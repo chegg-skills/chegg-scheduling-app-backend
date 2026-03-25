@@ -1,0 +1,215 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole{
+  SUPER_ADMIN
+  TEAM_ADMIN
+  COACH
+}
+
+enum AssignmentStrategy {
+  DIRECT
+  ROUND_ROBIN
+}
+
+enum EventLocationType {
+  VIRTUAL
+  IN_PERSON
+  CUSTOM
+}
+
+model User {
+  id          String    @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String    @unique
+  password    String
+  phoneNumber String?
+  avatarUrl   String?
+  role        UserRole
+  timezone    String    @default("UTC") // IANA timezone, e.g. "America/New_York"
+
+  isActive    Boolean   @default(true)
+  failedLoginAttempts Int @default(0)
+  lockedUntil DateTime?
+
+  // Auth tracking
+  lastLoginAt     DateTime?
+
+  // Team relations
+  teamsLed     Team[]   @relation("TeamLead")
+  teamsCreated Team[]   @relation("TeamCreatedBy")
+  teamMemberships TeamMember[]
+
+  // Event relations
+  eventsCreated Event[] @relation("EventCreatedBy")
+  eventsUpdated Event[] @relation("EventUpdatedBy")
+  hostedEvents  EventHost[] @relation("EventHostUser")
+  createdEventOfferings EventOffering[] @relation("EventOfferingCreatedBy")
+  updatedEventOfferings EventOffering[] @relation("EventOfferingUpdatedBy")
+  createdInteractionTypes EventInteractionType[] @relation("InteractionTypeCreatedBy")
+  updatedInteractionTypes EventInteractionType[] @relation("InteractionTypeUpdatedBy")
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String   @unique // stored lowercase for case-insensitive uniqueness
+  description String?
+  isActive    Boolean  @default(true)
+
+  teamLeadId  String
+  teamLead    User     @relation("TeamLead", fields: [teamLeadId], references: [id])
+
+  createdById String
+  createdByUser User   @relation("TeamCreatedBy", fields: [createdById], references: [id])
+
+  members     TeamMember[]
+  events      Event[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserInvite {
+  id        String    @id @default(uuid())
+  email     String
+  role      UserRole
+  token     String    @unique
+  expiresAt DateTime
+  acceptedAt DateTime?
+  createdBy String    // Admin user ID who created the invite
+  createdAt DateTime  @default(now())
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@index([teamId, isActive])
+}
+
+model EventOffering {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdById String
+  updatedById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User     @relation("EventOfferingCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User     @relation("EventOfferingUpdatedBy", fields: [updatedById], references: [id])
+  events      Event[]
+
+  @@index([isActive, sortOrder])
+}
+
+model EventInteractionType {
+  id                    String   @id @default(uuid())
+  key                   String   @unique
+  name                  String
+  description           String?
+  supportsRoundRobin    Boolean  @default(false)
+  supportsMultipleHosts Boolean  @default(false)
+  minHosts              Int      @default(1)
+  maxHosts              Int?
+  minParticipants       Int      @default(1)
+  maxParticipants       Int?
+  isActive              Boolean  @default(true)
+  sortOrder             Int      @default(0)
+  createdById           String
+  updatedById           String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  createdBy             User     @relation("InteractionTypeCreatedBy", fields: [createdById], references: [id])
+  updatedBy             User     @relation("InteractionTypeUpdatedBy", fields: [updatedById], references: [id])
+  events                Event[]
+
+  @@index([isActive, sortOrder])
+}
+
+model Event {
+  id                 String               @id @default(uuid())
+  name               String
+  description        String?
+  offeringId         String
+  interactionTypeId  String
+  assignmentStrategy AssignmentStrategy   @default(DIRECT)
+  durationSeconds    Int
+  locationType       EventLocationType
+  locationValue      String
+  isActive           Boolean              @default(true)
+  teamId             String
+  createdById        String
+  updatedById        String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  team               Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy          User                 @relation("EventCreatedBy", fields: [createdById], references: [id])
+  updatedBy          User                 @relation("EventUpdatedBy", fields: [updatedById], references: [id])
+  offering           EventOffering        @relation(fields: [offeringId], references: [id])
+  interactionType    EventInteractionType @relation(fields: [interactionTypeId], references: [id])
+  hosts              EventHost[]
+  routingState       EventRoutingState?
+
+  @@index([teamId, isActive])
+  @@index([offeringId])
+  @@index([interactionTypeId])
+  @@index([assignmentStrategy])
+}
+
+model EventHost {
+  id         String   @id @default(uuid())
+  eventId     String
+  hostUserId  String
+  hostOrder   Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  hostUser    User     @relation("EventHostUser", fields: [hostUserId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, hostUserId])
+  @@unique([eventId, hostOrder])
+  @@index([hostUserId])
+  @@index([eventId, isActive])
+}
+
+model EventRoutingState {
+  id            String   @id @default(uuid())
+  eventId       String   @unique
+  nextHostOrder Int      @default(1)
+  updatedAt     DateTime @updatedAt
+
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+
