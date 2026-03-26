@@ -63,7 +63,7 @@ router
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.listTeamEvents,
-  ) 
+  )
   .all(methodNotAllowed);
 
 router
@@ -93,7 +93,7 @@ router
     eventController.listEventHosts,
   )
   .put(
-    authenticate, 
+    authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.replaceEventHosts,
   )

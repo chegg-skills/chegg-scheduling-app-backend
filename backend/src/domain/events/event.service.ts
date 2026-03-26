@@ -743,10 +743,10 @@ const updateEvent = async (
   const nextLocationType =
     payload.locationType !== undefined
       ? parseOptionalEnum(
-          payload.locationType,
-          "locationType",
-          isValidLocationType,
-        )
+        payload.locationType,
+        "locationType",
+        isValidLocationType,
+      )
       : existingEvent.locationType;
 
   const nextLocationValue =

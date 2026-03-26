@@ -1,0 +1,252 @@
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
+export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
+export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
+
+// ─── Core Models ──────────────────────────────────────────────────────────────
+
+export interface SafeUser {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string | null
+  avatarUrl: string | null
+  role: UserRole
+  timezone: string
+  isActive: boolean
+  failedLoginAttempts: number
+  lockedUntil: string | null
+  lastLoginAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Team {
+  id: string
+  name: string
+  description: string | null
+  isActive: boolean
+  teamLeadId: string
+  createdById: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TeamMember {
+  id: string
+  teamId: string
+  userId: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  user: SafeUser
+}
+
+export interface UserInvite {
+  id: string
+  email: string
+  role: UserRole
+  token?: string // only in non-prod
+  expiresAt: string
+  createdAt: string
+}
+
+export interface EventOffering {
+  id: string
+  key: string
+  name: string
+  description: string | null
+  isActive: boolean
+  sortOrder: number
+  createdById: string
+  updatedById: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EventInteractionType {
+  id: string
+  key: string
+  name: string
+  description: string | null
+  supportsRoundRobin: boolean
+  supportsMultipleHosts: boolean
+  minHosts: number
+  maxHosts: number | null
+  minParticipants: number
+  maxParticipants: number | null
+  isActive: boolean
+  sortOrder: number
+  createdById: string
+  updatedById: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EventHost {
+  id: string
+  eventId: string
+  hostUserId: string
+  hostOrder: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  hostUser: SafeUser
+}
+
+export interface Event {
+  id: string
+  name: string
+  description: string | null
+  isActive: boolean
+  offeringId: string
+  interactionTypeId: string
+  assignmentStrategy: AssignmentStrategy
+  durationSeconds: number
+  locationType: EventLocationType
+  locationValue: string
+  teamId: string
+  createdById: string
+  updatedById: string
+  createdAt: string
+  updatedAt: string
+  offering: EventOffering
+  interactionType: EventInteractionType
+  hosts: EventHost[]
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+export interface Pagination {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}
+
+// ─── API Response Envelope ────────────────────────────────────────────────────
+
+export interface ApiResponse<T> {
+  success: boolean
+  message: string
+  data?: T
+  error?: unknown
+}
+
+// ─── Auth Payloads ────────────────────────────────────────────────────────────
+
+export interface AuthPayload {
+  user: SafeUser
+  token: string
+}
+
+// ─── Request DTOs ─────────────────────────────────────────────────────────────
+
+export interface LoginDto {
+  email: string
+  password: string
+}
+
+export interface BootstrapDto {
+  bootstrapSecret: string
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  timezone?: string
+}
+
+export interface RegisterDto {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  role?: UserRole
+  phoneNumber?: string
+  avatarUrl?: string
+  timezone?: string
+}
+
+export interface AcceptInviteDto {
+  token: string
+  firstName: string
+  lastName: string
+  password: string
+  timezone?: string
+}
+
+export interface CreateInviteDto {
+  email: string
+  role: UserRole
+}
+
+export interface UpdateUserDto {
+  firstName?: string
+  lastName?: string
+  email?: string
+  password?: string
+  phoneNumber?: string
+  avatarUrl?: string
+  role?: UserRole
+  timezone?: string
+  isActive?: boolean
+}
+
+export interface CreateTeamDto {
+  name: string
+  teamLeadId: string
+  description?: string
+}
+
+export interface UpdateTeamDto {
+  name?: string
+  description?: string
+  teamLeadId?: string
+  isActive?: boolean
+}
+
+export interface CreateEventDto {
+  name: string
+  offeringId: string
+  interactionTypeId: string
+  locationType: EventLocationType
+  locationValue: string
+  durationSeconds: number
+  assignmentStrategy?: AssignmentStrategy
+  description?: string
+  isActive?: boolean
+}
+
+export interface UpdateEventDto extends Partial<CreateEventDto> { }
+
+export interface SetEventHostsDto {
+  hosts: Array<{ userId: string; hostOrder?: number }>
+}
+
+export interface CreateEventOfferingDto {
+  key: string
+  name: string
+  description?: string
+  sortOrder?: number
+  isActive?: boolean
+}
+
+export interface UpdateEventOfferingDto extends Partial<CreateEventOfferingDto> { }
+
+export interface CreateInteractionTypeDto {
+  key: string
+  name: string
+  description?: string
+  supportsRoundRobin?: boolean
+  supportsMultipleHosts?: boolean
+  minHosts?: number
+  maxHosts?: number | null
+  minParticipants?: number
+  maxParticipants?: number | null
+  sortOrder?: number
+  isActive?: boolean
+}
+
+export interface UpdateInteractionTypeDto extends Partial<CreateInteractionTypeDto> { }

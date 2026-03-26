@@ -18,6 +18,15 @@ export class ErrorHandler extends Error {
 // (e.g. 400 for malformed JSON, 413 for payload too large).
 type FrameworkError = Error & { status?: number; statusCode?: number; type?: string };
 
+const shouldLogClientErrors =
+  process.env.NODE_ENV !== "test" && process.env.LOG_CLIENT_ERRORS === "true";
+
+const logClientError = (err: Error): void => {
+  if (shouldLogClientErrors) {
+    console.warn(err);
+  }
+};
+
 const resolveFrameworkStatus = (err: FrameworkError): number | undefined => {
   if (typeof err.status === "number" && err.status >= 400 && err.status < 600) {
     return err.status;
@@ -36,19 +45,19 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
   }
 
   if (err instanceof PathNotFoundError) {
-    console.warn(err);
+    logClientError(err);
     return sendErrorResponse(res, StatusCodes.NOT_FOUND, err.message);
   }
 
   if (err instanceof MethodNotAllowedError) {
-    console.warn(err);
+    logClientError(err);
     return sendErrorResponse(res, StatusCodes.METHOD_NOT_ALLOWED, err.message);
   }
 
   if (err instanceof ErrorHandler) {
-    // 4xx = expected / client errors → warn; 5xx = server faults → error
+    // 4xx are expected client-side outcomes; 5xx indicate server faults.
     if (err.statusCode >= 400 && err.statusCode < 500) {
-      console.warn(err);
+      logClientError(err);
     } else {
       console.error(err);
     }
@@ -58,7 +67,11 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
   // Handle framework errors: malformed JSON (400), payload too large (413), etc.
   const frameworkStatus = resolveFrameworkStatus(err as FrameworkError);
   if (frameworkStatus !== undefined) {
-    console.warn(err);
+    if (frameworkStatus >= 500) {
+      console.error(err);
+    } else {
+      logClientError(err as Error);
+    }
     return sendErrorResponse(
       res,
       frameworkStatus,

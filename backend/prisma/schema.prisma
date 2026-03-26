@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,87 +6,58 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole{
-  SUPER_ADMIN
-  TEAM_ADMIN
-  COACH
-}
-
-enum AssignmentStrategy {
-  DIRECT
-  ROUND_ROBIN
-}
-
-enum EventLocationType {
-  VIRTUAL
-  IN_PERSON
-  CUSTOM
-}
-
 model User {
-  id          String    @id @default(uuid())
-  firstName   String
-  lastName    String
-  email       String    @unique
-  password    String
-  phoneNumber String?
-  avatarUrl   String?
-  role        UserRole
-  timezone    String    @default("UTC") // IANA timezone, e.g. "America/New_York"
-
-  isActive    Boolean   @default(true)
-  failedLoginAttempts Int @default(0)
-  lockedUntil DateTime?
-
-  // Auth tracking
-  lastLoginAt     DateTime?
-
-  // Team relations
-  teamsLed     Team[]   @relation("TeamLead")
-  teamsCreated Team[]   @relation("TeamCreatedBy")
-  teamMemberships TeamMember[]
-
-  // Event relations
-  eventsCreated Event[] @relation("EventCreatedBy")
-  eventsUpdated Event[] @relation("EventUpdatedBy")
-  hostedEvents  EventHost[] @relation("EventHostUser")
-  createdEventOfferings EventOffering[] @relation("EventOfferingCreatedBy")
-  updatedEventOfferings EventOffering[] @relation("EventOfferingUpdatedBy")
+  id                      String                 @id @default(uuid())
+  email                   String                 @unique
+  password                String
+  role                    UserRole
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  avatarUrl               String?
+  firstName               String
+  isActive                Boolean                @default(true)
+  lastLoginAt             DateTime?
+  lastName                String
+  phoneNumber             String?
+  timezone                String                 @default("UTC")
+  failedLoginAttempts     Int                    @default(0)
+  lockedUntil             DateTime?
+  eventsCreated           Event[]                @relation("EventCreatedBy")
+  eventsUpdated           Event[]                @relation("EventUpdatedBy")
+  hostedEvents            EventHost[]            @relation("EventHostUser")
   createdInteractionTypes EventInteractionType[] @relation("InteractionTypeCreatedBy")
   updatedInteractionTypes EventInteractionType[] @relation("InteractionTypeUpdatedBy")
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdEventOfferings   EventOffering[]        @relation("EventOfferingCreatedBy")
+  updatedEventOfferings   EventOffering[]        @relation("EventOfferingUpdatedBy")
+  teamsCreated            Team[]                 @relation("TeamCreatedBy")
+  teamsLed                Team[]                 @relation("TeamLead")
+  teamMemberships         TeamMember[]
 }
 
 model Team {
-  id          String   @id @default(uuid())
-  name        String   @unique // stored lowercase for case-insensitive uniqueness
-  description String?
-  isActive    Boolean  @default(true)
-
-  teamLeadId  String
-  teamLead    User     @relation("TeamLead", fields: [teamLeadId], references: [id])
-
-  createdById String
-  createdByUser User   @relation("TeamCreatedBy", fields: [createdById], references: [id])
-
-  members     TeamMember[]
-  events      Event[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String       @id @default(uuid())
+  name          String       @unique
+  description   String?
+  isActive      Boolean      @default(true)
+  teamLeadId    String
+  createdById   String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  events        Event[]
+  createdByUser User         @relation("TeamCreatedBy", fields: [createdById], references: [id])
+  teamLead      User         @relation("TeamLead", fields: [teamLeadId], references: [id])
+  members       TeamMember[]
 }
 
 model UserInvite {
-  id        String    @id @default(uuid())
-  email     String
-  role      UserRole
-  token     String    @unique
-  expiresAt DateTime
+  id         String    @id @default(uuid())
+  email      String
+  role       UserRole
+  token      String    @unique
+  expiresAt  DateTime
   acceptedAt DateTime?
-  createdBy String    // Admin user ID who created the invite
-  createdAt DateTime  @default(now())
+  createdBy  String
+  createdAt  DateTime  @default(now())
 }
 
 model TeamMember {
@@ -101,7 +67,6 @@ model TeamMember {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -121,10 +86,9 @@ model EventOffering {
   updatedById String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
+  events      Event[]
   createdBy   User     @relation("EventOfferingCreatedBy", fields: [createdById], references: [id])
   updatedBy   User     @relation("EventOfferingUpdatedBy", fields: [updatedById], references: [id])
-  events      Event[]
 
   @@index([isActive, sortOrder])
 }
@@ -146,10 +110,9 @@ model EventInteractionType {
   updatedById           String
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
-
+  events                Event[]
   createdBy             User     @relation("InteractionTypeCreatedBy", fields: [createdById], references: [id])
   updatedBy             User     @relation("InteractionTypeUpdatedBy", fields: [updatedById], references: [id])
-  events                Event[]
 
   @@index([isActive, sortOrder])
 }
@@ -170,12 +133,11 @@ model Event {
   updatedById        String
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
-
-  team               Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdBy          User                 @relation("EventCreatedBy", fields: [createdById], references: [id])
-  updatedBy          User                 @relation("EventUpdatedBy", fields: [updatedById], references: [id])
-  offering           EventOffering        @relation(fields: [offeringId], references: [id])
   interactionType    EventInteractionType @relation(fields: [interactionTypeId], references: [id])
+  offering           EventOffering        @relation(fields: [offeringId], references: [id])
+  team               Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  updatedBy          User                 @relation("EventUpdatedBy", fields: [updatedById], references: [id])
   hosts              EventHost[]
   routingState       EventRoutingState?
 
@@ -187,15 +149,14 @@ model Event {
 
 model EventHost {
   id         String   @id @default(uuid())
-  eventId     String
-  hostUserId  String
-  hostOrder   Int
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  hostUser    User     @relation("EventHostUser", fields: [hostUserId], references: [id], onDelete: Cascade)
+  eventId    String
+  hostUserId String
+  hostOrder  Int
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  hostUser   User     @relation("EventHostUser", fields: [hostUserId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, hostUserId])
   @@unique([eventId, hostOrder])
@@ -208,8 +169,22 @@ model EventRoutingState {
   eventId       String   @unique
   nextHostOrder Int      @default(1)
   updatedAt     DateTime @updatedAt
-
   event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  TEAM_ADMIN
+  COACH
+}
 
+enum AssignmentStrategy {
+  DIRECT
+  ROUND_ROBIN
+}
+
+enum EventLocationType {
+  VIRTUAL
+  IN_PERSON
+  CUSTOM
+}
