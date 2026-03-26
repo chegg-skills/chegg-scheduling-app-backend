@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+.idea
+
+# Keep environment variables out of version control
+.env
+
+/src/generated/prisma
+
+# Personal local-only notes
+/personal-notes/
