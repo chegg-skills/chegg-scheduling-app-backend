@@ -15,7 +15,14 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
       spacing={2}
       justifyContent="space-between"
       alignItems={{ xs: 'flex-start', sm: 'center' }}
-      mb={3}
+      sx={{
+        mb: 3,
+        backgroundColor: "white",
+        borderRadius: 1.5,
+        border: 1,
+        borderColor: "#E5E7EB",
+      }}
+      padding={2}
     >
       <Stack spacing={0.5}>
         <Typography variant="h5">{title}</Typography>

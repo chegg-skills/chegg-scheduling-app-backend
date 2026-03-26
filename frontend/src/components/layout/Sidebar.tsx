@@ -87,7 +87,9 @@ export function Sidebar() {
           width: 260,
           boxSizing: 'border-box',
           borderRightColor: 'divider',
+          borderRadius: 0,
         },
+
       }}
     >
       <Box sx={{ px: 3, py: 2.5 }}>

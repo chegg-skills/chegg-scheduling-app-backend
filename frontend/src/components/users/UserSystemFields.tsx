@@ -5,8 +5,8 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
 import { Select } from '@/components/shared/Select'
+import { useTimezones } from '@/hooks/useConfig'
 import type { UserFormValues } from './UserForm'
 import type { UserRole } from '@/types'
 
@@ -28,6 +28,8 @@ export function UserSystemFields({
   canChangeRole,
   canChangeActiveStatus,
 }: Props) {
+  const { data: timezones = [] } = useTimezones()
+
   return (
     <Stack spacing={2}>
       <FormField label="Role" htmlFor="role" error={errors.role?.message}>
@@ -49,9 +51,23 @@ export function UserSystemFields({
         label="Timezone"
         htmlFor="timezone"
         error={errors.timezone?.message}
-        hint="IANA timezone (e.g. America/New_York)"
+        hint="Select your preferred timezone"
       >
-        <Input id="timezone" hasError={!!errors.timezone} {...register('timezone')} />
+        <Select
+          id="timezone"
+          hasError={!!errors.timezone}
+          {...register('timezone')}
+          displayEmpty
+        >
+          <MenuItem value="">
+            <em>Choose a timezone...</em>
+          </MenuItem>
+          {timezones.map((tz: string) => (
+            <MenuItem key={tz} value={tz}>
+              {tz.replace(/_/g, ' ')}
+            </MenuItem>
+          ))}
+        </Select>
       </FormField>
 
       {canChangeActiveStatus && (

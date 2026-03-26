@@ -2,13 +2,16 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
+import MenuItem from '@mui/material/MenuItem'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
+import { Select } from '@/components/shared/Select'
 import { Button } from '@/components/shared/Button'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { useAcceptInvite } from '@/hooks/useAuthMutations'
+import { useTimezones } from '@/hooks/useConfig'
 import { extractApiError } from '@/utils/apiError'
 
 const schema = z.object({
@@ -32,7 +35,14 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+  })
+
+  const { data: timezones = [] } = useTimezones()
 
   function onSubmit(values: FormValues) {
     mutate(
@@ -89,14 +99,23 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
         label="Timezone"
         htmlFor="timezone"
         error={errors.timezone?.message}
-        hint="IANA timezone (e.g. America/New_York). Defaults to UTC."
+        hint="Select your preferred timezone. Defaults to system timezone."
       >
-        <Input
+        <Select
           id="timezone"
-          placeholder="UTC"
           hasError={!!errors.timezone}
           {...register('timezone')}
-        />
+          displayEmpty
+        >
+          <MenuItem value="">
+            <em>Choose a timezone...</em>
+          </MenuItem>
+          {timezones.map((tz: string) => (
+            <MenuItem key={tz} value={tz}>
+              {tz.replace(/_/g, ' ')}
+            </MenuItem>
+          ))}
+        </Select>
       </FormField>
 
       <Button type="submit" isLoading={isPending} fullWidth>
