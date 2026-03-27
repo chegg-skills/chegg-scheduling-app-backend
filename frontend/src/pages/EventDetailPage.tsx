@@ -68,34 +68,61 @@ export function EventDetailPage() {
         <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1, mb: 2 }}>
           Details
         </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant="caption" color="text.secondary">Offering</Typography>
+            <Typography variant="body2" fontWeight={500}>{event.offering.name}</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant="caption" color="text.secondary">Interaction type</Typography>
+            <Typography variant="body2" fontWeight={500}>{event.interactionType.name} ({event.interactionType.key})</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant="caption" color="text.secondary">Assignment strategy</Typography>
+            <Typography variant="body2" fontWeight={500}>{event.assignmentStrategy}</Typography>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="caption" color="text.secondary">Location type</Typography>
             <Typography variant="body2">{event.locationType}</Typography>
           </Grid>
           {event.locationValue && (
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Typography variant="caption" color="text.secondary">Location</Typography>
               <Typography variant="body2">{event.locationValue}</Typography>
             </Grid>
           )}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="caption" color="text.secondary">Duration</Typography>
             <Typography variant="body2">{event.durationSeconds / 60} min</Typography>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="caption" color="text.secondary">Assignment strategy</Typography>
-            <Typography variant="body2">{event.assignmentStrategy}</Typography>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant="caption" color="text.secondary">Round robin</Typography>
+            <Typography variant="body2">{event.interactionType.supportsRoundRobin ? 'Enabled' : 'Disabled'}</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant="caption" color="text.secondary">Multiple hosts</Typography>
+            <Typography variant="body2">{event.interactionType.supportsMultipleHosts ? 'Supported' : 'Not supported'}</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant="caption" color="text.secondary">Hosts (Min / Max)</Typography>
+            <Typography variant="body2">{event.interactionType.minHosts} / {event.interactionType.maxHosts ?? '∞'}</Typography>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography variant="caption" color="text.secondary">Participants (Min / Max)</Typography>
+            <Typography variant="body2">{event.interactionType.minParticipants} / {event.interactionType.maxParticipants ?? '∞'}</Typography>
           </Grid>
         </Grid>
       </Paper>
 
       <Box component="section">
-        <Typography variant="h6" mb={2}>Hosts</Typography>
         <EventHostManager
           eventId={eventId}
           hosts={event.hosts}
           teamMembers={teamMembers}
+          title="Hosts"
         />
       </Box>
 
