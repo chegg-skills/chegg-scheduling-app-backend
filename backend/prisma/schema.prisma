@@ -32,6 +32,8 @@ model User {
   teamsCreated            Team[]                 @relation("TeamCreatedBy")
   teamsLed                Team[]                 @relation("TeamLead")
   teamMemberships         TeamMember[]
+  weeklyAvailability     UserWeeklyAvailability[]
+  availabilityExceptions UserAvailabilityException[]
 }
 
 model Team {
@@ -187,4 +189,31 @@ enum EventLocationType {
   VIRTUAL
   IN_PERSON
   CUSTOM
+  }
+
+  model UserWeeklyAvailability {
+    id        String   @id @default(uuid())
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    dayOfWeek Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    startTime String   // e.g., "09:00"
+    endTime   String   // e.g., "17:00"
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId, dayOfWeek])
+  }
+
+  model UserAvailabilityException {
+    id            String   @id @default(uuid())
+    user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId        String
+    date          DateTime // Specific date for the exception
+    isUnavailable Boolean  // True if user is unavailable for the whole day
+    startTime     String?  // Optional: for partial-day exceptions
+    endTime       String?  // Optional: for partial-day exceptions
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    @@index([userId, date])
 }

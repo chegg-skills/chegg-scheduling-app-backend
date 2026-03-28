@@ -48,6 +48,7 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<UserFormValues>({
     resolver: zodResolver(schema),
@@ -92,7 +93,6 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
             Account Settings
           </Typography>
           <UserSystemFields
-            register={register}
             errors={errors}
             control={control}
             canChangeRole={canChangeRole}
@@ -100,7 +100,15 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
           />
         </Stack>
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
+        <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ pt: 1 }}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => reset()}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
             Save changes
           </Button>

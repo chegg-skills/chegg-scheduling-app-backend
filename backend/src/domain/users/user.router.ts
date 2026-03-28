@@ -3,6 +3,7 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import * as userController from "./user.controller";
+import availabilityRouter from '../availability/availability.router';
 
 const router = express.Router();
 
@@ -46,5 +47,9 @@ router
     userController.deleteUser,
   )
   .all(methodNotAllowed);
+
+// Mount user availability routes
+// Mount availability routes from the dedicated domain
+router.use("/:userId/availability", authenticate, availabilityRouter);
 
 export default router;

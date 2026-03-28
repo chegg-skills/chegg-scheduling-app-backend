@@ -249,4 +249,36 @@ export interface CreateInteractionTypeDto {
   isActive?: boolean
 }
 
-export interface UpdateInteractionTypeDto extends Partial<CreateInteractionTypeDto> { }
+export interface UserWeeklyAvailability {
+  id: string
+  userId: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserAvailabilityException {
+  id: string
+  userId: string
+  date: string
+  isUnavailable: boolean
+  startTime: string | null
+  endTime: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type SetWeeklyAvailabilityDto = Array<{
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+}>
+
+export interface CreateAvailabilityExceptionDto {
+  date: string | Date
+  isUnavailable: boolean
+  startTime?: string | null
+  endTime?: string | null
+}

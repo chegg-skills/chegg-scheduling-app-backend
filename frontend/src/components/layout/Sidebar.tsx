@@ -7,7 +7,6 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
-import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useAuth } from '@/context/AuthContext'
 import type { UserRole } from '@/types'
@@ -19,6 +18,7 @@ import {
   BookOpen,
   Layers,
   LogOut,
+  User,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -116,33 +116,12 @@ export function Sidebar() {
       </List>
       <Divider />
       <Box sx={{ p: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              bgcolor: 'primary.light',
-              color: 'primary.dark',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
-            {user.firstName[0]}
-            {user.lastName[0]}
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" fontWeight={600} noWrap>
-              {user.firstName} {user.lastName}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {user.role}
-            </Typography>
-          </Box>
-        </Stack>
+        <ListItemButton component={NavLink} to="/profile" sx={{ borderRadius: 2, mb: 0.5 }}>
+          <ListItemIcon sx={{ minWidth: 36 }}>
+            <User size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Profile" primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+        </ListItemButton>
         <ListItemButton onClick={logout} sx={{ borderRadius: 2 }}>
           <ListItemIcon sx={{ minWidth: 36 }}>
             <LogOut size={18} />
