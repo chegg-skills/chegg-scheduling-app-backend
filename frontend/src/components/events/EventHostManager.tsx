@@ -79,7 +79,7 @@ export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHo
         <Table>
           <TableHead>
             <TableRow>
-              {['Coach', 'Time Zone', 'Actions'].map((col) => (
+              {['Coach', 'Country', 'Time Zone', 'Language', 'Actions'].map((col) => (
                 <TableCell
                   key={col}
                   sx={{
@@ -123,7 +123,9 @@ export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHo
                       </Box>
                     </Stack>
                   </TableCell>
-                  <TableCell>{host.hostUser.timezone}</TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>{host.hostUser.country ?? '—'}</TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>{host.hostUser.timezone.replace(/_/g, ' ')}</TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>{host.hostUser.preferredLanguage ?? '—'}</TableCell>
                   <TableCell align="right">
                     <RowActions
                       actions={[

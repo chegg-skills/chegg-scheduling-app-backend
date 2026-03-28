@@ -49,10 +49,10 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
         <Table>
           <TableHead>
             <TableRow>
-              {['User', 'Role', 'Status', 'Actions'].map((col) => (
+              {['User', 'Role', 'Country', 'Timezone', 'Language', 'Status', 'Actions'].map((col) => (
                 <TableCell
                   key={col}
-                  sx={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary' }}
+                  sx={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary', letterSpacing: '0.05em' }}
                 >
                   {col}
                 </TableCell>
@@ -88,6 +88,9 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
                   </Stack>
                 </TableCell>
                 <TableCell>{roleBadge(user.role)}</TableCell>
+                <TableCell sx={{ fontSize: '0.8125rem' }}>{user.country ?? '—'}</TableCell>
+                <TableCell sx={{ fontSize: '0.8125rem' }}>{user.timezone.replace(/_/g, ' ')}</TableCell>
+                <TableCell sx={{ fontSize: '0.8125rem' }}>{user.preferredLanguage ?? '—'}</TableCell>
                 <TableCell>{statusBadge(user.isActive)}</TableCell>
                 <TableCell>
                   <RowActions

@@ -21,6 +21,8 @@ const schema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(8, 'Minimum 8 characters').or(z.literal('')).optional(),
   phoneNumber: z.string().optional(),
+  country: z.string().optional(),
+  preferredLanguage: z.string().optional(),
   role: z.enum(['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'] as const),
   timezone: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -58,6 +60,8 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
       email: user.email,
       password: '',
       phoneNumber: user.phoneNumber ?? '',
+      country: user.country ?? '',
+      preferredLanguage: user.preferredLanguage ?? 'English',
       role: user.role,
       timezone: user.timezone,
       isActive: user.isActive,
@@ -83,7 +87,7 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
           <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
             Personal Information
           </Typography>
-          <UserPersonalFields register={register} errors={errors} isCreateMode={false} />
+          <UserPersonalFields register={register} errors={errors} control={control} isCreateMode={false} />
         </Stack>
 
         <Divider />

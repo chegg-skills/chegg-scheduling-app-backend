@@ -221,6 +221,16 @@ describe("PATCH /api/users/:userId", () => {
     expect(res.body.data.timezone).toBe("America/New_York");
   });
 
+  it("SUPER_ADMIN can update a user's preferredLanguage", async () => {
+    const res = await request(app)
+      .patch(`/api/users/${coachId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ preferredLanguage: "es" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.preferredLanguage).toBe("es");
+  });
+
   it("SUPER_ADMIN can change a user's role", async () => {
     const res = await request(app)
       .patch(`/api/users/${coachId}`)

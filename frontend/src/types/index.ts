@@ -12,6 +12,8 @@ export interface SafeUser {
   lastName: string
   email: string
   phoneNumber: string | null
+  country: string | null
+  preferredLanguage: string | null
   avatarUrl: string | null
   role: UserRole
   timezone: string
@@ -165,6 +167,8 @@ export interface RegisterDto {
   password: string
   role?: UserRole
   phoneNumber?: string
+  country?: string
+  preferredLanguage?: string
   avatarUrl?: string
   timezone?: string
 }
@@ -188,6 +192,8 @@ export interface UpdateUserDto {
   email?: string
   password?: string
   phoneNumber?: string
+  country?: string
+  preferredLanguage?: string
   avatarUrl?: string
   role?: UserRole
   timezone?: string

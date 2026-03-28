@@ -17,6 +17,8 @@ export const safeUserSelect = Prisma.validator<Prisma.UserSelect>()({
   lastName: true,
   email: true,
   phoneNumber: true,
+  country: true,
+  preferredLanguage: true,
   avatarUrl: true,
   role: true,
   timezone: true,

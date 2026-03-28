@@ -23,9 +23,11 @@ type UpdateUserInput = {
   email?: string;
   password?: string;
   phoneNumber?: string;
+  country?: string;
   avatarUrl?: string;
   role?: string;
   timezone?: string;
+  preferredLanguage?: string;
   isActive?: boolean;
 };
 
@@ -201,8 +203,16 @@ const updateUser = async (
     updateData.phoneNumber = payload.phoneNumber?.trim() || null;
   }
 
+  if (payload.country !== undefined) {
+    updateData.country = payload.country?.trim() || null;
+  }
+
   if (payload.avatarUrl !== undefined) {
     updateData.avatarUrl = payload.avatarUrl?.trim() || null;
+  }
+
+  if (payload.preferredLanguage !== undefined) {
+    updateData.preferredLanguage = payload.preferredLanguage?.trim() || "en";
   }
 
   if (payload.role !== undefined) {

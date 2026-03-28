@@ -1,18 +1,24 @@
-import type { UseFormRegister, FieldErrors } from 'react-hook-form'
+import { Controller } from 'react-hook-form'
+import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
+import { Autocomplete } from '@/components/shared/Autocomplete'
+import { useCountries, useLanguages } from '@/hooks/useConfig'
 import type { UserFormValues } from './UserForm'
 
 interface Props {
   register: UseFormRegister<UserFormValues>
   errors: FieldErrors<UserFormValues>
+  control: Control<UserFormValues>
   isCreateMode: boolean
 }
 
-/** Handles firstName, lastName, email, phoneNumber, password fields */
-export function UserPersonalFields({ register, errors, isCreateMode }: Props) {
+/** Handles firstName, lastName, email, phoneNumber, country, password fields */
+export function UserPersonalFields({ register, errors, control, isCreateMode }: Props) {
+  const { data: countries = [] } = useCountries()
+  const { data: languages = [] } = useLanguages()
   return (
     <Stack spacing={2}>
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' } }}>
@@ -75,6 +81,68 @@ export function UserPersonalFields({ register, errors, isCreateMode }: Props) {
           type="tel"
           hasError={!!errors.phoneNumber}
           {...register('phoneNumber')}
+        />
+      </FormField>
+
+      <FormField
+        label="Country"
+        htmlFor="country"
+        error={errors.country?.message}
+      >
+        <Controller
+          name="country"
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <Autocomplete<{ code: string; name: string }, false, false, true>
+              options={countries}
+              getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
+              isOptionEqualToValue={(option, val) => {
+                const optionName = typeof option === 'string' ? option : option.name
+                const valName = typeof val === 'string' ? val : val?.name
+                return optionName === valName
+              }}
+              value={countries.find((c) => c.name === value) || value || null}
+              onChange={(_, newValue) => {
+                onChange(typeof newValue === 'string' ? newValue : newValue?.name || '')
+              }}
+              onInputChange={(_, newInputValue) => {
+                onChange(newInputValue)
+              }}
+              placeholder="Select or type country..."
+              freeSolo
+            />
+          )}
+        />
+      </FormField>
+
+      <FormField
+        label="Preferred Language"
+        htmlFor="preferredLanguage"
+        error={errors.preferredLanguage?.message}
+      >
+        <Controller
+          name="preferredLanguage"
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <Autocomplete<{ code: string; name: string }, false, false, true>
+              options={languages}
+              getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
+              isOptionEqualToValue={(option, val) => {
+                const optionName = typeof option === 'string' ? option : option.name
+                const valName = typeof val === 'string' ? val : val?.name
+                return optionName === valName
+              }}
+              value={languages.find(l => l.name === value) || value || null}
+              onChange={(_, newValue) => {
+                onChange(typeof newValue === 'string' ? newValue : newValue?.name || '')
+              }}
+              onInputChange={(_, newInputValue) => {
+                onChange(newInputValue)
+              }}
+              placeholder="Select or type language..."
+              freeSolo
+            />
+          )}
         />
       </FormField>
     </Stack>
