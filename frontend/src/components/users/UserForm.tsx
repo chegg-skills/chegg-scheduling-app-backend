@@ -10,7 +10,8 @@ import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { UserPersonalFields } from './UserPersonalFields'
 import { UserSystemFields } from './UserSystemFields'
 import type { SafeUser, UserRole } from '@/types'
-import { useUpdateUser } from '@/hooks/useUsers'
+import { useUpdateUser, useUpdateMyProfile } from '@/hooks/useUsers'
+import { useAuth } from '@/context/AuthContext'
 import { extractApiError } from '@/utils/apiError'
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -41,7 +42,11 @@ interface UserFormProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
-  const { mutate, isPending, error } = useUpdateUser()
+  const { user: authUser } = useAuth()
+  const updateAdmin = useUpdateUser()
+  const updateSelf = useUpdateMyProfile()
+
+  const isSelf = user.id === authUser?.id
 
   const canChangeRole = currentUserRole === 'SUPER_ADMIN'
   const canChangeActiveStatus = currentUserRole === 'SUPER_ADMIN'
@@ -72,11 +77,20 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
     const payload = { ...values }
     if (!payload.password) delete payload.password
 
-    mutate(
-      { userId: user.id, data: payload },
-      { onSuccess },
-    )
+    if (isSelf) {
+      // For self-updates, email is blocked by schema but we exclude it here for clarity
+      const { email, role, isActive, ...selfPayload } = payload
+      updateSelf.mutate(selfPayload, { onSuccess })
+    } else {
+      updateAdmin.mutate(
+        { userId: user.id, data: payload },
+        { onSuccess },
+      )
+    }
   }
+
+  const isPending = updateAdmin.isPending || updateSelf.isPending
+  const error = updateAdmin.error || updateSelf.error
 
   return (
     <Box sx={{ maxWidth: 560, mx: 'auto', width: '100%' }}>
@@ -87,7 +101,13 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
           <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
             Personal Information
           </Typography>
-          <UserPersonalFields register={register} errors={errors} control={control} isCreateMode={false} />
+          <UserPersonalFields
+            register={register}
+            errors={errors}
+            control={control}
+            isCreateMode={false}
+            disabledFields={{ email: isSelf }}
+          />
         </Stack>
 
         <Divider />

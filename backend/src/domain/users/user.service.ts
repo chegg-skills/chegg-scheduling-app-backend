@@ -31,6 +31,17 @@ type UpdateUserInput = {
   isActive?: boolean;
 };
 
+type UpdateMyProfileInput = {
+  firstName?: string;
+  lastName?: string;
+  password?: string;
+  phoneNumber?: string;
+  country?: string;
+  avatarUrl?: string;
+  timezone?: string;
+  preferredLanguage?: string;
+};
+
 const isValidRole = (role: string): role is UserRole => {
   return Object.values(UserRole).includes(role as UserRole);
 };
@@ -331,4 +342,81 @@ const deleteUser = async (
   return toSafeUser(deactivatedUser);
 };
 
-export { deleteUser, listUsers, readUser, updateUser };
+const updateMyProfile = async (
+  userId: string,
+  payload: UpdateMyProfileInput,
+): Promise<SafeUser> => {
+  if (!userId?.trim()) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "userId is required.");
+  }
+
+  const updateData: Prisma.UserUpdateInput = {};
+
+  if (payload.firstName !== undefined) {
+    const value = payload.firstName.trim();
+    if (!value) {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "firstName cannot be empty.");
+    }
+    updateData.firstName = value;
+  }
+
+  if (payload.lastName !== undefined) {
+    const value = payload.lastName.trim();
+    if (!value) {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "lastName cannot be empty.");
+    }
+    updateData.lastName = value;
+  }
+
+  if (payload.password !== undefined) {
+    const value = payload.password.trim();
+    if (value.length < 8) {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Password must be at least 8 characters long.");
+    }
+    updateData.password = await bcrypt.hash(value, SALT_ROUNDS);
+  }
+
+  if (payload.phoneNumber !== undefined) {
+    updateData.phoneNumber = payload.phoneNumber?.trim() || null;
+  }
+
+  if (payload.country !== undefined) {
+    updateData.country = payload.country?.trim() || null;
+  }
+
+  if (payload.avatarUrl !== undefined) {
+    updateData.avatarUrl = payload.avatarUrl?.trim() || null;
+  }
+
+  if (payload.preferredLanguage !== undefined) {
+    updateData.preferredLanguage = payload.preferredLanguage?.trim() || "en";
+  }
+
+  if (payload.timezone !== undefined) {
+    const timezone = payload.timezone.trim();
+    if (!timezone) {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "timezone cannot be empty.");
+    }
+    updateData.timezone = validateTimezone(timezone);
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "At least one field is required to update profile.");
+  }
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return toSafeUser(updatedUser);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      throw new ErrorHandler(StatusCodes.NOT_FOUND, "User not found.");
+    }
+    throw error;
+  }
+};
+
+export { deleteUser, listUsers, readUser, updateUser, updateMyProfile };

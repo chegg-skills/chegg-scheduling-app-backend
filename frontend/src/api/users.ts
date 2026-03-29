@@ -18,6 +18,9 @@ export const usersApi = {
   getMe: () =>
     apiClient.get<ApiResponse<SafeUser>>('/users/me'),
 
+  updateMe: (data: Partial<UpdateUserDto>) =>
+    apiClient.patch<ApiResponse<SafeUser>>('/users/me', data),
+
   getById: (userId: string) =>
     apiClient.get<ApiResponse<SafeUser>>(`/users/${userId}`),
 

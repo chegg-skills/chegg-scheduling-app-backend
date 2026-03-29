@@ -22,6 +22,10 @@ router
     authenticate,
     userController.readMyProfile,
   )
+  .patch(
+    authenticate,
+    userController.updateMyProfile,
+  )
   .all(methodNotAllowed);
 
 router

@@ -13,10 +13,13 @@ interface Props {
   errors: FieldErrors<UserFormValues>
   control: Control<UserFormValues>
   isCreateMode: boolean
+  disabledFields?: {
+    email?: boolean
+  }
 }
 
 /** Handles firstName, lastName, email, phoneNumber, country, password fields */
-export function UserPersonalFields({ register, errors, control, isCreateMode }: Props) {
+export function UserPersonalFields({ register, errors, control, isCreateMode, disabledFields }: Props) {
   const { data: countries = [] } = useCountries()
   const { data: languages = [] } = useLanguages()
   return (
@@ -51,6 +54,7 @@ export function UserPersonalFields({ register, errors, control, isCreateMode }: 
           type="email"
           autoComplete="off"
           hasError={!!errors.email}
+          disabled={disabledFields?.email}
           {...register('email')}
         />
       </FormField>

@@ -118,4 +118,23 @@ const deleteUser = async (
   }
 };
 
-export { deleteUser, listUsers, readMyProfile, readUser, updateUser };
+const updateMyProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const user = await userService.updateMyProfile(caller.id, req.body);
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      user,
+      "Profile updated successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { deleteUser, listUsers, readMyProfile, readUser, updateUser, updateMyProfile };

@@ -36,6 +36,21 @@ export function useUpdateUser() {
   })
 }
 
+export function useUpdateMyProfile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<UpdateUserDto>) => usersApi.updateMe(data),
+    onSuccess: (response) => {
+      const updatedUser = response.data.data
+      qc.invalidateQueries({ queryKey: userKeys.all })
+      qc.invalidateQueries({ queryKey: userKeys.me() })
+      if (updatedUser?.id) {
+        qc.invalidateQueries({ queryKey: userKeys.detail(updatedUser.id) })
+      }
+    },
+  })
+}
+
 export function useDeactivateUser() {
   const qc = useQueryClient()
   return useMutation({

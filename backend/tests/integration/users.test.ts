@@ -208,6 +208,54 @@ describe("GET /api/users/me", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// PATCH /api/users/me
+// ─────────────────────────────────────────────────────────────
+describe("PATCH /api/users/me", () => {
+  it("COACH can update their own timezone", async () => {
+    const res = await request(app)
+      .patch("/api/users/me")
+      .set("Authorization", `Bearer ${coachToken}`)
+      .send({ timezone: "Europe/London" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.timezone).toBe("Europe/London");
+  });
+
+  it("COACH cannot update their own email via /me (field ignored)", async () => {
+    // Current user's email is coach@users.com
+    const res = await request(app)
+      .patch("/api/users/me")
+      .set("Authorization", `Bearer ${coachToken}`)
+      .send({ email: "new@email.com", timezone: "UTC" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.email).toBe("coach@users.com"); // Remains unchanged
+    expect(res.body.data.timezone).toBe("UTC");
+  });
+
+  it("COACH cannot update their own role via /me (field ignored)", async () => {
+    const res = await request(app)
+      .patch("/api/users/me")
+      .set("Authorization", `Bearer ${coachToken}`)
+      .send({ role: "SUPER_ADMIN" });
+
+    // The field is ignored, but since no other fields were provided, 
+    // it will return 400 "At least one field is required to update profile."
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain("required");
+  });
+
+  it("COACH cannot change their own isActive status via /me (field ignored)", async () => {
+    const res = await request(app)
+      .patch("/api/users/me")
+      .set("Authorization", `Bearer ${coachToken}`)
+      .send({ isActive: false });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
 // PATCH /api/users/:userId
 // ─────────────────────────────────────────────────────────────
 describe("PATCH /api/users/:userId", () => {
