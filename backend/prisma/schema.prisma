@@ -36,6 +36,7 @@ model User {
   teamMemberships         TeamMember[]
   weeklyAvailability     UserWeeklyAvailability[]
   availabilityExceptions UserAvailabilityException[]
+  bookings               Booking[]
 }
 
 model Team {
@@ -51,6 +52,7 @@ model Team {
   createdByUser User         @relation("TeamCreatedBy", fields: [createdById], references: [id])
   teamLead      User         @relation("TeamLead", fields: [teamLeadId], references: [id])
   members       TeamMember[]
+  bookings      Booking[]
 }
 
 model UserInvite {
@@ -143,6 +145,7 @@ model Event {
   team               Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy          User                 @relation("EventUpdatedBy", fields: [updatedById], references: [id])
   hosts              EventHost[]
+  bookings           Booking[]
   routingState       EventRoutingState?
 
   @@index([teamId, isActive])
@@ -218,4 +221,41 @@ enum EventLocationType {
     updatedAt     DateTime @updatedAt
 
     @@index([userId, date])
+}
+
+model Booking {
+  id              String        @id @default(uuid())
+  studentName     String
+  studentEmail    String
+  teamId          String
+  eventId         String
+  hostUserId      String
+  startTime       DateTime
+  endTime         DateTime
+  timezone          String        @default("UTC")
+  notes             String?
+  specificQuestion  String?
+  triedSolutions    String?
+  usedResources     String?
+  sessionObjectives String?
+  status            BookingStatus @default(CONFIRMED)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  team            Team          @relation(fields: [teamId], references: [id])
+  event           Event         @relation(fields: [eventId], references: [id])
+  host            User          @relation(fields: [hostUserId], references: [id])
+
+  @@index([teamId])
+  @@index([eventId])
+  @@index([hostUserId])
+  @@index([startTime, endTime])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
 }

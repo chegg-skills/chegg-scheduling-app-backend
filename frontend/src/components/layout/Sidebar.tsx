@@ -19,6 +19,7 @@ import {
   Layers,
   LogOut,
   User,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -34,6 +35,12 @@ const navItems: NavItem[] = [
     to: '/dashboard',
     label: 'Dashboard',
     Icon: LayoutDashboard,
+    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'],
+  },
+  {
+    to: '/bookings',
+    label: 'Bookings',
+    Icon: ClipboardList,
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'],
   },
   {

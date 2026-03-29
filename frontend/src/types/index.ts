@@ -3,6 +3,7 @@
 export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
 export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
 export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
+export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
 
 // ─── Core Models ──────────────────────────────────────────────────────────────
 
@@ -287,4 +288,55 @@ export interface CreateAvailabilityExceptionDto {
   isUnavailable: boolean
   startTime?: string | null
   endTime?: string | null
+}
+
+// ─── Booking Models ───────────────────────────────────────────────────────────
+
+export interface Booking {
+  id: string
+  studentName: string
+  studentEmail: string
+  startTime: string
+  endTime: string
+  timezone: string
+  status: BookingStatus
+  notes: string | null
+  specificQuestion: string | null
+  triedSolutions: string | null
+  usedResources: string | null
+  sessionObjectives: string | null
+  teamId: string
+  eventId: string
+  hostUserId: string
+  createdAt: string
+  updatedAt: string
+  team?: Team
+  event?: Event
+  host?: SafeUser
+}
+
+export interface CreateBookingDto {
+  studentName: string
+  studentEmail: string
+  teamId: string
+  eventId: string
+  startTime: string
+  timezone?: string
+  notes?: string
+  specificQuestion?: string
+  triedSolutions?: string
+  usedResources?: string
+  sessionObjectives?: string
+  preferredHostId?: string
+}
+
+export interface ListBookingsFilters {
+  teamId?: string
+  eventId?: string
+  hostUserId?: string
+  status?: BookingStatus
+}
+
+export interface UpdateBookingStatusDto {
+  status: BookingStatus
 }

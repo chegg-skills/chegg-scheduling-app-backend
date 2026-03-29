@@ -73,6 +73,18 @@ const InteractionTypesPage = lazy(() =>
     default: module.InteractionTypesPage,
   })),
 );
+const BookingsPage = lazy(() =>
+  import("@/pages/BookingsPage").then((module) => ({
+    default: module.BookingsPage,
+  })),
+);
+const PublicBookingPage = lazy(() =>
+  import("@/pages/public/PublicBookingPage").then((module) => ({
+    default: module.PublicBookingPage,
+  })),
+);
+
+import { PublicLayout } from "@/components/layout/PublicLayout";
 
 // Helper to render a lazy-loaded page with a fallback spinner
 // This ensures a consistent loading experience across all routes
@@ -113,6 +125,11 @@ export const router = createBrowserRouter([
     element: renderLazyPage(AcceptInvitePage),
     errorElement: <RouteErrorPage />,
   },
+  {
+    path: "/book",
+    element: <PublicLayout />,
+    children: [{ path: "", element: renderLazyPage(PublicBookingPage) }],
+  },
 
   {
     element: <AuthGuard />,
@@ -138,6 +155,7 @@ export const router = createBrowserRouter([
             path: "/interaction-types",
             element: renderLazyPage(InteractionTypesPage),
           },
+          { path: "/bookings", element: renderLazyPage(BookingsPage) },
         ],
       },
     ],
