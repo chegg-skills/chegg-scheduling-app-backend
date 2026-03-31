@@ -31,7 +31,7 @@ export const eventsApi = {
     apiClient.get<ApiResponse<Event>>(`/events/${eventId}`),
   update: (eventId: string, data: UpdateEventDto) =>
     apiClient.patch<ApiResponse<Event>>(`/events/${eventId}`, data),
-  deactivate: (eventId: string) =>
+  delete: (eventId: string) =>
     apiClient.delete<ApiResponse<Event>>(`/events/${eventId}`),
   listHosts: (eventId: string) =>
     apiClient.get<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`),

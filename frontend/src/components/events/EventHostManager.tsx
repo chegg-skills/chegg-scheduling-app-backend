@@ -13,24 +13,25 @@ import Typography from '@mui/material/Typography'
 import { Trash2, Plus } from 'lucide-react'
 import type { EventHost, TeamMember } from '@/types'
 import { Button } from '@/components/shared/Button'
-import { Select } from '@/components/shared/Select'
 import { Modal } from '@/components/shared/Modal'
-import { MenuItem } from '@mui/material'
 import { useEventHosts, useSetEventHosts, useRemoveEventHost } from '@/hooks/useEvents'
 import { extractApiError } from '@/utils/apiError'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { useConfirm } from '@/context/ConfirmContext'
 import { RowActions } from '@/components/shared/RowActions'
+import { AddHostForm } from './AddHostForm'
 
 interface EventHostManagerProps {
   eventId: string
   hosts: EventHost[]
   teamMembers: TeamMember[]
+  assignmentStrategy?: string
   title?: string
 }
 
-export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHostManagerProps) {
-  const [selectedUserId, setSelectedUserId] = useState('')
+export function EventHostManager({ eventId, hosts, teamMembers, assignmentStrategy, title }: EventHostManagerProps) {
   const [showAddModal, setShowAddModal] = useState(false)
+  const { confirm } = useConfirm()
 
   const { data: hostsResponse } = useEventHosts(eventId)
   const { mutate: setHosts, isPending: setting, error: setError } = useSetEventHosts(eventId)
@@ -39,21 +40,22 @@ export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHo
   const activeHosts = hostsResponse?.hosts ?? hosts
 
   const currentHostUserIds = new Set(activeHosts.map((h) => h.hostUserId))
-  const eligible = teamMembers.filter(
+  const eligibleCount = teamMembers.filter(
     (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentHostUserIds.has(m.userId),
-  )
+  ).length
 
-  function handleAdd() {
-    if (!selectedUserId) return
+  function handleAdd(userIds: string[]) {
     const newHosts = [
-      ...activeHosts.map((h, i) => ({ userId: h.hostUserId, hostOrder: i + 1 })),
-      { userId: selectedUserId, hostOrder: activeHosts.length + 1 },
+      ...activeHosts.map((h, i) => ({ userId: h.hostUserId, hostOrder: h.hostOrder ?? i + 1 })),
+      ...userIds.map((userId, i) => ({
+        userId,
+        hostOrder: activeHosts.length + i + 1,
+      })),
     ]
     setHosts(
       { hosts: newHosts },
       {
         onSuccess: () => {
-          setSelectedUserId('')
           setShowAddModal(false)
         },
       },
@@ -68,7 +70,7 @@ export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHo
 
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
         {title && <Typography variant="h6">{title} - {activeHosts.length}</Typography>}
-        {eligible.length > 0 && (
+        {eligibleCount > 0 && (
           <Button size="sm" onClick={() => setShowAddModal(true)}>
             <Plus size={16} /> Add coach
           </Button>
@@ -133,7 +135,16 @@ export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHo
                           label: 'Remove',
                           icon: <Trash2 size={16} />,
                           color: 'error.main',
-                          onClick: () => removeHost(host.hostUserId),
+                          onClick: async () => {
+                            if (
+                              await confirm({
+                                title: 'Remove Coach',
+                                message: `Are you sure you want to remove ${host.hostUser.firstName} ${host.hostUser.lastName} as a host for this event?`,
+                              })
+                            ) {
+                              removeHost(host.hostUserId)
+                            }
+                          },
                         },
                       ]}
                     />
@@ -142,7 +153,7 @@ export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHo
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                   No hosts assigned yet.
                 </TableCell>
               </TableRow>
@@ -156,36 +167,14 @@ export function EventHostManager({ eventId, hosts, teamMembers, title }: EventHo
         title="Add coach to event"
         size="sm"
       >
-        <Stack spacing={3}>
-          <Box>
-            <Typography variant="body2" color="text.secondary" mb={1}>
-              Select a coach to add to this event.
-            </Typography>
-            <Select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value as string)}
-            >
-              <MenuItem value="">Select a coach…</MenuItem>
-              {eligible.map(({ user }) => (
-                <MenuItem key={user.id} value={user.id}>
-                  {user.firstName} {user.lastName}
-                </MenuItem>
-              ))}
-            </Select>
-          </Box>
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAdd}
-              isLoading={setting}
-              disabled={!selectedUserId}
-            >
-              Add coach
-            </Button>
-          </Stack>
-        </Stack>
+        <AddHostForm
+          activeHosts={activeHosts}
+          teamMembers={teamMembers}
+          assignmentStrategy={assignmentStrategy}
+          isPending={setting}
+          onAdd={handleAdd}
+          onCancel={() => setShowAddModal(false)}
+        />
       </Modal>
     </Stack>
   )

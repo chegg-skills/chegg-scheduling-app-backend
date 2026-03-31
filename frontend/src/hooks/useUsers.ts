@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, type ListUsersParams } from '@/api/users'
-import type { UpdateUserDto } from '@/types'
+import type { UpdateUserDto, UserWithDetails } from '@/types'
 
 export const userKeys = {
   all: ['users'] as const,
@@ -17,7 +17,7 @@ export function useUsers(params?: ListUsersParams) {
 }
 
 export function useUser(userId: string) {
-  return useQuery({
+  return useQuery<UserWithDetails | undefined>({
     queryKey: userKeys.detail(userId),
     queryFn: () => usersApi.getById(userId).then((r) => r.data.data),
     enabled: !!userId,

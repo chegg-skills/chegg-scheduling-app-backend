@@ -24,6 +24,6 @@ export const teamsApi = {
   update: (teamId: string, data: UpdateTeamDto) =>
     apiClient.patch<ApiResponse<Team>>(`/teams/${teamId}`, data),
 
-  deactivate: (teamId: string) =>
+  delete: (teamId: string) =>
     apiClient.delete<ApiResponse<Team>>(`/teams/${teamId}`),
 }

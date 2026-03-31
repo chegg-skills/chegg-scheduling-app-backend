@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Box from '@mui/material/Box'
@@ -6,6 +5,8 @@ import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { z } from 'zod'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import { Button } from '@/components/shared/Button'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { EventBasicFields } from './EventBasicFields'
@@ -27,6 +28,7 @@ const schema = z.object({
   locationValue: z.string().min(1, 'Location is required'),
   durationSeconds: z.number({ invalid_type_error: 'Enter a valid duration' }).min(60, 'Minimum 1 minute'),
   assignmentStrategy: z.enum(['DIRECT', 'ROUND_ROBIN'] as const),
+  isActive: z.boolean().default(true),
 })
 
 export type EventFormValues = z.infer<typeof schema>
@@ -37,11 +39,12 @@ interface EventFormProps {
   teamId: string
   event?: Event
   onSuccess?: () => void
+  onCancel?: () => void
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function EventForm({ teamId, event, onSuccess }: EventFormProps) {
+export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps) {
   const isEdit = !!event
   const { mutate: create, isPending: creating, error: createError } = useCreateEvent(teamId)
   const { mutate: update, isPending: updating, error: updateError } = useUpdateEvent()
@@ -54,32 +57,29 @@ export function EventForm({ teamId, event, onSuccess }: EventFormProps) {
     formState: { errors },
   } = useForm<EventFormValues>({
     resolver: zodResolver(schema),
+    values: event ? {
+      name: event.name,
+      description: event.description ?? '',
+      offeringId: event.offeringId,
+      interactionTypeId: event.interactionTypeId,
+      locationType: event.locationType,
+      locationValue: event.locationValue ?? '',
+      durationSeconds: event.durationSeconds,
+      assignmentStrategy: event.assignmentStrategy,
+      isActive: event.isActive,
+    } : undefined,
     defaultValues: {
-      name: event?.name ?? '',
-      description: event?.description ?? '',
-      offeringId: event?.offeringId ?? '',
-      interactionTypeId: event?.interactionTypeId ?? '',
-      locationType: event?.locationType ?? 'VIRTUAL',
-      locationValue: event?.locationValue ?? '',
-      durationSeconds: event ? event.durationSeconds : 3600,
-      assignmentStrategy: event?.assignmentStrategy ?? 'DIRECT',
+      name: '',
+      description: '',
+      offeringId: '',
+      interactionTypeId: '',
+      locationType: 'VIRTUAL',
+      locationValue: '',
+      durationSeconds: 3600,
+      assignmentStrategy: 'DIRECT',
+      isActive: true,
     },
   })
-
-  useEffect(() => {
-    if (event) {
-      reset({
-        name: event.name,
-        description: event.description ?? '',
-        offeringId: event.offeringId,
-        interactionTypeId: event.interactionTypeId,
-        locationType: event.locationType,
-        locationValue: event.locationValue,
-        durationSeconds: event.durationSeconds,
-        assignmentStrategy: event.assignmentStrategy,
-      })
-    }
-  }, [event, reset])
 
   function onSubmit(values: EventFormValues) {
     if (isEdit && event) {
@@ -115,7 +115,7 @@ export function EventForm({ teamId, event, onSuccess }: EventFormProps) {
           <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
             Resources
           </Typography>
-          <EventResourceFields register={register} errors={errors} />
+          <EventResourceFields register={register} errors={errors} watch={watch} />
         </Stack>
 
         <Divider />
@@ -133,10 +133,27 @@ export function EventForm({ teamId, event, onSuccess }: EventFormProps) {
           <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
             Schedule
           </Typography>
-          <EventScheduleFields register={register} errors={errors} />
+          <EventScheduleFields register={register} errors={errors} watch={watch} />
         </Stack>
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
+        <Divider />
+
+        <Box sx={{ py: 1 }}>
+          <FormControlLabel
+            label="Event is Active"
+            control={
+              <Switch
+                defaultChecked={event?.isActive ?? true}
+                {...register('isActive')}
+              />
+            }
+          />
+        </Box>
+
+        <Stack direction="row" justifyContent="flex-end" spacing={1.5} sx={{ pt: 1 }}>
+          <Button variant="secondary" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
             {isEdit ? 'Save changes' : 'Create event'}
           </Button>

@@ -10,12 +10,12 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Stack from '@mui/material/Stack'
 import { Link as RouterLink } from 'react-router-dom'
-import { Users, Edit, Trash2 } from 'lucide-react'
+import { Users, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import type { Team } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
 import { TeamForm } from './TeamForm'
-import { useDeactivateTeam } from '@/hooks/useTeams'
+import { useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
 import { useConfirm } from '@/context/ConfirmContext'
 import { RowActions } from '@/components/shared/RowActions'
 
@@ -26,7 +26,8 @@ interface TeamTableProps {
 
 export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null)
-  const { mutate: deactivate } = useDeactivateTeam()
+  const { mutate: deleteTeam } = useDeleteTeam()
+  const { mutate: updateTeam } = useUpdateTeam()
   const { confirm } = useConfirm()
 
   return (
@@ -98,29 +99,42 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
                     <RowActions
                       actions={[
                         {
-                          label: 'Edit',
+                          label: 'Edit team details',
                           icon: <Edit size={16} />,
                           onClick: () => setEditingTeam(team),
                         },
-                        ...(team.isActive
-                          ? [
-                            {
-                              label: 'Deactivate',
-                              icon: <Trash2 size={16} />,
-                              color: 'error.main',
-                              onClick: async () => {
-                                if (
-                                  await confirm({
-                                    title: 'Deactivate Team',
-                                    message: `Are you sure you want to deactivate team "${team.name}"?`,
-                                  })
-                                ) {
-                                  deactivate(team.id)
-                                }
-                              },
-                            },
-                          ]
-                          : []),
+                        {
+                          label: team.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                          icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                          onClick: async () => {
+                            const newStatus = !team.isActive
+                            if (
+                              await confirm({
+                                title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+                                message: newStatus
+                                  ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
+                                  : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page and prevent new bookings, but keep its configuration.`,
+                              })
+                            ) {
+                              updateTeam({ teamId: team.id, data: { isActive: newStatus } })
+                            }
+                          },
+                        },
+                        {
+                          label: 'Delete team',
+                          icon: <Trash2 size={16} />,
+                          color: 'error.main',
+                          onClick: async () => {
+                            if (
+                              await confirm({
+                                title: 'Delete Team',
+                                message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
+                              })
+                            ) {
+                              deleteTeam(team.id)
+                            }
+                          },
+                        },
                       ]}
                     />
                   )}
@@ -137,7 +151,11 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
           onClose={() => setEditingTeam(null)}
           title={`Edit "${editingTeam.name}"`}
         >
-          <TeamForm team={editingTeam} onSuccess={() => setEditingTeam(null)} />
+          <TeamForm
+            team={editingTeam}
+            onSuccess={() => setEditingTeam(null)}
+            onCancel={() => setEditingTeam(null)}
+          />
         </Modal>
       )}
     </>

@@ -26,6 +26,22 @@ export interface SafeUser {
   updatedAt: string
 }
 
+export interface UserWithDetails extends SafeUser {
+  teamMemberships: Array<{
+    id: string
+    team: Team
+  }>
+  hostedEvents: Array<{
+    id: string
+    event: Event & {
+      offering: EventOffering
+      interactionType: EventInteractionType
+    }
+  }>
+  weeklyAvailability: UserWeeklyAvailability[]
+  availabilityExceptions: UserAvailabilityException[]
+}
+
 export interface Team {
   id: string
   name: string
@@ -202,9 +218,10 @@ export interface UpdateUserDto {
 }
 
 export interface CreateTeamDto {
-  name: string
-  teamLeadId: string
-  description?: string
+  name: string;
+  teamLeadId: string;
+  description?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateTeamDto {
@@ -255,6 +272,8 @@ export interface CreateInteractionTypeDto {
   sortOrder?: number
   isActive?: boolean
 }
+
+export interface UpdateInteractionTypeDto extends Partial<CreateInteractionTypeDto> { }
 
 export interface UserWeeklyAvailability {
   id: string

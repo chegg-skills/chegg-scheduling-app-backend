@@ -21,17 +21,21 @@ const addTeamMember = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const member = await teamMemberService.addTeamMember(
-      getTeamIdParam(req),
-      req.body,
-      caller,
-    );
+    const teamId = getTeamIdParam(req);
+    const { userId, userIds } = req.body;
+
+    let result;
+    if (userIds && Array.isArray(userIds)) {
+      result = await teamMemberService.addTeamMembers(teamId, { userIds }, caller);
+    } else {
+      result = await teamMemberService.addTeamMember(teamId, { userId }, caller);
+    }
 
     sendSuccessResponse(
       res,
       StatusCodes.CREATED,
-      member,
-      "Team member added successfully.",
+      result,
+      userIds ? "Team members added successfully." : "Team member added successfully.",
     );
   } catch (error) {
     next(error);

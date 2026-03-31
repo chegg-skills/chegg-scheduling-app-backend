@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios'
-import type { ApiResponse, SafeUser, UpdateUserDto, Pagination } from '@/types'
+import type { ApiResponse, SafeUser, UserWithDetails, UpdateUserDto, Pagination } from '@/types'
 
 export interface ListUsersParams {
   page?: number
@@ -22,7 +22,7 @@ export const usersApi = {
     apiClient.patch<ApiResponse<SafeUser>>('/users/me', data),
 
   getById: (userId: string) =>
-    apiClient.get<ApiResponse<SafeUser>>(`/users/${userId}`),
+    apiClient.get<ApiResponse<UserWithDetails>>(`/users/${userId}`),
 
   update: (userId: string, data: UpdateUserDto) =>
     apiClient.patch<ApiResponse<SafeUser>>(`/users/${userId}`, data),

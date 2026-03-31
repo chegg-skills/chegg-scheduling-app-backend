@@ -16,6 +16,7 @@ type CreateTeamInput = {
   name: string;
   description?: string;
   teamLeadId: string;
+  isActive?: boolean;
 };
 
 type UpdateTeamInput = {
@@ -69,14 +70,29 @@ const createTeam = async (
   await validateTeamLead(teamLeadId);
 
   try {
-    const team = await prisma.team.create({
-      data: {
-        name: normalizeName(name),
-        description: description?.trim() || null,
-        teamLeadId,
-        createdById: caller.id,
-      },
+    const team = await prisma.$transaction(async (tx) => {
+      const newTeam = await tx.team.create({
+        data: {
+          name: normalizeName(name),
+          description: description?.trim() || null,
+          teamLeadId,
+          createdById: caller.id,
+          isActive: payload.isActive ?? true,
+        },
+      });
+
+      // Automatically add team lead as a member
+      await tx.teamMember.create({
+        data: {
+          teamId: newTeam.id,
+          userId: teamLeadId,
+          isActive: true,
+        },
+      });
+
+      return newTeam;
     });
+
     return team;
   } catch (error) {
     if (
@@ -182,10 +198,35 @@ const updateTeam = async (
   }
 
   try {
-    const team = await prisma.team.update({
-      where: { id: teamId },
-      data: updateData,
+    const team = await prisma.$transaction(async (tx) => {
+      const updatedTeam = await tx.team.update({
+        where: { id: teamId },
+        data: updateData,
+      });
+
+      if (payload.teamLeadId !== undefined) {
+        // Upsert team lead as member
+        await tx.teamMember.upsert({
+          where: {
+            teamId_userId: {
+              teamId: updatedTeam.id,
+              userId: payload.teamLeadId,
+            },
+          },
+          create: {
+            teamId: updatedTeam.id,
+            userId: payload.teamLeadId,
+            isActive: true,
+          },
+          update: {
+            isActive: true, // Reactivate if they were inactive
+          },
+        });
+      }
+
+      return updatedTeam;
     });
+
     return team;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

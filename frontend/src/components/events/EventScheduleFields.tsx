@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldErrors } from 'react-hook-form'
+import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
@@ -10,6 +10,7 @@ import type { AssignmentStrategy } from '@/types'
 interface Props {
   register: UseFormRegister<EventFormValues>
   errors: FieldErrors<EventFormValues>
+  watch: UseFormWatch<EventFormValues>
 }
 
 const STRATEGIES: { value: AssignmentStrategy; label: string }[] = [
@@ -18,7 +19,7 @@ const STRATEGIES: { value: AssignmentStrategy; label: string }[] = [
 ]
 
 /** Handles durationSeconds and assignmentStrategy */
-export function EventScheduleFields({ register, errors }: Props) {
+export function EventScheduleFields({ register, errors, watch }: Props) {
   return (
     <Stack spacing={2}>
       <FormField
@@ -49,6 +50,7 @@ export function EventScheduleFields({ register, errors }: Props) {
         <Select
           id="assignmentStrategy"
           hasError={!!errors.assignmentStrategy}
+          value={watch('assignmentStrategy') || ''}
           {...register('assignmentStrategy')}
         >
           {STRATEGIES.map(({ value, label }) => (

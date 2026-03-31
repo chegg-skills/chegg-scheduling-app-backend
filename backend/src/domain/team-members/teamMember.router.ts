@@ -21,6 +21,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/teams/:teamId/members/bulk")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    teamMemberController.addTeamMember,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/teams/:teamId/members/:userId")
   .delete(
     authenticate,

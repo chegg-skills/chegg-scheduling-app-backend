@@ -174,4 +174,23 @@ describe("Team member routes", () => {
     expect(res.body.data.userId).toBe(context.coachTwoId);
     expect(res.body.data.isActive).toBe(false);
   });
+
+  it("prevents removing the Team Lead", async () => {
+    const res = await request(app)
+      .delete(`/api/teams/${context.teamId}/members/${context.teamAdminId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/Cannot remove the Team Lead/i);
+  });
+
+  it("bulk adds multiple team members", async () => {
+    const res = await request(app)
+      .post(`/api/teams/${context.teamId}/members/bulk`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ userIds: [context.coachId] });
+
+    expect(res.status).toBe(201);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
 });

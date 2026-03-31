@@ -11,12 +11,15 @@ import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import { Link as RouterLink } from 'react-router-dom'
-import { Calendar, Edit, Trash2 } from 'lucide-react'
+import { Calendar, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
+import Avatar from '@mui/material/Avatar'
+import AvatarGroup from '@mui/material/AvatarGroup'
+import Tooltip from '@mui/material/Tooltip'
 import type { Event } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
 import { EventForm } from './EventForm'
-import { useDeactivateEvent } from '@/hooks/useEvents'
+import { useDeleteEvent, useUpdateEvent } from '@/hooks/useEvents'
 import { useConfirm } from '@/context/ConfirmContext'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { RowActions } from '@/components/shared/RowActions'
@@ -38,7 +41,8 @@ const headerTooltips: Record<string, string> = {
 
 export function EventTable({ events, teamId }: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
-  const { mutate: deactivate } = useDeactivateEvent()
+  const { mutate: deleteEvent } = useDeleteEvent()
+  const { mutate: updateEvent } = useUpdateEvent()
   const { confirm } = useConfirm()
 
   return (
@@ -47,7 +51,7 @@ export function EventTable({ events, teamId }: EventTableProps) {
         <Table>
           <TableHead>
             <TableRow>
-              {['Event', 'Offering', 'Duration', 'Strategy', 'Status', 'Actions'].map(
+              {['Event', 'Offering', 'Duration', 'Hosts', 'Strategy', 'Status', 'Actions'].map(
                 (col) => (
                   <TableCell
                     key={col}
@@ -117,6 +121,18 @@ export function EventTable({ events, teamId }: EventTableProps) {
                     {formatDuration(event.durationSeconds)}
                   </TableCell>
                   <TableCell>
+                    <AvatarGroup max={4} sx={{ justifyContent: 'flex-end', '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.75rem' } }}>
+                      {event.hosts.map((host) => (
+                        <Tooltip key={host.id} title={`${host.hostUser.firstName} ${host.hostUser.lastName} (${host.hostUser.email})`} arrow>
+                          <Avatar sx={{ bgcolor: 'secondary.light', color: 'secondary.dark' }}>
+                            {host.hostUser.firstName[0]}
+                            {host.hostUser.lastName[0]}
+                          </Avatar>
+                        </Tooltip>
+                      ))}
+                    </AvatarGroup>
+                  </TableCell>
+                  <TableCell>
                     <Badge
                       label={event.assignmentStrategy === 'ROUND_ROBIN' ? 'Round Robin' : 'Direct'}
                       variant={event.assignmentStrategy === 'ROUND_ROBIN' ? 'blue' : 'gray'}
@@ -132,29 +148,42 @@ export function EventTable({ events, teamId }: EventTableProps) {
                     <RowActions
                       actions={[
                         {
-                          label: 'Edit',
+                          label: 'Edit event details',
                           icon: <Edit size={16} />,
                           onClick: () => setEditingEvent(event),
                         },
-                        ...(event.isActive
-                          ? [
-                            {
-                              label: 'Deactivate',
-                              icon: <Trash2 size={16} />,
-                              color: 'error.main',
-                              onClick: async () => {
-                                if (
-                                  await confirm({
-                                    title: 'Deactivate Event',
-                                    message: `Are you sure you want to deactivate event "${event.name}"?`,
-                                  })
-                                ) {
-                                  deactivate(event.id)
-                                }
-                              },
-                            },
-                          ]
-                          : []),
+                        {
+                          label: event.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                          icon: event.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                          onClick: async () => {
+                            const newStatus = !event.isActive
+                            if (
+                              await confirm({
+                                title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+                                message: newStatus
+                                  ? `Are you sure you want to mark event "${event.name}" as active? This will make it visible on the public booking page.`
+                                  : `Are you sure you want to mark event "${event.name}" as inactive? This will hide it from the public booking page but keep all its configuration.`,
+                              })
+                            ) {
+                              updateEvent({ eventId: event.id, data: { isActive: newStatus } })
+                            }
+                          },
+                        },
+                        {
+                          label: 'Delete event',
+                          icon: <Trash2 size={16} />,
+                          color: 'error.main',
+                          onClick: async () => {
+                            if (
+                              await confirm({
+                                title: 'Delete Event',
+                                message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated host assignments will be lost.`,
+                              })
+                            ) {
+                              deleteEvent(event.id)
+                            }
+                          },
+                        },
                       ]}
                     />
                   </TableCell>
@@ -176,6 +205,7 @@ export function EventTable({ events, teamId }: EventTableProps) {
             teamId={teamId ?? ''}
             event={editingEvent}
             onSuccess={() => setEditingEvent(null)}
+            onCancel={() => setEditingEvent(null)}
           />
         </Modal>
       )}

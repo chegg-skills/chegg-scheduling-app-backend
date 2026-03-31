@@ -275,7 +275,7 @@ const deleteEvent = async (
       res,
       StatusCodes.OK,
       event,
-      "Event deactivated successfully.",
+      "Event deleted successfully.",
     );
   } catch (error) {
     next(error);

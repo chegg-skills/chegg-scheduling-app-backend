@@ -4,11 +4,12 @@ import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useParams, Link as RouterLink } from 'react-router-dom'
-import { Plus, ChevronLeft } from 'lucide-react'
+import { Plus, ChevronLeft, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { useTeam, useDeactivateTeam } from '@/hooks/useTeams'
-import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
 import { useTeamEvents } from '@/hooks/useEvents'
+import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useConfirm } from '@/context/ConfirmContext'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/Button'
 import { Modal } from '@/components/shared/Modal'
@@ -20,6 +21,7 @@ import { TeamMemberList } from '@/components/team-members/TeamMemberList'
 import { AddMemberForm } from '@/components/team-members/AddMemberForm'
 import { EventTable } from '@/components/events/EventTable'
 import { EventForm } from '@/components/events/EventForm'
+import { RowActions } from '@/components/shared/RowActions'
 
 export function TeamDetailPage() {
   const { teamId = '' } = useParams<{ teamId: string }>()
@@ -27,11 +29,13 @@ export function TeamDetailPage() {
   const [showEditTeam, setShowEditTeam] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
+  const { confirm } = useConfirm()
 
   const { data: team, isLoading: teamLoading, error: teamError } = useTeam(teamId)
   const { data: membersResponse, isLoading: membersLoading, error: membersError } = useTeamMembers(teamId)
   const { data: events, isLoading: eventsLoading, error: eventsError } = useTeamEvents(teamId)
-  const deactivateTeam = useDeactivateTeam()
+  const { mutate: deleteTeam } = useDeleteTeam()
+  const { mutate: updateTeam } = useUpdateTeam()
   const canManageTeam = user?.role === 'SUPER_ADMIN'
 
   const members = membersResponse?.members ?? []
@@ -53,20 +57,48 @@ export function TeamDetailPage() {
           subtitle={team.description ?? undefined}
           actions={
             canManageTeam ? (
-              <Stack direction="row" spacing={1}>
-                <Button variant="secondary" size="sm" onClick={() => setShowEditTeam(true)}>
-                  Edit team
-                </Button>
-                {team.isActive && (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    isLoading={deactivateTeam.isPending}
-                    onClick={() => deactivateTeam.mutate(teamId)}
-                  >
-                    Deactivate
-                  </Button>
-                )}
+              <Stack direction="row" spacing={1} alignItems="center">
+                <RowActions
+                  actions={[
+                    {
+                      label: 'Edit team details',
+                      icon: <Edit size={16} />,
+                      onClick: () => setShowEditTeam(true),
+                    },
+                    {
+                      label: team.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                      icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                      onClick: async () => {
+                        const newStatus = !team.isActive
+                        if (
+                          await confirm({
+                            title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+                            message: newStatus
+                              ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
+                              : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page but keep its configuration.`,
+                          })
+                        ) {
+                          updateTeam({ teamId, data: { isActive: newStatus } })
+                        }
+                      },
+                    },
+                    {
+                      label: 'Delete team',
+                      icon: <Trash2 size={16} />,
+                      color: 'error.main',
+                      onClick: async () => {
+                        if (
+                          await confirm({
+                            title: 'Delete Team',
+                            message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
+                          })
+                        ) {
+                          deleteTeam(teamId)
+                        }
+                      },
+                    },
+                  ]}
+                />
               </Stack>
             ) : null
           }
@@ -91,6 +123,7 @@ export function TeamDetailPage() {
             members={members}
             teamId={teamId}
             currentUserRole={user?.role ?? 'TEAM_ADMIN'}
+            teamLeadId={team.teamLeadId}
           />
         )}
       </Box>
@@ -111,7 +144,11 @@ export function TeamDetailPage() {
 
       {canManageTeam && (
         <Modal isOpen={showEditTeam} onClose={() => setShowEditTeam(false)} title="Edit team">
-          <TeamForm team={team} onSuccess={() => setShowEditTeam(false)} />
+          <TeamForm
+            team={team}
+            onSuccess={() => setShowEditTeam(false)}
+            onCancel={() => setShowEditTeam(false)}
+          />
         </Modal>
       )}
 
@@ -120,11 +157,16 @@ export function TeamDetailPage() {
           teamId={teamId}
           existingMemberIds={existingMemberIds}
           onSuccess={() => setShowAddMember(false)}
+          onCancel={() => setShowAddMember(false)}
         />
       </Modal>
 
       <Modal isOpen={showCreateEvent} onClose={() => setShowCreateEvent(false)} title="New event" size="lg">
-        <EventForm teamId={teamId} onSuccess={() => setShowCreateEvent(false)} />
+        <EventForm
+          teamId={teamId}
+          onSuccess={() => setShowCreateEvent(false)}
+          onCancel={() => setShowCreateEvent(false)}
+        />
       </Modal>
     </Stack>
   )

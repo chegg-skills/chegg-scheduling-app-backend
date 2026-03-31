@@ -16,6 +16,7 @@ import { Modal } from '@/components/shared/Modal'
 import { InteractionTypeForm } from './InteractionTypeForm'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { RowActions } from '@/components/shared/RowActions'
+import { Button } from '@/components/shared/Button'
 
 interface InteractionTypeTableProps {
   interactionTypes: EventInteractionType[]
@@ -125,8 +126,31 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
       </TableContainer>
 
       {editing && (
-        <Modal isOpen size="lg" onClose={() => setEditing(null)} title={`Edit "${editing.name}"`}>
-          <InteractionTypeForm interactionType={editing} onSuccess={() => setEditing(null)} />
+        <Modal
+          isOpen
+          size="lg"
+          onClose={() => setEditing(null)}
+          title={`Edit "${editing.name}"`}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setEditing(null)} sx={{ minWidth: 120 }}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="interaction-type-form"
+                sx={{ minWidth: 160, ml: 2 }}
+              >
+                Save changes
+              </Button>
+            </>
+          }
+        >
+          <InteractionTypeForm
+            interactionType={editing}
+            onSuccess={() => setEditing(null)}
+            formId="interaction-type-form"
+          />
         </Modal>
       )}
     </>

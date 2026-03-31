@@ -56,47 +56,67 @@ const addTeamMember = async (
   payload: CreateTeamMemberInput,
   caller: CallerContext,
 ): Promise<SafeTeamMember> => {
+  const result = await addTeamMembers(teamId, { userIds: [payload.userId] }, caller);
+  return result[0];
+};
+
+const addTeamMembers = async (
+  teamId: string,
+  payload: { userIds: string[] },
+  caller: CallerContext,
+): Promise<SafeTeamMember[]> => {
   await getManagedTeam(teamId, caller);
 
-  const userId = payload.userId?.trim();
-  if (!userId) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "userId is required.");
+  const { userIds } = payload;
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "userIds array is required.");
   }
 
-  await validateAssignableUser(userId);
+  const results: SafeTeamMember[] = [];
 
-  const existingMembership = await prisma.teamMember.findUnique({
-    where: {
-      teamId_userId: {
-        teamId,
-        userId,
+  for (const rawId of userIds) {
+    const userId = rawId.trim();
+    if (!userId) continue;
+
+    await validateAssignableUser(userId);
+
+    const existingMembership = await prisma.teamMember.findUnique({
+      where: {
+        teamId_userId: {
+          teamId,
+          userId,
+        },
       },
-    },
-    include: teamMemberInclude,
-  });
-
-  if (existingMembership?.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "This user is already an active member of the team.",
-    );
-  }
-
-  if (existingMembership) {
-    return prisma.teamMember.update({
-      where: { id: existingMembership.id },
-      data: { isActive: true },
       include: teamMemberInclude,
     });
+
+    if (existingMembership?.isActive) {
+      // Skip if already active, or we could collect these as errors? 
+      // For bulk, let's just skip or return the existing one.
+      results.push(existingMembership);
+      continue;
+    }
+
+    let member: SafeTeamMember;
+    if (existingMembership) {
+      member = await prisma.teamMember.update({
+        where: { id: existingMembership.id },
+        data: { isActive: true },
+        include: teamMemberInclude,
+      });
+    } else {
+      member = await prisma.teamMember.create({
+        data: {
+          teamId,
+          userId,
+        },
+        include: teamMemberInclude,
+      });
+    }
+    results.push(member);
   }
 
-  return prisma.teamMember.create({
-    data: {
-      teamId,
-      userId,
-    },
-    include: teamMemberInclude,
-  });
+  return results;
 };
 
 const listTeamMembers = async (
@@ -146,6 +166,18 @@ const removeTeamMember = async (
     );
   }
 
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    select: { teamLeadId: true },
+  });
+
+  if (team?.teamLeadId === userId) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Cannot remove the Team Lead from the team. Please assign a new Team Lead in Team Settings first.",
+    );
+  }
+
   const activeHostAssignments = await prisma.eventHost.count({
     where: {
       hostUserId: userId,
@@ -173,6 +205,7 @@ const removeTeamMember = async (
 
 export {
   addTeamMember,
+  addTeamMembers,
   listTeamMembers,
   removeTeamMember,
   type SafeTeamMember,

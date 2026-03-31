@@ -81,20 +81,39 @@ const listUsers = async (
   };
 };
 
-const readUser = async (userId: string): Promise<SafeUser> => {
+const readUser = async (userId: string): Promise<any> => {
   if (!userId?.trim()) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "userId is required.");
   }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    include: {
+      teamMemberships: {
+        include: {
+          team: true,
+        },
+      },
+      hostedEvents: {
+        include: {
+          event: {
+            include: {
+              offering: true,
+              interactionType: true,
+            },
+          },
+        },
+      },
+      weeklyAvailability: true,
+      availabilityExceptions: true,
+    },
   });
 
   if (!user) {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "User not found.");
   }
 
-  return toSafeUser(user);
+  return toSafeUser(user as any);
 };
 
 const updateUser = async (

@@ -10,12 +10,14 @@ import TableRow from '@mui/material/TableRow'
 import Avatar from '@mui/material/Avatar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, Eye } from 'lucide-react'
+import CircularProgress from '@mui/material/CircularProgress'
 import type { SafeUser, UserRole } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
 import { UserForm } from './UserForm'
-import { useDeactivateUser } from '@/hooks/useUsers'
+import { UserDetailView } from './UserDetailView'
+import { useDeactivateUser, useUser } from '@/hooks/useUsers'
 import { useConfirm } from '@/context/ConfirmContext'
 import { RowActions } from '@/components/shared/RowActions'
 
@@ -23,6 +25,31 @@ interface UserTableProps {
   users: SafeUser[]
   currentUserRole: UserRole
   currentUserId: string
+}
+
+function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => void }) {
+  const { data: user, isLoading } = useUser(userId)
+
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="User Details"
+      size="lg"
+    >
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress size={40} />
+        </Box>
+      ) : user ? (
+        <UserDetailView user={user} />
+      ) : (
+        <Box sx={{ py: 4, textAlign: 'center' }}>
+          <Typography color="text.secondary">User not found.</Typography>
+        </Box>
+      )}
+    </Modal>
+  )
 }
 
 function statusBadge(isActive: boolean) {
@@ -40,6 +67,7 @@ function roleBadge(role: UserRole) {
 
 export function UserTable({ users, currentUserRole, currentUserId }: UserTableProps) {
   const [editingUser, setEditingUser] = useState<SafeUser | null>(null)
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const { mutate: deactivate } = useDeactivateUser()
   const { confirm } = useConfirm()
 
@@ -96,6 +124,11 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
                   <RowActions
                     actions={[
                       {
+                        label: 'View Details',
+                        icon: <Eye size={16} />,
+                        onClick: () => setViewingUserId(user.id),
+                      },
+                      {
                         label: 'Edit',
                         icon: <Edit size={16} />,
                         onClick: () => setEditingUser(user),
@@ -127,6 +160,13 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
           </TableBody>
         </Table>
       </TableContainer>
+
+      {viewingUserId && (
+        <UserDetailModal
+          userId={viewingUserId}
+          onClose={() => setViewingUserId(null)}
+        />
+      )}
 
       {editingUser && (
         <Modal

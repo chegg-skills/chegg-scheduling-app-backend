@@ -1,1 +1,0 @@
-import{r as a,j as i}from"./index-Cg9SwjDN.js";import{T as s}from"./apiError-BfhzV1mZ.js";const o=a.forwardRef(({hasError:r,...e},t)=>i.jsx(s,{inputRef:t,size:"small",variant:"outlined",fullWidth:!0,multiline:!0,minRows:3,error:r,...e}));o.displayName="Textarea";export{o as T};

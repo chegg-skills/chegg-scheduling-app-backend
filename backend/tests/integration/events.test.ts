@@ -142,8 +142,6 @@ beforeAll(async () => {
     data: [
       { teamId, userId: coachOne.id },
       { teamId, userId: coachTwo.id },
-      { teamId, userId: teamAdmin.id },
-      { teamId: otherTeamId, userId: otherTeamAdmin.id },
     ],
   });
 
@@ -397,24 +395,44 @@ describe("Event CRUD routes", () => {
     expect(updateRes.body.data.locationValue).toBe("https://meet.example.com/updated");
   });
 
-  it("deactivates an event", async () => {
-    const offering = await createOffering(context.superAdminToken, {
-      key: uniqueValue("delete-offering"),
-      name: "Delete Offering",
-    });
-    const interactionType = await createInteractionType(context.superAdminToken, {
-      key: uniqueValue("delete-interaction"),
-      name: "Delete Interaction",
-    });
+  it("hard deletes an event", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const interactionType = await createInteractionType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Deletable Event",
       offeringId: offering.body.data.id,
       interactionTypeId: interactionType.body.data.id,
     });
+    const eventId = created.body.data.id;
 
     const res = await request(app)
-      .delete(`/api/events/${created.body.data.id}`)
+      .delete(`/api/events/${eventId}`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/deleted/i);
+
+    // Verify it's actually gone
+    const readRes = await request(app)
+      .get(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(readRes.status).toBe(404);
+  });
+
+  it("deactivates an event via PATCH", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const interactionType = await createInteractionType(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Deactivatable Event",
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+    });
+    const eventId = created.body.data.id;
+
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ isActive: false });
 
     expect(res.status).toBe(200);
     expect(res.body.data.isActive).toBe(false);
@@ -518,5 +536,75 @@ describe("Event host routes", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.hosts).toHaveLength(0);
+  });
+
+  it("rejects removing a host from a round-robin event if it leaves fewer than two hosts", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const interactionType = await createInteractionType(context.superAdminToken, {
+      supportsRoundRobin: true,
+      supportsMultipleHosts: true,
+      minHosts: 2,
+      maxHosts: null,
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      assignmentStrategy: "ROUND_ROBIN",
+    });
+    const eventId = event.body.data.id as string;
+
+    // Add two hosts
+    await request(app)
+      .put(`/api/events/${eventId}/hosts`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        hosts: [
+          { userId: context.coachOneId, hostOrder: 1 },
+          { userId: context.coachTwoId, hostOrder: 2 },
+        ],
+      });
+
+    // Try removing one
+    const res = await request(app)
+      .delete(`/api/events/${eventId}/hosts/${context.coachOneId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two hosts/i);
+  });
+
+  it("rejects updating strategy to ROUND_ROBIN if event has fewer than two hosts", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const interactionType = await createInteractionType(context.superAdminToken, {
+      supportsRoundRobin: true,
+      supportsMultipleHosts: true,
+      minHosts: 2,
+      maxHosts: null,
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      assignmentStrategy: "DIRECT",
+    });
+    const eventId = event.body.data.id as string;
+
+    // Add only one host
+    await request(app)
+      .put(`/api/events/${eventId}/hosts`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        hosts: [{ userId: context.coachOneId, hostOrder: 1 }],
+      });
+
+    // Try updating to ROUND_ROBIN
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        assignmentStrategy: "ROUND_ROBIN",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two hosts/i);
   });
 });

@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldErrors } from 'react-hook-form'
+import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
@@ -10,10 +10,11 @@ import type { EventFormValues } from './EventForm'
 interface Props {
   register: UseFormRegister<EventFormValues>
   errors: FieldErrors<EventFormValues>
+  watch: UseFormWatch<EventFormValues>
 }
 
 /** Handles offeringId and interactionTypeId */
-export function EventResourceFields({ register, errors }: Props) {
+export function EventResourceFields({ register, errors, watch }: Props) {
   const { data: offeringsData } = useEventOfferings()
   const { data: interactionData } = useInteractionTypes()
 
@@ -29,7 +30,12 @@ export function EventResourceFields({ register, errors }: Props) {
         info="The category or type of service for this event (e.g., Tutorial)."
         required
       >
-        <Select id="offeringId" hasError={!!errors.offeringId} {...register('offeringId')}>
+        <Select
+          id="offeringId"
+          hasError={!!errors.offeringId}
+          value={watch('offeringId') || ''}
+          {...register('offeringId')}
+        >
           <MenuItem value="">Select an offering…</MenuItem>
           {offerings.map((o) => (
             <MenuItem key={o.id} value={o.id}>
@@ -49,6 +55,7 @@ export function EventResourceFields({ register, errors }: Props) {
         <Select
           id="interactionTypeId"
           hasError={!!errors.interactionTypeId}
+          value={watch('interactionTypeId') || ''}
           {...register('interactionTypeId')}
         >
           <MenuItem value="">Select an interaction type…</MenuItem>

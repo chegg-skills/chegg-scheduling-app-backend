@@ -35,8 +35,25 @@ export function InteractionTypesPage() {
         <InteractionTypeTable interactionTypes={interactionTypes} />
       </Box>
 
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create interaction type">
-        <InteractionTypeForm onSuccess={() => setShowCreate(false)} />
+      <Modal
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Create interaction type"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowCreate(false)} sx={{ minWidth: 120 }}>
+              Cancel
+            </Button>
+            <Button type="submit" form="create-interaction-type-form" sx={{ minWidth: 160, ml: 2 }}>
+              Create interaction type
+            </Button>
+          </>
+        }
+      >
+        <InteractionTypeForm
+          onSuccess={() => setShowCreate(false)}
+          formId="create-interaction-type-form"
+        />
       </Modal>
     </Box>
   )

@@ -46,10 +46,10 @@ export function useUpdateEvent() {
   })
 }
 
-export function useDeactivateEvent() {
+export function useDeleteEvent() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (eventId: string) => eventsApi.deactivate(eventId),
+    mutationFn: (eventId: string) => eventsApi.delete(eventId),
     onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
   })
 }

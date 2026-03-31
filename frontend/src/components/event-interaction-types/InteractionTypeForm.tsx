@@ -25,9 +25,27 @@ const schema = z
     supportsMultipleHosts: z.boolean().optional(),
     supportsRoundRobin: z.boolean().optional(),
     minHosts: z.coerce.number().int().min(1).optional(),
-    maxHosts: z.coerce.number().int().min(1).nullable().optional(),
+    maxHosts: z.preprocess(
+      (v) => {
+        if (typeof v === 'string' && v.trim() === '') return null;
+        if (v === null || v === undefined) return null;
+        if (typeof v === 'number') return v;
+        const n = Number(v);
+        return isNaN(n) ? null : n;
+      },
+      z.number().int().min(1, 'If set, must be at least 1').nullable()
+    ).optional(),
     minParticipants: z.coerce.number().int().min(1).optional(),
-    maxParticipants: z.coerce.number().int().min(1).nullable().optional(),
+    maxParticipants: z.preprocess(
+      (v) => {
+        if (typeof v === 'string' && v.trim() === '') return null;
+        if (v === null || v === undefined) return null;
+        if (typeof v === 'number') return v;
+        const n = Number(v);
+        return isNaN(n) ? null : n;
+      },
+      z.number().int().min(1, 'If set, must be at least 1').nullable()
+    ).optional(),
     sortOrder: z.coerce.number().nonnegative().optional(),
   })
   .refine(
@@ -40,6 +58,7 @@ type FormValues = z.infer<typeof schema>
 interface InteractionTypeFormProps {
   interactionType?: EventInteractionType
   onSuccess?: () => void
+  onCancel?: () => void
 }
 
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
@@ -69,7 +88,11 @@ function CheckboxField({
   )
 }
 
-export function InteractionTypeForm({ interactionType, onSuccess }: InteractionTypeFormProps) {
+interface InteractionTypeFormWithIdProps extends InteractionTypeFormProps {
+  formId?: string
+}
+
+export function InteractionTypeForm({ interactionType, onSuccess, formId }: InteractionTypeFormWithIdProps) {
   const isEdit = !!interactionType
   const { mutate: create, isPending: creating, error: createError } = useCreateInteractionType()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateInteractionType()
@@ -126,7 +149,13 @@ export function InteractionTypeForm({ interactionType, onSuccess }: InteractionT
 
   return (
     <Box sx={{ maxWidth: 560, mx: 'auto', width: '100%' }}>
-      <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={3}>
+      <Stack
+        component="form"
+        id={formId}
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        spacing={3}
+      >
         {error && <ErrorAlert message={extractApiError(error)} />}
 
         <FormField
@@ -180,13 +209,38 @@ export function InteractionTypeForm({ interactionType, onSuccess }: InteractionT
             <Input id="minHosts" type="number" min="1" {...register('minHosts')} />
           </FormField>
           <FormField label="Max Hosts (blank = unlimited)" htmlFor="maxHosts" error={errors.maxHosts?.message}>
-            <Input id="maxHosts" type="number" min="1" placeholder="∞" {...register('maxHosts')} />
+            <Controller
+              name="maxHosts"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="maxHosts"
+                  type="number"
+                  min="1"
+                  placeholder="∞"
+                  value={field.value === null || typeof field.value === 'undefined' ? '' : field.value}
+                  onChange={e => {
+                    const val = e.target.value;
+                    field.onChange(val === '' ? null : Number(val));
+                  }}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
           </FormField>
           <FormField label="Min Participants" htmlFor="minParticipants" error={errors.minParticipants?.message}>
             <Input id="minParticipants" type="number" min="1" {...register('minParticipants')} />
           </FormField>
           <FormField label="Max Participants (blank = unlimited)" htmlFor="maxParticipants" error={errors.maxParticipants?.message}>
-            <Input id="maxParticipants" type="number" min="1" placeholder="∞" {...register('maxParticipants')} />
+            <Input
+              id="maxParticipants"
+              type="number"
+              min="1"
+              placeholder="∞"
+              {...register('maxParticipants', {
+                setValueAs: v => (typeof v === 'string' && v.trim() === '') ? null : Number(v),
+              })}
+            />
           </FormField>
         </Box>
 
@@ -198,11 +252,16 @@ export function InteractionTypeForm({ interactionType, onSuccess }: InteractionT
           <Input id="sortOrder" type="number" min="0" {...register('sortOrder')} />
         </FormField>
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
-          <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
-            {isEdit ? 'Save changes' : 'Create interaction type'}
-          </Button>
-        </Stack>
+        {!formId && (
+          <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ pt: 1 }}>
+            <Button variant="secondary" type="button" onClick={() => reset()} sx={{ minWidth: 120 }}>
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
+              {isEdit ? 'Save changes' : 'Create interaction type'}
+            </Button>
+          </Stack>
+        )}
       </Stack>
     </Box>
   )

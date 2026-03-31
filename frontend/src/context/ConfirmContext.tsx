@@ -39,8 +39,8 @@ function ConfirmDialog({
     isOpen,
     title,
     message,
-    confirmText = 'OK',
-    cancelText = 'Cancel',
+    confirmText = 'Yes',
+    cancelText = 'No',
     isAlert = false,
     onConfirm,
     onCancel,
@@ -77,7 +77,7 @@ function ConfirmDialog({
                 </IconButton>
             </DialogTitle>
             <DialogContent dividers sx={{ py: 3 }}>
-                <Typography variant="body1" color="text.primary">
+                <Typography variant="body1" color="text.primary" sx={{ whiteSpace: 'pre-wrap' }}>
                     {message}
                 </Typography>
             </DialogContent>

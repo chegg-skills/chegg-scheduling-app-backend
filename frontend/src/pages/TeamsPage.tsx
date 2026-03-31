@@ -58,7 +58,10 @@ export function TeamsPage() {
 
       {canManageTeam && (
         <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create team">
-          <TeamForm onSuccess={() => setShowCreate(false)} />
+          <TeamForm
+            onSuccess={() => setShowCreate(false)}
+            onCancel={() => setShowCreate(false)}
+          />
         </Modal>
       )}
     </Box>

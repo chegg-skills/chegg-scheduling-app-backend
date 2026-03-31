@@ -17,7 +17,7 @@ export function useTeamMembers(teamId: string) {
 export function useAddTeamMember(teamId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (userId: string) => teamMembersApi.add(teamId, userId),
+    mutationFn: (userIds: string | string[]) => teamMembersApi.add(teamId, userIds),
     onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.byTeam(teamId) }),
   })
 }

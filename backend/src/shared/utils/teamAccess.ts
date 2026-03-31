@@ -52,7 +52,7 @@ const getManagedTeam = async (
     );
   }
 
-  if (!options.allowInactive && !team.isActive) {
+  if (options.allowInactive === false && !team.isActive) {
     throw new ErrorHandler(
       StatusCodes.CONFLICT,
       "This team is inactive.",

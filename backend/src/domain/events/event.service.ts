@@ -774,6 +774,16 @@ const updateEvent = async (
     include: eventInclude,
   });
 
+  if (
+    updatedEvent.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+    updatedEvent.hosts.length < 2
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "ROUND_ROBIN events require at least two hosts.",
+    );
+  }
+
   if (updatedEvent.assignmentStrategy !== AssignmentStrategy.ROUND_ROBIN) {
     await prisma.eventRoutingState.deleteMany({ where: { eventId } });
   } else if (updatedEvent.hosts.length > 0) {
@@ -794,21 +804,10 @@ const deleteEvent = async (
   eventId: string,
   caller: CallerContext,
 ): Promise<SafeEvent> => {
-  const event = await getManagedEvent(eventId, caller);
+  await getManagedEvent(eventId, caller);
 
-  if (!event.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "Event is already inactive.",
-    );
-  }
-
-  return prisma.event.update({
+  return prisma.event.delete({
     where: { id: eventId },
-    data: {
-      isActive: false,
-      updatedBy: { connect: { id: caller.id } },
-    },
     include: eventInclude,
   });
 };
@@ -1046,6 +1045,16 @@ const removeEventHost = async (
 
   if (remainingHosts.length === event.hosts.length) {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event host not found.");
+  }
+
+  if (
+    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+    remainingHosts.length < 2
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "ROUND_ROBIN events require at least two hosts.",
+    );
   }
 
   await prisma.$transaction(async (tx) => {

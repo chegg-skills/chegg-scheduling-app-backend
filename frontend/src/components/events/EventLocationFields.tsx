@@ -41,6 +41,7 @@ export function EventLocationFields({ register, errors, watch }: Props) {
         <Select
           id="locationType"
           hasError={!!errors.locationType}
+          value={locationType || ''}
           {...register('locationType')}
         >
           {LOCATION_TYPES.map(({ value, label }) => (
