@@ -26,7 +26,7 @@ const schema = z.object({
   interactionTypeId: z.string().min(1, 'Interaction type is required'),
   locationType: z.enum(['VIRTUAL', 'IN_PERSON', 'CUSTOM'] as const),
   locationValue: z.string().min(1, 'Location is required'),
-  durationSeconds: z.number({ invalid_type_error: 'Enter a valid duration' }).min(60, 'Minimum 1 minute'),
+  durationMinutes: z.number({ invalid_type_error: 'Enter a valid duration' }).min(1, 'Minimum 1 minute'),
   assignmentStrategy: z.enum(['DIRECT', 'ROUND_ROBIN'] as const),
   isActive: z.boolean().default(true),
 })
@@ -64,7 +64,7 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
       interactionTypeId: event.interactionTypeId,
       locationType: event.locationType,
       locationValue: event.locationValue ?? '',
-      durationSeconds: event.durationSeconds,
+      durationMinutes: Math.floor(event.durationSeconds / 60),
       assignmentStrategy: event.assignmentStrategy,
       isActive: event.isActive,
     } : undefined,
@@ -75,17 +75,24 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
       interactionTypeId: '',
       locationType: 'VIRTUAL',
       locationValue: '',
-      durationSeconds: 3600,
+      durationMinutes: 60,
       assignmentStrategy: 'DIRECT',
       isActive: true,
     },
   })
 
   function onSubmit(values: EventFormValues) {
+    const apiPayload = {
+      ...values,
+      durationSeconds: values.durationMinutes * 60,
+    }
+    // @ts-ignore - durationMinutes is not in API but we handled it
+    delete apiPayload.durationMinutes
+
     if (isEdit && event) {
-      update({ eventId: event.id, data: values }, { onSuccess })
+      update({ eventId: event.id, data: apiPayload as any }, { onSuccess })
     } else {
-      create(values, {
+      create(apiPayload as any, {
         onSuccess: () => {
           reset()
           onSuccess?.()

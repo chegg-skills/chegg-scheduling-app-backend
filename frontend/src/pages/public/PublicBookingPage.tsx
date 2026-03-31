@@ -6,6 +6,8 @@ import StepLabel from '@mui/material/StepLabel'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import { Calendar } from 'lucide-react'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { usePublicTeams, usePublicTeamEvents, usePublicSlots } from '@/hooks/usePublicBooking'
 import { bookingsApi } from '@/api/bookings'
 
@@ -21,6 +23,7 @@ export function PublicBookingPage() {
     const [activeStep, setActiveStep] = useState(0)
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
     const [selectedEvent, setSelectedEvent] = useState<string | null>(null)
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [studentInfo, setStudentInfo] = useState({
@@ -36,10 +39,9 @@ export function PublicBookingPage() {
     const { data: teams = [], isLoading: loadingTeams, error: teamsError } = usePublicTeams()
     const { data: events = [], isLoading: loadingEvents } = usePublicTeamEvents(selectedTeam || '')
 
-    // Use native Date logic instead of date-fns
-    const now = new Date()
-    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7, 23, 59, 59, 999).toISOString()
+    // Fetch slots for the selected date (full day range)
+    const startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).toISOString()
+    const endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59, 999).toISOString()
 
     const { data: slots = [], isLoading: loadingSlots } = usePublicSlots(selectedEvent || '', startDate, endDate)
 
@@ -97,6 +99,8 @@ export function PublicBookingPage() {
                     <SlotStep
                         slots={slots}
                         loading={loadingSlots}
+                        selectedDate={selectedDate}
+                        onDateSelect={setSelectedDate}
                         selectedSlot={selectedSlot}
                         onSelect={setSelectedSlot}
                         onNext={handleNext}
@@ -125,31 +129,33 @@ export function PublicBookingPage() {
     }
 
     return (
-        <Box sx={{ p: { xs: 2, sm: 4 } }}>
-            <Typography variant="h5" fontWeight={800} sx={{ mb: 1 }}>Book a Session</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-                Find the perfect time to connect with our experts.
-            </Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Box sx={{ p: { xs: 2, sm: 4 } }}>
+                <Typography variant="h5" fontWeight={800} sx={{ mb: 1 }}>Book a Session</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+                    Find the perfect time to connect with our experts.
+                </Typography>
 
-            {activeStep < 4 && (
-                <Stepper activeStep={activeStep} sx={{ mb: 6 }} alternativeLabel>
-                    {STEPS.map((label) => (
-                        <Step key={label}>
-                            <StepLabel>{label}</StepLabel>
-                        </Step>
-                    ))}
-                </Stepper>
-            )}
+                {activeStep < 4 && (
+                    <Stepper activeStep={activeStep} sx={{ mb: 6 }} alternativeLabel>
+                        {STEPS.map((label) => (
+                            <Step key={label}>
+                                <StepLabel>{label}</StepLabel>
+                            </Step>
+                        ))}
+                    </Stepper>
+                )}
 
-            {renderStepContent(activeStep)}
+                {renderStepContent(activeStep)}
 
-            {activeStep > 0 && activeStep < 3 && (
-                <Box sx={{ mt: 4 }}>
-                    <Button onClick={handleBack} startIcon={<Calendar size={18} />}>
-                        Back to previous step
-                    </Button>
-                </Box>
-            )}
-        </Box>
+                {activeStep > 0 && activeStep < 3 && (
+                    <Box sx={{ mt: 4 }}>
+                        <Button onClick={handleBack} startIcon={<Calendar size={18} />}>
+                            Back to previous step
+                        </Button>
+                    </Box>
+                )}
+            </Box>
+        </LocalizationProvider>
     )
 }

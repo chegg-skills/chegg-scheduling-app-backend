@@ -25,7 +25,7 @@ export function EventScheduleFields({ register, errors, watch }: Props) {
       <FormField
         label="Duration (minutes)"
         htmlFor="durationMinutes"
-        error={errors.durationSeconds?.message}
+        error={errors.durationMinutes?.message}
         info="How long the event will last (e.g., 60 for one hour)."
         required
       >
@@ -33,10 +33,8 @@ export function EventScheduleFields({ register, errors, watch }: Props) {
           id="durationMinutes"
           type="number"
           min="1"
-          hasError={!!errors.durationSeconds}
-          {...register('durationSeconds', {
-            setValueAs: (v) => (v ? Number(v) * 60 : 0),
-          })}
+          hasError={!!errors.durationMinutes}
+          {...register('durationMinutes', { valueAsNumber: true })}
         />
       </FormField>
 
