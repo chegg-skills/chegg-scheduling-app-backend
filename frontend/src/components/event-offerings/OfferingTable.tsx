@@ -40,7 +40,7 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
                 <TableCell
                   key={col}
                   sx={{
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     color: 'text.secondary',

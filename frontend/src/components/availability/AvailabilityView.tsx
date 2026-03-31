@@ -68,7 +68,7 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
                             disabled={addException.isPending || removeException.isPending}
                         />
                         <Box sx={{ mt: 3 }}>
-                            <Alert severity="info" sx={{ '& .MuiAlert-message': { fontSize: '0.8rem' } }}>
+                            <Alert severity="info">
                                 Exceptions take precedence over your weekly schedule for specific dates. Use them for vacations, holidays, or one-off schedule changes.
                             </Alert>
                         </Box>

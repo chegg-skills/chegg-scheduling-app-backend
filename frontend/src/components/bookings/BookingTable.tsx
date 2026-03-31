@@ -13,12 +13,15 @@ import {
     Button,
     Stack,
     Divider,
+    Avatar,
+    alpha,
 } from '@mui/material'
 import { ChevronDown, ChevronUp, XCircle, Clock, User, MapPin, FileText } from 'lucide-react'
 import type { Booking, BookingStatus } from '@/types'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { useConfirm } from '@/context/ConfirmContext'
 import { useUpdateBookingStatus } from '@/hooks/useBookings'
+import { useTheme } from '@mui/material/styles'
 
 interface RowProps {
     booking: Booking
@@ -28,6 +31,7 @@ interface RowProps {
 }
 
 function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps) {
+    const theme = useTheme()
     const { confirm } = useConfirm()
 
     const handleAction = async (status: BookingStatus, label: string) => {
@@ -54,20 +58,36 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
                 hover
                 sx={{
                     '& > *': { borderBottom: 'unset' },
-                    bgcolor: isExpanded ? 'grey.50' : 'inherit',
+                    bgcolor: isExpanded ? alpha(theme.palette.secondary.main, 0.03) : 'inherit',
                     transition: 'background-color 0.2s ease'
                 }}
             >
                 <TableCell>
-                    <Typography variant="body2" fontWeight={600}>{booking.studentName}</Typography>
-                    <Typography variant="caption" color="text.secondary">{booking.studentEmail}</Typography>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Avatar
+                            sx={{
+                                width: 34,
+                                height: 34,
+                                fontSize: '0.8125rem',
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                                fontWeight: 700,
+                            }}
+                        >
+                            {booking.studentName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </Avatar>
+                        <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{booking.studentName}</Typography>
+                            <Typography variant="caption" color="text.secondary">{booking.studentEmail}</Typography>
+                        </Box>
+                    </Stack>
                 </TableCell>
-                <TableCell>{booking.event?.name || 'Unknown Event'}</TableCell>
-                <TableCell>
+                <TableCell sx={{ fontSize: '0.875rem' }}>{booking.event?.name || 'Unknown Event'}</TableCell>
+                <TableCell sx={{ fontSize: '0.875rem' }}>
                     {booking.host ? `${booking.host.firstName} ${booking.host.lastName}` : 'N/A'}
                 </TableCell>
                 <TableCell>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(startTime)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -83,7 +103,8 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
                         onClick={onToggle}
                         endIcon={isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         sx={{
-                            color: isExpanded ? 'primary.main' : 'text.secondary'
+                            color: isExpanded ? 'primary.main' : 'text.secondary',
+                            fontWeight: 600
                         }}
                     >
                         Details
@@ -93,41 +114,47 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                        <Box sx={{ py: 3, px: 2, bgcolor: 'grey.50', borderTop: '1px solid', borderColor: 'grey.250' }}>
-                            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{
+                            py: 3,
+                            px: 3,
+                            bgcolor: alpha(theme.palette.secondary.main, 0.02),
+                            borderTop: '1px solid',
+                            borderColor: theme.palette.divider,
+                        }}>
+                            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: theme.palette.secondary.main }}>
                                 <FileText size={16} /> Detailed Booking Information
                             </Typography>
 
                             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4 }}>
                                 <Box>
-                                    <Stack spacing={2}>
+                                    <Stack spacing={2.5}>
                                         <Box>
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
                                                 <User size={12} /> Student & Session
                                             </Typography>
-                                            <Typography variant="body2" fontWeight={700}>{booking.studentName}</Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 700 }}>{booking.studentName}</Typography>
                                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{booking.studentEmail}</Typography>
-                                            <Typography variant="body2" sx={{ mt: 1 }}>{booking.event?.name} • {booking.team?.name}</Typography>
+                                            <Typography variant="body2" sx={{ mt: 1, color: 'text.primary' }}>{booking.event?.name} • {booking.team?.name}</Typography>
                                         </Box>
 
                                         <Box>
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
                                                 <Clock size={12} /> Scheduling
                                             </Typography>
-                                            <Typography variant="body2" fontWeight={600}>
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                                 {new Intl.DateTimeFormat('en-US', { dateStyle: 'full' }).format(startTime)}
                                             </Typography>
-                                            <Typography variant="body2">
+                                            <Typography variant="body2" color="text.primary">
                                                 {new Intl.DateTimeFormat('en-US', { timeStyle: 'short' }).format(startTime)} ({booking.event?.durationSeconds ? booking.event.durationSeconds / 60 : 0} mins)
                                             </Typography>
-                                            <Typography variant="caption" color="text.secondary">Zone: {booking.timezone}</Typography>
+                                            <Typography variant="caption" color="text.secondary">Zone: {booking.timezone.replace(/_/g, ' ')}</Typography>
                                         </Box>
 
                                         <Box>
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
                                                 <MapPin size={12} /> Logistics
                                             </Typography>
-                                            <Typography variant="body2" fontWeight={600}>
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                                 {booking.event?.locationType === 'VIRTUAL' ? 'Virtual' : 'In-Person'}: {booking.event?.locationValue}
                                             </Typography>
                                             <Typography variant="body2">
@@ -142,33 +169,27 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
                                     </Stack>
                                 </Box>
 
-                                <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 2 }}>
-                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 2, display: 'block', textTransform: 'uppercase' }}>
+                                <Box sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.03), p: 2.5, borderRadius: 2, border: `1px solid ${alpha(theme.palette.secondary.main, 0.05)}` }}>
+                                    <Typography variant="caption" sx={{ fontWeight: 700, mb: 2, display: 'block', textTransform: 'uppercase', color: theme.palette.secondary.main, letterSpacing: '0.05em' }}>
                                         Student Problem Context
                                     </Typography>
                                     <Stack spacing={2}>
                                         <Box>
-                                            <Typography variant="caption" fontWeight={600} color="primary.main">Specific Question</Typography>
-                                            <Typography variant="body2">{booking.specificQuestion || 'None provided'}</Typography>
+                                            <Typography variant="caption" sx={{ fontWeight: 700, color: theme.palette.primary.main, display: 'block', textTransform: 'uppercase', fontSize: '0.65rem', mb: 0.5 }}>Specific Question</Typography>
+                                            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>{booking.specificQuestion || 'None provided'}</Typography>
                                         </Box>
                                         <Box>
-                                            <Typography variant="caption" fontWeight={600} color="primary.main">Attempted Solutions</Typography>
-                                            <Typography variant="body2">{booking.triedSolutions || 'None provided'}</Typography>
+                                            <Typography variant="caption" sx={{ fontWeight: 700, color: theme.palette.primary.main, display: 'block', textTransform: 'uppercase', fontSize: '0.65rem', mb: 0.5 }}>Attempted Solutions</Typography>
+                                            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>{booking.triedSolutions || 'None provided'}</Typography>
                                         </Box>
                                         <Box>
-                                            <Typography variant="caption" fontWeight={600} color="primary.main">Resources Used</Typography>
-                                            <Typography variant="body2">{booking.usedResources || 'None provided'}</Typography>
+                                            <Typography variant="caption" sx={{ fontWeight: 700, color: theme.palette.primary.main, display: 'block', textTransform: 'uppercase', fontSize: '0.65rem', mb: 0.5 }}>Resources Used</Typography>
+                                            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>{booking.usedResources || 'None provided'}</Typography>
                                         </Box>
                                         <Box>
-                                            <Typography variant="caption" fontWeight={600} color="primary.main">Session Objectives</Typography>
-                                            <Typography variant="body2">{booking.sessionObjectives || 'None provided'}</Typography>
+                                            <Typography variant="caption" sx={{ fontWeight: 700, color: theme.palette.primary.main, display: 'block', textTransform: 'uppercase', fontSize: '0.65rem', mb: 0.5 }}>Session Objectives</Typography>
+                                            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>{booking.sessionObjectives || 'None provided'}</Typography>
                                         </Box>
-                                        {booking.notes && (
-                                            <Box>
-                                                <Typography variant="caption" fontWeight={600} color="text.secondary">Additional Notes</Typography>
-                                                <Typography variant="body2">{booking.notes}</Typography>
-                                            </Box>
-                                        )}
                                     </Stack>
                                 </Box>
                             </Box>
@@ -177,7 +198,7 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
 
                             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mr: 'auto', alignSelf: 'center' }}>
-                                    Timezone: {booking.timezone}
+                                    Booking ID: {booking.id.slice(0, 8).toUpperCase()}
                                 </Typography>
                                 {booking.status === 'CONFIRMED' && (
                                     <Button
@@ -186,6 +207,7 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
                                         size="small"
                                         startIcon={<XCircle size={16} />}
                                         onClick={() => handleAction('CANCELLED', 'Cancel')}
+                                        sx={{ fontWeight: 600, borderRadius: 1.5 }}
                                     >
                                         Cancel Booking
                                     </Button>
@@ -197,6 +219,7 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
                                         size="small"
                                         startIcon={<Clock size={16} />}
                                         onClick={() => handleAction('NO_SHOW', 'Mark as No Show')}
+                                        sx={{ fontWeight: 600, borderRadius: 1.5 }}
                                     >
                                         Mark as No Show
                                     </Button>
@@ -224,23 +247,39 @@ export function BookingTable({ bookings }: Props) {
 
     if (bookings.length === 0) {
         return (
-            <Paper variant="outlined" sx={{ p: 6, textAlign: 'center', borderRadius: 3, borderStyle: 'dashed' }}>
-                <Typography color="text.secondary">No bookings scheduled yet.</Typography>
+            <Paper variant="outlined" sx={{ p: 8, textAlign: 'center', borderRadius: 3, borderStyle: 'dashed', bgcolor: 'transparent' }}>
+                <Typography color="text.secondary" sx={{ fontWeight: 500 }}>No bookings scheduled yet.</Typography>
             </Paper>
         )
     }
 
     return (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.3, overflow: 'hidden' }}>
-            <Table size="small">
-                <TableHead sx={{ bgcolor: 'grey.50' }}>
+        <TableContainer component={Paper} variant="outlined">
+            <Table>
+                <TableHead>
                     <TableRow>
-                        <TableCell sx={{ fontWeight: 700 }}>Student</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Event</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Host</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Time</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 700, width: 110, textAlign: 'right' }} />
+                        {[
+                            { label: 'Student', width: '25%' },
+                            { label: 'Event', width: '20%' },
+                            { label: 'Host', width: '20%' },
+                            { label: 'Date / Time', width: '20%' },
+                            { label: 'Status', width: '15%' },
+                            { label: '', width: 50 },
+                        ].map((col) => (
+                            <TableCell
+                                key={col.label}
+                                sx={{
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    color: 'text.secondary',
+                                    letterSpacing: '0.05em',
+                                    width: col.width,
+                                }}
+                            >
+                                {col.label}
+                            </TableCell>
+                        ))}
                     </TableRow>
                 </TableHead>
                 <TableBody>
