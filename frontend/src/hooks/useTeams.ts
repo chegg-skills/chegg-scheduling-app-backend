@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { teamsApi, type ListTeamsParams } from '@/api/teams'
 import type { CreateTeamDto, UpdateTeamDto } from '@/types'
 import { memberKeys } from './useTeamMembers'
+import { statsKeys } from './useStats'
 
 export const teamKeys = {
   all: ['teams'] as const,
@@ -28,7 +29,10 @@ export function useCreateTeam() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateTeamDto) => teamsApi.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: teamKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teamKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
   })
 }
 
@@ -41,6 +45,7 @@ export function useUpdateTeam() {
       qc.invalidateQueries({ queryKey: teamKeys.all })
       qc.invalidateQueries({ queryKey: teamKeys.detail(teamId) })
       qc.invalidateQueries({ queryKey: memberKeys.byTeam(teamId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }
@@ -49,6 +54,9 @@ export function useDeleteTeam() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (teamId: string) => teamsApi.delete(teamId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: teamKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teamKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
   })
 }

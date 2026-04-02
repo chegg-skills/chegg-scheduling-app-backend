@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventsApi, type ListEventsParams } from '@/api/events'
 import type { CreateEventDto, UpdateEventDto, SetEventHostsDto } from '@/types'
+import { statsKeys } from './useStats'
 
 export const eventKeys = {
   all: ['events'] as const,
@@ -30,7 +31,10 @@ export function useCreateEvent(teamId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateEventDto) => eventsApi.create(teamId, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
   })
 }
 
@@ -42,6 +46,7 @@ export function useUpdateEvent() {
     onSuccess: (_, { eventId }) => {
       qc.invalidateQueries({ queryKey: eventKeys.all })
       qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }
@@ -50,7 +55,10 @@ export function useDeleteEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (eventId: string) => eventsApi.delete(eventId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
   })
 }
 
@@ -69,6 +77,7 @@ export function useSetEventHosts(eventId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: eventKeys.hosts(eventId) })
       qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }
@@ -80,6 +89,7 @@ export function useRemoveEventHost(eventId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: eventKeys.hosts(eventId) })
       qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }

@@ -50,8 +50,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={className}
         sx={{
           gap: 1,
-          px: size === 'sm' ? 1.5 : 2.5,
-          py: size === 'sm' ? 0.75 : 1.25,
+          borderRadius: 1.5, // 12px
+          height: size === 'sm' ? 40 : 48,
+          px: size === 'sm' ? 2 : 3,
+          fontSize: size === 'sm' ? '0.875rem' : '1rem',
           '& .MuiCircularProgress-root': {
             mr: 1,
           },

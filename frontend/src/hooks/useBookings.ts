@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '@/api/bookings'
 import type { ListBookingsFilters, BookingStatus } from '@/types'
+import { statsKeys } from './useStats'
 
 export const bookingKeys = {
     all: ['bookings'] as const,
@@ -32,6 +33,7 @@ export function useUpdateBookingStatus() {
         onSuccess: (_, { id }) => {
             qc.invalidateQueries({ queryKey: bookingKeys.all })
             qc.invalidateQueries({ queryKey: bookingKeys.detail(id) })
+            qc.invalidateQueries({ queryKey: statsKeys.all })
         },
     })
 }

@@ -21,36 +21,38 @@ export function ProfilePage() {
     <Box>
       <PageHeader title="My Profile" subtitle="Manage your personal information and settings." />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-          <Tab
-            label="Profile Info"
-            icon={<User size={18} />}
-            iconPosition="start"
-            sx={{ minHeight: 48, textTransform: 'none', fontWeight: 600 }}
-          />
-          <Tab
-            label="My Availability"
-            icon={<Clock size={18} />}
-            iconPosition="start"
-            sx={{ minHeight: 48, textTransform: 'none', fontWeight: 600 }}
-          />
-        </Tabs>
+      <Box sx={{ px: { xs: 2.5, md: 4 } }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
+          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+            <Tab
+              label="Profile Info"
+              icon={<User size={18} />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab
+              label="My Availability"
+              icon={<Clock size={18} />}
+              iconPosition="start"
+              sx={{ minHeight: 48, textTransform: 'none', fontWeight: 600 }}
+            />
+          </Tabs>
+        </Box>
+
+        {activeTab === 0 && (
+          <Paper variant="outlined" sx={{ mt: 3, maxWidth: 760, p: 3, borderRadius: 2 }}>
+            <UserForm
+              user={user}
+              currentUserRole={user.role}
+              onSuccess={refreshUser}
+            />
+          </Paper>
+        )}
+
+        {activeTab === 1 && (
+          <AvailabilityView userId={user.id} />
+        )}
       </Box>
-
-      {activeTab === 0 && (
-        <Paper variant="outlined" sx={{ mt: 3, maxWidth: 760, p: 3, borderRadius: 2 }}>
-          <UserForm
-            user={user}
-            currentUserRole={user.role}
-            onSuccess={refreshUser}
-          />
-        </Paper>
-      )}
-
-      {activeTab === 1 && (
-        <AvailabilityView userId={user.id} />
-      )}
     </Box>
   )
 }

@@ -1,15 +1,16 @@
 import { forwardRef } from 'react'
 import TextField, { type TextFieldProps } from '@mui/material/TextField'
 
-interface InputProps extends Omit<TextFieldProps, 'variant' | 'size' | 'error'> {
+export interface InputProps extends Omit<TextFieldProps, 'variant' | 'size' | 'error'> {
   hasError?: boolean
+  isSearch?: boolean
   min?: number | string
   max?: number | string
   step?: number | string
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ hasError, min, max, step, inputProps, ...props }, ref) => {
+  ({ hasError, isSearch, min, max, step, inputProps, sx, ...props }, ref) => {
     return (
       <TextField
         inputRef={ref}
@@ -22,6 +23,33 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           max,
           step,
           ...inputProps,
+        }}
+        sx={{
+          ...(isSearch && {
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: '#F3F4F6', // Light grey BG
+              '& fieldset': {
+                border: 'none', // Remove border
+              },
+              '&:hover fieldset': {
+                border: 'none',
+              },
+              '&.Mui-focused fieldset': {
+                border: '1.5px solid',
+                borderColor: 'primary.main',
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: 'text.secondary',
+                opacity: 0.8,
+              },
+              borderRadius: 1.5, // 12px
+              height: 40,
+              '& .MuiInputBase-root': {
+                height: 40,
+              },
+            },
+          }),
+          ...sx,
         }}
         {...props}
       />

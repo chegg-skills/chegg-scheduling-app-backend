@@ -107,8 +107,8 @@ export const appTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
-          padding: '10px 24px',
+          borderRadius: 12,
+          padding: '8px 20px',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           boxShadow: 'none',
           '&:hover': {
@@ -159,7 +159,7 @@ export const appTheme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          borderRadius: 12,
           boxShadow: '0 8px 24px -4px rgba(0,0,0,0.05)',
           border: `1px solid ${softBorder}`,
         },
@@ -174,7 +174,7 @@ export const appTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 12,
           backgroundColor: '#ffffff',
           transition: 'all 0.2s',
           '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -185,7 +185,7 @@ export const appTheme = createTheme({
           },
         },
         input: {
-          padding: '12px 16px',
+          padding: '10px 16px',
         },
       },
     },

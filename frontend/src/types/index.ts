@@ -4,6 +4,13 @@ export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
 export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
 export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
+export type StatsTimeframe =
+  | 'today' | 'yesterday'
+  | 'thisWeek' | 'lastWeek'
+  | 'thisMonth' | 'lastMonth'
+  | 'thisQuarter' | 'lastQuarter'
+  | 'thisYear' | 'lastYear' | 'all'
+  | string // to support 'custom:ISO_START:ISO_END' in URL/params
 
 // ─── Core Models ──────────────────────────────────────────────────────────────
 
@@ -152,6 +159,19 @@ export interface ApiResponse<T> {
   message: string
   data?: T
   error?: unknown
+}
+
+export interface StatsTimeframeInfo {
+  key: StatsTimeframe
+  label: string
+  startDate: string | null
+  endDate: string | null
+  rangeLabel: string
+}
+
+export interface StatsSummary<TMetrics = Record<string, any>> {
+  timeframe: StatsTimeframeInfo
+  metrics: TMetrics
 }
 
 // ─── Auth Payloads ────────────────────────────────────────────────────────────

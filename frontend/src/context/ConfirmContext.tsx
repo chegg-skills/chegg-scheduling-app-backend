@@ -7,7 +7,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import { X } from 'lucide-react'
-import { Button } from '@/components/shared/Button'
+import Button from '@mui/material/Button'
 
 interface ConfirmOptions {
     title?: string
@@ -84,15 +84,22 @@ function ConfirmDialog({
             <DialogActions sx={{ px: 3, py: 2 }}>
                 <Stack direction="row" spacing={1.5}>
                     {!isAlert && (
-                        <Button variant="secondary" onClick={handleCancel} size="sm">
+                        <Button
+                            variant="outlined"
+                            onClick={handleCancel}
+                            size="small"
+                            sx={{ borderRadius: 1.5, height: 40, px: 2, fontSize: '0.875rem' }}
+                        >
                             {cancelText}
                         </Button>
                     )}
                     <Button
-                        variant={isAlert ? 'primary' : 'danger'}
+                        variant="contained"
+                        color={isAlert ? 'primary' : 'error'}
                         onClick={onConfirm}
-                        size="sm"
+                        size="small"
                         ref={confirmButtonRef}
+                        sx={{ borderRadius: 1.5, height: 40, px: 2, fontSize: '0.875rem' }}
                     >
                         {confirmText}
                     </Button>

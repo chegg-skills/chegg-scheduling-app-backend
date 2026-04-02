@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
-import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useParams, Link as RouterLink } from 'react-router-dom'
-import { Plus, ChevronLeft, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
 import { useTeamEvents } from '@/hooks/useEvents'
@@ -48,98 +47,99 @@ export function TeamDetailPage() {
 
   return (
     <Stack spacing={4}>
-      <Box>
-        <Link component={RouterLink} to="/teams" underline="hover" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
-          <ChevronLeft size={16} /> Back to teams
-        </Link>
-        <PageHeader
-          title={team.name}
-          subtitle={team.description ?? undefined}
-          actions={
-            canManageTeam ? (
-              <Stack direction="row" spacing={1} alignItems="center">
-                <RowActions
-                  actions={[
-                    {
-                      label: 'Edit team details',
-                      icon: <Edit size={16} />,
-                      onClick: () => setShowEditTeam(true),
-                    },
-                    {
-                      label: team.isActive ? 'Mark as Inactive' : 'Mark as Active',
-                      icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
-                      onClick: async () => {
-                        const newStatus = !team.isActive
-                        if (
-                          await confirm({
-                            title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
-                            message: newStatus
-                              ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
-                              : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page but keep its configuration.`,
-                          })
-                        ) {
-                          updateTeam({ teamId, data: { isActive: newStatus } })
-                        }
-                      },
-                    },
-                    {
-                      label: 'Delete team',
-                      icon: <Trash2 size={16} />,
-                      color: 'error.main',
-                      onClick: async () => {
-                        if (
-                          await confirm({
-                            title: 'Delete Team',
-                            message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
-                          })
-                        ) {
-                          deleteTeam(teamId)
-                        }
-                      },
-                    },
-                  ]}
-                />
-              </Stack>
-            ) : null
-          }
-        />
-        <Badge
-          label={team.isActive ? 'Active' : 'Inactive'}
-          variant={team.isActive ? 'green' : 'red'}
-        />
-      </Box>
-
-      <Box component="section">
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} mb={2}>
-          <Typography variant="h6">Members</Typography>
-          <Button size="sm" onClick={() => setShowAddMember(true)}>
-            <Plus size={16} /> Add member
-          </Button>
-        </Stack>
-        {membersLoading ? (
-          <PageSpinner />
-        ) : (
-          <TeamMemberList
-            members={members}
-            teamId={teamId}
-            currentUserRole={user?.role ?? 'TEAM_ADMIN'}
-            teamLeadId={team.teamLeadId}
+      <PageHeader
+        title={team.name}
+        subtitle={team.description ?? undefined}
+        backTo="/teams"
+        backLabel="Teams"
+        tags={
+          <Badge
+            label={team.isActive ? 'Active' : 'Inactive'}
+            variant={team.isActive ? 'green' : 'red'}
           />
-        )}
-      </Box>
+        }
+        actions={
+          canManageTeam ? (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <RowActions
+                actions={[
+                  {
+                    label: 'Edit team details',
+                    icon: <Edit size={16} />,
+                    onClick: () => setShowEditTeam(true),
+                  },
+                  {
+                    label: team.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                    icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                    onClick: async () => {
+                      const newStatus = !team.isActive
+                      if (
+                        await confirm({
+                          title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+                          message: newStatus
+                            ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
+                            : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page but keep its configuration.`,
+                        })
+                      ) {
+                        updateTeam({ teamId, data: { isActive: newStatus } })
+                      }
+                    },
+                  },
+                  {
+                    label: 'Delete team',
+                    icon: <Trash2 size={16} />,
+                    color: 'error.main',
+                    onClick: async () => {
+                      if (
+                        await confirm({
+                          title: 'Delete Team',
+                          message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
+                        })
+                      ) {
+                        deleteTeam(teamId)
+                      }
+                    },
+                  },
+                ]}
+              />
+            </Stack>
+          ) : null
+        }
+      />
 
-      <Box component="section">
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} mb={2}>
-          <Typography variant="h6">Events</Typography>
-          <Button size="sm" onClick={() => setShowCreateEvent(true)}>
-            <Plus size={16} /> New event
-          </Button>
-        </Stack>
-        {eventsLoading ? (
-          <PageSpinner />
-        ) : (
-          <EventTable events={events?.events ?? []} teamId={teamId} />
-        )}
+      <Box sx={{ px: { xs: 2.5, md: 4 } }}>
+        <Box component="section">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} mb={2}>
+            <Typography variant="h6">Members</Typography>
+            <Button size="sm" onClick={() => setShowAddMember(true)}>
+              <Plus size={16} /> Add member
+            </Button>
+          </Stack>
+          {membersLoading ? (
+            <PageSpinner />
+          ) : (
+            <TeamMemberList
+              members={members}
+              teamId={teamId}
+              currentUserRole={user?.role ?? 'TEAM_ADMIN'}
+              teamLeadId={team.teamLeadId}
+            />
+          )}
+        </Box>
+
+        <Box component="section" mt={4}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} mb={2}>
+            <Typography variant="h6">Events</Typography>
+            <Button size="sm" onClick={() => setShowCreateEvent(true)}>
+              <Plus size={16} /> New event
+            </Button>
+          </Stack>
+          {eventsLoading ? (
+            <PageSpinner />
+          ) : (
+            <EventTable events={events?.events ?? []} teamId={teamId} />
+          )}
+        </Box>
       </Box>
 
       {canManageTeam && (
