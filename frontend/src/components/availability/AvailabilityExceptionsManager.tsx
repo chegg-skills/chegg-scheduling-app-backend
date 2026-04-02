@@ -69,55 +69,97 @@ export function AvailabilityExceptionsManager({
 
     return (
         <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h6">Exceptions & Time Off</Typography>
+            <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                justifyContent="space-between"
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                spacing={1.5}
+                sx={{ mb: 2.5 }}
+            >
+                <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 600 }}>
+                    Exceptions & Time Off
+                </Typography>
                 <Button
                     variant="outlined"
-                    startIcon={<Plus size={18} />}
+                    startIcon={<Plus size={16} />}
                     onClick={() => setIsDialogOpen(true)}
                     disabled={disabled}
                     size="small"
+                    sx={{ borderRadius: 1.5 }}
                 >
                     Add Exception
                 </Button>
             </Stack>
 
             {futureExceptions.length === 0 ? (
-                <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', bgcolor: 'transparent', borderStyle: 'dashed' }}>
-                    <Typography color="text.secondary">No availability exceptions scheduled.</Typography>
+                <Paper
+                    variant="outlined"
+                    sx={{
+                        p: 4,
+                        textAlign: 'center',
+                        bgcolor: 'rgba(0,0,0,0.02)',
+                        borderStyle: 'dashed',
+                        borderRadius: 2
+                    }}
+                >
+                    <Typography variant="body2" color="text.secondary">No availability exceptions scheduled.</Typography>
                 </Paper>
             ) : (
-                <TableContainer component={Paper} variant="outlined" sx={{ bgcolor: 'transparent' }}>
-                    <Table size="small">
+                <TableContainer
+                    component={Paper}
+                    variant="outlined"
+                    sx={{
+                        bgcolor: 'transparent',
+                        borderRadius: 1.5,
+                        overflowX: 'auto',
+                        '& .MuiTableCell-root': {
+                            py: 1.5,
+                            px: 1.5,
+                        }
+                    }}
+                >
+                    <Table size="small" sx={{ minWidth: 400, tableLayout: 'fixed' }}>
                         <TableHead>
-                            <TableRow>
-                                <TableCell>Date</TableCell>
-                                <TableCell>Type</TableCell>
-                                <TableCell>Hours</TableCell>
-                                <TableCell align="right">Actions</TableCell>
+                            <TableRow sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
+                                <TableCell sx={{ width: '32%', fontWeight: 600 }}>Date</TableCell>
+                                <TableCell sx={{ width: '30%', fontWeight: 600 }}>Type</TableCell>
+                                <TableCell sx={{ width: '28%', fontWeight: 600 }}>Hours</TableCell>
+                                <TableCell align="right" sx={{ width: '10%' }}></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {futureExceptions.map((ex) => (
-                                <TableRow key={ex.id}>
-                                    <TableCell>{formatDate(ex.date)}</TableCell>
-                                    <TableCell>
-                                        {ex.isUnavailable ? (
-                                            <Typography variant="caption" sx={{ px: 1, py: 0.5, borderRadius: 1, bgcolor: 'error.main', color: 'white' }}>
-                                                Unavailable
-                                            </Typography>
-                                        ) : (
-                                            <Typography variant="caption" sx={{ px: 1, py: 0.5, borderRadius: 1, bgcolor: 'success.main', color: 'white' }}>
-                                                Custom Hours
-                                            </Typography>
-                                        )}
+                                <TableRow key={ex.id} hover>
+                                    <TableCell sx={{ fontSize: '0.8125rem' }}>
+                                        {formatDate(ex.date)}
                                     </TableCell>
                                     <TableCell>
-                                        {ex.isUnavailable ? '-' : `${ex.startTime} - ${ex.endTime}`}
+                                        <Box
+                                            sx={{
+                                                display: 'inline-flex',
+                                                px: 1,
+                                                py: 0.25,
+                                                borderRadius: 1,
+                                                fontSize: '0.75rem',
+                                                fontWeight: 600,
+                                                bgcolor: ex.isUnavailable ? 'error.light' : 'success.light',
+                                                color: ex.isUnavailable ? 'error.dark' : 'success.dark',
+                                            }}
+                                        >
+                                            {ex.isUnavailable ? 'Unavailable' : 'Custom'}
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
+                                        {ex.isUnavailable ? '—' : `${ex.startTime} - ${ex.endTime}`}
                                     </TableCell>
                                     <TableCell align="right">
-                                        <IconButton size="small" color="error" onClick={() => onRemove(ex.id)} disabled={disabled}>
-                                            <Trash2 size={16} />
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => onRemove(ex.id)}
+                                            disabled={disabled}
+                                            sx={{ color: 'text.disabled', '&:hover': { color: 'error.main' } }}
+                                        >
+                                            <Trash2 size={14} />
                                         </IconButton>
                                     </TableCell>
                                 </TableRow>
