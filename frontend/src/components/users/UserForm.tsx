@@ -26,6 +26,16 @@ const schema = z.object({
   preferredLanguage: z.string().optional(),
   role: z.enum(['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'] as const),
   timezone: z.string().optional(),
+  zoomIsvLink: z.string().optional().refine((value) => {
+    if (!value?.trim()) return true
+
+    try {
+      const url = new URL(value)
+      return url.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }, 'Enter a valid https Zoom ISV meeting link'),
   isActive: z.boolean().optional(),
 })
 
@@ -69,6 +79,7 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
       preferredLanguage: user.preferredLanguage ?? 'English',
       role: user.role,
       timezone: user.timezone,
+      zoomIsvLink: user.zoomIsvLink ?? '',
       isActive: user.isActive,
     },
   })

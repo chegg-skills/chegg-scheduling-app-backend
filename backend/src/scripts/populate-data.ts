@@ -245,7 +245,7 @@ async function main() {
             const shuffledMembers = [...teamWrapper.members].sort(() => 0.5 - Math.random());
             const selectedHosts = shuffledMembers.slice(0, hostCount);
 
-            const hostsPayload = selectedHosts.map((h, index) => ({
+            const hostsPayload = selectedHosts.map((h: any, index: number) => ({
                 userId: h.id,
                 hostOrder: index + 1,
             }));
@@ -257,7 +257,7 @@ async function main() {
             });
         } else {
             // Round Robin: all eligible members are hosts
-            const hostsPayload = teamWrapper.members.map((h, index) => ({
+            const hostsPayload = teamWrapper.members.map((h: any, index: number) => ({
                 userId: h.id,
                 hostOrder: index + 1,
             }));

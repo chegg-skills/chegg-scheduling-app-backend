@@ -61,7 +61,15 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
                   onSort={requestSort}
                 />
               ))}
-              <TableCell>
+              <TableCell
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 Actions
               </TableCell>
             </TableRow>

@@ -40,8 +40,8 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
     return (
         <Box sx={{ mt: 3 }}>
             {/* Container Box instead of Grid if Grid props are problematic */}
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', xl: 'row' }, gap: 4, alignItems: 'flex-start' }}>
-                <Box sx={{ flex: { xl: '0 0 65%' }, minWidth: 0, width: '100%' }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 4, alignItems: 'flex-start' }}>
+                <Box sx={{ flex: { lg: '0 0 52%' }, minWidth: 0, width: '100%' }}>
                     <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2 }}>
                         <Typography variant="h6" gutterBottom>Weekly Recurring Schedule</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -55,7 +55,7 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
                     </Paper>
                 </Box>
 
-                <Box sx={{ flex: { xl: '0 0 35%' }, minWidth: 0, width: '100%' }}>
+                <Box sx={{ flex: { lg: '0 0 43%' }, minWidth: 0, width: '100%' }}>
                     <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2 }}>
                         <AvailabilityExceptionsManager
                             exceptions={exceptions || []}

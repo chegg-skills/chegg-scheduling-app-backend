@@ -563,6 +563,7 @@ const validateInteractionStrategyCompatibility = (
   }
 };
 
+
 const buildCreateEventData = (
   payload: CreateEventInput,
   callerId: string,
@@ -768,11 +769,17 @@ const updateEvent = async (
     updateData.isActive = Boolean(payload.isActive);
   }
 
-  const updatedEvent = await prisma.event.update({
-    where: { id: eventId },
-    data: updateData,
-    include: eventInclude,
-  });
+  let updatedEvent: SafeEvent;
+  try {
+    updatedEvent = await prisma.event.update({
+      where: { id: eventId },
+      data: updateData,
+      include: eventInclude,
+    });
+  } catch (error) {
+    console.error("Failed to update event:", error);
+    throw error;
+  }
 
   if (
     updatedEvent.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&

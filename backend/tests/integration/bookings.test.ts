@@ -146,6 +146,12 @@ describe("Booking Domain Integration Tests", () => {
         });
 
         it("successfully creates a booking for an available slot", async () => {
+            const zoomIsvLink = "https://students.skills.chegg.com/meeting/join/7d26db62-1f37-49f5-8b49-97a66444007b";
+            await request(app)
+                .patch(`/api/users/${coachId}`)
+                .set("Authorization", `Bearer ${adminToken}`)
+                .send({ zoomIsvLink });
+
             const startTime = getNextUtcWeekdayAt(1, 10, 0).toISOString(); // Next Monday 10:00 UTC
 
             const res = await request(app)
@@ -163,6 +169,7 @@ describe("Booking Domain Integration Tests", () => {
             expect(res.status).toBe(201);
             expect(res.body.data.booking.studentName).toBe("John Doe");
             expect(res.body.data.booking.hostUserId).toBe(coachId);
+            expect(res.body.data.booking.meetingJoinUrl).toBe(zoomIsvLink);
         });
 
         it("returns 409 conflict if host is unavailable (outside weekly schedule)", async () => {

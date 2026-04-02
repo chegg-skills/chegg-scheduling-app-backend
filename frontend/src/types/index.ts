@@ -25,6 +25,7 @@ export interface SafeUser {
   avatarUrl: string | null
   role: UserRole
   timezone: string
+  zoomIsvLink: string | null
   isActive: boolean
   failedLoginAttempts: number
   lockedUntil: string | null
@@ -234,6 +235,7 @@ export interface UpdateUserDto {
   avatarUrl?: string
   role?: UserRole
   timezone?: string
+  zoomIsvLink?: string
   isActive?: boolean
 }
 
@@ -347,6 +349,7 @@ export interface Booking {
   teamId: string
   eventId: string
   hostUserId: string
+  meetingJoinUrl: string | null
   createdAt: string
   updatedAt: string
   team?: Team

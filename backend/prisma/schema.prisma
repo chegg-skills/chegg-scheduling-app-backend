@@ -22,6 +22,7 @@ model User {
   lastName                String
   phoneNumber             String?
   timezone                String                 @default("UTC")
+  zoomIsvLink             String?
   failedLoginAttempts     Int                    @default(0)
   lockedUntil             DateTime?
   eventsCreated           Event[]                @relation("EventCreatedBy")
@@ -238,6 +239,7 @@ model Booking {
   triedSolutions    String?
   usedResources     String?
   sessionObjectives String?
+  meetingJoinUrl    String?
   status            BookingStatus @default(CONFIRMED)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt

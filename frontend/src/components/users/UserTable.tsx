@@ -108,7 +108,15 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
                   onSort={requestSort}
                 />
               ))}
-              <TableCell>
+              <TableCell
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 Actions
               </TableCell>
             </TableRow>
@@ -142,9 +150,9 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
                   </Stack>
                 </TableCell>
                 <TableCell>{roleBadge(user.role)}</TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>{user.country ?? '—'}</TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>{user.timezone.replace(/_/g, ' ')}</TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>{user.preferredLanguage ?? '—'}</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{user.country ?? '—'}</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{user.timezone.replace(/_/g, ' ')}</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{user.preferredLanguage ?? '—'}</TableCell>
                 <TableCell>{statusBadge(user.isActive)}</TableCell>
                 <TableCell>
                   <RowActions

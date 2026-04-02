@@ -69,7 +69,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
               ))}
               <TableCell
                 sx={{
-                  fontSize: 11,
+                  fontSize: '0.75rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
                   color: 'text.secondary',

@@ -34,6 +34,7 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
             lastName: true,
             timezone: true,
             avatarUrl: true,
+            zoomIsvLink: true,
         },
     },
 });
@@ -77,6 +78,13 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             hosts: {
                 where: { isActive: true },
                 orderBy: { hostOrder: "asc" },
+                include: {
+                    hostUser: {
+                        select: {
+                            zoomIsvLink: true,
+                        },
+                    },
+                },
             },
             routingState: true,
         },
@@ -95,6 +103,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
 
     // 3. Determine Host Assignment
     let assignedHostId: string | null = null;
+    let meetingJoinUrl: string | null = null;
     const activeHosts = event.hosts;
 
     if (activeHosts.length === 0) {
@@ -115,6 +124,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             throw new ErrorHandler(StatusCodes.CONFLICT, "The selected host is not available at this time.");
         }
         assignedHostId = targetHostId;
+        meetingJoinUrl = host.hostUser.zoomIsvLink ?? null;
     } else {
         // Round-Robin Assignment
         const routingState = event.routingState || { nextHostOrder: 1 };
@@ -134,6 +144,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             const available = await isHostAvailable(candidate.hostUserId, start, end);
             if (available) {
                 assignedHostId = candidate.hostUserId;
+                meetingJoinUrl = candidate.hostUser.zoomIsvLink ?? null;
 
                 // Update routing state for next time
                 const nextOrder = (candidate.hostOrder % maxOrder) + 1;
@@ -168,6 +179,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             triedSolutions,
             usedResources,
             sessionObjectives,
+            meetingJoinUrl,
             status: BookingStatus.CONFIRMED,
         } as any,
         include: bookingInclude,

@@ -10,6 +10,7 @@ import {
   normalizeEmail,
   toSafeUser,
   validateTimezone,
+  validateZoomIsvLink,
 } from "../../shared/utils/userUtils";
 
 type ListUsersOptions = {
@@ -29,6 +30,7 @@ type UpdateUserInput = {
   role?: string;
   timezone?: string;
   preferredLanguage?: string;
+  zoomIsvLink?: string;
   isActive?: boolean;
 };
 
@@ -41,6 +43,7 @@ type UpdateMyProfileInput = {
   avatarUrl?: string;
   timezone?: string;
   preferredLanguage?: string;
+  zoomIsvLink?: string;
 };
 
 const isValidRole = (role: string): role is UserRole => {
@@ -275,6 +278,11 @@ const updateUser = async (
     updateData.preferredLanguage = payload.preferredLanguage?.trim() || "en";
   }
 
+  if (payload.zoomIsvLink !== undefined) {
+    const value = payload.zoomIsvLink.trim();
+    updateData.zoomIsvLink = value ? validateZoomIsvLink(value) : null;
+  }
+
   if (payload.role !== undefined) {
     const role = payload.role.trim();
     if (!isValidRole(role)) {
@@ -439,6 +447,11 @@ const updateMyProfile = async (
 
   if (payload.preferredLanguage !== undefined) {
     updateData.preferredLanguage = payload.preferredLanguage?.trim() || "en";
+  }
+
+  if (payload.zoomIsvLink !== undefined) {
+    const value = payload.zoomIsvLink.trim();
+    updateData.zoomIsvLink = value ? validateZoomIsvLink(value) : null;
   }
 
   if (payload.timezone !== undefined) {

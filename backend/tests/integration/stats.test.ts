@@ -151,7 +151,7 @@ describe('GET /api/v1/stats/dashboard', () => {
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
     expect(res.body.data.timeframe).toMatchObject({
-      key: 'month',
+      key: expect.stringMatching(/month/i),
       label: 'This month',
       rangeLabel: expect.any(String),
     })

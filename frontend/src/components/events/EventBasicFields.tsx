@@ -13,15 +13,12 @@ interface Props {
 /** Handles name and description */
 export function EventBasicFields({ register, errors }: Props) {
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       <FormField label="Event Name" htmlFor="name" error={errors.name?.message} required>
         <Input id="name" hasError={!!errors.name} {...register('name')} />
       </FormField>
-      <FormField
-        label="Description"
-        htmlFor="description"
-        error={errors.description?.message}
-      >
+
+      <FormField label="Description" htmlFor="description" error={errors.description?.message}>
         <Textarea id="description" {...register('description')} />
       </FormField>
     </Stack>

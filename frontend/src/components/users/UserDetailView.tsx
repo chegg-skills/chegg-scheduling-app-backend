@@ -6,12 +6,14 @@ import Avatar from '@mui/material/Avatar'
 import Divider from '@mui/material/Divider'
 import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
+import Link from '@mui/material/Link'
 import Paper from '@mui/material/Paper'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
+
 import {
     Mail,
     MapPin,
@@ -19,7 +21,8 @@ import {
     Phone,
     Users,
     Calendar,
-    AlertCircle
+    AlertCircle,
+    Video
 } from 'lucide-react'
 import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/Badge'
@@ -131,10 +134,32 @@ export function UserDetailView({ user }: UserDetailViewProps) {
                                 <Typography variant="body2">{user.country ?? 'Not specified'}</Typography>
                             </Stack>
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
-                                <Clock size={16} />
-                                <Typography variant="body2">{user.timezone.replace(/_/g, ' ')} (UTC)</Typography>
+                        <Grid size={{ xs: 12, sm: 12 }}>
+                            <Stack spacing={1}>
+                                <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
+                                    <Clock size={16} />
+                                    <Typography variant="body2">{user.timezone.replace(/_/g, ' ')} (UTC)</Typography>
+                                </Stack>
+                                <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
+                                    <Video size={16} />
+                                    <Typography variant="body2" sx={{ display: 'flex', gap: 0.5 }}>
+                                        Zoom ISV link: {user.zoomIsvLink ? (
+                                            <Link
+                                                href={user.zoomIsvLink}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                sx={{
+                                                    color: '#ff9800',
+                                                    textDecoration: 'none',
+                                                    '&:hover': { textDecoration: 'underline' },
+                                                    wordBreak: 'break-all'
+                                                }}
+                                            >
+                                                {user.zoomIsvLink}
+                                            </Link>
+                                        ) : 'Not configured'}
+                                    </Typography>
+                                </Stack>
                             </Stack>
                         </Grid>
                     </Grid>

@@ -69,70 +69,38 @@ export function AvailabilityExceptionsManager({
 
     return (
         <Box>
-            <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                justifyContent="space-between"
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                spacing={1.5}
-                sx={{ mb: 2.5 }}
-            >
-                <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 600 }}>
-                    Exceptions & Time Off
-                </Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Typography variant="h6">Exceptions & Time Off</Typography>
                 <Button
                     variant="outlined"
-                    startIcon={<Plus size={16} />}
+                    startIcon={<Plus size={18} />}
                     onClick={() => setIsDialogOpen(true)}
                     disabled={disabled}
                     size="small"
-                    sx={{ borderRadius: 1.5 }}
                 >
                     Add Exception
                 </Button>
             </Stack>
 
             {futureExceptions.length === 0 ? (
-                <Paper
-                    variant="outlined"
-                    sx={{
-                        p: 4,
-                        textAlign: 'center',
-                        bgcolor: 'rgba(0,0,0,0.02)',
-                        borderStyle: 'dashed',
-                        borderRadius: 2
-                    }}
-                >
-                    <Typography variant="body2" color="text.secondary">No availability exceptions scheduled.</Typography>
+                <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', bgcolor: 'transparent', borderStyle: 'dashed' }}>
+                    <Typography color="text.secondary">No availability exceptions scheduled.</Typography>
                 </Paper>
             ) : (
-                <TableContainer
-                    component={Paper}
-                    variant="outlined"
-                    sx={{
-                        bgcolor: 'transparent',
-                        borderRadius: 1.5,
-                        overflowX: 'auto',
-                        '& .MuiTableCell-root': {
-                            py: 1.5,
-                            px: 1.5,
-                        }
-                    }}
-                >
-                    <Table size="small" sx={{ minWidth: 400, tableLayout: 'fixed' }}>
+                <TableContainer component={Paper} variant="outlined" sx={{ bgcolor: 'transparent' }}>
+                    <Table size="small">
                         <TableHead>
                             <TableRow sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}>
-                                <TableCell sx={{ width: '32%', fontWeight: 600 }}>Date</TableCell>
-                                <TableCell sx={{ width: '30%', fontWeight: 600 }}>Type</TableCell>
-                                <TableCell sx={{ width: '28%', fontWeight: 600 }}>Hours</TableCell>
-                                <TableCell align="right" sx={{ width: '10%' }}></TableCell>
+                                <TableCell>Date</TableCell>
+                                <TableCell>Type</TableCell>
+                                <TableCell>Hours</TableCell>
+                                <TableCell align="right">Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {futureExceptions.map((ex) => (
-                                <TableRow key={ex.id} hover>
-                                    <TableCell sx={{ fontSize: '0.8125rem' }}>
-                                        {formatDate(ex.date)}
-                                    </TableCell>
+                                <TableRow key={ex.id}>
+                                    <TableCell>{formatDate(ex.date)}</TableCell>
                                     <TableCell>
                                         <Box
                                             sx={{
@@ -149,17 +117,12 @@ export function AvailabilityExceptionsManager({
                                             {ex.isUnavailable ? 'Unavailable' : 'Custom'}
                                         </Box>
                                     </TableCell>
-                                    <TableCell sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
-                                        {ex.isUnavailable ? '—' : `${ex.startTime} - ${ex.endTime}`}
+                                    <TableCell>
+                                        {ex.isUnavailable ? '-' : `${ex.startTime} - ${ex.endTime}`}
                                     </TableCell>
                                     <TableCell align="right">
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => onRemove(ex.id)}
-                                            disabled={disabled}
-                                            sx={{ color: 'text.disabled', '&:hover': { color: 'error.main' } }}
-                                        >
-                                            <Trash2 size={14} />
+                                        <IconButton size="small" color="error" onClick={() => onRemove(ex.id)} disabled={disabled}>
+                                            <Trash2 size={16} />
                                         </IconButton>
                                     </TableCell>
                                 </TableRow>

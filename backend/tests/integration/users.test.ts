@@ -308,6 +308,18 @@ describe("PATCH /api/users/:userId", () => {
     expect(res.body.data.preferredLanguage).toBe("es");
   });
 
+  it("SUPER_ADMIN can save a Zoom ISV link on the user profile", async () => {
+    const zoomIsvLink = "https://students.skills.chegg.com/meeting/join/7d26db62-1f37-49f5-8b49-97a66444007b";
+
+    const res = await request(app)
+      .patch(`/api/users/${coachId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ zoomIsvLink });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.zoomIsvLink).toBe(zoomIsvLink);
+  });
+
   it("SUPER_ADMIN can change a user's role", async () => {
     const res = await request(app)
       .patch(`/api/users/${coachId}`)

@@ -15,6 +15,7 @@ import { Calendar, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
 import Tooltip from '@mui/material/Tooltip'
+import { alpha, useTheme } from '@mui/material/styles'
 import type { Event } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
@@ -52,6 +53,7 @@ const eventSortAccessors: SortAccessorMap<Event, EventSortKey> = {
 }
 
 export function EventTable({ events, teamId }: EventTableProps) {
+  const theme = useTheme()
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()
@@ -82,7 +84,15 @@ export function EventTable({ events, teamId }: EventTableProps) {
                   tooltip={col.tooltip}
                 />
               ))}
-              <TableCell>
+              <TableCell
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 Actions
               </TableCell>
             </TableRow>
@@ -106,11 +116,12 @@ export function EventTable({ events, teamId }: EventTableProps) {
                           width: 36,
                           height: 36,
                           borderRadius: 2,
-                          bgcolor: 'primary.light',
-                          color: 'primary.dark',
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                          color: 'primary.main',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                         }}
                       >
                         <Calendar size={18} />
@@ -132,7 +143,7 @@ export function EventTable({ events, teamId }: EventTableProps) {
                   <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     {event.offering?.name ?? '—'}
                   </TableCell>
-                  <TableCell sx={{ fontSize: '0.875rem' }}>
+                  <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     {formatDuration(event.durationSeconds)}
                   </TableCell>
                   <TableCell>
