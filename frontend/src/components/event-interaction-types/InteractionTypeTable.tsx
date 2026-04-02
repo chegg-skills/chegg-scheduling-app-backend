@@ -13,10 +13,11 @@ import { Monitor, Edit } from 'lucide-react'
 import type { EventInteractionType } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
+import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { InteractionTypeForm } from './InteractionTypeForm'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { RowActions } from '@/components/shared/RowActions'
 import { Button } from '@/components/shared/Button'
+import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 
 interface InteractionTypeTableProps {
   interactionTypes: EventInteractionType[]
@@ -29,8 +30,19 @@ const headerTooltips: Record<string, string> = {
   Sort: 'The display order of this interaction type in lists.',
 }
 
+type InteractionTypeSortKey = 'interactionType' | 'multiHost' | 'roundRobin' | 'sort' | 'status'
+
+const interactionTypeSortAccessors: SortAccessorMap<EventInteractionType, InteractionTypeSortKey> = {
+  interactionType: (interactionType) => interactionType.name,
+  multiHost: (interactionType) => interactionType.supportsMultipleHosts,
+  roundRobin: (interactionType) => interactionType.supportsRoundRobin,
+  sort: (interactionType) => interactionType.sortOrder,
+  status: (interactionType) => interactionType.isActive,
+}
+
 export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableProps) {
   const [editing, setEditing] = useState<EventInteractionType | null>(null)
+  const { sortedItems: sortedInteractionTypes, sortConfig, requestSort } = useTableSort(interactionTypes, interactionTypeSortAccessors)
 
   return (
     <>
@@ -38,25 +50,34 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
         <Table>
           <TableHead>
             <TableRow>
-              {['Interaction Type', 'Multi-Host', 'Round Robin', 'Sort', 'Status', 'Actions'].map(
-                (col) => (
-                  <TableCell
-                    key={col}
-                    sx={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      color: 'text.secondary',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    <Stack direction="row" alignItems="center">
-                      {col}
-                      {headerTooltips[col] && <InfoTooltip title={headerTooltips[col]} />}
-                    </Stack>
-                  </TableCell>
-                ),
-              )}
+              {[
+                { label: 'Interaction Type', sortKey: 'interactionType' as const, tooltip: headerTooltips['Interaction Type'] },
+                { label: 'Multi-Host', sortKey: 'multiHost' as const, tooltip: headerTooltips['Multi-Host'] },
+                { label: 'Round Robin', sortKey: 'roundRobin' as const, tooltip: headerTooltips['Round Robin'] },
+                { label: 'Sort', sortKey: 'sort' as const, tooltip: headerTooltips.Sort },
+                { label: 'Status', sortKey: 'status' as const },
+              ].map((col) => (
+                <SortableHeaderCell
+                  key={col.sortKey}
+                  label={col.label}
+                  sortKey={col.sortKey}
+                  activeSortKey={sortConfig?.key ?? null}
+                  direction={sortConfig?.direction ?? 'asc'}
+                  onSort={requestSort}
+                  tooltip={col.tooltip}
+                />
+              ))}
+              <TableCell
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -69,7 +90,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                 </TableCell>
               </TableRow>
             ) : (
-              interactionTypes.map((t) => (
+              sortedInteractionTypes.map((t) => (
                 <TableRow key={t.id} hover>
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">

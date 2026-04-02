@@ -192,14 +192,44 @@ const listBookings = async (filters: {
     eventId?: string;
     hostUserId?: string;
     status?: BookingStatus;
+    search?: string;
 }): Promise<SafeBooking[]> => {
+    const normalizedSearch = filters.search?.trim();
+    const hasSearch = Boolean(normalizedSearch);
+
+    const where: Prisma.BookingWhereInput = {
+        teamId: filters.teamId,
+        eventId: filters.eventId,
+        hostUserId: filters.hostUserId,
+        status: filters.status,
+        ...(hasSearch
+            ? {
+                OR: [
+                    {
+                        studentName: {
+                            contains: normalizedSearch,
+                            mode: "insensitive",
+                        },
+                    },
+                    {
+                        studentEmail: {
+                            contains: normalizedSearch,
+                            mode: "insensitive",
+                        },
+                    },
+                    {
+                        id: {
+                            contains: normalizedSearch,
+                            mode: "insensitive",
+                        },
+                    },
+                ],
+            }
+            : {}),
+    };
+
     return prisma.booking.findMany({
-        where: {
-            teamId: filters.teamId,
-            eventId: filters.eventId,
-            hostUserId: filters.hostUserId,
-            status: filters.status
-        },
+        where,
         include: bookingInclude,
         orderBy: { startTime: 'desc' }
     });

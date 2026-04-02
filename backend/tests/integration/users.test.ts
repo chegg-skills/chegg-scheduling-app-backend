@@ -98,6 +98,27 @@ describe("GET /api/users", () => {
     expect(res.body.data.pagination.pageSize).toBe(2);
   });
 
+  it("supports partial search by name", async () => {
+    const res = await request(app)
+      .get("/api/users?search=team")
+      .set("Authorization", `Bearer ${superAdminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data.users)).toBe(true);
+    expect(res.body.data.users.some((user: { email: string }) => user.email === "teamadmin@users.com")).toBe(true);
+  });
+
+  it("supports partial search by email", async () => {
+    const res = await request(app)
+      .get("/api/users?search=coach@users")
+      .set("Authorization", `Bearer ${superAdminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.users).toHaveLength(1);
+    expect(res.body.data.users[0].email).toBe("coach@users.com");
+  });
+
+
   it("falls back to defaults for invalid pagination params", async () => {
     const res = await request(app)
       .get("/api/users?page=abc&pageSize=-5")

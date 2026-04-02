@@ -13,6 +13,7 @@ export function useUsers(params?: ListUsersParams) {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: () => usersApi.list(params).then((r) => r.data.data),
+    placeholderData: (previousData) => previousData,
   })
 }
 

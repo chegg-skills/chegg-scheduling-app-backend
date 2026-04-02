@@ -15,16 +15,29 @@ import CircularProgress from '@mui/material/CircularProgress'
 import type { SafeUser, UserRole } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
+import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { UserForm } from './UserForm'
 import { UserDetailView } from './UserDetailView'
 import { useDeactivateUser, useUser } from '@/hooks/useUsers'
 import { useConfirm } from '@/context/ConfirmContext'
 import { RowActions } from '@/components/shared/RowActions'
+import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 
 interface UserTableProps {
   users: SafeUser[]
   currentUserRole: UserRole
   currentUserId: string
+}
+
+type UserSortKey = 'user' | 'role' | 'country' | 'timezone' | 'language' | 'status'
+
+const userSortAccessors: SortAccessorMap<SafeUser, UserSortKey> = {
+  user: (user) => `${user.firstName} ${user.lastName}`,
+  role: (user) => user.role,
+  country: (user) => user.country ?? '',
+  timezone: (user) => user.timezone,
+  language: (user) => user.preferredLanguage ?? '',
+  status: (user) => user.isActive,
 }
 
 function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => void }) {
@@ -70,6 +83,7 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const { mutate: deactivate } = useDeactivateUser()
   const { confirm } = useConfirm()
+  const { sortedItems: sortedUsers, sortConfig, requestSort } = useTableSort(users, userSortAccessors)
 
   return (
     <>
@@ -77,18 +91,30 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
         <Table>
           <TableHead>
             <TableRow>
-              {['User', 'Role', 'Country', 'Timezone', 'Language', 'Status', 'Actions'].map((col) => (
-                <TableCell
-                  key={col}
-                  sx={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary', letterSpacing: '0.05em' }}
-                >
-                  {col}
-                </TableCell>
+              {[
+                { label: 'User', sortKey: 'user' as const },
+                { label: 'Role', sortKey: 'role' as const },
+                { label: 'Country', sortKey: 'country' as const },
+                { label: 'Timezone', sortKey: 'timezone' as const },
+                { label: 'Language', sortKey: 'language' as const },
+                { label: 'Status', sortKey: 'status' as const },
+              ].map((col) => (
+                <SortableHeaderCell
+                  key={col.sortKey}
+                  label={col.label}
+                  sortKey={col.sortKey}
+                  activeSortKey={sortConfig?.key ?? null}
+                  direction={sortConfig?.direction ?? 'asc'}
+                  onSort={requestSort}
+                />
               ))}
+              <TableCell>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user) => (
+            {sortedUsers.map((user) => (
               <TableRow key={user.id} hover>
                 <TableCell>
                   <Stack direction="row" spacing={1.5} alignItems="center">

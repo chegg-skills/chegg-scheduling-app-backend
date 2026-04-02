@@ -354,6 +354,7 @@ export interface ListBookingsFilters {
   eventId?: string
   hostUserId?: string
   status?: BookingStatus
+  search?: string
 }
 
 export interface UpdateBookingStatusDto {

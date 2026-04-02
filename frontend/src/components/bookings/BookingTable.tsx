@@ -22,12 +22,24 @@ import { BookingStatusBadge } from './BookingStatusBadge'
 import { useConfirm } from '@/context/ConfirmContext'
 import { useUpdateBookingStatus } from '@/hooks/useBookings'
 import { useTheme } from '@mui/material/styles'
+import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
+import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 
 interface RowProps {
     booking: Booking
     onUpdateStatus: (id: string, status: BookingStatus) => void
     isExpanded: boolean
     onToggle: () => void
+}
+
+type BookingSortKey = 'student' | 'event' | 'host' | 'date' | 'status'
+
+const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
+    student: (booking) => booking.studentName,
+    event: (booking) => booking.event?.name ?? '',
+    host: (booking) => booking.host ? `${booking.host.firstName} ${booking.host.lastName}` : '',
+    date: (booking) => new Date(booking.startTime),
+    status: (booking) => booking.status,
 }
 
 function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps) {
@@ -57,7 +69,6 @@ function BookingRow({ booking, onUpdateStatus, isExpanded, onToggle }: RowProps)
             <TableRow
                 hover
                 sx={{
-                    '& > *': { borderBottom: 'unset' },
                     bgcolor: isExpanded ? alpha(theme.palette.secondary.main, 0.03) : 'inherit',
                     transition: 'background-color 0.2s ease'
                 }}
@@ -240,6 +251,7 @@ interface Props {
 export function BookingTable({ bookings }: Props) {
     const { mutate: updateStatus } = useUpdateBookingStatus()
     const [expandedId, setExpandedId] = useState<string | null>(null)
+    const { sortedItems: sortedBookings, sortConfig, requestSort } = useTableSort(bookings, bookingSortAccessors)
 
     const handleToggle = (id: string) => {
         setExpandedId(prev => prev === id ? null : id)
@@ -259,31 +271,37 @@ export function BookingTable({ bookings }: Props) {
                 <TableHead>
                     <TableRow>
                         {[
-                            { label: 'Student', width: '25%' },
-                            { label: 'Event', width: '20%' },
-                            { label: 'Host', width: '20%' },
-                            { label: 'Date / Time', width: '20%' },
-                            { label: 'Status', width: '15%' },
-                            { label: '', width: 50 },
+                            { label: 'Student', sortKey: 'student' as const, width: '25%' },
+                            { label: 'Event', sortKey: 'event' as const, width: '20%' },
+                            { label: 'Host', sortKey: 'host' as const, width: '20%' },
+                            { label: 'Date / Time', sortKey: 'date' as const, width: '20%' },
+                            { label: 'Status', sortKey: 'status' as const, width: '15%' },
                         ].map((col) => (
-                            <TableCell
-                                key={col.label}
-                                sx={{
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    textTransform: 'uppercase',
-                                    color: 'text.secondary',
-                                    letterSpacing: '0.05em',
-                                    width: col.width,
-                                }}
-                            >
-                                {col.label}
-                            </TableCell>
+                            <SortableHeaderCell
+                                key={col.sortKey}
+                                label={col.label}
+                                sortKey={col.sortKey}
+                                activeSortKey={sortConfig?.key ?? null}
+                                direction={sortConfig?.direction ?? 'asc'}
+                                onSort={requestSort}
+                                width={col.width}
+                            />
                         ))}
+                        <TableCell
+                            align="right"
+                            sx={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                color: 'text.secondary',
+                                letterSpacing: '0.05em',
+                                width: 50,
+                            }}
+                        />
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {bookings.map((booking) => (
+                    {sortedBookings.map((booking) => (
                         <BookingRow
                             key={booking.id}
                             booking={booking}

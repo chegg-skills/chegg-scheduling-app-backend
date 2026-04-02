@@ -15,6 +15,7 @@ import {
 type ListUsersOptions = {
   page?: number;
   pageSize?: number;
+  search?: string;
 };
 
 type UpdateUserInput = {
@@ -60,14 +61,43 @@ const listUsers = async (
   const page = Math.max(1, options.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
   const skip = (page - 1) * pageSize;
+  const searchTerms = options.search?.trim().split(/\s+/).filter(Boolean) ?? [];
+
+  const where: Prisma.UserWhereInput = searchTerms.length
+    ? {
+        AND: searchTerms.map((term) => ({
+          OR: [
+            {
+              firstName: {
+                contains: term,
+                mode: "insensitive",
+              },
+            },
+            {
+              lastName: {
+                contains: term,
+                mode: "insensitive",
+              },
+            },
+            {
+              email: {
+                contains: term,
+                mode: "insensitive",
+              },
+            },
+          ],
+        })),
+      }
+    : {};
 
   const [users, total] = await prisma.$transaction([
     prisma.user.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       skip,
       take: pageSize,
     }),
-    prisma.user.count(),
+    prisma.user.count({ where }),
   ]);
 
   return {

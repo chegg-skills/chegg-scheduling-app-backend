@@ -46,7 +46,7 @@ export const getBooking = async (req: Request, res: Response) => {
 };
 
 export const listBookings = async (req: Request, res: Response) => {
-    const { teamId, eventId, hostUserId, status } = req.query;
+    const { teamId, eventId, hostUserId, status, search } = req.query;
     const caller = res.locals.authUser as CallerContext;
 
     let targetHostId = getStringParam(hostUserId);
@@ -60,7 +60,8 @@ export const listBookings = async (req: Request, res: Response) => {
         teamId: targetTeamId,
         eventId: getStringParam(eventId),
         hostUserId: targetHostId,
-        status: status as BookingStatus | undefined
+        status: status as BookingStatus | undefined,
+        search: getStringParam(search)
     });
 
     return sendSuccessResponse(

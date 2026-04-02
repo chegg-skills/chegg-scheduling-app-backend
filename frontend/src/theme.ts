@@ -245,5 +245,78 @@ export const appTheme = createTheme({
         },
       },
     },
+    MuiTable: {
+      styleOverrides: {
+        root: {
+          borderCollapse: 'separate',
+          borderSpacing: 0,
+        },
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          backgroundColor: alpha(cheggOrange, 0.03),
+          '& .MuiTableCell-root': {
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            fontSize: '0.75rem',
+            letterSpacing: '0.05em',
+            color: '#525252',
+            padding: '16px 20px',
+            borderBottom: `2px solid ${softBorder}`,
+          },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: '16px 20px',
+          borderColor: softBorder,
+          fontSize: '0.875rem',
+          color: '#1a1a1a',
+          '&:first-of-type': {
+            paddingLeft: '24px',
+          },
+          '&:last-of-type': {
+            paddingRight: '24px',
+          },
+        },
+        body: {
+          fontWeight: 400,
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          transition: 'all 0.2s ease',
+          '&.MuiTableRow-hover:hover': {
+            backgroundColor: alpha(indigoPurple, 0.03),
+          },
+          '&:last-child .MuiTableCell-root': {
+            borderBottom: 0,
+          },
+        },
+      },
+    },
+    MuiTableSortLabel: {
+      styleOverrides: {
+        root: {
+          '& .MuiTableSortLabel-icon': {
+            opacity: 0.4,
+            transition: 'opacity 0.2s ease, transform 0.2s ease',
+          },
+          '&.Mui-active .MuiTableSortLabel-icon': {
+            opacity: 1,
+            color: cheggOrange,
+          },
+          '&:hover .MuiTableSortLabel-icon': {
+            opacity: 0.8,
+          },
+        },
+      },
+    },
   },
 })

@@ -18,11 +18,12 @@ import Tooltip from '@mui/material/Tooltip'
 import type { Event } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
+import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { EventForm } from './EventForm'
 import { useDeleteEvent, useUpdateEvent } from '@/hooks/useEvents'
 import { useConfirm } from '@/context/ConfirmContext'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { RowActions } from '@/components/shared/RowActions'
+import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 
 interface EventTableProps {
   events: Event[]
@@ -39,11 +40,23 @@ const headerTooltips: Record<string, string> = {
   Strategy: 'How hosts are assigned (Direct or Round Robin).',
 }
 
+type EventSortKey = 'event' | 'offering' | 'duration' | 'hosts' | 'strategy' | 'status'
+
+const eventSortAccessors: SortAccessorMap<Event, EventSortKey> = {
+  event: (event) => event.name,
+  offering: (event) => event.offering?.name ?? '',
+  duration: (event) => event.durationSeconds,
+  hosts: (event) => event.hosts.length,
+  strategy: (event) => event.assignmentStrategy,
+  status: (event) => event.isActive,
+}
+
 export function EventTable({ events, teamId }: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()
   const { confirm } = useConfirm()
+  const { sortedItems: sortedEvents, sortConfig, requestSort } = useTableSort(events, eventSortAccessors)
 
   return (
     <>
@@ -51,25 +64,27 @@ export function EventTable({ events, teamId }: EventTableProps) {
         <Table>
           <TableHead>
             <TableRow>
-              {['Event', 'Offering', 'Duration', 'Hosts', 'Strategy', 'Status', 'Actions'].map(
-                (col) => (
-                  <TableCell
-                    key={col}
-                    sx={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      color: 'text.secondary',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    <Stack direction="row" alignItems="center">
-                      {col}
-                      {headerTooltips[col] && <InfoTooltip title={headerTooltips[col]} />}
-                    </Stack>
-                  </TableCell>
-                ),
-              )}
+              {[
+                { label: 'Event', sortKey: 'event' as const },
+                { label: 'Offering', sortKey: 'offering' as const, tooltip: headerTooltips.Offering },
+                { label: 'Duration', sortKey: 'duration' as const },
+                { label: 'Hosts', sortKey: 'hosts' as const },
+                { label: 'Strategy', sortKey: 'strategy' as const, tooltip: headerTooltips.Strategy },
+                { label: 'Status', sortKey: 'status' as const },
+              ].map((col) => (
+                <SortableHeaderCell
+                  key={col.sortKey}
+                  label={col.label}
+                  sortKey={col.sortKey}
+                  activeSortKey={sortConfig?.key ?? null}
+                  direction={sortConfig?.direction ?? 'asc'}
+                  onSort={requestSort}
+                  tooltip={col.tooltip}
+                />
+              ))}
+              <TableCell>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -82,7 +97,7 @@ export function EventTable({ events, teamId }: EventTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              events.map((event) => (
+              sortedEvents.map((event) => (
                 <TableRow key={event.id} hover>
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">

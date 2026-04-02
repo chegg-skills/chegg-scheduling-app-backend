@@ -12,6 +12,7 @@ export function useBookings(filters: ListBookingsFilters = {}) {
     return useQuery({
         queryKey: bookingKeys.list(filters),
         queryFn: () => bookingsApi.list(filters).then(r => r.data.data?.bookings ?? []),
+        placeholderData: (previousData) => previousData,
     })
 }
 

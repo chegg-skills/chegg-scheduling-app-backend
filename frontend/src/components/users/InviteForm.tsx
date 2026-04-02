@@ -22,11 +22,12 @@ type FormValues = z.infer<typeof schema>
 
 interface InviteFormProps {
   onSuccess?: () => void
+  onCancel?: () => void
 }
 
 const ROLES: UserRole[] = ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH']
 
-export function InviteForm({ onSuccess }: InviteFormProps) {
+export function InviteForm({ onSuccess, onCancel }: InviteFormProps) {
   const { mutate, isPending, error } = useCreateInvite()
 
   const {
@@ -73,7 +74,10 @@ export function InviteForm({ onSuccess }: InviteFormProps) {
           </Select>
         </FormField>
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
+        <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ pt: 1 }}>
+          <Button variant="secondary" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
             Send invite
           </Button>

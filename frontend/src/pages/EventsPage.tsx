@@ -1,6 +1,5 @@
 import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { useTeams } from '@/hooks/useTeams';
@@ -21,27 +20,79 @@ export function EventsPage() {
 
   return (
     <Box>
-      <PageHeader title="Events" subtitle="View events by team" />
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="subtitle1">Select Team:</Typography>
-        <Box sx={{ minWidth: 220 }}>
-          <Select
-            value={selectedTeamId}
-            onChange={e => setSelectedTeamId(e.target.value as string)}
-            displayEmpty
-            inputProps={{ 'aria-label': 'Select team' }}
-          >
-            <MenuItem value="">
-              Choose a team...
-            </MenuItem>
-            {teamsData?.teams?.map(team => (
-              <MenuItem key={team.id} value={team.id}>
-                {team.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
-      </Stack>
+      <PageHeader
+        title="Events"
+        subtitle="View events by team"
+        actions={
+          <Box sx={{ width: { xs: '100%', sm: 280 } }}>
+            <Box sx={{ position: 'relative', pt: 1 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 12,
+                  zIndex: 1,
+                  px: 0.75,
+                  backgroundColor: 'background.paper',
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  borderRadius: 1,
+                  lineHeight: 1.2,
+                }}
+              >
+                Search Team
+              </Typography>
+
+              <Select
+                value={selectedTeamId}
+                onChange={e => setSelectedTeamId(e.target.value as string)}
+                displayEmpty
+                inputProps={{ 'aria-label': 'Select team' }}
+                renderValue={value => {
+                  if (!value) {
+                    return <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500 }}>Choose a team...</Box>;
+                  }
+
+                  return teamsData?.teams?.find(team => team.id === value)?.name ?? 'Choose a team...';
+                }}
+                sx={{
+                  minWidth: { xs: '100%', sm: 280 },
+                  backgroundColor: 'background.paper',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: selectedTeamId ? 'primary.main' : '#D9DEE8',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'primary.main',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderWidth: 2,
+                    borderColor: 'primary.main',
+                  },
+                  '& .MuiSelect-select': {
+                    py: 1.25,
+                    fontWeight: 600,
+                  },
+                  '& .MuiSelect-icon': {
+                    color: 'primary.main',
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  Choose a team...
+                </MenuItem>
+                {teamsData?.teams?.map(team => (
+                  <MenuItem key={team.id} value={team.id}>
+                    {team.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          </Box>
+        }
+      />
       {selectedTeamId === '' ? (
         <Typography variant="body2" color="text.secondary">Please select a team to view its events.</Typography>
       ) : eventsLoading ? (

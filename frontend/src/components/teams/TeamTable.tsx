@@ -14,14 +14,24 @@ import { Users, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import type { Team } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
+import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { TeamForm } from './TeamForm'
 import { useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
 import { useConfirm } from '@/context/ConfirmContext'
 import { RowActions } from '@/components/shared/RowActions'
+import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 
 interface TeamTableProps {
   teams: Team[]
   canManageTeam: boolean
+}
+
+type TeamSortKey = 'team' | 'description' | 'status'
+
+const teamSortAccessors: SortAccessorMap<Team, TeamSortKey> = {
+  team: (team) => team.name,
+  description: (team) => team.description ?? '',
+  status: (team) => team.isActive,
 }
 
 export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
@@ -29,6 +39,7 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
   const { confirm } = useConfirm()
+  const { sortedItems: sortedTeams, sortConfig, requestSort } = useTableSort(teams, teamSortAccessors)
 
   return (
     <>
@@ -36,24 +47,27 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
         <Table>
           <TableHead>
             <TableRow>
-              {['Team', 'Description', 'Status', 'Actions'].map((col) => (
-                <TableCell
-                  key={col}
-                  sx={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {col}
-                </TableCell>
+              {[
+                { label: 'Team', sortKey: 'team' as const },
+                { label: 'Description', sortKey: 'description' as const },
+                { label: 'Status', sortKey: 'status' as const },
+              ].map((col) => (
+                <SortableHeaderCell
+                  key={col.sortKey}
+                  label={col.label}
+                  sortKey={col.sortKey}
+                  activeSortKey={sortConfig?.key ?? null}
+                  direction={sortConfig?.direction ?? 'asc'}
+                  onSort={requestSort}
+                />
               ))}
+              <TableCell>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {teams.map((team) => (
+            {sortedTeams.map((team) => (
               <TableRow key={team.id} hover>
                 <TableCell>
                   <Stack direction="row" spacing={1.5} alignItems="center">
