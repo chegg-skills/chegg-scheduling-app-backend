@@ -6,9 +6,9 @@ import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
 import { Autocomplete } from '@/components/shared/Autocomplete'
 import { useCountries, useLanguages } from '@/hooks/useConfig'
-import type { UserFormValues } from './UserForm'
+import type { UserFormValues } from './userFormSchema'
 
-interface Props {
+interface UserPersonalFieldsProps {
   register: UseFormRegister<UserFormValues>
   errors: FieldErrors<UserFormValues>
   control: Control<UserFormValues>
@@ -19,7 +19,13 @@ interface Props {
 }
 
 /** Handles firstName, lastName, email, phoneNumber, country, password fields */
-export function UserPersonalFields({ register, errors, control, isCreateMode, disabledFields }: Props) {
+export function UserPersonalFields({
+  register,
+  errors,
+  control,
+  isCreateMode,
+  disabledFields,
+}: UserPersonalFieldsProps) {
   const { data: countries = [] } = useCountries()
   const { data: languages = [] } = useLanguages()
   return (

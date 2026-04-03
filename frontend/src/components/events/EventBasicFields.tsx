@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
 import { Textarea } from '@/components/shared/Textarea'
-import type { EventFormValues } from './EventForm'
+import type { EventFormValues } from './eventFormSchema'
 
 interface Props {
   register: UseFormRegister<EventFormValues>

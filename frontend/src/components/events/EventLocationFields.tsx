@@ -4,7 +4,7 @@ import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
 import { Select } from '@/components/shared/Select'
-import type { EventFormValues } from './EventForm'
+import type { EventFormValues } from './eventFormSchema'
 import type { EventLocationType } from '@/types'
 
 interface Props {

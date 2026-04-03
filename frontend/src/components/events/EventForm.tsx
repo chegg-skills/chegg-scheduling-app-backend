@@ -4,7 +4,6 @@ import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { z } from 'zod'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
 import { Button } from '@/components/shared/Button'
@@ -13,25 +12,10 @@ import { EventBasicFields } from './EventBasicFields'
 import { EventLocationFields } from './EventLocationFields'
 import { EventScheduleFields } from './EventScheduleFields'
 import { EventResourceFields } from './EventResourceFields'
+import { eventFormSchema, getEventFormDefaults, type EventFormValues } from './eventFormSchema'
 import { useCreateEvent, useUpdateEvent } from '@/hooks/useEvents'
 import { extractApiError } from '@/utils/apiError'
 import type { Event } from '@/types'
-
-// ─── Schema ───────────────────────────────────────────────────────────────────
-
-const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  offeringId: z.string().min(1, 'Offering is required'),
-  interactionTypeId: z.string().min(1, 'Interaction type is required'),
-  locationType: z.enum(['VIRTUAL', 'IN_PERSON', 'CUSTOM'] as const),
-  locationValue: z.string().min(1, 'Location is required'),
-  durationMinutes: z.number({ invalid_type_error: 'Enter a valid duration' }).min(1, 'Minimum 1 minute'),
-  assignmentStrategy: z.enum(['DIRECT', 'ROUND_ROBIN'] as const),
-  isActive: z.boolean().default(true),
-})
-
-export type EventFormValues = z.infer<typeof schema>
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -56,29 +40,9 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
     reset,
     formState: { errors },
   } = useForm<EventFormValues>({
-    resolver: zodResolver(schema),
-    values: event ? {
-      name: event.name,
-      description: event.description ?? '',
-      offeringId: event.offeringId,
-      interactionTypeId: event.interactionTypeId,
-      locationType: event.locationType,
-      locationValue: event.locationValue ?? '',
-      durationMinutes: Math.floor(event.durationSeconds / 60),
-      assignmentStrategy: event.assignmentStrategy,
-      isActive: event.isActive,
-    } : undefined,
-    defaultValues: {
-      name: '',
-      description: '',
-      offeringId: '',
-      interactionTypeId: '',
-      locationType: 'VIRTUAL',
-      locationValue: '',
-      durationMinutes: 60,
-      assignmentStrategy: 'DIRECT',
-      isActive: true,
-    },
+    resolver: zodResolver(eventFormSchema),
+    values: getEventFormDefaults(event) as EventFormValues,
+    defaultValues: getEventFormDefaults(),
   })
 
   function onSubmit(values: EventFormValues) {

@@ -85,10 +85,11 @@ export function EventHostManager({ eventId, hosts, teamMembers, assignmentStrate
                 <TableCell
                   key={col}
                   sx={{
-                    fontSize: 12,
+                    fontSize: '0.75rem',
                     fontWeight: 700,
                     textTransform: 'uppercase',
-                    color: 'text.secondary'
+                    color: 'text.secondary',
+                    letterSpacing: '0.05em',
                   }}
                   align={col === 'Actions' ? 'right' : 'left'}
                 >

@@ -5,7 +5,7 @@ import { FormField } from '@/components/shared/FormField'
 import { Select } from '@/components/shared/Select'
 import { useEventOfferings } from '@/hooks/useEventOfferings'
 import { useInteractionTypes } from '@/hooks/useInteractionTypes'
-import type { EventFormValues } from './EventForm'
+import type { EventFormValues } from './eventFormSchema'
 
 interface Props {
   register: UseFormRegister<EventFormValues>
