@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+dotenv.config({ override: true });
 
 type PrismaGlobal = typeof globalThis & {
 	prisma?: PrismaClient;
@@ -12,7 +15,14 @@ const getDatabaseUrl = (): string => {
 		throw new Error("DATABASE_URL is not configured.");
 	}
 
-	return databaseUrl;
+	const trimmedValue = databaseUrl.trim();
+	const isWrappedInMatchingQuotes =
+		(trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) ||
+		(trimmedValue.startsWith("'") && trimmedValue.endsWith("'"));
+
+	return isWrappedInMatchingQuotes
+		? trimmedValue.slice(1, -1)
+		: trimmedValue;
 };
 
 const createPrismaClient = (): PrismaClient => {

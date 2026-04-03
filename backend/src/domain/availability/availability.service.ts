@@ -279,6 +279,7 @@ const getAvailableSlots = async (
   eventId: string,
   startDate: Date,
   endDate: Date,
+  preferredHostId?: string,
 ): Promise<string[]> => {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
@@ -290,6 +291,12 @@ const getAvailableSlots = async (
   });
 
   if (!event || event.hosts.length === 0) return [];
+
+  const eligibleHosts = preferredHostId
+    ? event.hosts.filter((host) => host.hostUserId === preferredHostId)
+    : event.hosts;
+
+  if (eligibleHosts.length === 0) return [];
 
   const slots: string[] = [];
   const durationMs = event.durationSeconds * 1000;
@@ -315,7 +322,7 @@ const getAvailableSlots = async (
 
       // Check if ANY host is available for this specific slot
       // Optimization: We could parallelize this, but let's start simple
-      for (const host of event.hosts) {
+      for (const host of eligibleHosts) {
         if (await isHostAvailable(host.hostUserId, slotStart, slotEnd)) {
           slots.push(slotStart.toISOString());
           break; // One host available is enough for the slot to be shown

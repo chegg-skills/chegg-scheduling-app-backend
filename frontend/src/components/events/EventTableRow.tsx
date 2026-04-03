@@ -11,6 +11,7 @@ import { Calendar, Edit, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import { Badge } from '@/components/shared/Badge'
 import { RowActions } from '@/components/shared/RowActions'
+import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import type { Event } from '@/types'
 import { formatEventDuration } from './eventTableUtils'
 
@@ -107,6 +108,9 @@ export function EventTableRow({
 
       <TableCell>
         <Badge label={event.isActive ? 'Active' : 'Inactive'} variant={event.isActive ? 'green' : 'red'} />
+      </TableCell>
+      <TableCell>
+        <PublicBookingLinkCell type="event" slug={event.publicBookingSlug} isActive={event.isActive} />
       </TableCell>
 
       <TableCell>

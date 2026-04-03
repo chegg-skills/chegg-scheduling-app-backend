@@ -14,6 +14,7 @@ import {
   safeUserSelect,
   type CallerContext,
 } from "../../shared/utils/userUtils";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 
 const eventInclude = Prisma.validator<Prisma.EventInclude>()({
   offering: true,
@@ -590,6 +591,7 @@ const buildCreateEventData = (
 
   return {
     name,
+    publicBookingSlug: createPublicBookingSlug(name, "event"),
     description: normalizeOptionalString(payload.description, "description"),
     offering: { connect: { id: offeringId } },
     interactionType: { connect: { id: interactionTypeId } },
@@ -701,7 +703,12 @@ const updateEvent = async (
   };
 
   if (payload.name !== undefined) {
-    updateData.name = normalizeRequiredString(payload.name, "name");
+    const normalizedName = normalizeRequiredString(payload.name, "name");
+    updateData.name = normalizedName;
+
+    if (!existingEvent.publicBookingSlug) {
+      updateData.publicBookingSlug = createPublicBookingSlug(normalizedName, "event");
+    }
   }
 
   if (payload.description !== undefined) {

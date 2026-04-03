@@ -5,6 +5,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { prisma } from "../../shared/db/prisma";
 import { SALT_ROUNDS, type SafeUser, normalizeEmail, validateTimezone, toSafeUser } from "../../shared/utils/userUtils";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 
 const MAX_FAILED_LOGIN_ATTEMPTS = Number(
 	process.env.MAX_FAILED_LOGIN_ATTEMPTS ?? 5
@@ -87,6 +88,7 @@ const register = async (
 				firstName,
 				lastName,
 				email: normalizedEmail,
+				publicBookingSlug: createPublicBookingSlug(`${firstName} ${lastName}`, 'coach'),
 				password: hashedPassword,
 				phoneNumber: payload.phoneNumber?.trim(),
 				avatarUrl: payload.avatarUrl?.trim(),

@@ -110,9 +110,23 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         throw new ErrorHandler(StatusCodes.SERVICE_UNAVAILABLE, "No active hosts available for this event.");
     }
 
-    if (event.assignmentStrategy === AssignmentStrategy.DIRECT) {
+    if (preferredHostId) {
+        const host = activeHosts.find((candidateHost) => candidateHost.hostUserId === preferredHostId);
+
+        if (!host) {
+            throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Specified host is not eligible for this event.");
+        }
+
+        const available = await isHostAvailable(preferredHostId, start, end);
+        if (!available) {
+            throw new ErrorHandler(StatusCodes.CONFLICT, "The selected host is not available at this time.");
+        }
+
+        assignedHostId = preferredHostId;
+        meetingJoinUrl = host.hostUser.zoomIsvLink ?? null;
+    } else if (event.assignmentStrategy === AssignmentStrategy.DIRECT) {
         // Direct Assignment
-        const targetHostId = preferredHostId || activeHosts[0].hostUserId;
+        const targetHostId = activeHosts[0].hostUserId;
         const host = activeHosts.find(h => h.hostUserId === targetHostId);
 
         if (!host) {

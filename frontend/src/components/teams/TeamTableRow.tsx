@@ -7,6 +7,7 @@ import { Edit, Eye, EyeOff, Trash2, Users } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import { Badge } from '@/components/shared/Badge'
 import { RowActions } from '@/components/shared/RowActions'
+import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import type { Team } from '@/types'
 
 interface TeamTableRowProps {
@@ -64,6 +65,9 @@ export function TeamTableRow({
 
       <TableCell>
         <Badge label={team.isActive ? 'Active' : 'Inactive'} variant={team.isActive ? 'green' : 'red'} />
+      </TableCell>
+      <TableCell>
+        <PublicBookingLinkCell type="team" slug={team.publicBookingSlug} isActive={team.isActive} />
       </TableCell>
 
       <TableCell>

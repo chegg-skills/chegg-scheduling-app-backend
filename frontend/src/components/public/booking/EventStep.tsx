@@ -5,12 +5,15 @@ import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import { Award, ChevronRight } from 'lucide-react'
+import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { PageSpinner } from '@/components/shared/Spinner'
-import type { Event } from '@/types'
+import type { PublicEventSummary } from '@/types'
 
 interface EventStepProps {
-    events: Pick<Event, 'id' | 'name' | 'description' | 'durationSeconds' | 'locationType'>[]
+    events: PublicEventSummary[]
     loading: boolean
+    error?: unknown
+    emptyMessage?: string
     selectedEventId: string | null
     onSelect: (eventId: string) => void
 }
@@ -18,10 +21,16 @@ interface EventStepProps {
 export function EventStep({
     events,
     loading,
+    error,
+    emptyMessage = 'No events are available right now.',
     selectedEventId,
     onSelect
 }: EventStepProps) {
     if (loading) return <PageSpinner />
+    if (error) return <ErrorAlert message="Failed to load events." />
+    if (events.length === 0) {
+        return <Typography color="text.secondary">{emptyMessage}</Typography>
+    }
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

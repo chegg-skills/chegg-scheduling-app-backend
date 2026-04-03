@@ -163,6 +163,7 @@ export function EventDetailPage() {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
+
           <Paper component="section" variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
             <Typography
               variant="subtitle2"

@@ -4,7 +4,10 @@ const path = require("path");
 const { execSync } = require("child_process");
 const { Client } = require("pg");
 
-require("dotenv").config({ path: path.resolve(__dirname, "../../.env.test") });
+require("dotenv").config({
+  path: path.resolve(__dirname, "../../.env.test"),
+  override: true,
+});
 
 module.exports = async function globalSetup() {
   const dbUrl = process.env.DATABASE_URL;

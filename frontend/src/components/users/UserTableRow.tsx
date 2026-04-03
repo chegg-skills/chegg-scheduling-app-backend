@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/shared/Badge'
 import { RowActions } from '@/components/shared/RowActions'
+import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import type { SafeUser } from '@/types'
 import { getUserRoleBadgeProps, getUserStatusBadgeProps } from './userTableUtils'
 
@@ -68,6 +69,15 @@ export function UserTableRow({
         <Badge {...getUserStatusBadgeProps(user.isActive)} />
       </TableCell>
       <TableCell>
+        {user.role === 'COACH' ? (
+          <PublicBookingLinkCell type="coach" slug={user.publicBookingSlug} isActive={user.isActive} />
+        ) : (
+          <Typography variant="caption" color="text.disabled">
+            N/A
+          </Typography>
+        )}
+      </TableCell>
+      <TableCell>
         <RowActions
           actions={[
             {
@@ -82,13 +92,13 @@ export function UserTableRow({
             },
             ...(canDeactivate
               ? [
-                  {
-                    label: 'Deactivate',
-                    icon: <Trash2 size={16} />,
-                    color: 'error.main',
-                    onClick: () => onDeactivate(user),
-                  },
-                ]
+                {
+                  label: 'Deactivate',
+                  icon: <Trash2 size={16} />,
+                  color: 'error.main',
+                  onClick: () => onDeactivate(user),
+                },
+              ]
               : []),
           ]}
         />

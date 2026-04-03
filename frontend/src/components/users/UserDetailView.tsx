@@ -45,6 +45,7 @@ export function UserDetailView({ user }: UserDetailViewProps) {
     return (
         <Box>
             <UserProfileHeader user={user} />
+
             <Tabs
                 value={tabValue}
                 onChange={handleTabChange}

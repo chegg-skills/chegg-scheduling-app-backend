@@ -1,7 +1,7 @@
 import type { SafeUser, UserRole } from '@/types'
 import type { SortAccessorMap } from '@/hooks/useTableSort'
 
-export type UserSortKey = 'user' | 'role' | 'country' | 'timezone' | 'language' | 'status'
+export type UserSortKey = 'user' | 'role' | 'country' | 'timezone' | 'language' | 'status' | 'bookingLink'
 
 export const userSortAccessors: SortAccessorMap<SafeUser, UserSortKey> = {
   user: (user) => `${user.firstName} ${user.lastName}`,
@@ -10,6 +10,7 @@ export const userSortAccessors: SortAccessorMap<SafeUser, UserSortKey> = {
   timezone: (user) => user.timezone,
   language: (user) => user.preferredLanguage ?? '',
   status: (user) => user.isActive,
+  bookingLink: () => '',
 }
 
 export const userTableColumns: Array<{ label: string; sortKey: UserSortKey }> = [
@@ -19,6 +20,7 @@ export const userTableColumns: Array<{ label: string; sortKey: UserSortKey }> = 
   { label: 'Timezone', sortKey: 'timezone' },
   { label: 'Language', sortKey: 'language' },
   { label: 'Status', sortKey: 'status' },
+  { label: 'Booking Link', sortKey: 'bookingLink' },
 ]
 
 export function getUserStatusBadgeProps(isActive: boolean) {

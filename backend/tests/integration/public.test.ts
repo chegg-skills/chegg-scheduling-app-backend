@@ -5,8 +5,12 @@ import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
 let superAdminToken: string;
 let teamAdminId: string;
+let coachId: string;
 let teamId: string;
+let teamSlug: string;
 let eventId: string;
+let eventSlug: string;
+let coachSlug: string;
 
 beforeAll(async () => {
     await clearTables();
@@ -55,12 +59,28 @@ beforeAll(async () => {
     });
     teamAdminId = teamAdmin.id;
 
+    const coach = await registerUser(superAdminToken, {
+        firstName: "Public",
+        lastName: "Coach",
+        email: "coach@public.com",
+        password: "CoachPass1234",
+        role: "COACH",
+    });
+    coachId = coach.id;
+    coachSlug = coach.publicBookingSlug ?? "";
+
     // Create a team
     const teamRes = await request(app)
         .post("/api/teams")
         .set("Authorization", `Bearer ${superAdminToken}`)
         .send({ name: "Public Team", description: "Discoverable team", teamLeadId: teamAdminId });
     teamId = teamRes.body.data.id;
+    teamSlug = teamRes.body.data.publicBookingSlug;
+
+    await request(app)
+        .post(`/api/teams/${teamId}/members`)
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({ userId: coachId });
 
     // Create an event via API
     const eventRes = await request(app)
@@ -75,10 +95,16 @@ beforeAll(async () => {
             isActive: true,
             offeringId,
             interactionTypeId,
-            hostUserIds: [teamAdminId]
+            hostUserIds: [coachId]
         });
 
     eventId = eventRes.body.data.id;
+    eventSlug = eventRes.body.data.publicBookingSlug;
+
+    await request(app)
+        .put(`/api/events/${eventId}/hosts`)
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({ hosts: [{ userId: coachId }] });
 });
 
 afterAll(clearTables);
@@ -103,6 +129,48 @@ describe("Public API", () => {
             expect(res.body.data.events).toBeDefined();
             expect(res.body.data.events.length).toBeGreaterThanOrEqual(1);
             expect(res.body.data.events[0].name).toBe("Public Intro");
+        });
+    });
+
+    describe("slug-based public booking endpoints", () => {
+        it("should resolve a team by public slug", async () => {
+            const res = await request(app).get(`/api/public/teams/slug/${teamSlug}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.team.publicBookingSlug).toBe(teamSlug);
+        });
+
+        it("should list a team's public events by slug", async () => {
+            const res = await request(app).get(`/api/public/teams/slug/${teamSlug}/events`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.team.publicBookingSlug).toBe(teamSlug);
+            expect(res.body.data.events.some((event: { id: string }) => event.id === eventId)).toBe(true);
+        });
+
+        it("should resolve an event by public slug", async () => {
+            const res = await request(app).get(`/api/public/events/slug/${eventSlug}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.event.publicBookingSlug).toBe(eventSlug);
+            expect(res.body.data.event.teamId).toBe(teamId);
+        });
+
+        it("should resolve a coach by public slug and list their public events", async () => {
+            const coachRes = await request(app).get(`/api/public/coaches/slug/${coachSlug}`);
+            const eventsRes = await request(app).get(`/api/public/coaches/slug/${coachSlug}/events`);
+
+            expect(coachRes.status).toBe(200);
+            expect(coachRes.body.success).toBe(true);
+            expect(coachRes.body.data.coach.publicBookingSlug).toBe(coachSlug);
+
+            expect(eventsRes.status).toBe(200);
+            expect(eventsRes.body.success).toBe(true);
+            expect(eventsRes.body.data.coach.publicBookingSlug).toBe(coachSlug);
+            expect(eventsRes.body.data.events.some((event: { id: string }) => event.id === eventId)).toBe(true);
         });
     });
 

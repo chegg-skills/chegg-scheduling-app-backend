@@ -2,6 +2,7 @@ import { Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import type { Team } from "@prisma/client";
 
@@ -74,6 +75,7 @@ const createTeam = async (
       const newTeam = await tx.team.create({
         data: {
           name: normalizeName(name),
+          publicBookingSlug: createPublicBookingSlug(name, "team"),
           description: description?.trim() || null,
           teamLeadId,
           createdById: caller.id,
@@ -163,6 +165,7 @@ const updateTeam = async (
   teamId: string,
   payload: UpdateTeamInput,
 ): Promise<SafeTeam> => {
+  const existingTeam = await readTeam(teamId);
   if (!teamId?.trim()) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
   }
@@ -175,6 +178,10 @@ const updateTeam = async (
       throw new ErrorHandler(StatusCodes.BAD_REQUEST, "name cannot be empty.");
     }
     updateData.name = normalizeName(value);
+
+    if (!existingTeam.publicBookingSlug) {
+      updateData.publicBookingSlug = createPublicBookingSlug(value, "team");
+    }
   }
 
   if (payload.description !== undefined) {

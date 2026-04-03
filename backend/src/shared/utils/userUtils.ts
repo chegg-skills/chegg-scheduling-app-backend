@@ -13,6 +13,7 @@ export type CallerContext = {
 
 export const safeUserSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
+  publicBookingSlug: true,
   firstName: true,
   lastName: true,
   email: true,

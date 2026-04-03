@@ -6,6 +6,7 @@ export interface TestUser {
   id: string;
   email: string;
   role: string;
+  publicBookingSlug?: string | null;
 }
 
 /** Bootstrap the very first SUPER_ADMIN on an empty database. */
@@ -34,6 +35,7 @@ export const bootstrapAdmin = async (
     id: res.body.data.user.id,
     email: res.body.data.user.email,
     role: res.body.data.user.role,
+    publicBookingSlug: res.body.data.user.publicBookingSlug,
   };
 };
 
@@ -64,5 +66,6 @@ export const registerUser = async (
     id: res.body.data.user.id,
     email: res.body.data.user.email,
     role: res.body.data.user.role,
+    publicBookingSlug: res.body.data.user.publicBookingSlug,
   };
 };

@@ -36,6 +36,11 @@ export function SortableHeaderCell<K extends string>({
       align={align}
       sortDirection={isActive ? direction : false}
       sx={{
+        fontSize: '0.75rem',
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        color: 'text.secondary',
+        letterSpacing: '0.05em',
         width,
         ...sx,
       }}

@@ -16,6 +16,7 @@ export type StatsTimeframe =
 
 export interface SafeUser {
   id: string
+  publicBookingSlug: string | null
   firstName: string
   lastName: string
   email: string
@@ -52,6 +53,7 @@ export interface UserWithDetails extends SafeUser {
 
 export interface Team {
   id: string
+  publicBookingSlug: string | null
   name: string
   description: string | null
   isActive: boolean
@@ -125,6 +127,7 @@ export interface EventHost {
 
 export interface Event {
   id: string
+  publicBookingSlug: string | null
   name: string
   description: string | null
   isActive: boolean
@@ -142,6 +145,14 @@ export interface Event {
   offering: EventOffering
   interactionType: EventInteractionType
   hosts: EventHost[]
+}
+
+export interface PublicTeamSummary extends Pick<Team, 'id' | 'name' | 'description' | 'publicBookingSlug'> {}
+
+export interface PublicCoachSummary extends Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'> {}
+
+export interface PublicEventSummary extends Pick<Event, 'id' | 'name' | 'description' | 'durationSeconds' | 'locationType' | 'teamId' | 'publicBookingSlug'> {
+  team: PublicTeamSummary
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────

@@ -128,7 +128,12 @@ export const router = createBrowserRouter([
   {
     path: "/book",
     element: <PublicLayout />,
-    children: [{ path: "", element: renderLazyPage(PublicBookingPage) }],
+    children: [
+      { path: "", element: renderLazyPage(PublicBookingPage) },
+      { path: "team/:teamSlug", element: renderLazyPage(PublicBookingPage) },
+      { path: "event/:eventSlug", element: renderLazyPage(PublicBookingPage) },
+      { path: "coach/:coachSlug", element: renderLazyPage(PublicBookingPage) },
+    ],
   },
 
   {

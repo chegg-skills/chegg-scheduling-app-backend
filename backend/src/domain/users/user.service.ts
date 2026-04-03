@@ -12,6 +12,7 @@ import {
   validateTimezone,
   validateZoomIsvLink,
 } from "../../shared/utils/userUtils";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 
 type ListUsersOptions = {
   page?: number;
@@ -68,29 +69,29 @@ const listUsers = async (
 
   const where: Prisma.UserWhereInput = searchTerms.length
     ? {
-        AND: searchTerms.map((term) => ({
-          OR: [
-            {
-              firstName: {
-                contains: term,
-                mode: "insensitive",
-              },
+      AND: searchTerms.map((term) => ({
+        OR: [
+          {
+            firstName: {
+              contains: term,
+              mode: "insensitive",
             },
-            {
-              lastName: {
-                contains: term,
-                mode: "insensitive",
-              },
+          },
+          {
+            lastName: {
+              contains: term,
+              mode: "insensitive",
             },
-            {
-              email: {
-                contains: term,
-                mode: "insensitive",
-              },
+          },
+          {
+            email: {
+              contains: term,
+              mode: "insensitive",
             },
-          ],
-        })),
-      }
+          },
+        ],
+      })),
+    }
     : {};
 
   const [users, total] = await prisma.$transaction([
@@ -306,6 +307,18 @@ const updateUser = async (
     updateData.isActive = Boolean(payload.isActive);
   }
 
+  // Generate public booking slug if missing for coaches
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, publicBookingSlug: true, firstName: true, lastName: true },
+  });
+
+  if (existingUser && existingUser.role === UserRole.COACH && !existingUser.publicBookingSlug) {
+    const firstName = payload.firstName?.trim() || existingUser.firstName;
+    const lastName = payload.lastName?.trim() || existingUser.lastName;
+    updateData.publicBookingSlug = createPublicBookingSlug(`${firstName} ${lastName}`, 'coach');
+  }
+
   if (Object.keys(updateData).length === 0) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
@@ -460,6 +473,18 @@ const updateMyProfile = async (
       throw new ErrorHandler(StatusCodes.BAD_REQUEST, "timezone cannot be empty.");
     }
     updateData.timezone = validateTimezone(timezone);
+  }
+
+  // Generate public booking slug if missing for coaches
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, publicBookingSlug: true, firstName: true, lastName: true },
+  });
+
+  if (currentUser && currentUser.role === UserRole.COACH && !currentUser.publicBookingSlug) {
+    const firstName = payload.firstName?.trim() || currentUser.firstName;
+    const lastName = payload.lastName?.trim() || currentUser.lastName;
+    updateData.publicBookingSlug = createPublicBookingSlug(`${firstName} ${lastName}`, 'coach');
   }
 
   if (Object.keys(updateData).length === 0) {
