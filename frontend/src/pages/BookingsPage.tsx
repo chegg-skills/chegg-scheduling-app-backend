@@ -126,12 +126,58 @@ export function BookingsPage() {
                     isLoading={statsLoading}
                 />
 
-                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                    <Tabs value={filter} onChange={handleTabChange} aria-label="booking filters">
-                        <Tab label="Upcoming" value="UPCOMING" />
-                        <Tab label="All" value="ALL" />
-                        <Tab label="Cancelled" value="CANCELLED" />
-                        <Tab label="Completed" value="COMPLETED" />
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        mt: 2,
+                        mb: 3,
+                    }}
+                >
+                    <Tabs
+                        value={filter}
+                        onChange={handleTabChange}
+                        aria-label="booking filters"
+                        sx={{
+                            '& .MuiTab-root': {
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                fontSize: '0.875rem',
+                                minHeight: 48,
+                            },
+                            '& .MuiTabs-indicator': {
+                                height: 3,
+                                borderRadius: '3px 3px 0 0',
+                            },
+                        }}
+                    >
+                        <Tab
+                            label="Upcoming"
+                            value="UPCOMING"
+                            icon={<Clock3 size={18} />}
+                            iconPosition="start"
+                        />
+                        <Tab
+                            label="All"
+                            value="ALL"
+                            icon={<CalendarDays size={18} />}
+                            iconPosition="start"
+                        />
+                        <Tab
+                            label="Cancelled"
+                            value="CANCELLED"
+                            icon={<X size={18} />}
+                            iconPosition="start"
+                        />
+                        <Tab
+                            label="Completed"
+                            value="COMPLETED"
+                            icon={<CheckCircle2 size={18} />}
+                            iconPosition="start"
+                        />
                     </Tabs>
                 </Box>
 

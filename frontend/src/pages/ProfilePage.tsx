@@ -22,19 +22,43 @@ export function ProfilePage() {
       <PageHeader title="My Profile" subtitle="Manage your personal information and settings." />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
-          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            mt: 2,
+            mb: 3,
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            aria-label="profile sections"
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                minHeight: 48,
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: '3px 3px 0 0',
+              },
+            }}
+          >
             <Tab
               label="Profile Info"
               icon={<User size={18} />}
               iconPosition="start"
-              sx={{ minHeight: 48, textTransform: 'none', fontWeight: 600 }}
             />
             <Tab
               label="My Availability"
               icon={<Clock size={18} />}
               iconPosition="start"
-              sx={{ minHeight: 48, textTransform: 'none', fontWeight: 600 }}
             />
           </Tabs>
         </Box>

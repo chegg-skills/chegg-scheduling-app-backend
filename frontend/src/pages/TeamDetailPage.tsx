@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import { useParams } from 'react-router-dom'
-import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
 import { useTeamEvents } from '@/hooks/useEvents'
@@ -22,12 +23,37 @@ import { EventTable } from '@/components/events/EventTable'
 import { EventForm } from '@/components/events/EventForm'
 import { RowActions } from '@/components/shared/RowActions'
 
+interface TabPanelProps {
+  children?: React.ReactNode
+  index: number
+  value: number
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`team-tabpanel-${index}`}
+      aria-labelledby={`team-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ py: 3 }}>{children}</Box>
+      )}
+    </div>
+  )
+}
+
 export function TeamDetailPage() {
   const { teamId = '' } = useParams<{ teamId: string }>()
   const { user } = useAuth()
   const [showEditTeam, setShowEditTeam] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
+  const [tabValue, setTabValue] = useState(0)
   const { confirm } = useConfirm()
 
   const { data: team, isLoading: teamLoading, error: teamError } = useTeam(teamId)
@@ -38,6 +64,7 @@ export function TeamDetailPage() {
   const canManageTeam = user?.role === 'SUPER_ADMIN'
 
   const members = membersResponse?.members ?? []
+  const teamEvents = events?.events ?? []
   const existingMemberIds = members.map((member) => member.userId)
 
   if (teamLoading) return <PageSpinner />
@@ -108,13 +135,57 @@ export function TeamDetailPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <Box component="section">
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} mb={2}>
-            <Typography variant="h6">Members</Typography>
-            <Button size="sm" onClick={() => setShowAddMember(true)}>
-              <Plus size={16} /> Add member
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            mt: 2,
+            mb: 3,
+          }}
+        >
+          <Tabs
+            value={tabValue}
+            onChange={(_, newValue: number) => setTabValue(newValue)}
+            aria-label="team detail sections"
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                minHeight: 48,
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: '3px 3px 0 0',
+              },
+            }}
+          >
+            <Tab
+              label={`Members (${members.length})`}
+              icon={<Users size={18} />}
+              iconPosition="start"
+            />
+            <Tab
+              label={`Events (${teamEvents.length})`}
+              icon={<Calendar size={18} />}
+              iconPosition="start"
+            />
+          </Tabs>
+
+          <Box sx={{ mb: 1 }}>
+            <Button
+              size="sm"
+              onClick={() => (tabValue === 0 ? setShowAddMember(true) : setShowCreateEvent(true))}
+            >
+              <Plus size={16} /> {tabValue === 0 ? 'Add member' : 'New event'}
             </Button>
-          </Stack>
+          </Box>
+        </Box>
+
+        <TabPanel value={tabValue} index={0}>
           {membersLoading ? (
             <PageSpinner />
           ) : (
@@ -125,21 +196,15 @@ export function TeamDetailPage() {
               teamLeadId={team.teamLeadId}
             />
           )}
-        </Box>
+        </TabPanel>
 
-        <Box component="section" mt={4}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} mb={2}>
-            <Typography variant="h6">Events</Typography>
-            <Button size="sm" onClick={() => setShowCreateEvent(true)}>
-              <Plus size={16} /> New event
-            </Button>
-          </Stack>
+        <TabPanel value={tabValue} index={1}>
           {eventsLoading ? (
             <PageSpinner />
           ) : (
-            <EventTable events={events?.events ?? []} teamId={teamId} />
+            <EventTable events={teamEvents} teamId={teamId} />
           )}
-        </Box>
+        </TabPanel>
       </Box>
 
       {canManageTeam && (

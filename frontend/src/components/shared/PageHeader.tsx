@@ -56,7 +56,7 @@ export function PageHeader({
                 color: 'text.secondary',
                 border: '1px solid',
                 borderColor: 'divider',
-                borderRadius: '50%', // Circular shape
+                borderRadius: '50%',
                 width: 36,
                 height: 36,
                 '&:hover': {

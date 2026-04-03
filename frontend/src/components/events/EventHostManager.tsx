@@ -27,10 +27,24 @@ interface EventHostManagerProps {
   teamMembers: TeamMember[]
   assignmentStrategy?: string
   title?: string
+  hideHeader?: boolean
+  showAddModalOverride?: boolean
+  onCloseAddModal?: () => void
 }
 
-export function EventHostManager({ eventId, hosts, teamMembers, assignmentStrategy, title }: EventHostManagerProps) {
-  const [showAddModal, setShowAddModal] = useState(false)
+export function EventHostManager({
+  eventId,
+  hosts,
+  teamMembers,
+  assignmentStrategy,
+  title,
+  hideHeader,
+  showAddModalOverride,
+  onCloseAddModal,
+}: EventHostManagerProps) {
+  const [localShowAddModal, setLocalShowAddModal] = useState(false)
+  const showAddModal = showAddModalOverride ?? localShowAddModal
+  const setShowAddModal = onCloseAddModal ?? setLocalShowAddModal
   const { confirm } = useConfirm()
 
   const { data: hostsResponse } = useEventHosts(eventId)
@@ -56,7 +70,11 @@ export function EventHostManager({ eventId, hosts, teamMembers, assignmentStrate
       { hosts: newHosts },
       {
         onSuccess: () => {
-          setShowAddModal(false)
+          if (onCloseAddModal) {
+            onCloseAddModal()
+          } else {
+            setLocalShowAddModal(false)
+          }
         },
       },
     )
@@ -68,14 +86,16 @@ export function EventHostManager({ eventId, hosts, teamMembers, assignmentStrate
     <Stack spacing={2}>
       {error && <ErrorAlert message={extractApiError(error)} />}
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-        {title && <Typography variant="h6">{title} - {activeHosts.length}</Typography>}
-        {eligibleCount > 0 && (
-          <Button size="sm" onClick={() => setShowAddModal(true)}>
-            <Plus size={16} /> Add coach
-          </Button>
-        )}
-      </Stack>
+      {!hideHeader && (
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+          {title && <Typography variant="h6">{title} - {activeHosts.length}</Typography>}
+          {eligibleCount > 0 && (
+            <Button size="sm" onClick={() => setShowAddModal(true)}>
+              <Plus size={16} /> Add coach
+            </Button>
+          )}
+        </Stack>
+      )}
 
       <TableContainer component={Paper} variant="outlined">
         <Table>
@@ -164,7 +184,7 @@ export function EventHostManager({ eventId, hosts, teamMembers, assignmentStrate
       </TableContainer>
       <Modal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => (onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false))}
         title="Add coach to event"
         size="sm"
       >
@@ -174,7 +194,7 @@ export function EventHostManager({ eventId, hosts, teamMembers, assignmentStrate
           assignmentStrategy={assignmentStrategy}
           isPending={setting}
           onAdd={handleAdd}
-          onCancel={() => setShowAddModal(false)}
+          onCancel={() => (onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false))}
         />
       </Modal>
     </Stack>
