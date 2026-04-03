@@ -2,6 +2,7 @@ import { AssignmentStrategy, BookingStatus, Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { normalizeEmail } from "../../shared/utils/userUtils";
 import { isHostAvailable } from "../availability/availability.service";
 
 export type CreateBookingInput = {
@@ -24,6 +25,17 @@ export type UpdateBookingStatusInput = {
 };
 
 export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
+    student: {
+        select: {
+            id: true,
+            fullName: true,
+            email: true,
+            firstBookedAt: true,
+            lastBookedAt: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    },
     team: true,
     event: true,
     host: {
@@ -43,6 +55,52 @@ export type SafeBooking = Prisma.BookingGetPayload<{
     include: typeof bookingInclude;
 }>;
 
+const normalizeStudentName = (studentName: string): string => {
+    const normalizedName = studentName?.trim();
+
+    if (!normalizedName) {
+        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "studentName is required.");
+    }
+
+    return normalizedName;
+};
+
+const normalizeStudentEmailAddress = (studentEmail: string): string => {
+    const normalizedStudentEmail = normalizeEmail(studentEmail ?? "");
+
+    if (!normalizedStudentEmail) {
+        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "studentEmail is required.");
+    }
+
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedStudentEmail);
+    if (!isValidEmail) {
+        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "A valid studentEmail is required.");
+    }
+
+    return normalizedStudentEmail;
+};
+
+const upsertStudentForBooking = async (
+    tx: Prisma.TransactionClient,
+    studentName: string,
+    studentEmail: string,
+    bookedAt: Date,
+) => {
+    return tx.student.upsert({
+        where: { email: studentEmail },
+        update: {
+            fullName: studentName,
+            lastBookedAt: bookedAt,
+        },
+        create: {
+            fullName: studentName,
+            email: studentEmail,
+            firstBookedAt: bookedAt,
+            lastBookedAt: bookedAt,
+        },
+    });
+};
+
 const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> => {
     if (!payload) {
         throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking request body is missing.");
@@ -61,6 +119,9 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         sessionObjectives,
         preferredHostId
     } = payload;
+
+    const normalizedStudentName = normalizeStudentName(studentName);
+    const normalizedStudentEmail = normalizeStudentEmailAddress(studentEmail);
 
     // 1. Validate inputs
     const start = new Date(startTime);
@@ -176,28 +237,41 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         }
     }
 
-    // 4. Create Booking
-    // @ts-ignore - Prisma client types may lag in IDE after schema changes
-    return prisma.booking.create({
-        data: {
-            studentName,
-            studentEmail,
-            teamId,
-            eventId,
-            hostUserId: assignedHostId,
-            startTime: start,
-            endTime: end,
-            timezone: timezone || "UTC",
-            notes,
-            specificQuestion,
-            triedSolutions,
-            usedResources,
-            sessionObjectives,
-            meetingJoinUrl,
-            status: BookingStatus.CONFIRMED,
-        } as any,
-        include: bookingInclude,
-    }) as unknown as Promise<SafeBooking>;
+    if (!assignedHostId) {
+        throw new ErrorHandler(StatusCodes.CONFLICT, "No available hosts found for the requested time slot.");
+    }
+
+    // 4. Create Booking and link the external student identity
+    return prisma.$transaction(async (tx) => {
+        const student = await upsertStudentForBooking(
+            tx,
+            normalizedStudentName,
+            normalizedStudentEmail,
+            start,
+        );
+
+        return tx.booking.create({
+            data: {
+                studentId: student.id,
+                studentName: normalizedStudentName,
+                studentEmail: normalizedStudentEmail,
+                teamId,
+                eventId,
+                hostUserId: assignedHostId,
+                startTime: start,
+                endTime: end,
+                timezone: timezone || "UTC",
+                notes,
+                specificQuestion,
+                triedSolutions,
+                usedResources,
+                sessionObjectives,
+                meetingJoinUrl,
+                status: BookingStatus.CONFIRMED,
+            },
+            include: bookingInclude,
+        });
+    });
 };
 
 const getBooking = async (id: string): Promise<SafeBooking> => {

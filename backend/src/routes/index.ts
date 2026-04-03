@@ -8,6 +8,7 @@ import teamRoutes from "../domain/teams/team.router";
 import configRoutes from "../domain/config/config.router";
 import bookingRoutes from "../domain/bookings/booking.router";
 import publicRoutes from "../domain/public/public.router";
+import studentRoutes from "../domain/students/student.router";
 import v1routes from "./v1/index";
 import { authenticate } from "../shared/middleware/auth";
 
@@ -20,6 +21,7 @@ router.use("/invites", inviteRoutes);
 router.use("/users", usersRoutes);
 router.use("/teams", teamRoutes);
 router.use("/bookings", bookingRoutes);
+router.use("/students", studentRoutes);
 router.use(teamMemberRoutes);
 router.use(eventRoutes);
 

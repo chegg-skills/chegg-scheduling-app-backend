@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-dotenv.config({ override: true });
+dotenv.config();
 
 import app from "./app";
 import { prisma } from "./shared/db/prisma";

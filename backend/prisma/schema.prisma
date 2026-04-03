@@ -210,8 +210,22 @@ model UserAvailabilityException {
   @@index([userId, date])
 }
 
+model Student {
+  id            String    @id @default(uuid())
+  fullName      String
+  email         String    @unique
+  firstBookedAt DateTime?
+  lastBookedAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookings      Booking[]
+
+  @@index([lastBookedAt])
+}
+
 model Booking {
   id                String        @id @default(uuid())
+  studentId         String?
   studentName       String
   studentEmail      String
   teamId            String
@@ -229,10 +243,12 @@ model Booking {
   triedSolutions    String?
   usedResources     String?
   meetingJoinUrl    String?
+  student           Student?      @relation(fields: [studentId], references: [id])
   event             Event         @relation(fields: [eventId], references: [id])
   host              User          @relation(fields: [hostUserId], references: [id])
   team              Team          @relation(fields: [teamId], references: [id])
 
+  @@index([studentId])
   @@index([teamId])
   @@index([eventId])
   @@index([hostUserId])

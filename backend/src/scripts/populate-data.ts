@@ -1,280 +1,943 @@
-import { UserRole, AssignmentStrategy, EventLocationType } from "@prisma/client";
+import {
+  AssignmentStrategy,
+  BookingStatus,
+  EventLocationType,
+  UserRole,
+} from "@prisma/client";
 import "dotenv/config";
+import request from "supertest";
+import app from "../app";
 import { prisma } from "../shared/db/prisma";
 
-const API_BASE_URL = "http://localhost:4000/api";
 const SUPER_ADMIN_EMAIL = "mohitkumar3005@example.com";
+const SUPER_ADMIN_FIRST_NAME = "Mohit";
+const SUPER_ADMIN_LAST_NAME = "Kumar";
 const DEFAULT_PASSWORD = "pass1234";
+const RESET_DEMO_DATA = process.env.RESET_DEMO_DATA === "true";
+const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET ?? "";
 
-async function apiFetch(url: string, options: any) {
-    const res = await fetch(url, options);
-    const data: any = await res.json();
-    if (!res.ok) {
-        console.error(`❌ API Error [${res.status}] ${url}:`, JSON.stringify(data, null, 2));
-        throw new Error(`API call failed: ${data.message || res.statusText}`);
+type ApiMethod = "GET" | "POST" | "PUT" | "PATCH";
+
+type DemoMemberDefinition = {
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+type DemoEventDefinition = {
+  name: string;
+  description: string;
+  offeringKey: string;
+  interactionKey: string;
+  assignmentStrategy: AssignmentStrategy;
+  durationMinutes: number;
+};
+
+type DemoTeamDefinition = {
+  key: string;
+  name: string;
+  description: string;
+  admin: DemoMemberDefinition;
+  coaches: DemoMemberDefinition[];
+  events: DemoEventDefinition[];
+};
+
+type SeedUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+const offeringDefinitions = [
+  {
+    key: "mentorship",
+    name: "Mentorship Sessions",
+    description: "Career and growth coaching",
+    sortOrder: 1,
+  },
+  {
+    key: "qa",
+    name: "Q&A Sessions",
+    description: "Fast problem-solving help",
+    sortOrder: 2,
+  },
+  {
+    key: "live_lessons",
+    name: "Live Lessons",
+    description: "Guided teaching and walkthroughs",
+    sortOrder: 3,
+  },
+  {
+    key: "project_review",
+    name: "Project Reviews",
+    description: "Hands-on project feedback",
+    sortOrder: 4,
+  },
+  {
+    key: "portfolio_review",
+    name: "Portfolio Reviews",
+    description: "Design and portfolio critiques",
+    sortOrder: 5,
+  },
+  {
+    key: "analytics_consulting",
+    name: "Analytics Consulting",
+    description: "Dashboard and data analysis support",
+    sortOrder: 6,
+  },
+];
+
+const interactionTypeDefinitions = [
+  {
+    key: "one_to_one",
+    name: "1 to 1 Connect",
+    description: "Standard one coach, one student session",
+    supportsRoundRobin: true,
+    supportsMultipleHosts: true,
+    minHosts: 1,
+    maxHosts: null,
+    minParticipants: 1,
+    maxParticipants: 1,
+    sortOrder: 1,
+  },
+  {
+    key: "one_to_many",
+    name: "1 to N Connect",
+    description: "One coach with a small student group",
+    supportsRoundRobin: false,
+    supportsMultipleHosts: false,
+    minHosts: 1,
+    maxHosts: 1,
+    minParticipants: 2,
+    maxParticipants: 20,
+    sortOrder: 2,
+  },
+  {
+    key: "many_to_one",
+    name: "N to 1 Connect",
+    description: "Multiple coaches collaborating with one student",
+    supportsRoundRobin: false,
+    supportsMultipleHosts: true,
+    minHosts: 2,
+    maxHosts: 3,
+    minParticipants: 1,
+    maxParticipants: 1,
+    sortOrder: 3,
+  },
+];
+
+const demoTeams: DemoTeamDefinition[] = [
+  {
+    key: "engineering",
+    name: "Engineering Team",
+    description:
+      "Backend systems design, debugging, and software architecture support.",
+    admin: {
+      firstName: "Ethan",
+      lastName: "Engineer",
+      email: "engineering.admin@demo.chegg.local",
+    },
+    coaches: [
+      {
+        firstName: "Ava",
+        lastName: "Backend",
+        email: "ava.backend@demo.chegg.local",
+      },
+      {
+        firstName: "Liam",
+        lastName: "Systems",
+        email: "liam.systems@demo.chegg.local",
+      },
+      {
+        firstName: "Noah",
+        lastName: "APIs",
+        email: "noah.apis@demo.chegg.local",
+      },
+    ],
+    events: [
+      {
+        name: "System Design Review",
+        description:
+          "Architecture reviews for scalable applications and platform design.",
+        offeringKey: "project_review",
+        interactionKey: "one_to_one",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 60,
+      },
+      {
+        name: "API Debugging Lab",
+        description:
+          "Hands-on help with backend bugs, integrations, and service failures.",
+        offeringKey: "qa",
+        interactionKey: "one_to_one",
+        assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
+        durationMinutes: 45,
+      },
+    ],
+  },
+  {
+    key: "data-science",
+    name: "Data Science Team",
+    description:
+      "Machine learning, experimentation, and model evaluation guidance.",
+    admin: {
+      firstName: "Maya",
+      lastName: "Insights",
+      email: "data-science.admin@demo.chegg.local",
+    },
+    coaches: [
+      {
+        firstName: "Priya",
+        lastName: "Models",
+        email: "priya.models@demo.chegg.local",
+      },
+      {
+        firstName: "Leo",
+        lastName: "Metrics",
+        email: "leo.metrics@demo.chegg.local",
+      },
+      {
+        firstName: "Sara",
+        lastName: "Experiments",
+        email: "sara.experiments@demo.chegg.local",
+      },
+    ],
+    events: [
+      {
+        name: "ML Model Review",
+        description:
+          "Discuss model quality, validation strategy, and practical improvements.",
+        offeringKey: "mentorship",
+        interactionKey: "one_to_one",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 60,
+      },
+      {
+        name: "Experiment Design Office Hours",
+        description:
+          "Support for A/B testing, feature evaluation, and experiment setup.",
+        offeringKey: "live_lessons",
+        interactionKey: "one_to_many",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 45,
+      },
+    ],
+  },
+  {
+    key: "uiux",
+    name: "UI/UX Team",
+    description:
+      "Design systems, user journeys, and portfolio feedback sessions.",
+    admin: {
+      firstName: "Olivia",
+      lastName: "Design",
+      email: "uiux.admin@demo.chegg.local",
+    },
+    coaches: [
+      {
+        firstName: "Nina",
+        lastName: "Figma",
+        email: "nina.figma@demo.chegg.local",
+      },
+      {
+        firstName: "Aria",
+        lastName: "Research",
+        email: "aria.research@demo.chegg.local",
+      },
+      {
+        firstName: "Mason",
+        lastName: "Product",
+        email: "mason.product@demo.chegg.local",
+      },
+    ],
+    events: [
+      {
+        name: "Portfolio Critique",
+        description:
+          "Detailed feedback for case studies, resumes, and design storytelling.",
+        offeringKey: "portfolio_review",
+        interactionKey: "one_to_one",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 45,
+      },
+      {
+        name: "Figma Design Review",
+        description:
+          "Collaborative design reviews for interfaces, prototypes, and usability.",
+        offeringKey: "project_review",
+        interactionKey: "one_to_many",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 60,
+      },
+    ],
+  },
+  {
+    key: "cyber-security",
+    name: "Cyber Security Team",
+    description:
+      "Application security, threat modeling, and secure coding sessions.",
+    admin: {
+      firstName: "Arjun",
+      lastName: "Shield",
+      email: "cyber.admin@demo.chegg.local",
+    },
+    coaches: [
+      {
+        firstName: "Ivy",
+        lastName: "ZeroTrust",
+        email: "ivy.zerotrust@demo.chegg.local",
+      },
+      {
+        firstName: "Rohan",
+        lastName: "Audit",
+        email: "rohan.audit@demo.chegg.local",
+      },
+      {
+        firstName: "Mila",
+        lastName: "Threat",
+        email: "mila.threat@demo.chegg.local",
+      },
+    ],
+    events: [
+      {
+        name: "Security Audit Clinic",
+        description:
+          "Walk through vulnerabilities, checklists, and remediation strategies.",
+        offeringKey: "project_review",
+        interactionKey: "many_to_one",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 60,
+      },
+      {
+        name: "Threat Modeling Session",
+        description:
+          "Map risks and attack surfaces for product or infrastructure changes.",
+        offeringKey: "mentorship",
+        interactionKey: "one_to_one",
+        assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
+        durationMinutes: 45,
+      },
+    ],
+  },
+  {
+    key: "ai-dev",
+    name: "AI in Development Team",
+    description:
+      "AI-assisted software development, LLM apps, and developer productivity coaching.",
+    admin: {
+      firstName: "Priyank",
+      lastName: "Copilot",
+      email: "ai-dev.admin@demo.chegg.local",
+    },
+    coaches: [
+      {
+        firstName: "Sofia",
+        lastName: "Agents",
+        email: "sofia.agents@demo.chegg.local",
+      },
+      {
+        firstName: "Daniel",
+        lastName: "LLM",
+        email: "daniel.llm@demo.chegg.local",
+      },
+      {
+        firstName: "Grace",
+        lastName: "Automation",
+        email: "grace.automation@demo.chegg.local",
+      },
+    ],
+    events: [
+      {
+        name: "AI Pair Programming",
+        description:
+          "Use AI tools effectively for code generation, refactors, and debugging.",
+        offeringKey: "live_lessons",
+        interactionKey: "one_to_one",
+        assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
+        durationMinutes: 45,
+      },
+      {
+        name: "LLM App Architecture Review",
+        description:
+          "Design scalable and secure AI-powered application workflows.",
+        offeringKey: "project_review",
+        interactionKey: "many_to_one",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 60,
+      },
+    ],
+  },
+  {
+    key: "data-analytics",
+    name: "Data Analytics Team",
+    description: "SQL, dashboards, KPI design, and business reporting support.",
+    admin: {
+      firstName: "Noah",
+      lastName: "Numbers",
+      email: "analytics.admin@demo.chegg.local",
+    },
+    coaches: [
+      {
+        firstName: "Emma",
+        lastName: "Dashboards",
+        email: "emma.dashboards@demo.chegg.local",
+      },
+      {
+        firstName: "Lucas",
+        lastName: "SQL",
+        email: "lucas.sql@demo.chegg.local",
+      },
+      {
+        firstName: "Chloe",
+        lastName: "KPIs",
+        email: "chloe.kpis@demo.chegg.local",
+      },
+    ],
+    events: [
+      {
+        name: "Dashboard Review Session",
+        description:
+          "Improve visual storytelling and executive reporting dashboards.",
+        offeringKey: "analytics_consulting",
+        interactionKey: "one_to_one",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 45,
+      },
+      {
+        name: "SQL Optimization Workshop",
+        description:
+          "Tune heavy queries and improve reporting workflows with experts.",
+        offeringKey: "qa",
+        interactionKey: "one_to_many",
+        assignmentStrategy: AssignmentStrategy.DIRECT,
+        durationMinutes: 60,
+      },
+    ],
+  },
+];
+
+const sampleBookingPlans = [
+  {
+    studentName: "Alex Johnson",
+    studentEmail: "alex.johnson@student.demo",
+    teamKey: "engineering",
+    eventName: "System Design Review",
+    dayOffset: 1,
+    hour: 10,
+    status: BookingStatus.COMPLETED,
+  },
+  {
+    studentName: "Alex Johnson",
+    studentEmail: "alex.johnson@student.demo",
+    teamKey: "engineering",
+    eventName: "API Debugging Lab",
+    dayOffset: 4,
+    hour: 11,
+    status: BookingStatus.CONFIRMED,
+  },
+  {
+    studentName: "Priya Shah",
+    studentEmail: "priya.shah@student.demo",
+    teamKey: "data-science",
+    eventName: "ML Model Review",
+    dayOffset: 2,
+    hour: 12,
+    status: BookingStatus.COMPLETED,
+  },
+  {
+    studentName: "Jordan Lee",
+    studentEmail: "jordan.lee@student.demo",
+    teamKey: "uiux",
+    eventName: "Portfolio Critique",
+    dayOffset: 3,
+    hour: 10,
+    status: BookingStatus.CONFIRMED,
+  },
+  {
+    studentName: "Jordan Lee",
+    studentEmail: "jordan.lee@student.demo",
+    teamKey: "data-analytics",
+    eventName: "Dashboard Review Session",
+    dayOffset: 8,
+    hour: 14,
+    status: BookingStatus.CONFIRMED,
+  },
+  {
+    studentName: "Mia Chen",
+    studentEmail: "mia.chen@student.demo",
+    teamKey: "cyber-security",
+    eventName: "Threat Modeling Session",
+    dayOffset: 5,
+    hour: 13,
+    status: BookingStatus.COMPLETED,
+  },
+  {
+    studentName: "Daniel Brooks",
+    studentEmail: "daniel.brooks@student.demo",
+    teamKey: "ai-dev",
+    eventName: "AI Pair Programming",
+    dayOffset: 6,
+    hour: 15,
+    status: BookingStatus.CONFIRMED,
+  },
+  {
+    studentName: "Sofia Martinez",
+    studentEmail: "sofia.martinez@student.demo",
+    teamKey: "data-analytics",
+    eventName: "SQL Optimization Workshop",
+    dayOffset: 9,
+    hour: 11,
+    status: BookingStatus.CONFIRMED,
+  },
+];
+
+const getFutureWeekdaySlot = (dayOffset: number, hour: number): Date => {
+  const slot = new Date();
+  slot.setUTCDate(slot.getUTCDate() + dayOffset);
+
+  while (slot.getUTCDay() === 0 || slot.getUTCDay() === 6) {
+    slot.setUTCDate(slot.getUTCDate() + 1);
+  }
+
+  slot.setUTCHours(hour, 0, 0, 0);
+  return slot;
+};
+
+async function apiRequest<T>(
+  method: ApiMethod,
+  path: string,
+  body?: unknown,
+  token?: string,
+): Promise<T> {
+  let req =
+    method === "GET"
+      ? request(app).get(`/api${path}`)
+      : method === "POST"
+        ? request(app).post(`/api${path}`)
+        : method === "PUT"
+          ? request(app).put(`/api${path}`)
+          : request(app).patch(`/api${path}`);
+
+  if (token) {
+    req = req.set("Authorization", `Bearer ${token}`);
+  }
+
+  if (body !== undefined) {
+    req = req.send(body as string | object);
+  }
+
+  const res = await req;
+  if (!res.ok) {
+    console.error(
+      `❌ API Error [${res.status}] ${path}:`,
+      JSON.stringify(res.body, null, 2),
+    );
+    throw new Error(res.body?.message || `API call failed for ${path}`);
+  }
+
+  return res.body.data as T;
+}
+
+async function ensureAuthenticatedAdmin(): Promise<{
+  token: string;
+  userId: string;
+}> {
+  const totalUsers = await prisma.user.count();
+
+  if (totalUsers === 0) {
+    if (!BOOTSTRAP_SECRET) {
+      throw new Error(
+        "BOOTSTRAP_SECRET is required to create the initial super admin.",
+      );
     }
-    return data;
+
+    console.log("🔐 Bootstrapping the first super admin...");
+    const result = await apiRequest<{ token: string; user: { id: string } }>(
+      "POST",
+      "/auth/bootstrap",
+      {
+        bootstrapSecret: BOOTSTRAP_SECRET,
+        firstName: SUPER_ADMIN_FIRST_NAME,
+        lastName: SUPER_ADMIN_LAST_NAME,
+        email: SUPER_ADMIN_EMAIL,
+        password: DEFAULT_PASSWORD,
+      },
+    );
+
+    return { token: result.token, userId: result.user.id };
+  }
+
+  console.log(`🔐 Logging in as ${SUPER_ADMIN_EMAIL}...`);
+  const result = await apiRequest<{ token: string; user: { id: string } }>(
+    "POST",
+    "/auth/login",
+    {
+      email: SUPER_ADMIN_EMAIL,
+      password: DEFAULT_PASSWORD,
+    },
+  );
+
+  return { token: result.token, userId: result.user.id };
+}
+
+async function resetDemoDataKeepingAdmin(adminId?: string) {
+  if (!RESET_DEMO_DATA) {
+    return;
+  }
+
+  console.log(
+    "🧹 Resetting existing demo data while keeping the super admin account...",
+  );
+  await prisma.booking.deleteMany();
+  await prisma.student.deleteMany();
+  await prisma.userAvailabilityException.deleteMany();
+  await prisma.userWeeklyAvailability.deleteMany();
+  await prisma.eventRoutingState.deleteMany();
+  await prisma.eventHost.deleteMany();
+  await prisma.event.deleteMany();
+  await prisma.teamMember.deleteMany();
+  await prisma.team.deleteMany();
+  await prisma.eventInteractionType.deleteMany();
+  await prisma.eventOffering.deleteMany();
+
+  if (adminId) {
+    await prisma.user.deleteMany({ where: { id: { not: adminId } } });
+  }
+}
+
+async function ensureUser(
+  authToken: string,
+  member: DemoMemberDefinition,
+  role: UserRole,
+): Promise<SeedUser> {
+  const existingUser = await prisma.user.findUnique({
+    where: { email: member.email.toLowerCase() },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+    },
+  });
+
+  if (existingUser) {
+    return existingUser;
+  }
+
+  const result = await apiRequest<{ user: SeedUser }>(
+    "POST",
+    "/auth/register",
+    {
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      password: DEFAULT_PASSWORD,
+      role,
+      timezone: "UTC",
+    },
+    authToken,
+  );
+
+  return result.user;
+}
+
+async function seedCatalog(authToken: string) {
+  const createdOfferings = new Map<string, { id: string; name: string }>();
+  const createdInteractionTypes = new Map<
+    string,
+    { id: string; supportsMultipleHosts: boolean; minHosts: number }
+  >();
+
+  for (const offering of offeringDefinitions) {
+    let existing = await prisma.eventOffering.findUnique({
+      where: { key: offering.key },
+    });
+    if (!existing) {
+      existing = (await apiRequest<{ id: string; name: string }>(
+        "POST",
+        "/event-offerings",
+        {
+          ...offering,
+          isActive: true,
+        },
+        authToken,
+      )) as never;
+    }
+    createdOfferings.set(offering.key, {
+      id: existing.id,
+      name: existing.name,
+    });
+  }
+
+  for (const interactionType of interactionTypeDefinitions) {
+    let existing = await prisma.eventInteractionType.findUnique({
+      where: { key: interactionType.key },
+    });
+    if (!existing) {
+      existing = (await apiRequest<{
+        id: string;
+        supportsMultipleHosts: boolean;
+        minHosts: number;
+      }>(
+        "POST",
+        "/event-interaction-types",
+        {
+          ...interactionType,
+          isActive: true,
+        },
+        authToken,
+      )) as never;
+    }
+    createdInteractionTypes.set(interactionType.key, {
+      id: existing.id,
+      supportsMultipleHosts: existing.supportsMultipleHosts,
+      minHosts: existing.minHosts,
+    });
+  }
+
+  return { createdOfferings, createdInteractionTypes };
+}
+
+async function ensureCoachAvailability(userIds: string[]) {
+  for (const userId of userIds) {
+    await prisma.userWeeklyAvailability.deleteMany({ where: { userId } });
+    await prisma.userWeeklyAvailability.createMany({
+      data: [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+        userId,
+        dayOfWeek,
+        startTime: "09:00",
+        endTime: "17:00",
+      })),
+    });
+  }
 }
 
 async function main() {
-    console.log("🚀 Starting database population via API (refined names)...");
+  console.log("🚀 Populating the app with realistic demo data...");
 
-    // 1. Wipe database using Prisma (no API for this)
-    console.log("🧹 Wiping existing data (except super admin)...");
-    await prisma.eventHost.deleteMany({});
-    await prisma.eventRoutingState.deleteMany({});
-    await prisma.event.deleteMany({});
-    await prisma.teamMember.deleteMany({});
-    await prisma.team.deleteMany({});
-    await prisma.eventOffering.deleteMany({});
-    await prisma.eventInteractionType.deleteMany({});
+  const { token, userId } = await ensureAuthenticatedAdmin();
+  await resetDemoDataKeepingAdmin(userId);
 
-    const superAdmin = await prisma.user.findUnique({ where: { email: SUPER_ADMIN_EMAIL } });
-    await prisma.user.deleteMany({
-        where: { id: { not: superAdmin?.id } }
+  const { createdOfferings, createdInteractionTypes } =
+    await seedCatalog(token);
+
+  const seededTeams: Array<{
+    key: string;
+    id: string;
+    name: string;
+    coaches: Array<{ id: string; firstName: string; lastName: string }>;
+    events: Array<{ id: string; name: string }>;
+  }> = [];
+
+  for (const teamDefinition of demoTeams) {
+    const admin = await ensureUser(
+      token,
+      teamDefinition.admin,
+      UserRole.TEAM_ADMIN,
+    );
+    const coaches: SeedUser[] = [];
+
+    for (const coachDefinition of teamDefinition.coaches) {
+      const coach = await ensureUser(token, coachDefinition, UserRole.COACH);
+      coaches.push(coach);
+    }
+
+    await ensureCoachAvailability(coaches.map((coach) => coach.id));
+
+    const teamResponse = await apiRequest<{ id: string; name: string }>(
+      "POST",
+      "/teams",
+      {
+        name: teamDefinition.name,
+        description: teamDefinition.description,
+        teamLeadId: admin.id,
+      },
+      token,
+    );
+
+    for (const member of [admin, ...coaches]) {
+      await prisma.teamMember.upsert({
+        where: {
+          teamId_userId: {
+            teamId: teamResponse.id,
+            userId: member.id,
+          },
+        },
+        update: { isActive: true },
+        create: {
+          teamId: teamResponse.id,
+          userId: member.id,
+          isActive: true,
+        },
+      });
+    }
+
+    const createdEvents: Array<{ id: string; name: string }> = [];
+    for (const eventDefinition of teamDefinition.events) {
+      const offering = createdOfferings.get(eventDefinition.offeringKey);
+      const interactionType = createdInteractionTypes.get(
+        eventDefinition.interactionKey,
+      );
+
+      if (!offering || !interactionType) {
+        throw new Error(
+          `Missing seed catalog dependency for ${eventDefinition.name}`,
+        );
+      }
+
+      const event = await apiRequest<{ id: string; name: string }>(
+        "POST",
+        `/teams/${teamResponse.id}/events`,
+        {
+          name: eventDefinition.name,
+          description: eventDefinition.description,
+          offeringId: offering.id,
+          interactionTypeId: interactionType.id,
+          assignmentStrategy: eventDefinition.assignmentStrategy,
+          durationSeconds: eventDefinition.durationMinutes * 60,
+          locationType: EventLocationType.VIRTUAL,
+          locationValue: "https://zoom.us/j/demo-session-room",
+          isActive: true,
+        },
+        token,
+      );
+
+      const candidateHosts =
+        eventDefinition.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN
+          ? coaches
+          : interactionType.supportsMultipleHosts
+            ? coaches.slice(0, Math.max(interactionType.minHosts, 2))
+            : coaches.slice(0, 1);
+
+      await apiRequest(
+        "PUT",
+        `/events/${event.id}/hosts`,
+        {
+          hosts: candidateHosts.map((coach, index) => ({
+            userId: coach.id,
+            hostOrder: index + 1,
+          })),
+        },
+        token,
+      );
+
+      createdEvents.push({ id: event.id, name: event.name });
+    }
+
+    seededTeams.push({
+      key: teamDefinition.key,
+      id: teamResponse.id,
+      name: teamResponse.name,
+      coaches: coaches.map((coach) => ({
+        id: coach.id,
+        firstName: coach.firstName,
+        lastName: coach.lastName,
+      })),
+      events: createdEvents,
     });
+  }
 
-    // 2. Login to get token
-    console.log(`🔐 Logging in as ${SUPER_ADMIN_EMAIL}...`);
-    const loginData = await apiFetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: SUPER_ADMIN_EMAIL, password: DEFAULT_PASSWORD }),
+  console.log("🗓️ Creating sample student bookings...");
+  const createdBookingIds: string[] = [];
+
+  for (const plan of sampleBookingPlans) {
+    const team = seededTeams.find((entry) => entry.key === plan.teamKey);
+    const event = team?.events.find((entry) => entry.name === plan.eventName);
+
+    if (!team || !event) {
+      throw new Error(
+        `Unable to find seeded event ${plan.eventName} for ${plan.teamKey}`,
+      );
+    }
+
+    const startTime = getFutureWeekdaySlot(
+      plan.dayOffset,
+      plan.hour,
+    ).toISOString();
+    const bookingResult = await apiRequest<{ booking: { id: string } }>(
+      "POST",
+      "/bookings",
+      {
+        studentName: plan.studentName,
+        studentEmail: plan.studentEmail,
+        teamId: team.id,
+        eventId: event.id,
+        startTime,
+        timezone: "UTC",
+        notes: `Seeded demo booking for ${team.name}`,
+      },
+    );
+
+    createdBookingIds.push(bookingResult.booking.id);
+
+    if (plan.status === BookingStatus.COMPLETED) {
+      const completedStart = getFutureWeekdaySlot(
+        -Math.max(plan.dayOffset, 2),
+        plan.hour,
+      );
+      const completedEnd = new Date(completedStart.getTime() + 45 * 60 * 1000);
+      await prisma.booking.update({
+        where: { id: bookingResult.booking.id },
+        data: {
+          startTime: completedStart,
+          endTime: completedEnd,
+          status: BookingStatus.COMPLETED,
+        },
+      });
+    }
+  }
+
+  const students = await prisma.student.findMany({
+    include: {
+      bookings: {
+        select: { startTime: true },
+        orderBy: { startTime: "asc" },
+      },
+    },
+  });
+
+  for (const student of students) {
+    const firstBookedAt = student.bookings[0]?.startTime ?? null;
+    const lastBookedAt =
+      student.bookings[student.bookings.length - 1]?.startTime ?? null;
+    await prisma.student.update({
+      where: { id: student.id },
+      data: { firstBookedAt, lastBookedAt },
     });
+  }
 
-    const token = loginData.data.token;
-    const authHeaders = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-    };
+  const [userCount, teamCount, eventCount, bookingCount, studentCount] =
+    await Promise.all([
+      prisma.user.count(),
+      prisma.team.count(),
+      prisma.event.count(),
+      prisma.booking.count(),
+      prisma.student.count(),
+    ]);
 
-    // 3. Create Event Offerings
-    console.log("📅 Creating event offerings...");
-    const offerings = [
-        { key: "on_demand", name: "On-demand sessions", description: "Immediate help sessions" },
-        { key: "tutoring", name: "Tutoring sessions", description: "Regular academic help" },
-        { key: "mentorship", name: "Mentorship sessions", description: "Career and growth guidance" },
-        { key: "qa", name: "Q&A sessions", description: "Quick question answering" },
-        { key: "live_lessons", name: "Live lessons", description: "Scheduled interactive teaching" },
-        { key: "live_assessments", name: "Live assessments", description: "One-on-one evaluation" },
-    ];
-
-    const createdOfferings = [];
-    for (const off of offerings) {
-        const data = await apiFetch(`${API_BASE_URL}/event-offerings`, {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify(off),
-        });
-        createdOfferings.push(data.data);
-    }
-
-    // 4. Create Interaction Types
-    console.log("🤝 Creating interaction types...");
-    const interactionTypes = [
-        {
-            key: "one_to_one",
-            name: "1 to 1 connect",
-            description: "Standard 1:1 interaction",
-            supportsRoundRobin: true,
-            supportsMultipleHosts: true,
-            minHosts: 1,
-            maxHosts: null,
-            minParticipants: 1,
-            maxParticipants: 1,
-        },
-        {
-            key: "one_to_many",
-            name: "1 to n connect",
-            description: "One host, multiple participants",
-            supportsRoundRobin: false,
-            supportsMultipleHosts: false,
-            minHosts: 1,
-            maxHosts: null,
-            minParticipants: 2,
-            maxParticipants: 50,
-        },
-        {
-            key: "many_to_one",
-            name: "n to 1 connect",
-            description: "Multiple hosts, one participant",
-            supportsRoundRobin: false,
-            supportsMultipleHosts: true,
-            minHosts: 2,
-            maxHosts: null,
-            minParticipants: 1,
-            maxParticipants: 1,
-        },
-        {
-            key: "many_to_many",
-            name: "n to n connect",
-            description: "Multiple hosts, multiple participants",
-            supportsRoundRobin: false,
-            supportsMultipleHosts: true,
-            minHosts: 2,
-            maxHosts: null,
-            minParticipants: 2,
-            maxParticipants: 50,
-        },
-    ];
-
-    const createdInteractionTypes = [];
-    for (const it of interactionTypes) {
-        const data = await apiFetch(`${API_BASE_URL}/event-interaction-types`, {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify(it),
-        });
-        createdInteractionTypes.push(data.data);
-    }
-
-    // 5. Create Team Admins
-    console.log("👮 Creating team admins...");
-    const teamAdmins = [];
-    for (let i = 1; i <= 10; i++) {
-        const data = await apiFetch(`${API_BASE_URL}/auth/register`, {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify({
-                firstName: "Admin",
-                lastName: i.toString(),
-                email: `admin${i}@test.com`,
-                password: DEFAULT_PASSWORD,
-                role: UserRole.TEAM_ADMIN,
-                timezone: "UTC",
-            }),
-        });
-        teamAdmins.push(data.data.user);
-    }
-
-    // 6. Create Coaches
-    console.log("👨‍🏫 Creating coaches...");
-    const coaches = [];
-    for (let i = 1; i <= 20; i++) {
-        const data = await apiFetch(`${API_BASE_URL}/auth/register`, {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify({
-                firstName: "Coach",
-                lastName: i.toString(),
-                email: `coach${i}@test.com`,
-                password: DEFAULT_PASSWORD,
-                role: UserRole.COACH,
-                timezone: "UTC",
-            }),
-        });
-        coaches.push(data.data.user);
-    }
-
-    // 7. Create Teams
-    console.log("👥 Creating teams...");
-    const teams = [];
-    const teamNames = [
-        "Engineering team",
-        "UI/UX team",
-        "Cyber security team",
-        "AI team",
-        "Data analytics team",
-        "Data science team"
-    ];
-    for (let i = 0; i < teamNames.length; i++) {
-        const adminNum = (i % 10) + 1;
-        const admin = teamAdmins[adminNum - 1];
-        const teamData = await apiFetch(`${API_BASE_URL}/teams`, {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify({
-                name: teamNames[i],
-                description: `Dedicated team for ${teamNames[i]}`,
-                teamLeadId: admin.id,
-            }),
-        });
-        const team = teamData.data;
-
-        // Add random coaches to team
-        const teamSize = 3 + Math.floor(Math.random() * 5);
-        const shuffledCoaches = [...coaches].sort(() => 0.5 - Math.random());
-        const selectedCoaches = shuffledCoaches.slice(0, teamSize);
-
-        const members = [...selectedCoaches, admin];
-        for (const member of members) {
-            await apiFetch(`${API_BASE_URL}/teams/${team.id}/members`, {
-                method: "POST",
-                headers: authHeaders,
-                body: JSON.stringify({ userId: member.id }),
-            });
-        }
-
-        teams.push({ ...team, members });
-    }
-
-    // 8. Create Events
-    console.log("📅 Creating events...");
-    for (let i = 1; i <= 20; i++) {
-        const teamWrapper = teams[Math.floor(Math.random() * teams.length)];
-        const offering = createdOfferings[Math.floor(Math.random() * createdOfferings.length)];
-        const interactionType = createdInteractionTypes[Math.floor(Math.random() * createdInteractionTypes.length)];
-
-        const strategy = interactionType.supportsRoundRobin && Math.random() > 0.5
-            ? AssignmentStrategy.ROUND_ROBIN
-            : AssignmentStrategy.DIRECT;
-
-        const eventData = await apiFetch(`${API_BASE_URL}/teams/${teamWrapper.id}/events`, {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify({
-                name: `${offering.name} - ${i}`,
-                description: `Sample event for ${offering.name} using ${interactionType.name}`,
-                offeringId: offering.id,
-                interactionTypeId: interactionType.id,
-                assignmentStrategy: strategy,
-                durationSeconds: (30 + Math.floor(Math.random() * 6) * 15) * 60,
-                locationType: EventLocationType.VIRTUAL,
-                locationValue: "https://zoom.us/j/sample-meeting",
-            }),
-        });
-
-        const event = eventData.data;
-
-        // Assign hosts via API
-        if (strategy === AssignmentStrategy.DIRECT) {
-            const hostCount = interactionType.supportsMultipleHosts
-                ? Math.min(teamWrapper.members.length, 2 + Math.floor(Math.random() * 2))
-                : 1;
-
-            const shuffledMembers = [...teamWrapper.members].sort(() => 0.5 - Math.random());
-            const selectedHosts = shuffledMembers.slice(0, hostCount);
-
-            const hostsPayload = selectedHosts.map((h: any, index: number) => ({
-                userId: h.id,
-                hostOrder: index + 1,
-            }));
-
-            await apiFetch(`${API_BASE_URL}/events/${event.id}/hosts`, {
-                method: "PUT",
-                headers: authHeaders,
-                body: JSON.stringify({ hosts: hostsPayload }),
-            });
-        } else {
-            // Round Robin: all eligible members are hosts
-            const hostsPayload = teamWrapper.members.map((h: any, index: number) => ({
-                userId: h.id,
-                hostOrder: index + 1,
-            }));
-
-            await apiFetch(`${API_BASE_URL}/events/${event.id}/hosts`, {
-                method: "PUT",
-                headers: authHeaders,
-                body: JSON.stringify({ hosts: hostsPayload }),
-            });
-        }
-    }
-
-    console.log("✅ Database population completed successfully via API calls!");
+  console.log("✅ Demo data is ready.");
+  console.log(
+    JSON.stringify(
+      {
+        users: userCount,
+        teams: teamCount,
+        events: eventCount,
+        bookings: bookingCount,
+        students: studentCount,
+        recentBookingIds: createdBookingIds.slice(-3),
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 main()
-    .catch((e) => {
-        console.error("❌ Error during population:", e);
-        process.exit(1);
-    });
+  .catch((error) => {
+    console.error("❌ Error during demo data population:", error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

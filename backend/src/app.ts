@@ -8,7 +8,7 @@ import { pathNotFound } from "./shared/error/pathNotFound";
 import { errorHandler } from "./shared/error/errorhandler";
 import routes from "./routes/index";
 
-dotenv.config({ override: true });
+dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
 

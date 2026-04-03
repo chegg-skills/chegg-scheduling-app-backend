@@ -147,9 +147,9 @@ export interface Event {
   hosts: EventHost[]
 }
 
-export interface PublicTeamSummary extends Pick<Team, 'id' | 'name' | 'description' | 'publicBookingSlug'> {}
+export interface PublicTeamSummary extends Pick<Team, 'id' | 'name' | 'description' | 'publicBookingSlug'> { }
 
-export interface PublicCoachSummary extends Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'> {}
+export interface PublicCoachSummary extends Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'> { }
 
 export interface PublicEventSummary extends Pick<Event, 'id' | 'name' | 'description' | 'durationSeconds' | 'locationType' | 'teamId' | 'publicBookingSlug'> {
   team: PublicTeamSummary
@@ -346,6 +346,7 @@ export interface CreateAvailabilityExceptionDto {
 
 export interface Booking {
   id: string
+  studentId: string | null
   studentName: string
   studentEmail: string
   startTime: string
@@ -393,4 +394,33 @@ export interface ListBookingsFilters {
 
 export interface UpdateBookingStatusDto {
   status: BookingStatus
+}
+// ─── Student Models ───────────────────────────────────────────────────────────
+export interface Student {
+  id: string
+  fullName: string
+  email: string
+  firstBookedAt: string | null
+  lastBookedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface StudentSummary extends Student {
+  bookingCount: number
+  latestBooking: {
+    id: string
+    startTime: string
+    endTime: string
+    status: BookingStatus
+    team: { id: string; name: string }
+    event: { id: string; name: string; publicBookingSlug: string }
+    host: {
+      id: string
+      firstName: string
+      lastName: string
+      email: string
+      avatarUrl: string | null
+    }
+  } | null
 }

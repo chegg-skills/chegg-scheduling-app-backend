@@ -55,6 +55,7 @@ beforeAll(async () => {
       teamLeadId: teamAdminId,
       createdById: superAdminId,
       isActive: true,
+      publicBookingSlug: 'stats-team-test',
     },
   })
 
@@ -102,6 +103,7 @@ beforeAll(async () => {
       isActive: true,
       createdById: superAdminId,
       updatedById: superAdminId,
+      publicBookingSlug: 'stats-event-test',
     },
   })
 

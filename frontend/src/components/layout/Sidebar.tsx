@@ -20,6 +20,7 @@ import {
   LogOut,
   User,
   ClipboardList,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -41,6 +42,12 @@ const navItems: NavItem[] = [
     to: '/bookings',
     label: 'Bookings',
     Icon: ClipboardList,
+    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'],
+  },
+  {
+    to: '/students',
+    label: 'Students',
+    Icon: GraduationCap,
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'],
   },
   {

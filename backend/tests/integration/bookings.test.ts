@@ -42,6 +42,7 @@ beforeAll(async () => {
             name: "Test Team",
             createdById: admin.id,
             teamLeadId: admin.id,
+            publicBookingSlug: "test-team-bookings",
         },
     });
     teamId = team.id;
@@ -114,6 +115,7 @@ describe("Booking Domain Integration Tests", () => {
                 locationValue: "Zoom",
                 createdById: coachId,
                 updatedById: coachId,
+                publicBookingSlug: `test-direct-event-${Date.now()}`,
                 hosts: {
                     create: {
                         hostUserId: coachId,
@@ -170,6 +172,41 @@ describe("Booking Domain Integration Tests", () => {
             expect(res.body.data.booking.studentName).toBe("John Doe");
             expect(res.body.data.booking.hostUserId).toBe(coachId);
             expect(res.body.data.booking.meetingJoinUrl).toBe(zoomIsvLink);
+        });
+
+        it("creates and reuses a student profile across bookings with the same email", async () => {
+            const firstStartTime = getNextUtcWeekdayAt(1, 10, 0).toISOString();
+            const secondStartTime = getNextUtcWeekdayAt(1, 12, 0).toISOString();
+
+            const firstRes = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Jane Student",
+                    studentEmail: "jane@example.com",
+                    teamId,
+                    eventId,
+                    startTime: firstStartTime,
+                    timezone: "UTC"
+                });
+
+            const secondRes = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Jane Student",
+                    studentEmail: "jane@example.com",
+                    teamId,
+                    eventId,
+                    startTime: secondStartTime,
+                    timezone: "UTC"
+                });
+
+            expect(firstRes.status).toBe(201);
+            expect(secondRes.status).toBe(201);
+            expect(firstRes.body.data.booking.student).toBeDefined();
+            expect(firstRes.body.data.booking.student.email).toBe("jane@example.com");
+            expect(firstRes.body.data.booking.studentId ?? firstRes.body.data.booking.student?.id).toBe(
+                secondRes.body.data.booking.studentId ?? secondRes.body.data.booking.student?.id,
+            );
         });
 
         it("returns 409 conflict if host is unavailable (outside weekly schedule)", async () => {
@@ -237,6 +274,7 @@ describe("Booking Domain Integration Tests", () => {
                     locationValue: "Zoom",
                     createdById: coachId,
                     updatedById: coachId,
+                    publicBookingSlug: `test-rr-event-${Date.now()}`,
                     hosts: {
                         create: [
                             { hostUserId: coachId, hostOrder: 1 },

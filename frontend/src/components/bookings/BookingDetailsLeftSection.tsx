@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { ExternalLink, User, Video } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 import type { Booking } from '@/types';
 import { getBookingMeetingJoinUrl } from './BookingDetailsPanel';
 
@@ -66,12 +67,31 @@ export function BookingDetailsLeftSection({
               .toUpperCase()}
           </Avatar>
           <Box>
-            <Typography
-              variant='body1'
-              sx={{ fontWeight: 600, color: theme.palette.text.primary }}
-            >
-              {booking.studentName}
-            </Typography>
+            {booking.studentId ? (
+              <Typography
+                variant='body1'
+                component={RouterLink}
+                to={`/students/${booking.studentId}`}
+                sx={{
+                  fontWeight: 600,
+                  color: theme.palette.text.primary,
+                  textDecoration: 'none',
+                  '&:hover': {
+                    color: 'primary.main',
+                    textDecoration: 'underline',
+                  }
+                }}
+              >
+                {booking.studentName}
+              </Typography>
+            ) : (
+              <Typography
+                variant='body1'
+                sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+              >
+                {booking.studentName}
+              </Typography>
+            )}
             <Typography variant='body2' color='text.secondary'>
               {booking.studentEmail}
             </Typography>

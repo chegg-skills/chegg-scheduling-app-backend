@@ -133,19 +133,19 @@ export function PublicBookingPage() {
         scope === 'team'
             ? loadingTeamDetails || loadingTeamEvents
             : scope === 'event'
-              ? loadingEventDetails
-              : scope === 'coach'
-                ? loadingCoachDetails || loadingCoachEvents
-                : loadingDirectoryEvents
+                ? loadingEventDetails
+                : scope === 'coach'
+                    ? loadingCoachDetails || loadingCoachEvents
+                    : loadingDirectoryEvents
 
     const eventsError =
         scope === 'team'
             ? teamDetailsError || teamEventsError
             : scope === 'event'
-              ? eventDetailsError
-              : scope === 'coach'
-                ? coachDetailsError || coachEventsError
-                : directoryEventsError
+                ? eventDetailsError
+                : scope === 'coach'
+                    ? coachDetailsError || coachEventsError
+                    : directoryEventsError
 
     const heading = useMemo(() => {
         switch (scope) {
