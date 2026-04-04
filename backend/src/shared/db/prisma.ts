@@ -1,11 +1,13 @@
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 dotenv.config();
 
 type PrismaGlobal = typeof globalThis & {
 	prisma?: PrismaClient;
+	pgPool?: Pool;
 };
 
 const getDatabaseUrl = (): string => {
@@ -25,18 +27,27 @@ const getDatabaseUrl = (): string => {
 		: trimmedValue;
 };
 
-const createPrismaClient = (): PrismaClient => {
-	return new PrismaClient({
-		adapter: new PrismaPg({ connectionString: getDatabaseUrl() }),
+const createPgPool = (): Pool => {
+	return new Pool({
+		connectionString: getDatabaseUrl(),
+		allowExitOnIdle: process.env.NODE_ENV !== "production",
 	});
 };
 
 const globalForPrisma = globalThis as PrismaGlobal;
+const pgPool = globalForPrisma.pgPool ?? createPgPool();
+
+const createPrismaClient = (): PrismaClient => {
+	return new PrismaClient({
+		adapter: new PrismaPg(pgPool),
+	});
+};
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
 	globalForPrisma.prisma = prisma;
+	globalForPrisma.pgPool = pgPool;
 }
 
 export default prisma;

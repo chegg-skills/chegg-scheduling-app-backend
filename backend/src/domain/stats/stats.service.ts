@@ -1,157 +1,75 @@
 import { AssignmentStrategy, BookingStatus, Prisma, UserRole } from '@prisma/client'
-import { StatusCodes } from 'http-status-codes'
 import { prisma } from '../../shared/db/prisma'
-import { ErrorHandler } from '../../shared/error/errorhandler'
 import { getManagedTeam } from '../../shared/utils/teamAccess'
 import type { CallerContext } from '../../shared/utils/userUtils'
+import {
+    buildDateFilter,
+    buildStatsResponse,
+    requireAdmin,
+    resolveTimeframe,
+    type ResolvedTimeframe,
+    type StatsResponse,
+} from './stats.shared'
 
-export type StatsTimeframeKey =
-    | 'today' | 'yesterday'
-    | 'thisWeek' | 'lastWeek'
-    | 'thisMonth' | 'lastMonth'
-    | 'thisQuarter' | 'lastQuarter'
-    | 'thisYear' | 'lastYear' | 'all'
-    | string
+export type { StatsTimeframeKey } from './stats.shared'
 
-type ResolvedTimeframe = {
-    key: StatsTimeframeKey
-    label: string
-    start: Date | null
-    end: Date | null
-    rangeLabel: string
-}
+const resolveTopCoachMetric = async (
+    bookingWhere: Prisma.BookingWhereInput,
+): Promise<{ id: string; name: string; count: number } | null> => {
+    const coachGroup = await prisma.booking.groupBy({
+        by: ['hostUserId'],
+        where: bookingWhere,
+        _count: { _all: true },
+        orderBy: { _count: { hostUserId: 'desc' } },
+        take: 1,
+    })
 
-type StatsResponse<TMetrics extends Record<string, any>> = {
-    timeframe: {
-        key: StatsTimeframeKey
-        label: string
-        startDate: string | null
-        endDate: string | null
-        rangeLabel: string
-    }
-    metrics: TMetrics
-}
-
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-})
-
-const formatRangeLabel = (start: Date | null, end: Date | null): string => {
-    if (!start || !end) return 'All time'
-    return `${DATE_FORMATTER.format(start)} – ${DATE_FORMATTER.format(end)}`
-}
-
-const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
-    const customPrefix = 'custom:'
-    if (timeframe?.startsWith(customPrefix)) {
-        const parts = timeframe.substring(customPrefix.length).split(':')
-        if (parts.length === 2) {
-            const start = new Date(parts[0])
-            const end = new Date(parts[1])
-            // Move end to 23:59:59 if it's currently midnight from simple date strings
-            if (end.getHours() === 0) end.setHours(23, 59, 59, 999)
-
-            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-                return { key: timeframe, label: 'Custom Range', start, end, rangeLabel: formatRangeLabel(start, end) }
-            }
-        }
+    if (coachGroup.length === 0 || !coachGroup[0].hostUserId) {
+        return null
     }
 
-    const normalized = (timeframe?.trim() || 'thisMonth') as StatsTimeframeKey
-    const now = new Date()
+    const topCoach = await prisma.user.findUnique({
+        where: { id: coachGroup[0].hostUserId },
+    })
 
-    // Base utilities
-    const getStartOfDate = (d: Date) => { const r = new Date(d); r.setHours(0, 0, 0, 0); return r }
-    const getEndOfDate = (d: Date) => { const r = new Date(d); r.setHours(23, 59, 59, 999); return r }
-
-    switch (normalized) {
-        case 'today': {
-            const start = getStartOfDate(now); const end = getEndOfDate(now)
-            return { key: 'today', label: 'Today', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'yesterday': {
-            const d = new Date(now); d.setDate(d.getDate() - 1)
-            const start = getStartOfDate(d); const end = getEndOfDate(d)
-            return { key: 'yesterday', label: 'Yesterday', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'thisWeek': {
-            const start = getStartOfDate(now); const day = start.getDay(); const diff = day === 0 ? -6 : 1 - day
-            start.setDate(start.getDate() + diff);
-            const end = getEndOfDate(start); end.setDate(end.getDate() + 6)
-            return { key: 'thisWeek', label: 'This week', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'lastWeek': {
-            const start = getStartOfDate(now); const day = start.getDay(); const diff = day === 0 ? -6 : 1 - day
-            start.setDate(start.getDate() + diff - 7);
-            const end = getEndOfDate(start); end.setDate(end.getDate() + 6)
-            return { key: 'lastWeek', label: 'Last week', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'thisMonth': {
-            const start = new Date(now.getFullYear(), now.getMonth(), 1); start.setHours(0, 0, 0, 0)
-            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); end.setHours(23, 59, 59, 999)
-            return { key: 'thisMonth', label: 'This month', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'lastMonth': {
-            const start = new Date(now.getFullYear(), now.getMonth() - 1, 1); start.setHours(0, 0, 0, 0)
-            const end = new Date(now.getFullYear(), now.getMonth(), 0); end.setHours(23, 59, 59, 999)
-            return { key: 'lastMonth', label: 'Last month', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'thisQuarter': {
-            const qStartMonth = Math.floor(now.getMonth() / 3) * 3
-            const start = new Date(now.getFullYear(), qStartMonth, 1); start.setHours(0, 0, 0, 0)
-            const end = new Date(now.getFullYear(), qStartMonth + 3, 0); end.setHours(23, 59, 59, 999)
-            return { key: 'thisQuarter', label: 'This quarter', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'lastQuarter': {
-            const qStartMonth = Math.floor(now.getMonth() / 3) * 3 - 3
-            const start = new Date(now.getFullYear(), qStartMonth, 1); start.setHours(0, 0, 0, 0)
-            const end = new Date(now.getFullYear(), qStartMonth + 3, 0); end.setHours(23, 59, 59, 999)
-            return { key: 'lastQuarter', label: 'Last quarter', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'thisYear': {
-            const start = new Date(now.getFullYear(), 0, 1); start.setHours(0, 0, 0, 0)
-            const end = new Date(now.getFullYear(), 11, 31); end.setHours(23, 59, 59, 999)
-            return { key: 'thisYear', label: 'This year', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'lastYear': {
-            const start = new Date(now.getFullYear() - 1, 0, 1); start.setHours(0, 0, 0, 0)
-            const end = new Date(now.getFullYear() - 1, 11, 31); end.setHours(23, 59, 59, 999)
-            return { key: 'lastYear', label: 'Last year', start, end, rangeLabel: formatRangeLabel(start, end) }
-        }
-        case 'all':
-            return { key: 'all', label: 'All time', start: null, end: null, rangeLabel: 'All time' }
-        default:
-            // Fallback
-            const startFallback = new Date(now.getFullYear(), now.getMonth(), 1); startFallback.setHours(0, 0, 0, 0)
-            const endFallback = new Date(now.getFullYear(), now.getMonth() + 1, 0); endFallback.setHours(23, 59, 59, 999)
-            return { key: 'thisMonth', label: 'This month', start: startFallback, end: endFallback, rangeLabel: formatRangeLabel(startFallback, endFallback) }
-    }
-}
-
-const toResponseTimeframe = (timeframe: ResolvedTimeframe) => ({
-    key: timeframe.key,
-    label: timeframe.label,
-    startDate: timeframe.start?.toISOString() ?? null,
-    endDate: timeframe.end?.toISOString() ?? null,
-    rangeLabel: timeframe.rangeLabel,
-})
-
-const requireAdmin = (caller: CallerContext): void => {
-    if (caller.role !== UserRole.SUPER_ADMIN && caller.role !== UserRole.TEAM_ADMIN) {
-        throw new ErrorHandler(StatusCodes.FORBIDDEN, 'You are not authorized to view these stats.')
-    }
-}
-
-const buildDateFilter = (timeframe: ResolvedTimeframe): Prisma.DateTimeFilter | undefined => {
-    if (!timeframe.start || !timeframe.end) {
-        return undefined
+    if (!topCoach) {
+        return null
     }
 
     return {
-        gte: timeframe.start,
-        lte: timeframe.end,
+        id: topCoach.id,
+        name: `${topCoach.firstName} ${topCoach.lastName}`,
+        count: coachGroup[0]._count._all,
+    }
+}
+
+const resolveTopTeamMetric = async (
+    bookingWhere: Prisma.BookingWhereInput,
+): Promise<{ id: string; name: string; count: number } | null> => {
+    const teamGroup = await prisma.booking.groupBy({
+        by: ['teamId'],
+        where: bookingWhere,
+        _count: { _all: true },
+        orderBy: { _count: { teamId: 'desc' } },
+        take: 1,
+    })
+
+    if (teamGroup.length === 0 || !teamGroup[0].teamId) {
+        return null
+    }
+
+    const topTeam = await prisma.team.findUnique({
+        where: { id: teamGroup[0].teamId },
+    })
+
+    if (!topTeam) {
+        return null
+    }
+
+    return {
+        id: topTeam.id,
+        name: topTeam.name,
+        count: teamGroup[0]._count._all,
     }
 }
 
@@ -205,55 +123,23 @@ export const getBookingStats = async (
         prisma.booking.count({ where: { ...bookingWhere, status: BookingStatus.CANCELLED } }),
     ])
 
-    // Aggregations for Coaches
-    let mostBookedCoach = null
-    let mostBookedTeam = null
+    const [mostBookedCoach, mostBookedTeam] = totalBookings > 0
+        ? await Promise.all([
+            resolveTopCoachMetric(bookingWhere),
+            caller.role !== UserRole.COACH
+                ? resolveTopTeamMetric(bookingWhere)
+                : Promise.resolve(null),
+        ])
+        : [null, null]
 
-    if (totalBookings > 0) {
-        const coachGroup = await prisma.booking.groupBy({
-            by: ['hostUserId'],
-            where: bookingWhere,
-            _count: { _all: true },
-            orderBy: { _count: { hostUserId: 'desc' } },
-            take: 1
-        })
-
-        if (coachGroup.length > 0 && coachGroup[0].hostUserId) {
-            const topCoach = await prisma.user.findUnique({ where: { id: coachGroup[0].hostUserId } })
-            if (topCoach) {
-                mostBookedCoach = { id: topCoach.id, name: `${topCoach.firstName} ${topCoach.lastName}`, count: coachGroup[0]._count._all }
-            }
-        }
-
-        if (caller.role !== UserRole.COACH) {
-            const teamGroup = await prisma.booking.groupBy({
-                by: ['teamId'],
-                where: bookingWhere,
-                _count: { _all: true },
-                orderBy: { _count: { teamId: 'desc' } },
-                take: 1
-            })
-
-            if (teamGroup.length > 0 && teamGroup[0].teamId) {
-                const topTeam = await prisma.team.findUnique({ where: { id: teamGroup[0].teamId } })
-                if (topTeam) {
-                    mostBookedTeam = { id: topTeam.id, name: topTeam.name, count: teamGroup[0]._count._all }
-                }
-            }
-        }
-    }
-
-    return {
-        timeframe: toResponseTimeframe(timeframe),
-        metrics: {
-            totalBookings,
-            upcomingBookings,
-            completedBookings,
-            cancelledBookings,
-            ...(mostBookedCoach ? { mostBookedCoach } : {}),
-            ...(mostBookedTeam ? { mostBookedTeam } : {}),
-        },
-    }
+    return buildStatsResponse(timeframe, {
+        totalBookings,
+        upcomingBookings,
+        completedBookings,
+        cancelledBookings,
+        ...(mostBookedCoach ? { mostBookedCoach } : {}),
+        ...(mostBookedTeam ? { mostBookedTeam } : {}),
+    })
 }
 
 export const getUserStats = async (
@@ -277,15 +163,12 @@ export const getUserStats = async (
         prisma.user.count({ where: { role: UserRole.COACH, isActive: true } }),
     ])
 
-    return {
-        timeframe: toResponseTimeframe(timeframe),
-        metrics: {
-            newUsers,
-            activeUsers,
-            pendingInvites,
-            coaches,
-        },
-    }
+    return buildStatsResponse(timeframe, {
+        newUsers,
+        activeUsers,
+        pendingInvites,
+        coaches,
+    })
 }
 
 export const getTeamStats = async (
@@ -308,15 +191,12 @@ export const getTeamStats = async (
         prisma.team.count({ where: { events: { some: {} } } }),
     ])
 
-    return {
-        timeframe: toResponseTimeframe(timeframe),
-        metrics: {
-            newTeams,
-            activeTeams,
-            activeMembers,
-            teamsWithEvents,
-        },
-    }
+    return buildStatsResponse(timeframe, {
+        newTeams,
+        activeTeams,
+        activeMembers,
+        teamsWithEvents,
+    })
 }
 
 export const getEventStats = async (
@@ -346,15 +226,12 @@ export const getEventStats = async (
         prisma.event.count({ where: { ...scopedWhere, hosts: { some: { isActive: true } } } }),
     ])
 
-    return {
-        timeframe: toResponseTimeframe(timeframe),
-        metrics: {
-            newEvents,
-            activeEvents,
-            roundRobinEvents,
-            hostedEvents,
-        },
-    }
+    return buildStatsResponse(timeframe, {
+        newEvents,
+        activeEvents,
+        roundRobinEvents,
+        hostedEvents,
+    })
 }
 
 export const getOfferingStats = async (
@@ -377,15 +254,12 @@ export const getOfferingStats = async (
         prisma.eventOffering.count({ where: { events: { none: {} } } }),
     ])
 
-    return {
-        timeframe: toResponseTimeframe(timeframe),
-        metrics: {
-            newOfferings,
-            activeOfferings,
-            offeringsInUse,
-            unusedOfferings,
-        },
-    }
+    return buildStatsResponse(timeframe, {
+        newOfferings,
+        activeOfferings,
+        offeringsInUse,
+        unusedOfferings,
+    })
 }
 
 export const getInteractionTypeStats = async (
@@ -408,15 +282,12 @@ export const getInteractionTypeStats = async (
         prisma.eventInteractionType.count({ where: { supportsRoundRobin: true, isActive: true } }),
     ])
 
-    return {
-        timeframe: toResponseTimeframe(timeframe),
-        metrics: {
-            newInteractionTypes,
-            activeInteractionTypes,
-            multiHostEnabled,
-            roundRobinEnabled,
-        },
-    }
+    return buildStatsResponse(timeframe, {
+        newInteractionTypes,
+        activeInteractionTypes,
+        multiHostEnabled,
+        roundRobinEnabled,
+    })
 }
 
 export const getDashboardStats = async (
@@ -453,14 +324,11 @@ export const getDashboardStats = async (
         activeTeamsPromise,
     ])
 
-    return {
-        timeframe: toResponseTimeframe(timeframe),
-        metrics: {
-            scheduledBookings,
-            upcomingBookings,
-            activeUsers,
-            activeEvents,
-            activeTeams,
-        },
-    }
+    return buildStatsResponse(timeframe, {
+        scheduledBookings,
+        upcomingBookings,
+        activeUsers,
+        activeEvents,
+        activeTeams,
+    })
 }

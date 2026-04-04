@@ -1,0 +1,255 @@
+import {
+  Prisma,
+  PrismaClient,
+  UserAvailabilityException,
+  UserRole,
+  UserWeeklyAvailability,
+} from "@prisma/client";
+import { StatusCodes } from "http-status-codes";
+import { ErrorHandler } from "../../shared/error/errorhandler";
+import type { CallerContext } from "../../shared/utils/userUtils";
+
+export type AvailabilityClient = Prisma.TransactionClient | PrismaClient;
+
+export type LocalAvailabilityInfo = {
+  hhmm: string;
+  dayOfWeek: number;
+  dateString: string;
+};
+
+export const assertCanManageAvailability = (
+  targetUserId: string,
+  caller: CallerContext,
+): void => {
+  if (
+    caller.role === UserRole.SUPER_ADMIN ||
+    caller.role === UserRole.TEAM_ADMIN
+  ) {
+    return;
+  }
+
+  if (caller.id !== targetUserId) {
+    throw new ErrorHandler(
+      StatusCodes.FORBIDDEN,
+      "You do not have permission to manage this user's availability.",
+    );
+  }
+};
+
+export const validateTimeFormat = (time: string, fieldName: string): void => {
+  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+  if (!timeRegex.test(time)) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      `${fieldName} must be in HH:mm format.`,
+    );
+  }
+};
+
+export const validateWeeklySlots = (
+  slots: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
+): void => {
+  for (const slot of slots) {
+    if (
+      !Number.isInteger(slot.dayOfWeek) ||
+      slot.dayOfWeek < 0 ||
+      slot.dayOfWeek > 6
+    ) {
+      throw new ErrorHandler(
+        StatusCodes.BAD_REQUEST,
+        "dayOfWeek must be an integer between 0 and 6.",
+      );
+    }
+
+    validateTimeFormat(slot.startTime, "startTime");
+    validateTimeFormat(slot.endTime, "endTime");
+
+    if (slot.startTime >= slot.endTime) {
+      throw new ErrorHandler(
+        StatusCodes.BAD_REQUEST,
+        "startTime must be before endTime.",
+      );
+    }
+  }
+};
+
+export const parseAvailabilityExceptionDate = (value: Date | string): Date => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid date provided.");
+  }
+
+  return date;
+};
+
+export const validateAvailabilityExceptionInput = (payload: {
+  isUnavailable: boolean;
+  startTime?: string | null;
+  endTime?: string | null;
+}): void => {
+  if (payload.isUnavailable) {
+    if (payload.startTime) {
+      validateTimeFormat(payload.startTime, "startTime");
+    }
+    if (payload.endTime) {
+      validateTimeFormat(payload.endTime, "endTime");
+    }
+
+    if (
+      payload.startTime &&
+      payload.endTime &&
+      payload.startTime >= payload.endTime
+    ) {
+      throw new ErrorHandler(
+        StatusCodes.BAD_REQUEST,
+        "startTime must be before endTime.",
+      );
+    }
+    return;
+  }
+
+  if (!payload.startTime || !payload.endTime) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "startTime and endTime are required if user is not unavailable for the whole day.",
+    );
+  }
+
+  validateTimeFormat(payload.startTime, "startTime");
+  validateTimeFormat(payload.endTime, "endTime");
+
+  if (payload.startTime >= payload.endTime) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "startTime must be before endTime.",
+    );
+  }
+};
+
+export const buildSameSessionExclusion = (
+  startTime: Date,
+  endTime: Date,
+  options: {
+    eventId?: string;
+    scheduleSlotId?: string | null;
+  },
+): Prisma.BookingWhereInput | undefined => {
+  if (!options.eventId) {
+    return undefined;
+  }
+
+  return options.scheduleSlotId
+    ? { scheduleSlotId: options.scheduleSlotId }
+    : {
+      eventId: options.eventId,
+      startTime,
+      endTime,
+    };
+};
+
+export const toLocalAvailabilityInfo = (
+  date: Date,
+  timeZone: string,
+): LocalAvailabilityInfo => {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    weekday: "short",
+  });
+
+  const parts = formatter.formatToParts(date);
+  const getPart = (type: string) =>
+    parts.find((part) => part.type === type)?.value;
+
+  const year = getPart("year")!;
+  const month = getPart("month")!;
+  const day = getPart("day")!;
+  const hour = getPart("hour")!;
+  const minute = getPart("minute")!;
+  const weekdayName = getPart("weekday")!;
+
+  const weekdayMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  return {
+    hhmm: `${hour}:${minute}`,
+    dayOfWeek: weekdayMap[weekdayName],
+    dateString: `${year}-${month}-${day}`,
+  };
+};
+
+export const findAvailabilityException = (
+  exceptions: UserAvailabilityException[],
+  dateString: string,
+): UserAvailabilityException | undefined => {
+  return exceptions.find((exception) => {
+    const exceptionDate = exception.date.toISOString().split("T")[0];
+    return exceptionDate === dateString;
+  });
+};
+
+export const resolveAvailabilityFromException = (
+  dayException: UserAvailabilityException | undefined,
+  startLocal: LocalAvailabilityInfo,
+  endLocal: LocalAvailabilityInfo,
+): boolean | null => {
+  if (!dayException) {
+    return null;
+  }
+
+  if (dayException.isUnavailable && !dayException.startTime) {
+    return false;
+  }
+
+  if (
+    dayException.isUnavailable &&
+    dayException.startTime &&
+    dayException.endTime
+  ) {
+    const overlapsException =
+      startLocal.hhmm < dayException.endTime &&
+      endLocal.hhmm > dayException.startTime;
+
+    return overlapsException ? false : null;
+  }
+
+  if (
+    !dayException.isUnavailable &&
+    dayException.startTime &&
+    dayException.endTime
+  ) {
+    return (
+      startLocal.hhmm >= dayException.startTime &&
+      endLocal.hhmm <= dayException.endTime
+    );
+  }
+
+  return null;
+};
+
+export const isWithinWeeklyAvailability = (
+  weekly: UserWeeklyAvailability[],
+  startLocal: LocalAvailabilityInfo,
+  endLocal: LocalAvailabilityInfo,
+): boolean => {
+  const daySlots = weekly.filter(
+    (slot) => slot.dayOfWeek === startLocal.dayOfWeek,
+  );
+
+  return daySlots.some(
+    (slot) =>
+      startLocal.hhmm >= slot.startTime && endLocal.hhmm <= slot.endTime,
+  );
+};

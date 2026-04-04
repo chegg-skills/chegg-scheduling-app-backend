@@ -1,8 +1,25 @@
-import { EventBookingMode, Prisma, UserRole, UserWeeklyAvailability, UserAvailabilityException, PrismaClient } from '@prisma/client';
+import {
+  EventBookingMode,
+  Prisma,
+  UserAvailabilityException,
+  UserWeeklyAvailability,
+} from '@prisma/client';
 import { StatusCodes } from 'http-status-codes';
 import { prisma } from '../../shared/db/prisma';
 import { ErrorHandler } from '../../shared/error/errorhandler';
 import type { CallerContext } from '../../shared/utils/userUtils';
+import {
+  assertCanManageAvailability,
+  buildSameSessionExclusion,
+  findAvailabilityException,
+  isWithinWeeklyAvailability,
+  parseAvailabilityExceptionDate,
+  resolveAvailabilityFromException,
+  toLocalAvailabilityInfo,
+  validateAvailabilityExceptionInput,
+  validateWeeklySlots,
+  type AvailabilityClient,
+} from './availability.shared';
 import {
   assertBookingNoticeSatisfied,
   assertBookingWeekdayAllowed,
@@ -22,36 +39,28 @@ type AddAvailabilityExceptionInput = {
   endTime?: string | null;
 };
 
-const assertCanManageAvailability = (targetUserId: string, caller: CallerContext): void => {
-  if (caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN) {
-    return;
-  }
+const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
+  interactionType: {
+    select: {
+      minParticipants: true,
+      maxParticipants: true,
+    },
+  },
+  scheduleSlots: {
+    where: {
+      isActive: true,
+    },
+    orderBy: { startTime: 'asc' },
+  },
+  hosts: {
+    where: { isActive: true },
+    orderBy: { hostOrder: 'asc' },
+  },
+});
 
-  if (caller.id !== targetUserId) {
-    throw new ErrorHandler(StatusCodes.FORBIDDEN, "You do not have permission to manage this user's availability.");
-  }
-};
-
-const validateTimeFormat = (time: string, fieldName: string): void => {
-  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
-  if (!timeRegex.test(time)) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, `${fieldName} must be in HH:mm format.`);
-  }
-};
-
-const validateWeeklySlots = (slots: SetWeeklyAvailabilityInput): void => {
-  for (const slot of slots) {
-    if (!Number.isInteger(slot.dayOfWeek) || slot.dayOfWeek < 0 || slot.dayOfWeek > 6) {
-      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "dayOfWeek must be an integer between 0 and 6.");
-    }
-    validateTimeFormat(slot.startTime, "startTime");
-    validateTimeFormat(slot.endTime, "endTime");
-
-    if (slot.startTime >= slot.endTime) {
-      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "startTime must be before endTime.");
-    }
-  }
-};
+type AvailabilityEvent = Prisma.EventGetPayload<{
+  include: typeof availabilityEventInclude;
+}>;
 
 const getWeeklyAvailability = async (userId: string, caller: CallerContext): Promise<UserWeeklyAvailability[]> => {
   await assertCanManageAvailability(userId, caller);
@@ -94,21 +103,8 @@ const addAvailabilityException = async (
 ): Promise<UserAvailabilityException> => {
   await assertCanManageAvailability(userId, caller);
 
-  const date = new Date(payload.date);
-  if (isNaN(date.getTime())) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid date provided.");
-  }
-
-  if (!payload.isUnavailable) {
-    if (!payload.startTime || !payload.endTime) {
-      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "startTime and endTime are required if user is not unavailable for the whole day.");
-    }
-    validateTimeFormat(payload.startTime, "startTime");
-    validateTimeFormat(payload.endTime, "endTime");
-    if (payload.startTime >= payload.endTime) {
-      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "startTime must be before endTime.");
-    }
-  }
+  const date = parseAvailabilityExceptionDate(payload.date);
+  validateAvailabilityExceptionInput(payload);
 
   return prisma.userAvailabilityException.create({
     data: {
@@ -173,27 +169,24 @@ const isHostAvailable = async (
     ignoreWeeklySchedule?: boolean;
     eventId?: string;
     scheduleSlotId?: string | null;
-    tx?: Prisma.TransactionClient | PrismaClient;
+    tx?: AvailabilityClient;
   } = {},
 ): Promise<boolean> => {
-  const client = options.tx || prisma;
-  // 1. Fetch host timezone, schedule, exceptions, and existing bookings
+  const client: AvailabilityClient = options.tx || prisma;
   const user = await client.user.findUnique({
     where: { id: userId },
     select: { timezone: true },
   });
 
-  if (!user) return false;
+  if (!user) {
+    return false;
+  }
 
-  const sameSessionExclusion = options.eventId
-    ? options.scheduleSlotId
-      ? { scheduleSlotId: options.scheduleSlotId }
-      : {
-        eventId: options.eventId,
-        startTime,
-        endTime,
-      }
-    : undefined;
+  const sameSessionExclusion = buildSameSessionExclusion(
+    startTime,
+    endTime,
+    options,
+  );
 
   const [weekly, exceptions, conflicts] = await Promise.all([
     client.userWeeklyAvailability.findMany({ where: { userId } }),
@@ -201,15 +194,15 @@ const isHostAvailable = async (
       where: {
         userId,
         date: {
-          gte: new Date(startTime.getTime() - 24 * 60 * 60 * 1000), // Check yesterday just in case of TZ wrap
-          lte: new Date(endTime.getTime() + 24 * 60 * 60 * 1000),  // Check tomorrow just in case of TZ wrap
+          gte: new Date(startTime.getTime() - 24 * 60 * 60 * 1000),
+          lte: new Date(endTime.getTime() + 24 * 60 * 60 * 1000),
         },
       },
     }),
     client.booking.findFirst({
       where: {
         hostUserId: userId,
-        status: { not: "CANCELLED" },
+        status: { not: 'CANCELLED' },
         ...(sameSessionExclusion ? { NOT: sameSessionExclusion } : {}),
         OR: [
           {
@@ -221,85 +214,33 @@ const isHostAvailable = async (
     }),
   ]);
 
-  // If there's a conflict, host is not available
-  if (conflicts) return false;
+  if (conflicts) {
+    return false;
+  }
 
-  // 2. Convert UTC times to Host Local Time for schedule matching
-  const hostTz = user.timezone;
+  const startLocal = toLocalAvailabilityInfo(startTime, user.timezone);
+  const endLocal = toLocalAvailabilityInfo(endTime, user.timezone);
 
-  const toLocalInfo = (date: Date) => {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: hostTz,
-      hour12: false,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      weekday: 'short'
-    });
-
-    const parts = formatter.formatToParts(date);
-    const getPart = (type: string) => parts.find(p => p.type === type)?.value;
-
-    const year = getPart('year')!;
-    const month = getPart('month')!;
-    const day = getPart('day')!;
-    const hour = getPart('hour')!;
-    const minute = getPart('minute')!;
-    const weekdayName = getPart('weekday')!;
-
-    const weekdayMap: Record<string, number> = {
-      'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
-    };
-
-    return {
-      hhmm: `${hour}:${minute}`,
-      dayOfWeek: weekdayMap[weekdayName],
-      dateString: `${year}-${month}-${day}`
-    };
-  };
-
-  const startLocal = toLocalInfo(startTime);
-  const endLocal = toLocalInfo(endTime);
-
-  // If the booking spans across two local days, we reject for now (simplification)
   if (startLocal.dateString !== endLocal.dateString) {
     return false;
   }
 
-  // 3. Check Exceptions
-  const dayException = exceptions.find((e: UserAvailabilityException) => {
-    const eDate = e.date.toISOString().split('T')[0];
-    return eDate === startLocal.dateString;
-  });
+  const dayException = findAvailabilityException(exceptions, startLocal.dateString);
+  const exceptionDecision = resolveAvailabilityFromException(
+    dayException,
+    startLocal,
+    endLocal,
+  );
 
-  if (dayException) {
-    if (dayException.isUnavailable && !dayException.startTime) {
-      return false; // Full day off
-    }
-    if (dayException.isUnavailable && dayException.startTime && dayException.endTime) {
-      // Partial day off - check overlap
-      if (startLocal.hhmm < dayException.endTime && endLocal.hhmm > dayException.startTime) {
-        return false;
-      }
-    } else if (!dayException.isUnavailable && dayException.startTime && dayException.endTime) {
-      // Custom availability - must fit within
-      return startLocal.hhmm >= dayException.startTime && endLocal.hhmm <= dayException.endTime;
-    }
+  if (exceptionDecision !== null) {
+    return exceptionDecision;
   }
 
   if (options.ignoreWeeklySchedule) {
     return true;
   }
 
-  // 4. Check Weekly Schedule (if no exception overrode it)
-  const daySlots = weekly.filter((slot: UserWeeklyAvailability) => slot.dayOfWeek === startLocal.dayOfWeek);
-  const isWithinWeekly = daySlots.some((slot: UserWeeklyAvailability) =>
-    startLocal.hhmm >= slot.startTime && endLocal.hhmm <= slot.endTime
-  );
-
-  return isWithinWeekly;
+  return isWithinWeeklyAvailability(weekly, startLocal, endLocal);
 };
 
 export type AvailableSlot = {
@@ -319,12 +260,7 @@ const getAvailableSlots = async (
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
-      interactionType: {
-        select: {
-          minParticipants: true,
-          maxParticipants: true,
-        },
-      },
+      ...availabilityEventInclude,
       scheduleSlots: {
         where: {
           isActive: true,
@@ -333,25 +269,22 @@ const getAvailableSlots = async (
             lte: endDate,
           },
         },
-        orderBy: { startTime: "asc" },
-      },
-      hosts: {
-        where: { isActive: true },
-        orderBy: { hostOrder: "asc" },
+        orderBy: { startTime: 'asc' },
       },
     },
   });
 
-  if (!event || (event as any).hosts.length === 0) return [];
+  if (!event || event.hosts.length === 0) {
+    return [];
+  }
 
   const eligibleHosts = preferredHostId
-    ? (event as any).hosts.filter((host: any) => host.hostUserId === preferredHostId)
-    : (event as any).hosts;
+    ? event.hosts.filter((host) => host.hostUserId === preferredHostId)
+    : event.hosts;
 
   if (eligibleHosts.length === 0) return [];
 
   const slots: AvailableSlot[] = [];
-  const now = new Date();
 
   const getSlotAvailability = async (
     slotStart: Date,
@@ -365,16 +298,16 @@ const getAvailableSlots = async (
     }
 
     try {
-      assertBookingWeekdayAllowed((event as any).allowedWeekdays, slotStart);
-      assertBookingNoticeSatisfied(
-        (event as any).minimumNoticeMinutes,
-        slotStart,
-      );
+      assertBookingWeekdayAllowed(event.allowedWeekdays, slotStart);
+      assertBookingNoticeSatisfied(event.minimumNoticeMinutes, slotStart);
     } catch {
       return null;
     }
 
-    const { maxParticipants } = getEffectiveParticipantPolicy(event as any, scheduleSlot ?? (event.interactionType as any));
+    const { maxParticipants } = getEffectiveParticipantPolicy(
+      event,
+      scheduleSlot ?? event.interactionType,
+    );
     const currentBookings = await prisma.booking.count({
       where: (scheduleSlot
         ? {
@@ -394,13 +327,13 @@ const getAvailableSlots = async (
     }
 
     const allowSharedSessionOverlap =
-      (event as any).bookingMode === EventBookingMode.FIXED_SLOTS;
+      event.bookingMode === EventBookingMode.FIXED_SLOTS;
 
     let isAvailable = false;
     for (const host of eligibleHosts) {
       if (
         await isHostAvailable(host.hostUserId, slotStart, slotEnd, {
-          ignoreWeeklySchedule: (event as any).bookingMode === EventBookingMode.FIXED_SLOTS,
+          ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
           eventId: allowSharedSessionOverlap ? eventId : undefined,
           scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
         })
@@ -421,8 +354,8 @@ const getAvailableSlots = async (
     };
   };
 
-  if ((event as any).bookingMode === EventBookingMode.FIXED_SLOTS) {
-    for (const scheduleSlot of (event as any).scheduleSlots) {
+  if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
+    for (const scheduleSlot of event.scheduleSlots) {
       const availableSlot = await getSlotAvailability(scheduleSlot.startTime, scheduleSlot.endTime, scheduleSlot);
       if (availableSlot) {
         slots.push(availableSlot);

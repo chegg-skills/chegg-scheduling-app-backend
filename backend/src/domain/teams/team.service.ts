@@ -30,6 +30,28 @@ type UpdateTeamInput = {
 
 const normalizeName = (name: string): string => name.trim().toLowerCase();
 
+const requireTeamId = (teamId: string): string => {
+  const normalizedTeamId = teamId?.trim();
+  if (!normalizedTeamId) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
+  }
+
+  return normalizedTeamId;
+};
+
+const requireTeamName = (name: string): string => {
+  const normalizedValue = name?.trim();
+  if (!normalizedValue) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team name is required.");
+  }
+
+  return normalizedValue;
+};
+
+const normalizeDescription = (description?: string): string | null => {
+  return description?.trim() || null;
+};
+
 const validateTeamLead = async (teamLeadId: string): Promise<void> => {
   const lead = await prisma.user.findUnique({
     where: { id: teamLeadId },
@@ -56,16 +78,37 @@ const validateTeamLead = async (teamLeadId: string): Promise<void> => {
   }
 };
 
+const upsertTeamLeadMembership = async (
+  tx: Prisma.TransactionClient,
+  teamId: string,
+  teamLeadId: string,
+): Promise<void> => {
+  await tx.teamMember.upsert({
+    where: {
+      teamId_userId: {
+        teamId,
+        userId: teamLeadId,
+      },
+    },
+    create: {
+      teamId,
+      userId: teamLeadId,
+      isActive: true,
+    },
+    update: {
+      isActive: true,
+    },
+  });
+};
+
 const createTeam = async (
   payload: CreateTeamInput,
   caller: CallerContext,
 ): Promise<SafeTeam> => {
-  const { name, description, teamLeadId } = payload;
+  const name = requireTeamName(payload.name);
+  const teamLeadId = payload.teamLeadId?.trim();
 
-  if (!name?.trim()) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team name is required.");
-  }
-  if (!teamLeadId?.trim()) {
+  if (!teamLeadId) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamLeadId is required.");
   }
 
@@ -77,21 +120,14 @@ const createTeam = async (
         data: {
           name: normalizeName(name),
           publicBookingSlug: createPublicBookingSlug(name, "team"),
-          description: description?.trim() || null,
+          description: normalizeDescription(payload.description),
           teamLeadId,
           createdById: caller.id,
           isActive: payload.isActive ?? true,
         },
       });
 
-      // Automatically add team lead as a member
-      await tx.teamMember.create({
-        data: {
-          teamId: newTeam.id,
-          userId: teamLeadId,
-          isActive: true,
-        },
-      });
+      await upsertTeamLeadMembership(tx, newTeam.id, teamLeadId);
 
       return newTeam;
     });
@@ -145,12 +181,10 @@ const listTeams = async (
 };
 
 const readTeam = async (teamId: string): Promise<SafeTeam> => {
-  if (!teamId?.trim()) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
-  }
+  const normalizedTeamId = requireTeamId(teamId);
 
   const team = await prisma.team.findUnique({
-    where: { id: teamId },
+    where: { id: normalizedTeamId },
   });
 
   if (!team) {
@@ -164,18 +198,13 @@ const updateTeam = async (
   teamId: string,
   payload: UpdateTeamInput,
 ): Promise<SafeTeam> => {
+  teamId = requireTeamId(teamId);
   const existingTeam = await readTeam(teamId);
-  if (!teamId?.trim()) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
-  }
 
   const updateData: Prisma.TeamUpdateInput = {};
 
   if (payload.name !== undefined) {
-    const value = payload.name.trim();
-    if (!value) {
-      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "name cannot be empty.");
-    }
+    const value = requireTeamName(payload.name);
     updateData.name = normalizeName(value);
 
     if (!existingTeam.publicBookingSlug) {
@@ -184,7 +213,7 @@ const updateTeam = async (
   }
 
   if (payload.description !== undefined) {
-    updateData.description = payload.description?.trim() || null;
+    updateData.description = normalizeDescription(payload.description);
   }
 
   if (payload.teamLeadId !== undefined) {
@@ -211,23 +240,7 @@ const updateTeam = async (
       });
 
       if (payload.teamLeadId !== undefined) {
-        // Upsert team lead as member
-        await tx.teamMember.upsert({
-          where: {
-            teamId_userId: {
-              teamId: updatedTeam.id,
-              userId: payload.teamLeadId,
-            },
-          },
-          create: {
-            teamId: updatedTeam.id,
-            userId: payload.teamLeadId,
-            isActive: true,
-          },
-          update: {
-            isActive: true, // Reactivate if they were inactive
-          },
-        });
+        await upsertTeamLeadMembership(tx, updatedTeam.id, payload.teamLeadId);
       }
 
       return updatedTeam;
@@ -251,9 +264,7 @@ const updateTeam = async (
 };
 
 const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
-  if (!teamId?.trim()) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
-  }
+  teamId = requireTeamId(teamId);
 
   const team = await prisma.team.findUnique({
     where: { id: teamId },
