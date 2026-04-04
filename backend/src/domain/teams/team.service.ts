@@ -256,11 +256,30 @@ const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
   }
 
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    include: {
+      _count: {
+        select: { bookings: true },
+      },
+    },
+  });
+
+  if (!team) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
+  }
+
+  if (team._count.bookings > 0) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      `Cannot delete team because it has ${team._count.bookings} booking(s). Please deactivate it instead to preserve historical data.`,
+    );
+  }
+
   try {
-    const team = await prisma.team.delete({
+    return await prisma.team.delete({
       where: { id: teamId },
     });
-    return team;
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

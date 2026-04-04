@@ -33,10 +33,61 @@ export const interactionTypeFormSchema = z
       z.number().int().min(1, 'If set, must be at least 1').nullable(),
     ).optional(),
     sortOrder: z.coerce.number().nonnegative().optional(),
+    isActive: z.boolean().optional(),
   })
-  .refine((values) => !values.supportsRoundRobin || values.supportsMultipleHosts, {
-    message: 'Round Robin requires Multiple Hosts to be enabled',
-    path: ['supportsRoundRobin'],
+  .superRefine((values, context) => {
+    const minHosts = values.minHosts ?? 1
+    const maxHosts = values.maxHosts ?? null
+    const minParticipants = values.minParticipants ?? 1
+    const maxParticipants = values.maxParticipants ?? null
+
+    if (values.supportsRoundRobin && !values.supportsMultipleHosts) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Round Robin requires Multiple Hosts to be enabled.',
+        path: ['supportsRoundRobin'],
+      })
+    }
+
+    if (!values.supportsMultipleHosts && minHosts !== 1) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Single-host interaction types must keep Min Hosts at 1.',
+        path: ['minHosts'],
+      })
+    }
+
+    if (!values.supportsMultipleHosts && maxHosts !== null && maxHosts !== 1) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Single-host interaction types must keep Max Hosts at 1.',
+        path: ['maxHosts'],
+      })
+    }
+
+    if (values.supportsMultipleHosts && maxHosts !== null && maxHosts < 2) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Multi-host interaction types need Max Hosts of at least 2.',
+        path: ['maxHosts'],
+      })
+    }
+
+    if (maxHosts !== null && maxHosts < minHosts) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Max Hosts cannot be less than Min Hosts.',
+        path: ['maxHosts'],
+      })
+    }
+
+    if (maxParticipants !== null && maxParticipants < minParticipants) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Max Participants cannot be less than Min Participants.',
+        path: ['maxParticipants'],
+      })
+    }
   })
 
 export type InteractionTypeFormValues = z.infer<typeof interactionTypeFormSchema>
@@ -55,5 +106,6 @@ export function getInteractionTypeFormDefaults(
     minParticipants: interactionType?.minParticipants ?? 1,
     maxParticipants: interactionType?.maxParticipants ?? null,
     sortOrder: interactionType?.sortOrder ?? 0,
+    isActive: interactionType?.isActive ?? true,
   }
 }

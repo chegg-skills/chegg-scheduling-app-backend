@@ -94,6 +94,7 @@ const StudentDetailPage = lazy(() =>
   })),
 );
 
+
 import { PublicLayout } from "@/components/layout/PublicLayout";
 
 // Helper to render a lazy-loaded page with a fallback spinner

@@ -1,16 +1,20 @@
-import { Avatar, Box, Button, Collapse, Divider, Stack, TableCell, TableRow, Typography, alpha } from '@mui/material'
+import { Box, Button, Collapse, Divider, TableCell, TableRow, alpha } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ChevronDown, ChevronUp, Clock, XCircle } from 'lucide-react'
 import type { Booking, BookingStatus } from '@/types'
-import { useConfirm } from '@/context/ConfirmContext'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
+import { BookingStudentCell } from './cells/BookingStudentCell'
+import { BookingTimeCell } from './cells/BookingTimeCell'
+import { BookingHostInfo } from './cells/BookingHostInfo'
 
 interface BookingTableRowProps {
   booking: Booking
   onUpdateStatus: (id: string, status: BookingStatus) => void
   isExpanded: boolean
   onToggle: () => void
+  onViewHost?: (userId: string) => void
 }
 
 export function BookingTableRow({
@@ -18,26 +22,27 @@ export function BookingTableRow({
   onUpdateStatus,
   isExpanded,
   onToggle,
+  onViewHost,
 }: BookingTableRowProps) {
   const theme = useTheme()
-  const { confirm } = useConfirm()
+  const { handleAction } = useAsyncAction()
 
   const startTime = new Date(booking.startTime)
   const now = new Date()
   const tenMinutesAfterStart = new Date(startTime.getTime() + 10 * 60 * 1000)
   const canMarkNoShow = booking.status === 'CONFIRMED' && now >= tenMinutesAfterStart
 
-  const handleAction = async (status: BookingStatus, label: string) => {
-    const isConfirmed = await confirm({
-      title: `${label} Booking`,
-      message: `Are you sure you want to ${label.toLowerCase()} the booking for ${booking.studentName}?`,
-      confirmText: 'Confirm',
-      cancelText: 'Back',
-    })
-
-    if (isConfirmed) {
-      onUpdateStatus(booking.id, status)
-    }
+  const handleStatusUpdate = async (status: BookingStatus, label: string) => {
+    handleAction(
+      (id, s) => onUpdateStatus(id, s as BookingStatus),
+      [booking.id, status],
+      {
+        title: `${label} Booking`,
+        message: `Are you sure you want to ${label.toLowerCase()} the booking for ${booking.studentName
+          }?`,
+        actionName: label,
+      }
+    )
   }
 
   return (
@@ -50,49 +55,21 @@ export function BookingTableRow({
         }}
       >
         <TableCell sx={{ pl: 3 }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Avatar
-              sx={{
-                width: 34,
-                height: 34,
-                fontSize: '0.8125rem',
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main,
-                fontWeight: 700,
-              }}
-            >
-              {booking.studentName.split(' ').map((name) => name[0]).join('').toUpperCase()}
-            </Avatar>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {booking.studentName}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {booking.studentEmail}
-              </Typography>
-            </Box>
-          </Stack>
+          <BookingStudentCell name={booking.studentName} email={booking.studentEmail} />
         </TableCell>
 
         <TableCell>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Box sx={{ color: 'text.secondary', typography: 'body2' }}>
             {booking.event?.name || 'Unknown Event'}
-          </Typography>
+          </Box>
         </TableCell>
 
         <TableCell>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {booking.host ? `${booking.host.firstName} ${booking.host.lastName}` : 'N/A'}
-          </Typography>
+          <BookingHostInfo host={booking.host} onViewHost={onViewHost} />
         </TableCell>
 
         <TableCell>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(startTime)}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(startTime)}
-          </Typography>
+          <BookingTimeCell startTime={booking.startTime} />
         </TableCell>
 
         <TableCell>
@@ -126,14 +103,14 @@ export function BookingTableRow({
                 borderColor: theme.palette.divider,
               }}
             >
-              <BookingDetailsPanel booking={booking} />
+              <BookingDetailsPanel booking={booking} onViewHost={onViewHost} />
 
               <Divider sx={{ my: 3 }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ mr: 'auto', alignSelf: 'center' }}>
+                <Box sx={{ mr: 'auto', alignSelf: 'center', color: 'text.secondary', typography: 'caption' }}>
                   Booking ID: {booking.id.slice(0, 8).toUpperCase()}
-                </Typography>
+                </Box>
 
                 {booking.status === 'CONFIRMED' && (
                   <Button
@@ -141,7 +118,7 @@ export function BookingTableRow({
                     color="error"
                     size="small"
                     startIcon={<XCircle size={16} />}
-                    onClick={() => handleAction('CANCELLED', 'Cancel')}
+                    onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
                     sx={{ fontWeight: 600, borderRadius: 1.5 }}
                   >
                     Cancel Booking
@@ -154,7 +131,7 @@ export function BookingTableRow({
                     color="warning"
                     size="small"
                     startIcon={<Clock size={16} />}
-                    onClick={() => handleAction('NO_SHOW', 'Mark as No Show')}
+                    onClick={() => handleStatusUpdate('NO_SHOW', 'No Show')}
                     sx={{ fontWeight: 600, borderRadius: 1.5 }}
                   >
                     Mark as No Show

@@ -11,8 +11,8 @@ import type { Event } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useDeleteEvent, useUpdateEvent } from '@/hooks/useEvents'
-import { useConfirm } from '@/context/ConfirmContext'
 import { useTableSort } from '@/hooks/useTableSort'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { EventForm } from './EventForm'
 import { EventTableRow } from './EventTableRow'
 import { eventSortAccessors, eventTableColumns } from './eventTableUtils'
@@ -20,39 +20,38 @@ import { eventSortAccessors, eventTableColumns } from './eventTableUtils'
 interface EventTableProps {
   events: Event[]
   teamId?: string
+  onViewUser?: (userId: string) => void
 }
 
-export function EventTable({ events, teamId }: EventTableProps) {
+export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()
-  const { confirm } = useConfirm()
+  const { handleAction } = useAsyncAction()
   const { sortedItems: sortedEvents, sortConfig, requestSort } = useTableSort(events, eventSortAccessors)
 
   async function handleToggleActive(event: Event) {
     const newStatus = !event.isActive
 
-    const confirmed = await confirm({
-      title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
-      message: newStatus
-        ? `Are you sure you want to mark event "${event.name}" as active? This will make it visible on the public booking page.`
-        : `Are you sure you want to mark event "${event.name}" as inactive? This will hide it from the public booking page but keep all its configuration.`,
-    })
-
-    if (confirmed) {
-      updateEvent({ eventId: event.id, data: { isActive: newStatus } })
-    }
+    handleAction(
+      updateEvent,
+      { eventId: event.id, data: { isActive: newStatus } },
+      {
+        title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+        message: newStatus
+          ? `Are you sure you want to mark event "${event.name}" as active? This will make it visible on the public booking page.`
+          : `Are you sure you want to mark event "${event.name}" as inactive? This will hide it from the public booking page but keep all its configuration.`,
+        actionName: 'Update',
+      }
+    )
   }
 
   async function handleDelete(event: Event) {
-    const confirmed = await confirm({
+    handleAction(deleteEvent, event.id, {
       title: 'Delete Event',
       message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated host assignments will be lost.`,
+      actionName: 'Delete',
     })
-
-    if (confirmed) {
-      deleteEvent(event.id)
-    }
   }
 
   return (
@@ -103,6 +102,7 @@ export function EventTable({ events, teamId }: EventTableProps) {
                   onEdit={setEditingEvent}
                   onToggleActive={handleToggleActive}
                   onDelete={handleDelete}
+                  onViewUser={onViewUser}
                 />
               ))
             )}

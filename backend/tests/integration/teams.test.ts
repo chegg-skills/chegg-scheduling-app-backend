@@ -2,6 +2,7 @@ import request from "supertest";
 import app from "../../src/app";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
+import { prisma } from "../../src/shared/db/prisma";
 
 let superAdminToken: string;
 let teamAdminToken: string;
@@ -492,6 +493,69 @@ describe("DELETE /api/teams/:teamId", () => {
     const res = await request(app).delete(`/api/teams/${teamId}`);
 
     expect(res.status).toBe(401);
+  });
+
+  it("blocks deletion of a team with active bookings", async () => {
+    // Create a team
+    const teamRes = await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ name: "Booking Protected Team", teamLeadId: teamAdminId });
+    const teamId = teamRes.body.data.id;
+
+    // Create a booking for this team (must exist before deletion)
+    const offering = await prisma.eventOffering.create({
+      data: {
+        key: "protected-offering-team",
+        name: "Protected Offering",
+        createdById: teamAdminId,
+        updatedById: teamAdminId,
+      },
+    });
+
+    const interactionType = await prisma.eventInteractionType.create({
+      data: {
+        key: "protected-interaction-team",
+        name: "Protected Interaction",
+        createdById: teamAdminId,
+        updatedById: teamAdminId,
+      },
+    });
+
+    const event = await prisma.event.create({
+      data: {
+        name: "Protected Event",
+        teamId,
+        offeringId: offering.id,
+        interactionTypeId: interactionType.id,
+        durationSeconds: 1800,
+        locationType: "VIRTUAL",
+        locationValue: "https://meet.example.com",
+        createdById: teamAdminId,
+        updatedById: teamAdminId,
+        publicBookingSlug: "protected-event-slug-team",
+      },
+    });
+
+    await prisma.booking.create({
+      data: {
+        studentName: "Test Student",
+        studentEmail: "student@example.com",
+        teamId,
+        eventId: event.id,
+        hostUserId: teamAdminId,
+        startTime: new Date(),
+        endTime: new Date(Date.now() + 1800000),
+      },
+    });
+
+    // Try to delete the team
+    const res = await request(app)
+      .delete(`/api/teams/${teamId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toContain("booking(s)");
   });
 
   it("returns 405 for POST on a specific team resource", async () => {

@@ -9,7 +9,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
-import { Monitor, Edit } from 'lucide-react'
+import { Monitor, Edit, Trash2, Info } from 'lucide-react'
 import type { EventInteractionType } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
@@ -18,6 +18,11 @@ import { InteractionTypeForm } from './InteractionTypeForm'
 import { RowActions } from '@/components/shared/RowActions'
 import { Button } from '@/components/shared/Button'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
+import { useConfirm } from '@/context/ConfirmContext'
+import { useDeleteInteractionType } from '@/hooks/useInteractionTypes'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { extractApiError } from '@/utils/apiError'
+import { InteractionTypeUsageList } from './InteractionTypeUsageList'
 
 interface InteractionTypeTableProps {
   interactionTypes: EventInteractionType[]
@@ -42,7 +47,32 @@ const interactionTypeSortAccessors: SortAccessorMap<EventInteractionType, Intera
 
 export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableProps) {
   const [editing, setEditing] = useState<EventInteractionType | null>(null)
+  const [usageId, setUsageId] = useState<string | null>(null)
   const { sortedItems: sortedInteractionTypes, sortConfig, requestSort } = useTableSort(interactionTypes, interactionTypeSortAccessors)
+  const { alert } = useConfirm()
+  const { mutate: deleteInteractionType } = useDeleteInteractionType()
+  const { handleAction } = useAsyncAction()
+
+  const usageTarget = usageId ? interactionTypes.find(t => t.id === usageId) : null
+
+  const handleDelete = async (t: EventInteractionType) => {
+    handleAction(deleteInteractionType, t.id, {
+      title: 'Delete Interaction Type',
+      message: `Are you sure you want to permanently delete "${t.name}"? This action cannot be undone.`,
+      confirmText: 'Yes',
+      actionName: 'Delete',
+      onError: (error: any) => {
+        if (error.response?.status === 409) {
+          setUsageId(t.id)
+        } else {
+          alert({
+            title: 'Delete Failed',
+            message: extractApiError(error),
+          })
+        }
+      }
+    })
+  }
 
   return (
     <>
@@ -136,6 +166,17 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                           icon: <Edit size={16} />,
                           onClick: () => setEditing(t),
                         },
+                        {
+                          label: 'View Usage',
+                          icon: <Info size={16} />,
+                          onClick: () => setUsageId(t.id),
+                        },
+                        {
+                          label: 'Delete',
+                          icon: <Trash2 size={16} />,
+                          onClick: () => handleDelete(t),
+                          color: 'error',
+                        },
                       ]}
                     />
                   </TableCell>
@@ -174,6 +215,38 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
           />
         </Modal>
       )}
+
+      {usageTarget && (
+        <Modal
+          isOpen
+          size="md"
+          onClose={() => setUsageId(null)}
+          title={`Usage: ${usageTarget.name}`}
+          footer={
+            <Button variant="secondary" onClick={() => setUsageId(null)}>
+              Close
+            </Button>
+          }
+        >
+          <Box sx={{ p: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              This interaction type is currently used by the following events. To delete it, you must first change the interaction type for these events or deactivate this interaction type.
+            </Typography>
+
+            <InteractionTypeUsageList interactionTypeId={usageTarget.id} />
+
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                💡 Recommendation: Deactivate
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                If you no longer want to offer this interaction type, uncheck <strong>"Is active"</strong> in the Edit form. This prevents new events from using it while keeping historical data intact.
+              </Typography>
+            </Box>
+          </Box>
+        </Modal>
+      )}
     </>
   )
 }
+

@@ -14,6 +14,7 @@ import { EventForm } from '@/components/events/EventForm';
 import { PageSpinner } from '@/components/shared/Spinner';
 import { ErrorAlert } from '@/components/shared/ErrorAlert';
 import { EventTable } from '@/components/events/EventTable';
+import { UserDetailModal } from '@/components/users/UserDetailModal';
 import { Select } from '@/components/shared/Select';
 import { StatsOverview } from '@/components/shared/StatsOverview';
 import { useEventStats } from '@/hooks/useStats';
@@ -23,6 +24,7 @@ export function EventsPage() {
   const { user } = useAuth();
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('month');
   const canManageTeam = user?.role === 'SUPER_ADMIN';
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams();
@@ -175,7 +177,7 @@ export function EventsPage() {
           <ErrorAlert message="Failed to load events." />
         ) : (
           <Box sx={{ mt: 3 }}>
-            <EventTable events={eventsData?.events ?? []} teamId={selectedTeamId} />
+            <EventTable events={eventsData?.events ?? []} teamId={selectedTeamId} onViewUser={setViewingUserId} />
           </Box>
         )}
 
@@ -187,6 +189,13 @@ export function EventsPage() {
               onCancel={() => setShowCreateEvent(false)}
             />
           </Modal>
+        )}
+
+        {viewingUserId && (
+          <UserDetailModal
+            userId={viewingUserId}
+            onClose={() => setViewingUserId(null)}
+          />
         )}
       </Box>
     </Box>

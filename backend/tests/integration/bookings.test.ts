@@ -256,6 +256,96 @@ describe("Booking Domain Integration Tests", () => {
             expect(res.status).toBe(409);
             expect(res.body.message).toContain("not available");
         });
+
+        it("rejects bookings that do not match a predefined fixed slot", async () => {
+            const allowedStart = getNextUtcWeekdayAt(1, 10, 0);
+            const invalidStart = getNextUtcWeekdayAt(1, 11, 0);
+
+            await prisma.event.update({
+                where: { id: eventId },
+                data: {
+                    bookingMode: "FIXED_SLOTS",
+                    allowedWeekdays: [1],
+                    minimumNoticeMinutes: 0,
+                    minParticipantCount: 1,
+                    maxParticipantCount: 1,
+                },
+            });
+
+            await prisma.eventScheduleSlot.create({
+                data: {
+                    eventId,
+                    startTime: allowedStart,
+                    endTime: new Date(allowedStart.getTime() + 3600 * 1000),
+                },
+            });
+
+            const res = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Slot Mismatch",
+                    studentEmail: "slot-mismatch@example.com",
+                    teamId,
+                    eventId,
+                    startTime: invalidStart.toISOString(),
+                    timezone: "UTC",
+                });
+
+            expect(res.status).toBe(409);
+            expect(res.body.message).toMatch(/predefined slot/i);
+        });
+
+        it("rejects bookings when a fixed slot has reached its participant limit", async () => {
+            const slotStart = getNextUtcWeekdayAt(1, 10, 0);
+            const slotEnd = new Date(slotStart.getTime() + 3600 * 1000);
+
+            await prisma.event.update({
+                where: { id: eventId },
+                data: {
+                    bookingMode: "FIXED_SLOTS",
+                    allowedWeekdays: [1],
+                    minimumNoticeMinutes: 0,
+                    minParticipantCount: 1,
+                    maxParticipantCount: 1,
+                },
+            });
+
+            const scheduleSlot = await prisma.eventScheduleSlot.create({
+                data: {
+                    eventId,
+                    startTime: slotStart,
+                    endTime: slotEnd,
+                },
+            });
+
+            await prisma.booking.create({
+                data: {
+                    studentName: "Existing Student",
+                    studentEmail: "existing@example.com",
+                    teamId,
+                    eventId,
+                    hostUserId: coachId,
+                    scheduleSlotId: scheduleSlot.id,
+                    startTime: slotStart,
+                    endTime: slotEnd,
+                    status: "CONFIRMED",
+                },
+            });
+
+            const res = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Capacity Student",
+                    studentEmail: "capacity@example.com",
+                    teamId,
+                    eventId,
+                    startTime: slotStart.toISOString(),
+                    timezone: "UTC",
+                });
+
+            expect(res.status).toBe(409);
+            expect(res.body.message).toMatch(/capacity|participant limit|full/i);
+        });
     });
 
     describe("POST /api/bookings (ROUND-ROBIN)", () => {

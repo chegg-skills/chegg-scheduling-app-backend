@@ -125,6 +125,19 @@ export interface EventHost {
   hostUser: SafeUser
 }
 
+export type EventBookingMode = 'HOST_AVAILABILITY' | 'FIXED_SLOTS'
+
+export interface EventScheduleSlot {
+  id: string
+  eventId: string
+  startTime: string
+  endTime: string
+  capacity: number | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Event {
   id: string
   publicBookingSlug: string | null
@@ -134,9 +147,14 @@ export interface Event {
   offeringId: string
   interactionTypeId: string
   assignmentStrategy: AssignmentStrategy
+  bookingMode: EventBookingMode
   durationSeconds: number
   locationType: EventLocationType
   locationValue: string
+  allowedWeekdays: number[]
+  minimumNoticeMinutes: number
+  minParticipantCount: number | null
+  maxParticipantCount: number | null
   teamId: string
   createdById: string
   updatedById: string
@@ -145,6 +163,7 @@ export interface Event {
   offering: EventOffering
   interactionType: EventInteractionType
   hosts: EventHost[]
+  scheduleSlots?: EventScheduleSlot[]
 }
 
 export interface PublicTeamSummary extends Pick<Team, 'id' | 'name' | 'description' | 'publicBookingSlug'> { }
@@ -272,6 +291,11 @@ export interface CreateEventDto {
   locationValue: string
   durationSeconds: number
   assignmentStrategy?: AssignmentStrategy
+  bookingMode?: EventBookingMode
+  allowedWeekdays?: number[]
+  minimumNoticeMinutes?: number
+  minParticipantCount?: number | null
+  maxParticipantCount?: number | null
   description?: string
   isActive?: boolean
 }
@@ -347,6 +371,7 @@ export interface CreateAvailabilityExceptionDto {
 export interface Booking {
   id: string
   studentId: string | null
+  scheduleSlotId: string | null
   studentName: string
   studentEmail: string
   startTime: string
@@ -367,6 +392,7 @@ export interface Booking {
   team?: Team
   event?: Event
   host?: SafeUser
+  scheduleSlot?: EventScheduleSlot
 }
 
 export interface CreateBookingDto {

@@ -249,6 +249,18 @@ describe("Interaction type routes", () => {
     expect(res.body.message).toMatch(/supportsRoundRobin requires supportsMultipleHosts/i);
   });
 
+  it("rejects contradictory multi-host interaction types", async () => {
+    const res = await createInteractionType(context.superAdminToken, {
+      key: "bad-multi-host",
+      name: "Bad Multi Host",
+      supportsMultipleHosts: true,
+      maxHosts: 1,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/maxHosts .* at least 2/i);
+  });
+
   it("lists interaction types", async () => {
     const created = await createInteractionType(context.superAdminToken);
 
@@ -285,6 +297,71 @@ describe("Interaction type routes", () => {
     expect(res.body.data.name).toBe("Updated Mentorship");
     expect(res.body.data.maxParticipants).toBe(4);
   });
+
+  it("deletes an unused interaction type", async () => {
+    const created = await createInteractionType(context.superAdminToken);
+    const id = created.body.data.id;
+
+    const res = await request(app)
+      .delete(`/api/event-interaction-types/${id}`)
+      .set("Authorization", `Bearer ${context.superAdminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/deleted successfully/i);
+
+    // Verify it's gone
+    const listRes = await request(app)
+      .get("/api/event-interaction-types")
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(
+      listRes.body.data.interactionTypes.some((t: { id: string }) => t.id === id),
+    ).toBe(false);
+  });
+
+  it("lists events and teams using an interaction type", async () => {
+    const interactionType = await createInteractionType(context.superAdminToken);
+    const itId = interactionType.body.data.id;
+
+    const offering = await createOffering(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Usage Test Event",
+      offeringId: offering.body.data.id,
+      interactionTypeId: itId,
+    });
+
+    const res = await request(app)
+      .get(`/api/event-interaction-types/${itId}/usage`)
+      .set("Authorization", `Bearer ${context.superAdminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0]).toMatchObject({
+      id: event.body.data.id,
+      name: "Usage Test Event",
+      team: {
+        id: context.teamId,
+        name: "primary events team",
+      },
+    });
+  });
+
+  it("blocks deletion of an interaction type used by events", async () => {
+    const interactionType = await createInteractionType(context.superAdminToken);
+    const itId = interactionType.body.data.id;
+
+    const offering = await createOffering(context.superAdminToken);
+    await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionTypeId: itId,
+    });
+
+    const res = await request(app)
+      .delete(`/api/event-interaction-types/${itId}`)
+      .set("Authorization", `Bearer ${context.superAdminToken}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/currently used by 1 event/i);
+  });
 });
 
 describe("Event CRUD routes", () => {
@@ -308,6 +385,37 @@ describe("Event CRUD routes", () => {
     expect(res.body.data.name).toBe("Career Coaching Session");
     expect(res.body.data.offering.id).toBe(offering.body.data.id);
     expect(res.body.data.interactionType.id).toBe(interactionType.body.data.id);
+  });
+
+  it("defaults to DIRECT assignment when the event does not choose a strategy", async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: uniqueValue("round-robin-offering"),
+      name: "Round Robin Offering",
+    });
+    const interactionType = await createInteractionType(context.superAdminToken, {
+      key: uniqueValue("round-robin-interaction"),
+      name: "Round Robin Interaction",
+      supportsRoundRobin: true,
+      supportsMultipleHosts: true,
+      minHosts: 1,
+      maxHosts: 4,
+      minParticipants: 1,
+      maxParticipants: 20,
+    });
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Configured Event",
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      assignmentStrategy: undefined,
+      minParticipantCount: 2,
+      maxParticipantCount: 8,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.assignmentStrategy).toBe("DIRECT");
+    expect(res.body.data.minParticipantCount).toBe(2);
+    expect(res.body.data.maxParticipantCount).toBe(8);
   });
 
   it("forbids a TEAM_ADMIN from managing another team", async () => {
@@ -419,6 +527,73 @@ describe("Event CRUD routes", () => {
     expect(readRes.status).toBe(404);
   });
 
+  it("blocks hard deletion of an event with bookings", async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: uniqueValue("delete-booking-offering"),
+      name: "Delete Booking Offering",
+    });
+    const interactionType = await createInteractionType(context.superAdminToken, {
+      key: uniqueValue("delete-booking-interaction"),
+      name: "Delete Booking Interaction",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Event with Booking",
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      bookingMode: "FIXED_SLOTS",
+      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
+    });
+    const eventId = event.body.data.id;
+
+    // Create a 30-minute slot (matching default 1800 durationSeconds)
+    const startTime = new Date(Date.now() + 86400000);
+    startTime.setUTCMinutes(0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 1800 * 1000);
+
+    const slotRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        capacity: 1,
+      });
+
+    expect(slotRes.status).toBe(201);
+
+    // Add a host (required for booking)
+    await request(app)
+      .put(`/api/events/${eventId}/hosts`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        hosts: [{ userId: context.coachOneId, hostOrder: 1 }],
+      });
+
+    // Create a booking
+    const bookingRes = await request(app)
+      .post("/api/bookings")
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        eventId,
+        teamId: context.teamId,
+        scheduleSlotId: slotRes.body.data.id,
+        studentName: "Test Student",
+        studentEmail: "student@example.com",
+        startTime: slotRes.body.data.startTime,
+        endTime: slotRes.body.data.endTime,
+      });
+
+    expect(bookingRes.status).toBe(201);
+
+    // Try to delete event
+    const res = await request(app)
+      .delete(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toContain("booking(s)");
+  });
+
   it("deactivates an event via PATCH", async () => {
     const offering = await createOffering(context.superAdminToken);
     const interactionType = await createInteractionType(context.superAdminToken);
@@ -436,6 +611,117 @@ describe("Event CRUD routes", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.isActive).toBe(false);
+  });
+});
+
+describe("Event scheduling routes", () => {
+  it("creates and updates an event with advanced scheduling settings", async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: uniqueValue("fixed-slot-offering"),
+      name: "Fixed Slot Offering",
+    });
+    const interactionType = await createInteractionType(context.superAdminToken, {
+      key: uniqueValue("group-session"),
+      name: "Group Session",
+      supportsMultipleHosts: true,
+      maxHosts: null,
+      minParticipants: 2,
+      maxParticipants: 12,
+    });
+
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Advanced Scheduling Event",
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      bookingMode: "FIXED_SLOTS",
+      allowedWeekdays: [1, 4],
+      minimumNoticeMinutes: 360,
+      minParticipantCount: 2,
+      maxParticipantCount: 8,
+    });
+
+    expect(created.status).toBe(201);
+    expect(created.body.data.bookingMode).toBe("FIXED_SLOTS");
+    expect(created.body.data.allowedWeekdays).toEqual([1, 4]);
+    expect(created.body.data.minimumNoticeMinutes).toBe(360);
+    expect(created.body.data.minParticipantCount).toBe(2);
+    expect(created.body.data.maxParticipantCount).toBe(8);
+
+    const updated = await request(app)
+      .patch(`/api/events/${created.body.data.id}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        bookingMode: "HOST_AVAILABILITY",
+        allowedWeekdays: [],
+        minimumNoticeMinutes: 60,
+      });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.bookingMode).toBe("HOST_AVAILABILITY");
+    expect(updated.body.data.allowedWeekdays).toEqual([]);
+    expect(updated.body.data.minimumNoticeMinutes).toBe(60);
+  });
+
+  it("creates, updates, lists, and deletes predefined schedule slots", async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: uniqueValue("slot-offering"),
+      name: "Slot Offering",
+    });
+    const interactionType = await createInteractionType(context.superAdminToken, {
+      key: uniqueValue("slot-interaction"),
+      name: "Slot Interaction",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Slot Managed Event",
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      bookingMode: "FIXED_SLOTS",
+    });
+    const eventId = event.body.data.id as string;
+
+    const startTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    startTime.setUTCMinutes(0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    const createRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        capacity: 5,
+      });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.data.capacity).toBe(5);
+
+    const slotId = createRes.body.data.id as string;
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.data.slots).toHaveLength(1);
+    expect(listRes.body.data.slots[0].id).toBe(slotId);
+
+    const updateRes = await request(app)
+      .patch(`/api/events/${eventId}/schedule-slots/${slotId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ capacity: 8 });
+
+    if (updateRes.status !== 200) {
+      console.log("updateRes.body:", updateRes.body);
+    }
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.data.capacity).toBe(8);
+
+    const deleteRes = await request(app)
+      .delete(`/api/events/${eventId}/schedule-slots/${slotId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(deleteRes.status).toBe(200);
+    expect(deleteRes.body.message).toMatch(/deleted/i);
   });
 });
 

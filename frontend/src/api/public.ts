@@ -36,8 +36,16 @@ export interface ListTeamEventsBySlugResponse {
     events: PublicEventSummary[]
 }
 
+export interface AvailableSlot {
+    startTime: string;
+    endTime: string;
+    scheduleSlotId?: string;
+    remainingSeats?: number | null;
+    maxSeats?: number | null;
+}
+
 export interface ListSlotsResponse {
-    slots: string[]
+    slots: AvailableSlot[]
 }
 
 export const publicApi = {

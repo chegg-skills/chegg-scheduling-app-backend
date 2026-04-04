@@ -29,6 +29,11 @@ const getUserIdParam = (req: Request): string => {
   return Array.isArray(userId) ? userId[0] : userId;
 };
 
+const getSlotIdParam = (req: Request): string => {
+  const { slotId } = req.params;
+  return Array.isArray(slotId) ? slotId[0] : slotId;
+};
+
 const parsePositiveInt = (value: unknown): number | undefined => {
   if (typeof value !== "string") {
     return undefined;
@@ -186,6 +191,52 @@ const updateInteractionType = async (
       StatusCodes.OK,
       interactionType,
       "Interaction type updated successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteInteractionType = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const interactionType = await eventService.deleteInteractionType(
+      getInteractionTypeIdParam(req),
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      interactionType,
+      "Interaction type deleted successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getInteractionTypeUsage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const usage = await eventService.getInteractionTypeUsage(
+      getInteractionTypeIdParam(req),
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      usage,
+      "Interaction type usage fetched successfully.",
     );
   } catch (error) {
     next(error);
@@ -353,6 +404,102 @@ const removeEventHost = async (
   }
 };
 
+const listEventScheduleSlots = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.listEventScheduleSlots(
+      getEventIdParam(req),
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      result,
+      "Event schedule slots fetched successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const createEventScheduleSlot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const slot = await eventService.createEventScheduleSlot(
+      getEventIdParam(req),
+      req.body,
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.CREATED,
+      slot,
+      "Event schedule slot created successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateEventScheduleSlot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const slot = await eventService.updateEventScheduleSlot(
+      getEventIdParam(req),
+      getSlotIdParam(req),
+      req.body,
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      slot,
+      "Event schedule slot updated successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteEventScheduleSlot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const slot = await eventService.deleteEventScheduleSlot(
+      getEventIdParam(req),
+      getSlotIdParam(req),
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      slot,
+      "Event schedule slot deleted successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createEventOffering,
   listEventOfferings,
@@ -361,11 +508,15 @@ export {
   listInteractionTypes,
   updateInteractionType,
   createEvent,
+  createEventScheduleSlot,
   deleteEvent,
+  deleteEventScheduleSlot,
   listEventHosts,
+  listEventScheduleSlots,
   listTeamEvents,
   readEvent,
   removeEventHost,
   replaceEventHosts,
   updateEvent,
+  updateEventScheduleSlot, deleteInteractionType, getInteractionTypeUsage,
 };

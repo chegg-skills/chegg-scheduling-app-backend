@@ -42,3 +42,22 @@ export function useUpdateInteractionType() {
     },
   })
 }
+
+export function useDeleteInteractionType() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (interactionTypeId: string) => interactionTypesApi.delete(interactionTypeId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: interactionTypeKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
+  })
+}
+
+export function useInteractionTypeUsage(interactionTypeId: string) {
+  return useQuery({
+    queryKey: [...interactionTypeKeys.all, interactionTypeId, 'usage'],
+    queryFn: () => interactionTypesApi.getUsage(interactionTypeId).then((r) => r.data.data),
+    enabled: !!interactionTypeId,
+  })
+}

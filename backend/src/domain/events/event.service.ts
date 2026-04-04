@@ -1,5 +1,6 @@
 import {
   AssignmentStrategy,
+  EventBookingMode,
   EventLocationType,
   type EventOffering as EventOfferingModel,
   type EventInteractionType as EventInteractionTypeModel,
@@ -51,6 +52,11 @@ type CreateEventInput = {
   locationType?: string;
   locationValue?: string;
   isActive?: boolean;
+  bookingMode?: string;
+  allowedWeekdays?: number[];
+  minimumNoticeMinutes?: number;
+  minParticipantCount?: number;
+  maxParticipantCount?: number;
 };
 
 type UpdateEventInput = CreateEventInput;
@@ -183,6 +189,157 @@ const parseNonNegativeInt = (value: unknown, fieldName: string): number => {
     );
   }
   return Number(value);
+};
+
+const resolveEventSchedulingConfig = (
+  payload: CreateEventInput | UpdateEventInput,
+  interactionType: EventInteractionTypeModel,
+  existing?: SafeEvent,
+) => {
+  return {
+    bookingMode: (payload.bookingMode as EventBookingMode) ?? existing?.bookingMode ?? EventBookingMode.HOST_AVAILABILITY,
+    allowedWeekdays: payload.allowedWeekdays ?? existing?.allowedWeekdays ?? [],
+    minimumNoticeMinutes:
+      payload.minimumNoticeMinutes ?? existing?.minimumNoticeMinutes ?? 0,
+    minParticipantCount:
+      payload.minParticipantCount ??
+      existing?.minParticipantCount ??
+      interactionType.minParticipants,
+    maxParticipantCount:
+      payload.maxParticipantCount ??
+      existing?.maxParticipantCount ??
+      interactionType.maxParticipants,
+  };
+};
+
+const validateEventConfiguration = (
+  interactionType: EventInteractionTypeModel,
+  config: {
+    assignmentStrategy: AssignmentStrategy;
+    hostCount: number;
+  },
+): void => {
+  if (
+    config.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+    !interactionType.supportsRoundRobin
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      `Interaction type "${interactionType.name}" does not support ROUND_ROBIN assignment.`,
+    );
+  }
+
+  let requiredMinHosts = interactionType.minHosts;
+  if (config.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN) {
+    requiredMinHosts = Math.max(requiredMinHosts, 2);
+  } else {
+    // DIRECT events can have 0 hosts for now (assigned later)
+    requiredMinHosts = 0;
+  }
+
+  if (config.hostCount > 0 && config.hostCount < requiredMinHosts) {
+    if (
+      config.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+      config.hostCount < 2
+    ) {
+      throw new ErrorHandler(
+        StatusCodes.BAD_REQUEST,
+        "ROUND_ROBIN events require at least two hosts.",
+      );
+    }
+
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      `This event requires at least ${requiredMinHosts} host(s) based on its interaction type.`,
+    );
+  }
+
+  if (
+    interactionType.maxHosts !== null &&
+    config.hostCount > interactionType.maxHosts
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      `This event exceeds the maximum host limit of ${interactionType.maxHosts} for its interaction type.`,
+    );
+  }
+};
+
+const assertBookingNoticeSatisfied = (
+  minimumNoticeMinutes: number,
+  bookingStartTime: Date,
+) => {
+  const now = new Date();
+  const noticeMs = minimumNoticeMinutes * 60 * 1000;
+  if (bookingStartTime.getTime() - now.getTime() < noticeMs) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "Booking does not satisfy the minimum notice requirement.",
+    );
+  }
+};
+
+const assertBookingWeekdayAllowed = (
+  allowedWeekdays: number[],
+  bookingTime: Date,
+) => {
+  if (allowedWeekdays.length === 0) return;
+  const day = bookingTime.getUTCDay();
+  if (!allowedWeekdays.includes(day)) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "Booking is not allowed on this day of the week.",
+    );
+  }
+};
+
+const getEffectiveParticipantPolicy = (
+  event: {
+    bookingMode: EventBookingMode;
+    minParticipantCount: number | null;
+    maxParticipantCount: number | null;
+  },
+  slotOrInteraction: {
+    minParticipants?: number;
+    maxParticipants?: number | null;
+    capacity?: number | null;
+  },
+) => {
+  if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
+    return {
+      minParticipants: event.minParticipantCount ?? slotOrInteraction.minParticipants ?? 1,
+      maxParticipants: slotOrInteraction.capacity ?? event.maxParticipantCount ?? slotOrInteraction.maxParticipants ?? null,
+    };
+  }
+  return {
+    minParticipants: slotOrInteraction.minParticipants ?? 1,
+    maxParticipants: slotOrInteraction.maxParticipants ?? null,
+  };
+};
+
+const assertParticipantCapacityAvailable = (
+  maxParticipants: number | null,
+  currentParticipantCount: number,
+) => {
+  if (maxParticipants !== null && currentParticipantCount >= maxParticipants) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "This slot has reached its maximum participant capacity.",
+    );
+  }
+};
+
+const resolveMatchingScheduleSlot = async (
+  eventId: string,
+  startTime: Date,
+) => {
+  return prisma.eventScheduleSlot.findFirst({
+    where: {
+      eventId,
+      startTime,
+      isActive: true,
+    },
+  });
 };
 
 const assertCatalogManagementAllowed = (caller: CallerContext): void => {
@@ -357,6 +514,13 @@ const validateInteractionTypePayload = (
     );
   }
 
+  if (supportsMultipleHosts && maxHosts !== null && maxHosts < 2) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "When supportsMultipleHosts is true, maxHosts must be at least 2 or null.",
+    );
+  }
+
   return {
     supportsRoundRobin,
     supportsMultipleHosts,
@@ -496,6 +660,141 @@ const updateInteractionType = async (
   }
 };
 
+const getInteractionTypeUsage = async (
+  interactionTypeId: string,
+  caller: CallerContext,
+): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
+  const events = await prisma.event.findMany({
+    where: { interactionTypeId },
+    select: {
+      id: true,
+      name: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  return events;
+};
+
+const deleteInteractionType = async (
+  interactionTypeId: string,
+  caller: CallerContext,
+): Promise<SafeEventInteractionType> => {
+  assertCatalogManagementAllowed(caller);
+
+  const usage = await getInteractionTypeUsage(interactionTypeId, caller);
+  if (usage.length > 0) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      `Cannot delete interaction type as it is currently used by ${usage.length} event(s).`,
+    );
+  }
+
+  try {
+    return await prisma.eventInteractionType.delete({
+      where: { id: interactionTypeId },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      throw new ErrorHandler(StatusCodes.NOT_FOUND, "Interaction type not found.");
+    }
+    throw error;
+  }
+};
+
+const listEventScheduleSlots = async (
+  eventId: string,
+  caller: CallerContext,
+): Promise<{ slots: any[] }> => {
+  const slots = await prisma.eventScheduleSlot.findMany({
+    where: { eventId },
+    orderBy: { startTime: "asc" },
+  });
+  return { slots };
+};
+
+const createEventScheduleSlot = async (
+  eventId: string,
+  payload: {
+    startTime: string | Date;
+    endTime: string | Date;
+    isActive?: boolean;
+    capacity?: number;
+  },
+  caller: CallerContext,
+): Promise<any> => {
+  await getManagedEvent(eventId, caller);
+
+  return prisma.eventScheduleSlot.create({
+    data: {
+      eventId,
+      startTime: new Date(payload.startTime),
+      endTime: new Date(payload.endTime),
+      capacity: payload.capacity !== undefined ? parseNonNegativeInt(payload.capacity, "capacity") : null,
+      isActive: payload.isActive ?? true,
+    },
+  });
+};
+
+const updateEventScheduleSlot = async (
+  eventId: string,
+  slotId: string,
+  payload: {
+    startTime?: string | Date;
+    endTime?: string | Date;
+    isActive?: boolean;
+    capacity?: number;
+  },
+  caller: CallerContext,
+): Promise<any> => {
+  await getManagedEvent(eventId, caller);
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId },
+  });
+  if (!slot || slot.eventId !== eventId) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found for this event.");
+  }
+
+  const data: any = {};
+  if (payload.startTime !== undefined) data.startTime = new Date(payload.startTime);
+  if (payload.endTime !== undefined) data.endTime = new Date(payload.endTime);
+  if (payload.isActive !== undefined) data.isActive = Boolean(payload.isActive);
+  if (payload.capacity !== undefined) {
+    data.capacity = payload.capacity !== null ? parseNonNegativeInt(payload.capacity, "capacity") : null;
+  }
+
+  return prisma.eventScheduleSlot.update({
+    where: { id: slotId },
+    data,
+  });
+};
+
+const deleteEventScheduleSlot = async (
+  eventId: string,
+  slotId: string,
+  caller: CallerContext,
+): Promise<any> => {
+  await getManagedEvent(eventId, caller);
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId },
+  });
+  if (!slot || slot.eventId !== eventId) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found for this event.");
+  }
+
+  return prisma.eventScheduleSlot.delete({
+    where: { id: slotId },
+  });
+};
+
 const getManagedEvent = async (
   eventId: string,
   caller: CallerContext,
@@ -547,22 +846,6 @@ const getActiveInteractionType = async (interactionTypeId: string) => {
   return interactionType;
 };
 
-const validateInteractionStrategyCompatibility = (
-  interactionType: {
-    supportsRoundRobin: boolean;
-  },
-  strategy: AssignmentStrategy,
-): void => {
-  if (
-    strategy === AssignmentStrategy.ROUND_ROBIN &&
-    !interactionType.supportsRoundRobin
-  ) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Selected interaction type does not support ROUND_ROBIN assignment.",
-    );
-  }
-};
 
 
 const buildCreateEventData = (
@@ -589,6 +872,11 @@ const buildCreateEventData = (
     "locationValue",
   );
 
+  const schedulingConfig = resolveEventSchedulingConfig(
+    payload,
+    { minParticipants: 1, maxParticipants: 1 } as any, // Temporary for type safety if needed, but buildCreateEventData is called from createEvent where we have the real interactionType
+  );
+
   return {
     name,
     publicBookingSlug: createPublicBookingSlug(name, "event"),
@@ -603,6 +891,7 @@ const buildCreateEventData = (
     team: { connect: { id: teamId } },
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
+    ...schedulingConfig,
   };
 };
 
@@ -622,25 +911,35 @@ const createEvent = async (
   const offering = await getActiveOffering(offeringId);
   const interactionType = await getActiveInteractionType(interactionTypeId);
 
-  const strategy = parseRequiredEnum(
-    payload.assignmentStrategy ?? AssignmentStrategy.DIRECT,
+  const strategy = parseOptionalEnum(
+    payload.assignmentStrategy,
     "assignmentStrategy",
     isValidAssignmentStrategy,
-  );
-  validateInteractionStrategyCompatibility(interactionType, strategy);
+  ) ?? AssignmentStrategy.DIRECT;
 
-  const event = await prisma.event.create({
-    data: buildCreateEventData(
-      { ...payload, assignmentStrategy: strategy },
-      caller.id,
-      teamId,
-      offering.id,
-      interactionType.id,
-    ),
-    include: eventInclude,
+  validateEventConfiguration(interactionType, {
+    assignmentStrategy: strategy,
+    hostCount: 0, // No hosts yet on create
   });
 
-  return event;
+  const schedulingConfig = resolveEventSchedulingConfig(
+    payload,
+    interactionType,
+  );
+
+  return prisma.event.create({
+    data: {
+      ...buildCreateEventData(
+        { ...payload, assignmentStrategy: strategy },
+        caller.id,
+        teamId,
+        offering.id,
+        interactionType.id,
+      ),
+      ...schedulingConfig,
+    },
+    include: eventInclude,
+  });
 };
 
 const listTeamEvents = async (
@@ -742,7 +1041,19 @@ const updateEvent = async (
   const nextAssignmentStrategy =
     (updateData.assignmentStrategy as AssignmentStrategy | undefined) ??
     existingEvent.assignmentStrategy;
-  validateInteractionStrategyCompatibility(interactionType, nextAssignmentStrategy);
+
+  validateEventConfiguration(interactionType, {
+    assignmentStrategy: nextAssignmentStrategy,
+    hostCount: existingEvent.hosts.length,
+  });
+
+  const schedulingConfig = resolveEventSchedulingConfig(
+    payload,
+    interactionType,
+    existingEvent,
+  );
+
+  Object.assign(updateData, schedulingConfig);
 
   if (payload.durationSeconds !== undefined) {
     updateData.durationSeconds = parseDurationSeconds(payload.durationSeconds);
@@ -818,7 +1129,19 @@ const deleteEvent = async (
   eventId: string,
   caller: CallerContext,
 ): Promise<SafeEvent> => {
-  await getManagedEvent(eventId, caller);
+  const event = await getManagedEvent(eventId, caller);
+
+  // Check for bookings
+  const bookingCount = await prisma.booking.count({
+    where: { eventId, status: { not: "CANCELLED" } },
+  });
+
+  if (bookingCount > 0) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      `Cannot delete an event that has active booking(s). Please deactivate it instead.`,
+    );
+  }
 
   return prisma.event.delete({
     where: { id: eventId },
@@ -874,36 +1197,16 @@ const normalizeHostInputs = (
 
 const validateEventHosts = async (
   teamId: string,
-  interactionType: {
-    supportsMultipleHosts: boolean;
-    minHosts: number;
-    maxHosts: number | null;
+  event: {
+    interactionType: EventInteractionTypeModel;
+    assignmentStrategy: AssignmentStrategy;
   },
   hosts: Array<{ userId: string; hostOrder: number }>,
 ): Promise<void> => {
-  if (!interactionType.supportsMultipleHosts && hosts.length > 1) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Selected interaction type allows only one host.",
-    );
-  }
-
-  if (hosts.length < interactionType.minHosts) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `At least ${interactionType.minHosts} host(s) are required for this interaction type.`,
-    );
-  }
-
-  if (
-    interactionType.maxHosts !== null &&
-    hosts.length > interactionType.maxHosts
-  ) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `At most ${interactionType.maxHosts} host(s) are allowed for this interaction type.`,
-    );
-  }
+  validateEventConfiguration(event.interactionType, {
+    assignmentStrategy: event.assignmentStrategy,
+    hostCount: hosts.length,
+  });
 
   if (hosts.length === 0) {
     return;
@@ -1001,7 +1304,7 @@ const replaceEventHosts = async (
     );
   }
 
-  await validateEventHosts(event.teamId, event.interactionType, normalizedHosts);
+  await validateEventHosts(event.teamId, event, normalizedHosts);
 
   await prisma.$transaction(async (tx) => {
     await tx.eventHost.deleteMany({ where: { eventId } });
@@ -1061,15 +1364,7 @@ const removeEventHost = async (
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event host not found.");
   }
 
-  if (
-    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
-    remainingHosts.length < 2
-  ) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "ROUND_ROBIN events require at least two hosts.",
-    );
-  }
+  await validateEventHosts(event.teamId, event, remainingHosts);
 
   await prisma.$transaction(async (tx) => {
     await tx.eventHost.deleteMany({ where: { eventId } });
@@ -1112,6 +1407,8 @@ export {
   createInteractionType,
   listInteractionTypes,
   updateInteractionType,
+  deleteInteractionType,
+  getInteractionTypeUsage,
   createEvent,
   deleteEvent,
   listEventHosts,
@@ -1120,5 +1417,14 @@ export {
   removeEventHost,
   replaceEventHosts,
   updateEvent,
+  listEventScheduleSlots,
+  createEventScheduleSlot,
+  updateEventScheduleSlot,
+  deleteEventScheduleSlot,
+  assertBookingNoticeSatisfied,
+  assertBookingWeekdayAllowed,
+  getEffectiveParticipantPolicy,
+  assertParticipantCapacityAvailable,
+  resolveMatchingScheduleSlot,
   type SafeEvent,
 };

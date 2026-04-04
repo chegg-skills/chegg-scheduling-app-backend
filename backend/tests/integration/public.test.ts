@@ -3,6 +3,22 @@ import app from "../../src/app";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
+const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date => {
+    const now = new Date();
+    const currentDay = now.getUTCDay();
+    const daysAhead = (targetDay - currentDay + 7) % 7 || 7;
+
+    return new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + daysAhead,
+        hour,
+        minute,
+        0,
+        0,
+    ));
+};
+
 let superAdminToken: string;
 let teamAdminId: string;
 let coachId: string;
@@ -190,6 +206,58 @@ describe("Public API", () => {
             expect(res.status).toBe(200);
             expect(res.body.success).toBe(true);
             expect(Array.isArray(res.body.data.slots)).toBe(true);
+        });
+
+        it("returns only future predefined slots that satisfy the scheduling rules", async () => {
+            const allowedSlot = getNextUtcWeekdayAt(1, 15, 0);
+            const blockedByNotice = new Date(Date.now() + 60 * 60 * 1000);
+
+            await request(app)
+                .patch(`/api/events/${eventId}`)
+                .set("Authorization", `Bearer ${superAdminToken}`)
+                .send({
+                    bookingMode: "FIXED_SLOTS",
+                    allowedWeekdays: [1],
+                    minimumNoticeMinutes: 180,
+                    maxParticipantCount: 1,
+                });
+
+            await request(app)
+                .post(`/api/events/${eventId}/schedule-slots`)
+                .set("Authorization", `Bearer ${superAdminToken}`)
+                .send({
+                    startTime: blockedByNotice.toISOString(),
+                    endTime: new Date(blockedByNotice.getTime() + 30 * 60 * 1000).toISOString(),
+                });
+
+            await request(app)
+                .post(`/api/events/${eventId}/schedule-slots`)
+                .set("Authorization", `Bearer ${superAdminToken}`)
+                .send({
+                    startTime: allowedSlot.toISOString(),
+                    endTime: new Date(allowedSlot.getTime() + 30 * 60 * 1000).toISOString(),
+                });
+
+            const rangeStart = new Date();
+            const rangeEnd = new Date();
+            rangeEnd.setDate(rangeStart.getDate() + 10);
+
+            const res = await request(app)
+                .get(`/api/public/events/${eventId}/slots`)
+                .query({
+                    startDate: rangeStart.toISOString(),
+                    endDate: rangeEnd.toISOString(),
+                });
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+
+            const returnedStartTimes = res.body.data.slots.map(
+                (slot: { startTime: string }) => slot.startTime,
+            );
+
+            expect(returnedStartTimes).toContain(allowedSlot.toISOString());
+            expect(returnedStartTimes).not.toContain(blockedByNotice.toISOString());
         });
 
         it("should return 400 if dates are missing", async () => {

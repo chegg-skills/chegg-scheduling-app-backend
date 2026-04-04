@@ -11,8 +11,8 @@ import type { Team } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
-import { useConfirm } from '@/context/ConfirmContext'
 import { useTableSort } from '@/hooks/useTableSort'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { TeamForm } from './TeamForm'
 import { TeamTableRow } from './TeamTableRow'
 import { teamSortAccessors, teamTableColumns } from './teamTableUtils'
@@ -26,33 +26,31 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
-  const { confirm } = useConfirm()
+  const { handleAction } = useAsyncAction()
   const { sortedItems: sortedTeams, sortConfig, requestSort } = useTableSort(teams, teamSortAccessors)
 
   async function handleToggleActive(team: Team) {
     const newStatus = !team.isActive
 
-    const confirmed = await confirm({
-      title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
-      message: newStatus
-        ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
-        : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page and prevent new bookings, but keep its configuration.`,
-    })
-
-    if (confirmed) {
-      updateTeam({ teamId: team.id, data: { isActive: newStatus } })
-    }
+    handleAction(
+      updateTeam,
+      { teamId: team.id, data: { isActive: newStatus } },
+      {
+        title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+        message: newStatus
+          ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
+          : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page and prevent new bookings, but keep its configuration.`,
+        actionName: 'Update',
+      }
+    )
   }
 
   async function handleDelete(team: Team) {
-    const confirmed = await confirm({
+    handleAction(deleteTeam, team.id, {
       title: 'Delete Team',
       message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
+      actionName: 'Delete',
     })
-
-    if (confirmed) {
-      deleteTeam(team.id)
-    }
   }
 
   return (

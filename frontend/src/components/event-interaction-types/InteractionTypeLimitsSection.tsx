@@ -11,12 +11,14 @@ interface InteractionTypeLimitsSectionProps {
   control: Control<InteractionTypeFormValues>
   errors: FieldErrors<InteractionTypeFormValues>
   register: UseFormRegister<InteractionTypeFormValues>
+  supportsMultipleHosts: boolean
 }
 
 export function InteractionTypeLimitsSection({
   control,
   errors,
   register,
+  supportsMultipleHosts,
 }: InteractionTypeLimitsSectionProps) {
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -30,14 +32,20 @@ export function InteractionTypeLimitsSection({
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
           }}
         >
-          <FormField label="Min Hosts" htmlFor="minHosts" error={errors.minHosts?.message}>
-            <Input id="minHosts" type="number" min="1" {...register('minHosts')} />
+          <FormField
+            label="Min Hosts"
+            htmlFor="minHosts"
+            error={errors.minHosts?.message}
+            hint={!supportsMultipleHosts ? 'Single-host types stay locked to 1.' : undefined}
+          >
+            <Input id="minHosts" type="number" min="1" disabled={!supportsMultipleHosts} {...register('minHosts')} />
           </FormField>
 
           <FormField
             label="Max Hosts (blank = unlimited)"
             htmlFor="maxHosts"
             error={errors.maxHosts?.message}
+            hint={!supportsMultipleHosts ? 'Single-host types stay locked to 1.' : undefined}
           >
             <Controller
               name="maxHosts"
@@ -47,7 +55,8 @@ export function InteractionTypeLimitsSection({
                   id="maxHosts"
                   type="number"
                   min="1"
-                  placeholder="∞"
+                  placeholder={supportsMultipleHosts ? '∞' : '1'}
+                  disabled={!supportsMultipleHosts}
                   value={field.value === null || typeof field.value === 'undefined' ? '' : field.value}
                   onChange={(event) => {
                     const { value } = event.target

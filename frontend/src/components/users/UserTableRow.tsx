@@ -45,10 +45,23 @@ export function UserTableRow({
             {user.lastName[0]}
           </Avatar>
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+            <Typography
+              variant="body2"
+              onClick={() => onView(user.id)}
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                '&:hover': {
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               {user.firstName} {user.lastName}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
               {user.email}
             </Typography>
           </Box>

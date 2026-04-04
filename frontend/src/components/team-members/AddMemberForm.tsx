@@ -3,17 +3,8 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import Checkbox from '@mui/material/Checkbox'
-import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemIcon from '@mui/material/ListItemIcon'
-import ListItemAvatar from '@mui/material/ListItemAvatar'
-import ListItemText from '@mui/material/ListItemText'
-import { Square, CheckSquare } from 'lucide-react'
 import { z } from 'zod'
 import { FormField } from '@/components/shared/FormField'
 import { Button } from '@/components/shared/Button'
@@ -22,6 +13,7 @@ import { Badge } from '@/components/shared/Badge'
 import { useAddTeamMember } from '@/hooks/useTeamMembers'
 import { useUsers } from '@/hooks/useUsers'
 import { extractApiError } from '@/utils/apiError'
+import { UserSelectionList } from './UserSelectionList'
 
 const schema = z.object({ userIds: z.array(z.string()).min(1, 'Select at least one user') })
 type FormValues = z.infer<typeof schema>
@@ -38,7 +30,6 @@ export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }
   const { mutate, isPending, error } = useAddTeamMember(teamId)
   const { data: usersData } = useUsers({ pageSize: 200 })
 
-  // Only show active non-SUPER_ADMIN users not already on the team
   const eligible = (usersData?.users ?? []).filter(
     (u) => u.isActive && u.role !== 'SUPER_ADMIN' && !existingMemberIds.includes(u.id),
   )
@@ -113,69 +104,17 @@ export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }
                     }}
                   />
 
-                  <Box
-                    sx={{
-                      maxHeight: 280,
-                      overflowY: 'auto',
-                      border: '1px solid',
-                      borderColor: errors.userIds ? 'error.main' : 'divider',
-                      borderRadius: 1.5,
-                    }}
-                  >
-                    <List disablePadding>
-                      {filteredEligible.length === 0 ? (
-                        <ListItem>
-                          <ListItemText
-                            primary="No selectable members found."
-                            sx={{ color: 'text.secondary', textAlign: 'center', py: 2 }}
-                          />
-                        </ListItem>
-                      ) : (
-                        filteredEligible.map((option) => (
-                          <ListItem key={option.id} disablePadding>
-                            <ListItemButton onClick={() => handleToggle(option.id)} dense>
-                              <ListItemIcon sx={{ minWidth: 36 }}>
-                                <Checkbox
-                                  edge="start"
-                                  checked={value.includes(option.id)}
-                                  tabIndex={-1}
-                                  disableRipple
-                                  icon={<Square size={20} />}
-                                  checkedIcon={<CheckSquare size={20} />}
-                                />
-                              </ListItemIcon>
-                              <ListItemAvatar sx={{ minWidth: 48 }}>
-                                <Avatar
-                                  sx={{
-                                    width: 32,
-                                    height: 32,
-                                    fontSize: '0.75rem',
-                                    bgcolor: 'primary.light',
-                                    color: 'primary.dark',
-                                  }}
-                                >
-                                  {option.firstName[0]}
-                                  {option.lastName[0]}
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={`${option.firstName} ${option.lastName}`}
-                                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                                secondary={option.email}
-                                secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
-                              />
-                            </ListItemButton>
-                          </ListItem>
-                        ))
-                      )}
-                    </List>
-                  </Box>
+                  <UserSelectionList
+                    users={filteredEligible}
+                    selectedUserIds={value}
+                    onToggle={handleToggle}
+                    error={!!errors.userIds}
+                  />
                 </Stack>
               )
             }}
           />
         </FormField>
-
       </Box>
 
       <Stack direction="row" spacing={1} justifyContent="flex-end">

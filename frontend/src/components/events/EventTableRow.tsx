@@ -20,6 +20,7 @@ interface EventTableRowProps {
   onDelete: (event: Event) => void | Promise<void>
   onEdit: (event: Event) => void
   onToggleActive: (event: Event) => void | Promise<void>
+  onViewUser?: (userId: string) => void
 }
 
 function getHostInitials(firstName: string, lastName: string) {
@@ -31,6 +32,7 @@ export function EventTableRow({
   onDelete,
   onEdit,
   onToggleActive,
+  onViewUser,
 }: EventTableRowProps) {
   const theme = useTheme()
 
@@ -91,7 +93,18 @@ export function EventTableRow({
               title={`${host.hostUser.firstName} ${host.hostUser.lastName} (${host.hostUser.email})`}
               arrow
             >
-              <Avatar sx={{ bgcolor: 'secondary.light', color: 'secondary.dark' }}>
+              <Avatar
+                onClick={() => onViewUser?.(host.hostUser.id)}
+                sx={{
+                  bgcolor: 'secondary.light',
+                  color: 'secondary.dark',
+                  textDecoration: 'none',
+                  cursor: onViewUser ? 'pointer' : 'default',
+                  '&:hover': {
+                    opacity: 0.8,
+                  },
+                }}
+              >
                 {getHostInitials(host.hostUser.firstName, host.hostUser.lastName)}
               </Avatar>
             </Tooltip>

@@ -7,6 +7,7 @@ import { BookingDetailsRightSection } from './BookingDetailsRightSection'
 
 interface BookingDetailsPanelProps {
   booking: Booking
+  onViewHost?: (userId: string) => void
 }
 
 
@@ -22,7 +23,7 @@ export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   )
 }
 
-export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
+export function BookingDetailsPanel({ booking, onViewHost }: BookingDetailsPanelProps) {
   const theme = useTheme()
 
   return (
@@ -43,7 +44,7 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
       </Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4 }}>
-        <BookingDetailsLeftSection booking={booking} />
+        <BookingDetailsLeftSection booking={booking} onViewHost={onViewHost} />
         <BookingDetailsRightSection booking={booking} />
       </Box>
     </>

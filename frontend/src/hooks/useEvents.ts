@@ -9,6 +9,49 @@ export const eventKeys = {
     [...eventKeys.all, 'team', teamId, params] as const,
   detail: (id: string) => [...eventKeys.all, 'detail', id] as const,
   hosts: (id: string) => [...eventKeys.all, 'hosts', id] as const,
+  scheduleSlots: (id: string) => [...eventKeys.all, 'schedule-slots', id] as const,
+}
+
+export function useEventScheduleSlots(eventId: string) {
+  return useQuery({
+    queryKey: eventKeys.scheduleSlots(eventId),
+    queryFn: () => eventsApi.listScheduleSlots(eventId).then((r) => r.data.data),
+    enabled: !!eventId,
+  })
+}
+
+export function useCreateEventScheduleSlot(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: any) => eventsApi.createScheduleSlot(eventId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+    },
+  })
+}
+
+export function useUpdateEventScheduleSlot(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ slotId, data }: { slotId: string; data: any }) =>
+      eventsApi.updateScheduleSlot(eventId, slotId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+    },
+  })
+}
+
+export function useDeleteEventScheduleSlot(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (slotId: string) => eventsApi.deleteScheduleSlot(eventId, slotId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+    },
+  })
 }
 
 export function useTeamEvents(teamId: string, params?: ListEventsParams) {

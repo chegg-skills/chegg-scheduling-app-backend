@@ -42,6 +42,8 @@ export function InteractionTypeForm({
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<InteractionTypeFormValues>({
     resolver: zodResolver(interactionTypeFormSchema),
@@ -51,6 +53,28 @@ export function InteractionTypeForm({
   useEffect(() => {
     reset(getInteractionTypeFormDefaults(interactionType))
   }, [interactionType, reset])
+
+  const supportsMultipleHosts = watch('supportsMultipleHosts') ?? false
+  const supportsRoundRobin = watch('supportsRoundRobin') ?? false
+  const maxHosts = watch('maxHosts')
+
+  useEffect(() => {
+    if (supportsRoundRobin && !supportsMultipleHosts) {
+      setValue('supportsMultipleHosts', true, { shouldDirty: false })
+    }
+  }, [setValue, supportsMultipleHosts, supportsRoundRobin])
+
+  useEffect(() => {
+    if (!supportsMultipleHosts) {
+      setValue('minHosts', 1, { shouldDirty: false })
+      setValue('maxHosts', 1, { shouldDirty: false })
+      return
+    }
+
+    if (maxHosts === 1) {
+      setValue('maxHosts', 2, { shouldDirty: false })
+    }
+  }, [maxHosts, setValue, supportsMultipleHosts])
 
   function onSubmit(values: InteractionTypeFormValues) {
     if (isEdit && interactionType) {
@@ -79,9 +103,14 @@ export function InteractionTypeForm({
       <Stack component="form" id={formId} onSubmit={handleSubmit(onSubmit)} noValidate spacing={3}>
         {error && <ErrorAlert message={extractApiError(error)} />}
 
-        <InteractionTypeBasicFields errors={errors} isEdit={isEdit} register={register} />
+        <InteractionTypeBasicFields errors={errors} isEdit={isEdit} register={register} control={control} />
         <InteractionTypeCapabilitiesSection control={control} errors={errors} />
-        <InteractionTypeLimitsSection control={control} errors={errors} register={register} />
+        <InteractionTypeLimitsSection
+          control={control}
+          errors={errors}
+          register={register}
+          supportsMultipleHosts={supportsMultipleHosts}
+        />
 
         {!formId && (
           <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ pt: 1 }}>

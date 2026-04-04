@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
 import { useTeamEvents } from '@/hooks/useEvents'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
-import { useConfirm } from '@/context/ConfirmContext'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/Button'
 import { Modal } from '@/components/shared/Modal'
@@ -21,6 +21,7 @@ import { TeamMemberList } from '@/components/team-members/TeamMemberList'
 import { AddMemberForm } from '@/components/team-members/AddMemberForm'
 import { EventTable } from '@/components/events/EventTable'
 import { EventForm } from '@/components/events/EventForm'
+import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { RowActions } from '@/components/shared/RowActions'
 
 interface TabPanelProps {
@@ -53,8 +54,9 @@ export function TeamDetailPage() {
   const [showEditTeam, setShowEditTeam] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [tabValue, setTabValue] = useState(0)
-  const { confirm } = useConfirm()
+  const { handleAction } = useAsyncAction()
 
   const { data: team, isLoading: teamLoading, error: teamError } = useTeam(teamId)
   const { data: membersResponse, isLoading: membersLoading, error: membersError } = useTeamMembers(teamId)
@@ -100,16 +102,17 @@ export function TeamDetailPage() {
                     icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
                     onClick: async () => {
                       const newStatus = !team.isActive
-                      if (
-                        await confirm({
+                      handleAction(
+                        updateTeam,
+                        { teamId, data: { isActive: newStatus } },
+                        {
                           title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
                           message: newStatus
                             ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
                             : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page but keep its configuration.`,
-                        })
-                      ) {
-                        updateTeam({ teamId, data: { isActive: newStatus } })
-                      }
+                          actionName: 'Update',
+                        }
+                      )
                     },
                   },
                   {
@@ -117,14 +120,11 @@ export function TeamDetailPage() {
                     icon: <Trash2 size={16} />,
                     color: 'error.main',
                     onClick: async () => {
-                      if (
-                        await confirm({
-                          title: 'Delete Team',
-                          message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
-                        })
-                      ) {
-                        deleteTeam(teamId)
-                      }
+                      handleAction(deleteTeam, teamId, {
+                        title: 'Delete Team',
+                        message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
+                        actionName: 'Delete',
+                      })
                     },
                   },
                 ]}
@@ -194,6 +194,7 @@ export function TeamDetailPage() {
               teamId={teamId}
               currentUserRole={user?.role ?? 'TEAM_ADMIN'}
               teamLeadId={team.teamLeadId}
+              onViewUser={setViewingUserId}
             />
           )}
         </TabPanel>
@@ -233,6 +234,13 @@ export function TeamDetailPage() {
           onCancel={() => setShowCreateEvent(false)}
         />
       </Modal>
+
+      {viewingUserId && (
+        <UserDetailModal
+          userId={viewingUserId}
+          onClose={() => setViewingUserId(null)}
+        />
+      )}
     </Stack>
   )
 }

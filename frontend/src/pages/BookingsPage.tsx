@@ -12,6 +12,7 @@ import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { BookingTable } from '@/components/bookings/BookingTable'
 import { useBookings } from '@/hooks/useBookings'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Input } from '@/components/shared/Input'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useBookingStats } from '@/hooks/useStats'
@@ -22,6 +23,7 @@ type FilterType = 'UPCOMING' | 'ALL' | BookingStatus
 export function BookingsPage() {
     const [filter, setFilter] = useState<FilterType>('UPCOMING')
     const [searchInput, setSearchInput] = useState('')
+    const [viewingUserId, setViewingUserId] = useState<string | null>(null)
     const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
     const debouncedSearch = useDebouncedValue(searchInput, 250)
 
@@ -192,8 +194,15 @@ export function BookingsPage() {
                                 Showing {filteredBookings.length} bookings
                             </Typography>
                         </Box>
-                        <BookingTable bookings={filteredBookings} />
+                        <BookingTable bookings={filteredBookings} onViewHost={setViewingUserId} />
                     </Box>
+                )}
+
+                {viewingUserId && (
+                    <UserDetailModal
+                        userId={viewingUserId}
+                        onClose={() => setViewingUserId(null)}
+                    />
                 )}
             </Box>
         </Box>

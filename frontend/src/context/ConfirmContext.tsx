@@ -39,12 +39,14 @@ function ConfirmDialog({
     isOpen,
     title,
     message,
-    confirmText = 'Yes',
-    cancelText = 'No',
+    confirmText,
+    cancelText,
     isAlert = false,
     onConfirm,
     onCancel,
 }: ConfirmDialogProps) {
+    const finalConfirmText = confirmText || (isAlert ? 'OK' : 'Yes')
+    const finalCancelText = cancelText || 'No'
     const confirmButtonRef = useRef<HTMLButtonElement>(null)
 
     useEffect(() => {
@@ -90,7 +92,7 @@ function ConfirmDialog({
                             size="small"
                             sx={{ borderRadius: 1.5, height: 40, px: 2, fontSize: '0.875rem' }}
                         >
-                            {cancelText}
+                            {finalCancelText}
                         </Button>
                     )}
                     <Button
@@ -101,7 +103,7 @@ function ConfirmDialog({
                         ref={confirmButtonRef}
                         sx={{ borderRadius: 1.5, height: 40, px: 2, fontSize: '0.875rem' }}
                     >
-                        {confirmText}
+                        {finalConfirmText}
                     </Button>
                 </Stack>
             </DialogActions>

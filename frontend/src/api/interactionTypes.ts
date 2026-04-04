@@ -22,4 +22,11 @@ export const interactionTypesApi = {
       `/event-interaction-types/${interactionTypeId}`,
       data,
     ),
+  delete: (interactionTypeId: string) =>
+    apiClient.delete<ApiResponse<EventInteractionType>>(`/event-interaction-types/${interactionTypeId}`),
+
+  getUsage: (interactionTypeId: string) =>
+    apiClient.get<ApiResponse<{ id: string; name: string; team: { id: string; name: string } }[]>>(
+      `/event-interaction-types/${interactionTypeId}/usage`,
+    ),
 }

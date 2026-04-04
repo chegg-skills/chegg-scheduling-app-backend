@@ -58,7 +58,7 @@ export function InteractionTypeCapabilitiesSection({
               label="Supports multiple hosts"
               value={field.value ?? false}
               onChange={field.onChange}
-              info="Allows multiple hosts to be assigned to the same event booking."
+              info="Allows an event to be configured with more than one eligible host."
             />
           )}
         />
@@ -73,7 +73,7 @@ export function InteractionTypeCapabilitiesSection({
                 label="Supports round-robin assignment"
                 value={field.value ?? false}
                 onChange={field.onChange}
-                info="Automatically cycles through available hosts to distribute events evenly."
+                info="Lets events choose round-robin assignment across their eligible hosts."
               />
               {errors.supportsRoundRobin ? (
                 <Typography variant="caption" color="error">
