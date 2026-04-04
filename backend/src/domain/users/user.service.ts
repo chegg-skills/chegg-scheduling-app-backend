@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { resolvePagination } from "../../shared/utils/pagination";
 import {
   SALT_ROUNDS,
   type CallerContext,
@@ -62,9 +63,7 @@ const listUsers = async (
     totalPages: number;
   };
 }> => {
-  const page = Math.max(1, options.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
-  const skip = (page - 1) * pageSize;
+  const { page, pageSize, skip } = resolvePagination(options);
   const searchTerms = options.search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
   const where: Prisma.UserWhereInput = searchTerms.length

@@ -2,6 +2,7 @@ import { Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { resolvePagination } from "../../shared/utils/pagination";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { bookingInclude, type SafeBooking } from "../bookings/booking.service";
 
@@ -215,9 +216,9 @@ const listStudents = async (
     totalPages: number;
   };
 }> => {
-  const page = Math.max(1, options.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 25));
-  const skip = (page - 1) * pageSize;
+  const { page, pageSize, skip } = resolvePagination(options, {
+    defaultPageSize: 25,
+  });
   const where = buildStudentWhere(caller, options);
 
   const [students, total] = await prisma.$transaction([
@@ -283,9 +284,9 @@ const listStudentBookings = async (
   const normalizedStudentId = normalizeStudentId(studentId);
   await readStudent(normalizedStudentId, caller);
 
-  const page = Math.max(1, options.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 25));
-  const skip = (page - 1) * pageSize;
+  const { page, pageSize, skip } = resolvePagination(options, {
+    defaultPageSize: 25,
+  });
   const accessWhere = buildBookingAccessWhere(caller);
 
   const where: Prisma.BookingWhereInput = {

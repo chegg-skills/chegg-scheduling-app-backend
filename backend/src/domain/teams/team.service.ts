@@ -2,6 +2,7 @@ import { Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { resolvePagination } from "../../shared/utils/pagination";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import type { Team } from "@prisma/client";
@@ -121,9 +122,7 @@ const listTeams = async (
     totalPages: number;
   };
 }> => {
-  const page = Math.max(1, options.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 50));
-  const skip = (page - 1) * pageSize;
+  const { page, pageSize, skip } = resolvePagination(options);
 
   const [teams, total] = await prisma.$transaction([
     prisma.team.findMany({
