@@ -7,7 +7,7 @@ import {
   assertBookingNoticeSatisfied,
   assertBookingWeekdayAllowed,
   getEffectiveParticipantPolicy,
-} from '../events/event.service';
+} from '../events/eventScheduling.service';
 
 type SetWeeklyAvailabilityInput = {
   dayOfWeek: number;
