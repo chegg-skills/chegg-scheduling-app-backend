@@ -3,6 +3,10 @@ import { StatusCodes } from "http-status-codes";
 import * as inviteService from "./invite.service";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import { setAuthCookie } from "../../shared/utils/cookie";
+import {
+  queueInviteAcceptedNotification,
+  queueInviteCreatedNotification,
+} from "./invite.notification";
 
 /**
  * POST /api/invites
@@ -22,11 +26,13 @@ const createInvite = async (
       createdByAdminId: adminId,
     });
 
-    // TODO: Trigger email service here to send invite link to result.email
-    // The email should include: FRONTEND_URL/accept-invite?token=result.token
-      // Do NOT expose result.token in the HTTP response in production.
-      
-    // for development/testing purposes, we include the token in the response. Remove this before deploying to production.
+    void queueInviteCreatedNotification({
+      email: result.email,
+      role: result.role,
+      token: result.token,
+      expiresAt: result.expiresAt,
+      createdByAdminId: adminId,
+    });
 
     sendSuccessResponse(
       res,
@@ -68,10 +74,17 @@ const acceptInvite = async (
 
     setAuthCookie(res, result.token);
 
+    void queueInviteAcceptedNotification({
+      invitedById: result.invitedById,
+      inviteeName: `${result.user.firstName} ${result.user.lastName}`.trim(),
+      inviteeEmail: result.user.email,
+      role: result.user.role,
+    });
+
     sendSuccessResponse(
       res,
       StatusCodes.CREATED,
-      result,
+      { user: result.user, token: result.token },
       "Invite accepted. Account created and logged in."
     );
   } catch (error) {

@@ -106,7 +106,7 @@ const createInvite = async (
 
 const acceptInvite = async (
   payload: AcceptInviteInput
-): Promise<{ user: SafeUser; token: string }> => {
+): Promise<{ user: SafeUser; token: string; invitedById: string }> => {
   const token = payload.token?.trim();
   const firstName = payload.firstName?.trim();
   const lastName = payload.lastName?.trim();
@@ -206,6 +206,7 @@ const acceptInvite = async (
   return {
     user: safeUser,
     token: buildAuthToken(safeUser),
+    invitedById: invite.createdBy,
   };
 };
 
