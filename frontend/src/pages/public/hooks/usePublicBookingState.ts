@@ -11,7 +11,7 @@ import {
   usePublicSlots,
 } from '@/hooks/usePublicBooking'
 import { bookingsApi } from '@/api/bookings'
-import type { PublicEventSummary, SafeUser, Team } from '@/types'
+import type { PublicEventSummary } from '@/types'
 
 export type BookingScope = 'directory' | 'team' | 'event' | 'coach'
 export type BookingStepKey = 'team' | 'event' | 'schedule' | 'confirm'

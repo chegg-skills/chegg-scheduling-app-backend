@@ -1,9 +1,8 @@
-import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import type { User } from '@/types'
+import type { SafeUser } from '@/types'
 
 interface BookingHostInfoProps {
-    host?: User | null
+    host?: SafeUser | null
     onViewHost?: (userId: string) => void
 }
 

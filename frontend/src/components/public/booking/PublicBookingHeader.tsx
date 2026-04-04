@@ -2,13 +2,13 @@ import { useMemo } from 'react'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import type { BookingScope } from '@/pages/public/hooks/usePublicBookingState'
-import type { Team, SafeUser, PublicEventSummary } from '@/types'
+import type { PublicCoachSummary, PublicEventSummary, PublicTeamSummary } from '@/types'
 
 interface PublicBookingHeaderProps {
   scope: BookingScope
-  teamDetails?: Team
+  teamDetails?: PublicTeamSummary | null
   eventDetails?: PublicEventSummary | null
-  coachDetails?: SafeUser
+  coachDetails?: PublicCoachSummary | null
 }
 
 export function PublicBookingHeader({

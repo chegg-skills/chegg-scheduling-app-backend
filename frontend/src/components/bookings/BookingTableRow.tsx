@@ -34,8 +34,9 @@ export function BookingTableRow({
 
   const handleStatusUpdate = async (status: BookingStatus, label: string) => {
     handleAction(
-      (id, s) => onUpdateStatus(id, s as BookingStatus),
-      [booking.id, status],
+      ({ id, status: nextStatus }: { id: string; status: BookingStatus }) =>
+        onUpdateStatus(id, nextStatus),
+      { id: booking.id, status },
       {
         title: `${label} Booking`,
         message: `Are you sure you want to ${label.toLowerCase()} the booking for ${booking.studentName
