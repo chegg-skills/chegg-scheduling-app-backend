@@ -29,6 +29,9 @@ const getBookingNotificationVariables = (booking: SafeBooking) => ({
   meetingJoinUrl: booking.meetingJoinUrl ?? "",
   bookingStatus: booking.status,
   frontendUrl: resolveFrontendUrl(),
+  specificQuestion: booking.specificQuestion ?? "None provided",
+  triedSolutions: booking.triedSolutions ?? "None provided",
+  usedResources: booking.usedResources ?? "None provided",
 });
 
 const getTeamAdminRecipients = async (teamId: string): Promise<string[]> => {
