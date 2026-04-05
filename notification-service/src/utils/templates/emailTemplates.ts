@@ -70,6 +70,12 @@ const emailTemplates: EmailTemplateMap = {
          <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{timezone}}</p>
          <p style="margin: 12px 0 0; font-size: 14px; color: #3E5363;"><strong>Team:</strong> {{teamName}}</p>
        </div>
+       <div style="margin: 24px 0; border: 1px solid #EDEDED; border-radius: 8px; padding: 20px;">
+         <p style="margin: 0 0 12px; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Your Inquiry Details</p>
+         <p style="margin: 0 0 8px; font-size: 14px;"><strong>Question:</strong> {{specificQuestion}}</p>
+         <p style="margin: 0 0 8px; font-size: 14px;"><strong>What you've tried:</strong> {{triedSolutions}}</p>
+         <p style="margin: 0; font-size: 14px;"><strong>Resources referred:</strong> {{usedResources}}</p>
+       </div>
        <div style="background: #FFF9E6; border-left: 4px solid #FFC107; padding: 16px; margin: 24px 0; border-radius: 4px;">
          <p style="margin: 0; font-size: 14px; color: #856404;"><strong>🕒 Policy Note:</strong> Please join the session within the first <strong>10 minutes</strong>. Students who arrive later than 10 minutes may be marked as a no-show.</p>
        </div>
@@ -206,7 +212,13 @@ const emailTemplates: EmailTemplateMap = {
        <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
          <p style="margin: 0 0 4px; font-size: 14px;"><strong>Coach:</strong> {{coachName}}</p>
          <p style="margin: 0 0 12px; font-size: 14px;"><strong>Time:</strong> {{startTime}} ({{timezone}})</p>
-         <p style="margin: 0; font-size: 14px;">Join using the link below:</p>
+         <div style="margin: 16px 0 0; border-top: 1px solid #EDEDED; padding-top: 16px;">
+           <p style="margin: 0 0 8px; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Your Session Context</p>
+           <p style="margin: 0 0 8px; font-size: 14px;"><strong>Question:</strong> {{specificQuestion}}</p>
+           <p style="margin: 0 0 8px; font-size: 14px;"><strong>What you've tried:</strong> {{triedSolutions}}</p>
+           <p style="margin: 0; font-size: 14px;"><strong>Resources referred:</strong> {{usedResources}}</p>
+         </div>
+         <p style="margin: 16px 0 0; font-size: 14px;">Join using the link below:</p>
        </div>`,
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
     ),
@@ -221,7 +233,13 @@ const emailTemplates: EmailTemplateMap = {
        <p>Your session for <strong>{{eventName}}</strong> with <strong>{{coachName}}</strong> starts in just <strong>1 hour</strong>.</p>
        <div style="background: ${BRAND_DARK}; color: #ffffff; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
          <p style="margin: 0; font-size: 20px; font-weight: 700;">{{startTime}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.8;">{{timezone}}</p>
+         <p style="margin: 4px 0 16px; font-size: 14px; opacity: 0.8;">{{timezone}}</p>
+         <div style="background: rgba(255,255,255,0.1); border-radius: 4px; padding: 16px; text-align: left;">
+           <p style="margin: 0 0 8px; font-size: 14px; opacity: 0.7; text-transform: uppercase; font-weight: 700;">Your Context</p>
+           <p style="margin: 0 0 4px; font-size: 14px;"><strong>Q:</strong> {{specificQuestion}}</p>
+           <p style="margin: 0 0 4px; font-size: 14px;"><strong>Tried:</strong> {{triedSolutions}}</p>
+           <p style="margin: 0; font-size: 14px;"><strong>Resources:</strong> {{usedResources}}</p>
+         </div>
        </div>`,
       { text: "Join Now", url: "{{meetingJoinUrl}}" }
     ),
