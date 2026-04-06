@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
     Paper,
     Table,
@@ -97,16 +97,53 @@ export function BookingTable({ bookings, onViewHost }: Props) {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {sortedBookings.map((booking) => (
-                        <BookingTableRow
-                            key={booking.id}
-                            booking={booking}
-                            onUpdateStatus={(id, status) => updateStatus({ id, status })}
-                            isExpanded={expandedId === booking.id}
-                            onToggle={() => handleToggle(booking.id)}
-                            onViewHost={onViewHost}
-                        />
-                    ))}
+                    {(() => {
+                        let lastDateHeader = ''
+                        return sortedBookings.map((booking) => {
+                            const date = new Date(booking.startTime)
+                            const dateHeader = new Intl.DateTimeFormat('en-US', {
+                                weekday: 'long',
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric',
+                            }).format(date)
+
+                            const showHeader = dateHeader !== lastDateHeader
+                            lastDateHeader = dateHeader
+
+                            return (
+                                <React.Fragment key={booking.id}>
+                                    {showHeader && (
+                                        <TableRow sx={{ bgcolor: 'secondary.light' }}>
+                                            <TableCell
+                                                colSpan={6}
+                                                sx={{
+                                                    py: 1,
+                                                    px: 3,
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textTransform: 'uppercase',
+                                                    color: 'text.secondary',
+                                                    letterSpacing: '0.08em',
+                                                    borderBottom: '1px solid',
+                                                    borderColor: 'divider',
+                                                }}
+                                            >
+                                                {dateHeader}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                    <BookingTableRow
+                                        booking={booking}
+                                        onUpdateStatus={(id, status) => updateStatus({ id, status })}
+                                        isExpanded={expandedId === booking.id}
+                                        onToggle={() => handleToggle(booking.id)}
+                                        onViewHost={onViewHost}
+                                    />
+                                </React.Fragment>
+                            )
+                        })
+                    })()}
                 </TableBody>
             </Table>
         </TableContainer>
