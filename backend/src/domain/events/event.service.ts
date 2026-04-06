@@ -348,6 +348,41 @@ const deleteEvent = async (
 };
 
 
+const listAllEvents = async (
+  _caller: CallerContext,
+  options: ListEventsOptions = {},
+): Promise<{
+  events: SafeEvent[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}> => {
+  const { page, pageSize, skip } = resolvePagination(options);
+
+  const [events, total] = await prisma.$transaction([
+    prisma.event.findMany({
+      include: eventInclude,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.event.count(),
+  ]);
+
+  return {
+    events,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+};
+
 export {
   createEventOffering,
   listEventOfferings,
@@ -361,6 +396,7 @@ export {
   deleteEvent,
   listEventHosts,
   listTeamEvents,
+  listAllEvents,
   readEvent,
   removeEventHost,
   replaceEventHosts,

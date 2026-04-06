@@ -74,7 +74,7 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
           <TableBody>
             {sortedUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">
                     No users found.
                   </Typography>

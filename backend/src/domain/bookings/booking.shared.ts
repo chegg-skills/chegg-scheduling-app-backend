@@ -28,6 +28,8 @@ export type ListBookingsFilters = {
     hostUserId?: string;
     status?: BookingStatus;
     search?: string;
+    startDate?: string | Date;
+    endDate?: string | Date;
 };
 
 export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
@@ -158,34 +160,42 @@ export const buildBookingListWhere = (
     const normalizedSearch = filters.search?.trim();
     const hasSearch = Boolean(normalizedSearch);
 
-    return {
+    const where: Prisma.BookingWhereInput = {
         teamId: filters.teamId,
         eventId: filters.eventId,
         hostUserId: filters.hostUserId,
         status: filters.status,
-        ...(hasSearch
-            ? {
-                OR: [
-                    {
-                        studentName: {
-                            contains: normalizedSearch,
-                            mode: "insensitive",
-                        },
-                    },
-                    {
-                        studentEmail: {
-                            contains: normalizedSearch,
-                            mode: "insensitive",
-                        },
-                    },
-                    {
-                        id: {
-                            contains: normalizedSearch,
-                            mode: "insensitive",
-                        },
-                    },
-                ],
-            }
-            : {}),
     };
+
+    if (filters.startDate || filters.endDate) {
+        where.startTime = {
+            gte: filters.startDate ? new Date(filters.startDate) : undefined,
+            lte: filters.endDate ? new Date(filters.endDate) : undefined,
+        };
+    }
+
+    if (hasSearch) {
+        where.OR = [
+            {
+                studentName: {
+                    contains: normalizedSearch,
+                    mode: "insensitive",
+                },
+            },
+            {
+                studentEmail: {
+                    contains: normalizedSearch,
+                    mode: "insensitive",
+                },
+            },
+            {
+                id: {
+                    contains: normalizedSearch,
+                    mode: "insensitive",
+                },
+            },
+        ];
+    }
+
+    return where;
 };

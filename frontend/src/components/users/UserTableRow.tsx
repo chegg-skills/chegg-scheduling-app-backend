@@ -71,12 +71,8 @@ export function UserTableRow({
       <TableCell>
         <Badge {...getUserRoleBadgeProps(user.role)} />
       </TableCell>
-      <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{user.country ?? '—'}</TableCell>
       <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
         {user.timezone.replace(/_/g, ' ')}
-      </TableCell>
-      <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-        {user.preferredLanguage ?? '—'}
       </TableCell>
       <TableCell>
         <Badge {...getUserStatusBadgeProps(user.isActive)} />

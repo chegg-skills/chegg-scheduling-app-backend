@@ -5,11 +5,19 @@ import { statsKeys } from './useStats'
 
 export const eventKeys = {
   all: ['events'] as const,
+  list: (params?: ListEventsParams) => [...eventKeys.all, 'list', params] as const,
   byTeam: (teamId: string, params?: ListEventsParams) =>
     [...eventKeys.all, 'team', teamId, params] as const,
   detail: (id: string) => [...eventKeys.all, 'detail', id] as const,
   hosts: (id: string) => [...eventKeys.all, 'hosts', id] as const,
   scheduleSlots: (id: string) => [...eventKeys.all, 'schedule-slots', id] as const,
+}
+
+export function useEvents(params?: ListEventsParams) {
+  return useQuery({
+    queryKey: eventKeys.list(params),
+    queryFn: () => eventsApi.listAll().then((r) => r.data.data),
+  })
 }
 
 export function useEventScheduleSlots(eventId: string) {
