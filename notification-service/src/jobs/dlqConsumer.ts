@@ -54,7 +54,17 @@ async function startDLQConsumer(): Promise<void> {
         ) as NotificationPayload;
 
         console.log("+-----------------------------------------------------------------+");
-        console.log("Received notification from DLQ:", notificationPayload);
+        const maskedVariables = {
+          ...notificationPayload.variables,
+          studentEmail: "***",
+          studentName: "***",
+        };
+        const maskedPayload = {
+          ...notificationPayload,
+          recipients: typeof notificationPayload.recipients === "string" ? "***" : ["***"],
+          variables: maskedVariables,
+        };
+        console.log("Received notification from DLQ:", maskedPayload);
         console.log("+-----------------------------------------------------------------+");
 
         await processNotification(notificationPayload);
