@@ -2,7 +2,7 @@ envVarGroups:
   - name: chegg-shared-secrets
     envVars:
       - key: JWT_SECRET
-        generate: true
+        sync: false
 
 services:
   # 1. Backend API (Web Service)
