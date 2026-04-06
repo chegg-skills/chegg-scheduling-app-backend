@@ -5,9 +5,10 @@ export const AUTH_COOKIE_NAME = "auth_token";
 const getCookieSameSite = (): "lax" | "strict" | "none" => {
   const sameSite = process.env.COOKIE_SAME_SITE?.toLowerCase();
   if (sameSite === "none" || sameSite === "strict" || sameSite === "lax") {
-    return sameSite;
+    return sameSite as "lax" | "strict" | "none";
   }
-  return "lax";
+  // Default to 'none' in production to support cross-site requests (e.g. onrender.com subdomains)
+  return process.env.NODE_ENV === "production" ? "none" : "lax";
 };
 
 const buildCookieOptions = () => {
