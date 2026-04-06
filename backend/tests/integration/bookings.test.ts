@@ -514,4 +514,89 @@ describe("Booking Domain Integration Tests", () => {
             expect(res.body.data.bookings).toHaveLength(0);
         });
     });
+
+    describe("GET /api/bookings date range filtering", () => {
+        beforeEach(async () => {
+            // Use specific dates for predictability
+            const date1 = new Date("2026-04-10T10:00:00Z");
+            const date2 = new Date("2026-05-10T10:00:00Z");
+            const date3 = new Date("2026-06-10T10:00:00Z");
+
+            await prisma.booking.createMany({
+                data: [
+                    {
+                        studentName: "April Student",
+                        studentEmail: "april@test.com",
+                        teamId,
+                        eventId,
+                        hostUserId: coachId,
+                        startTime: date1,
+                        endTime: new Date(date1.getTime() + 3600 * 1000),
+                        status: BookingStatus.CONFIRMED,
+                    },
+                    {
+                        studentName: "May Student",
+                        studentEmail: "may@test.com",
+                        teamId,
+                        eventId,
+                        hostUserId: coachId,
+                        startTime: date2,
+                        endTime: new Date(date2.getTime() + 3600 * 1000),
+                        status: BookingStatus.CONFIRMED,
+                    },
+                    {
+                        studentName: "June Student",
+                        studentEmail: "june@test.com",
+                        teamId,
+                        eventId,
+                        hostUserId: coachId,
+                        startTime: date3,
+                        endTime: new Date(date3.getTime() + 3600 * 1000),
+                        status: BookingStatus.CONFIRMED,
+                    },
+                ],
+            });
+        });
+
+        it("filters bookings by date range (April only)", async () => {
+            const res = await request(app)
+                .get("/api/bookings")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .query({
+                    startDate: "2026-04-01T00:00:00.000Z",
+                    endDate: "2026-04-30T23:59:59.999Z"
+                });
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.bookings).toHaveLength(1);
+            expect(res.body.data.bookings[0].studentName).toBe("April Student");
+        });
+
+        it("filters bookings by date range (May and June)", async () => {
+            const res = await request(app)
+                .get("/api/bookings")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .query({
+                    startDate: "2026-05-01T00:00:00.000Z",
+                    endDate: "2026-06-30T23:59:59.999Z"
+                });
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.bookings).toHaveLength(2);
+            expect(res.body.data.bookings.map((b: any) => b.studentName)).toContain("May Student");
+            expect(res.body.data.bookings.map((b: any) => b.studentName)).toContain("June Student");
+        });
+
+        it("returns all bookings if no date range is provided", async () => {
+            const res = await request(app)
+                .get("/api/bookings")
+                .set("Authorization", `Bearer ${adminToken}`);
+
+            expect(res.status).toBe(200);
+            // 3 from this beforeEach + 3 from the previous describe block's beforeEach (if not cleared)
+            // But clearTables is in afterAll and deleteMany in afterEach.
+            // Wait, afterEach deletes all bookings. So it should be Exactly 3.
+            expect(res.body.data.bookings.length).toBe(3);
+        });
+    });
 });

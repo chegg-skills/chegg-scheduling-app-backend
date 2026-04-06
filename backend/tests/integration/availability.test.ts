@@ -42,10 +42,9 @@ afterAll(clearTables);
 
 describe("Availability Domain Integration Tests", () => {
     describe("Weekly Availability", () => {
-        it("COACH can set their own weekly availability", async () => {
+        it("COACH cannot set their own weekly availability (Policy Change)", async () => {
             const slots = [
                 { dayOfWeek: 1, startTime: "09:00", endTime: "12:00" },
-                { dayOfWeek: 1, startTime: "13:00", endTime: "17:00" },
             ];
 
             const res = await request(app)
@@ -53,13 +52,20 @@ describe("Availability Domain Integration Tests", () => {
                 .set("Authorization", `Bearer ${coachToken}`)
                 .send(slots);
 
-            expect(res.status).toBe(200);
-            expect(res.body.success).toBe(true);
-            expect(res.body.data).toHaveLength(2);
-            expect(res.body.data[0].dayOfWeek).toBe(1);
+            expect(res.status).toBe(403);
+            expect(res.body.message).toMatch(/Coaches are not allowed to manage/);
         });
 
         it("COACH can get their own weekly availability", async () => {
+            // Setup: Admin sets the availability first
+            await request(app)
+                .post(`/api/users/${coachId}/availability/weekly`)
+                .set("Authorization", `Bearer ${superAdminToken}`)
+                .send([
+                    { dayOfWeek: 1, startTime: "09:00", endTime: "12:00" },
+                    { dayOfWeek: 1, startTime: "13:00", endTime: "17:00" },
+                ]);
+
             const res = await request(app)
                 .get(`/api/users/${coachId}/availability/weekly`)
                 .set("Authorization", `Bearer ${coachToken}`);
@@ -88,19 +94,19 @@ describe("Availability Domain Integration Tests", () => {
             expect(res.body.data).toHaveLength(1);
         });
 
-        it("rejects invalid time format", async () => {
+        it("rejects invalid time format (403 before 400 for COACH)", async () => {
             const res = await request(app)
                 .post(`/api/users/${coachId}/availability/weekly`)
                 .set("Authorization", `Bearer ${coachToken}`)
                 .send([{ dayOfWeek: 1, startTime: "9:00", endTime: "17:00" }]); // Should be 09:00
 
-            expect(res.status).toBe(400);
+            expect(res.status).toBe(403);
         });
 
-        it("rejects startTime after endTime", async () => {
+        it("rejects startTime after endTime (as Admin)", async () => {
             const res = await request(app)
                 .post(`/api/users/${coachId}/availability/weekly`)
-                .set("Authorization", `Bearer ${coachToken}`)
+                .set("Authorization", `Bearer ${superAdminToken}`)
                 .send([{ dayOfWeek: 1, startTime: "17:00", endTime: "09:00" }]);
 
             expect(res.status).toBe(400);
