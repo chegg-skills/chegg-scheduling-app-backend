@@ -51,7 +51,7 @@ const getTeamAdminRecipients = async (teamId: string): Promise<string[]> => {
   });
 
   return Array.from(
-    new Set(members.map((member) => member.user.email).filter(Boolean)),
+    new Set(members.map((member: any) => member.user.email).filter(Boolean)),
   );
 };
 
