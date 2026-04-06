@@ -5,50 +5,88 @@ import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import { useState, useMemo } from 'react'
-import { CalendarDays, CheckCircle2, Clock3, Search, X } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Clock3, Search, X, SlidersHorizontal } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { BookingTable } from '@/components/bookings/BookingTable'
+import { BookingFilterDialog } from '@/components/bookings/filters/BookingFilterDialog'
 import { useBookings } from '@/hooks/useBookings'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Input } from '@/components/shared/Input'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useBookingStats } from '@/hooks/useStats'
+import { Badge, Button as MuiButton } from '@mui/material'
 import type { BookingStatus, StatsTimeframe } from '@/types'
 
 type FilterType = 'UPCOMING' | 'ALL' | BookingStatus
 
 export function BookingsPage() {
-    const [filter, setFilter] = useState<FilterType>('UPCOMING')
+    const [statusFilter, setStatusFilter] = useState<FilterType>('UPCOMING')
     const [searchInput, setSearchInput] = useState('')
     const [viewingUserId, setViewingUserId] = useState<string | null>(null)
     const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+    const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
+
+    // New Advanced Filters
+    const [advancedFilters, setAdvancedFilters] = useState({
+        teamId: '',
+        eventId: '',
+        startDate: null as Date | null,
+        endDate: null as Date | null,
+    })
+
     const debouncedSearch = useDebouncedValue(searchInput, 250)
 
     const { data: bookingStats, isLoading: statsLoading } = useBookingStats(timeframe)
 
-    // Keep "Upcoming" filtering client-side. Search is server-driven for scalability.
-    const { data: bookings = [], isLoading, error } = useBookings({
+    const serverFilters = useMemo(() => ({
         search: debouncedSearch.trim() || undefined,
-    })
+        status: statusFilter === 'UPCOMING' ? 'CONFIRMED' : (statusFilter === 'ALL' ? undefined : statusFilter),
+        teamId: advancedFilters.teamId || undefined,
+        eventId: advancedFilters.eventId || undefined,
+        startDate: advancedFilters.startDate?.toISOString(),
+        endDate: advancedFilters.endDate?.toISOString(),
+    }), [debouncedSearch, statusFilter, advancedFilters])
+
+    const { data: bookings = [], isLoading, error } = useBookings(serverFilters)
 
     const filteredBookings = useMemo(() => {
-        const now = new Date()
-        return bookings.filter(b => {
-            const startTime = new Date(b.startTime)
-
-            if (filter === 'UPCOMING') {
+        let result = bookings
+        if (statusFilter === 'UPCOMING') {
+            const now = new Date()
+            result = bookings.filter(b => {
+                const startTime = new Date(b.startTime)
                 return b.status === 'CONFIRMED' && startTime >= now
-            }
-            if (filter === 'ALL') return true
-            return b.status === filter
-        }).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-    }, [bookings, filter])
+            })
+        }
+
+        return [...result].sort((a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        )
+    }, [bookings, statusFilter])
 
     const handleTabChange = (_: React.SyntheticEvent, newValue: FilterType) => {
-        setFilter(newValue)
+        setStatusFilter(newValue)
+    }
+
+    const handleFilterChange = (key: string, value: any) => {
+        setAdvancedFilters(prev => {
+            const next = { ...prev, [key]: value }
+            // If teamId changes, reset eventId
+            if (key === 'teamId') next.eventId = ''
+            return next
+        })
+    }
+
+    const handleResetFilters = () => {
+        setAdvancedFilters({
+            teamId: '',
+            eventId: '',
+            startDate: null,
+            endDate: null,
+        })
     }
 
     const bookingStatItems = [
@@ -135,12 +173,12 @@ export function BookingsPage() {
                         alignItems: 'center',
                         borderBottom: '1px solid',
                         borderColor: 'divider',
-                        mt: 2,
+                        mt: 4,
                         mb: 3,
                     }}
                 >
                     <Tabs
-                        value={filter}
+                        value={statusFilter}
                         onChange={handleTabChange}
                         aria-label="booking filters"
                         sx={{
@@ -150,38 +188,52 @@ export function BookingsPage() {
                                 fontSize: '0.875rem',
                                 minHeight: 48,
                             },
-                            '& .MuiTabs-indicator': {
-                                height: 3,
-                                borderRadius: '3px 3px 0 0',
-                            },
                         }}
                     >
-                        <Tab
-                            label="Upcoming"
-                            value="UPCOMING"
-                            icon={<Clock3 size={18} />}
-                            iconPosition="start"
-                        />
-                        <Tab
-                            label="All"
-                            value="ALL"
-                            icon={<CalendarDays size={18} />}
-                            iconPosition="start"
-                        />
-                        <Tab
-                            label="Cancelled"
-                            value="CANCELLED"
-                            icon={<X size={18} />}
-                            iconPosition="start"
-                        />
-                        <Tab
-                            label="Completed"
-                            value="COMPLETED"
-                            icon={<CheckCircle2 size={18} />}
-                            iconPosition="start"
-                        />
+                        <Tab label="Upcoming" value="UPCOMING" icon={<Clock3 size={18} />} iconPosition="start" />
+                        <Tab label="All" value="ALL" icon={<CalendarDays size={18} />} iconPosition="start" />
+                        <Tab label="Cancelled" value="CANCELLED" icon={<X size={18} />} iconPosition="start" />
+                        <Tab label="Completed" value="COMPLETED" icon={<CheckCircle2 size={18} />} iconPosition="start" />
                     </Tabs>
+
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <Badge
+                            badgeContent={
+                                Object.values(advancedFilters).filter(v => v !== '' && v !== null).length
+                            }
+                            color="primary"
+                            variant="dot"
+                            invisible={Object.values(advancedFilters).every(v => v === '' || v === null)}
+                        >
+                            <MuiButton
+                                startIcon={<SlidersHorizontal size={18} />}
+                                onClick={() => setIsFilterDialogOpen(true)}
+                                variant="outlined"
+                                color="inherit"
+                                sx={{
+                                    textTransform: 'none',
+                                    borderRadius: 2,
+                                    borderColor: 'divider',
+                                    fontWeight: 600,
+                                    height: 35
+                                }}
+                            >
+                                Filter
+                            </MuiButton>
+                        </Badge>
+                    </Box>
                 </Box>
+
+                <BookingFilterDialog
+                    open={isFilterDialogOpen}
+                    onClose={() => setIsFilterDialogOpen(false)}
+                    filters={advancedFilters}
+                    onFilterChange={handleFilterChange}
+                    onRangeChange={(start, end) => {
+                        setAdvancedFilters(prev => ({ ...prev, startDate: start, endDate: end }))
+                    }}
+                    onReset={handleResetFilters}
+                />
 
                 {isLoading && bookings.length === 0 ? (
                     <PageSpinner />

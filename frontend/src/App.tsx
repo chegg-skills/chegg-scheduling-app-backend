@@ -6,23 +6,27 @@ import { AuthProvider } from '@/context/AuthContext'
 import { ConfirmProvider } from '@/context/ConfirmContext'
 import { router } from '@/router'
 import { appTheme } from '@/theme'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 
 export default function App() {
   return (
     <ThemeProvider theme={appTheme}>
-      <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ConfirmProvider>
-            <RouterProvider
-              router={router}
-              future={{
-                v7_startTransition: true,
-              }}
-            />
-          </ConfirmProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <CssBaseline />
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ConfirmProvider>
+              <RouterProvider
+                router={router}
+                future={{
+                  v7_startTransition: true,
+                }}
+              />
+            </ConfirmProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </LocalizationProvider>
     </ThemeProvider>
   )
 }

@@ -500,6 +500,28 @@ const deleteEventScheduleSlot = async (
   }
 };
 
+const listAllEvents = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const page = parsePositiveInt(req.query.page);
+    const pageSize = parsePositiveInt(req.query.pageSize);
+    const result = await eventService.listAllEvents(caller, { page, pageSize });
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      result,
+      "Events fetched successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createEventOffering,
   listEventOfferings,
@@ -514,9 +536,12 @@ export {
   listEventHosts,
   listEventScheduleSlots,
   listTeamEvents,
+  listAllEvents,
   readEvent,
   removeEventHost,
   replaceEventHosts,
   updateEvent,
-  updateEventScheduleSlot, deleteInteractionType, getInteractionTypeUsage,
+  updateEventScheduleSlot,
+  deleteInteractionType,
+  getInteractionTypeUsage,
 };

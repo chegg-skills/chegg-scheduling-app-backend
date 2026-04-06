@@ -81,6 +81,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/events")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.listAllEvents,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId")
   .get(
     authenticate,

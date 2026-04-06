@@ -416,6 +416,8 @@ export interface ListBookingsFilters {
   hostUserId?: string
   status?: BookingStatus
   search?: string
+  startDate?: string | Date
+  endDate?: string | Date
 }
 
 export interface UpdateBookingStatusDto {
