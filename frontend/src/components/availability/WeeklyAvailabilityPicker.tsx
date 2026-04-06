@@ -114,29 +114,31 @@ export function WeeklyAvailabilityPicker({
         ))}
       </Stack>
 
-      <Box
-        sx={{
-          mt: 4,
-          pt: 3,
-          borderTop: 1,
-          borderColor: 'divider',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: 2,
-        }}
-      >
-        <Button variant="secondary" onClick={handleReset} disabled={disabled}>
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onClick={handleSave}
-          disabled={disabled}
-          sx={{ minWidth: 160 }}
+      {!disabled && (
+        <Box
+          sx={{
+            mt: 4,
+            pt: 3,
+            borderTop: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 2,
+          }}
         >
-          Save changes
-        </Button>
-      </Box>
+          <Button variant="secondary" onClick={handleReset} disabled={disabled}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            disabled={disabled}
+            sx={{ minWidth: 160 }}
+          >
+            Save changes
+          </Button>
+        </Box>
+      )}
     </Box>
   )
 }

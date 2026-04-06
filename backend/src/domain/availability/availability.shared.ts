@@ -20,6 +20,8 @@ export type LocalAvailabilityInfo = {
 export const assertCanManageAvailability = (
   targetUserId: string,
   caller: CallerContext,
+  mode: 'weekly' | 'exceptions',
+  action: 'read' | 'write' = 'write'
 ): void => {
   if (
     caller.role === UserRole.SUPER_ADMIN ||
@@ -32,6 +34,13 @@ export const assertCanManageAvailability = (
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
       "You do not have permission to manage this user's availability.",
+    );
+  }
+
+  if (mode === 'weekly' && action === 'write' && caller.role === UserRole.COACH) {
+    throw new ErrorHandler(
+      StatusCodes.FORBIDDEN,
+      "Coaches are not allowed to manage their own recurring weekly availability. Please contact a team administrator for schedule changes.",
     );
   }
 };

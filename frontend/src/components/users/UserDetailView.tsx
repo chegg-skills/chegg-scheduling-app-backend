@@ -4,7 +4,7 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { Calendar, Clock, Users } from 'lucide-react'
 import type { UserWithDetails } from '@/types'
-import { UserAvailabilityTab } from './UserAvailabilityTab'
+import { AvailabilityView } from '@/components/availability/AvailabilityView'
 import { UserHostedEventsTab } from './UserHostedEventsTab'
 import { UserProfileHeader } from './UserProfileHeader'
 import { UserTeamsTab } from './UserTeamsTab'
@@ -80,7 +80,7 @@ export function UserDetailView({ user }: UserDetailViewProps) {
             </TabPanel>
 
             <TabPanel value={tabValue} index={2}>
-                <UserAvailabilityTab user={user} />
+                <AvailabilityView userId={user.id} />
             </TabPanel>
         </Box>
     )
