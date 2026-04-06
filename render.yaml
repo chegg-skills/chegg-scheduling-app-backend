@@ -1,3 +1,9 @@
+envVarGroups:
+  - name: chegg-shared-secrets
+    envVars:
+      - key: JWT_SECRET
+        generate: true
+
 services:
   # 1. Backend API (Web Service)
   - type: web
@@ -12,11 +18,10 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        sync: false # Set this to your production Postgres URL
+        sync: false
       - key: RABBITMQ_URL
-        sync: false # Set this to your CloudAMQP link
-      - key: JWT_SECRET
-        generate: true # Render will generate a random one for you
+        sync: false
+      - fromGroup: chegg-shared-secrets
       - key: CORS_ORIGINS
         fromService:
           type: web
@@ -43,15 +48,10 @@ services:
       - key: RABBITMQ_URL
         sync: false
       - key: EMAIL_USERNAME
-        sync: false # Your Gmail email
+        sync: false
       - key: EMAIL_PASSWORD
-        sync: false # Your Gmail App Password
-      - key: JWT_SECRET
-        fromService:
-          type: web
-          name: chegg-scheduling-backend
-          property: envVar
-          envVar: JWT_SECRET
+        sync: false
+      - fromGroup: chegg-shared-secrets
 
   # 3. Frontend (Static Site)
   - type: web
