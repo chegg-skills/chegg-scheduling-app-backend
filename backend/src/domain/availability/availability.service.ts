@@ -63,7 +63,7 @@ type AvailabilityEvent = Prisma.EventGetPayload<{
 }>;
 
 const getWeeklyAvailability = async (userId: string, caller: CallerContext): Promise<UserWeeklyAvailability[]> => {
-  await assertCanManageAvailability(userId, caller);
+  await assertCanManageAvailability(userId, caller, 'weekly', 'read');
   return prisma.userWeeklyAvailability.findMany({
     where: { userId },
     orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
@@ -75,7 +75,7 @@ const setWeeklyAvailability = async (
   slots: SetWeeklyAvailabilityInput,
   caller: CallerContext,
 ): Promise<UserWeeklyAvailability[]> => {
-  await assertCanManageAvailability(userId, caller);
+  await assertCanManageAvailability(userId, caller, 'weekly', 'write');
   validateWeeklySlots(slots);
 
   await prisma.$transaction([
@@ -89,7 +89,7 @@ const setWeeklyAvailability = async (
 };
 
 const getAvailabilityExceptions = async (userId: string, caller: CallerContext): Promise<UserAvailabilityException[]> => {
-  await assertCanManageAvailability(userId, caller);
+  await assertCanManageAvailability(userId, caller, 'exceptions', 'read');
   return prisma.userAvailabilityException.findMany({
     where: { userId },
     orderBy: [{ date: 'asc' }],
@@ -101,7 +101,7 @@ const addAvailabilityException = async (
   payload: AddAvailabilityExceptionInput,
   caller: CallerContext,
 ): Promise<UserAvailabilityException> => {
-  await assertCanManageAvailability(userId, caller);
+  await assertCanManageAvailability(userId, caller, 'exceptions', 'write');
 
   const date = parseAvailabilityExceptionDate(payload.date);
   validateAvailabilityExceptionInput(payload);
@@ -118,7 +118,7 @@ const addAvailabilityException = async (
 };
 
 const removeAvailabilityException = async (userId: string, exceptionId: string, caller: CallerContext): Promise<void> => {
-  await assertCanManageAvailability(userId, caller);
+  await assertCanManageAvailability(userId, caller, 'exceptions', 'write');
 
   const exception = await prisma.userAvailabilityException.findUnique({
     where: { id: exceptionId },
@@ -143,7 +143,7 @@ const getEffectiveAvailability = async (
   to: Date,
   caller: CallerContext,
 ) => {
-  await assertCanManageAvailability(userId, caller);
+  await assertCanManageAvailability(userId, caller, 'exceptions', 'read');
 
   const [weekly, exceptions] = await Promise.all([
     prisma.userWeeklyAvailability.findMany({ where: { userId } }),

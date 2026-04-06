@@ -48,13 +48,15 @@ export function AvailabilityDayRow({
       sx={{ py: 1 }}
     >
       <Box sx={{ width: 120, display: 'flex', alignItems: 'center' }}>
-        <Switch
-          checked={day.enabled}
-          onChange={() => onToggleDay(dayIndex)}
-          disabled={disabled}
-          size="small"
-        />
-        <Typography variant="body2" sx={{ fontWeight: 600, ml: 1, minWidth: 80 }}>
+        {!disabled && (
+          <Switch
+            checked={day.enabled}
+            onChange={() => onToggleDay(dayIndex)}
+            disabled={disabled}
+            size="small"
+          />
+        )}
+        <Typography variant="body2" sx={{ fontWeight: 600, ml: !disabled ? 1 : 0, minWidth: 80 }}>
           {dayLabel}
         </Typography>
       </Box>
@@ -73,7 +75,10 @@ export function AvailabilityDayRow({
                   value={slot.startTime}
                   onChange={(event) => onTimeChange(dayIndex, slotIndex, 'startTime', event.target.value)}
                   disabled={disabled}
-                  style={timeInputStyle}
+                  style={{
+                    ...timeInputStyle,
+                    ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {})
+                  }}
                 />
                 <Typography variant="body2" color="text.secondary">
                   to
@@ -83,23 +88,28 @@ export function AvailabilityDayRow({
                   value={slot.endTime}
                   onChange={(event) => onTimeChange(dayIndex, slotIndex, 'endTime', event.target.value)}
                   disabled={disabled}
-                  style={timeInputStyle}
+                  style={{
+                    ...timeInputStyle,
+                    ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {})
+                  }}
                 />
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => onRemoveSlot(dayIndex, slotIndex)}
-                  disabled={disabled}
-                >
-                  <Trash2 size={16} />
-                </IconButton>
+                {!disabled && (
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => onRemoveSlot(dayIndex, slotIndex)}
+                    disabled={disabled}
+                  >
+                    <Trash2 size={16} />
+                  </IconButton>
+                )}
               </Stack>
             ))}
           </Stack>
         )}
       </Box>
 
-      {day.enabled && (
+      {day.enabled && !disabled && (
         <Stack direction="row" spacing={1}>
           <Tooltip title="Add slot">
             <IconButton size="small" color="primary" onClick={() => onAddSlot(dayIndex)} disabled={disabled}>
