@@ -5,6 +5,10 @@ import * as BookingService from "./booking.service";
 import { BookingStatus, UserRole } from "@prisma/client";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { CallerContext } from "../../shared/utils/userUtils";
+import {
+    queueBookingCreatedNotifications,
+    queueBookingStatusNotifications,
+} from "./booking.notification";
 
 const getStringParam = (value: unknown): string | undefined => {
     if (typeof value === "string") return value;
@@ -12,11 +16,14 @@ const getStringParam = (value: unknown): string | undefined => {
     return undefined;
 };
 
+
 export const createBooking = async (req: Request, res: Response) => {
     if (!req.body || Object.keys(req.body).length === 0) {
         throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking details are required.");
     }
     const booking = await BookingService.createBooking(req.body);
+    void queueBookingCreatedNotifications(booking);
+
     return sendSuccessResponse(
         res,
         StatusCodes.CREATED,
@@ -46,7 +53,7 @@ export const getBooking = async (req: Request, res: Response) => {
 };
 
 export const listBookings = async (req: Request, res: Response) => {
-    const { teamId, eventId, hostUserId, status } = req.query;
+    const { teamId, eventId, hostUserId, status, search } = req.query;
     const caller = res.locals.authUser as CallerContext;
 
     let targetHostId = getStringParam(hostUserId);
@@ -60,7 +67,8 @@ export const listBookings = async (req: Request, res: Response) => {
         teamId: targetTeamId,
         eventId: getStringParam(eventId),
         hostUserId: targetHostId,
-        status: status as BookingStatus | undefined
+        status: status as BookingStatus | undefined,
+        search: getStringParam(search)
     });
 
     return sendSuccessResponse(
@@ -78,6 +86,8 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
     }
     const { status } = req.body;
     const booking = await BookingService.updateBookingStatus(id, status as BookingStatus);
+    void queueBookingStatusNotifications(booking);
+
     return sendSuccessResponse(
         res,
         StatusCodes.OK,

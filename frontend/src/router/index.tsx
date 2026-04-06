@@ -83,6 +83,17 @@ const PublicBookingPage = lazy(() =>
     default: module.PublicBookingPage,
   })),
 );
+const StudentsPage = lazy(() =>
+  import("@/pages/StudentsPage").then((module) => ({
+    default: module.StudentsPage,
+  })),
+);
+const StudentDetailPage = lazy(() =>
+  import("@/pages/StudentDetailPage").then((module) => ({
+    default: module.StudentDetailPage,
+  })),
+);
+
 
 import { PublicLayout } from "@/components/layout/PublicLayout";
 
@@ -128,7 +139,12 @@ export const router = createBrowserRouter([
   {
     path: "/book",
     element: <PublicLayout />,
-    children: [{ path: "", element: renderLazyPage(PublicBookingPage) }],
+    children: [
+      { path: "", element: renderLazyPage(PublicBookingPage) },
+      { path: "team/:teamSlug", element: renderLazyPage(PublicBookingPage) },
+      { path: "event/:eventSlug", element: renderLazyPage(PublicBookingPage) },
+      { path: "coach/:coachSlug", element: renderLazyPage(PublicBookingPage) },
+    ],
   },
 
   {
@@ -156,6 +172,8 @@ export const router = createBrowserRouter([
             element: renderLazyPage(InteractionTypesPage),
           },
           { path: "/bookings", element: renderLazyPage(BookingsPage) },
+          { path: "/students", element: renderLazyPage(StudentsPage) },
+          { path: "/students/:studentId", element: renderLazyPage(StudentDetailPage) },
         ],
       },
     ],

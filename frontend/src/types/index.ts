@@ -4,11 +4,19 @@ export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
 export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
 export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
+export type StatsTimeframe =
+  | 'today' | 'yesterday'
+  | 'thisWeek' | 'lastWeek'
+  | 'thisMonth' | 'lastMonth'
+  | 'thisQuarter' | 'lastQuarter'
+  | 'thisYear' | 'lastYear' | 'all'
+  | string // to support 'custom:ISO_START:ISO_END' in URL/params
 
 // ─── Core Models ──────────────────────────────────────────────────────────────
 
 export interface SafeUser {
   id: string
+  publicBookingSlug: string | null
   firstName: string
   lastName: string
   email: string
@@ -18,6 +26,7 @@ export interface SafeUser {
   avatarUrl: string | null
   role: UserRole
   timezone: string
+  zoomIsvLink: string | null
   isActive: boolean
   failedLoginAttempts: number
   lockedUntil: string | null
@@ -44,6 +53,7 @@ export interface UserWithDetails extends SafeUser {
 
 export interface Team {
   id: string
+  publicBookingSlug: string | null
   name: string
   description: string | null
   isActive: boolean
@@ -115,17 +125,36 @@ export interface EventHost {
   hostUser: SafeUser
 }
 
+export type EventBookingMode = 'HOST_AVAILABILITY' | 'FIXED_SLOTS'
+
+export interface EventScheduleSlot {
+  id: string
+  eventId: string
+  startTime: string
+  endTime: string
+  capacity: number | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Event {
   id: string
+  publicBookingSlug: string | null
   name: string
   description: string | null
   isActive: boolean
   offeringId: string
   interactionTypeId: string
   assignmentStrategy: AssignmentStrategy
+  bookingMode: EventBookingMode
   durationSeconds: number
   locationType: EventLocationType
   locationValue: string
+  allowedWeekdays: number[]
+  minimumNoticeMinutes: number
+  minParticipantCount: number | null
+  maxParticipantCount: number | null
   teamId: string
   createdById: string
   updatedById: string
@@ -134,6 +163,15 @@ export interface Event {
   offering: EventOffering
   interactionType: EventInteractionType
   hosts: EventHost[]
+  scheduleSlots?: EventScheduleSlot[]
+}
+
+export interface PublicTeamSummary extends Pick<Team, 'id' | 'name' | 'description' | 'publicBookingSlug'> { }
+
+export interface PublicCoachSummary extends Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'> { }
+
+export interface PublicEventSummary extends Pick<Event, 'id' | 'name' | 'description' | 'durationSeconds' | 'locationType' | 'teamId' | 'publicBookingSlug'> {
+  team: PublicTeamSummary
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
@@ -152,6 +190,19 @@ export interface ApiResponse<T> {
   message: string
   data?: T
   error?: unknown
+}
+
+export interface StatsTimeframeInfo {
+  key: StatsTimeframe
+  label: string
+  startDate: string | null
+  endDate: string | null
+  rangeLabel: string
+}
+
+export interface StatsSummary<TMetrics = Record<string, any>> {
+  timeframe: StatsTimeframeInfo
+  metrics: TMetrics
 }
 
 // ─── Auth Payloads ────────────────────────────────────────────────────────────
@@ -214,6 +265,7 @@ export interface UpdateUserDto {
   avatarUrl?: string
   role?: UserRole
   timezone?: string
+  zoomIsvLink?: string
   isActive?: boolean
 }
 
@@ -239,6 +291,11 @@ export interface CreateEventDto {
   locationValue: string
   durationSeconds: number
   assignmentStrategy?: AssignmentStrategy
+  bookingMode?: EventBookingMode
+  allowedWeekdays?: number[]
+  minimumNoticeMinutes?: number
+  minParticipantCount?: number | null
+  maxParticipantCount?: number | null
   description?: string
   isActive?: boolean
 }
@@ -313,6 +370,8 @@ export interface CreateAvailabilityExceptionDto {
 
 export interface Booking {
   id: string
+  studentId: string | null
+  scheduleSlotId: string | null
   studentName: string
   studentEmail: string
   startTime: string
@@ -327,11 +386,13 @@ export interface Booking {
   teamId: string
   eventId: string
   hostUserId: string
+  meetingJoinUrl: string | null
   createdAt: string
   updatedAt: string
   team?: Team
   event?: Event
   host?: SafeUser
+  scheduleSlot?: EventScheduleSlot
 }
 
 export interface CreateBookingDto {
@@ -354,8 +415,38 @@ export interface ListBookingsFilters {
   eventId?: string
   hostUserId?: string
   status?: BookingStatus
+  search?: string
 }
 
 export interface UpdateBookingStatusDto {
   status: BookingStatus
+}
+// ─── Student Models ───────────────────────────────────────────────────────────
+export interface Student {
+  id: string
+  fullName: string
+  email: string
+  firstBookedAt: string | null
+  lastBookedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface StudentSummary extends Student {
+  bookingCount: number
+  latestBooking: {
+    id: string
+    startTime: string
+    endTime: string
+    status: BookingStatus
+    team: { id: string; name: string }
+    event: { id: string; name: string; publicBookingSlug: string }
+    host: {
+      id: string
+      firstName: string
+      lastName: string
+      email: string
+      avatarUrl: string | null
+    }
+  } | null
 }

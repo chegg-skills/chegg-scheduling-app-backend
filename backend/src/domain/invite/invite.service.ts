@@ -6,6 +6,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { prisma } from "../../shared/db/prisma";
 import { SALT_ROUNDS, type SafeUser, normalizeEmail, validateTimezone, toSafeUser } from "../../shared/utils/userUtils";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 
 const INVITE_EXPIRY_DAYS = Number(process.env.INVITE_EXPIRY_DAYS ?? 7);
 
@@ -105,7 +106,7 @@ const createInvite = async (
 
 const acceptInvite = async (
   payload: AcceptInviteInput
-): Promise<{ user: SafeUser; token: string }> => {
+): Promise<{ user: SafeUser; token: string; invitedById: string }> => {
   const token = payload.token?.trim();
   const firstName = payload.firstName?.trim();
   const lastName = payload.lastName?.trim();
@@ -176,6 +177,7 @@ const acceptInvite = async (
           firstName,
           lastName,
           email: invite.email,
+          publicBookingSlug: createPublicBookingSlug(`${firstName} ${lastName}`, 'coach'),
           password: hashedPassword,
           role: invite.role,
           timezone,
@@ -204,6 +206,7 @@ const acceptInvite = async (
   return {
     user: safeUser,
     token: buildAuthToken(safeUser),
+    invitedById: invite.createdBy,
   };
 };
 

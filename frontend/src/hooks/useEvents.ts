@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventsApi, type ListEventsParams } from '@/api/events'
 import type { CreateEventDto, UpdateEventDto, SetEventHostsDto } from '@/types'
+import { statsKeys } from './useStats'
 
 export const eventKeys = {
   all: ['events'] as const,
@@ -8,6 +9,49 @@ export const eventKeys = {
     [...eventKeys.all, 'team', teamId, params] as const,
   detail: (id: string) => [...eventKeys.all, 'detail', id] as const,
   hosts: (id: string) => [...eventKeys.all, 'hosts', id] as const,
+  scheduleSlots: (id: string) => [...eventKeys.all, 'schedule-slots', id] as const,
+}
+
+export function useEventScheduleSlots(eventId: string) {
+  return useQuery({
+    queryKey: eventKeys.scheduleSlots(eventId),
+    queryFn: () => eventsApi.listScheduleSlots(eventId).then((r) => r.data.data),
+    enabled: !!eventId,
+  })
+}
+
+export function useCreateEventScheduleSlot(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: any) => eventsApi.createScheduleSlot(eventId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+    },
+  })
+}
+
+export function useUpdateEventScheduleSlot(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ slotId, data }: { slotId: string; data: any }) =>
+      eventsApi.updateScheduleSlot(eventId, slotId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+    },
+  })
+}
+
+export function useDeleteEventScheduleSlot(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (slotId: string) => eventsApi.deleteScheduleSlot(eventId, slotId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+    },
+  })
 }
 
 export function useTeamEvents(teamId: string, params?: ListEventsParams) {
@@ -30,7 +74,10 @@ export function useCreateEvent(teamId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateEventDto) => eventsApi.create(teamId, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
   })
 }
 
@@ -42,6 +89,7 @@ export function useUpdateEvent() {
     onSuccess: (_, { eventId }) => {
       qc.invalidateQueries({ queryKey: eventKeys.all })
       qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }
@@ -50,7 +98,10 @@ export function useDeleteEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (eventId: string) => eventsApi.delete(eventId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
   })
 }
 
@@ -69,6 +120,7 @@ export function useSetEventHosts(eventId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: eventKeys.hosts(eventId) })
       qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }
@@ -80,6 +132,7 @@ export function useRemoveEventHost(eventId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: eventKeys.hosts(eventId) })
       qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }

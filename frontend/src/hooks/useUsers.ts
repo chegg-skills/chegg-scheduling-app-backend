@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, type ListUsersParams } from '@/api/users'
 import type { UpdateUserDto, UserWithDetails } from '@/types'
+import { statsKeys } from './useStats'
 
 export const userKeys = {
   all: ['users'] as const,
@@ -13,6 +14,7 @@ export function useUsers(params?: ListUsersParams) {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: () => usersApi.list(params).then((r) => r.data.data),
+    placeholderData: (previousData) => previousData,
   })
 }
 
@@ -32,6 +34,7 @@ export function useUpdateUser() {
     onSuccess: (_, { userId }) => {
       qc.invalidateQueries({ queryKey: userKeys.all })
       qc.invalidateQueries({ queryKey: userKeys.detail(userId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }
@@ -44,6 +47,7 @@ export function useUpdateMyProfile() {
       const updatedUser = response.data.data
       qc.invalidateQueries({ queryKey: userKeys.all })
       qc.invalidateQueries({ queryKey: userKeys.me() })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
       if (updatedUser?.id) {
         qc.invalidateQueries({ queryKey: userKeys.detail(updatedUser.id) })
       }
@@ -55,7 +59,10 @@ export function useDeactivateUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (userId: string) => usersApi.deactivate(userId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: userKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
   })
 }
 
@@ -67,6 +74,7 @@ export function useReplaceUser() {
     onSuccess: (_, { userId }) => {
       qc.invalidateQueries({ queryKey: userKeys.all })
       qc.invalidateQueries({ queryKey: userKeys.detail(userId) })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
     },
   })
 }

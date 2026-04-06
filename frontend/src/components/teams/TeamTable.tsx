@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import Box from '@mui/material/Box'
-import Link from '@mui/material/Link'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -8,16 +6,16 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import Stack from '@mui/material/Stack'
-import { Link as RouterLink } from 'react-router-dom'
-import { Users, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
+import Typography from '@mui/material/Typography'
 import type { Team } from '@/types'
-import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
-import { TeamForm } from './TeamForm'
+import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
-import { useConfirm } from '@/context/ConfirmContext'
-import { RowActions } from '@/components/shared/RowActions'
+import { useTableSort } from '@/hooks/useTableSort'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { TeamForm } from './TeamForm'
+import { TeamTableRow } from './TeamTableRow'
+import { teamSortAccessors, teamTableColumns } from './teamTableUtils'
 
 interface TeamTableProps {
   teams: Team[]
@@ -28,7 +26,32 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
-  const { confirm } = useConfirm()
+  const { handleAction } = useAsyncAction()
+  const { sortedItems: sortedTeams, sortConfig, requestSort } = useTableSort(teams, teamSortAccessors)
+
+  async function handleToggleActive(team: Team) {
+    const newStatus = !team.isActive
+
+    handleAction(
+      updateTeam,
+      { teamId: team.id, data: { isActive: newStatus } },
+      {
+        title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+        message: newStatus
+          ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
+          : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page and prevent new bookings, but keep its configuration.`,
+        actionName: 'Update',
+      }
+    )
+  }
+
+  async function handleDelete(team: Team) {
+    handleAction(deleteTeam, team.id, {
+      title: 'Delete Team',
+      message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
+      actionName: 'Delete',
+    })
+  }
 
   return (
     <>
@@ -36,121 +59,56 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
         <Table>
           <TableHead>
             <TableRow>
-              {['Team', 'Description', 'Status', 'Actions'].map((col) => (
-                <TableCell
-                  key={col}
-                  sx={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {col}
-                </TableCell>
+              {teamTableColumns.map((column) => (
+                <SortableHeaderCell
+                  key={column.sortKey}
+                  label={column.label}
+                  sortKey={column.sortKey}
+                  activeSortKey={sortConfig?.key ?? null}
+                  direction={sortConfig?.direction ?? 'asc'}
+                  onSort={requestSort}
+                />
               ))}
+              <TableCell
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {teams.map((team) => (
-              <TableRow key={team.id} hover>
-                <TableCell>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 2,
-                        bgcolor: 'secondary.light',
-                        color: 'secondary.dark',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Users size={20} />
-                    </Box>
-                    <Link
-                      component={RouterLink}
-                      to={`/teams/${team.id}`}
-                      sx={{
-                        fontWeight: 600,
-                        color: 'text.primary',
-                        textDecoration: 'none',
-                        '&:hover': { color: 'primary.main', textDecoration: 'underline' },
-                      }}
-                    >
-                      {team.name}
-                    </Link>
-                  </Stack>
-                </TableCell>
-                <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  {team.description ?? 'No description provided'}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    label={team.isActive ? 'Active' : 'Inactive'}
-                    variant={team.isActive ? 'green' : 'red'}
-                  />
-                </TableCell>
-                <TableCell>
-                  {canManageTeam && (
-                    <RowActions
-                      actions={[
-                        {
-                          label: 'Edit team details',
-                          icon: <Edit size={16} />,
-                          onClick: () => setEditingTeam(team),
-                        },
-                        {
-                          label: team.isActive ? 'Mark as Inactive' : 'Mark as Active',
-                          icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
-                          onClick: async () => {
-                            const newStatus = !team.isActive
-                            if (
-                              await confirm({
-                                title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
-                                message: newStatus
-                                  ? `Are you sure you want to mark team "${team.name}" as active? This will make it visible on the public booking page.`
-                                  : `Are you sure you want to mark team "${team.name}" as inactive? This will hide it from the public booking page and prevent new bookings, but keep its configuration.`,
-                              })
-                            ) {
-                              updateTeam({ teamId: team.id, data: { isActive: newStatus } })
-                            }
-                          },
-                        },
-                        {
-                          label: 'Delete team',
-                          icon: <Trash2 size={16} />,
-                          color: 'error.main',
-                          onClick: async () => {
-                            if (
-                              await confirm({
-                                title: 'Delete Team',
-                                message: `Are you sure you want to PERMANENTLY delete team "${team.name}"?\n\nThis action cannot be undone and will remove all associated events and memberships.`,
-                              })
-                            ) {
-                              deleteTeam(team.id)
-                            }
-                          },
-                        },
-                      ]}
-                    />
-                  )}
+            {sortedTeams.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No teams found.
+                  </Typography>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              sortedTeams.map((team) => (
+                <TeamTableRow
+                  key={team.id}
+                  team={team}
+                  canManageTeam={canManageTeam}
+                  onEdit={setEditingTeam}
+                  onToggleActive={handleToggleActive}
+                  onDelete={handleDelete}
+                />
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
       {editingTeam && (
-        <Modal
-          isOpen
-          onClose={() => setEditingTeam(null)}
-          title={`Edit "${editingTeam.name}"`}
-        >
+        <Modal isOpen onClose={() => setEditingTeam(null)} title={`Edit "${editingTeam.name}"`}>
           <TeamForm
             team={editingTeam}
             onSuccess={() => setEditingTeam(null)}

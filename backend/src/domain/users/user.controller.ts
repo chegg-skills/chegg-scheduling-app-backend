@@ -22,6 +22,14 @@ const parsePositiveInt = (value: unknown): number | undefined => {
   return parsed;
 };
 
+const parseString = (value: unknown): string | undefined => {
+  if (typeof value === "string") {
+    return value.trim() || undefined;
+  }
+
+  return undefined;
+};
+
 const listUsers = async (
   req: Request,
   res: Response,
@@ -30,7 +38,8 @@ const listUsers = async (
   try {
     const page = parsePositiveInt(req.query.page);
     const pageSize = parsePositiveInt(req.query.pageSize);
-    const result = await userService.listUsers({ page, pageSize });
+    const search = parseString(req.query.search);
+    const result = await userService.listUsers({ page, pageSize, search });
 
     sendSuccessResponse(
       res,

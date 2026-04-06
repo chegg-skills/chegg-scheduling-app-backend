@@ -7,9 +7,10 @@ import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
 import { PageSpinner } from '@/components/shared/Spinner'
+import type { AvailableSlot } from '@/api/public'
 
 interface SlotStepProps {
-    slots: string[]
+    slots: AvailableSlot[]
     loading: boolean
     selectedDate: Date
     onDateSelect: (date: Date) => void
@@ -28,14 +29,14 @@ export function SlotStep({
     onNext
 }: SlotStepProps) {
     const { amSlots, pmSlots } = useMemo(() => {
-        const am: string[] = []
-        const pm: string[] = []
+        const am: AvailableSlot[] = []
+        const pm: AvailableSlot[] = []
 
         // Ensure slots are sorted chronologically
-        const sorted = [...slots].sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+        const sorted = [...slots].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
 
         sorted.forEach(s => {
-            const date = new Date(s)
+            const date = new Date(s.startTime)
             if (date.getHours() < 12) {
                 am.push(s)
             } else {
@@ -46,29 +47,41 @@ export function SlotStep({
         return { amSlots: am, pmSlots: pm }
     }, [slots])
 
-    const renderSlotGrid = (items: string[]) => (
+    const renderSlotGrid = (items: AvailableSlot[]) => (
         <Box
             sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+                gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
                 gap: 1.5,
                 mb: 4
             }}
         >
             {items.map(s => (
                 <Button
-                    key={s}
-                    variant={selectedSlot === s ? 'contained' : 'outlined'}
+                    key={s.startTime}
+                    variant={selectedSlot === s.startTime ? 'contained' : 'outlined'}
                     fullWidth
-                    onClick={() => onSelect(s)}
+                    onClick={() => onSelect(s.startTime)}
                     sx={{
                         py: 1.5,
+                        px: 2,
                         borderRadius: 2,
                         fontWeight: 600,
-                        fontSize: '0.875rem'
+                        fontSize: '0.875rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        textTransform: 'none',
                     }}
                 >
-                    {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(s))}
+                    <Typography variant="body2" fontWeight={700}>
+                        {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(s.startTime))}
+                    </Typography>
+                    {s.remainingSeats !== null && s.remainingSeats !== undefined && (
+                        <Typography variant="caption" sx={{ mt: 0.5, opacity: 0.8 }}>
+                            {s.remainingSeats} {s.remainingSeats === 1 ? 'seat' : 'seats'} left
+                        </Typography>
+                    )}
                 </Button>
             ))}
         </Box>

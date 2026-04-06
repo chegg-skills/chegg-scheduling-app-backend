@@ -1,46 +1,126 @@
-import { AssignmentStrategy, BookingStatus, Prisma } from "@prisma/client";
+import { BookingStatus, Prisma } from "@prisma/client";
+import {
+    AssignmentContext,
+    getAssignmentStrategy,
+    HostCandidate,
+} from "./assignment.service";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { isHostAvailable } from "../availability/availability.service";
+import {
+    assertBookingNoticeSatisfied,
+    assertBookingWeekdayAllowed,
+    assertParticipantCapacityAvailable,
+    getEffectiveParticipantPolicy,
+    resolveMatchingScheduleSlot,
+} from "../events/eventScheduling.service";
+import {
+    countActiveParticipantsForTime,
+    createBookingRecord,
+    findBookableEvent,
+    findBookingById,
+    findBookings,
+    updateBookingStatusById,
+    upsertStudentForBooking,
+} from "./booking.repository";
+import {
+    buildSchedulingContext,
+    normalizeStudentEmailAddress,
+    normalizeStudentName,
+    parseBookingStartTime,
+    type BookableEvent,
+    type CreateBookingInput,
+    type ListBookingsFilters,
+    type SafeBooking,
+} from "./booking.shared";
 
-export type CreateBookingInput = {
-    studentName: string;
-    studentEmail: string;
-    teamId: string;
-    eventId: string;
-    startTime: string | Date;
-    timezone?: string;
-    notes?: string;
-    specificQuestion?: string;
-    triedSolutions?: string;
-    usedResources?: string;
-    sessionObjectives?: string;
+export { bookingInclude, type SafeBooking } from "./booking.shared";
+
+export type { UpdateBookingStatusInput } from "./booking.shared";
+
+const getBookableEvent = async (
+    teamId: string,
+    eventId: string,
+): Promise<BookableEvent> => {
+    const event = await findBookableEvent(eventId);
+
+    if (!event || !event.isActive) {
+        throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event not found or inactive.");
+    }
+
+    if (event.teamId !== teamId) {
+        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Event does not belong to the specified team.");
+    }
+
+    return event;
+};
+
+const resolveAssignedHost = async ({
+    preferredHostId,
+    activeHosts,
+    event,
+    start,
+    end,
+    allowSharedSessionOverlap,
+    matchedScheduleSlotId,
+    tx,
+}: {
     preferredHostId?: string;
+    activeHosts: HostCandidate[];
+    event: BookableEvent;
+    start: Date;
+    end: Date;
+    allowSharedSessionOverlap: boolean;
+    matchedScheduleSlotId?: string | null;
+    tx: Prisma.TransactionClient;
+}): Promise<{ assignedHostId: string; meetingJoinUrl: string | null }> => {
+    if (preferredHostId) {
+        const host = activeHosts.find((candidateHost) => candidateHost.hostUserId === preferredHostId);
+
+        if (!host) {
+            throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Specified host is not eligible for this event.");
+        }
+
+        const available = await isHostAvailable(preferredHostId, start, end, {
+            ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
+            eventId: allowSharedSessionOverlap ? event.id : undefined,
+            scheduleSlotId: allowSharedSessionOverlap ? matchedScheduleSlotId ?? null : undefined,
+            tx,
+        });
+
+        if (!available) {
+            throw new ErrorHandler(StatusCodes.CONFLICT, "The selected host is not available at this time.");
+        }
+
+        return {
+            assignedHostId: preferredHostId,
+            meetingJoinUrl: host.hostUser.zoomIsvLink ?? null,
+        };
+    }
+
+    const strategyImplementation = getAssignmentStrategy(event.assignmentStrategy);
+    const context: AssignmentContext = {
+        prisma: tx,
+        eventId: event.id,
+        start,
+        end,
+        bookingMode: event.bookingMode,
+        allowSharedSessionOverlap,
+        matchedScheduleSlotId,
+    };
+
+    const result = await strategyImplementation.resolveHost(activeHosts, context);
+
+    if (!result.assignedHostId) {
+        throw new ErrorHandler(StatusCodes.CONFLICT, "No available hosts found for the requested time slot.");
+    }
+
+    return {
+        assignedHostId: result.assignedHostId,
+        meetingJoinUrl: result.meetingJoinUrl,
+    };
 };
-
-export type UpdateBookingStatusInput = {
-    status: BookingStatus;
-};
-
-export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
-    team: true,
-    event: true,
-    host: {
-        select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            timezone: true,
-            avatarUrl: true,
-        },
-    },
-});
-
-export type SafeBooking = Prisma.BookingGetPayload<{
-    include: typeof bookingInclude;
-}>;
 
 const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> => {
     if (!payload) {
@@ -61,102 +141,84 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         preferredHostId
     } = payload;
 
-    // 1. Validate inputs
-    const start = new Date(startTime);
-    if (isNaN(start.getTime())) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid startTime provided.");
+    const normalizedStudentName = normalizeStudentName(studentName);
+    const normalizedStudentEmail = normalizeStudentEmailAddress(studentEmail);
+
+    const start = parseBookingStartTime(startTime);
+    const event = await getBookableEvent(teamId, eventId);
+    const end = new Date(start.getTime() + event.durationSeconds * 1000);
+    const schedulingContext = buildSchedulingContext(event);
+
+    assertBookingWeekdayAllowed(
+        schedulingContext.allowedWeekdays,
+        start,
+    );
+    assertBookingNoticeSatisfied(
+        schedulingContext.minimumNoticeMinutes,
+        start,
+    );
+
+    const matchedScheduleSlot = await resolveMatchingScheduleSlot(event.id, start);
+    const allowSharedSessionOverlap = event.bookingMode === "FIXED_SLOTS";
+
+    if (allowSharedSessionOverlap && !matchedScheduleSlot) {
+        throw new ErrorHandler(
+            StatusCodes.CONFLICT,
+            "The requested time does not match any predefined slot for this event.",
+        );
     }
-    if (start < new Date()) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Cannot book a session in the past.");
-    }
-
-    // 2. Fetch Event and Hosts
-    const event = await prisma.event.findUnique({
-        where: { id: eventId },
-        include: {
-            hosts: {
-                where: { isActive: true },
-                orderBy: { hostOrder: "asc" },
-            },
-            routingState: true,
-        },
-    });
-
-    if (!event || !event.isActive) {
-        throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event not found or inactive.");
-    }
-
-    if (event.teamId !== teamId) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Event does not belong to the specified team.");
-    }
-
-    const durationSeconds = event.durationSeconds;
-    const end = new Date(start.getTime() + durationSeconds * 1000);
-
-    // 3. Determine Host Assignment
-    let assignedHostId: string | null = null;
-    const activeHosts = event.hosts;
+    const activeHosts = event.hosts as HostCandidate[];
 
     if (activeHosts.length === 0) {
         throw new ErrorHandler(StatusCodes.SERVICE_UNAVAILABLE, "No active hosts available for this event.");
     }
 
-    if (event.assignmentStrategy === AssignmentStrategy.DIRECT) {
-        // Direct Assignment
-        const targetHostId = preferredHostId || activeHosts[0].hostUserId;
-        const host = activeHosts.find(h => h.hostUserId === targetHostId);
+    // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
+    return (prisma.$transaction(async (tx) => {
+        const { assignedHostId, meetingJoinUrl } = await resolveAssignedHost({
+            preferredHostId,
+            activeHosts,
+            event,
+            start,
+            end,
+            allowSharedSessionOverlap,
+            matchedScheduleSlotId: matchedScheduleSlot?.id,
+            tx,
+        });
 
-        if (!host) {
-            throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Specified host is not eligible for this event.");
-        }
+        const scheduleSlot = matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(
+            event.id,
+            start,
+        )) as any;
 
-        const available = await isHostAvailable(targetHostId, start, end);
-        if (!available) {
-            throw new ErrorHandler(StatusCodes.CONFLICT, "The selected host is not available at this time.");
-        }
-        assignedHostId = targetHostId;
-    } else {
-        // Round-Robin Assignment
-        const routingState = event.routingState || { nextHostOrder: 1 };
-        const maxOrder = Math.max(...activeHosts.map(h => h.hostOrder));
+        const { maxParticipants } = getEffectiveParticipantPolicy(
+            schedulingContext,
+            scheduleSlot ?? (schedulingContext.interactionType as any),
+        );
 
-        // Sort hosts so we can iterate from nextHostOrder
-        const sortedHosts = [...activeHosts].sort((a, b) => a.hostOrder - b.hostOrder);
+        const currentParticipantCount = await countActiveParticipantsForTime(
+            tx,
+            eventId,
+            start,
+        );
 
-        // Start searching from nextHostOrder
-        let startIndex = sortedHosts.findIndex(h => h.hostOrder >= routingState.nextHostOrder);
-        if (startIndex === -1) startIndex = 0;
+        assertParticipantCapacityAvailable(
+            maxParticipants,
+            currentParticipantCount,
+        );
 
-        for (let i = 0; i < sortedHosts.length; i++) {
-            const index = (startIndex + i) % sortedHosts.length;
-            const candidate = sortedHosts[index];
+        const student = await upsertStudentForBooking(
+            tx,
+            normalizedStudentName,
+            normalizedStudentEmail,
+            start,
+        );
 
-            const available = await isHostAvailable(candidate.hostUserId, start, end);
-            if (available) {
-                assignedHostId = candidate.hostUserId;
-
-                // Update routing state for next time
-                const nextOrder = (candidate.hostOrder % maxOrder) + 1;
-                await prisma.eventRoutingState.upsert({
-                    where: { eventId },
-                    update: { nextHostOrder: nextOrder },
-                    create: { eventId, nextHostOrder: nextOrder }
-                });
-                break;
-            }
-        }
-
-        if (!assignedHostId) {
-            throw new ErrorHandler(StatusCodes.CONFLICT, "No available hosts found for the requested time slot.");
-        }
-    }
-
-    // 4. Create Booking
-    // @ts-ignore - Prisma client types may lag in IDE after schema changes
-    return prisma.booking.create({
-        data: {
-            studentName,
-            studentEmail,
+        return createBookingRecord(tx, {
+            studentId: student.id,
+            scheduleSlotId: scheduleSlot?.id ?? null,
+            studentName: normalizedStudentName,
+            studentEmail: normalizedStudentEmail,
             teamId,
             eventId,
             hostUserId: assignedHostId,
@@ -168,56 +230,22 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             triedSolutions,
             usedResources,
             sessionObjectives,
+            meetingJoinUrl,
             status: BookingStatus.CONFIRMED,
-        } as any,
-        include: bookingInclude,
-    }) as unknown as Promise<SafeBooking>;
-};
-
-const getBooking = async (id: string): Promise<SafeBooking> => {
-    const booking = await prisma.booking.findUnique({
-        where: { id },
-        include: bookingInclude
-    });
-
-    if (!booking) {
-        throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking not found.");
-    }
-
-    return booking;
-};
-
-const listBookings = async (filters: {
-    teamId?: string;
-    eventId?: string;
-    hostUserId?: string;
-    status?: BookingStatus;
-}): Promise<SafeBooking[]> => {
-    return prisma.booking.findMany({
-        where: {
-            teamId: filters.teamId,
-            eventId: filters.eventId,
-            hostUserId: filters.hostUserId,
-            status: filters.status
-        },
-        include: bookingInclude,
-        orderBy: { startTime: 'desc' }
-    });
-};
-
-const updateBookingStatus = async (id: string, status: BookingStatus): Promise<SafeBooking> => {
-    try {
-        return await prisma.booking.update({
-            where: { id },
-            data: { status },
-            include: bookingInclude
         });
-    } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-            throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking not found.");
-        }
-        throw error;
-    }
+    })) as any;
+};
+
+const getBooking = async (id: string) => {
+    return findBookingById(id);
+};
+
+const listBookings = async (filters: ListBookingsFilters) => {
+    return findBookings(filters);
+};
+
+const updateBookingStatus = async (id: string, status: BookingStatus) => {
+    return updateBookingStatusById(id, status);
 };
 
 export {

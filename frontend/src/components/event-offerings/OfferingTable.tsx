@@ -13,9 +13,10 @@ import { Layers, Edit } from 'lucide-react'
 import type { EventOffering } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
+import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { OfferingForm } from './OfferingForm'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { RowActions } from '@/components/shared/RowActions'
+import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 
 interface OfferingTableProps {
   offerings: EventOffering[]
@@ -27,8 +28,18 @@ const headerTooltips: Record<string, string> = {
   Sort: 'The display order of this offering in lists.',
 }
 
+type OfferingSortKey = 'offering' | 'key' | 'sort' | 'status'
+
+const offeringSortAccessors: SortAccessorMap<EventOffering, OfferingSortKey> = {
+  offering: (offering) => offering.name,
+  key: (offering) => offering.key,
+  sort: (offering) => offering.sortOrder,
+  status: (offering) => offering.isActive,
+}
+
 export function OfferingTable({ offerings }: OfferingTableProps) {
   const [editing, setEditing] = useState<EventOffering | null>(null)
+  const { sortedItems: sortedOfferings, sortConfig, requestSort } = useTableSort(offerings, offeringSortAccessors)
 
   return (
     <>
@@ -36,27 +47,37 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
         <Table>
           <TableHead>
             <TableRow>
-              {['Offering', 'Key', 'Sort', 'Status', 'Actions'].map((col) => (
-                <TableCell
-                  key={col}
-                  sx={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  <Stack direction="row" alignItems="center">
-                    {col}
-                    {headerTooltips[col] && <InfoTooltip title={headerTooltips[col]} />}
-                  </Stack>
-                </TableCell>
+              {[
+                { label: 'Offering', sortKey: 'offering' as const, tooltip: headerTooltips.Offering },
+                { label: 'Key', sortKey: 'key' as const, tooltip: headerTooltips.Key },
+                { label: 'Sort', sortKey: 'sort' as const, tooltip: headerTooltips.Sort },
+                { label: 'Status', sortKey: 'status' as const },
+              ].map((col) => (
+                <SortableHeaderCell
+                  key={col.sortKey}
+                  label={col.label}
+                  sortKey={col.sortKey}
+                  activeSortKey={sortConfig?.key ?? null}
+                  direction={sortConfig?.direction ?? 'asc'}
+                  onSort={requestSort}
+                  tooltip={col.tooltip}
+                />
               ))}
+              <TableCell
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {offerings.map((o) => (
+            {sortedOfferings.map((o) => (
               <TableRow key={o.id} hover>
                 <TableCell>
                   <Stack direction="row" spacing={1.5} alignItems="center">

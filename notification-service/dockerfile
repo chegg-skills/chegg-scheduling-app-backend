@@ -1,0 +1,20 @@
+# 1. Use official Node.js LTS image
+FROM node:18
+
+# 2. Set working directory
+WORKDIR /app
+
+# 3. Copy package.json and package-lock.json for caching
+COPY package*.json ./
+
+# 4. Install only production dependencies
+RUN npm install --production
+
+# 5. Copy the rest of the source code
+COPY . .
+
+# 6. Generate Prisma client (since you're using Prisma)
+RUN npx prisma generate
+
+# 7. Command to start the worker
+CMD ["node", "src/index.js"]

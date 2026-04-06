@@ -1,3 +1,17 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+
+# Build
+dist/
+build/
+.vite/
+.next/
+
 # IDE
 .idea/
 .vscode/
@@ -5,3 +19,14 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Environment
+.env*
+.env.local
+.env.*.local
+
+# Personal Notes
+personal-notes/
+
+# Artifacts
+/brain/

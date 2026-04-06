@@ -50,6 +50,20 @@ router
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.updateInteractionType,
   )
+  .delete(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.deleteInteractionType,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/event-interaction-types/:interactionTypeId/usage")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN),
+    eventController.getInteractionTypeUsage,
+  )
   .all(methodNotAllowed);
 
 router
@@ -96,6 +110,34 @@ router
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.replaceEventHosts,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/events/:eventId/schedule-slots")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.listEventScheduleSlots,
+  )
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.createEventScheduleSlot,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/events/:eventId/schedule-slots/:slotId")
+  .patch(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.updateEventScheduleSlot,
+  )
+  .delete(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.deleteEventScheduleSlot,
   )
   .all(methodNotAllowed);
 

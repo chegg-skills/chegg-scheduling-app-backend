@@ -1,0 +1,68 @@
+services:
+  # 1. Backend API (Web Service)
+  - type: web
+    name: chegg-scheduling-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false # Set this to your production Postgres URL
+      - key: RABBITMQ_URL
+        sync: false # Set this to your CloudAMQP link
+      - key: JWT_SECRET
+        generate: true # Render will generate a random one for you
+      - key: CORS_ORIGINS
+        fromService:
+          type: static
+          name: chegg-scheduling-frontend
+          property: host
+      - key: FRONTEND_URL
+        fromService:
+          type: static
+          name: chegg-scheduling-frontend
+          property: host
+
+  # 2. Notification Service (Background Worker)
+  - type: worker
+    name: chegg-notification-service
+    runtime: node
+    rootDir: notification-service
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: EMAIL_USERNAME
+        sync: false # Your Gmail email
+      - key: EMAIL_PASSWORD
+        sync: false # Your Gmail App Password
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: chegg-scheduling-backend
+          property: envVar
+          envVar: JWT_SECRET
+
+  # 3. Frontend (Static Site)
+  - type: static
+    name: chegg-scheduling-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: chegg-scheduling-backend
+          property: host

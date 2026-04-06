@@ -14,7 +14,12 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ConfirmProvider>
-            <RouterProvider router={router} />
+            <RouterProvider
+              router={router}
+              future={{
+                v7_startTransition: true,
+              }}
+            />
           </ConfirmProvider>
         </AuthProvider>
       </QueryClientProvider>

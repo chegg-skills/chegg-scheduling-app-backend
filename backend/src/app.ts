@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import express from "express";
@@ -7,6 +8,7 @@ import { pathNotFound } from "./shared/error/pathNotFound";
 import { errorHandler } from "./shared/error/errorhandler";
 import routes from "./routes/index";
 
+dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
 

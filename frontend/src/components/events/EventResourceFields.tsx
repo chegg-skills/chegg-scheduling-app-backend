@@ -1,11 +1,14 @@
 import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/FormField'
 import { Select } from '@/components/shared/Select'
 import { useEventOfferings } from '@/hooks/useEventOfferings'
 import { useInteractionTypes } from '@/hooks/useInteractionTypes'
-import type { EventFormValues } from './EventForm'
+import { formatCapacityRange } from './eventCapabilityRules'
+import type { EventFormValues } from './eventFormSchema'
 
 interface Props {
   register: UseFormRegister<EventFormValues>
@@ -24,7 +27,7 @@ export function EventResourceFields({ register, errors, watch }: Props) {
   return (
     <Stack spacing={2}>
       <FormField
-        label="Offering"
+        label="Event Category"
         htmlFor="offeringId"
         error={errors.offeringId?.message}
         info="The category or type of service for this event (e.g., Tutorial)."
@@ -36,7 +39,7 @@ export function EventResourceFields({ register, errors, watch }: Props) {
           value={watch('offeringId') || ''}
           {...register('offeringId')}
         >
-          <MenuItem value="">Select an offering…</MenuItem>
+          <MenuItem value="">Select a category…</MenuItem>
           {offerings.map((o) => (
             <MenuItem key={o.id} value={o.id}>
               {o.name}
@@ -60,8 +63,18 @@ export function EventResourceFields({ register, errors, watch }: Props) {
         >
           <MenuItem value="">Select an interaction type…</MenuItem>
           {interactionTypes.map((t) => (
-            <MenuItem key={t.id} value={t.id}>
-              {t.name}
+            <MenuItem key={t.id} value={t.id} sx={{ py: 1.5 }}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  {t.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} • Hosts: {formatCapacityRange(t.minHosts, t.maxHosts)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {t.supportsRoundRobin ? 'Supports Round Robin' : 'Direct Assignment Only'}
+                </Typography>
+              </Box>
             </MenuItem>
           ))}
         </Select>

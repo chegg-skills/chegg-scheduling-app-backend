@@ -4,6 +4,7 @@ import type {
   ApiResponse,
   Event,
   EventHost,
+  EventScheduleSlot,
   CreateEventDto,
   UpdateEventDto,
   SetEventHostsDto,
@@ -39,4 +40,12 @@ export const eventsApi = {
     apiClient.put<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`, data),
   removeHost: (eventId: string, userId: string) =>
     apiClient.delete<ApiResponse<EventHost>>(`/events/${eventId}/hosts/${userId}`),
+  listScheduleSlots: (eventId: string) =>
+    apiClient.get<ApiResponse<{ slots: EventScheduleSlot[] }>>(`/events/${eventId}/schedule-slots`),
+  createScheduleSlot: (eventId: string, data: Partial<EventScheduleSlot>) =>
+    apiClient.post<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots`, data),
+  updateScheduleSlot: (eventId: string, slotId: string, data: Partial<EventScheduleSlot>) =>
+    apiClient.patch<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}`, data),
+  deleteScheduleSlot: (eventId: string, slotId: string) =>
+    apiClient.delete<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}`),
 }

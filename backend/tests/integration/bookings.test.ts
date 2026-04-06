@@ -5,6 +5,23 @@ import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 import { AssignmentStrategy, BookingStatus, EventLocationType } from "@prisma/client";
 
+const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date => {
+    const now = new Date();
+    const currentDay = now.getUTCDay(); // 0 = Sunday ... 6 = Saturday
+    const daysAhead = (targetDay - currentDay + 7) % 7 || 7;
+    const target = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + daysAhead,
+        hour,
+        minute,
+        0,
+        0,
+    ));
+
+    return target;
+};
+
 let adminToken: string;
 let teamId: string;
 let offeringId: string;
@@ -25,6 +42,7 @@ beforeAll(async () => {
             name: "Test Team",
             createdById: admin.id,
             teamLeadId: admin.id,
+            publicBookingSlug: "test-team-bookings",
         },
     });
     teamId = team.id;
@@ -97,6 +115,7 @@ describe("Booking Domain Integration Tests", () => {
                 locationValue: "Zoom",
                 createdById: coachId,
                 updatedById: coachId,
+                publicBookingSlug: `test-direct-event-${Date.now()}`,
                 hosts: {
                     create: {
                         hostUserId: coachId,
@@ -129,9 +148,13 @@ describe("Booking Domain Integration Tests", () => {
         });
 
         it("successfully creates a booking for an available slot", async () => {
-            // Monday at 10:00 AM UTC (Assuming host is in UTC for simplicity in test setup)
-            // Actually isHostAvailable gets the host TZ. Coach default is UTC.
-            const startTime = "2026-03-30T10:00:00Z"; // This is a Monday
+            const zoomIsvLink = "https://students.skills.chegg.com/meeting/join/7d26db62-1f37-49f5-8b49-97a66444007b";
+            await request(app)
+                .patch(`/api/users/${coachId}`)
+                .set("Authorization", `Bearer ${adminToken}`)
+                .send({ zoomIsvLink });
+
+            const startTime = getNextUtcWeekdayAt(1, 10, 0).toISOString(); // Next Monday 10:00 UTC
 
             const res = await request(app)
                 .post("/api/bookings")
@@ -148,10 +171,46 @@ describe("Booking Domain Integration Tests", () => {
             expect(res.status).toBe(201);
             expect(res.body.data.booking.studentName).toBe("John Doe");
             expect(res.body.data.booking.hostUserId).toBe(coachId);
+            expect(res.body.data.booking.meetingJoinUrl).toBe(zoomIsvLink);
+        });
+
+        it("creates and reuses a student profile across bookings with the same email", async () => {
+            const firstStartTime = getNextUtcWeekdayAt(1, 10, 0).toISOString();
+            const secondStartTime = getNextUtcWeekdayAt(1, 12, 0).toISOString();
+
+            const firstRes = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Jane Student",
+                    studentEmail: "jane@example.com",
+                    teamId,
+                    eventId,
+                    startTime: firstStartTime,
+                    timezone: "UTC"
+                });
+
+            const secondRes = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Jane Student",
+                    studentEmail: "jane@example.com",
+                    teamId,
+                    eventId,
+                    startTime: secondStartTime,
+                    timezone: "UTC"
+                });
+
+            expect(firstRes.status).toBe(201);
+            expect(secondRes.status).toBe(201);
+            expect(firstRes.body.data.booking.student).toBeDefined();
+            expect(firstRes.body.data.booking.student.email).toBe("jane@example.com");
+            expect(firstRes.body.data.booking.studentId ?? firstRes.body.data.booking.student?.id).toBe(
+                secondRes.body.data.booking.studentId ?? secondRes.body.data.booking.student?.id,
+            );
         });
 
         it("returns 409 conflict if host is unavailable (outside weekly schedule)", async () => {
-            const startTime = "2026-03-30T18:00:00Z"; // Monday 6 PM (Schedule ends at 5 PM)
+            const startTime = getNextUtcWeekdayAt(1, 18, 0).toISOString(); // Next Monday 18:00 UTC
 
             const res = await request(app)
                 .post("/api/bookings")
@@ -168,7 +227,7 @@ describe("Booking Domain Integration Tests", () => {
         });
 
         it("returns 409 conflict if there is a booking overlap", async () => {
-            const startTime = "2026-03-30T10:00:00Z";
+            const startTime = getNextUtcWeekdayAt(1, 10, 0).toISOString();
 
             // Create existing booking
             await prisma.booking.create({
@@ -197,6 +256,96 @@ describe("Booking Domain Integration Tests", () => {
             expect(res.status).toBe(409);
             expect(res.body.message).toContain("not available");
         });
+
+        it("rejects bookings that do not match a predefined fixed slot", async () => {
+            const allowedStart = getNextUtcWeekdayAt(1, 10, 0);
+            const invalidStart = getNextUtcWeekdayAt(1, 11, 0);
+
+            await prisma.event.update({
+                where: { id: eventId },
+                data: {
+                    bookingMode: "FIXED_SLOTS",
+                    allowedWeekdays: [1],
+                    minimumNoticeMinutes: 0,
+                    minParticipantCount: 1,
+                    maxParticipantCount: 1,
+                },
+            });
+
+            await prisma.eventScheduleSlot.create({
+                data: {
+                    eventId,
+                    startTime: allowedStart,
+                    endTime: new Date(allowedStart.getTime() + 3600 * 1000),
+                },
+            });
+
+            const res = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Slot Mismatch",
+                    studentEmail: "slot-mismatch@example.com",
+                    teamId,
+                    eventId,
+                    startTime: invalidStart.toISOString(),
+                    timezone: "UTC",
+                });
+
+            expect(res.status).toBe(409);
+            expect(res.body.message).toMatch(/predefined slot/i);
+        });
+
+        it("rejects bookings when a fixed slot has reached its participant limit", async () => {
+            const slotStart = getNextUtcWeekdayAt(1, 10, 0);
+            const slotEnd = new Date(slotStart.getTime() + 3600 * 1000);
+
+            await prisma.event.update({
+                where: { id: eventId },
+                data: {
+                    bookingMode: "FIXED_SLOTS",
+                    allowedWeekdays: [1],
+                    minimumNoticeMinutes: 0,
+                    minParticipantCount: 1,
+                    maxParticipantCount: 1,
+                },
+            });
+
+            const scheduleSlot = await prisma.eventScheduleSlot.create({
+                data: {
+                    eventId,
+                    startTime: slotStart,
+                    endTime: slotEnd,
+                },
+            });
+
+            await prisma.booking.create({
+                data: {
+                    studentName: "Existing Student",
+                    studentEmail: "existing@example.com",
+                    teamId,
+                    eventId,
+                    hostUserId: coachId,
+                    scheduleSlotId: scheduleSlot.id,
+                    startTime: slotStart,
+                    endTime: slotEnd,
+                    status: "CONFIRMED",
+                },
+            });
+
+            const res = await request(app)
+                .post("/api/bookings")
+                .send({
+                    studentName: "Capacity Student",
+                    studentEmail: "capacity@example.com",
+                    teamId,
+                    eventId,
+                    startTime: slotStart.toISOString(),
+                    timezone: "UTC",
+                });
+
+            expect(res.status).toBe(409);
+            expect(res.body.message).toMatch(/capacity|participant limit|full/i);
+        });
     });
 
     describe("POST /api/bookings (ROUND-ROBIN)", () => {
@@ -215,6 +364,7 @@ describe("Booking Domain Integration Tests", () => {
                     locationValue: "Zoom",
                     createdById: coachId,
                     updatedById: coachId,
+                    publicBookingSlug: `test-rr-event-${Date.now()}`,
                     hosts: {
                         create: [
                             { hostUserId: coachId, hostOrder: 1 },
@@ -236,7 +386,7 @@ describe("Booking Domain Integration Tests", () => {
         });
 
         it("assigns the first available host and updates routing state", async () => {
-            const startTime = "2026-03-30T09:30:00Z"; // Monday 9:30 AM (Coach 1 available)
+            const startTime = getNextUtcWeekdayAt(1, 9, 30).toISOString(); // Next Monday 09:30 UTC
 
             const res = await request(app)
                 .post("/api/bookings")
@@ -257,7 +407,7 @@ describe("Booking Domain Integration Tests", () => {
         });
 
         it("skips unavailable host and assigns the next available one", async () => {
-            const startTime = "2026-03-30T14:00:00Z"; // Coach 1 out, Coach 2 available
+            const startTime = getNextUtcWeekdayAt(1, 14, 0).toISOString(); // Next Monday 14:00 UTC
 
             const res = await request(app)
                 .post("/api/bookings")
@@ -271,6 +421,97 @@ describe("Booking Domain Integration Tests", () => {
 
             expect(res.status).toBe(201);
             expect(res.body.data.booking.hostUserId).toBe(coach2Id);
+        });
+    });
+
+    describe("GET /api/bookings search", () => {
+        beforeEach(async () => {
+            const baseStart = getNextUtcWeekdayAt(1, 9, 0);
+
+            await prisma.booking.createMany({
+                data: [
+                    {
+                        studentName: "Alice Johnson",
+                        studentEmail: "alice@example.com",
+                        teamId,
+                        eventId,
+                        hostUserId: coachId,
+                        startTime: baseStart,
+                        endTime: new Date(baseStart.getTime() + 3600 * 1000),
+                        status: BookingStatus.CONFIRMED,
+                    },
+                    {
+                        studentName: "Bob Carter",
+                        studentEmail: "bob.carter@example.com",
+                        teamId,
+                        eventId,
+                        hostUserId: coachId,
+                        startTime: new Date(baseStart.getTime() + 2 * 3600 * 1000),
+                        endTime: new Date(baseStart.getTime() + 3 * 3600 * 1000),
+                        status: BookingStatus.CONFIRMED,
+                    },
+                    {
+                        studentName: "Charlie King",
+                        studentEmail: "charlie@example.com",
+                        teamId,
+                        eventId,
+                        hostUserId: coach2Id,
+                        startTime: new Date(baseStart.getTime() + 4 * 3600 * 1000),
+                        endTime: new Date(baseStart.getTime() + 5 * 3600 * 1000),
+                        status: BookingStatus.CONFIRMED,
+                    },
+                ],
+            });
+        });
+
+        it("filters bookings by partial student name", async () => {
+            const res = await request(app)
+                .get("/api/bookings")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .query({ search: "ali" });
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.bookings).toHaveLength(1);
+            expect(res.body.data.bookings[0].studentName).toBe("Alice Johnson");
+        });
+
+        it("filters bookings by partial student email", async () => {
+            const res = await request(app)
+                .get("/api/bookings")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .query({ search: "bob.carter" });
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.bookings).toHaveLength(1);
+            expect(res.body.data.bookings[0].studentEmail).toBe("bob.carter@example.com");
+        });
+
+        it("filters bookings by partial booking ID", async () => {
+            const booking = await prisma.booking.findFirst({
+                where: { studentEmail: "alice@example.com" },
+                select: { id: true },
+            });
+
+            expect(booking).toBeTruthy();
+
+            const res = await request(app)
+                .get("/api/bookings")
+                .set("Authorization", `Bearer ${adminToken}`)
+                .query({ search: booking!.id.slice(0, 8) });
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.bookings.length).toBeGreaterThanOrEqual(1);
+            expect(res.body.data.bookings.some((b: { id: string }) => b.id === booking!.id)).toBe(true);
+        });
+
+        it("still enforces coach scoping while searching", async () => {
+            const res = await request(app)
+                .get("/api/bookings")
+                .set("Authorization", `Bearer ${coachToken}`)
+                .query({ search: "charlie" });
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.bookings).toHaveLength(0);
         });
     });
 });

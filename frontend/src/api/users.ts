@@ -4,6 +4,7 @@ import type { ApiResponse, SafeUser, UserWithDetails, UpdateUserDto, Pagination 
 export interface ListUsersParams {
   page?: number
   pageSize?: number
+  search?: string
 }
 
 export interface ListUsersResponse {

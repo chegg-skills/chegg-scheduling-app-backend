@@ -6,7 +6,9 @@ import { prisma } from "../../src/shared/db/prisma";
  */
 export const clearTables = async (): Promise<void> => {
   await prisma.booking.deleteMany();
+  await prisma.student.deleteMany();
   await prisma.eventRoutingState.deleteMany();
+  await prisma.eventScheduleSlot.deleteMany();
   await prisma.eventHost.deleteMany();
   await prisma.event.deleteMany();
   await prisma.eventInteractionType.deleteMany();
