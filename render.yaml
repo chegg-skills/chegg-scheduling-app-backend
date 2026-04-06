@@ -19,12 +19,12 @@ services:
         generate: true # Render will generate a random one for you
       - key: CORS_ORIGINS
         fromService:
-          type: static
+          type: static_site
           name: chegg-scheduling-frontend
           property: host
       - key: FRONTEND_URL
         fromService:
-          type: static
+          type: static_site
           name: chegg-scheduling-frontend
           property: host
 
@@ -54,7 +54,7 @@ services:
           envVar: JWT_SECRET
 
   # 3. Frontend (Static Site)
-  - type: static
+  - type: static_site
     name: chegg-scheduling-frontend
     runtime: static
     rootDir: frontend
