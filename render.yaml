@@ -19,8 +19,6 @@ services:
         value: 10000
       - key: DATABASE_URL
         sync: false
-      - key: RABBITMQ_URL
-        sync: false
       - fromGroup: chegg-shared-secrets
       - key: CORS_ORIGINS
         fromService:
@@ -33,27 +31,7 @@ services:
           name: chegg-scheduling-frontend
           property: host
 
-  # 2. Notification Service (Background Worker)
-  - type: worker
-    name: chegg-notification-service
-    runtime: node
-    rootDir: notification-service
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        sync: false
-      - key: RABBITMQ_URL
-        sync: false
-      - key: EMAIL_USERNAME
-        sync: false
-      - key: EMAIL_PASSWORD
-        sync: false
-      - fromGroup: chegg-shared-secrets
-
-  # 3. Frontend (Static Site)
+  # 2. Frontend (Static Site)
   - type: web
     name: chegg-scheduling-frontend
     runtime: static
