@@ -8,6 +8,7 @@ services:
   # 1. Backend API (Web Service)
   - type: web
     name: chegg-scheduling-backend
+    plan: free
     runtime: node
     rootDir: backend
     buildCommand: npm install && npm run build
