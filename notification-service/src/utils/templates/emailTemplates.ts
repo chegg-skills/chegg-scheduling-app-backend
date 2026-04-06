@@ -80,7 +80,8 @@ const emailTemplates: EmailTemplateMap = {
     text: "A new booking has been assigned to you for {{eventName}}. Student: {{studentName}} ({{studentEmail}}). Time: {{startTime}} ({{timezone}}).",
     html: wrapLayout(
       "A new session has been scheduled",
-      `<p>You have a new booking waiting for you.</p>
+      `<p>Hi <strong>{{coachName}}</strong>,</p>
+       <p>You have a new booking waiting for you.</p>
        <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
          <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Student Info</p>
          <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700;">{{studentName}}</p>
@@ -117,13 +118,46 @@ const emailTemplates: EmailTemplateMap = {
     html: wrapLayout(
       "Session Update: No-Show",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
-       <p>The following session has been marked as a **no-show** because we didn't see you there:</p>
+       <p>The following session has been marked as a **no-show** because we didn't see you there. 
+       Please note that coaches are only required to wait for <strong>10 minutes</strong> before marking a session as a no-show.</p>
        <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
          <p style="margin: 0; font-size: 16px; font-weight: 700;">{{eventName}}</p>
          <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{startTime}} ({{timezone}})</p>
          <p style="margin: 8px 0 0; font-size: 14px; color: #3E5363;"><strong>Coach:</strong> {{coachName}}</p>
        </div>
        <p>If you believe this is a mistake, please contact your coach or reach out to our support team.</p>`
+    ),
+    attachmentRequired: false,
+  },
+  COACH_BOOKING_CANCELLED: {
+    subject: "❌ Session Cancelled: {{eventName}} (Student: {{studentName}})",
+    text: "Your session for {{eventName}} with {{studentName}} at {{startTime}} has been cancelled.",
+    html: wrapLayout(
+      "Student Session Cancelled",
+      `<p>Hi <strong>{{coachName}}</strong>,</p>
+       <p>The following session has been cancelled by the student or an administrator:</p>
+       <div style="background: #FFF0F0; padding: 20px; border-radius: 8px; border: 1px solid #FFDada; margin: 24px 0;">
+         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #C0392B; font-weight: 700;">Cancelled Session</p>
+         <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700; color: #C0392B;">{{eventName}}</p>
+         <p style="margin: 4px 0 0; font-size: 14px; color: #D98880;">{{startTime}} ({{timezone}})</p>
+         <p style="margin: 12px 0 0; font-size: 14px; color: #3E5363;"><strong>Student:</strong> {{studentName}}</p>
+       </div>`
+    ),
+    attachmentRequired: false,
+  },
+  COACH_BOOKING_NO_SHOW: {
+    subject: "⚠️ Session Marked: No-Show (Student: {{studentName}})",
+    text: "You have marked the session for {{eventName}} with {{studentName}} as a no-show.",
+    html: wrapLayout(
+      "Session Marked as No-Show",
+      `<p>Hi <strong>{{coachName}}</strong>,</p>
+       <p>You have successfully marked the following session as a <strong>no-show</strong>:</p>
+       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
+         <p style="margin: 0; font-size: 16px; font-weight: 700;">{{eventName}}</p>
+         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{startTime}} ({{timezone}})</p>
+         <p style="margin: 8px 0 0; font-size: 14px; color: #3E5363;"><strong>Student:</strong> {{studentName}}</p>
+       </div>
+       <p>The student and team admins have been notified.</p>`
     ),
     attachmentRequired: false,
   },

@@ -192,7 +192,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
       if (booking.host?.email) {
         publishTasks.push(
           publishNotificationSafely({
-            type: "BOOKING_CANCELLED",
+            type: "COACH_BOOKING_CANCELLED",
             recipients: booking.host.email,
             userId: booking.host.id,
             variables,
@@ -215,12 +215,19 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     }
 
     if (booking.status === BookingStatus.NO_SHOW) {
-      const publishTasks: Array<Promise<boolean>> = [];
+      const publishTasks: Array<Promise<boolean>> = [
+        publishNotificationSafely({
+          type: "BOOKING_NO_SHOW",
+          recipients: booking.studentEmail,
+          userId: booking.hostUserId,
+          variables,
+        }),
+      ];
 
       if (booking.host?.email) {
         publishTasks.push(
           publishNotificationSafely({
-            type: "BOOKING_NO_SHOW",
+            type: "COACH_BOOKING_NO_SHOW",
             recipients: booking.host.email,
             userId: booking.host.id,
             variables,
