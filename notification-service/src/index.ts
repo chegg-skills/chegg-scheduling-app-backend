@@ -1,25 +1,9 @@
-import http from "http";
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { startDLQConsumer } from "./jobs/dlqConsumer";
 import { startNotificationConsumer } from "./jobs/notificationConsumer";
 import { startReminderScheduler } from "./jobs/reminderScheduler";
 
-// Simple health check server for Render Free Tier (Web Service support)
-const server = http.createServer((req, res) => {
-  if (req.url === "/health" || req.url === "/") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok" }));
-  } else {
-    res.writeHead(404);
-    res.end();
-  }
-});
-
-const PORT = process.env.PORT || 10001;
-server.listen(PORT, () => {
-  console.log(`Health check server listening on port ${PORT}`);
-});
 
 const prisma = new PrismaClient();
 

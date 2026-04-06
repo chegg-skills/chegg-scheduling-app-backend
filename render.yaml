@@ -33,8 +33,8 @@ services:
           name: chegg-scheduling-frontend
           property: host
 
-  # 2. Notification Service (Web Service - Free Tier)
-  - type: web
+  # 2. Notification Service (Background Worker)
+  - type: worker
     name: chegg-notification-service
     runtime: node
     rootDir: notification-service
@@ -43,8 +43,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10001
       - key: DATABASE_URL
         sync: false
       - key: RABBITMQ_URL
