@@ -330,16 +330,30 @@ const getAvailableSlots = async (
       event.bookingMode === EventBookingMode.FIXED_SLOTS;
 
     let isAvailable = false;
-    for (const host of eligibleHosts) {
-      if (
-        await isHostAvailable(host.hostUserId, slotStart, slotEnd, {
-          ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
-          eventId: allowSharedSessionOverlap ? eventId : undefined,
-          scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
-        })
-      ) {
+
+    // If strategy is DIRECT and no preferred host is specified, 
+    // we only show slots where the primary (first) host is available.
+    if (event.assignmentStrategy === "DIRECT" && !preferredHostId) {
+      const primaryHost = eligibleHosts[0];
+      if (primaryHost && await isHostAvailable(primaryHost.hostUserId, slotStart, slotEnd, {
+        ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
+        eventId: allowSharedSessionOverlap ? eventId : undefined,
+        scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
+      })) {
         isAvailable = true;
-        break;
+      }
+    } else {
+      for (const host of eligibleHosts) {
+        if (
+          await isHostAvailable(host.hostUserId, slotStart, slotEnd, {
+            ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
+            eventId: allowSharedSessionOverlap ? eventId : undefined,
+            scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
+          })
+        ) {
+          isAvailable = true;
+          break;
+        }
       }
     }
 
