@@ -28,9 +28,13 @@ const getDatabaseUrl = (): string => {
 };
 
 const createPgPool = (): Pool => {
+	const dbUrl = getDatabaseUrl();
+	const isProduction = process.env.NODE_ENV === "production" || !dbUrl.includes("localhost");
+
 	return new Pool({
-		connectionString: getDatabaseUrl(),
+		connectionString: dbUrl,
 		allowExitOnIdle: process.env.NODE_ENV !== "production",
+		ssl: isProduction ? { rejectUnauthorized: false } : false,
 	});
 };
 

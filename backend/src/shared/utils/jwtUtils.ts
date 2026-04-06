@@ -6,9 +6,10 @@ import type { SafeUser } from "./userUtils";
 export const getJwtSecret = (): string => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
+    console.error("❌ CRITICAL: JWT_SECRET environment variable is missing!");
     throw new ErrorHandler(
       StatusCodes.INTERNAL_SERVER_ERROR,
-      "JWT_SECRET is not configured."
+      "Infrastructure error: Authentication is not configured correctly."
     );
   }
   return secret;
