@@ -2,21 +2,23 @@ import Typography from '@mui/material/Typography'
 
 interface BookingTimeCellProps {
     startTime: string
+    endTime: string
 }
 
-export function BookingTimeCell({ startTime }: BookingTimeCellProps) {
-    const date = new Date(startTime)
+export function BookingTimeCell({ startTime, endTime }: BookingTimeCellProps) {
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+
+    const formatTime = (date: Date) =>
+        new Intl.DateTimeFormat('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        }).format(date)
 
     return (
-        <>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-                {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(
-                    date
-                )}
-            </Typography>
-        </>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {formatTime(start)} – {formatTime(end)}
+        </Typography>
     )
 }
