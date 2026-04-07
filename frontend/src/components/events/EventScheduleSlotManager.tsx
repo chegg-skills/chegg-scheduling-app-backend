@@ -6,7 +6,6 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
 import { Spinner } from '@/components/shared/Spinner'
 import {
-    useEventScheduleSlots,
     useCreateEventScheduleSlot,
     useDeleteEventScheduleSlot,
 } from '@/hooks/useEvents'
@@ -17,17 +16,16 @@ import { ScheduleSlotList } from './ScheduleSlotList'
 
 interface Props {
     event: Event
+    slots: any[] // Or the correct slot type if available
+    isLoading: boolean
 }
 
-export function EventScheduleSlotManager({ event }: Props) {
-    const { data, isLoading } = useEventScheduleSlots(event.id)
+export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
     const { mutate: create, isPending: creating } = useCreateEventScheduleSlot(event.id)
     const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
     const { handleAction } = useAsyncAction()
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-
-    const slots = data?.slots || []
 
     function handleCreate(slotData: { startTime: string; endTime: string; capacity: number | null }) {
         create(slotData, {

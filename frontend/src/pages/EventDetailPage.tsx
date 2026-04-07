@@ -6,7 +6,7 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { useParams } from 'react-router-dom'
 import { Edit, Trash2, Eye, EyeOff, Plus, Users, Info, Calendar as CalendarIcon } from 'lucide-react'
-import { useEvent, useDeleteEvent, useUpdateEvent } from '@/hooks/useEvents'
+import { useEvent, useDeleteEvent, useUpdateEvent, useEventScheduleSlots } from '@/hooks/useEvents'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -53,18 +53,20 @@ export function EventDetailPage() {
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
   const { data: event, isLoading, error } = useEvent(eventId)
+  const { data: slotsRes, isLoading: isLoadingSlots } = useEventScheduleSlots(eventId)
   const { data: teamMembersResponse } = useTeamMembers(event?.teamId ?? '')
   const updateEventMutation = useUpdateEvent()
   const deleteEventMutation = useDeleteEvent()
   const { handleAction } = useAsyncAction()
 
+  const slots = slotsRes?.slots ?? []
   const teamMembers = teamMembersResponse?.members ?? []
   const hostSetupStatus = getEventHostSetupStatus({
     activeHostCount: event?.hosts?.length ?? 0,
     assignmentStrategy: event?.assignmentStrategy,
     interactionType: event?.interactionType,
   })
-  const needsScheduleSlots = event?.bookingMode === 'FIXED_SLOTS' && (event.scheduleSlots?.length ?? 0) === 0
+  const needsScheduleSlots = event?.bookingMode === 'FIXED_SLOTS' && slots.length === 0
 
   if (isLoading) return <PageSpinner />
   if (error || !event) return <ErrorAlert message="Failed to load event." />
@@ -186,12 +188,12 @@ export function EventDetailPage() {
         <TabPanel value={tabValue} index={0}>
           <Stack spacing={2}>
             {!hostSetupStatus.isReady && (
-              <Alert severity="warning" variant="outlined">
+              <Alert severity="warning" variant="standard" sx={{ mt: 2 }}>
                 {hostSetupStatus.message}
               </Alert>
             )}
             {needsScheduleSlots && (
-              <Alert severity="info" variant="outlined">
+              <Alert severity="info" variant="standard" sx={{ mt: 2 }}>
                 This event is in fixed-slot mode, so add one or more schedule slots before sharing it for booking.
               </Alert>
             )}
@@ -216,7 +218,11 @@ export function EventDetailPage() {
 
         {event.bookingMode === 'FIXED_SLOTS' && (
           <TabPanel value={tabValue} index={2}>
-            <EventScheduleSlotManager event={event} />
+            <EventScheduleSlotManager
+              event={event}
+              slots={slots}
+              isLoading={isLoadingSlots}
+            />
           </TabPanel>
         )}
 
