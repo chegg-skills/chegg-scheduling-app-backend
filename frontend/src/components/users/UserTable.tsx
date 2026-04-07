@@ -22,8 +22,8 @@ import { TablePagination } from '@/components/shared/TablePagination'
 interface UserTableProps {
   users: SafeUser[]
   pagination?: Pagination
-  onPageChange: (page: number) => void
-  onRowsPerPageChange: (pageSize: number) => void
+  onPageChange?: (page: number) => void
+  onRowsPerPageChange?: (pageSize: number) => void
   currentUserRole: UserRole
   currentUserId: string
 }
@@ -105,11 +105,13 @@ export function UserTable({
             )}
           </TableBody>
         </Table>
-        <TablePagination
-          pagination={pagination}
-          onPageChange={onPageChange}
-          onRowsPerPageChange={onRowsPerPageChange}
-        />
+        {pagination && onPageChange && onRowsPerPageChange && (
+          <TablePagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
+          />
+        )}
       </TableContainer>
 
       {viewingUserId && <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />}

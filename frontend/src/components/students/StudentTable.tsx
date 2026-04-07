@@ -18,8 +18,8 @@ import { TablePagination } from '@/components/shared/TablePagination'
 interface StudentTableProps {
     students: StudentSummary[]
     pagination?: Pagination
-    onPageChange: (page: number) => void
-    onRowsPerPageChange: (pageSize: number) => void
+    onPageChange?: (page: number) => void
+    onRowsPerPageChange?: (pageSize: number) => void
 }
 
 export function StudentTable({
@@ -66,7 +66,13 @@ export function StudentTable({
                     )}
                 </TableBody>
             </Table>
-            <TablePagination pagination={pagination} onPageChange={onPageChange} onRowsPerPageChange={onRowsPerPageChange} />
+            {pagination && onPageChange && onRowsPerPageChange && (
+                <TablePagination
+                    pagination={pagination}
+                    onPageChange={onPageChange}
+                    onRowsPerPageChange={onRowsPerPageChange}
+                />
+            )}
         </TableContainer>
     )
 }
