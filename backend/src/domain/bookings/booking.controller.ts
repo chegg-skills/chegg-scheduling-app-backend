@@ -84,9 +84,9 @@ export const listBookings = async (req: Request, res: Response) => {
         {
             bookings,
             pagination: {
-                totalCount,
+                total: totalCount,
                 page: pageNum,
-                limit: limitNum,
+                pageSize: limitNum,
                 totalPages: Math.ceil(totalCount / limitNum)
             }
         },
