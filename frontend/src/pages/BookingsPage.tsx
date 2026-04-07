@@ -5,11 +5,25 @@ import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import { useState, useMemo } from 'react'
-import { CalendarDays, CheckCircle2, Clock3, Search, X, SlidersHorizontal } from 'lucide-react'
+import { alpha, useTheme } from '@mui/material/styles'
+import {
+    CalendarDays,
+    CheckCircle2,
+    Clock3,
+    Search,
+    X,
+    SlidersHorizontal,
+    LayoutList,
+    Calendar as CalendarIcon
+} from 'lucide-react'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { BookingTable } from '@/components/bookings/BookingTable'
+import { BookingCalendar } from '@/components/bookings/BookingCalendar'
+import { BookingDetailModal } from '@/components/bookings/BookingDetailModal'
 import { BookingFilterDialog } from '@/components/bookings/filters/BookingFilterDialog'
 import { useBookings } from '@/hooks/useBookings'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
@@ -18,16 +32,19 @@ import { Input } from '@/components/shared/Input'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useBookingStats } from '@/hooks/useStats'
 import { Badge, Button as MuiButton } from '@mui/material'
-import type { BookingStatus, StatsTimeframe } from '@/types'
+import type { BookingStatus, StatsTimeframe, Booking } from '@/types'
 
 type FilterType = 'UPCOMING' | 'ALL' | BookingStatus
 
 export function BookingsPage() {
+    const theme = useTheme()
     const [statusFilter, setStatusFilter] = useState<FilterType>('UPCOMING')
     const [searchInput, setSearchInput] = useState('')
     const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+    const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
     const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
     const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
     // New Advanced Filters
     const [advancedFilters, setAdvancedFilters] = useState({
@@ -197,6 +214,41 @@ export function BookingsPage() {
                     </Tabs>
 
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <ToggleButtonGroup
+                            value={viewMode}
+                            exclusive
+                            onChange={(_, next) => next && setViewMode(next)}
+                            size="small"
+                            sx={{
+                                bgcolor: 'background.paper',
+                                '& .MuiToggleButton-root': {
+                                    px: 2,
+                                    py: 0.5,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    fontSize: '0.8125rem',
+                                    '&.Mui-selected': {
+                                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                        color: 'primary.main',
+                                        '&:hover': {
+                                            bgcolor: alpha(theme.palette.primary.main, 0.12),
+                                        }
+                                    }
+                                }
+                            }}
+                        >
+                            <ToggleButton value="list">
+                                <LayoutList size={16} style={{ marginRight: 8 }} />
+                                List
+                            </ToggleButton>
+                            <ToggleButton value="calendar">
+                                <CalendarIcon size={16} style={{ marginRight: 8 }} />
+                                Calendar
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+
                         <Badge
                             badgeContent={
                                 Object.values(advancedFilters).filter(v => v !== '' && v !== null).length
@@ -246,9 +298,23 @@ export function BookingsPage() {
                                 Showing {filteredBookings.length} bookings
                             </Typography>
                         </Box>
-                        <BookingTable bookings={filteredBookings} onViewHost={setViewingUserId} />
+
+                        {viewMode === 'list' ? (
+                            <BookingTable bookings={filteredBookings} onViewHost={setViewingUserId} />
+                        ) : (
+                            <BookingCalendar
+                                bookings={filteredBookings}
+                                onViewDetail={setSelectedBooking}
+                            />
+                        )}
                     </Box>
                 )}
+
+                <BookingDetailModal
+                    booking={selectedBooking}
+                    onClose={() => setSelectedBooking(null)}
+                    onViewHost={setViewingUserId}
+                />
 
                 {viewingUserId && (
                     <UserDetailModal
