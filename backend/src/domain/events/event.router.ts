@@ -109,6 +109,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/events/:eventId/duplicate")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.duplicateEvent,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId/hosts")
   .get(
     authenticate,

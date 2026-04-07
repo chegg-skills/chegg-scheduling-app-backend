@@ -113,6 +113,17 @@ export function useDeleteEvent() {
   })
 }
 
+export function useDuplicateEvent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (eventId: string) => eventsApi.duplicate(eventId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: statsKeys.all })
+    },
+  })
+}
+
 export function useEventHosts(eventId: string) {
   return useQuery({
     queryKey: eventKeys.hosts(eventId),

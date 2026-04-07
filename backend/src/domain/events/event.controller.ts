@@ -71,6 +71,29 @@ const createEvent = async (
   }
 };
 
+const duplicateEvent = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const event = await eventService.duplicateEvent(
+      getEventIdParam(req),
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.CREATED,
+      event,
+      "Event duplicated successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createEventOffering = async (
   req: Request,
   res: Response,
@@ -530,6 +553,7 @@ export {
   listInteractionTypes,
   updateInteractionType,
   createEvent,
+  duplicateEvent,
   createEventScheduleSlot,
   deleteEvent,
   deleteEventScheduleSlot,
