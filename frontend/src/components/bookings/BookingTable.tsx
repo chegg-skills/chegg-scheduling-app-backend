@@ -19,8 +19,8 @@ import { TablePagination } from '@/components/shared/TablePagination'
 interface Props {
     bookings: Booking[]
     pagination?: Pagination
-    onPageChange: (page: number) => void
-    onRowsPerPageChange: (rowsPerPage: number) => void
+    onPageChange?: (page: number) => void
+    onRowsPerPageChange?: (rowsPerPage: number) => void
     onViewHost?: (userId: string) => void
 }
 
@@ -156,11 +156,13 @@ export function BookingTable({
                     })()}
                 </TableBody>
             </Table>
-            <TablePagination
-                pagination={pagination}
-                onPageChange={onPageChange}
-                onRowsPerPageChange={onRowsPerPageChange}
-            />
+            {pagination && onPageChange && onRowsPerPageChange && (
+                <TablePagination
+                    pagination={pagination}
+                    onPageChange={onPageChange}
+                    onRowsPerPageChange={onRowsPerPageChange}
+                />
+            )}
         </TableContainer>
     )
 }
