@@ -5,6 +5,7 @@ import {
   type EventOffering as EventOfferingModel,
   Prisma,
   UserRole,
+  SessionLeadershipStrategy,
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
@@ -54,6 +55,8 @@ export type CreateEventInput = {
   minimumNoticeMinutes?: number;
   minParticipantCount?: number;
   maxParticipantCount?: number;
+  sessionLeadershipStrategy?: string;
+  fixedLeadHostId?: string;
 };
 
 export type UpdateEventInput = CreateEventInput;
@@ -76,6 +79,7 @@ export type UpsertInteractionTypeInput = {
   maxHosts?: number | null;
   minParticipants?: number;
   maxParticipants?: number | null;
+  supportsSimultaneousCoaches?: boolean;
   sortOrder?: number;
   isActive?: boolean;
 };
@@ -104,6 +108,11 @@ export const isValidLocationType = (
 ): value is EventLocationType =>
   Object.values(EventLocationType).includes(value as EventLocationType);
 
+export const isValidSessionLeadershipStrategy = (
+  value: string,
+): value is SessionLeadershipStrategy =>
+  Object.values(SessionLeadershipStrategy).includes(value as SessionLeadershipStrategy);
+
 export const parseDurationSeconds = (value: unknown): number => {
   if (!Number.isInteger(value) || Number(value) <= 0) {
     throw new ErrorHandler(
@@ -127,7 +136,7 @@ export const normalizeRequiredString = (value: unknown, fieldName: string): stri
 };
 
 export const normalizeOptionalString = (value: unknown, fieldName: string): string | null => {
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return null;
   }
 

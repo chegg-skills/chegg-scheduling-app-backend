@@ -7,20 +7,41 @@ import { Input } from '@/components/shared/Input'
 import { Select } from '@/components/shared/Select'
 import type { EventFormValues } from './eventFormSchema'
 import { getAllowedAssignmentStrategies, getDefaultEventAssignmentStrategy } from './eventCapabilityRules'
-import type { EventInteractionType } from '@/types'
+import type { Event, EventInteractionType, TeamMember } from '@/types'
 
 interface Props {
   register: UseFormRegister<EventFormValues>
   errors: FieldErrors<EventFormValues>
   watch: UseFormWatch<EventFormValues>
   selectedInteractionType?: EventInteractionType | null
+  event?: Event
+  teamMembers?: TeamMember[]
 }
 
 /** Handles duration and event-level assignment behavior within the interaction type envelope. */
-export function EventScheduleFields({ register, errors, watch, selectedInteractionType }: Props) {
+export function EventScheduleFields({
+  register,
+  errors,
+  watch,
+  selectedInteractionType,
+  event,
+  teamMembers,
+}: Props) {
   const assignmentOptions = getAllowedAssignmentStrategies(selectedInteractionType)
   const selectedStrategy = watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(selectedInteractionType)
   const canChooseStrategy = assignmentOptions.length > 1
+
+  const leadershipStrategy = watch('sessionLeadershipStrategy')
+  const eventHosts = event?.hosts ?? []
+  const leadSelectionOptions = eventHosts.length > 0
+    ? eventHosts.map((host) => ({
+      value: host.hostUserId,
+      label: `${host.hostUser.firstName} ${host.hostUser.lastName}`,
+    }))
+    : (teamMembers ?? []).map((member) => ({
+      value: member.userId,
+      label: `${member.user.firstName} ${member.user.lastName}`,
+    }))
 
   return (
     <Stack spacing={2}>
@@ -53,11 +74,11 @@ export function EventScheduleFields({ register, errors, watch, selectedInteracti
             hasError={!!errors.assignmentStrategy}
             {...register('assignmentStrategy')}
           >
-            <MenuItem value="DIRECT">Direct — pick from this event&apos;s hosts</MenuItem>
-            <MenuItem value="ROUND_ROBIN">Round Robin — rotate across eligible hosts</MenuItem>
+            <MenuItem value="DIRECT">Direct — pick from this event&apos;s assigned coaches</MenuItem>
+            <MenuItem value="ROUND_ROBIN">Round Robin — rotate across the coach pool</MenuItem>
           </Select>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Round-robin events still need at least two hosts to be assigned later.
+            Round-robin events still need at least two coaches to be assigned later.
           </Typography>
         </FormField>
       ) : (
@@ -77,6 +98,59 @@ export function EventScheduleFields({ register, errors, watch, selectedInteracti
               : 'Choose an interaction type to see the assignment options available for this event.'}
           </Typography>
         </FormField>
+      )}
+
+      {selectedInteractionType?.supportsSimultaneousCoaches && (
+        <Stack spacing={2}>
+          <FormField
+            label="Leadership Strategy"
+            htmlFor="sessionLeadershipStrategy"
+            error={errors.sessionLeadershipStrategy?.message}
+            info="Define how the 'Lead' coach is chosen for each session. Co-hosts will also be added to the session."
+          >
+            <Select
+              id="sessionLeadershipStrategy"
+              value={leadershipStrategy ?? 'SINGLE_HOST'}
+              hasError={!!errors.sessionLeadershipStrategy}
+              {...register('sessionLeadershipStrategy')}
+            >
+              <MenuItem value="SINGLE_HOST">Single Host — Only one coach joins (Traditional)</MenuItem>
+              <MenuItem value="ROTATING_LEAD">Rotating Lead — Round-robin lead, others as co-hosts</MenuItem>
+              <MenuItem value="FIXED_LEAD">Fixed Lead — One specific coach always leads</MenuItem>
+            </Select>
+          </FormField>
+
+          {leadershipStrategy === 'FIXED_LEAD' && (
+            <FormField
+              label="Fixed Lead Coach"
+              htmlFor="fixedLeadHostId"
+              error={errors.fixedLeadHostId?.message}
+              info="Select the coach who will always lead sessions for this event."
+              required
+            >
+              <Select
+                id="fixedLeadHostId"
+                value={watch('fixedLeadHostId') || ''}
+                hasError={!!errors.fixedLeadHostId}
+                {...register('fixedLeadHostId')}
+              >
+                <MenuItem value="" disabled>
+                  Select a lead coach
+                </MenuItem>
+                {leadSelectionOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+              {eventHosts.length === 0 && !event && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Note: The selected coach will be automatically assigned to this event upon creation.
+                </Typography>
+              )}
+            </FormField>
+          )}
+        </Stack>
       )}
     </Stack>
   )

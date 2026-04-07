@@ -40,8 +40,13 @@ export const getBooking = async (req: Request, res: Response) => {
     const caller = res.locals.authUser as CallerContext;
     const booking = await BookingService.getBooking(id);
 
-    if (caller.role === UserRole.COACH && booking.hostUserId !== caller.id) {
-        throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking.");
+    if (caller.role === UserRole.COACH) {
+        const isLead = booking.hostUserId === caller.id;
+        const isCoHost = ((booking as any).coHostUserIds || []).includes(caller.id);
+
+        if (!isLead && !isCoHost) {
+            throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking.");
+        }
     }
 
     return sendSuccessResponse(

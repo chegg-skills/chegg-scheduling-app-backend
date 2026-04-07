@@ -8,6 +8,15 @@ interface EventDetailOverviewProps {
 }
 
 export function EventDetailOverview({ event }: EventDetailOverviewProps) {
+    const fixedLeadHost = event.fixedLeadHostId
+        ? event.hosts.find((host) => host.hostUserId === event.fixedLeadHostId)?.hostUser ?? null
+        : null
+
+    const leadershipStrategyLabel = event.sessionLeadershipStrategy
+        .split('_')
+        .map((segment) => segment.charAt(0) + segment.slice(1).toLowerCase())
+        .join(' ')
+
     return (
         <Paper component="section" variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
             <Typography
@@ -59,6 +68,35 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
 
                 <Grid size={{ xs: 12, sm: 4 }}>
                     <Typography variant="caption" color="text.secondary">
+                        Co-hosting support
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                        {event.interactionType.supportsSimultaneousCoaches ? 'Supported' : 'Not supported'}
+                    </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary">
+                        Leadership strategy
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                        {leadershipStrategyLabel}
+                    </Typography>
+                </Grid>
+                {event.sessionLeadershipStrategy === 'FIXED_LEAD' && (
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                        <Typography variant="caption" color="text.secondary">
+                            Fixed lead coach
+                        </Typography>
+                        <Typography variant="body2" fontWeight={500}>
+                            {fixedLeadHost
+                                ? `${fixedLeadHost.firstName} ${fixedLeadHost.lastName}`
+                                : 'Not assigned'}
+                        </Typography>
+                    </Grid>
+                )}
+
+                <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary">
                         Location type
                     </Typography>
                     <Typography variant="body2">{event.locationType}</Typography>
@@ -88,7 +126,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4 }}>
                     <Typography variant="caption" color="text.secondary">
-                        Multiple hosts
+                        Multiple coaches
                     </Typography>
                     <Typography variant="body2">
                         {event.interactionType.supportsMultipleHosts ? 'Supported' : 'Not supported'}
@@ -96,7 +134,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4 }}>
                     <Typography variant="caption" color="text.secondary">
-                        Hosts (Min / Max)
+                        Coaches (Min / Max)
                     </Typography>
                     <Typography variant="body2">
                         {event.interactionType.minHosts} / {event.interactionType.maxHosts ?? '∞'}

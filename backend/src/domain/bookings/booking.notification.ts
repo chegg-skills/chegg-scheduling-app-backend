@@ -160,6 +160,26 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
       );
     }
 
+    if (booking.coHostUserIds && booking.coHostUserIds.length > 0) {
+      const coHosts = await prisma.user.findMany({
+        where: { id: { in: booking.coHostUserIds }, isActive: true },
+        select: { id: true, email: true },
+      });
+
+      for (const coHost of coHosts) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "COACH_BOOKING_COHOST_ASSIGNED",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
+      }
+    }
+
     await Promise.all(publishTasks);
     await queueBookingReminderNotifications(booking);
   } catch (error) {
@@ -178,6 +198,15 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     ) {
       await cancelScheduledBookingReminders(booking);
     }
+
+    // Fetch co-hosts if needed
+    const coHostUserIds = (booking as any).coHostUserIds as string[] | undefined;
+    const coHostUsers = coHostUserIds?.length
+      ? await prisma.user.findMany({
+        where: { id: { in: coHostUserIds }, isActive: true },
+        select: { id: true, email: true },
+      })
+      : [];
 
     if (booking.status === BookingStatus.CANCELLED) {
       const publishTasks: Array<Promise<boolean>> = [
@@ -198,6 +227,19 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
             variables,
           }),
         );
+      }
+
+      for (const coHost of coHostUsers) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "COACH_BOOKING_COHOST_CANCELLED",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
       }
 
       if (teamAdminRecipients.length > 0) {
@@ -233,6 +275,19 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
             variables,
           }),
         );
+      }
+
+      for (const coHost of coHostUsers) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "COACH_BOOKING_COHOST_NO_SHOW",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
       }
 
       if (teamAdminRecipients.length > 0) {

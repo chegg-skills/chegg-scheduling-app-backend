@@ -57,7 +57,7 @@ export function AddHostForm({
                         color="error.main"
                         sx={{ display: 'block', mb: 1, fontWeight: 500 }}
                     >
-                        Note: Round Robin events require at least 2 hosts.
+                        Note: Round Robin events require at least 2 coaches.
                     </Typography>
                 )}
                 <Stack spacing={1.5} sx={{ width: '100%' }}>

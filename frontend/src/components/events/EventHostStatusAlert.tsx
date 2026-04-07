@@ -24,8 +24,8 @@ export function EventHostStatusAlert({
 
     return (
         <Alert severity="warning" variant="outlined">
-            {hostSetupStatus.message} Add at least {hostSetupStatus.requiredHosts} eligible host
-            {hostSetupStatus.requiredHosts === 1 ? '' : 's'} to make this event ready.
+            {hostSetupStatus.message} Add at least {hostSetupStatus.requiredHosts} eligible coach
+            {hostSetupStatus.requiredHosts === 1 ? '' : 'es'} to make this event ready.
         </Alert>
     )
 }

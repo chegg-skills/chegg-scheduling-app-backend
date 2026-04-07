@@ -118,6 +118,15 @@ const listEventScheduleSlots = async (
 
   const slots = await prisma.eventScheduleSlot.findMany({
     where: { eventId },
+    include: {
+      _count: {
+        select: {
+          bookings: {
+            where: { status: { not: "CANCELLED" } },
+          },
+        },
+      },
+    },
     orderBy: { startTime: "asc" },
   });
   return { slots };
@@ -182,6 +191,17 @@ const deleteEventScheduleSlot = async (
   });
   if (!slot || slot.eventId !== eventId) {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found for this event.");
+  }
+
+  const bookingCount = await prisma.booking.count({
+    where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
+  });
+
+  if (bookingCount > 0) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Cannot delete a schedule slot that has active booking(s). Please request student cancellations first.",
+    );
   }
 
   return prisma.eventScheduleSlot.delete({

@@ -19,6 +19,7 @@ import { EventForm } from '@/components/events/EventForm'
 import { EventHostManager } from '@/components/events/EventHostManager'
 import { EventScheduleSlotManager } from '@/components/events/EventScheduleSlotManager'
 import { EventDetailOverview } from '@/components/events/EventDetailOverview'
+import { EventBookingList } from '@/components/events/EventBookingList'
 import { RowActions } from '@/components/shared/RowActions'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { getEventHostSetupStatus } from '@/components/events/eventCapabilityRules'
@@ -110,7 +111,7 @@ export function EventDetailPage() {
               label={event.isActive ? 'Active' : 'Inactive'}
               variant={event.isActive ? 'green' : 'red'}
             />
-            {!hostSetupStatus.isReady && <Badge label="Needs Hosts" variant="yellow" />}
+            {!hostSetupStatus.isReady && <Badge label="Needs Coaches" variant="yellow" />}
             {needsScheduleSlots && <Badge label="Needs Slots" variant="yellow" />}
           </Stack>
         }
@@ -170,7 +171,8 @@ export function EventDetailPage() {
             }}
           >
             <Tab label="Details" icon={<Info size={18} />} iconPosition="start" />
-            <Tab label={`Hosts (${event.hosts?.length ?? 0})`} icon={<Users size={18} />} iconPosition="start" />
+            <Tab label={`Coaches (${event.hosts?.length ?? 0})`} icon={<Users size={18} />} iconPosition="start" />
+            <Tab label="Sessions" icon={<Plus size={18} />} iconPosition="start" />
             {event.bookingMode === 'FIXED_SLOTS' && (
               <Tab label="Schedule" icon={<CalendarIcon size={18} />} iconPosition="start" />
             )}
@@ -216,8 +218,15 @@ export function EventDetailPage() {
           />
         </TabPanel>
 
+        <TabPanel value={tabValue} index={2}>
+          <EventBookingList
+            eventId={eventId}
+            onViewHost={setViewingUserId}
+          />
+        </TabPanel>
+
         {event.bookingMode === 'FIXED_SLOTS' && (
-          <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={3}>
             <EventScheduleSlotManager
               event={event}
               slots={slots}

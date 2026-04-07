@@ -11,6 +11,7 @@ import { EventResourceFields } from './EventResourceFields'
 import { EventAssignmentAlert } from './EventAssignmentAlert'
 import { EventFormSubmitActions } from './EventFormSubmitActions'
 import { useEventForm } from './hooks/useEventForm'
+import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { extractApiError } from '@/utils/apiError'
 import type { Event } from '@/types'
 
@@ -26,6 +27,8 @@ interface EventFormProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps) {
+  const { data: teamMembersData } = useTeamMembers(teamId)
+  const teamMembers = teamMembersData?.members ?? []
   const {
     form,
     onSubmit,
@@ -85,6 +88,8 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
             errors={errors}
             watch={watch}
             selectedInteractionType={selectedInteractionType}
+            event={event}
+            teamMembers={teamMembers}
           />
         </Stack>
 

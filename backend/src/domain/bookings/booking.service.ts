@@ -1,4 +1,4 @@
-import { BookingStatus, Prisma } from "@prisma/client";
+import { BookingStatus, Prisma, SessionLeadershipStrategy } from "@prisma/client";
 import {
     AssignmentContext,
     getAssignmentStrategy,
@@ -75,51 +75,80 @@ const resolveAssignedHost = async ({
     allowSharedSessionOverlap: boolean;
     matchedScheduleSlotId?: string | null;
     tx: Prisma.TransactionClient;
-}): Promise<{ assignedHostId: string; meetingJoinUrl: string | null }> => {
-    if (preferredHostId) {
-        const host = activeHosts.find((candidateHost) => candidateHost.hostUserId === preferredHostId);
+}): Promise<{ assignedHostId: string; meetingJoinUrl: string | null; coHostUserIds: string[] }> => {
+    // 1. Handle Co-hosting Strategy
+    const leadershipStrategy = event.sessionLeadershipStrategy;
 
-        if (!host) {
-            throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Specified host is not eligible for this event.");
+    if (leadershipStrategy === SessionLeadershipStrategy.SINGLE_HOST) {
+        // Traditional single-host logic
+        if (preferredHostId) {
+            const host = activeHosts.find((h) => h.hostUserId === preferredHostId);
+            if (!host) throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Specified coach is not eligible.");
+
+            const available = await isHostAvailable(preferredHostId, start, end, {
+                ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
+                eventId: allowSharedSessionOverlap ? event.id : undefined,
+                scheduleSlotId: allowSharedSessionOverlap ? matchedScheduleSlotId ?? null : undefined,
+                tx,
+            });
+
+            if (!available) throw new ErrorHandler(StatusCodes.CONFLICT, "Coach is not available.");
+
+            return { assignedHostId: preferredHostId, meetingJoinUrl: host.hostUser.zoomIsvLink ?? null, coHostUserIds: [] };
         }
 
-        const available = await isHostAvailable(preferredHostId, start, end, {
+        const strategyImplementation = getAssignmentStrategy(event.assignmentStrategy);
+        const context: AssignmentContext = { prisma: tx, eventId: event.id, start, end, bookingMode: event.bookingMode, allowSharedSessionOverlap, matchedScheduleSlotId };
+        const result = await strategyImplementation.resolveHost(activeHosts, context);
+        if (!result.assignedHostId) throw new ErrorHandler(StatusCodes.CONFLICT, "No available coaches found.");
+
+        return { assignedHostId: result.assignedHostId, meetingJoinUrl: result.meetingJoinUrl, coHostUserIds: [] };
+    }
+
+    // 2. Collaborative Sessions (FIXED_LEAD or ROTATING_LEAD)
+    let leadHostId: string | undefined;
+    let meetingUrl: string | null = null;
+
+    if (leadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD) {
+        leadHostId = event.fixedLeadHostId ?? undefined;
+        if (!leadHostId) throw new ErrorHandler(StatusCodes.INTERNAL_SERVER_ERROR, "Event configured for FIXED_LEAD but no lead coach is set.");
+
+        const host = activeHosts.find((h) => h.hostUserId === leadHostId);
+        if (!host) throw new ErrorHandler(StatusCodes.BAD_REQUEST, "The fixed lead coach is no longer eligible for this event.");
+        meetingUrl = host.hostUser.zoomIsvLink ?? null;
+    } else {
+        // ROTATING_LEAD: used the standard assignment strategy to pick the lead
+        const strategyImplementation = getAssignmentStrategy(event.assignmentStrategy);
+        const context: AssignmentContext = { prisma: tx, eventId: event.id, start, end, bookingMode: event.bookingMode, allowSharedSessionOverlap, matchedScheduleSlotId };
+        const result = await strategyImplementation.resolveHost(activeHosts, context);
+        leadHostId = result.assignedHostId;
+        meetingUrl = result.meetingJoinUrl;
+    }
+
+    if (!leadHostId) {
+        throw new ErrorHandler(StatusCodes.CONFLICT, "Could not resolve a lead coach for this collaborative session.");
+    }
+
+    // All available coaches in the roster (except the lead) become co-hosts
+    const potentialCoHosts = activeHosts.filter((h) => h.hostUserId !== leadHostId);
+    const coHostUserIds: string[] = [];
+
+    for (const h of potentialCoHosts) {
+        const available = await isHostAvailable(h.hostUserId, start, end, {
             ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
             eventId: allowSharedSessionOverlap ? event.id : undefined,
             scheduleSlotId: allowSharedSessionOverlap ? matchedScheduleSlotId ?? null : undefined,
             tx,
         });
-
-        if (!available) {
-            throw new ErrorHandler(StatusCodes.CONFLICT, "The selected host is not available at this time.");
+        if (available) {
+            coHostUserIds.push(h.hostUserId);
         }
-
-        return {
-            assignedHostId: preferredHostId,
-            meetingJoinUrl: host.hostUser.zoomIsvLink ?? null,
-        };
-    }
-
-    const strategyImplementation = getAssignmentStrategy(event.assignmentStrategy);
-    const context: AssignmentContext = {
-        prisma: tx,
-        eventId: event.id,
-        start,
-        end,
-        bookingMode: event.bookingMode,
-        allowSharedSessionOverlap,
-        matchedScheduleSlotId,
-    };
-
-    const result = await strategyImplementation.resolveHost(activeHosts, context);
-
-    if (!result.assignedHostId) {
-        throw new ErrorHandler(StatusCodes.CONFLICT, "No available hosts found for the requested time slot.");
     }
 
     return {
-        assignedHostId: result.assignedHostId,
-        meetingJoinUrl: result.meetingJoinUrl,
+        assignedHostId: leadHostId,
+        meetingJoinUrl: meetingUrl,
+        coHostUserIds,
     };
 };
 
@@ -176,7 +205,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
 
     // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
     return (prisma.$transaction(async (tx) => {
-        const { assignedHostId, meetingJoinUrl } = await resolveAssignedHost({
+        const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveAssignedHost({
             preferredHostId,
             activeHosts,
             event,
@@ -223,6 +252,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             teamId,
             eventId,
             hostUserId: assignedHostId,
+            coHostUserIds,
             startTime: start,
             endTime: end,
             timezone: timezone || "UTC",

@@ -1,6 +1,7 @@
 import {
   AssignmentStrategy,
   Prisma,
+  SessionLeadershipStrategy,
   type EventInteractionType as EventInteractionTypeModel,
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
@@ -17,6 +18,7 @@ import {
   getManagedEvent,
   isValidAssignmentStrategy,
   isValidLocationType,
+  isValidSessionLeadershipStrategy,
   normalizeOptionalString,
   normalizeRequiredString,
   parseDurationSeconds,
@@ -65,6 +67,8 @@ const buildCreateEventData = (
   offeringId: string,
   interactionTypeId: string,
   assignmentStrategy: AssignmentStrategy,
+  sessionLeadershipStrategy: SessionLeadershipStrategy,
+  fixedLeadHostId: string | null,
   schedulingConfig: ReturnType<typeof resolveEventSchedulingConfig>,
 ): Prisma.EventCreateInput => {
   const name = normalizeRequiredString(payload.name, "name");
@@ -79,7 +83,7 @@ const buildCreateEventData = (
     "locationValue",
   );
 
-  return {
+  const data: Prisma.EventCreateInput = {
     name,
     publicBookingSlug: createPublicBookingSlug(name, "event"),
     description: normalizeOptionalString(payload.description, "description"),
@@ -90,11 +94,25 @@ const buildCreateEventData = (
     locationType,
     locationValue,
     isActive: payload.isActive ?? true,
+    sessionLeadershipStrategy,
+    fixedLeadHostId,
     team: { connect: { id: teamId } },
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
     ...schedulingConfig,
   };
+
+  if (fixedLeadHostId) {
+    data.hosts = {
+      create: {
+        hostUserId: fixedLeadHostId,
+        hostOrder: 1,
+        isActive: true,
+      },
+    };
+  }
+
+  return data;
 };
 
 const createEvent = async (
@@ -129,6 +147,14 @@ const createEvent = async (
     interactionType,
   );
 
+  const sessionLeadershipStrategy = parseOptionalEnum(
+    payload.sessionLeadershipStrategy,
+    "sessionLeadershipStrategy",
+    isValidSessionLeadershipStrategy,
+  ) ?? (interactionType.supportsSimultaneousCoaches ? SessionLeadershipStrategy.ROTATING_LEAD : SessionLeadershipStrategy.SINGLE_HOST);
+
+  const fixedLeadHostId = normalizeOptionalString(payload.fixedLeadHostId, "fixedLeadHostId");
+
   return prisma.event.create({
     data: buildCreateEventData(
       { ...payload, assignmentStrategy: strategy },
@@ -137,6 +163,8 @@ const createEvent = async (
       offering.id,
       interactionType.id,
       strategy,
+      sessionLeadershipStrategy,
+      fixedLeadHostId,
       schedulingConfig,
     ),
     include: eventInclude,
@@ -253,6 +281,18 @@ const updateEvent = async (
   );
 
   Object.assign(updateData, schedulingConfig);
+
+  if (payload.sessionLeadershipStrategy !== undefined) {
+    updateData.sessionLeadershipStrategy = parseOptionalEnum(
+      payload.sessionLeadershipStrategy,
+      "sessionLeadershipStrategy",
+      isValidSessionLeadershipStrategy,
+    );
+  }
+
+  if (payload.fixedLeadHostId !== undefined) {
+    updateData.fixedLeadHostId = normalizeOptionalString(payload.fixedLeadHostId, "fixedLeadHostId");
+  }
 
   if (payload.durationSeconds !== undefined) {
     updateData.durationSeconds = parseDurationSeconds(payload.durationSeconds);
@@ -373,6 +413,8 @@ const duplicateEvent = async (
     minimumNoticeMinutes: sourceEvent.minimumNoticeMinutes,
     minParticipantCount: sourceEvent.minParticipantCount,
     maxParticipantCount: sourceEvent.maxParticipantCount,
+    sessionLeadershipStrategy: sourceEvent.sessionLeadershipStrategy,
+    fixedLeadHostId: sourceEvent.fixedLeadHostId,
   };
 
   return prisma.$transaction(async (tx) => {

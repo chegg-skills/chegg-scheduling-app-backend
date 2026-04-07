@@ -94,6 +94,55 @@ const emailTemplates: EmailTemplateMap = {
     ),
     attachmentRequired: false,
   },
+  COACH_BOOKING_COHOST_ASSIGNED: {
+    subject: "🤝 Co-host Assignment: {{eventName}} (Student: {{studentName}})",
+    text: "You have been assigned as a co-host for {{eventName}} at {{startTime}} ({{timezone}}). Student: {{studentName}}. Lead Coach: {{coachName}}.",
+    html: wrapLayout(
+      "You've been assigned as a Co-host",
+      `<p>Hi there,</p>
+       <p>You have been added as a <strong>co-host</strong> for an upcoming session.</p>
+       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
+         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Co-hosting Details</p>
+         <p style="margin: 12px 0 4px; font-size: 14px;"><strong>Event:</strong> {{eventName}}</p>
+         <p style="margin: 0 0 4px; font-size: 14px;"><strong>Lead Coach:</strong> {{coachName}}</p>
+         <p style="margin: 0 0 4px; font-size: 14px;"><strong>Student:</strong> {{studentName}} ({{studentEmail}})</p>
+         <p style="margin: 16px 0 0; font-size: 16px; font-weight: 700;">{{startTime}} ({{timezone}})</p>
+       </div>`,
+      { text: "View Session", url: "{{meetingJoinUrl}}" }
+    ),
+    attachmentRequired: false,
+  },
+  COACH_BOOKING_COHOST_CANCELLED: {
+    subject: "❌ Co-host Update: Session Cancelled ({{eventName}})",
+    text: "The session for {{eventName}} at {{startTime}} where you were a co-host has been cancelled.",
+    html: wrapLayout(
+      "Co-hosted Session Cancelled",
+      `<p>Hi there,</p>
+       <p>The following session where you were assigned as a <strong>co-host</strong> has been cancelled:</p>
+       <div style="background: #FFF0F0; padding: 20px; border-radius: 8px; border: 1px solid #FFDada; margin: 24px 0;">
+         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #C0392B; font-weight: 700;">Cancelled Session</p>
+         <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700; color: #C0392B;">{{eventName}}</p>
+         <p style="margin: 4px 0 0; font-size: 14px; color: #D98880;">{{startTime}} ({{timezone}})</p>
+         <p style="margin: 12px 0 0; font-size: 14px; color: #3E5363;"><strong>Lead Coach:</strong> {{coachName}}</p>
+       </div>`
+    ),
+    attachmentRequired: false,
+  },
+  COACH_BOOKING_COHOST_NO_SHOW: {
+    subject: "⚠️ Co-host Update: No-Show ({{eventName}})",
+    text: "The session for {{eventName}} at {{startTime}} where you were a co-host has been marked as a no-show.",
+    html: wrapLayout(
+      "Co-hosted Session: No-Show",
+      `<p>Hi there,</p>
+       <p>The following session where you were assigned as a <strong>co-host</strong> has been marked as a <strong>no-show</strong>:</p>
+       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
+         <p style="margin: 0; font-size: 16px; font-weight: 700;">{{eventName}}</p>
+         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{startTime}} ({{timezone}})</p>
+         <p style="margin: 8px 0 0; font-size: 14px; color: #3E5363;"><strong>Lead Coach:</strong> {{coachName}}</p>
+       </div>`
+    ),
+    attachmentRequired: false,
+  },
   BOOKING_CANCELLED: {
     subject: "❌ Session Cancelled: {{eventName}}",
     text: "The booking for {{eventName}} scheduled at {{startTime}} ({{timezone}}) with {{coachName}} has been cancelled.",

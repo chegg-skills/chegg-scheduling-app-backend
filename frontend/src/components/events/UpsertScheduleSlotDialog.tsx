@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format, addSeconds } from 'date-fns'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
@@ -9,33 +9,52 @@ import { Modal } from '@/components/shared/Modal'
 import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
 import { isWeekdayAllowed, formatAllowedWeekdays } from './eventCapabilityRules'
-import type { Event } from '@/types'
+import type { Event, EventScheduleSlot } from '@/types'
 
-interface AddScheduleSlotDialogProps {
+interface UpsertScheduleSlotDialogProps {
     isOpen: boolean
     onClose: () => void
     event: Event
-    onCreate: (data: { startTime: string; endTime: string; capacity: number | null }) => void
+    slot?: EventScheduleSlot | null // If provided, we are editing
+    onSave: (data: { startTime: string; endTime: string; capacity: number | null }) => void
     isPending: boolean
 }
 
-export function AddScheduleSlotDialog({
+export function UpsertScheduleSlotDialog({
     isOpen,
     onClose,
     event,
-    onCreate,
+    slot,
+    onSave,
     isPending,
-}: AddScheduleSlotDialogProps) {
+}: UpsertScheduleSlotDialogProps) {
     const allowedDays = event.allowedWeekdays || []
-    const initialDate = format(new Date(), "yyyy-MM-dd'T'HH:mm")
+    const mode = slot ? 'Edit' : 'Add'
 
-    const [newSlotDate, setNewSlotDate] = useState(initialDate)
+    // Local state for the form
+    const [newSlotDate, setNewSlotDate] = useState('')
     const [newSlotCapacity, setNewSlotCapacity] = useState<number | ''>('')
-    const [error, setError] = useState<string | null>(
-        !isWeekdayAllowed(initialDate, allowedDays)
-            ? `Selected date must be one of the allowed weekdays: ${formatAllowedWeekdays(allowedDays)}`
-            : null
-    )
+    const [error, setError] = useState<string | null>(null)
+
+    // Sync state when slot changes or modal opens
+    useEffect(() => {
+        if (isOpen) {
+            if (slot) {
+                setNewSlotDate(format(new Date(slot.startTime), "yyyy-MM-dd'T'HH:mm"))
+                setNewSlotCapacity(slot.capacity ?? '')
+                setError(null)
+            } else {
+                const initialDate = format(new Date(), "yyyy-MM-dd'T'HH:mm")
+                setNewSlotDate(initialDate)
+                setNewSlotCapacity('')
+                if (!isWeekdayAllowed(initialDate, allowedDays)) {
+                    setError(`Selected date must be one of the allowed weekdays: ${formatAllowedWeekdays(allowedDays)}`)
+                } else {
+                    setError(null)
+                }
+            }
+        }
+    }, [isOpen, slot, allowedDays])
 
     function handleDateChange(value: string) {
         setNewSlotDate(value)
@@ -54,7 +73,7 @@ export function AddScheduleSlotDialog({
         const startTime = new Date(newSlotDate)
         const endTime = addSeconds(startTime, event.durationSeconds)
 
-        onCreate({
+        onSave({
             startTime: startTime.toISOString(),
             endTime: endTime.toISOString(),
             capacity: newSlotCapacity === '' ? null : newSlotCapacity,
@@ -62,7 +81,7 @@ export function AddScheduleSlotDialog({
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Add Scheduled Session">
+        <Modal isOpen={isOpen} onClose={onClose} title={`${mode} Scheduled Session`}>
             <Stack spacing={3} sx={{ mt: 1 }}>
                 <FormField
                     label="Start Date & Time"
@@ -111,7 +130,7 @@ export function AddScheduleSlotDialog({
                         Cancel
                     </Button>
                     <Button onClick={handleAdd} isLoading={isPending} disabled={!!error || !newSlotDate}>
-                        Add Session
+                        {mode === 'Edit' ? 'Update Session' : 'Add Session'}
                     </Button>
                 </Stack>
             </Stack>

@@ -69,10 +69,10 @@ export function EventResourceFields({ register, errors, watch }: Props) {
                   {t.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} • Hosts: {formatCapacityRange(t.minHosts, t.maxHosts)}
+                  Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} • Coaches: {formatCapacityRange(t.minHosts, t.maxHosts)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t.supportsRoundRobin ? 'Supports Round Robin' : 'Direct Assignment Only'}
+                  {t.supportsRoundRobin ? 'Supports Round Robin roster' : 'Direct assignment only'}
                 </Typography>
               </Box>
             </MenuItem>

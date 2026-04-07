@@ -130,6 +130,7 @@ const validateInteractionTypePayload = (
   maxHosts: number | null;
   minParticipants: number;
   maxParticipants: number | null;
+  supportsSimultaneousCoaches: boolean;
 } => {
   const supportsRoundRobin = Boolean(payload.supportsRoundRobin);
   const supportsMultipleHosts = Boolean(payload.supportsMultipleHosts);
@@ -139,6 +140,7 @@ const validateInteractionTypePayload = (
     payload.maxHosts === undefined || payload.maxHosts === null
       ? null
       : parsePositiveInt(payload.maxHosts, "maxHosts");
+  const supportsSimultaneousCoaches = Boolean(payload.supportsSimultaneousCoaches);
   const minParticipants =
     payload.minParticipants !== undefined
       ? parsePositiveInt(payload.minParticipants, "minParticipants")
@@ -183,6 +185,13 @@ const validateInteractionTypePayload = (
     );
   }
 
+  if (supportsSimultaneousCoaches && !supportsMultipleHosts) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "supportsSimultaneousCoaches requires supportsMultipleHosts to be true.",
+    );
+  }
+
   return {
     supportsRoundRobin,
     supportsMultipleHosts,
@@ -190,6 +199,7 @@ const validateInteractionTypePayload = (
     maxHosts,
     minParticipants,
     maxParticipants,
+    supportsSimultaneousCoaches,
   };
 };
 
@@ -277,6 +287,8 @@ const updateInteractionType = async (
       payload.maxParticipants !== undefined
         ? payload.maxParticipants
         : existing.maxParticipants,
+    supportsSimultaneousCoaches:
+      payload.supportsSimultaneousCoaches ?? existing.supportsSimultaneousCoaches,
   };
 
   const validated = validateInteractionTypePayload(mergedPayload);

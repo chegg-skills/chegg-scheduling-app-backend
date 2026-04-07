@@ -1,18 +1,24 @@
 import { format } from 'date-fns'
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
+import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
-import Tooltip from '@mui/material/Tooltip'
-import { Trash2, Calendar as CalendarIcon, Clock, Users } from 'lucide-react'
-import type { EventScheduleSlot } from '@/types'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import { RowActions } from '@/components/shared/RowActions'
+import { Edit, Trash2 } from 'lucide-react'
+import type { EventScheduleSlot, Event } from '@/types'
 
 interface ScheduleSlotListProps {
     slots: EventScheduleSlot[]
+    event: Event
     onRemove: (slotId: string, info: string) => void
+    onEdit: (slot: EventScheduleSlot) => void
 }
 
-export function ScheduleSlotList({ slots, onRemove }: ScheduleSlotListProps) {
+export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlotListProps) {
     if (slots.length === 0) {
         return (
             <Paper
@@ -24,70 +30,84 @@ export function ScheduleSlotList({ slots, onRemove }: ScheduleSlotListProps) {
                     bgcolor: 'background.default',
                 }}
             >
-                <Typography variant="body2" color="text.secondary">
+                <Box sx={{ color: 'text.secondary' }}>
                     No sessions scheduled yet for this event.
-                </Typography>
+                </Box>
             </Paper>
         )
     }
 
     return (
-        <Stack spacing={1.5}>
-            {slots.map((slot) => {
-                const dateStr = format(new Date(slot.startTime), 'EEE, MMM d, yyyy')
-                const timeRange = `${format(new Date(slot.startTime), 'h:mm a')} – ${format(
-                    new Date(slot.endTime),
-                    'h:mm a'
-                )}`
+        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+            <Table size="small">
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Time Range</TableCell>
+                        <TableCell>Occupancy</TableCell>
+                        <TableCell align="right" sx={{ pr: 3 }}>
+                            Actions
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {slots.map((slot) => {
+                        const dateStr = format(new Date(slot.startTime), 'EEE, MMM d, yyyy')
+                        const timeRange = `${format(new Date(slot.startTime), 'h:mm a')} – ${format(
+                            new Date(slot.endTime),
+                            'h:mm a'
+                        )}`
 
-                return (
-                    <Paper
-                        key={slot.id}
-                        variant="outlined"
-                        sx={{
-                            p: 2,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s',
-                            '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' },
-                        }}
-                    >
-                        <Stack direction="row" spacing={3} alignItems="center">
-                            <Stack direction="row" spacing={1} alignItems="center">
-                                <CalendarIcon size={16} className="text-muted-foreground" />
-                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                    {dateStr}
-                                </Typography>
-                            </Stack>
+                        const bookingCount = slot._count?.bookings ?? 0
+                        const effectiveCapacity = slot.capacity ?? event.maxParticipantCount
+                        const isFull = effectiveCapacity !== null && bookingCount >= effectiveCapacity
+                        const canDelete = bookingCount === 0
 
-                            <Stack direction="row" spacing={1} alignItems="center">
-                                <Clock size={16} className="text-muted-foreground" />
-                                <Typography variant="body2">{timeRange}</Typography>
-                            </Stack>
-
-                            {slot.capacity && (
-                                <Stack direction="row" spacing={1} alignItems="center">
-                                    <Users size={16} className="text-muted-foreground" />
-                                    <Typography variant="body2" color="text.secondary">
-                                        Limit: {slot.capacity}
-                                    </Typography>
-                                </Stack>
-                            )}
-                        </Stack>
-
-                        <Tooltip title="Delete Session">
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => onRemove(slot.id, `${dateStr} at ${timeRange}`)}
-                            >
-                                <Trash2 size={18} />
-                            </IconButton>
-                        </Tooltip>
-                    </Paper>
-                )
-            })}
-        </Stack>
+                        return (
+                            <TableRow key={slot.id} hover>
+                                <TableCell sx={{ fontWeight: 500, py: 2 }}>{dateStr}</TableCell>
+                                <TableCell sx={{ py: 2 }}>{timeRange}</TableCell>
+                                <TableCell sx={{ py: 2 }}>
+                                    <Box
+                                        sx={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            fontWeight: 600,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            borderRadius: 1,
+                                            bgcolor: isFull ? 'error.lighter' : 'action.hover',
+                                            color: isFull ? 'error.main' : 'text.primary',
+                                            fontSize: '0.75rem',
+                                        }}
+                                    >
+                                        {bookingCount}{effectiveCapacity ? ` / ${effectiveCapacity}` : ' seats'}
+                                    </Box>
+                                </TableCell>
+                                <TableCell align="right" sx={{ py: 2, pr: 3 }}>
+                                    <RowActions
+                                        actions={[
+                                            {
+                                                label: 'Edit Session',
+                                                icon: <Edit size={16} />,
+                                                onClick: () => onEdit(slot),
+                                            },
+                                            {
+                                                label: 'Delete Session',
+                                                icon: <Trash2 size={16} />,
+                                                color: 'error.main',
+                                                onClick: () => onRemove(slot.id, `${dateStr} at ${timeRange}`),
+                                                disabled: !canDelete,
+                                                tooltip: !canDelete ? 'Cannot delete session with active bookings. Request everyone to cancel first.' : undefined,
+                                            },
+                                        ]}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })}
+                </TableBody>
+            </Table>
+        </TableContainer>
     )
 }

@@ -1,6 +1,7 @@
 import {
   AssignmentStrategy,
   Prisma,
+  SessionLeadershipStrategy,
   UserRole,
   type EventInteractionType as EventInteractionTypeModel,
 } from "@prisma/client";
@@ -21,6 +22,9 @@ const validateEventConfiguration = (
   config: {
     assignmentStrategy: AssignmentStrategy;
     hostCount: number;
+    sessionLeadershipStrategy?: SessionLeadershipStrategy;
+    fixedLeadHostId?: string | null;
+    hostUserIds?: string[];
   },
 ): void => {
   if (

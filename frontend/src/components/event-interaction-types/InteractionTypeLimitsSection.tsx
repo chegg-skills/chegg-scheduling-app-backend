@@ -33,19 +33,19 @@ export function InteractionTypeLimitsSection({
           }}
         >
           <FormField
-            label="Min Hosts"
+            label="Min Assigned Coaches"
             htmlFor="minHosts"
             error={errors.minHosts?.message}
-            hint={!supportsMultipleHosts ? 'Single-host types stay locked to 1.' : undefined}
+            hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'Minimum number of coaches that must be assigned to an event.'}
           >
             <Input id="minHosts" type="number" min="1" disabled={!supportsMultipleHosts} {...register('minHosts')} />
           </FormField>
 
           <FormField
-            label="Max Hosts (blank = unlimited)"
+            label="Max Assigned Coaches (blank = unlimited)"
             htmlFor="maxHosts"
             error={errors.maxHosts?.message}
-            hint={!supportsMultipleHosts ? 'Single-host types stay locked to 1.' : undefined}
+            hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'No limit if left blank.'}
           >
             <Controller
               name="maxHosts"

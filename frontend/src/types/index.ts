@@ -4,6 +4,10 @@ export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
 export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
 export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
+export type SessionLeadershipStrategy =
+  | 'SINGLE_HOST'
+  | 'FIXED_LEAD'
+  | 'ROTATING_LEAD'
 export type StatsTimeframe =
   | 'today' | 'yesterday'
   | 'thisWeek' | 'lastWeek'
@@ -104,6 +108,7 @@ export interface EventInteractionType {
   supportsMultipleHosts: boolean
   minHosts: number
   maxHosts: number | null
+  supportsSimultaneousCoaches: boolean
   minParticipants: number
   maxParticipants: number | null
   isActive: boolean
@@ -136,6 +141,9 @@ export interface EventScheduleSlot {
   isActive: boolean
   createdAt: string
   updatedAt: string
+  _count?: {
+    bookings: number
+  }
 }
 
 export interface Event {
@@ -153,6 +161,8 @@ export interface Event {
   locationValue: string
   allowedWeekdays: number[]
   minimumNoticeMinutes: number
+  sessionLeadershipStrategy: SessionLeadershipStrategy
+  fixedLeadHostId: string | null
   minParticipantCount: number | null
   maxParticipantCount: number | null
   teamId: string
@@ -386,6 +396,7 @@ export interface Booking {
   teamId: string
   eventId: string
   hostUserId: string
+  coHostUserIds: string[]
   meetingJoinUrl: string | null
   createdAt: string
   updatedAt: string

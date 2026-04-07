@@ -1,4 +1,4 @@
-import { BookingStatus, Prisma } from "@prisma/client";
+import { BookingStatus, Prisma, SessionLeadershipStrategy, EventBookingMode } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { normalizeEmail } from "../../shared/utils/userUtils";
@@ -47,7 +47,24 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
         },
     },
     team: true,
-    event: true,
+    event: {
+        include: {
+            interactionType: true,
+            hosts: {
+                include: {
+                    hostUser: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            avatarUrl: true,
+                            email: true,
+                        },
+                    },
+                },
+            },
+        },
+    },
     host: {
         select: {
             id: true,
@@ -99,6 +116,8 @@ export type BookingSchedulingContext = Pick<
     | "minParticipantCount"
     | "maxParticipantCount"
     | "interactionType"
+    | "sessionLeadershipStrategy"
+    | "fixedLeadHostId"
 >;
 
 export const normalizeStudentName = (studentName: string): string => {
@@ -154,6 +173,8 @@ export const buildSchedulingContext = (
     minParticipantCount: event.minParticipantCount,
     maxParticipantCount: event.maxParticipantCount,
     interactionType: event.interactionType,
+    sessionLeadershipStrategy: (event as any).sessionLeadershipStrategy,
+    fixedLeadHostId: (event as any).fixedLeadHostId,
 });
 
 export const buildBookingListWhere = (
@@ -163,40 +184,56 @@ export const buildBookingListWhere = (
     const hasSearch = Boolean(normalizedSearch);
 
     const where: Prisma.BookingWhereInput = {
-        teamId: filters.teamId,
-        eventId: filters.eventId,
-        hostUserId: filters.hostUserId,
-        status: filters.status,
+        AND: [] as Prisma.BookingWhereInput[],
     };
 
+    const and = where.AND as Prisma.BookingWhereInput[];
+
+    if (filters.teamId) and.push({ teamId: filters.teamId });
+    if (filters.eventId) and.push({ eventId: filters.eventId });
+    if (filters.status) and.push({ status: filters.status });
+
+    if (filters.hostUserId) {
+        and.push({
+            OR: [
+                { hostUserId: filters.hostUserId },
+                { [("coHostUserIds" as any)]: { has: filters.hostUserId } },
+            ],
+        });
+    }
+
     if (filters.startDate || filters.endDate) {
-        where.startTime = {
-            gte: filters.startDate ? new Date(filters.startDate) : undefined,
-            lte: filters.endDate ? new Date(filters.endDate) : undefined,
-        };
+        and.push({
+            startTime: {
+                gte: filters.startDate ? new Date(filters.startDate) : undefined,
+                lte: filters.endDate ? new Date(filters.endDate) : undefined,
+            },
+        });
     }
 
     if (hasSearch) {
-        where.OR = [
-            {
-                studentName: {
-                    contains: normalizedSearch,
-                    mode: "insensitive",
+        and.push({
+            OR: [
+                {
+                    studentName: {
+                        contains: normalizedSearch,
+                        mode: "insensitive",
+                    },
                 },
-            },
-            {
-                studentEmail: {
-                    contains: normalizedSearch,
-                    mode: "insensitive",
+                {
+                    studentEmail: {
+                        contains: normalizedSearch,
+                        mode: "insensitive",
+                    },
                 },
-            },
-            {
-                id: {
-                    contains: normalizedSearch,
-                    mode: "insensitive",
+                {
+                    id: {
+                        contains: normalizedSearch,
+                        mode: "insensitive",
+                    },
                 },
-            },
-        ];
+            ],
+        });
     }
 
     return where;

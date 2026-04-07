@@ -645,6 +645,30 @@ describe("Event CRUD routes", () => {
     expect(res.body.data.hosts).toHaveLength(1);
     expect(res.body.data.hosts[0].hostUserId).toBe(context.coachOneId);
   });
+
+  it("creates an event with FIXED_LEAD and automatically assigns the host", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const interactionType = await createInteractionType(context.superAdminToken, {
+      supportsSimultaneousCoaches: true,
+      supportsMultipleHosts: true,
+      minHosts: 1,
+      maxHosts: 4,
+    });
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Fixed Lead Event",
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      sessionLeadershipStrategy: "FIXED_LEAD",
+      fixedLeadHostId: context.coachOneId,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+    expect(res.body.data.fixedLeadHostId).toBe(context.coachOneId);
+    expect(res.body.data.hosts).toHaveLength(1);
+    expect(res.body.data.hosts[0].hostUserId).toBe(context.coachOneId);
+  });
 });
 
 describe("Event scheduling routes", () => {
@@ -755,6 +779,64 @@ describe("Event scheduling routes", () => {
 
     expect(deleteRes.status).toBe(200);
     expect(deleteRes.body.message).toMatch(/deleted/i);
+  });
+
+  it("blocks deletion of a schedule slot with active bookings", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const interactionType = await createInteractionType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      bookingMode: "FIXED_SLOTS",
+    });
+    const eventId = event.body.data.id as string;
+
+    const startTime = new Date(Date.now() + 2 * 86400000);
+    startTime.setUTCMinutes(0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    const slotRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        capacity: 1,
+      });
+
+    const slotId = slotRes.body.data.id;
+
+    // Add a host
+    await request(app)
+      .put(`/api/events/${eventId}/hosts`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        hosts: [{ userId: context.coachOneId, hostOrder: 1 }],
+      });
+
+    // Create a booking
+    const bookingRes = await request(app)
+      .post("/api/bookings")
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        eventId,
+        teamId: context.teamId,
+        scheduleSlotId: slotId,
+        studentName: "Test Student",
+        studentEmail: "student@example.com",
+        startTime: slotRes.body.data.startTime,
+        endTime: slotRes.body.data.endTime,
+      });
+
+    expect(bookingRes.status).toBe(201);
+
+    // Try to delete slot
+    const res = await request(app)
+      .delete(`/api/events/${eventId}/schedule-slots/${slotId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/active booking/i);
   });
 });
 

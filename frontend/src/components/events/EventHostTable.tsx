@@ -108,7 +108,7 @@ export function EventHostTable({ hosts, onRemove, onViewUser }: EventHostTablePr
                     ) : (
                         <TableRow>
                             <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                                No hosts assigned yet.
+                                No coaches assigned yet.
                             </TableCell>
                         </TableRow>
                     )}

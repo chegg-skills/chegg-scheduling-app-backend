@@ -32,10 +32,10 @@ export function EventSchedulingPolicyFields({
                 label="Booking Mode"
                 htmlFor="bookingMode"
                 error={errors.bookingMode?.message}
-                info="Flexible: users can book any time based on host availability. Fixed Slots: users can only book predefined sessions."
+                info="Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions."
             >
                 <Select id="bookingMode" value={bookingMode || 'HOST_AVAILABILITY'} {...register('bookingMode')}>
-                    <MenuItem value="HOST_AVAILABILITY">Flexible — Based on Host Availability</MenuItem>
+                    <MenuItem value="HOST_AVAILABILITY">Flexible — Based on Coach Availability</MenuItem>
                     <MenuItem value="FIXED_SLOTS">Fixed — Predefined session slots only</MenuItem>
                 </Select>
             </FormField>
