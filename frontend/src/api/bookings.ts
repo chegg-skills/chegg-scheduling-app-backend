@@ -4,11 +4,13 @@ import type {
     Booking,
     CreateBookingDto,
     ListBookingsFilters,
-    UpdateBookingStatusDto
+    UpdateBookingStatusDto,
+    Pagination
 } from '@/types'
 
 export interface ListBookingsResponse {
     bookings: Booking[]
+    pagination: Pagination
 }
 
 export const bookingsApi = {

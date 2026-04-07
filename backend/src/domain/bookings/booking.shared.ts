@@ -30,6 +30,8 @@ export type ListBookingsFilters = {
     search?: string;
     startDate?: string | Date;
     endDate?: string | Date;
+    page?: number;
+    limit?: number;
 };
 
 export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({

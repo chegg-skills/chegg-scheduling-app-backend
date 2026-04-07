@@ -16,6 +16,7 @@ import {
     resolveMatchingScheduleSlot,
 } from "../events/eventScheduling.service";
 import {
+    countBookings,
     countActiveParticipantsForTime,
     createBookingRecord,
     findBookableEvent,
@@ -241,7 +242,11 @@ const getBooking = async (id: string) => {
 };
 
 const listBookings = async (filters: ListBookingsFilters) => {
-    return findBookings(filters);
+    const [bookings, totalCount] = await Promise.all([
+        findBookings(filters),
+        countBookings(filters),
+    ]);
+    return { bookings, totalCount };
 };
 
 const updateBookingStatus = async (id: string, status: BookingStatus) => {

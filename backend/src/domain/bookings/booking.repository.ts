@@ -79,10 +79,23 @@ const findBookingById = async (id: string): Promise<SafeBooking> => {
 const findBookings = async (
     filters: ListBookingsFilters,
 ): Promise<SafeBooking[]> => {
+    const { page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+
     return prisma.booking.findMany({
         where: buildBookingListWhere(filters),
         include: bookingInclude,
         orderBy: { startTime: "desc" },
+        skip,
+        take: limit,
+    });
+};
+
+const countBookings = async (
+    filters: ListBookingsFilters,
+): Promise<number> => {
+    return prisma.booking.count({
+        where: buildBookingListWhere(filters),
     });
 };
 
@@ -114,6 +127,7 @@ export {
     findBookableEvent,
     findBookingById,
     findBookings,
+    countBookings,
     updateBookingStatusById,
     upsertStudentForBooking,
 };

@@ -46,6 +46,9 @@ export function BookingsPage() {
     const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
+    const [page, setPage] = useState(0) // 0-indexed for MUI
+    const [limit, setLimit] = useState(10)
+
     // New Advanced Filters
     const [advancedFilters, setAdvancedFilters] = useState({
         teamId: '',
@@ -65,9 +68,13 @@ export function BookingsPage() {
         eventId: advancedFilters.eventId || undefined,
         startDate: advancedFilters.startDate?.toISOString(),
         endDate: advancedFilters.endDate?.toISOString(),
-    }), [debouncedSearch, statusFilter, advancedFilters])
+        page: page + 1, // backend is 1-indexed
+        limit: limit,
+    }), [debouncedSearch, statusFilter, advancedFilters, page, limit])
 
-    const { data: bookings = [], isLoading, error } = useBookings(serverFilters)
+    const { data, isLoading, error } = useBookings(serverFilters)
+    const bookings = data?.bookings ?? []
+    const pagination = data?.pagination
 
     const filteredBookings = useMemo(() => {
         let result = bookings
@@ -295,12 +302,21 @@ export function BookingsPage() {
                     <Box>
                         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="subtitle2" color="text.secondary">
-                                Showing {filteredBookings.length} bookings
+                                Showing {pagination?.total ?? filteredBookings.length} bookings
                             </Typography>
                         </Box>
 
                         {viewMode === 'list' ? (
-                            <BookingTable bookings={filteredBookings} onViewHost={setViewingUserId} />
+                            <BookingTable
+                                bookings={filteredBookings}
+                                pagination={pagination}
+                                onPageChange={setPage}
+                                onRowsPerPageChange={(val) => {
+                                    setLimit(val)
+                                    setPage(0)
+                                }}
+                                onViewHost={setViewingUserId}
+                            />
                         ) : (
                             <BookingCalendar
                                 bookings={filteredBookings}
