@@ -5,9 +5,10 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
+import TablePagination from '@mui/material/TablePagination'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
-import type { SafeUser, UserRole } from '@/types'
+import type { SafeUser, UserRole, Pagination } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useDeactivateUser } from '@/hooks/useUsers'
@@ -20,11 +21,21 @@ import { userSortAccessors, userTableColumns } from './userTableUtils'
 
 interface UserTableProps {
   users: SafeUser[]
+  pagination?: Pagination
+  onPageChange?: (page: number) => void
+  onRowsPerPageChange?: (rowsPerPage: number) => void
   currentUserRole: UserRole
   currentUserId: string
 }
 
-export function UserTable({ users, currentUserRole, currentUserId }: UserTableProps) {
+export function UserTable({
+  users,
+  pagination,
+  onPageChange,
+  onRowsPerPageChange,
+  currentUserRole,
+  currentUserId
+}: UserTableProps) {
   const [editingUser, setEditingUser] = useState<SafeUser | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const { mutate: deactivate } = useDeactivateUser()
@@ -94,6 +105,21 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
             )}
           </TableBody>
         </Table>
+        {pagination && onPageChange && onRowsPerPageChange && (
+          <TablePagination
+            component="div"
+            count={pagination.total}
+            page={pagination.page - 1}
+            onPageChange={(_, nextPage) => onPageChange(nextPage)}
+            rowsPerPage={pagination.pageSize}
+            onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
+            sx={{
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+            }}
+          />
+        )}
       </TableContainer>
 
       {viewingUserId && <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />}

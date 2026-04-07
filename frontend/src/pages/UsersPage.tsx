@@ -11,7 +11,6 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/Button'
 import { Input } from '@/components/shared/Input'
 import { Modal } from '@/components/shared/Modal'
-import { Pagination } from '@/components/shared/Pagination'
 import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { UserTable } from '@/components/users/UserTable'
@@ -20,11 +19,10 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useUserStats } from '@/hooks/useStats'
 
-const PAGE_SIZE = 20
-
 export function UsersPage() {
   const { user: currentUser } = useAuth()
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(0) // 0-indexed for MUI
+  const [pageSize, setPageSize] = useState(20)
   const [showInvite, setShowInvite] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
@@ -33,14 +31,17 @@ export function UsersPage() {
   const { data: userStats, isLoading: statsLoading } = useUserStats(timeframe)
 
   useEffect(() => {
-    setPage(1)
+    setPage(0)
   }, [debouncedSearch])
 
   const { data, isLoading, error } = useUsers({
-    page,
-    pageSize: PAGE_SIZE,
+    page: page + 1, // backend is 1-indexed
+    pageSize,
     search: debouncedSearch.trim() || undefined,
   })
+
+  const users = data?.users ?? []
+  const pagination = data?.pagination
 
   if (isLoading && !data) return <PageSpinner />
   if (error) return <ErrorAlert message="Failed to load users." />
@@ -80,7 +81,7 @@ export function UsersPage() {
     <Box>
       <PageHeader
         title="Users"
-        subtitle={`${data?.pagination.total ?? 0} total users`}
+        subtitle={`${pagination?.total ?? 0} total users`}
         actions={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Box sx={{ width: { xs: '100%', sm: 360 }, maxWidth: 360 }}>
@@ -131,23 +132,17 @@ export function UsersPage() {
 
         <Box sx={{ mt: 3 }}>
           <UserTable
-            users={data?.users ?? []}
+            users={users}
+            pagination={pagination}
+            onPageChange={setPage}
+            onRowsPerPageChange={(val) => {
+              setPageSize(val)
+              setPage(0)
+            }}
             currentUserRole={(currentUser?.role ?? 'TEAM_ADMIN') as UserRole}
             currentUserId={currentUser?.id ?? ''}
           />
         </Box>
-
-        {data && data.pagination.totalPages > 1 && (
-          <Box sx={{ mt: 2 }}>
-            <Pagination
-              page={page}
-              totalPages={data.pagination.totalPages}
-              total={data.pagination.total}
-              pageSize={PAGE_SIZE}
-              onPageChange={setPage}
-            />
-          </Box>
-        )}
 
         <Modal
           isOpen={showInvite}
