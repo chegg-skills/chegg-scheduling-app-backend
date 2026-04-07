@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 import type { Event } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
-import { useDeleteEvent, useUpdateEvent } from '@/hooks/useEvents'
+import { useDeleteEvent, useDuplicateEvent, useUpdateEvent } from '@/hooks/useEvents'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { EventForm } from './EventForm'
@@ -27,6 +27,7 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()
+  const { mutate: duplicateEvent } = useDuplicateEvent()
   const { handleAction } = useAsyncAction()
   const { sortedItems: sortedEvents, sortConfig, requestSort } = useTableSort(events, eventSortAccessors)
 
@@ -44,6 +45,14 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
         actionName: 'Update',
       }
     )
+  }
+
+  async function handleDuplicate(event: Event) {
+    handleAction(duplicateEvent, event.id, {
+      title: 'Duplicate Event',
+      message: `Are you sure you want to create a duplicate of "${event.name}"?\n\nThe new copy will be set to inactive so you can review its settings before publishing.`,
+      actionName: 'Duplicate',
+    })
   }
 
   async function handleDelete(event: Event) {
@@ -100,6 +109,7 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
                   key={event.id}
                   event={event}
                   onEdit={setEditingEvent}
+                  onDuplicate={handleDuplicate}
                   onToggleActive={handleToggleActive}
                   onDelete={handleDelete}
                   onViewUser={onViewUser}

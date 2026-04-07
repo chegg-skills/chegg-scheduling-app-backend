@@ -9,14 +9,18 @@ import {
     TableRow,
     Typography,
 } from '@mui/material'
-import type { Booking } from '@/types'
+import type { Booking, Pagination } from '@/types'
 import { useUpdateBookingStatus } from '@/hooks/useBookings'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { BookingTableRow } from './BookingTableRow'
+import { TablePagination } from '@/components/shared/TablePagination'
 
 interface Props {
     bookings: Booking[]
+    pagination?: Pagination
+    onPageChange: (page: number) => void
+    onRowsPerPageChange: (rowsPerPage: number) => void
     onViewHost?: (userId: string) => void
 }
 
@@ -30,7 +34,13 @@ const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
     status: (booking) => booking.status,
 }
 
-export function BookingTable({ bookings, onViewHost }: Props) {
+export function BookingTable({
+    bookings,
+    pagination,
+    onPageChange,
+    onRowsPerPageChange,
+    onViewHost
+}: Props) {
     const { mutate: updateStatus } = useUpdateBookingStatus()
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const { sortedItems: sortedBookings, sortConfig, requestSort } = useTableSort(bookings, bookingSortAccessors)
@@ -39,7 +49,7 @@ export function BookingTable({ bookings, onViewHost }: Props) {
         setExpandedId((prev) => (prev === id ? null : id))
     }
 
-    if (bookings.length === 0) {
+    if (bookings.length === 0 && !pagination?.total) {
         return (
             <Paper
                 variant="outlined"
@@ -146,6 +156,11 @@ export function BookingTable({ bookings, onViewHost }: Props) {
                     })()}
                 </TableBody>
             </Table>
+            <TablePagination
+                pagination={pagination}
+                onPageChange={onPageChange}
+                onRowsPerPageChange={onRowsPerPageChange}
+            />
         </TableContainer>
     )
 }

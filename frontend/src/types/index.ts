@@ -418,6 +418,8 @@ export interface ListBookingsFilters {
   search?: string
   startDate?: string | Date
   endDate?: string | Date
+  page?: number
+  limit?: number
 }
 
 export interface UpdateBookingStatusDto {

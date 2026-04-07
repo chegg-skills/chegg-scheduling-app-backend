@@ -12,7 +12,10 @@ export const bookingKeys = {
 export function useBookings(filters: ListBookingsFilters = {}) {
     return useQuery({
         queryKey: bookingKeys.list(filters),
-        queryFn: () => bookingsApi.list(filters).then(r => r.data.data?.bookings ?? []),
+        queryFn: () => bookingsApi.list(filters).then(r => ({
+            bookings: r.data.data?.bookings ?? [],
+            pagination: r.data.data?.pagination
+        })),
         placeholderData: (previousData) => previousData,
     })
 }

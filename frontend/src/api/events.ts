@@ -34,6 +34,8 @@ export const eventsApi = {
     apiClient.patch<ApiResponse<Event>>(`/events/${eventId}`, data),
   delete: (eventId: string) =>
     apiClient.delete<ApiResponse<Event>>(`/events/${eventId}`),
+  duplicate: (eventId: string) =>
+    apiClient.post<ApiResponse<Event>>(`/events/${eventId}/duplicate`),
   listHosts: (eventId: string) =>
     apiClient.get<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`),
   setHosts: (eventId: string, data: SetEventHostsDto) =>

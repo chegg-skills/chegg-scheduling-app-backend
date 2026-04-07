@@ -7,7 +7,7 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
-import type { SafeUser, UserRole } from '@/types'
+import type { SafeUser, UserRole, Pagination } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useDeactivateUser } from '@/hooks/useUsers'
@@ -17,14 +17,25 @@ import { UserDetailModal } from './UserDetailModal'
 import { UserForm } from './UserForm'
 import { UserTableRow } from './UserTableRow'
 import { userSortAccessors, userTableColumns } from './userTableUtils'
+import { TablePagination } from '@/components/shared/TablePagination'
 
 interface UserTableProps {
   users: SafeUser[]
+  pagination?: Pagination
+  onPageChange: (page: number) => void
+  onRowsPerPageChange: (pageSize: number) => void
   currentUserRole: UserRole
   currentUserId: string
 }
 
-export function UserTable({ users, currentUserRole, currentUserId }: UserTableProps) {
+export function UserTable({
+  users,
+  pagination,
+  onPageChange,
+  onRowsPerPageChange,
+  currentUserRole,
+  currentUserId
+}: UserTableProps) {
   const [editingUser, setEditingUser] = useState<SafeUser | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const { mutate: deactivate } = useDeactivateUser()
@@ -94,6 +105,11 @@ export function UserTable({ users, currentUserRole, currentUserId }: UserTablePr
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          pagination={pagination}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+        />
       </TableContainer>
 
       {viewingUserId && <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />}

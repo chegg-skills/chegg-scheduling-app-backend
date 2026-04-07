@@ -612,6 +612,39 @@ describe("Event CRUD routes", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.isActive).toBe(false);
   });
+
+  it("duplicates an event with hosts", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const interactionType = await createInteractionType(context.superAdminToken);
+    const originalEvent = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Original Event",
+      offeringId: offering.body.data.id,
+      interactionTypeId: interactionType.body.data.id,
+      description: "Original description",
+    });
+    const eventId = originalEvent.body.data.id;
+
+    // Add a host to the original event
+    await request(app)
+      .put(`/api/events/${eventId}/hosts`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        hosts: [{ userId: context.coachOneId, hostOrder: 1 }],
+      });
+
+    // Duplicate the event
+    const res = await request(app)
+      .post(`/api/events/${eventId}/duplicate`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.name).toBe("Copy of Original Event");
+    expect(res.body.data.description).toBe("Original description");
+    expect(res.body.data.isActive).toBe(false);
+    expect(res.body.data.publicBookingSlug).not.toBe(originalEvent.body.data.publicBookingSlug);
+    expect(res.body.data.hosts).toHaveLength(1);
+    expect(res.body.data.hosts[0].hostUserId).toBe(context.coachOneId);
+  });
 });
 
 describe("Event scheduling routes", () => {

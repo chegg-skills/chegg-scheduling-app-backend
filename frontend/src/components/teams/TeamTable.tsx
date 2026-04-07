@@ -7,7 +7,7 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
-import type { Team } from '@/types'
+import type { Team, Pagination } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
@@ -16,13 +16,23 @@ import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { TeamForm } from './TeamForm'
 import { TeamTableRow } from './TeamTableRow'
 import { teamSortAccessors, teamTableColumns } from './teamTableUtils'
+import { TablePagination } from '@/components/shared/TablePagination'
 
 interface TeamTableProps {
   teams: Team[]
+  pagination?: Pagination
+  onPageChange: (page: number) => void
+  onRowsPerPageChange: (pageSize: number) => void
   canManageTeam: boolean
 }
 
-export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
+export function TeamTable({
+  teams,
+  pagination,
+  onPageChange,
+  onRowsPerPageChange,
+  canManageTeam
+}: TeamTableProps) {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
@@ -105,6 +115,11 @@ export function TeamTable({ teams, canManageTeam }: TeamTableProps) {
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          pagination={pagination}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+        />
       </TableContainer>
 
       {editingTeam && (

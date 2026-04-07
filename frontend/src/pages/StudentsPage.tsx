@@ -5,27 +5,36 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { Input } from '@/components/shared/Input'
-import { Pagination } from '@/components/shared/Pagination'
 import { StudentTable } from '@/components/students/StudentTable'
 import { useStudents } from '@/hooks/useStudents'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
-const PAGE_SIZE = 25
+import { usePagination } from '@/hooks/usePagination'
 
 export function StudentsPage() {
-    const [page, setPage] = useState(1)
+    const {
+        pageSize,
+        backendPage,
+        onPageChange,
+        onRowsPerPageChange,
+        resetPage
+    } = usePagination(25)
+
     const [searchInput, setSearchInput] = useState('')
     const debouncedSearch = useDebouncedValue(searchInput, 250)
 
     useEffect(() => {
-        setPage(1)
-    }, [debouncedSearch])
+        resetPage()
+    }, [debouncedSearch, resetPage])
 
     const { data, isLoading, error } = useStudents({
-        page,
-        pageSize: PAGE_SIZE,
+        page: backendPage,
+        pageSize,
         search: debouncedSearch.trim() || undefined,
     })
+
+    const students = data?.students ?? []
+    const pagination = data?.pagination
 
     if (isLoading && !data) return <PageSpinner />
     if (error) return <ErrorAlert message="Failed to load students." />
@@ -34,7 +43,7 @@ export function StudentsPage() {
         <Box>
             <PageHeader
                 title="Students"
-                subtitle={`${data?.pagination.total ?? 0} total students`}
+                subtitle={`${pagination?.total ?? 0} total students`}
                 actions={
                     <Box sx={{ width: { xs: '100%', sm: 360 }, maxWidth: 360 }}>
                         <Input
@@ -69,20 +78,13 @@ export function StudentsPage() {
 
             <Box sx={{ px: { xs: 2.5, md: 4 } }}>
                 <Box sx={{ mt: 1 }}>
-                    <StudentTable students={data?.students ?? []} />
+                    <StudentTable
+                        students={students}
+                        pagination={pagination}
+                        onPageChange={onPageChange}
+                        onRowsPerPageChange={onRowsPerPageChange}
+                    />
                 </Box>
-
-                {data && data.pagination.totalPages > 1 && (
-                    <Box sx={{ mt: 3 }}>
-                        <Pagination
-                            page={page}
-                            totalPages={data.pagination.totalPages}
-                            total={data.pagination.total}
-                            pageSize={PAGE_SIZE}
-                            onPageChange={setPage}
-                        />
-                    </Box>
-                )}
             </Box>
         </Box>
     )

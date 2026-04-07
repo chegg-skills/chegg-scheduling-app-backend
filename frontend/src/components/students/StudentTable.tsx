@@ -8,17 +8,26 @@ import {
     TableRow,
     Typography,
 } from '@mui/material'
-import type { StudentSummary } from '@/types'
+import type { StudentSummary, Pagination } from '@/types'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useTableSort } from '@/hooks/useTableSort'
 import { StudentTableRow } from './StudentTableRow'
 import { studentSortAccessors, studentTableColumns } from './StudentTableUtils'
+import { TablePagination } from '@/components/shared/TablePagination'
 
 interface StudentTableProps {
     students: StudentSummary[]
+    pagination?: Pagination
+    onPageChange: (page: number) => void
+    onRowsPerPageChange: (pageSize: number) => void
 }
 
-export function StudentTable({ students }: StudentTableProps) {
+export function StudentTable({
+    students,
+    pagination,
+    onPageChange,
+    onRowsPerPageChange,
+}: StudentTableProps) {
     const { sortedItems: sortedStudents, sortConfig, requestSort } = useTableSort(students, studentSortAccessors)
 
     return (
@@ -57,6 +66,7 @@ export function StudentTable({ students }: StudentTableProps) {
                     )}
                 </TableBody>
             </Table>
+            <TablePagination pagination={pagination} onPageChange={onPageChange} onRowsPerPageChange={onRowsPerPageChange} />
         </TableContainer>
     )
 }

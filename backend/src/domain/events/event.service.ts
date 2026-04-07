@@ -348,6 +348,66 @@ const deleteEvent = async (
 };
 
 
+const duplicateEvent = async (
+  eventId: string,
+  caller: CallerContext,
+): Promise<SafeEvent> => {
+  const sourceEvent = await getManagedEvent(eventId, caller);
+
+  const duplicateData: Prisma.EventCreateInput = {
+    name: `Copy of ${sourceEvent.name}`,
+    publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
+    description: sourceEvent.description,
+    offering: { connect: { id: sourceEvent.offeringId } },
+    interactionType: { connect: { id: sourceEvent.interactionTypeId } },
+    assignmentStrategy: sourceEvent.assignmentStrategy,
+    durationSeconds: sourceEvent.durationSeconds,
+    locationType: sourceEvent.locationType,
+    locationValue: sourceEvent.locationValue,
+    isActive: false, // Default to inactive for the copy
+    team: { connect: { id: sourceEvent.teamId } },
+    createdBy: { connect: { id: caller.id } },
+    updatedBy: { connect: { id: caller.id } },
+    bookingMode: sourceEvent.bookingMode,
+    allowedWeekdays: sourceEvent.allowedWeekdays,
+    minimumNoticeMinutes: sourceEvent.minimumNoticeMinutes,
+    minParticipantCount: sourceEvent.minParticipantCount,
+    maxParticipantCount: sourceEvent.maxParticipantCount,
+  };
+
+  return prisma.$transaction(async (tx) => {
+    const newEvent = await tx.event.create({
+      data: duplicateData,
+      include: eventInclude,
+    });
+
+    // Duplicate hosts
+    if (sourceEvent.hosts.length > 0) {
+      await tx.eventHost.createMany({
+        data: sourceEvent.hosts.map((host) => ({
+          eventId: newEvent.id,
+          hostUserId: host.hostUserId,
+          hostOrder: host.hostOrder,
+          isActive: host.isActive,
+        })),
+      });
+    }
+
+    // Initialize routing state if needed
+    await syncRoutingState(
+      tx,
+      newEvent.id,
+      newEvent.assignmentStrategy,
+      sourceEvent.hosts.length,
+    );
+
+    return tx.event.findUniqueOrThrow({
+      where: { id: newEvent.id },
+      include: eventInclude,
+    });
+  });
+};
+
 const listAllEvents = async (
   _caller: CallerContext,
   options: ListEventsOptions = {},
@@ -393,6 +453,7 @@ export {
   deleteInteractionType,
   getInteractionTypeUsage,
   createEvent,
+  duplicateEvent,
   deleteEvent,
   listEventHosts,
   listTeamEvents,

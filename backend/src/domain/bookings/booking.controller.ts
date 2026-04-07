@@ -53,7 +53,7 @@ export const getBooking = async (req: Request, res: Response) => {
 };
 
 export const listBookings = async (req: Request, res: Response) => {
-    const { teamId, eventId, hostUserId, status, search, startDate, endDate } = req.query;
+    const { teamId, eventId, hostUserId, status, search, startDate, endDate, page, limit } = req.query;
     const caller = res.locals.authUser as CallerContext;
 
     let targetHostId = getStringParam(hostUserId);
@@ -63,7 +63,10 @@ export const listBookings = async (req: Request, res: Response) => {
         targetHostId = caller.id;
     }
 
-    const bookings = await BookingService.listBookings({
+    const pageNum = page ? parseInt(page as string, 10) : 1;
+    const limitNum = limit ? parseInt(limit as string, 10) : 10;
+
+    const { bookings, totalCount } = await BookingService.listBookings({
         teamId: targetTeamId,
         eventId: getStringParam(eventId),
         hostUserId: targetHostId,
@@ -71,12 +74,22 @@ export const listBookings = async (req: Request, res: Response) => {
         search: getStringParam(search),
         startDate: getStringParam(startDate),
         endDate: getStringParam(endDate),
+        page: pageNum,
+        limit: limitNum,
     });
 
     return sendSuccessResponse(
         res,
         StatusCodes.OK,
-        { bookings },
+        {
+            bookings,
+            pagination: {
+                total: totalCount,
+                page: pageNum,
+                pageSize: limitNum,
+                totalPages: Math.ceil(totalCount / limitNum)
+            }
+        },
         "Bookings fetched successfully."
     );
 };

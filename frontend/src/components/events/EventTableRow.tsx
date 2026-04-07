@@ -7,7 +7,7 @@ import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 import Tooltip from '@mui/material/Tooltip'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Calendar, Edit, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { Calendar, Copy, Edit, Eye, EyeOff, Trash2 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import { Badge } from '@/components/shared/Badge'
 import { RowActions } from '@/components/shared/RowActions'
@@ -19,6 +19,7 @@ interface EventTableRowProps {
   event: Event
   onDelete: (event: Event) => void | Promise<void>
   onEdit: (event: Event) => void
+  onDuplicate: (event: Event) => void
   onToggleActive: (event: Event) => void | Promise<void>
   onViewUser?: (userId: string) => void
 }
@@ -31,6 +32,7 @@ export function EventTableRow({
   event,
   onDelete,
   onEdit,
+  onDuplicate,
   onToggleActive,
   onViewUser,
 }: EventTableRowProps) {
@@ -133,6 +135,11 @@ export function EventTableRow({
               label: 'Edit event details',
               icon: <Edit size={16} />,
               onClick: () => onEdit(event),
+            },
+            {
+              label: 'Duplicate event',
+              icon: <Copy size={16} />,
+              onClick: () => onDuplicate(event),
             },
             {
               label: event.isActive ? 'Mark as Inactive' : 'Mark as Active',
