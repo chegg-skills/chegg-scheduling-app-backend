@@ -5,7 +5,6 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TablePagination,
     TableRow,
     Typography,
 } from '@mui/material'
@@ -14,12 +13,13 @@ import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useTableSort } from '@/hooks/useTableSort'
 import { StudentTableRow } from './StudentTableRow'
 import { studentSortAccessors, studentTableColumns } from './StudentTableUtils'
+import { TablePagination } from '@/components/shared/TablePagination'
 
 interface StudentTableProps {
     students: StudentSummary[]
     pagination?: Pagination
-    onPageChange?: (page: number) => void
-    onRowsPerPageChange?: (rowsPerPage: number) => void
+    onPageChange: (page: number) => void
+    onRowsPerPageChange: (pageSize: number) => void
 }
 
 export function StudentTable({
@@ -66,21 +66,7 @@ export function StudentTable({
                     )}
                 </TableBody>
             </Table>
-            {pagination && onPageChange && onRowsPerPageChange && (
-                <TablePagination
-                    component="div"
-                    count={pagination.total}
-                    page={pagination.page - 1}
-                    onPageChange={(_, nextPage) => onPageChange(nextPage)}
-                    rowsPerPage={pagination.pageSize}
-                    onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
-                    sx={{
-                        borderTop: '1px solid',
-                        borderColor: 'divider',
-                        bgcolor: 'background.paper',
-                    }}
-                />
-            )}
+            <TablePagination pagination={pagination} onPageChange={onPageChange} onRowsPerPageChange={onRowsPerPageChange} />
         </TableContainer>
     )
 }

@@ -5,7 +5,6 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
-import TablePagination from '@mui/material/TablePagination'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import type { Team, Pagination } from '@/types'
@@ -17,12 +16,13 @@ import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { TeamForm } from './TeamForm'
 import { TeamTableRow } from './TeamTableRow'
 import { teamSortAccessors, teamTableColumns } from './teamTableUtils'
+import { TablePagination } from '@/components/shared/TablePagination'
 
 interface TeamTableProps {
   teams: Team[]
   pagination?: Pagination
-  onPageChange?: (page: number) => void
-  onRowsPerPageChange?: (rowsPerPage: number) => void
+  onPageChange: (page: number) => void
+  onRowsPerPageChange: (pageSize: number) => void
   canManageTeam: boolean
 }
 
@@ -115,21 +115,11 @@ export function TeamTable({
             )}
           </TableBody>
         </Table>
-        {pagination && onPageChange && onRowsPerPageChange && (
-          <TablePagination
-            component="div"
-            count={pagination.total}
-            page={pagination.page - 1}
-            onPageChange={(_, nextPage) => onPageChange(nextPage)}
-            rowsPerPage={pagination.pageSize}
-            onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
-            sx={{
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-            }}
-          />
-        )}
+        <TablePagination
+          pagination={pagination}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+        />
       </TableContainer>
 
       {editingTeam && (

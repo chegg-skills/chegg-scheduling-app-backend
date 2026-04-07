@@ -4,7 +4,7 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { alpha, useTheme } from '@mui/material/styles'
 import {
     CalendarDays,
@@ -31,6 +31,7 @@ import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Input } from '@/components/shared/Input'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useBookingStats } from '@/hooks/useStats'
+import { usePagination } from '@/hooks/usePagination'
 import { Badge, Button as MuiButton } from '@mui/material'
 import type { BookingStatus, StatsTimeframe, Booking } from '@/types'
 
@@ -38,6 +39,14 @@ type FilterType = 'UPCOMING' | 'ALL' | BookingStatus
 
 export function BookingsPage() {
     const theme = useTheme()
+    const {
+        pageSize,
+        backendPage,
+        onPageChange,
+        onRowsPerPageChange,
+        resetPage
+    } = usePagination(25)
+
     const [statusFilter, setStatusFilter] = useState<FilterType>('UPCOMING')
     const [searchInput, setSearchInput] = useState('')
     const [viewingUserId, setViewingUserId] = useState<string | null>(null)
@@ -45,9 +54,6 @@ export function BookingsPage() {
     const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
     const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
-
-    const [page, setPage] = useState(0) // 0-indexed for MUI
-    const [limit, setLimit] = useState(10)
 
     // New Advanced Filters
     const [advancedFilters, setAdvancedFilters] = useState({
@@ -59,6 +65,10 @@ export function BookingsPage() {
 
     const debouncedSearch = useDebouncedValue(searchInput, 250)
 
+    useEffect(() => {
+        resetPage()
+    }, [debouncedSearch, statusFilter, advancedFilters, resetPage])
+
     const { data: bookingStats, isLoading: statsLoading } = useBookingStats(timeframe)
 
     const serverFilters = useMemo(() => ({
@@ -68,9 +78,9 @@ export function BookingsPage() {
         eventId: advancedFilters.eventId || undefined,
         startDate: advancedFilters.startDate?.toISOString(),
         endDate: advancedFilters.endDate?.toISOString(),
-        page: page + 1, // backend is 1-indexed
-        limit: limit,
-    }), [debouncedSearch, statusFilter, advancedFilters, page, limit])
+        page: backendPage,
+        pageSize: pageSize,
+    }), [debouncedSearch, statusFilter, advancedFilters, backendPage, pageSize])
 
     const { data, isLoading, error } = useBookings(serverFilters)
     const bookings = data?.bookings ?? []
@@ -310,11 +320,8 @@ export function BookingsPage() {
                             <BookingTable
                                 bookings={filteredBookings}
                                 pagination={pagination}
-                                onPageChange={setPage}
-                                onRowsPerPageChange={(val) => {
-                                    setLimit(val)
-                                    setPage(0)
-                                }}
+                                onPageChange={onPageChange}
+                                onRowsPerPageChange={onRowsPerPageChange}
                                 onViewHost={setViewingUserId}
                             />
                         ) : (

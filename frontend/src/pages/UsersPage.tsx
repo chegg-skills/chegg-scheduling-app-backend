@@ -18,11 +18,17 @@ import { InviteForm } from '@/components/users/InviteForm'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useUserStats } from '@/hooks/useStats'
+import { usePagination } from '@/hooks/usePagination'
 
 export function UsersPage() {
   const { user: currentUser } = useAuth()
-  const [page, setPage] = useState(0) // 0-indexed for MUI
-  const [pageSize, setPageSize] = useState(20)
+  const {
+    pageSize,
+    backendPage,
+    onPageChange,
+    onRowsPerPageChange,
+    resetPage
+  } = usePagination(20)
   const [showInvite, setShowInvite] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
@@ -31,13 +37,13 @@ export function UsersPage() {
   const { data: userStats, isLoading: statsLoading } = useUserStats(timeframe)
 
   useEffect(() => {
-    setPage(0)
-  }, [debouncedSearch])
+    resetPage()
+  }, [debouncedSearch, resetPage])
 
   const { data, isLoading, error } = useUsers({
-    page: page + 1, // backend is 1-indexed
+    page: backendPage,
     pageSize,
-    search: debouncedSearch.trim() || undefined,
+    search: debouncedSearch.trim() || undefined
   })
 
   const users = data?.users ?? []
@@ -134,11 +140,8 @@ export function UsersPage() {
           <UserTable
             users={users}
             pagination={pagination}
-            onPageChange={setPage}
-            onRowsPerPageChange={(val) => {
-              setPageSize(val)
-              setPage(0)
-            }}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
             currentUserRole={(currentUser?.role ?? 'TEAM_ADMIN') as UserRole}
             currentUserId={currentUser?.id ?? ''}
           />

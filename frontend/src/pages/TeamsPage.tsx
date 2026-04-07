@@ -13,17 +13,23 @@ import { TeamForm } from '@/components/teams/TeamForm'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useTeamStats } from '@/hooks/useStats'
 import type { StatsTimeframe } from '@/types'
+import { usePagination } from '@/hooks/usePagination'
 
 export function TeamsPage() {
   const { user } = useAuth()
-  const [page, setPage] = useState(0) // 0-indexed for MUI
-  const [pageSize, setPageSize] = useState(20)
+  const {
+    pageSize,
+    backendPage,
+    onPageChange,
+    onRowsPerPageChange
+  } = usePagination(20)
+
   const [showCreate, setShowCreate] = useState(false)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
   const canManageTeam = user?.role === 'SUPER_ADMIN'
 
   const { data, isLoading, error } = useTeams({
-    page: page + 1, // backend is 1-indexed
+    page: backendPage,
     pageSize
   })
   const { data: teamStats, isLoading: statsLoading } = useTeamStats(timeframe)
@@ -93,11 +99,8 @@ export function TeamsPage() {
           <TeamTable
             teams={teams}
             pagination={pagination}
-            onPageChange={setPage}
-            onRowsPerPageChange={(val) => {
-              setPageSize(val)
-              setPage(0)
-            }}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
             canManageTeam={canManageTeam}
           />
         </Box>

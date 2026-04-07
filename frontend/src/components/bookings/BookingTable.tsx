@@ -6,7 +6,6 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TablePagination,
     TableRow,
     Typography,
 } from '@mui/material'
@@ -15,12 +14,13 @@ import { useUpdateBookingStatus } from '@/hooks/useBookings'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { BookingTableRow } from './BookingTableRow'
+import { TablePagination } from '@/components/shared/TablePagination'
 
 interface Props {
     bookings: Booking[]
     pagination?: Pagination
-    onPageChange?: (page: number) => void
-    onRowsPerPageChange?: (rowsPerPage: number) => void
+    onPageChange: (page: number) => void
+    onRowsPerPageChange: (rowsPerPage: number) => void
     onViewHost?: (userId: string) => void
 }
 
@@ -156,21 +156,11 @@ export function BookingTable({
                     })()}
                 </TableBody>
             </Table>
-            {pagination && onPageChange && onRowsPerPageChange && (
-                <TablePagination
-                    component="div"
-                    count={pagination.total}
-                    page={pagination.page - 1}
-                    onPageChange={(_, nextPage) => onPageChange(nextPage)}
-                    rowsPerPage={pagination.pageSize}
-                    onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
-                    sx={{
-                        borderTop: '1px solid',
-                        borderColor: 'divider',
-                        bgcolor: 'background.paper',
-                    }}
-                />
-            )}
+            <TablePagination
+                pagination={pagination}
+                onPageChange={onPageChange}
+                onRowsPerPageChange={onRowsPerPageChange}
+            />
         </TableContainer>
     )
 }

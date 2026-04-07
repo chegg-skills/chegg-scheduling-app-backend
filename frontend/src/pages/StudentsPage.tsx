@@ -9,18 +9,26 @@ import { StudentTable } from '@/components/students/StudentTable'
 import { useStudents } from '@/hooks/useStudents'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
+import { usePagination } from '@/hooks/usePagination'
+
 export function StudentsPage() {
-    const [page, setPage] = useState(0) // 0-indexed for MUI
-    const [pageSize, setPageSize] = useState(25)
+    const {
+        pageSize,
+        backendPage,
+        onPageChange,
+        onRowsPerPageChange,
+        resetPage
+    } = usePagination(25)
+
     const [searchInput, setSearchInput] = useState('')
     const debouncedSearch = useDebouncedValue(searchInput, 250)
 
     useEffect(() => {
-        setPage(0)
-    }, [debouncedSearch])
+        resetPage()
+    }, [debouncedSearch, resetPage])
 
     const { data, isLoading, error } = useStudents({
-        page: page + 1, // backend is 1-indexed
+        page: backendPage,
         pageSize,
         search: debouncedSearch.trim() || undefined,
     })
@@ -73,11 +81,8 @@ export function StudentsPage() {
                     <StudentTable
                         students={students}
                         pagination={pagination}
-                        onPageChange={setPage}
-                        onRowsPerPageChange={(val) => {
-                            setPageSize(val)
-                            setPage(0)
-                        }}
+                        onPageChange={onPageChange}
+                        onRowsPerPageChange={onRowsPerPageChange}
                     />
                 </Box>
             </Box>
