@@ -15,7 +15,6 @@ type AuthUser = {
 };
 
 const getTokenFromRequest = (req: Request): string | undefined => {
-    
   const reqWithCookies = req as Request & {
     cookies?: Record<string, unknown>;
   };
@@ -32,7 +31,7 @@ const getTokenFromRequest = (req: Request): string | undefined => {
     return undefined;
   }
 
-    const token = authHeader.slice("Bearer ".length).trim();
+  const token = authHeader.slice("Bearer ".length).trim();
   return token.length > 0 ? token : undefined;
 };
 
@@ -40,7 +39,7 @@ const parseJwtPayload = (payload: string | JwtPayload): AuthUser => {
   if (typeof payload === "string") {
     throw new ErrorHandler(
       StatusCodes.UNAUTHORIZED,
-      "Invalid authentication token payload."
+      "Invalid authentication token payload.",
     );
   }
 
@@ -54,7 +53,7 @@ const parseJwtPayload = (payload: string | JwtPayload): AuthUser => {
   ) {
     throw new ErrorHandler(
       StatusCodes.UNAUTHORIZED,
-      "Invalid authentication token payload."
+      "Invalid authentication token payload.",
     );
   }
 
@@ -68,7 +67,7 @@ const parseJwtPayload = (payload: string | JwtPayload): AuthUser => {
 const authenticate = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   return (async () => {
     const token = getTokenFromRequest(req);
@@ -77,8 +76,8 @@ const authenticate = (
       next(
         new ErrorHandler(
           StatusCodes.UNAUTHORIZED,
-          "Authentication token is required."
-        )
+          "Authentication token is required.",
+        ),
       );
       return;
     }
@@ -98,8 +97,8 @@ const authenticate = (
         next(
           new ErrorHandler(
             StatusCodes.UNAUTHORIZED,
-            "Invalid or expired authentication token."
-          )
+            "Invalid or expired authentication token.",
+          ),
         );
         return;
       }
@@ -111,8 +110,8 @@ const authenticate = (
       next(
         new ErrorHandler(
           StatusCodes.UNAUTHORIZED,
-          "Invalid or expired authentication token."
-        )
+          "Invalid or expired authentication token.",
+        ),
       );
     }
   })();
@@ -126,8 +125,8 @@ const authorize = (...allowedRoles: UserRole[]) => {
       next(
         new ErrorHandler(
           StatusCodes.UNAUTHORIZED,
-          "Authentication is required."
-        )
+          "Authentication is required.",
+        ),
       );
       return;
     }
@@ -136,8 +135,8 @@ const authorize = (...allowedRoles: UserRole[]) => {
       next(
         new ErrorHandler(
           StatusCodes.FORBIDDEN,
-          "You do not have permission to perform this action."
-        )
+          "You do not have permission to perform this action.",
+        ),
       );
       return;
     }

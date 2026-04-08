@@ -31,13 +31,13 @@ const corsOptions: cors.CorsOptions = {
 
     callback(null, allowedOrigins.includes(origin));
   },
-  credentials: true,
+  credentials: true, // Allow cookies to be sent with requests
 };
 
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet()); 
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: "10kb" }));
