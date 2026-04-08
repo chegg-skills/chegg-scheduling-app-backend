@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import {
     Prisma,
     UserAvailabilityException,
@@ -5,6 +6,7 @@ import {
 } from '@prisma/client';
 import { prisma } from '../../shared/db/prisma';
 import type { CallerContext } from '../../shared/utils/userUtils';
+import { ErrorHandler } from '../../shared/error/errorhandler';
 import {
     assertCanManageAvailability,
     parseAvailabilityExceptionDate,
@@ -91,9 +93,16 @@ export const removeAvailabilityException = async (
     await assertCanManageAvailability(userId, caller, 'exceptions', 'write');
 
     // Authorization and ownership check is performed at the repository/service boundary
-    await prisma.userAvailabilityException.delete({
-        where: { id: exceptionId, userId },
-    });
+    try {
+        await prisma.userAvailabilityException.delete({
+            where: { id: exceptionId, userId },
+        });
+    } catch (err: any) {
+        if (err.code === 'P2025') {
+            throw new ErrorHandler(StatusCodes.NOT_FOUND, 'Availability exception not found.');
+        }
+        throw err;
+    }
 };
 
 /**

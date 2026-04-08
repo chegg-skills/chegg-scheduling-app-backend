@@ -124,13 +124,15 @@ export const buildSameSessionExclusion = (
     return undefined;
   }
 
-  return options.scheduleSlotId
-    ? { scheduleSlotId: options.scheduleSlotId }
-    : {
-      eventId: options.eventId,
-      startTime,
-      endTime,
-    };
+  return {
+    NOT: options.scheduleSlotId
+      ? { scheduleSlotId: options.scheduleSlotId }
+      : {
+        eventId: options.eventId,
+        startTime,
+        endTime,
+      },
+  };
 };
 
 export const toLocalAvailabilityInfo = (
