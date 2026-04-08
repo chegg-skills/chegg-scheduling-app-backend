@@ -7,6 +7,11 @@ import {
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import {
+  assertStartBeforeEnd,
+  parseDateInput,
+  validateTimeFormat,
+} from "../../shared/utils/validation";
 import type { CallerContext } from "../../shared/utils/userUtils";
 
 export type AvailabilityClient = Prisma.TransactionClient | PrismaClient;
@@ -45,15 +50,7 @@ export const assertCanManageAvailability = (
   }
 };
 
-export const validateTimeFormat = (time: string, fieldName: string): void => {
-  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
-  if (!timeRegex.test(time)) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `${fieldName} must be in HH:mm format.`,
-    );
-  }
-};
+export { validateTimeFormat };
 
 export const validateWeeklySlots = (
   slots: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
@@ -73,24 +70,13 @@ export const validateWeeklySlots = (
     validateTimeFormat(slot.startTime, "startTime");
     validateTimeFormat(slot.endTime, "endTime");
 
-    if (slot.startTime >= slot.endTime) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        "startTime must be before endTime.",
-      );
-    }
+    assertStartBeforeEnd(slot.startTime, slot.endTime);
   }
 };
 
 export const parseAvailabilityExceptionDate = (value: Date | string): Date => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid date provided.");
-  }
-
-  return date;
+  return parseDateInput(value, "date");
 };
-
 export const validateAvailabilityExceptionInput = (payload: {
   isUnavailable: boolean;
   startTime?: string | null;
@@ -104,15 +90,8 @@ export const validateAvailabilityExceptionInput = (payload: {
       validateTimeFormat(payload.endTime, "endTime");
     }
 
-    if (
-      payload.startTime &&
-      payload.endTime &&
-      payload.startTime >= payload.endTime
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        "startTime must be before endTime.",
-      );
+    if (payload.startTime && payload.endTime) {
+      assertStartBeforeEnd(payload.startTime, payload.endTime);
     }
     return;
   }
@@ -127,12 +106,7 @@ export const validateAvailabilityExceptionInput = (payload: {
   validateTimeFormat(payload.startTime, "startTime");
   validateTimeFormat(payload.endTime, "endTime");
 
-  if (payload.startTime >= payload.endTime) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "startTime must be before endTime.",
-    );
-  }
+  assertStartBeforeEnd(payload.startTime, payload.endTime);
 };
 
 export const buildSameSessionExclusion = (

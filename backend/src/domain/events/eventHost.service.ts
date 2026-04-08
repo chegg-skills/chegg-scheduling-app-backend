@@ -37,6 +37,39 @@ const validateEventConfiguration = (
     );
   }
 
+  if (
+    config.sessionLeadershipStrategy &&
+    config.sessionLeadershipStrategy !== SessionLeadershipStrategy.SINGLE_HOST &&
+    !interactionType.supportsSimultaneousCoaches
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      `Interaction type "${interactionType.name}" does not support simultaneous co-hosting.`,
+    );
+  }
+
+  if (
+    config.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD &&
+    !config.fixedLeadHostId
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "FIXED_LEAD events require a fixedLeadHostId.",
+    );
+  }
+
+  if (
+    config.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD &&
+    config.fixedLeadHostId &&
+    config.hostUserIds?.length &&
+    !config.hostUserIds.includes(config.fixedLeadHostId)
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "The fixed lead coach must be one of the event's assigned coaches.",
+    );
+  }
+
   let requiredMinHosts = interactionType.minHosts;
   if (config.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN) {
     requiredMinHosts = Math.max(requiredMinHosts, 2);

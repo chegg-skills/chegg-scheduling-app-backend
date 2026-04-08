@@ -1,11 +1,13 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { StatusCodes } from "http-status-codes";
-import { ErrorHandler } from "../../shared/error/errorhandler";
 import { prisma } from "../../shared/db/prisma";
-import { SALT_ROUNDS, type SafeUser, normalizeEmail, validateTimezone, toSafeUser } from "../../shared/utils/userUtils";
+import { ErrorHandler } from "../../shared/error/errorhandler";
+import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
+import { assertMinimumLength } from "../../shared/utils/validation";
+import { SALT_ROUNDS, type SafeUser, normalizeEmail, validateTimezone, toSafeUser } from "../../shared/utils/userUtils";
 
 const MAX_FAILED_LOGIN_ATTEMPTS = Number(
 	process.env.MAX_FAILED_LOGIN_ATTEMPTS ?? 5
@@ -51,12 +53,11 @@ const register = async (
 		);
 	}
 
-	if (password.length < 8) {
-		throw new ErrorHandler(
-			StatusCodes.BAD_REQUEST,
-			"Password must be at least 8 characters long."
-		);
-	}
+	assertMinimumLength(
+		password,
+		8,
+		"Password must be at least 8 characters long."
+	);
 
 	const normalizedEmail = normalizeEmail(email);
 
@@ -104,17 +105,12 @@ const register = async (
 			token: buildAuthToken(safeUser),
 		};
 	} catch (error) {
-		if (
-			error instanceof Prisma.PrismaClientKnownRequestError &&
-			error.code === "P2002"
-		) {
-			throw new ErrorHandler(
-				StatusCodes.CONFLICT,
-				"A user with this email already exists."
-			);
-		}
-
-		throw error;
+		return rethrowPrismaError(error, {
+			P2002: {
+				status: StatusCodes.CONFLICT,
+				message: "A user with this email already exists.",
+			},
+		});
 	}
 };
 

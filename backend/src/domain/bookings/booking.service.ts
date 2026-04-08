@@ -1,13 +1,7 @@
-import { BookingStatus, Prisma, SessionLeadershipStrategy } from "@prisma/client";
-import {
-    AssignmentContext,
-    getAssignmentStrategy,
-    HostCandidate,
-} from "./assignment.service";
+import { BookingStatus } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { isHostAvailable } from "../availability/availability.service";
 import {
     assertBookingNoticeSatisfied,
     assertBookingWeekdayAllowed,
@@ -35,6 +29,10 @@ import {
     type ListBookingsFilters,
     type SafeBooking,
 } from "./booking.shared";
+import {
+    resolveBookingHostSelection,
+} from "./bookingAssignmentResolver.service";
+import type { HostCandidate } from "./assignment.service";
 
 export { bookingInclude, type SafeBooking } from "./booking.shared";
 
@@ -57,99 +55,28 @@ const getBookableEvent = async (
     return event;
 };
 
-const resolveAssignedHost = async ({
-    preferredHostId,
-    activeHosts,
-    event,
-    start,
-    end,
-    allowSharedSessionOverlap,
-    matchedScheduleSlotId,
-    tx,
-}: {
-    preferredHostId?: string;
-    activeHosts: HostCandidate[];
-    event: BookableEvent;
-    start: Date;
-    end: Date;
-    allowSharedSessionOverlap: boolean;
-    matchedScheduleSlotId?: string | null;
-    tx: Prisma.TransactionClient;
-}): Promise<{ assignedHostId: string; meetingJoinUrl: string | null; coHostUserIds: string[] }> => {
-    // 1. Handle Co-hosting Strategy
-    const leadershipStrategy = event.sessionLeadershipStrategy;
+const resolveBookingWindow = (event: BookableEvent, start: Date) => {
+    const end = new Date(start.getTime() + event.durationSeconds * 1000);
+    const schedulingContext = buildSchedulingContext(event);
 
-    if (leadershipStrategy === SessionLeadershipStrategy.SINGLE_HOST) {
-        // Traditional single-host logic
-        if (preferredHostId) {
-            const host = activeHosts.find((h) => h.hostUserId === preferredHostId);
-            if (!host) throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Specified coach is not eligible.");
+    assertBookingWeekdayAllowed(schedulingContext.allowedWeekdays, start);
+    assertBookingNoticeSatisfied(schedulingContext.minimumNoticeMinutes, start);
 
-            const available = await isHostAvailable(preferredHostId, start, end, {
-                ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
-                eventId: allowSharedSessionOverlap ? event.id : undefined,
-                scheduleSlotId: allowSharedSessionOverlap ? matchedScheduleSlotId ?? null : undefined,
-                tx,
-            });
+    return { end, schedulingContext };
+};
 
-            if (!available) throw new ErrorHandler(StatusCodes.CONFLICT, "Coach is not available.");
+const resolveSlotContext = async (event: BookableEvent, start: Date) => {
+    const matchedScheduleSlot = await resolveMatchingScheduleSlot(event.id, start);
+    const allowSharedSessionOverlap = event.bookingMode === "FIXED_SLOTS";
 
-            return { assignedHostId: preferredHostId, meetingJoinUrl: host.hostUser.zoomIsvLink ?? null, coHostUserIds: [] };
-        }
-
-        const strategyImplementation = getAssignmentStrategy(event.assignmentStrategy);
-        const context: AssignmentContext = { prisma: tx, eventId: event.id, start, end, bookingMode: event.bookingMode, allowSharedSessionOverlap, matchedScheduleSlotId };
-        const result = await strategyImplementation.resolveHost(activeHosts, context);
-        if (!result.assignedHostId) throw new ErrorHandler(StatusCodes.CONFLICT, "No available coaches found.");
-
-        return { assignedHostId: result.assignedHostId, meetingJoinUrl: result.meetingJoinUrl, coHostUserIds: [] };
+    if (allowSharedSessionOverlap && !matchedScheduleSlot) {
+        throw new ErrorHandler(
+            StatusCodes.CONFLICT,
+            "The requested time does not match any predefined slot for this event.",
+        );
     }
 
-    // 2. Collaborative Sessions (FIXED_LEAD or ROTATING_LEAD)
-    let leadHostId: string | undefined;
-    let meetingUrl: string | null = null;
-
-    if (leadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD) {
-        leadHostId = event.fixedLeadHostId ?? undefined;
-        if (!leadHostId) throw new ErrorHandler(StatusCodes.INTERNAL_SERVER_ERROR, "Event configured for FIXED_LEAD but no lead coach is set.");
-
-        const host = activeHosts.find((h) => h.hostUserId === leadHostId);
-        if (!host) throw new ErrorHandler(StatusCodes.BAD_REQUEST, "The fixed lead coach is no longer eligible for this event.");
-        meetingUrl = host.hostUser.zoomIsvLink ?? null;
-    } else {
-        // ROTATING_LEAD: used the standard assignment strategy to pick the lead
-        const strategyImplementation = getAssignmentStrategy(event.assignmentStrategy);
-        const context: AssignmentContext = { prisma: tx, eventId: event.id, start, end, bookingMode: event.bookingMode, allowSharedSessionOverlap, matchedScheduleSlotId };
-        const result = await strategyImplementation.resolveHost(activeHosts, context);
-        leadHostId = result.assignedHostId;
-        meetingUrl = result.meetingJoinUrl;
-    }
-
-    if (!leadHostId) {
-        throw new ErrorHandler(StatusCodes.CONFLICT, "Could not resolve a lead coach for this collaborative session.");
-    }
-
-    // All available coaches in the roster (except the lead) become co-hosts
-    const potentialCoHosts = activeHosts.filter((h) => h.hostUserId !== leadHostId);
-    const coHostUserIds: string[] = [];
-
-    for (const h of potentialCoHosts) {
-        const available = await isHostAvailable(h.hostUserId, start, end, {
-            ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
-            eventId: allowSharedSessionOverlap ? event.id : undefined,
-            scheduleSlotId: allowSharedSessionOverlap ? matchedScheduleSlotId ?? null : undefined,
-            tx,
-        });
-        if (available) {
-            coHostUserIds.push(h.hostUserId);
-        }
-    }
-
-    return {
-        assignedHostId: leadHostId,
-        meetingJoinUrl: meetingUrl,
-        coHostUserIds,
-    };
+    return { matchedScheduleSlot, allowSharedSessionOverlap };
 };
 
 const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> => {
@@ -176,27 +103,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
 
     const start = parseBookingStartTime(startTime);
     const event = await getBookableEvent(teamId, eventId);
-    const end = new Date(start.getTime() + event.durationSeconds * 1000);
-    const schedulingContext = buildSchedulingContext(event);
-
-    assertBookingWeekdayAllowed(
-        schedulingContext.allowedWeekdays,
-        start,
-    );
-    assertBookingNoticeSatisfied(
-        schedulingContext.minimumNoticeMinutes,
-        start,
-    );
-
-    const matchedScheduleSlot = await resolveMatchingScheduleSlot(event.id, start);
-    const allowSharedSessionOverlap = event.bookingMode === "FIXED_SLOTS";
-
-    if (allowSharedSessionOverlap && !matchedScheduleSlot) {
-        throw new ErrorHandler(
-            StatusCodes.CONFLICT,
-            "The requested time does not match any predefined slot for this event.",
-        );
-    }
+    const { end, schedulingContext } = resolveBookingWindow(event, start);
+    const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
     const activeHosts = event.hosts as HostCandidate[];
 
     if (activeHosts.length === 0) {
@@ -205,7 +113,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
 
     // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
     return (prisma.$transaction(async (tx) => {
-        const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveAssignedHost({
+        const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveBookingHostSelection({
             preferredHostId,
             activeHosts,
             event,

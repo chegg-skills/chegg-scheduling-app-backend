@@ -1,8 +1,6 @@
 import {
   AssignmentStrategy,
   Prisma,
-  SessionLeadershipStrategy,
-  type EventInteractionType as EventInteractionTypeModel,
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
@@ -10,20 +8,9 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { resolvePagination } from "../../shared/utils/pagination";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import type { CallerContext } from "../../shared/utils/userUtils";
-import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   eventInclude,
-  getActiveInteractionType,
-  getActiveOffering,
   getManagedEvent,
-  isValidAssignmentStrategy,
-  isValidLocationType,
-  isValidSessionLeadershipStrategy,
-  normalizeOptionalString,
-  normalizeRequiredString,
-  parseDurationSeconds,
-  parseOptionalEnum,
-  parseRequiredEnum,
   type CreateEventInput,
   type ListEventsOptions,
   type SafeEvent,
@@ -44,7 +31,6 @@ import {
   removeEventHost,
   replaceEventHosts,
   syncRoutingState,
-  validateEventConfiguration,
 } from "./eventHost.service";
 import {
   assertBookingNoticeSatisfied,
@@ -54,65 +40,55 @@ import {
   deleteEventScheduleSlot,
   getEffectiveParticipantPolicy,
   listEventScheduleSlots,
-  resolveEventSchedulingConfig,
   resolveMatchingScheduleSlot,
   updateEventScheduleSlot,
 } from "./eventScheduling.service";
+import {
+  buildDuplicateEventData,
+  buildEventCreateData,
+  buildEventUpdateData,
+  resolveCreateEventContext,
+  resolveUpdateEventContext,
+} from "./eventMutation.service";
 
+const listEventsByQuery = async (
+  where: Prisma.EventWhereInput,
+  options: ListEventsOptions = {},
+) => {
+  const { page, pageSize, skip } = resolvePagination(options);
 
-const buildCreateEventData = (
-  payload: CreateEventInput,
-  callerId: string,
-  teamId: string,
-  offeringId: string,
-  interactionTypeId: string,
-  assignmentStrategy: AssignmentStrategy,
-  sessionLeadershipStrategy: SessionLeadershipStrategy,
-  fixedLeadHostId: string | null,
-  schedulingConfig: ReturnType<typeof resolveEventSchedulingConfig>,
-): Prisma.EventCreateInput => {
-  const name = normalizeRequiredString(payload.name, "name");
-  const durationSeconds = parseDurationSeconds(payload.durationSeconds);
-  const locationType = parseRequiredEnum(
-    payload.locationType,
-    "locationType",
-    isValidLocationType,
-  );
-  const locationValue = normalizeRequiredString(
-    payload.locationValue,
-    "locationValue",
-  );
+  const [events, total] = await prisma.$transaction([
+    prisma.event.findMany({
+      where,
+      include: eventInclude,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.event.count({ where }),
+  ]);
 
-  const data: Prisma.EventCreateInput = {
-    name,
-    publicBookingSlug: createPublicBookingSlug(name, "event"),
-    description: normalizeOptionalString(payload.description, "description"),
-    offering: { connect: { id: offeringId } },
-    interactionType: { connect: { id: interactionTypeId } },
-    assignmentStrategy,
-    durationSeconds,
-    locationType,
-    locationValue,
-    isActive: payload.isActive ?? true,
-    sessionLeadershipStrategy,
-    fixedLeadHostId,
-    team: { connect: { id: teamId } },
-    createdBy: { connect: { id: callerId } },
-    updatedBy: { connect: { id: callerId } },
-    ...schedulingConfig,
+  return {
+    events,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
   };
+};
 
-  if (fixedLeadHostId) {
-    data.hosts = {
-      create: {
-        hostUserId: fixedLeadHostId,
-        hostOrder: 1,
-        isActive: true,
-      },
-    };
+const assertRoundRobinHostCount = (event: SafeEvent): void => {
+  if (
+    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+    event.hosts.length < 2
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "ROUND_ROBIN events require at least two hosts.",
+    );
   }
-
-  return data;
 };
 
 const createEvent = async (
@@ -122,51 +98,15 @@ const createEvent = async (
 ): Promise<SafeEvent> => {
   await getManagedTeam(teamId, caller);
 
-  const offeringId = normalizeRequiredString(payload.offeringId, "offeringId");
-  const interactionTypeId = normalizeRequiredString(
-    payload.interactionTypeId,
-    "interactionTypeId",
-  );
-
-  const offering = await getActiveOffering(offeringId);
-  const interactionType = await getActiveInteractionType(interactionTypeId);
-
-  const strategy = parseOptionalEnum(
-    payload.assignmentStrategy,
-    "assignmentStrategy",
-    isValidAssignmentStrategy,
-  ) ?? AssignmentStrategy.DIRECT;
-
-  validateEventConfiguration(interactionType, {
-    assignmentStrategy: strategy,
-    hostCount: 0, // No hosts yet on create
-  });
-
-  const schedulingConfig = resolveEventSchedulingConfig(
-    payload,
-    interactionType,
-  );
-
-  const sessionLeadershipStrategy = parseOptionalEnum(
-    payload.sessionLeadershipStrategy,
-    "sessionLeadershipStrategy",
-    isValidSessionLeadershipStrategy,
-  ) ?? (interactionType.supportsSimultaneousCoaches ? SessionLeadershipStrategy.ROTATING_LEAD : SessionLeadershipStrategy.SINGLE_HOST);
-
-  const fixedLeadHostId = normalizeOptionalString(payload.fixedLeadHostId, "fixedLeadHostId");
+  const context = await resolveCreateEventContext(payload);
 
   return prisma.event.create({
-    data: buildCreateEventData(
-      { ...payload, assignmentStrategy: strategy },
-      caller.id,
+    data: buildEventCreateData({
+      payload,
+      callerId: caller.id,
       teamId,
-      offering.id,
-      interactionType.id,
-      strategy,
-      sessionLeadershipStrategy,
-      fixedLeadHostId,
-      schedulingConfig,
-    ),
+      context,
+    }),
     include: eventInclude,
   });
 };
@@ -186,28 +126,7 @@ const listTeamEvents = async (
 }> => {
   await getManagedTeam(teamId, caller, { allowInactive: true });
 
-  const { page, pageSize, skip } = resolvePagination(options);
-
-  const [events, total] = await prisma.$transaction([
-    prisma.event.findMany({
-      where: { teamId },
-      include: eventInclude,
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: pageSize,
-    }),
-    prisma.event.count({ where: { teamId } }),
-  ]);
-
-  return {
-    events,
-    pagination: {
-      page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    },
-  };
+  return listEventsByQuery({ teamId }, options);
 };
 
 const readEvent = async (
@@ -223,114 +142,18 @@ const updateEvent = async (
   caller: CallerContext,
 ): Promise<SafeEvent> => {
   const existingEvent = await getManagedEvent(eventId, caller);
-
-  const updateData: Prisma.EventUpdateInput = {
-    updatedBy: { connect: { id: caller.id } },
-  };
-
-  if (payload.name !== undefined) {
-    const normalizedName = normalizeRequiredString(payload.name, "name");
-    updateData.name = normalizedName;
-
-    if (!existingEvent.publicBookingSlug) {
-      updateData.publicBookingSlug = createPublicBookingSlug(normalizedName, "event");
-    }
-  }
-
-  if (payload.description !== undefined) {
-    updateData.description = normalizeOptionalString(payload.description, "description");
-  }
-
-  const nextOfferingId =
-    payload.offeringId !== undefined
-      ? normalizeRequiredString(payload.offeringId, "offeringId")
-      : existingEvent.offeringId;
-
-  const nextInteractionTypeId =
-    payload.interactionTypeId !== undefined
-      ? normalizeRequiredString(payload.interactionTypeId, "interactionTypeId")
-      : existingEvent.interactionTypeId;
-
-  const offering = await getActiveOffering(nextOfferingId);
-  const interactionType = await getActiveInteractionType(nextInteractionTypeId);
-
-  updateData.offering = { connect: { id: offering.id } };
-  updateData.interactionType = { connect: { id: interactionType.id } };
-
-  if (payload.assignmentStrategy !== undefined) {
-    updateData.assignmentStrategy = parseOptionalEnum(
-      payload.assignmentStrategy,
-      "assignmentStrategy",
-      isValidAssignmentStrategy,
-    );
-  }
-
-  const nextAssignmentStrategy =
-    (updateData.assignmentStrategy as AssignmentStrategy | undefined) ??
-    existingEvent.assignmentStrategy;
-
-  validateEventConfiguration(interactionType, {
-    assignmentStrategy: nextAssignmentStrategy,
-    hostCount: existingEvent.hosts.length,
-  });
-
-  const schedulingConfig = resolveEventSchedulingConfig(
-    payload,
-    interactionType,
-    existingEvent,
-  );
-
-  Object.assign(updateData, schedulingConfig);
-
-  if (payload.sessionLeadershipStrategy !== undefined) {
-    updateData.sessionLeadershipStrategy = parseOptionalEnum(
-      payload.sessionLeadershipStrategy,
-      "sessionLeadershipStrategy",
-      isValidSessionLeadershipStrategy,
-    );
-  }
-
-  if (payload.fixedLeadHostId !== undefined) {
-    updateData.fixedLeadHostId = normalizeOptionalString(payload.fixedLeadHostId, "fixedLeadHostId");
-  }
-
-  if (payload.durationSeconds !== undefined) {
-    updateData.durationSeconds = parseDurationSeconds(payload.durationSeconds);
-  }
-
-  const nextLocationType =
-    payload.locationType !== undefined
-      ? parseOptionalEnum(
-        payload.locationType,
-        "locationType",
-        isValidLocationType,
-      )
-      : existingEvent.locationType;
-
-  const nextLocationValue =
-    payload.locationValue !== undefined
-      ? normalizeRequiredString(payload.locationValue, "locationValue")
-      : existingEvent.locationValue;
-
-  if (!nextLocationValue) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "locationValue is required.",
-    );
-  }
-
-  updateData.locationType = nextLocationType;
-  updateData.locationValue = nextLocationValue;
-
-  if (payload.isActive !== undefined) {
-    updateData.isActive = Boolean(payload.isActive);
-  }
+  const context = await resolveUpdateEventContext({ payload, existingEvent });
 
   let updatedEvent: SafeEvent;
   try {
     updatedEvent = await prisma.event.update({
       where: { id: eventId },
-      data: updateData,
+      data: buildEventUpdateData({
+        payload,
+        existingEvent,
+        callerId: caller.id,
+        context,
+      }),
       include: eventInclude,
     });
   } catch (error) {
@@ -338,15 +161,7 @@ const updateEvent = async (
     throw error;
   }
 
-  if (
-    updatedEvent.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
-    updatedEvent.hosts.length < 2
-  ) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "ROUND_ROBIN events require at least two hosts.",
-    );
-  }
+  assertRoundRobinHostCount(updatedEvent);
 
   await prisma.$transaction(async (tx) => {
     await syncRoutingState(
@@ -394,32 +209,12 @@ const duplicateEvent = async (
 ): Promise<SafeEvent> => {
   const sourceEvent = await getManagedEvent(eventId, caller);
 
-  const duplicateData: Prisma.EventCreateInput = {
-    name: `Copy of ${sourceEvent.name}`,
-    publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
-    description: sourceEvent.description,
-    offering: { connect: { id: sourceEvent.offeringId } },
-    interactionType: { connect: { id: sourceEvent.interactionTypeId } },
-    assignmentStrategy: sourceEvent.assignmentStrategy,
-    durationSeconds: sourceEvent.durationSeconds,
-    locationType: sourceEvent.locationType,
-    locationValue: sourceEvent.locationValue,
-    isActive: false, // Default to inactive for the copy
-    team: { connect: { id: sourceEvent.teamId } },
-    createdBy: { connect: { id: caller.id } },
-    updatedBy: { connect: { id: caller.id } },
-    bookingMode: sourceEvent.bookingMode,
-    allowedWeekdays: sourceEvent.allowedWeekdays,
-    minimumNoticeMinutes: sourceEvent.minimumNoticeMinutes,
-    minParticipantCount: sourceEvent.minParticipantCount,
-    maxParticipantCount: sourceEvent.maxParticipantCount,
-    sessionLeadershipStrategy: sourceEvent.sessionLeadershipStrategy,
-    fixedLeadHostId: sourceEvent.fixedLeadHostId,
-  };
-
   return prisma.$transaction(async (tx) => {
     const newEvent = await tx.event.create({
-      data: duplicateData,
+      data: buildDuplicateEventData({
+        sourceEvent,
+        callerId: caller.id,
+      }),
       include: eventInclude,
     });
 
@@ -462,27 +257,7 @@ const listAllEvents = async (
     totalPages: number;
   };
 }> => {
-  const { page, pageSize, skip } = resolvePagination(options);
-
-  const [events, total] = await prisma.$transaction([
-    prisma.event.findMany({
-      include: eventInclude,
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: pageSize,
-    }),
-    prisma.event.count(),
-  ]);
-
-  return {
-    events,
-    pagination: {
-      page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    },
-  };
+  return listEventsByQuery({}, options);
 };
 
 export {

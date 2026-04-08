@@ -1,4 +1,4 @@
-import { BookingStatus, Prisma, SessionLeadershipStrategy, EventBookingMode } from "@prisma/client";
+import { BookingStatus, Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { normalizeEmail } from "../../shared/utils/userUtils";
@@ -173,8 +173,8 @@ export const buildSchedulingContext = (
     minParticipantCount: event.minParticipantCount,
     maxParticipantCount: event.maxParticipantCount,
     interactionType: event.interactionType,
-    sessionLeadershipStrategy: (event as any).sessionLeadershipStrategy,
-    fixedLeadHostId: (event as any).fixedLeadHostId,
+    sessionLeadershipStrategy: event.sessionLeadershipStrategy,
+    fixedLeadHostId: event.fixedLeadHostId,
 });
 
 export const buildBookingListWhere = (
