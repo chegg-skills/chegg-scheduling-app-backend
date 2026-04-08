@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { requireTrimmedString } from "../../shared/utils/validation";
 
 const publicTeamSelect = {
     id: true,
@@ -38,11 +39,7 @@ const publicCoachSelect = {
 } as const;
 
 const normalizeSlug = (slug: string, label: string): string => {
-    const normalizedSlug = slug?.trim();
-    if (!normalizedSlug) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, `${label} is required.`);
-    }
-    return normalizedSlug;
+    return requireTrimmedString(slug, label, `${label} is required.`);
 };
 
 /**

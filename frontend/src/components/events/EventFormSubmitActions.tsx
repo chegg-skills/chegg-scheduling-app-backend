@@ -1,26 +1,30 @@
+import { useFormContext } from 'react-hook-form'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
-import type { UseFormRegister } from 'react-hook-form'
 import { Button } from '@/components/shared/Button'
 import type { EventFormValues } from './eventFormSchema'
 
 interface EventFormSubmitActionsProps {
-    register: UseFormRegister<EventFormValues>
     isPending: boolean
     isEdit: boolean
     onCancel?: () => void
     defaultActive?: boolean
 }
 
+/** 
+ * Handles form submission and active/inactive toggle.
+ * Consumes the EventForm context for the register function.
+ */
 export function EventFormSubmitActions({
-    register,
     isPending,
     isEdit,
     onCancel,
     defaultActive = true,
 }: EventFormSubmitActionsProps) {
+    const { register } = useFormContext<EventFormValues>()
+
     return (
         <Stack spacing={4}>
             <Box sx={{ py: 1 }}>

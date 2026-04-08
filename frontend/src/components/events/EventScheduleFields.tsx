@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -9,24 +9,23 @@ import type { EventFormValues } from './eventFormSchema'
 import { getAllowedAssignmentStrategies, getDefaultEventAssignmentStrategy } from './eventCapabilityRules'
 import type { Event, EventInteractionType, TeamMember } from '@/types'
 
-interface Props {
-  register: UseFormRegister<EventFormValues>
-  errors: FieldErrors<EventFormValues>
-  watch: UseFormWatch<EventFormValues>
+interface EventScheduleFieldsProps {
   selectedInteractionType?: EventInteractionType | null
   event?: Event
   teamMembers?: TeamMember[]
 }
 
-/** Handles duration and event-level assignment behavior within the interaction type envelope. */
+/** 
+ * Handles duration and event-level assignment behavior.
+ * Consumes the EventForm context for core form state.
+ */
 export function EventScheduleFields({
-  register,
-  errors,
-  watch,
   selectedInteractionType,
   event,
   teamMembers,
-}: Props) {
+}: EventScheduleFieldsProps) {
+  const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
+
   const assignmentOptions = getAllowedAssignmentStrategies(selectedInteractionType)
   const selectedStrategy = watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(selectedInteractionType)
   const canChooseStrategy = assignmentOptions.length > 1

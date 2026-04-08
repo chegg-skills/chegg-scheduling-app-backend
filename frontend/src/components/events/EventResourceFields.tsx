@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
@@ -10,14 +10,12 @@ import { useInteractionTypes } from '@/hooks/useInteractionTypes'
 import { formatCapacityRange } from './eventCapabilityRules'
 import type { EventFormValues } from './eventFormSchema'
 
-interface Props {
-  register: UseFormRegister<EventFormValues>
-  errors: FieldErrors<EventFormValues>
-  watch: UseFormWatch<EventFormValues>
-}
-
-/** Handles offeringId and interactionTypeId */
-export function EventResourceFields({ register, errors, watch }: Props) {
+/** 
+ * Handles offeringId and interactionTypeId fields.
+ * Consumes the EventForm context.
+ */
+export function EventResourceFields() {
+  const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
   const { data: offeringsData } = useEventOfferings()
   const { data: interactionData } = useInteractionTypes()
 

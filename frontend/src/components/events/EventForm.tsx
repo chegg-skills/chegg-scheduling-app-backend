@@ -1,3 +1,4 @@
+import { FormProvider } from 'react-hook-form'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
@@ -26,6 +27,11 @@ interface EventFormProps {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/**
+ * Main form component for creating or editing Events.
+ * Utilizes FormProvider to share form state with child field components,
+ * eliminating prop-drilling of register, errors, and control.
+ */
 export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps) {
   const { data: teamMembersData } = useTeamMembers(teamId)
   const teamMembers = teamMembersData?.members ?? []
@@ -41,14 +47,6 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
     isEdit,
   } = useEventForm({ teamId, event, onSuccess })
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    control,
-    formState: { errors },
-  } = form
-
   const sectionLabelStyle = {
     variant: 'overline',
     color: 'text.secondary',
@@ -57,72 +55,66 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
 
   return (
     <Box sx={{ maxWidth: 560, mx: 'auto', width: '100%' }}>
-      <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={4}>
-        {error && <ErrorAlert message={extractApiError(error)} />}
+      <FormProvider {...form}>
+        <Stack component="form" onSubmit={form.handleSubmit(onSubmit)} noValidate spacing={4}>
+          {error && <ErrorAlert message={extractApiError(error)} />}
 
-        <Stack spacing={2}>
-          <Typography {...sectionLabelStyle}>Basic Info</Typography>
-          <EventBasicFields register={register} errors={errors} />
-        </Stack>
+          <Stack spacing={2}>
+            <Typography {...sectionLabelStyle}>Basic Info</Typography>
+            <EventBasicFields />
+          </Stack>
 
-        <Divider />
+          <Divider />
 
-        <Stack spacing={2}>
-          <Typography {...sectionLabelStyle}>Resources</Typography>
-          <EventResourceFields register={register} errors={errors} watch={watch} />
-        </Stack>
+          <Stack spacing={2}>
+            <Typography {...sectionLabelStyle}>Resources</Typography>
+            <EventResourceFields />
+          </Stack>
 
-        <Divider />
+          <Divider />
 
-        <Stack spacing={2}>
-          <Typography {...sectionLabelStyle}>Location</Typography>
-          <EventLocationFields register={register} errors={errors} watch={watch} />
-        </Stack>
+          <Stack spacing={2}>
+            <Typography {...sectionLabelStyle}>Location</Typography>
+            <EventLocationFields />
+          </Stack>
 
-        <Divider />
+          <Divider />
 
-        <Stack spacing={2}>
-          <Typography {...sectionLabelStyle}>Schedule & Assignment</Typography>
-          <EventScheduleFields
-            register={register}
-            errors={errors}
-            watch={watch}
+          <Stack spacing={2}>
+            <Typography {...sectionLabelStyle}>Schedule & Assignment</Typography>
+            <EventScheduleFields
+              selectedInteractionType={selectedInteractionType}
+              event={event}
+              teamMembers={teamMembers}
+            />
+          </Stack>
+
+          <Divider />
+
+          <Stack spacing={2}>
+            <Typography {...sectionLabelStyle}>Booking Rules & Policy</Typography>
+            <EventSchedulingPolicyFields
+              selectedInteractionType={selectedInteractionType}
+            />
+          </Stack>
+
+          <EventAssignmentAlert
             selectedInteractionType={selectedInteractionType}
-            event={event}
-            teamMembers={teamMembers}
+            requiredHostCount={requiredHostCount}
+            selectedAssignmentStrategy={selectedAssignmentStrategy}
+            bookingModeSelection={bookingModeSelection}
+          />
+
+          <Divider />
+
+          <EventFormSubmitActions
+            isPending={isPending}
+            isEdit={isEdit}
+            onCancel={onCancel}
+            defaultActive={event?.isActive ?? true}
           />
         </Stack>
-
-        <Divider />
-
-        <Stack spacing={2}>
-          <Typography {...sectionLabelStyle}>Booking Rules & Policy</Typography>
-          <EventSchedulingPolicyFields
-            register={register}
-            errors={errors}
-            watch={watch}
-            control={control}
-            selectedInteractionType={selectedInteractionType}
-          />
-        </Stack>
-
-        <EventAssignmentAlert
-          selectedInteractionType={selectedInteractionType}
-          requiredHostCount={requiredHostCount}
-          selectedAssignmentStrategy={selectedAssignmentStrategy}
-          bookingModeSelection={bookingModeSelection}
-        />
-
-        <Divider />
-
-        <EventFormSubmitActions
-          register={register}
-          isPending={isPending}
-          isEdit={isEdit}
-          onCancel={onCancel}
-          defaultActive={event?.isActive ?? true}
-        />
-      </Stack>
+      </FormProvider>
     </Box>
   )
 }

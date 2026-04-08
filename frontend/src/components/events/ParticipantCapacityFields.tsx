@@ -1,4 +1,4 @@
-import { Controller, type Control, type FieldErrors, type UseFormWatch } from 'react-hook-form'
+import { Controller, useFormContext } from 'react-hook-form'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/FormField'
@@ -8,18 +8,17 @@ import type { EventFormValues } from './eventFormSchema'
 import type { EventInteractionType } from '@/types'
 
 interface ParticipantCapacityFieldsProps {
-    control: Control<EventFormValues>
-    errors: FieldErrors<EventFormValues>
-    watch: UseFormWatch<EventFormValues>
     selectedInteractionType?: EventInteractionType | null
 }
 
+/** 
+ * Handles participant capacity limits.
+ * Consumes the EventForm context.
+ */
 export function ParticipantCapacityFields({
-    control,
-    errors,
-    watch,
     selectedInteractionType,
 }: ParticipantCapacityFieldsProps) {
+    const { control, watch, formState: { errors } } = useFormContext<EventFormValues>()
     const currentMinParticipants = watch('minParticipantCount')
     const participantRange = selectedInteractionType
         ? formatCapacityRange(selectedInteractionType.minParticipants, selectedInteractionType.maxParticipants)

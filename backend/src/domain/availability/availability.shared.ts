@@ -8,6 +8,9 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import {
+  toDateOnlyString,
+} from "../../shared/utils/date";
+import {
   assertStartBeforeEnd,
   parseDateInput,
   validateTimeFormat,
@@ -178,8 +181,7 @@ export const findAvailabilityException = (
   dateString: string,
 ): UserAvailabilityException | undefined => {
   return exceptions.find((exception) => {
-    const exceptionDate = exception.date.toISOString().split("T")[0];
-    return exceptionDate === dateString;
+    return toDateOnlyString(exception.date) === dateString;
   });
 };
 
