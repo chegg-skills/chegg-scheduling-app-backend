@@ -19,4 +19,7 @@ export const eventOfferingsApi = {
 
   update: (offeringId: string, data: UpdateEventOfferingDto) =>
     apiClient.patch<ApiResponse<EventOffering>>(`/event-offerings/${offeringId}`, data),
+
+  delete: (offeringId: string) =>
+    apiClient.delete<ApiResponse<EventOffering>>(`/event-offerings/${offeringId}`),
 }

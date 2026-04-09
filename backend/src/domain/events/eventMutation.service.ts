@@ -43,28 +43,37 @@ const resolveSessionLeadershipConfig = ({
   ResolvedEventMutationContext,
   "sessionLeadershipStrategy" | "fixedLeadHostId"
 > => {
-  const fallbackLeadershipStrategy: SessionLeadershipStrategy =
-    existingEvent?.sessionLeadershipStrategy ??
-    (interactionType.supportsSimultaneousCoaches
-      ? SessionLeadershipStrategy.ROTATING_LEAD
-      : SessionLeadershipStrategy.SINGLE_HOST);
+  // 1. Initial Default (The Baseline)
+  let strategy: SessionLeadershipStrategy = interactionType.supportsSimultaneousCoaches
+    ? SessionLeadershipStrategy.ROTATING_LEAD
+    : SessionLeadershipStrategy.SINGLE_HOST;
 
-  const sessionLeadershipStrategy: SessionLeadershipStrategy =
-    payload.sessionLeadershipStrategy !== undefined
-      ? parseOptionalEnum(
-          payload.sessionLeadershipStrategy,
-          "sessionLeadershipStrategy",
-          isValidSessionLeadershipStrategy,
-        ) ?? fallbackLeadershipStrategy
-      : fallbackLeadershipStrategy;
+  // 2. Override with DB Value (If we are updating)
+  if (existingEvent) {
+    strategy = existingEvent.sessionLeadershipStrategy;
+  }
 
-  const fixedLeadHostId =
-    payload.fixedLeadHostId !== undefined
-      ? normalizeOptionalString(payload.fixedLeadHostId, "fixedLeadHostId")
-      : existingEvent?.fixedLeadHostId ?? null;
+  // 3. Final Override with User Input (The highest priority)
+  if (payload.sessionLeadershipStrategy !== undefined) {
+    const userInput = parseOptionalEnum(
+      payload.sessionLeadershipStrategy,
+      "sessionLeadershipStrategy",
+      isValidSessionLeadershipStrategy,
+    );
+    if (userInput) {
+      strategy = userInput;
+    }
+  }
+
+  // --- Same logic for the Lead Host ---
+  let fixedLeadHostId = existingEvent?.fixedLeadHostId ?? null;
+
+  if (payload.fixedLeadHostId !== undefined) {
+    fixedLeadHostId = normalizeOptionalString(payload.fixedLeadHostId, "fixedLeadHostId");
+  }
 
   return {
-    sessionLeadershipStrategy,
+    sessionLeadershipStrategy: strategy,
     fixedLeadHostId,
   };
 };
@@ -139,10 +148,10 @@ export const resolveUpdateEventContext = async ({
   const assignmentStrategy: AssignmentStrategy =
     payload.assignmentStrategy !== undefined
       ? parseOptionalEnum(
-          payload.assignmentStrategy,
-          "assignmentStrategy",
-          isValidAssignmentStrategy,
-        ) ?? existingEvent.assignmentStrategy
+        payload.assignmentStrategy,
+        "assignmentStrategy",
+        isValidAssignmentStrategy,
+      ) ?? existingEvent.assignmentStrategy
       : existingEvent.assignmentStrategy;
 
   const { sessionLeadershipStrategy, fixedLeadHostId } =

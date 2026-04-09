@@ -37,3 +37,11 @@ export function useUpdateEventOffering() {
     onSuccess: () => invalidateQueryKeys(qc, [offeringKeys.all, statsKeys.all]),
   })
 }
+
+export function useDeleteEventOffering() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (offeringId: string) => eventOfferingsApi.delete(offeringId),
+    onSuccess: () => invalidateQueryKeys(qc, [offeringKeys.all, statsKeys.all]),
+  })
+}

@@ -109,6 +109,61 @@ const updateEventOffering = async (
   }
 };
 
+const getEventOfferingUsage = async (
+  offeringId: string,
+  _caller: CallerContext,
+): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
+  const events = await prisma.event.findMany({
+    where: { offeringId },
+    select: {
+      id: true,
+      name: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  return events;
+};
+
+const deleteEventOffering = async (
+  offeringId: string,
+  caller: CallerContext,
+): Promise<SafeEventOffering> => {
+  assertCatalogManagementAllowed(caller);
+
+  if (!offeringId?.trim()) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "offeringId is required.");
+  }
+
+  const usage = await getEventOfferingUsage(offeringId, caller);
+
+  if (usage.length > 0) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      `Cannot delete event offering as it is currently used by ${usage.length} event(s). Please deactivate it instead.`,
+    );
+  }
+
+  // Hard delete: Remove the offering if it's not in use
+  try {
+    return await prisma.eventOffering.delete({
+      where: { id: offeringId },
+    });
+  } catch (error) {
+    return rethrowPrismaError(error, {
+      P2025: {
+        status: StatusCodes.NOT_FOUND,
+        message: "Event offering not found.",
+      },
+    });
+  }
+};
+
 const validateInteractionTypePayload = (
   payload: UpsertInteractionTypeInput,
 ): {
@@ -365,9 +420,11 @@ export {
   createEventOffering,
   listEventOfferings,
   updateEventOffering,
+  deleteEventOffering,
   createInteractionType,
   listInteractionTypes,
   updateInteractionType,
   deleteInteractionType,
   getInteractionTypeUsage,
+  getEventOfferingUsage,
 };

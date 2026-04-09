@@ -24,6 +24,8 @@ import {
   listEventOfferings,
   listInteractionTypes,
   updateEventOffering,
+  deleteEventOffering,
+  getEventOfferingUsage,
   updateInteractionType,
 } from "./eventCatalog.service";
 import {
@@ -264,6 +266,8 @@ export {
   createEventOffering,
   listEventOfferings,
   updateEventOffering,
+  deleteEventOffering,
+  getEventOfferingUsage,
   createInteractionType,
   listInteractionTypes,
   updateInteractionType,

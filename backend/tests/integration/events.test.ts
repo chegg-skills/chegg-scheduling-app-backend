@@ -218,6 +218,71 @@ describe("Event offerings routes", () => {
     expect(res.status).toBe(403);
     expect(res.body.success).toBe(false);
   });
+
+  it("deletes an unused event offering", async () => {
+    const created = await createOffering(context.superAdminToken);
+    const id = created.body.data.id;
+
+    const res = await request(app)
+      .delete(`/api/event-offerings/${id}`)
+      .set("Authorization", `Bearer ${context.superAdminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/deleted successfully/i);
+
+    // Verify it's gone
+    const listRes = await request(app)
+      .get("/api/event-offerings")
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(
+      listRes.body.data.offerings.some((o: { id: string }) => o.id === id),
+    ).toBe(false);
+  });
+
+  it("lists events using an event offering", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const offId = offering.body.data.id;
+
+    const interactionType = await createInteractionType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Offering Usage Event",
+      offeringId: offId,
+      interactionTypeId: interactionType.body.data.id,
+    });
+
+    const res = await request(app)
+      .get(`/api/event-offerings/${offId}/usage`)
+      .set("Authorization", `Bearer ${context.superAdminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0]).toMatchObject({
+      id: event.body.data.id,
+      name: "Offering Usage Event",
+      team: {
+        id: context.teamId,
+        name: "primary events team",
+      },
+    });
+  });
+
+  it("blocks deletion of an event offering used by events", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const offId = offering.body.data.id;
+
+    const interactionType = await createInteractionType(context.superAdminToken);
+    await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offId,
+      interactionTypeId: interactionType.body.data.id,
+    });
+
+    const res = await request(app)
+      .delete(`/api/event-offerings/${offId}`)
+      .set("Authorization", `Bearer ${context.superAdminToken}`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/currently used by 1 event/i);
+  });
 });
 
 describe("Interaction type routes", () => {
