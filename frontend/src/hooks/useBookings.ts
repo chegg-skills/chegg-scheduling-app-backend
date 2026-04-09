@@ -13,7 +13,7 @@ export const bookingKeys = {
 export function useBookings(filters: ListBookingsFilters = {}) {
     return useQuery({
         queryKey: bookingKeys.list(filters),
-        queryFn: () => bookingsApi.list(filters).then(r => ({
+        queryFn: ({ signal }) => bookingsApi.list(filters, signal).then(r => ({
             bookings: r.data.data?.bookings ?? [],
             pagination: r.data.data?.pagination
         })),
@@ -24,7 +24,7 @@ export function useBookings(filters: ListBookingsFilters = {}) {
 export function useBooking(id: string) {
     return useQuery({
         queryKey: bookingKeys.detail(id),
-        queryFn: () => bookingsApi.getById(id).then(r => r.data.data),
+        queryFn: ({ signal }) => bookingsApi.getById(id, signal).then(r => r.data.data),
         enabled: !!id,
     })
 }

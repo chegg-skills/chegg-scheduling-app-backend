@@ -15,7 +15,7 @@ export const statsKeys = {
 
 function useStatsQuery<TData>(
   queryKey: readonly unknown[],
-  queryFn: () => Promise<TData>,
+  queryFn: (context: { signal: AbortSignal }) => Promise<TData>,
 ) {
   return useQuery({
     queryKey,
@@ -26,35 +26,35 @@ function useStatsQuery<TData>(
 
 export function useDashboardStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.dashboard(params), () => statsApi.getDashboard(params).then((r) => r.data.data))
+  return useStatsQuery(statsKeys.dashboard(params), ({ signal }) => statsApi.getDashboard(params, signal).then((r) => r.data.data))
 }
 
 export function useBookingStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.bookings(params), () => statsApi.getBookings(params).then((r) => r.data.data))
+  return useStatsQuery(statsKeys.bookings(params), ({ signal }) => statsApi.getBookings(params, signal).then((r) => r.data.data))
 }
 
 export function useUserStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.users(params), () => statsApi.getUsers(params).then((r) => r.data.data))
+  return useStatsQuery(statsKeys.users(params), ({ signal }) => statsApi.getUsers(params, signal).then((r) => r.data.data))
 }
 
 export function useTeamStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.teams(params), () => statsApi.getTeams(params).then((r) => r.data.data))
+  return useStatsQuery(statsKeys.teams(params), ({ signal }) => statsApi.getTeams(params, signal).then((r) => r.data.data))
 }
 
 export function useEventStats(timeframe: StatsParams['timeframe'], teamId?: string) {
   const params = { timeframe, teamId }
-  return useStatsQuery(statsKeys.events(params), () => statsApi.getEvents(params).then((r) => r.data.data))
+  return useStatsQuery(statsKeys.events(params), ({ signal }) => statsApi.getEvents(params, signal).then((r) => r.data.data))
 }
 
 export function useOfferingStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.offerings(params), () => statsApi.getOfferings(params).then((r) => r.data.data))
+  return useStatsQuery(statsKeys.offerings(params), ({ signal }) => statsApi.getOfferings(params, signal).then((r) => r.data.data))
 }
 
 export function useInteractionTypeStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.interactionTypes(params), () => statsApi.getInteractionTypes(params).then((r) => r.data.data))
+  return useStatsQuery(statsKeys.interactionTypes(params), ({ signal }) => statsApi.getInteractionTypes(params, signal).then((r) => r.data.data))
 }

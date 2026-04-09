@@ -14,14 +14,14 @@ export const teamKeys = {
 export function useTeams(params?: ListTeamsParams) {
   return useQuery({
     queryKey: teamKeys.list(params),
-    queryFn: () => teamsApi.list(params).then((r) => r.data.data),
+    queryFn: ({ signal }) => teamsApi.list(params, signal).then((r) => r.data.data),
   })
 }
 
 export function useTeam(teamId: string) {
   return useQuery({
     queryKey: teamKeys.detail(teamId),
-    queryFn: () => teamsApi.getById(teamId).then((r) => r.data.data),
+    queryFn: ({ signal }) => teamsApi.getById(teamId, signal).then((r) => r.data.data),
     enabled: !!teamId,
   })
 }

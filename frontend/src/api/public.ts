@@ -49,29 +49,30 @@ export interface ListSlotsResponse {
 }
 
 export const publicApi = {
-    listTeams: () =>
-        apiClient.get<ApiResponse<ListPublicTeamsResponse>>('/public/teams'),
+    listTeams: (signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<ListPublicTeamsResponse>>('/public/teams', { signal }),
 
-    getTeamBySlug: (slug: string) =>
-        apiClient.get<ApiResponse<GetPublicTeamResponse>>(`/public/teams/slug/${slug}`),
+    getTeamBySlug: (slug: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<GetPublicTeamResponse>>(`/public/teams/slug/${slug}`, { signal }),
 
-    listTeamEvents: (teamId: string) =>
-        apiClient.get<ApiResponse<ListPublicEventsResponse>>(`/public/teams/${teamId}/events`),
+    listTeamEvents: (teamId: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<ListPublicEventsResponse>>(`/public/teams/${teamId}/events`, { signal }),
 
-    listTeamEventsBySlug: (slug: string) =>
-        apiClient.get<ApiResponse<ListTeamEventsBySlugResponse>>(`/public/teams/slug/${slug}/events`),
+    listTeamEventsBySlug: (slug: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<ListTeamEventsBySlugResponse>>(`/public/teams/slug/${slug}/events`, { signal }),
 
-    getEventBySlug: (slug: string) =>
-        apiClient.get<ApiResponse<GetPublicEventResponse>>(`/public/events/slug/${slug}`),
+    getEventBySlug: (slug: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<GetPublicEventResponse>>(`/public/events/slug/${slug}`, { signal }),
 
-    getCoachBySlug: (slug: string) =>
-        apiClient.get<ApiResponse<GetPublicCoachResponse>>(`/public/coaches/slug/${slug}`),
+    getCoachBySlug: (slug: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<GetPublicCoachResponse>>(`/public/coaches/slug/${slug}`, { signal }),
 
-    listCoachEventsBySlug: (slug: string) =>
-        apiClient.get<ApiResponse<ListCoachEventsResponse>>(`/public/coaches/slug/${slug}/events`),
+    listCoachEventsBySlug: (slug: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<ListCoachEventsResponse>>(`/public/coaches/slug/${slug}/events`, { signal }),
 
-    getAvailableSlots: (eventId: string, startDate: string, endDate: string, preferredHostId?: string) =>
+    getAvailableSlots: (eventId: string, startDate: string, endDate: string, preferredHostId?: string, signal?: AbortSignal) =>
         apiClient.get<ApiResponse<ListSlotsResponse>>(`/public/events/${eventId}/slots`, {
-            params: { startDate, endDate, preferredHostId }
+            params: { startDate, endDate, preferredHostId },
+            signal
         }),
 }

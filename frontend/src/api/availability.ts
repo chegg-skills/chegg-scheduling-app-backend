@@ -13,19 +13,19 @@ export interface GetExceptionsParams {
 }
 
 export const availabilityApi = {
-    getWeekly: (userId: string) =>
-        apiClient.get<ApiResponse<UserWeeklyAvailability[]>>(`/users/${userId}/availability/weekly`),
+    getWeekly: (userId: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<UserWeeklyAvailability[]>>(`/users/${userId}/availability/weekly`, { signal }),
 
     setWeekly: (userId: string, data: SetWeeklyAvailabilityDto) =>
         apiClient.post<ApiResponse<UserWeeklyAvailability[]>>(`/users/${userId}/availability/weekly`, data),
 
-    getExceptions: (userId: string, params?: GetExceptionsParams) =>
-        apiClient.get<ApiResponse<UserAvailabilityException[]>>(`/users/${userId}/availability/exceptions`, { params }),
+    getExceptions: (userId: string, params?: GetExceptionsParams, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<UserAvailabilityException[]>>(`/users/${userId}/availability/exceptions`, { params, signal }),
 
-    getEffective: (userId: string, params: { from: string; to: string }) =>
+    getEffective: (userId: string, params: { from: string; to: string }, signal?: AbortSignal) =>
         apiClient.get<ApiResponse<{ weekly: UserWeeklyAvailability[]; exceptions: UserAvailabilityException[] }>>(
             `/users/${userId}/availability/effective`,
-            { params }
+            { params, signal }
         ),
 
     addException: (userId: string, data: CreateAvailabilityExceptionDto) =>

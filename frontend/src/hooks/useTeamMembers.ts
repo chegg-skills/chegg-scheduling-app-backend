@@ -10,7 +10,7 @@ export const memberKeys = {
 export function useTeamMembers(teamId: string) {
   return useQuery({
     queryKey: memberKeys.byTeam(teamId),
-    queryFn: () => teamMembersApi.list(teamId).then((r) => r.data.data),
+    queryFn: ({ signal }) => teamMembersApi.list(teamId, signal).then((r) => r.data.data),
     enabled: !!teamId,
   })
 }

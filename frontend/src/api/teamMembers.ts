@@ -11,8 +11,8 @@ export const teamMembersApi = {
     return apiClient.post<ApiResponse<TeamMember | TeamMember[]>>(`/teams/${teamId}/members`, payload);
   },
 
-  list: (teamId: string) =>
-    apiClient.get<ApiResponse<ListTeamMembersResponse>>(`/teams/${teamId}/members`),
+  list: (teamId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListTeamMembersResponse>>(`/teams/${teamId}/members`, { signal }),
 
   remove: (teamId: string, userId: string) =>
     apiClient.delete<ApiResponse<TeamMember>>(`/teams/${teamId}/members/${userId}`),

@@ -15,8 +15,8 @@ export const authApi = {
   login: (data: LoginDto) =>
     apiClient.post<ApiResponse<AuthPayload>>('/auth/login', data),
 
-  logout: () =>
-    apiClient.post<ApiResponse<null>>('/auth/logout'),
+  logout: (signal?: AbortSignal) =>
+    apiClient.post<ApiResponse<null>>('/auth/logout', null, { signal }),
 
   bootstrap: (data: BootstrapDto) =>
     apiClient.post<ApiResponse<AuthPayload>>('/auth/bootstrap', data),

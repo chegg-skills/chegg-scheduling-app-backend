@@ -7,24 +7,24 @@ export interface StatsParams {
 }
 
 export const statsApi = {
-  getDashboard: (params?: StatsParams) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/dashboard', { params }),
+  getDashboard: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/dashboard', { params, signal }),
 
-  getBookings: (params?: StatsParams) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/bookings', { params }),
+  getBookings: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/bookings', { params, signal }),
 
-  getUsers: (params?: StatsParams) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/users', { params }),
+  getUsers: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/users', { params, signal }),
 
-  getTeams: (params?: StatsParams) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/teams', { params }),
+  getTeams: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/teams', { params, signal }),
 
-  getEvents: (params?: StatsParams) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/events', { params }),
+  getEvents: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/events', { params, signal }),
 
-  getOfferings: (params?: StatsParams) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/offerings', { params }),
+  getOfferings: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/offerings', { params, signal }),
 
-  getInteractionTypes: (params?: StatsParams) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/interaction-types', { params }),
+  getInteractionTypes: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/interaction-types', { params, signal }),
 }

@@ -12,7 +12,7 @@ export const offeringKeys = {
 export function useEventOfferings() {
   return useQuery({
     queryKey: offeringKeys.list(),
-    queryFn: () => eventOfferingsApi.list().then((r) => r.data.data),
+    queryFn: ({ signal }) => eventOfferingsApi.list(signal).then((r) => r.data.data),
   })
 }
 

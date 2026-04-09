@@ -15,11 +15,11 @@ export const teamsApi = {
   create: (data: CreateTeamDto) =>
     apiClient.post<ApiResponse<Team>>('/teams', data),
 
-  list: (params?: ListTeamsParams) =>
-    apiClient.get<ApiResponse<ListTeamsResponse>>('/teams', { params }),
+  list: (params?: ListTeamsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListTeamsResponse>>('/teams', { params, signal }),
 
-  getById: (teamId: string) =>
-    apiClient.get<ApiResponse<Team>>(`/teams/${teamId}`),
+  getById: (teamId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<Team>>(`/teams/${teamId}`, { signal }),
 
   update: (teamId: string, data: UpdateTeamDto) =>
     apiClient.patch<ApiResponse<Team>>(`/teams/${teamId}`, data),
