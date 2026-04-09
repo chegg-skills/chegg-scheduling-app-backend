@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { requireTrimmedString } from "../../shared/utils/validation";
+import { bookingInclude } from "../bookings/booking.shared";
 
 const publicTeamSelect = {
     id: true,
@@ -150,4 +151,17 @@ export const listCoachEventsBySlug = async (slug: string) => {
     });
 
     return { coach, events };
+};
+
+export const getPublicBooking = async (id: string, token: string) => {
+    const booking = await prisma.booking.findFirst({
+        where: { id, rescheduleToken: token } as any,
+        include: bookingInclude,
+    });
+
+    if (!booking) {
+        throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking not found or invalid token.");
+    }
+
+    return booking;
 };

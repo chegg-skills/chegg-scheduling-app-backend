@@ -35,6 +35,7 @@ const getBookingNotificationVariables = async (booking: SafeBooking) => {
     publicBookingUrl: booking.event?.publicBookingSlug
       ? `${resolveFrontendUrl()}/book/${booking.event.publicBookingSlug}`
       : resolveFrontendUrl(),
+    rescheduleUrl: `${resolveFrontendUrl()}/reschedule/${booking.id}?token=${(booking as any).rescheduleToken ?? ""}`,
     coHostDetails: "",
     coHostNames: "",
   };
@@ -378,8 +379,63 @@ const queueBookingUpdatedNotifications = async (
   }
 };
 
+const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
+  try {
+    const variables = await getBookingNotificationVariables(booking);
+    const publishTasks: Array<Promise<boolean>> = [
+      publishNotificationSafely({
+        type: "BOOKING_RESCHEDULED",
+        recipients: booking.studentEmail,
+        userId: booking.hostUserId,
+        variables,
+      }),
+    ];
+
+    if (booking.host?.email) {
+      publishTasks.push(
+        publishNotificationSafely({
+          type: "BOOKING_RESCHEDULED",
+          recipients: booking.host.email,
+          userId: booking.host.id,
+          variables,
+        }),
+      );
+    }
+
+    // Also notify co-hosts
+    if (booking.coHostUserIds && booking.coHostUserIds.length > 0) {
+      const coHosts = await prisma.user.findMany({
+        where: { id: { in: booking.coHostUserIds }, isActive: true },
+        select: { id: true, email: true },
+      });
+
+      for (const coHost of coHosts) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "BOOKING_RESCHEDULED",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
+      }
+    }
+
+    await Promise.all(publishTasks);
+
+    // Rescheduling should also refresh the reminders!
+    await cancelScheduledBookingReminders(booking);
+    await queueBookingReminderNotifications(booking);
+  } catch (error) {
+    console.error("Failed to queue booking rescheduled notifications:", error);
+  }
+};
+
 export {
   queueBookingCreatedNotifications,
   queueBookingStatusNotifications,
   queueBookingUpdatedNotifications,
+  queueBookingRescheduledNotifications,
 };

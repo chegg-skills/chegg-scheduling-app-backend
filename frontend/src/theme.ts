@@ -176,6 +176,7 @@ export const appTheme = createTheme({
         root: {
           borderRadius: 12,
           backgroundColor: '#ffffff',
+          minHeight: 56,
           transition: 'all 0.2s',
           '&:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: alpha(cheggOrange, 0.4),
@@ -185,7 +186,7 @@ export const appTheme = createTheme({
           },
         },
         input: {
-          padding: '10px 16px',
+          padding: '14.5px 14px',
         },
       },
     },

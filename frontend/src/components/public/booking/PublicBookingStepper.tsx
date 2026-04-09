@@ -24,7 +24,7 @@ export function PublicBookingStepper({
   if (activeStep >= completionStep) return null
 
   return (
-    <Stepper activeStep={activeStep} sx={{ mb: 6 }} alternativeLabel>
+    <Stepper activeStep={activeStep} sx={{ mb: 1 }} alternativeLabel>
       {stepKeys.map((stepKey) => (
         <Step key={stepKey}>
           <StepLabel>{stepLabels[stepKey]}</StepLabel>

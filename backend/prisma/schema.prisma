@@ -270,6 +270,7 @@ model Booking {
   triedSolutions    String?
   usedResources     String?
   meetingJoinUrl    String?
+  rescheduleToken   String?            @unique @default(uuid())
   studentId         String?
   scheduleSlotId    String?
   event             Event              @relation(fields: [eventId], references: [id])

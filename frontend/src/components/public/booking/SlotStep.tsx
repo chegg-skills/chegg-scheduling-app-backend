@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import * as React from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
+import { alpha } from '@mui/material/styles'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
 import { PageSpinner } from '@/components/shared/Spinner'
 import type { AvailableSlot } from '@/api/public'
@@ -16,7 +17,6 @@ interface SlotStepProps {
     onDateSelect: (date: Date) => void
     selectedSlot: string | null
     onSelect: (slot: string) => void
-    onNext: () => void
 }
 
 export function SlotStep({
@@ -26,9 +26,8 @@ export function SlotStep({
     onDateSelect,
     selectedSlot,
     onSelect,
-    onNext
 }: SlotStepProps) {
-    const { amSlots, pmSlots } = useMemo(() => {
+    const { amSlots, pmSlots } = React.useMemo(() => {
         const am: AvailableSlot[] = []
         const pm: AvailableSlot[] = []
 
@@ -47,57 +46,20 @@ export function SlotStep({
         return { amSlots: am, pmSlots: pm }
     }, [slots])
 
-    const renderSlotGrid = (items: AvailableSlot[]) => (
-        <Box
-            sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                    xs: 'repeat(3, 1fr)',
-                    sm: 'repeat(4, 1fr)',
-                    md: 'repeat(5, 1fr)',
-                    lg: 'repeat(6, 1fr)'
-                },
-                gap: 1,
-                mb: 4
-            }}
-        >
-            {items.map(s => (
-                <Button
-                    key={s.startTime}
-                    variant={selectedSlot === s.startTime ? 'contained' : 'outlined'}
-                    fullWidth
-                    onClick={() => onSelect(s.startTime)}
-                    sx={{
-                        py: 1.5,
-                        px: 0.5,
-                        minWidth: 'auto',
-                        borderRadius: 1,
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        textTransform: 'none',
-                    }}
-                >
-                    <Typography variant="caption" fontWeight={700}>
-                        {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(s.startTime))}
-                    </Typography>
-                    {s.remainingSeats !== null && s.remainingSeats !== undefined && s.maxSeats && s.maxSeats > 1 && (
-                        <Typography variant="caption" sx={{ mt: 0, fontSize: '0.65rem', opacity: 0.8 }}>
-                            {s.remainingSeats} left
-                        </Typography>
-                    )}
-                </Button>
-            ))}
-        </Box>
-    )
-
     return (
-        <Box>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="flex-start">
-                <Box sx={{ width: { xs: '100%', md: 'auto' }, flexShrink: 0 }}>
-                    <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 2 }}>
+        <Box sx={{ overflow: 'hidden', height: { lg: '100%' } }}>
+            <Stack
+                direction={{ xs: 'column', lg: 'row' }}
+                alignItems="stretch"
+                divider={<Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', lg: 'block' } }} />}
+                sx={{ height: '100%' }}
+            >
+                {/* Column 1: Calendar Picker */}
+                <Box sx={{ width: { xs: '100%', lg: 400 }, flexShrink: 0, p: 3 }}>
+                    <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ display: 'block', mb: 2, letterSpacing: 1.2, fontSize: '0.7rem' }}>
+                        Select Date
+                    </Typography>
+                    <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 3, bgcolor: 'background.paper' }}>
                         <StaticDatePicker
                             displayStaticWrapperAs="desktop"
                             value={selectedDate}
@@ -106,68 +68,129 @@ export function SlotStep({
                             slotProps={{
                                 actionBar: { actions: [] },
                             }}
+                            sx={{
+                                '.MuiDateCalendar-root': {
+                                    width: '100%',
+                                    maxWidth: 'none'
+                                }
+                            }}
                         />
                     </Paper>
                 </Box>
 
-                <Box sx={{ flexGrow: 1, width: '100%' }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
-                        Available Slots
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        {new Intl.DateTimeFormat('en-US', {
-                            weekday: 'long',
-                            month: 'long',
-                            day: 'numeric'
-                        }).format(selectedDate)}
-                    </Typography>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    {loading ? (
-                        <PageSpinner />
-                    ) : slots.length === 0 ? (
-                        <Box sx={{ py: 8, textAlign: 'center' }}>
-                            <Typography color="text.secondary">
-                                No available slots for this date.
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                Please try selecting another day.
-                            </Typography>
-                        </Box>
-                    ) : (
-                        <Box>
-                            {amSlots.length > 0 && (
-                                <Box sx={{ mb: 4 }}>
-                                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Morning (AM)
-                                    </Typography>
-                                    {renderSlotGrid(amSlots)}
-                                </Box>
-                            )}
-
-                            {pmSlots.length > 0 && (
-                                <Box sx={{ mb: 4 }}>
-                                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Afternoon & Evening (PM)
-                                    </Typography>
-                                    {renderSlotGrid(pmSlots)}
-                                </Box>
-                            )}
-                        </Box>
-                    )}
-
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                            variant="contained"
-                            disabled={!selectedSlot}
-                            onClick={onNext}
-                            size="large"
-                            sx={{ px: 4 }}
-                        >
-                            Confirm Selection
-                        </Button>
+                {/* Column 2: Slot Selection */}
+                <Box sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ display: 'block', mb: 1, letterSpacing: 1.2, fontSize: '0.7rem' }}>
+                            Available Slots
+                        </Typography>
+                        <Typography variant="h6" fontWeight={800} color="text.primary">
+                            {new Intl.DateTimeFormat('en-US', {
+                                weekday: 'long',
+                                month: 'long',
+                                day: 'numeric'
+                            }).format(selectedDate)}
+                        </Typography>
                     </Box>
+                    <Divider sx={{ mb: 1 }} />
+
+                    {/* Scrollable grid area for slots */}
+                    <Box sx={{ overflowY: 'auto', flexGrow: 1, pr: 1, mt: 1, '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: 'grey.200', borderRadius: 2 } }}>
+                        {loading ? (
+                            <PageSpinner />
+                        ) : slots.length === 0 ? (
+                            <Box sx={{ py: 6, textAlign: 'center' }}>
+                                <Typography color="text.secondary" variant="body2">No availability on this date.</Typography>
+                            </Box>
+                        ) : (
+                            <Box sx={{ pb: 2 }}>
+                                {amSlots.length > 0 && (
+                                    <Box sx={{ mb: 3 }}>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block', fontWeight: 700 }}>
+                                            Morning
+                                        </Typography>
+                                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 0.5 }}>
+                                            {amSlots.map(s => (
+                                                <Button
+                                                    key={s.startTime}
+                                                    variant={selectedSlot === s.startTime ? 'contained' : 'outlined'}
+                                                    fullWidth
+                                                    onClick={() => onSelect(s.startTime)}
+                                                    sx={{
+                                                        py: 1,
+                                                        px: 0,
+                                                        borderRadius: 1,
+                                                        fontWeight: 700,
+                                                        fontSize: '0.75rem',
+                                                        textTransform: 'none',
+                                                        ...(selectedSlot === s.startTime ? {
+                                                            bgcolor: 'primary.main',
+                                                            color: 'white',
+                                                            '&:hover': { bgcolor: 'primary.dark' }
+                                                        } : {
+                                                            borderColor: (theme) => alpha(theme.palette.divider, 0.5),
+                                                            color: 'text.primary',
+                                                            '&:hover': {
+                                                                borderColor: 'primary.main',
+                                                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04)
+                                                            }
+                                                        })
+                                                    }}
+                                                >
+                                                    <Typography variant="caption" fontWeight={800}>
+                                                        {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(s.startTime))}
+                                                    </Typography>
+                                                </Button>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+
+                                {pmSlots.length > 0 && (
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block', fontWeight: 700 }}>
+                                            Afternoon & Evening
+                                        </Typography>
+                                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 0.5 }}>
+                                            {pmSlots.map(s => (
+                                                <Button
+                                                    key={s.startTime}
+                                                    variant={selectedSlot === s.startTime ? 'contained' : 'outlined'}
+                                                    fullWidth
+                                                    onClick={() => onSelect(s.startTime)}
+                                                    sx={{
+                                                        py: 1,
+                                                        px: 0,
+                                                        borderRadius: 1,
+                                                        fontWeight: 700,
+                                                        fontSize: '0.75rem',
+                                                        textTransform: 'none',
+                                                        ...(selectedSlot === s.startTime ? {
+                                                            bgcolor: 'primary.main',
+                                                            color: 'white',
+                                                            '&:hover': { bgcolor: 'primary.dark' }
+                                                        } : {
+                                                            borderColor: (theme) => alpha(theme.palette.divider, 0.5),
+                                                            color: 'text.primary',
+                                                            '&:hover': {
+                                                                borderColor: 'primary.main',
+                                                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04)
+                                                            }
+                                                        })
+                                                    }}
+                                                >
+                                                    <Typography variant="caption" fontWeight={800}>
+                                                        {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(s.startTime))}
+                                                    </Typography>
+                                                </Button>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </Box>
+                        )}
+                    </Box>
+
                 </Box>
             </Stack>
         </Box>

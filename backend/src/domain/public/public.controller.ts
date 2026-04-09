@@ -68,3 +68,23 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
 
     return sendSuccessResponse(res, StatusCodes.OK, { slots }, "Available slots fetched successfully.");
 };
+
+export const getPublicBooking = async (req: Request, res: Response) => {
+    const id = (req.params.id as string)?.trim();
+    const token = getStringParam(req.query.token)?.trim();
+
+    console.log(`[getPublicBooking] id: ${id}, token: ${token}`);
+
+    if (!token) {
+        console.warn(`[getPublicBooking] Missing token for booking ${id}`);
+        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "token is required.");
+    }
+
+    const booking = await PublicService.getPublicBooking(id, token);
+
+    if (!booking) {
+        console.warn(`[getPublicBooking] Booking not found or invalid token for id: ${id}`);
+    }
+
+    return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking fetched successfully.");
+};

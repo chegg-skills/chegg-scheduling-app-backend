@@ -20,8 +20,11 @@ export const bookingsApi = {
     list: (filters: ListBookingsFilters = {}, signal?: AbortSignal) =>
         apiClient.get<ApiResponse<ListBookingsResponse>>('/bookings', { params: filters, signal }),
 
-    getById: (id: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`, { signal }),
+    getById: (id: string, token?: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`, { params: { token }, signal }),
+
+    reschedule: (id: string, data: { startTime: Date | string; timezone?: string; token?: string }, signal?: AbortSignal) =>
+        apiClient.post<ApiResponse<Booking>>(`/bookings/${id}/reschedule`, data, { signal }),
 
     updateStatus: (id: string, data: UpdateBookingStatusDto) =>
         apiClient.patch<ApiResponse<Booking>>(`/bookings/${id}`, data),

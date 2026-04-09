@@ -44,4 +44,9 @@ router
     .get(PublicController.getAvailableSlots)
     .all(methodNotAllowed);
 
+router
+    .route("/bookings/:id")
+    .get(PublicController.getPublicBooking)
+    .all(methodNotAllowed);
+
 export default router;

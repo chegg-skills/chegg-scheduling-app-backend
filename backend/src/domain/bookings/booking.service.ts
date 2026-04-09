@@ -15,6 +15,7 @@ import {
     createBookingRecord,
     findBookableEvent,
     findBookingById,
+    findBookingByToken,
     findBookings,
     updateBookingById,
     upsertStudentForBooking,
@@ -194,9 +195,80 @@ const updateBooking = async (
     return updateBookingById(id, data);
 };
 
+const rescheduleBooking = async (
+    id: string,
+    payload: { startTime: string | Date; timezone?: string; token?: string },
+): Promise<SafeBooking> => {
+    const { startTime, timezone, token } = payload;
+    const start = parseBookingStartTime(startTime);
+
+    // 1. Find booking (verify token if provided)
+    const booking = token
+        ? await findBookingByToken(id, token)
+        : await findBookingById(id);
+
+    // 2. Resolve booking window and slot context
+    const event = await getBookableEvent(booking.teamId, booking.eventId);
+    const { end } = resolveBookingWindow(event, start);
+    const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
+
+    const activeHosts = event.hosts as HostCandidate[];
+
+    // 3. Re-assign host (prefer current host if available)
+    return (prisma.$transaction(async (tx) => {
+        const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveBookingHostSelection({
+            preferredHostId: booking.hostUserId,
+            activeHosts,
+            event,
+            start,
+            end,
+            allowSharedSessionOverlap,
+            matchedScheduleSlotId: matchedScheduleSlot?.id,
+            tx,
+        });
+
+        const scheduleSlot = matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(
+            event.id,
+            start,
+        )) as any;
+
+        // Check capacity for the NEW time
+        const schedulingContext = buildSchedulingContext(event);
+        const { maxParticipants } = getEffectiveParticipantPolicy(
+            schedulingContext,
+            scheduleSlot ?? (schedulingContext.interactionType as any),
+        );
+
+        const currentParticipantCount = await countActiveParticipantsForTime(
+            tx,
+            booking.eventId,
+            start,
+        );
+
+        // When rescheduling, the student is ALREADY counted if they are moving within the same slot
+        // but since we are changing the start time, we just check the new start time's capacity.
+        assertParticipantCapacityAvailable(
+            maxParticipants,
+            currentParticipantCount,
+        );
+
+        return updateBookingById(id, {
+            startTime: start,
+            endTime: end,
+            timezone: timezone || booking.timezone,
+            hostUserId: assignedHostId,
+            coHostUserIds,
+            meetingJoinUrl,
+            scheduleSlotId: scheduleSlot?.id ?? null,
+            status: BookingStatus.CONFIRMED, // Reset to confirmed if it was something else
+        });
+    })) as any;
+};
+
 export {
     createBooking,
     getBooking,
     listBookings,
-    updateBooking
+    updateBooking,
+    rescheduleBooking
 };
