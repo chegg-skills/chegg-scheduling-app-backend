@@ -51,8 +51,13 @@ export function SlotStep({
         <Box
             sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-                gap: 1.5,
+                gridTemplateColumns: {
+                    xs: 'repeat(3, 1fr)',
+                    sm: 'repeat(4, 1fr)',
+                    md: 'repeat(5, 1fr)',
+                    lg: 'repeat(6, 1fr)'
+                },
+                gap: 1,
                 mb: 4
             }}
         >
@@ -64,22 +69,23 @@ export function SlotStep({
                     onClick={() => onSelect(s.startTime)}
                     sx={{
                         py: 1.5,
-                        px: 2,
-                        borderRadius: 2,
+                        px: 0.5,
+                        minWidth: 'auto',
+                        borderRadius: 1,
                         fontWeight: 600,
-                        fontSize: '0.875rem',
+                        fontSize: '0.75rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         textTransform: 'none',
                     }}
                 >
-                    <Typography variant="body2" fontWeight={700}>
+                    <Typography variant="caption" fontWeight={700}>
                         {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(s.startTime))}
                     </Typography>
-                    {s.remainingSeats !== null && s.remainingSeats !== undefined && (
-                        <Typography variant="caption" sx={{ mt: 0.5, opacity: 0.8 }}>
-                            {s.remainingSeats} {s.remainingSeats === 1 ? 'seat' : 'seats'} left
+                    {s.remainingSeats !== null && s.remainingSeats !== undefined && s.maxSeats && s.maxSeats > 1 && (
+                        <Typography variant="caption" sx={{ mt: 0, fontSize: '0.65rem', opacity: 0.8 }}>
+                            {s.remainingSeats} left
                         </Typography>
                     )}
                 </Button>
