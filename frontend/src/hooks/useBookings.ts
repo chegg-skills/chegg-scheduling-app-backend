@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '@/api/bookings'
 import type { ListBookingsFilters, BookingStatus } from '@/types'
-import { invalidateQueryKeys, preservePreviousData } from './queryUtils'
+import { invalidateQueryKeys } from './queryUtils'
 import { statsKeys } from './useStats'
 
 export const bookingKeys = {
@@ -17,7 +17,7 @@ export function useBookings(filters: ListBookingsFilters = {}) {
             bookings: r.data.data?.bookings ?? [],
             pagination: r.data.data?.pagination
         })),
-        placeholderData: preservePreviousData,
+        placeholderData: (prev) => prev,
     })
 }
 

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, type ListUsersParams } from '@/api/users'
 import type { UpdateUserDto, UserWithDetails } from '@/types'
-import { invalidateQueryKeys, preservePreviousData } from './queryUtils'
+import { invalidateQueryKeys } from './queryUtils'
 import { statsKeys } from './useStats'
 
 export const userKeys = {
@@ -15,7 +15,7 @@ export function useUsers(params?: ListUsersParams) {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: ({ signal }) => usersApi.list(params, signal).then((r) => r.data.data),
-    placeholderData: preservePreviousData,
+    placeholderData: (prev) => prev,
   })
 }
 

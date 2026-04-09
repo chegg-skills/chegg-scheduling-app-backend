@@ -14,7 +14,7 @@ export function useStudents(filters: ListStudentsFilters = {}) {
     return useQuery({
         queryKey: studentKeys.list(filters),
         queryFn: ({ signal }) => studentsApi.list(filters, signal).then(r => r.data.data),
-        placeholderData: (previousData) => previousData,
+        placeholderData: (prev) => prev,
     })
 }
 
