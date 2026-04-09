@@ -1,4 +1,3 @@
-import * as React from 'react'
 import Typography from '@mui/material/Typography'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { TeamStep } from '@/components/public/booking/TeamStep'
@@ -6,7 +5,8 @@ import { EventStep } from '@/components/public/booking/EventStep'
 import { SlotStep } from '@/components/public/booking/SlotStep'
 import { ConfirmationForm } from '@/components/public/booking/ConfirmationForm'
 import type { BookingScope } from '@/pages/public/hooks/usePublicBookingState'
-import type { PublicTeamSummary, PublicEventSummary, PublicSlot } from '@/types'
+import { AvailableSlot } from '@/api/public'
+import type { PublicTeamSummary, PublicEventSummary } from '@/types'
 
 interface PublicBookingFlowProps {
     currentStepKey: string | null
@@ -22,7 +22,7 @@ interface PublicBookingFlowProps {
     selectedEvent: string | null
     handleEventSelect: (id: string) => void
     eventDetailsError: any
-    slots: PublicSlot[]
+    slots: AvailableSlot[]
     loadingSlots: boolean
     selectedDate: Date
     setSelectedDate: (date: Date) => void
