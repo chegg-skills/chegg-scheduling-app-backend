@@ -18,6 +18,7 @@ export const eventFormSchema = z
         fixedLeadHostId: z.string().nullable().optional(),
         minParticipantCount: z.number().int().min(1, 'Minimum participants must be at least 1').nullable().optional(),
         maxParticipantCount: z.number().int().min(1, 'Maximum participants must be at least 1').nullable().optional(),
+        bufferAfterMinutes: z.number().min(0).default(0),
         isActive: z.boolean().default(true),
     })
     .superRefine((values, context) => {
@@ -56,6 +57,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
             fixedLeadHostId: event.fixedLeadHostId,
             minParticipantCount: event.minParticipantCount,
             maxParticipantCount: event.maxParticipantCount,
+            bufferAfterMinutes: event.bufferAfterMinutes,
             isActive: event.isActive,
         }
     }
@@ -76,6 +78,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
         fixedLeadHostId: null,
         minParticipantCount: null,
         maxParticipantCount: null,
+        bufferAfterMinutes: 15,
         isActive: true,
     }
 }

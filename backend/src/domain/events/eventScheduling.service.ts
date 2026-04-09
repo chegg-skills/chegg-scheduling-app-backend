@@ -30,6 +30,9 @@ const resolveEventSchedulingConfig = (
       payload.maxParticipantCount ??
       existing?.maxParticipantCount ??
       interactionType.maxParticipants,
+    bufferAfterMinutes:
+      payload.bufferAfterMinutes ??
+      existing?.bufferAfterMinutes ?? 0,
   };
 };
 

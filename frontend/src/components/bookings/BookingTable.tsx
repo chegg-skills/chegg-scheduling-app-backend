@@ -124,7 +124,7 @@ export function BookingTable({
                             return (
                                 <React.Fragment key={booking.id}>
                                     {showHeader && (
-                                        <TableRow sx={{ bgcolor: 'secondary.light' }}>
+                                        <TableRow sx={{ bgcolor: 'rgba(0, 0, 0, 0.04)' }}>
                                             <TableCell
                                                 colSpan={6}
                                                 sx={{

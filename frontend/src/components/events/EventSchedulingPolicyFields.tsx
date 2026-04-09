@@ -53,6 +53,20 @@ export function EventSchedulingPolicyFields({
                 />
             </FormField>
 
+            <FormField
+                label="Buffer After Session (minutes)"
+                htmlFor="bufferAfterMinutes"
+                error={errors.bufferAfterMinutes?.message}
+                info="Mandatory cooldown period added after each session (e.g., 15 for a 15-minute break)."
+            >
+                <Input
+                    id="bufferAfterMinutes"
+                    type="number"
+                    min="0"
+                    {...register('bufferAfterMinutes', { valueAsNumber: true })}
+                />
+            </FormField>
+
             <ParticipantCapacityFields
                 selectedInteractionType={selectedInteractionType}
             />

@@ -1,6 +1,7 @@
 import {
   EventBookingMode,
   Prisma,
+  UserRole,
 } from '@prisma/client';
 import { prisma } from '../../shared/db/prisma';
 import type { CallerContext } from '../../shared/utils/userUtils';
@@ -11,6 +12,7 @@ import {
   resolveAvailabilityFromException,
   type AvailabilityClient,
 } from './availability.shared';
+import { type SafeEvent } from '../events/event.shared';
 import {
   assertBookingNoticeSatisfied,
   assertBookingWeekdayAllowed,
@@ -59,6 +61,7 @@ const isHostAvailable = async (
     eventId?: string;
     scheduleSlotId?: string | null;
     tx?: AvailabilityClient;
+    bufferAfterMinutes?: number;
   } = {},
 ): Promise<boolean> => {
   const client: AvailabilityClient = options.tx || prisma;
@@ -71,9 +74,13 @@ const isHostAvailable = async (
 
   if (!user) return false;
 
+  const effectiveEndTime = options.bufferAfterMinutes
+    ? new Date(endTime.getTime() + options.bufferAfterMinutes * 60 * 1000)
+    : endTime;
+
   const [calendar, conflicts] = await Promise.all([
-    getEffectiveAvailability(userId, startTime, endTime, { id: userId, role: 'COACH' } as any),
-    getHostConflicts(userId, startTime, endTime, options),
+    getEffectiveAvailability(userId, startTime, effectiveEndTime, { id: userId, role: UserRole.COACH }),
+    getHostConflicts(userId, startTime, effectiveEndTime, options),
   ]);
 
   // 2. Conflict Check (Bookings)
@@ -83,7 +90,7 @@ const isHostAvailable = async (
 
   // 3. Exception Decision (Overrides)
   const startLocal = toLocalAvailabilityInfo(startTime, user.timezone);
-  const endLocal = toLocalAvailabilityInfo(endTime, user.timezone);
+  const endLocal = toLocalAvailabilityInfo(effectiveEndTime, user.timezone);
 
   if (startLocal.dateString !== endLocal.dateString) {
     return false; // Sessions across date boundaries are currently unsupported
@@ -122,7 +129,7 @@ const getAvailableSlots = async (
   endDate: Date,
   preferredHostId?: string,
 ): Promise<AvailableSlot[]> => {
-  const event = await prisma.event.findUnique({
+  const eventResult = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
       ...availabilityEventInclude,
@@ -139,12 +146,14 @@ const getAvailableSlots = async (
     },
   });
 
-  if (!event || event.hosts.length === 0) {
+  if (!eventResult || eventResult.hosts.length === 0) {
     return [];
   }
 
+  const event = eventResult as (typeof eventResult & { bufferAfterMinutes: number });
+
   const eligibleHosts = preferredHostId
-    ? event.hosts.filter((host) => host.hostUserId === preferredHostId)
+    ? event.hosts.filter((host: { hostUserId: string }) => host.hostUserId === preferredHostId)
     : event.hosts;
 
   if (eligibleHosts.length === 0) return [];
@@ -158,7 +167,7 @@ const getAvailableSlots = async (
   ): Promise<AvailableSlot | null> => {
     // Buffers and notice checks
     const BUFFER_MS = 2 * 60 * 1000;
-    if (slotStart.getTime() <= Date.now() + BUFFER_MS || slotStart >= endDate) {
+    if (slotStart.getTime() <= Date.now() + BUFFER_MS || slotStart >= finalEnd) {
       return null;
     }
 
@@ -204,6 +213,7 @@ const getAvailableSlots = async (
         ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
         eventId: allowSharedSessionOverlap ? eventId : undefined,
         scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
+        bufferAfterMinutes: event.bufferAfterMinutes,
       })) {
         isAvailable = true;
       }
@@ -214,6 +224,7 @@ const getAvailableSlots = async (
             ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
             eventId: allowSharedSessionOverlap ? eventId : undefined,
             scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
+            bufferAfterMinutes: event.bufferAfterMinutes,
           })
         ) {
           isAvailable = true;
@@ -233,6 +244,9 @@ const getAvailableSlots = async (
     };
   };
 
+  const finalEnd = new Date(endDate);
+  finalEnd.setUTCHours(23, 59, 59, 999);
+
   // Mode based resolution
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
     for (const scheduleSlot of event.scheduleSlots) {
@@ -247,8 +261,6 @@ const getAvailableSlots = async (
   // Window based resolution
   const durationMs = event.durationSeconds * 1000;
   const intervalMs = 15 * 60 * 1000;
-  const finalEnd = new Date(endDate);
-  finalEnd.setUTCHours(23, 59, 59, 999);
   let currentStart = new Date(startDate);
   currentStart.setUTCHours(0, 0, 0, 0);
 
@@ -260,7 +272,9 @@ const getAvailableSlots = async (
       if (slotStart >= finalEnd) break;
 
       const availableSlot = await getSlotAvailability(slotStart, slotEnd);
-      if (availableSlot) slots.push(availableSlot);
+      if (availableSlot) {
+        slots.push(availableSlot);
+      }
     }
     currentStart.setUTCDate(currentStart.getUTCDate() + 1);
   }

@@ -172,7 +172,7 @@ export const toLocalAvailabilityInfo = (
   };
 
   return {
-    hhmm: `${hour}:${minute}`,
+    hhmm: `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`,
     dayOfWeek: weekdayMap[weekdayName],
     dateString: `${year}-${month}-${day}`,
   };

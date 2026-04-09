@@ -151,6 +151,7 @@ model Event {
   fixedLeadHostId      String?
   minParticipantCount  Int?
   maxParticipantCount  Int?
+  bufferAfterMinutes   Int                  @default(0)
   bookings             Booking[]
   createdBy            User                 @relation("EventCreatedBy", fields: [createdById], references: [id])
   interactionType      EventInteractionType @relation(fields: [interactionTypeId], references: [id])

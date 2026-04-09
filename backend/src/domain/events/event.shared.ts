@@ -66,6 +66,7 @@ export type CreateEventInput = {
   maxParticipantCount?: number;
   sessionLeadershipStrategy?: string;
   fixedLeadHostId?: string;
+  bufferAfterMinutes?: number;
 };
 
 export type UpdateEventInput = CreateEventInput;
@@ -122,7 +123,7 @@ export const isValidSessionLeadershipStrategy = (
 ): value is SessionLeadershipStrategy =>
   Object.values(SessionLeadershipStrategy).includes(value as SessionLeadershipStrategy);
 
-export { 
+export {
   normalizeOptionalString,
   normalizeRequiredString,
   parseDurationSeconds,

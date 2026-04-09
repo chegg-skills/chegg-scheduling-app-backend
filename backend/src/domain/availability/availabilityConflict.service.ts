@@ -10,6 +10,12 @@ import {
  * Encapsulates the logic for "Same Booking" overrides and capacity-aware conflicts.
  */
 
+export type BookingWithEventBuffer = Prisma.BookingGetPayload<{
+    include: {
+        event: true,
+    },
+}>;
+
 export const getHostConflicts = async (
     userId: string,
     startTime: Date,
@@ -19,7 +25,7 @@ export const getHostConflicts = async (
         scheduleSlotId?: string | null;
         tx?: AvailabilityClient;
     } = {},
-): Promise<any[]> => {
+): Promise<BookingWithEventBuffer[]> => {
     const client = options.tx || prisma;
 
     // 1. Build the "Same Session Exclusion" to allow overlapping bookings for the same slot/event
@@ -29,32 +35,38 @@ export const getHostConflicts = async (
         options,
     );
 
-    // 2. Query for any conflicting bookings that are not in the excluded session
-    return client.booking.findMany({
+    // 2. Query for any potential conflicting bookings in a slightly wider window 
+    // to account for possibly large buffers on existing bookings.
+    // We assume buffers won't exceed 120 minutes for safety.
+    const lookbackStartTime = new Date(startTime.getTime() - 120 * 60 * 1000);
+
+    const bookings = (await client.booking.findMany({
         where: {
             hostUserId: userId,
             status: { in: ['CONFIRMED', 'PENDING'] },
             AND: [
                 {
-                    OR: [
-                        { startTime: { lt: endTime }, endTime: { gt: startTime } },
-                    ],
+                    startTime: { lt: endTime },
+                    endTime: { gt: lookbackStartTime },
                 },
                 ...(sameSessionExclusion ? [sameSessionExclusion] : []),
             ],
         },
         include: {
-            event: {
-                include: {
-                    interactionType: {
-                        select: {
-                            minParticipants: true,
-                            maxParticipants: true,
-                        },
-                    },
-                },
-            },
+            event: true,
         },
+    })) as BookingWithEventBuffer[];
+
+    // 3. Filter for true "effective" overlaps (Meeting + Buffer)
+    // A conflict occurs if the new meeting's [startTime, endTime] 
+    // overlaps with an existing meeting's [startTime, endTime + buffer]
+    return bookings.filter((booking) => {
+        const effectiveEndTime = new Date(
+            booking.endTime.getTime() + (booking.event.bufferAfterMinutes ?? 0) * 60 * 1000
+        );
+
+        // Standard overlap check: current.start < other.end && other.start < current.end
+        return startTime < effectiveEndTime && booking.startTime < endTime;
     });
 };
 
@@ -62,7 +74,7 @@ export const getHostConflicts = async (
  * Determines if a conflict is blocking based on session capacity rules.
  */
 export const isConflictBlocking = (
-    conflicts: any[],
+    conflicts: BookingWithEventBuffer[],
     currentEventId?: string,
 ): boolean => {
     if (conflicts.length === 0) return false;

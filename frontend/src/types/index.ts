@@ -165,6 +165,7 @@ export interface Event {
   fixedLeadHostId: string | null
   minParticipantCount: number | null
   maxParticipantCount: number | null
+  bufferAfterMinutes: number
   teamId: string
   createdById: string
   updatedById: string
@@ -306,6 +307,7 @@ export interface CreateEventDto {
   minimumNoticeMinutes?: number
   minParticipantCount?: number | null
   maxParticipantCount?: number | null
+  bufferAfterMinutes?: number
   description?: string
   isActive?: boolean
 }

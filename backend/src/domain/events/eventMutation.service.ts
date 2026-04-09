@@ -319,4 +319,5 @@ export const buildDuplicateEventData = ({
   maxParticipantCount: sourceEvent.maxParticipantCount,
   sessionLeadershipStrategy: sourceEvent.sessionLeadershipStrategy,
   fixedLeadHostId: sourceEvent.fixedLeadHostId,
+  bufferAfterMinutes: sourceEvent.bufferAfterMinutes,
 });
