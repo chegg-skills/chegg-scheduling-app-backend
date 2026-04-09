@@ -1,2 +1,2 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-UPDATE "Booking" SET "rescheduleToken" = encode(gen_random_bytes(16), 'hex') WHERE "rescheduleToken" IS NULL;
+-- Backfill existing NULL tokens with the booking ID (which is already a unique UUID)
+UPDATE "Booking" SET "rescheduleToken" = "id" WHERE "rescheduleToken" IS NULL;
