@@ -16,7 +16,7 @@
     "@prisma/client": "^6.14.0",
     "amqplib": "^0.10.3",
     "dotenv": "^16.4.5",
-    "nodemailer": "^6.9.8"
+    "nodemailer": "^8.0.5"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.7",
