@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { availabilityApi, type GetExceptionsParams } from '@/api/availability'
 import type { SetWeeklyAvailabilityDto, CreateAvailabilityExceptionDto } from '@/types'
+import { invalidateQueryKeys } from './queryUtils'
 
 export const availabilityKeys = {
     all: ['availability'] as const,
     weekly: (userId: string) => [...availabilityKeys.all, 'weekly', userId] as const,
-    exceptions: (userId: string, params?: GetExceptionsParams) => [...availabilityKeys.all, 'exceptions', userId, params] as const,
-    effective: (userId: string, params?: { from: string; to: string }) => [...availabilityKeys.all, 'effective', userId, params] as const,
+    exceptionsRoot: (userId: string) => [...availabilityKeys.all, 'exceptions', userId] as const,
+    exceptions: (userId: string, params?: GetExceptionsParams) => [...availabilityKeys.exceptionsRoot(userId), params] as const,
+    effectiveRoot: (userId: string) => [...availabilityKeys.all, 'effective', userId] as const,
+    effective: (userId: string, params?: { from: string; to: string }) => [...availabilityKeys.effectiveRoot(userId), params] as const,
 }
 
 export function useWeeklyAvailability(userId: string) {
@@ -22,10 +25,8 @@ export function useUpdateWeeklyAvailability() {
     return useMutation({
         mutationFn: ({ userId, data }: { userId: string; data: SetWeeklyAvailabilityDto }) =>
             availabilityApi.setWeekly(userId, data),
-        onSuccess: (_, { userId }) => {
-            qc.invalidateQueries({ queryKey: availabilityKeys.weekly(userId) })
-            qc.invalidateQueries({ queryKey: [...availabilityKeys.all, 'effective', userId] })
-        },
+        onSuccess: (_, { userId }) =>
+            invalidateQueryKeys(qc, [availabilityKeys.weekly(userId), availabilityKeys.effectiveRoot(userId)]),
     })
 }
 
@@ -42,10 +43,8 @@ export function useAddAvailabilityException() {
     return useMutation({
         mutationFn: ({ userId, data }: { userId: string; data: CreateAvailabilityExceptionDto }) =>
             availabilityApi.addException(userId, data),
-        onSuccess: (_, { userId }) => {
-            qc.invalidateQueries({ queryKey: [...availabilityKeys.all, 'exceptions', userId] })
-            qc.invalidateQueries({ queryKey: [...availabilityKeys.all, 'effective', userId] })
-        },
+        onSuccess: (_, { userId }) =>
+            invalidateQueryKeys(qc, [availabilityKeys.exceptionsRoot(userId), availabilityKeys.effectiveRoot(userId)]),
     })
 }
 
@@ -54,10 +53,8 @@ export function useRemoveAvailabilityException() {
     return useMutation({
         mutationFn: ({ userId, exceptionId }: { userId: string; exceptionId: string }) =>
             availabilityApi.removeException(userId, exceptionId),
-        onSuccess: (_, { userId }) => {
-            qc.invalidateQueries({ queryKey: [...availabilityKeys.all, 'exceptions', userId] })
-            qc.invalidateQueries({ queryKey: [...availabilityKeys.all, 'effective', userId] })
-        },
+        onSuccess: (_, { userId }) =>
+            invalidateQueryKeys(qc, [availabilityKeys.exceptionsRoot(userId), availabilityKeys.effectiveRoot(userId)]),
     })
 }
 

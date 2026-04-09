@@ -4,6 +4,8 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
+import Tooltip from '@mui/material/Tooltip'
+import Box from '@mui/material/Box'
 import { MoreVertical } from 'lucide-react'
 
 export interface Action {
@@ -12,6 +14,7 @@ export interface Action {
     icon?: React.ReactNode
     color?: string
     disabled?: boolean
+    tooltip?: string
 }
 
 interface RowActionsProps {
@@ -69,34 +72,52 @@ export function RowActions({ actions }: RowActionsProps) {
                     },
                 }}
             >
-                {actions.map((action) => (
-                    <MenuItem
-                        key={action.label}
-                        onClick={() => handleActionClick(action.onClick)}
-                        disabled={action.disabled}
-                        sx={{
-                            px: 2,
-                            py: 1,
-                            color: action.color || 'text.primary',
-                            '& .MuiListItemIcon-root': {
-                                color: action.color || 'text.secondary',
-                                minWidth: 32,
-                            },
-                            '&:hover': {
-                                bgcolor: action.color === 'error' || action.color === 'error.main' ? 'error.lighter' : 'action.hover',
-                            }
-                        }}
-                    >
-                        {action.icon && <ListItemIcon>{action.icon}</ListItemIcon>}
-                        <ListItemText
-                            primary={action.label}
-                            primaryTypographyProps={{
-                                variant: 'body2',
-                                fontWeight: 500
+                {actions.map((action) => {
+                    const menuItem = (
+                        <MenuItem
+                            key={action.label}
+                            onClick={() => handleActionClick(action.onClick)}
+                            disabled={action.disabled}
+                            sx={{
+                                px: 2,
+                                py: 1,
+                                color: action.color || 'text.primary',
+                                '& .MuiListItemIcon-root': {
+                                    color: action.color || 'text.secondary',
+                                    minWidth: 32,
+                                },
+                                '&:hover': {
+                                    bgcolor: action.color === 'error' || action.color === 'error.main' ? 'error.lighter' : 'action.hover',
+                                }
                             }}
-                        />
-                    </MenuItem>
-                ))}
+                        >
+                            {action.icon && <ListItemIcon>{action.icon}</ListItemIcon>}
+                            <ListItemText
+                                primary={action.label}
+                                primaryTypographyProps={{
+                                    variant: 'body2',
+                                    fontWeight: 500
+                                }}
+                            />
+                        </MenuItem>
+                    )
+
+                    if (action.tooltip) {
+                        return (
+                            <Tooltip key={action.label} title={action.tooltip} placement="left">
+                                <Box component="span" sx={{ display: 'block' }}>
+                                    {menuItem}
+                                </Box>
+                            </Tooltip>
+                        )
+                    }
+
+                    return (
+                        <Box key={action.label} component="span">
+                            {menuItem}
+                        </Box>
+                    )
+                })}
             </Menu>
         </div>
     )

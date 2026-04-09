@@ -5,10 +5,20 @@ import {
   type EventOffering as EventOfferingModel,
   Prisma,
   UserRole,
+  SessionLeadershipStrategy,
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import {
+  normalizeOptionalString,
+  normalizeRequiredString,
+  parseDurationSeconds,
+  parseNonNegativeInt,
+  parseOptionalEnum,
+  parsePositiveInt,
+  parseRequiredEnum,
+} from "../../shared/utils/validation";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import {
   safeUserSelect,
@@ -54,6 +64,9 @@ export type CreateEventInput = {
   minimumNoticeMinutes?: number;
   minParticipantCount?: number;
   maxParticipantCount?: number;
+  sessionLeadershipStrategy?: string;
+  fixedLeadHostId?: string;
+  bufferAfterMinutes?: number;
 };
 
 export type UpdateEventInput = CreateEventInput;
@@ -76,6 +89,7 @@ export type UpsertInteractionTypeInput = {
   maxHosts?: number | null;
   minParticipants?: number;
   maxParticipants?: number | null;
+  supportsSimultaneousCoaches?: boolean;
   sortOrder?: number;
   isActive?: boolean;
 };
@@ -104,95 +118,23 @@ export const isValidLocationType = (
 ): value is EventLocationType =>
   Object.values(EventLocationType).includes(value as EventLocationType);
 
-export const parseDurationSeconds = (value: unknown): number => {
-  if (!Number.isInteger(value) || Number(value) <= 0) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "durationSeconds must be a positive integer.",
-    );
-  }
+export const isValidSessionLeadershipStrategy = (
+  value: string,
+): value is SessionLeadershipStrategy =>
+  Object.values(SessionLeadershipStrategy).includes(value as SessionLeadershipStrategy);
 
-  return Number(value);
-};
-
-export const normalizeRequiredString = (value: unknown, fieldName: string): string => {
-  if (typeof value !== "string" || !value.trim()) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `${fieldName} is required.`,
-    );
-  }
-
-  return value.trim();
-};
-
-export const normalizeOptionalString = (value: unknown, fieldName: string): string | null => {
-  if (value === undefined) {
-    return null;
-  }
-
-  if (typeof value !== "string") {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `${fieldName} must be a string.`,
-    );
-  }
-
-  return value.trim() || null;
-};
+export {
+  normalizeOptionalString,
+  normalizeRequiredString,
+  parseDurationSeconds,
+  parseNonNegativeInt,
+  parseOptionalEnum,
+  parsePositiveInt,
+  parseRequiredEnum,
+} from "../../shared/utils/validation";
 
 export const normalizeKey = (value: string): string => {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
-};
-
-export const parseRequiredEnum = <T extends string>(
-  value: unknown,
-  fieldName: string,
-  validator: (candidate: string) => candidate is T,
-): T => {
-  const normalized = normalizeRequiredString(value, fieldName);
-  if (!validator(normalized)) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, `Invalid ${fieldName}.`);
-  }
-
-  return normalized;
-};
-
-export const parseOptionalEnum = <T extends string>(
-  value: unknown,
-  fieldName: string,
-  validator: (candidate: string) => candidate is T,
-): T | undefined => {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  const normalized = normalizeRequiredString(value, fieldName);
-  if (!validator(normalized)) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, `Invalid ${fieldName}.`);
-  }
-
-  return normalized;
-};
-
-export const parsePositiveInt = (value: unknown, fieldName: string): number => {
-  if (!Number.isInteger(value) || Number(value) <= 0) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `${fieldName} must be a positive integer.`,
-    );
-  }
-  return Number(value);
-};
-
-export const parseNonNegativeInt = (value: unknown, fieldName: string): number => {
-  if (!Number.isInteger(value) || Number(value) < 0) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `${fieldName} must be a non-negative integer.`,
-    );
-  }
-  return Number(value);
 };
 
 export const assertCatalogManagementAllowed = (caller: CallerContext): void => {

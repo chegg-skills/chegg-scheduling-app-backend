@@ -37,6 +37,7 @@ export const normalizeEmail = (email: string): string =>
 
 export const validateTimezone = (timezone: string): string => {
   try {
+    // This will throw an error if the timezone is invalid
     Intl.DateTimeFormat(undefined, { timeZone: timezone });
     return timezone;
   } catch {

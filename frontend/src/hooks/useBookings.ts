@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '@/api/bookings'
 import type { ListBookingsFilters, BookingStatus } from '@/types'
+import { invalidateQueryKeys, preservePreviousData } from './queryUtils'
 import { statsKeys } from './useStats'
 
 export const bookingKeys = {
@@ -16,7 +17,7 @@ export function useBookings(filters: ListBookingsFilters = {}) {
             bookings: r.data.data?.bookings ?? [],
             pagination: r.data.data?.pagination
         })),
-        placeholderData: (previousData) => previousData,
+        placeholderData: preservePreviousData,
     })
 }
 
@@ -33,10 +34,7 @@ export function useUpdateBookingStatus() {
     return useMutation({
         mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
             bookingsApi.updateStatus(id, { status }),
-        onSuccess: (_, { id }) => {
-            qc.invalidateQueries({ queryKey: bookingKeys.all })
-            qc.invalidateQueries({ queryKey: bookingKeys.detail(id) })
-            qc.invalidateQueries({ queryKey: statsKeys.all })
-        },
+        onSuccess: (_, { id }) =>
+            invalidateQueryKeys(qc, [bookingKeys.all, bookingKeys.detail(id), statsKeys.all]),
     })
 }

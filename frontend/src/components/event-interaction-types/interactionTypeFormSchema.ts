@@ -8,6 +8,7 @@ export const interactionTypeFormSchema = z
     description: z.string().optional(),
     supportsMultipleHosts: z.boolean().optional(),
     supportsRoundRobin: z.boolean().optional(),
+    supportsSimultaneousCoaches: z.boolean().optional(),
     minHosts: z.coerce.number().int().min(1).optional(),
     maxHosts: z.preprocess(
       (value) => {
@@ -44,15 +45,23 @@ export const interactionTypeFormSchema = z
     if (values.supportsRoundRobin && !values.supportsMultipleHosts) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Round Robin requires Multiple Hosts to be enabled.',
+        message: 'Round Robin requires Coach Pool to be enabled.',
         path: ['supportsRoundRobin'],
+      })
+    }
+
+    if (values.supportsSimultaneousCoaches && !values.supportsMultipleHosts) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Co-hosting requires Coach Pool to be enabled.',
+        path: ['supportsSimultaneousCoaches'],
       })
     }
 
     if (!values.supportsMultipleHosts && minHosts !== 1) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Single-host interaction types must keep Min Hosts at 1.',
+        message: 'Single-coach interaction types must keep Min Hosts at 1.',
         path: ['minHosts'],
       })
     }
@@ -101,6 +110,7 @@ export function getInteractionTypeFormDefaults(
     description: interactionType?.description ?? '',
     supportsMultipleHosts: interactionType?.supportsMultipleHosts ?? false,
     supportsRoundRobin: interactionType?.supportsRoundRobin ?? false,
+    supportsSimultaneousCoaches: interactionType?.supportsSimultaneousCoaches ?? false,
     minHosts: interactionType?.minHosts ?? 1,
     maxHosts: interactionType?.maxHosts ?? null,
     minParticipants: interactionType?.minParticipants ?? 1,

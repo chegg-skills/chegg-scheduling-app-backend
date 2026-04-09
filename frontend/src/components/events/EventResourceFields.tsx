@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
@@ -10,14 +10,12 @@ import { useInteractionTypes } from '@/hooks/useInteractionTypes'
 import { formatCapacityRange } from './eventCapabilityRules'
 import type { EventFormValues } from './eventFormSchema'
 
-interface Props {
-  register: UseFormRegister<EventFormValues>
-  errors: FieldErrors<EventFormValues>
-  watch: UseFormWatch<EventFormValues>
-}
-
-/** Handles offeringId and interactionTypeId */
-export function EventResourceFields({ register, errors, watch }: Props) {
+/** 
+ * Handles offeringId and interactionTypeId fields.
+ * Consumes the EventForm context.
+ */
+export function EventResourceFields() {
+  const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
   const { data: offeringsData } = useEventOfferings()
   const { data: interactionData } = useInteractionTypes()
 
@@ -69,10 +67,10 @@ export function EventResourceFields({ register, errors, watch }: Props) {
                   {t.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} • Hosts: {formatCapacityRange(t.minHosts, t.maxHosts)}
+                  Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} • Coaches: {formatCapacityRange(t.minHosts, t.maxHosts)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t.supportsRoundRobin ? 'Supports Round Robin' : 'Direct Assignment Only'}
+                  {t.supportsRoundRobin ? 'Supports Round Robin roster' : 'Direct assignment only'}
                 </Typography>
               </Box>
             </MenuItem>

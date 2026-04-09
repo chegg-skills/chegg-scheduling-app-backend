@@ -1,4 +1,4 @@
-import { Controller, type Control, type FieldErrors } from 'react-hook-form'
+import { Controller, useFormContext } from 'react-hook-form'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { FormField } from '@/components/shared/FormField'
@@ -14,12 +14,13 @@ const WEEKDAYS = [
     { value: 0, label: 'S' },
 ]
 
-interface WeekdaySelectorProps {
-    control: Control<EventFormValues>
-    errors: FieldErrors<EventFormValues>
-}
+/** 
+ * Handles weekday selection for the event.
+ * Consumes the EventForm context.
+ */
+export function WeekdaySelector() {
+    const { control, formState: { errors } } = useFormContext<EventFormValues>()
 
-export function WeekdaySelector({ control, errors }: WeekdaySelectorProps) {
     return (
         <FormField
             label="Allowed Weekdays"

@@ -55,10 +55,10 @@ export function InteractionTypeCapabilitiesSection({
           render={({ field }) => (
             <CapabilityCheckbox
               id="supportsMultipleHosts"
-              label="Supports multiple hosts"
+              label="Supports a pool of coaches"
               value={field.value ?? false}
               onChange={field.onChange}
-              info="Allows an event to be configured with more than one eligible host."
+              info="Allows you to assign multiple coaches to an event. Use this for load-balancing (Round Robin) or providing students with a choice of coaches."
             />
           )}
         />
@@ -73,11 +73,31 @@ export function InteractionTypeCapabilitiesSection({
                 label="Supports round-robin assignment"
                 value={field.value ?? false}
                 onChange={field.onChange}
-                info="Lets events choose round-robin assignment across their eligible hosts."
+                info="Lets events choose round-robin assignment across their eligible coaches."
               />
               {errors.supportsRoundRobin ? (
                 <Typography variant="caption" color="error">
                   {errors.supportsRoundRobin.message}
+                </Typography>
+              ) : null}
+            </Box>
+          )}
+        />
+        <Controller
+          name="supportsSimultaneousCoaches"
+          control={control}
+          render={({ field }) => (
+            <Box>
+              <CapabilityCheckbox
+                id="supportsSimultaneousCoaches"
+                label="Supports simultaneous co-hosting"
+                value={field.value ?? false}
+                onChange={field.onChange}
+                info="Allows multiple coaches to join the same session simultaneously (Team Coaching / Collaborative Sessions)."
+              />
+              {errors.supportsSimultaneousCoaches ? (
+                <Typography variant="caption" color="error">
+                  {errors.supportsSimultaneousCoaches.message}
                 </Typography>
               ) : null}
             </Box>

@@ -6,7 +6,7 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { useParams } from 'react-router-dom'
 import { Edit, Trash2, Eye, EyeOff, Plus, Users, Info, Calendar as CalendarIcon } from 'lucide-react'
-import { useEvent, useDeleteEvent, useUpdateEvent } from '@/hooks/useEvents'
+import { useEvent, useDeleteEvent, useUpdateEvent, useEventScheduleSlots } from '@/hooks/useEvents'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -19,6 +19,7 @@ import { EventForm } from '@/components/events/EventForm'
 import { EventHostManager } from '@/components/events/EventHostManager'
 import { EventScheduleSlotManager } from '@/components/events/EventScheduleSlotManager'
 import { EventDetailOverview } from '@/components/events/EventDetailOverview'
+import { EventBookingList } from '@/components/events/EventBookingList'
 import { RowActions } from '@/components/shared/RowActions'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { getEventHostSetupStatus } from '@/components/events/eventCapabilityRules'
@@ -53,18 +54,20 @@ export function EventDetailPage() {
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
   const { data: event, isLoading, error } = useEvent(eventId)
+  const { data: slotsRes, isLoading: isLoadingSlots } = useEventScheduleSlots(eventId)
   const { data: teamMembersResponse } = useTeamMembers(event?.teamId ?? '')
   const updateEventMutation = useUpdateEvent()
   const deleteEventMutation = useDeleteEvent()
   const { handleAction } = useAsyncAction()
 
+  const slots = slotsRes?.slots ?? []
   const teamMembers = teamMembersResponse?.members ?? []
   const hostSetupStatus = getEventHostSetupStatus({
     activeHostCount: event?.hosts?.length ?? 0,
     assignmentStrategy: event?.assignmentStrategy,
     interactionType: event?.interactionType,
   })
-  const needsScheduleSlots = event?.bookingMode === 'FIXED_SLOTS' && (event.scheduleSlots?.length ?? 0) === 0
+  const needsScheduleSlots = event?.bookingMode === 'FIXED_SLOTS' && slots.length === 0
 
   if (isLoading) return <PageSpinner />
   if (error || !event) return <ErrorAlert message="Failed to load event." />
@@ -108,7 +111,7 @@ export function EventDetailPage() {
               label={event.isActive ? 'Active' : 'Inactive'}
               variant={event.isActive ? 'green' : 'red'}
             />
-            {!hostSetupStatus.isReady && <Badge label="Needs Hosts" variant="yellow" />}
+            {!hostSetupStatus.isReady && <Badge label="Needs Coaches" variant="yellow" />}
             {needsScheduleSlots && <Badge label="Needs Slots" variant="yellow" />}
           </Stack>
         }
@@ -168,7 +171,8 @@ export function EventDetailPage() {
             }}
           >
             <Tab label="Details" icon={<Info size={18} />} iconPosition="start" />
-            <Tab label={`Hosts (${event.hosts?.length ?? 0})`} icon={<Users size={18} />} iconPosition="start" />
+            <Tab label={`Coaches (${event.hosts?.length ?? 0})`} icon={<Users size={18} />} iconPosition="start" />
+            <Tab label="Sessions" icon={<Plus size={18} />} iconPosition="start" />
             {event.bookingMode === 'FIXED_SLOTS' && (
               <Tab label="Schedule" icon={<CalendarIcon size={18} />} iconPosition="start" />
             )}
@@ -186,12 +190,12 @@ export function EventDetailPage() {
         <TabPanel value={tabValue} index={0}>
           <Stack spacing={2}>
             {!hostSetupStatus.isReady && (
-              <Alert severity="warning" variant="outlined">
+              <Alert severity="warning" variant="standard" sx={{ mt: 2 }}>
                 {hostSetupStatus.message}
               </Alert>
             )}
             {needsScheduleSlots && (
-              <Alert severity="info" variant="outlined">
+              <Alert severity="info" variant="standard" sx={{ mt: 2 }}>
                 This event is in fixed-slot mode, so add one or more schedule slots before sharing it for booking.
               </Alert>
             )}
@@ -214,9 +218,20 @@ export function EventDetailPage() {
           />
         </TabPanel>
 
+        <TabPanel value={tabValue} index={2}>
+          <EventBookingList
+            eventId={eventId}
+            onViewHost={setViewingUserId}
+          />
+        </TabPanel>
+
         {event.bookingMode === 'FIXED_SLOTS' && (
-          <TabPanel value={tabValue} index={2}>
-            <EventScheduleSlotManager event={event} />
+          <TabPanel value={tabValue} index={3}>
+            <EventScheduleSlotManager
+              event={event}
+              slots={slots}
+              isLoading={isLoadingSlots}
+            />
           </TabPanel>
         )}
 

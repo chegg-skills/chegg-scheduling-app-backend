@@ -111,6 +111,7 @@ model EventInteractionType {
   supportsMultipleHosts Boolean  @default(false)
   minHosts              Int      @default(1)
   maxHosts              Int?
+  supportsSimultaneousCoaches Boolean @default(false)
   minParticipants       Int      @default(1)
   maxParticipants       Int?
   isActive              Boolean  @default(true)
@@ -146,8 +147,11 @@ model Event {
   bookingMode          EventBookingMode     @default(HOST_AVAILABILITY)
   allowedWeekdays      Int[]                @default([])
   minimumNoticeMinutes Int                  @default(0)
+  sessionLeadershipStrategy SessionLeadershipStrategy @default(SINGLE_HOST)
+  fixedLeadHostId      String?
   minParticipantCount  Int?
   maxParticipantCount  Int?
+  bufferAfterMinutes   Int                  @default(0)
   bookings             Booking[]
   createdBy            User                 @relation("EventCreatedBy", fields: [createdById], references: [id])
   interactionType      EventInteractionType @relation(fields: [interactionTypeId], references: [id])
@@ -253,6 +257,7 @@ model Booking {
   teamId            String
   eventId           String
   hostUserId        String
+  coHostUserIds     String[]           @default([])
   startTime         DateTime
   endTime           DateTime
   timezone          String             @default("UTC")
@@ -309,4 +314,10 @@ enum BookingStatus {
   CANCELLED
   COMPLETED
   NO_SHOW
+}
+
+enum SessionLeadershipStrategy {
+  SINGLE_HOST
+  FIXED_LEAD
+  ROTATING_LEAD
 }

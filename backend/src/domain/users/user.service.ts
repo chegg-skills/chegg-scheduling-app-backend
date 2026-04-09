@@ -3,7 +3,15 @@ import bcrypt from "bcrypt";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { resolvePagination } from "../../shared/utils/pagination";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
+import {
+  assertMinimumLength,
+  normalizeOptionalString,
+  requireEntityId,
+  requireTrimmedString,
+} from "../../shared/utils/validation";
 import {
   SALT_ROUNDS,
   type CallerContext,
@@ -13,7 +21,6 @@ import {
   validateTimezone,
   validateZoomIsvLink,
 } from "../../shared/utils/userUtils";
-import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 
 type ListUsersOptions = {
   page?: number;
@@ -65,26 +72,11 @@ type SharedProfileInput = Pick<
   | "zoomIsvLink"
 >;
 
-const requireUserId = (userId: string): string => {
-  const normalizedUserId = userId?.trim();
-  if (!normalizedUserId) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "userId is required.");
-  }
+const requireUserId = (userId: string): string =>
+  requireEntityId(userId, "userId");
 
-  return normalizedUserId;
-};
-
-const normalizeRequiredField = (value: string, fieldName: string): string => {
-  const normalizedValue = value.trim();
-  if (!normalizedValue) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `${fieldName} cannot be empty.`,
-    );
-  }
-
-  return normalizedValue;
-};
+const normalizeRequiredField = (value: string, fieldName: string): string =>
+  requireTrimmedString(value, fieldName, `${fieldName} cannot be empty.`);
 
 const assignCoachPublicBookingSlug = async (
   userId: string,
@@ -127,34 +119,33 @@ const applySharedProfileUpdates = async (
   }
 
   if (payload.password !== undefined) {
-    const value = payload.password.trim();
-    if (value.length < 8) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        "Password must be at least 8 characters long.",
-      );
-    }
+    const value = assertMinimumLength(
+      payload.password.trim(),
+      8,
+      "Password must be at least 8 characters long.",
+    );
     updateData.password = await bcrypt.hash(value, SALT_ROUNDS);
   }
 
   if (payload.phoneNumber !== undefined) {
-    updateData.phoneNumber = payload.phoneNumber?.trim() || null;
+    updateData.phoneNumber = normalizeOptionalString(payload.phoneNumber, "phoneNumber");
   }
 
   if (payload.country !== undefined) {
-    updateData.country = payload.country?.trim() || null;
+    updateData.country = normalizeOptionalString(payload.country, "country");
   }
 
   if (payload.avatarUrl !== undefined) {
-    updateData.avatarUrl = payload.avatarUrl?.trim() || null;
+    updateData.avatarUrl = normalizeOptionalString(payload.avatarUrl, "avatarUrl");
   }
 
   if (payload.preferredLanguage !== undefined) {
-    updateData.preferredLanguage = payload.preferredLanguage?.trim() || "en";
+    updateData.preferredLanguage =
+      normalizeOptionalString(payload.preferredLanguage, "preferredLanguage") ?? "en";
   }
 
   if (payload.zoomIsvLink !== undefined) {
-    const value = payload.zoomIsvLink.trim();
+    const value = normalizeOptionalString(payload.zoomIsvLink, "zoomIsvLink");
     updateData.zoomIsvLink = value ? validateZoomIsvLink(value) : null;
   }
 
@@ -367,24 +358,13 @@ const updateUser = async (
 
     return toSafeUser(updatedUser);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      throw new ErrorHandler(StatusCodes.NOT_FOUND, "User not found.");
-    }
-
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "A user with this email already exists.",
-      );
-    }
-
-    throw error;
+    return rethrowPrismaError(error, {
+      P2025: { status: StatusCodes.NOT_FOUND, message: "User not found." },
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "A user with this email already exists.",
+      },
+    });
   }
 };
 
@@ -464,10 +444,9 @@ const updateMyProfile = async (
 
     return toSafeUser(updatedUser);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-      throw new ErrorHandler(StatusCodes.NOT_FOUND, "User not found.");
-    }
-    throw error;
+    return rethrowPrismaError(error, {
+      P2025: { status: StatusCodes.NOT_FOUND, message: "User not found." },
+    });
   }
 };
 

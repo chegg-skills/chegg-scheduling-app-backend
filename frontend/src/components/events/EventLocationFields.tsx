@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
@@ -6,12 +6,6 @@ import { Input } from '@/components/shared/Input'
 import { Select } from '@/components/shared/Select'
 import type { EventFormValues } from './eventFormSchema'
 import type { EventLocationType } from '@/types'
-
-interface Props {
-  register: UseFormRegister<EventFormValues>
-  errors: FieldErrors<EventFormValues>
-  watch: UseFormWatch<EventFormValues>
-}
 
 const LOCATION_TYPES: { value: EventLocationType; label: string }[] = [
   { value: 'VIRTUAL', label: 'Virtual (URL)' },
@@ -25,8 +19,12 @@ const locationHint: Record<EventLocationType, string> = {
   CUSTOM: 'Any custom location string.',
 }
 
-/** Handles locationType and locationValue */
-export function EventLocationFields({ register, errors, watch }: Props) {
+/** 
+ * Handles locationType and locationValue fields.
+ * Consumes the EventForm context.
+ */
+export function EventLocationFields() {
+  const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
   const locationType = watch('locationType')
 
   return (

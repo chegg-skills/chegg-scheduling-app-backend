@@ -27,6 +27,20 @@ router
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.updateEventOffering,
   )
+  .delete(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.deleteEventOffering,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/event-offerings/:offeringId/usage")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN),
+    eventController.getEventOfferingUsage,
+  )
   .all(methodNotAllowed);
 
 router

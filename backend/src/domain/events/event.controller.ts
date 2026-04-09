@@ -157,6 +157,52 @@ const updateEventOffering = async (
   }
 };
 
+const deleteEventOffering = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const offering = await eventService.deleteEventOffering(
+      getOfferingIdParam(req),
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      offering,
+      "Event offering deleted successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getEventOfferingUsage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const usage = await eventService.getEventOfferingUsage(
+      getOfferingIdParam(req),
+      caller,
+    );
+
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      usage,
+      "Event offering usage fetched successfully.",
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createInteractionType = async (
   req: Request,
   res: Response,
@@ -568,4 +614,6 @@ export {
   updateEventScheduleSlot,
   deleteInteractionType,
   getInteractionTypeUsage,
+  deleteEventOffering,
+  getEventOfferingUsage,
 };

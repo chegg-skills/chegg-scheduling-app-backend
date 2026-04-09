@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { rethrowPrismaError } from "../../shared/error/prismaError";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   assertCatalogManagementAllowed,
@@ -41,17 +42,12 @@ const createEventOffering = async (
       },
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "An event offering with this key already exists.",
-      );
-    }
-
-    throw error;
+    return rethrowPrismaError(error, {
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "An event offering with this key already exists.",
+      },
+    });
   }
 };
 
@@ -100,24 +96,71 @@ const updateEventOffering = async (
       data,
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event offering not found.");
-    }
+    return rethrowPrismaError(error, {
+      P2025: {
+        status: StatusCodes.NOT_FOUND,
+        message: "Event offering not found.",
+      },
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "An event offering with this key already exists.",
+      },
+    });
+  }
+};
 
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "An event offering with this key already exists.",
-      );
-    }
+const getEventOfferingUsage = async (
+  offeringId: string,
+  _caller: CallerContext,
+): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
+  const events = await prisma.event.findMany({
+    where: { offeringId },
+    select: {
+      id: true,
+      name: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
 
-    throw error;
+  return events;
+};
+
+const deleteEventOffering = async (
+  offeringId: string,
+  caller: CallerContext,
+): Promise<SafeEventOffering> => {
+  assertCatalogManagementAllowed(caller);
+
+  if (!offeringId?.trim()) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "offeringId is required.");
+  }
+
+  const usage = await getEventOfferingUsage(offeringId, caller);
+
+  if (usage.length > 0) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      `Cannot delete event offering as it is currently used by ${usage.length} event(s). Please deactivate it instead.`,
+    );
+  }
+
+  // Hard delete: Remove the offering if it's not in use
+  try {
+    return await prisma.eventOffering.delete({
+      where: { id: offeringId },
+    });
+  } catch (error) {
+    return rethrowPrismaError(error, {
+      P2025: {
+        status: StatusCodes.NOT_FOUND,
+        message: "Event offering not found.",
+      },
+    });
   }
 };
 
@@ -130,6 +173,7 @@ const validateInteractionTypePayload = (
   maxHosts: number | null;
   minParticipants: number;
   maxParticipants: number | null;
+  supportsSimultaneousCoaches: boolean;
 } => {
   const supportsRoundRobin = Boolean(payload.supportsRoundRobin);
   const supportsMultipleHosts = Boolean(payload.supportsMultipleHosts);
@@ -139,6 +183,7 @@ const validateInteractionTypePayload = (
     payload.maxHosts === undefined || payload.maxHosts === null
       ? null
       : parsePositiveInt(payload.maxHosts, "maxHosts");
+  const supportsSimultaneousCoaches = Boolean(payload.supportsSimultaneousCoaches);
   const minParticipants =
     payload.minParticipants !== undefined
       ? parsePositiveInt(payload.minParticipants, "minParticipants")
@@ -183,6 +228,13 @@ const validateInteractionTypePayload = (
     );
   }
 
+  if (supportsSimultaneousCoaches && !supportsMultipleHosts) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "supportsSimultaneousCoaches requires supportsMultipleHosts to be true.",
+    );
+  }
+
   return {
     supportsRoundRobin,
     supportsMultipleHosts,
@@ -190,6 +242,7 @@ const validateInteractionTypePayload = (
     maxHosts,
     minParticipants,
     maxParticipants,
+    supportsSimultaneousCoaches,
   };
 };
 
@@ -220,17 +273,12 @@ const createInteractionType = async (
       },
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "An interaction type with this key already exists.",
-      );
-    }
-
-    throw error;
+    return rethrowPrismaError(error, {
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "An interaction type with this key already exists.",
+      },
+    });
   }
 };
 
@@ -277,6 +325,8 @@ const updateInteractionType = async (
       payload.maxParticipants !== undefined
         ? payload.maxParticipants
         : existing.maxParticipants,
+    supportsSimultaneousCoaches:
+      payload.supportsSimultaneousCoaches ?? existing.supportsSimultaneousCoaches,
   };
 
   const validated = validateInteractionTypePayload(mergedPayload);
@@ -308,17 +358,12 @@ const updateInteractionType = async (
       data,
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "An interaction type with this key already exists.",
-      );
-    }
-
-    throw error;
+    return rethrowPrismaError(error, {
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "An interaction type with this key already exists.",
+      },
+    });
   }
 };
 
@@ -362,13 +407,12 @@ const deleteInteractionType = async (
       where: { id: interactionTypeId },
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      throw new ErrorHandler(StatusCodes.NOT_FOUND, "Interaction type not found.");
-    }
-    throw error;
+    return rethrowPrismaError(error, {
+      P2025: {
+        status: StatusCodes.NOT_FOUND,
+        message: "Interaction type not found.",
+      },
+    });
   }
 };
 
@@ -376,9 +420,11 @@ export {
   createEventOffering,
   listEventOfferings,
   updateEventOffering,
+  deleteEventOffering,
   createInteractionType,
   listInteractionTypes,
   updateInteractionType,
   deleteInteractionType,
   getInteractionTypeUsage,
+  getEventOfferingUsage,
 };

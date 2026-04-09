@@ -2,240 +2,288 @@ import type { EmailTemplateMap } from "../../types/notification";
 
 const BRAND_ORANGE = "#FF7500";
 const BRAND_DARK = "#00253C";
-const BG_COLOR = "#F5F7F8";
+const TEXT_MAIN = "#1B2D38";
+const TEXT_SECONDARY = "#6B7280";
+const DIVIDER = "#E5E7EB";
+
+const LOGO_URL = "https://img.logokit.com/chegg.com";
 
 const wrapLayout = (title: string, content: string, cta?: { text: string; url: string }) => `
-  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: ${BG_COLOR}; padding: 40px 20px; color: #1B2D38; line-height: 1.6;">
-    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-top: 6px solid ${BRAND_ORANGE};">
-      <div style="padding: 40px 40px 20px;">
-        <h1 style="color: ${BRAND_DARK}; font-size: 24px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.5px;">${title}</h1>
-        <div style="font-size: 16px; color: #3E5363;">
-          ${content}
-        </div>
-        ${cta ? `
-          <div style="margin-top: 40px; text-align: center;">
-            <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; background-color: ${BRAND_ORANGE}; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: background 0.2s ease;">
-              ${cta.text}
-            </a>
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F3F4F6;">
+      <div class="email-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F3F4F6; padding: 40px 20px; color: ${TEXT_MAIN}; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; box-sizing: border-box;">
+          <h1 class="email-title" style="font-size: 18px; font-weight: 700; margin: 0 0 20px; color: ${BRAND_DARK}; text-align: left;">${title}</h1>
+          
+          <div class="email-content" style="font-size: 14px; color: ${TEXT_MAIN}; text-align: left;">
+            ${content}
           </div>
-        ` : ""}
+          
+          ${cta ? `
+            <div style="margin: 24px 0; text-align: left;">
+              <a href="${cta.url}" style="color: ${BRAND_ORANGE}; font-weight: 600; text-decoration: none; border-bottom: 2px solid ${BRAND_ORANGE}; padding-bottom: 2px; font-size: 14px;">
+                ${cta.text} &rarr;
+              </a>
+            </div>
+          ` : ""}
+          
+          <div style="margin-top: 40px; padding-top: 20px;">
+            <img src="${LOGO_URL}" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: ${TEXT_SECONDARY}; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; ${new Date().getFullYear()} Chegg Inc.
+            </p>
+          </div>
+        </div>
       </div>
-      <div style="padding: 20px 40px 40px; background-color: #FAFBFC; border-top: 1px solid #EDEDED;">
-        <p style="font-size: 13px; color: #8C99A3; margin: 0;">
-          This is an automated message from <strong>Chegg Scheduling App</strong>. 
-          If you have questions, please reach out to our <a href="mailto:support@chegg-scheduling.com" style="color: ${BRAND_ORANGE}; text-decoration: none;">support team</a>.
-        </p>
-      </div>
-    </div>
-    <div style="text-align: center; margin-top: 24px; font-size: 12px; color: #A4B1BC;">
-      &copy; ${new Date().getFullYear()} Chegg Inc. All rights reserved.
-    </div>
-  </div>
+    </body>
+  </html>
 `;
 
 const emailTemplates: EmailTemplateMap = {
   USER_INVITED: {
-    subject: "✨ You've been invited: Chegg Scheduling App",
+    subject: "You've been invited: Chegg Scheduling App",
     text: "You have been invited as a {{role}}. Use this link to accept your invite: {{inviteUrl}}. This invite expires on {{expiresAt}}.",
     html: wrapLayout(
-      "You're invited to join the team",
+      "Invitation to join the team",
       `<p>Hi there,</p>
        <p>You've been invited to join the <strong>Chegg Scheduling App</strong> as a <strong>{{role}}</strong>.</p>
        <p>This invitation will expire on <strong>{{expiresAt}}</strong>.</p>
-       <p>Click the button below to accept your invitation and get started.</p>`,
+       <p>Please accept your invitation to finalize your account setup.</p>`,
       { text: "Accept Invitation", url: "{{inviteUrl}}" }
     ),
     attachmentRequired: false,
   },
   INVITE_ACCEPTED: {
-    subject: "✅ Invite Accepted: {{inviteeName}}",
+    subject: "Invite Accepted: {{inviteeName}}",
     text: "{{inviteeName}} ({{inviteeEmail}}) has accepted the invite and joined as a {{role}}.",
     html: wrapLayout(
       "Invitation Accepted",
-      `<p>Great news! <strong>{{inviteeName}}</strong> ({{inviteeEmail}}) has successfully accepted the invitation and joined the app.</p>
-       <p style="margin-top: 16px;"><strong>Role assigned:</strong> {{role}}</p>`
+      `<p><strong>{{inviteeName}}</strong> ({{inviteeEmail}}) has successfully joined the application.</p>
+       <p style="margin-top: 16px;"><strong>Assigned Role:</strong> {{role}}</p>`
+    ),
+    attachmentRequired: false,
+  },
+  TEAM_MEMBER_ADDED: {
+    subject: "Added to Team: {{teamName}}",
+    text: "Hi {{userName}}, you have been added to the team {{teamName}} on Chegg Scheduling App.",
+    html: wrapLayout(
+      "Team Assignment",
+      `<p>Hi <strong>{{userName}}</strong>,</p>
+       <p>You have been officially added to the <strong>{{teamName}}</strong> team on the Chegg Scheduling App.</p>
+       <p>You can now manage events and view availability for this team.</p>`,
+      { text: "Go to Dashboard", url: "{{frontendUrl}}" }
+    ),
+    attachmentRequired: false,
+  },
+  EVENT_HOST_ADDED: {
+    subject: "Assigned to Event: {{eventName}}",
+    text: "Hi {{userName}}, you have been assigned as a host for the event {{eventName}}.",
+    html: wrapLayout(
+      "Event Host Assignment",
+      `<p>Hi <strong>{{userName}}</strong>,</p>
+       <p>You have been assigned as a host for: <strong>{{eventName}}</strong>.</p>
+       <p>Please ensure your availability is up to date in the dashboard.</p>`,
+      { text: "View Event Details", url: "{{frontendUrl}}" }
+    ),
+    attachmentRequired: false,
+  },
+  AVAILABILITY_EXCEPTION_CREATED: {
+    subject: "Availability Update: {{userName}} ({{date}})",
+    text: "An availability exception has been set for {{userName}} on {{date}} ({{timeRange}}).",
+    html: wrapLayout(
+      "Availability Update",
+      `<p>An update has been made to the availability for <strong>{{userName}}</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Date:</strong> {{date}}<br/>
+         <strong>Time Range:</strong> {{timeRange}}
+       </p>`,
+      { text: "Manage Availability", url: "{{frontendUrl}}" }
     ),
     attachmentRequired: false,
   },
   BOOKING_CONFIRMED: {
-    subject: "📅 Confirmed: {{eventName}} with {{coachName}}",
-    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}). Meeting link: {{meetingJoinUrl}}",
+    subject: "Confirmed: {{eventName}} with {{coachName}}",
+    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}).{{coHostDetails}}",
     html: wrapLayout(
-      "Your booking is confirmed",
+      "Booking Confirmation",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
-       <p>Get ready! Your session for <strong>{{eventName}}</strong> with <strong>{{coachName}}</strong> is officially on the calendar.</p>
-       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Meeting Details</p>
-         <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700;">{{startTime}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{timezone}}</p>
-         <p style="margin: 12px 0 0; font-size: 14px; color: #3E5363;"><strong>Team:</strong> {{teamName}}</p>
-       </div>
-       <p>You can join the session directly via the link below:</p>`,
+       <p>Your session for <strong>{{eventName}}</strong> with <strong>{{coachName}}</strong> is confirmed.</p>
+       <p style="margin-top: 16px;">
+          <strong>Time:</strong> {{startTime}}<br/>
+          <strong>Timezone:</strong> {{timezone}}<br/>
+          <strong>Team:</strong> {{teamName}}{{coHostDetailsHtml}}
+        </p>`,
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
     ),
     attachmentRequired: false,
   },
   COACH_BOOKING_ASSIGNED: {
-    subject: "📬 New Booking: {{eventName}} (Student: {{studentName}})",
-    text: "A new booking has been assigned to you for {{eventName}}. Student: {{studentName}} ({{studentEmail}}). Time: {{startTime}} ({{timezone}}).",
+    subject: "New Booking: {{eventName}} (Student: {{studentName}})",
+    text: "A new booking has been assigned to you for {{eventName}}. Student: {{studentName}} ({{startTime}}).{{coHostDetails}}",
     html: wrapLayout(
-      "A new session has been scheduled",
+      "New Session Assigned",
       `<p>Hi <strong>{{coachName}}</strong>,</p>
-       <p>You have a new booking waiting for you.</p>
-       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Student Info</p>
-         <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700;">{{studentName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{studentEmail}}</p>
-         <p style="margin: 16px 0 0; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Session Info</p>
-         <p style="margin: 8px 0 0; font-size: 16px; font-weight: 700;">{{eventName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{startTime}} ({{timezone}})</p>
-       </div>`,
+       <p>A new session has been scheduled for you.</p>
+       <p style="margin-top: 16px;">
+         <strong>Student:</strong> {{studentName}} ({{studentEmail}})<br/>
+          <strong>Event:</strong> {{eventName}}<br/>
+          <strong>Time:</strong> {{startTime}} ({{timezone}}){{coHostDetailsHtml}}
+        </p>`,
       { text: "View Details", url: "{{meetingJoinUrl}}" }
     ),
     attachmentRequired: false,
   },
-  BOOKING_CANCELLED: {
-    subject: "❌ Session Cancelled: {{eventName}}",
-    text: "The booking for {{eventName}} scheduled at {{startTime}} ({{timezone}}) with {{coachName}} has been cancelled.",
+  COACH_BOOKING_COHOST_ASSIGNED: {
+    subject: "Co-host Assigned: {{eventName}} (Student: {{studentName}})",
+    text: "You have been assigned as a co-host for {{eventName}} with {{studentName}} at {{startTime}}.",
     html: wrapLayout(
-      "Your session was cancelled",
+      "Co-host Assignment",
+      `<p>Hi there,</p>
+       <p>You have been added as a <strong>co-host</strong> for an upcoming session.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> {{eventName}}<br/>
+         <strong>Lead Coach:</strong> {{coachName}}<br/>
+         <strong>Student:</strong> {{studentName}}<br/>
+         <strong>Time:</strong> {{startTime}} ({{timezone}})
+       </p>`,
+      { text: "Join Session", url: "{{meetingJoinUrl}}" }
+    ),
+    attachmentRequired: false,
+  },
+  BOOKING_CANCELLED: {
+    subject: "Session Cancelled: {{eventName}}",
+    text: "The booking for {{eventName}} scheduled at {{startTime}} with {{coachName}} has been cancelled.",
+    html: wrapLayout(
+      "Session Cancelled",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
        <p>This is to inform you that your upcoming booking has been cancelled.</p>
-       <div style="background: #FFF0F0; padding: 20px; border-radius: 8px; border: 1px solid #FFDada; margin: 24px 0;">
-         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #C0392B; font-weight: 700;">Cancelled Session</p>
-         <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700; color: #C0392B;">{{eventName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #D98880;">{{startTime}} ({{timezone}})</p>
-         <p style="margin: 12px 0 0; font-size: 14px; color: #3E5363;"><strong>Coach:</strong> {{coachName}}</p>
-       </div>
-       <p>We apologize for the inconvenience. You can reschedule your session by visiting our booking dashboard.</p>`,
-      { text: "Reschedule Now", url: "{{frontendUrl}}" }
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> {{eventName}}<br/>
+         <strong>Time:</strong> {{startTime}}<br/>
+         <strong>Coach:</strong> {{coachName}}
+       </p>
+       <p style="margin-top: 16px;">You can reschedule your session by visiting our booking page.</p>`,
+      { text: "Reschedule Now", url: "{{publicBookingUrl}}" }
     ),
     attachmentRequired: false,
   },
   BOOKING_NO_SHOW: {
-    subject: "⚠️ Booking Marked: No-Show ({{eventName}})",
-    text: "The booking for {{eventName}} at {{startTime}} ({{timezone}}) has been marked as a no-show.",
+    subject: "Booking Marked: No-Show ({{eventName}})",
+    text: "The booking for {{eventName}} at {{startTime}} has been marked as a no-show.",
     html: wrapLayout(
       "Session Update: No-Show",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
-       <p>The following session has been marked as a **no-show** because we didn't see you there. 
-       Please note that coaches are only required to wait for <strong>10 minutes</strong> before marking a session as a no-show.</p>
-       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-         <p style="margin: 0; font-size: 16px; font-weight: 700;">{{eventName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{startTime}} ({{timezone}})</p>
-         <p style="margin: 8px 0 0; font-size: 14px; color: #3E5363;"><strong>Coach:</strong> {{coachName}}</p>
-       </div>
-       <p>If you believe this is a mistake, please contact your coach or reach out to our support team.</p>`
+       <p>The following session has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> {{eventName}}<br/>
+         <strong>Time:</strong> {{startTime}}<br/>
+         <strong>Coach:</strong> {{coachName}}
+       </p>`,
+      { text: "Book New Session", url: "{{publicBookingUrl}}" }
     ),
     attachmentRequired: false,
   },
   COACH_BOOKING_CANCELLED: {
-    subject: "❌ Session Cancelled: {{eventName}} (Student: {{studentName}})",
+    subject: "Session Cancelled: {{eventName}} (Student: {{studentName}})",
     text: "Your session for {{eventName}} with {{studentName}} at {{startTime}} has been cancelled.",
     html: wrapLayout(
       "Student Session Cancelled",
       `<p>Hi <strong>{{coachName}}</strong>,</p>
        <p>The following session has been cancelled by the student or an administrator:</p>
-       <div style="background: #FFF0F0; padding: 20px; border-radius: 8px; border: 1px solid #FFDada; margin: 24px 0;">
-         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #C0392B; font-weight: 700;">Cancelled Session</p>
-         <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700; color: #C0392B;">{{eventName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #D98880;">{{startTime}} ({{timezone}})</p>
-         <p style="margin: 12px 0 0; font-size: 14px; color: #3E5363;"><strong>Student:</strong> {{studentName}}</p>
-       </div>`
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> {{eventName}}<br/>
+         <strong>Time:</strong> {{startTime}}<br/>
+         <strong>Student:</strong> {{studentName}}
+       </p>`
     ),
     attachmentRequired: false,
   },
-  COACH_BOOKING_NO_SHOW: {
-    subject: "⚠️ Session Marked: No-Show (Student: {{studentName}})",
-    text: "You have marked the session for {{eventName}} with {{studentName}} as a no-show.",
+  COACH_BOOKING_COHOST_CANCELLED: {
+    subject: "Co-host Session Cancelled: {{eventName}}",
+    text: "Your co-hosting session for {{eventName}} with {{studentName}} has been cancelled.",
     html: wrapLayout(
-      "Session Marked as No-Show",
-      `<p>Hi <strong>{{coachName}}</strong>,</p>
-       <p>You have successfully marked the following session as a <strong>no-show</strong>:</p>
-       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-         <p style="margin: 0; font-size: 16px; font-weight: 700;">{{eventName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{startTime}} ({{timezone}})</p>
-         <p style="margin: 8px 0 0; font-size: 14px; color: #3E5363;"><strong>Student:</strong> {{studentName}}</p>
-       </div>
-       <p>The student and team admins have been notified.</p>`
+      "Co-host Session Cancelled",
+      `<p>Hi there,</p>
+       <p>The following session where you were assigned as a <strong>co-host</strong> has been cancelled:</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> {{eventName}}<br/>
+         <strong>Time:</strong> {{startTime}}<br/>
+         <strong>Student:</strong> {{studentName}}
+       </p>`
+    ),
+    attachmentRequired: false,
+  },
+  COACH_BOOKING_COHOST_NO_SHOW: {
+    subject: "Co-host Update: Student No-Show ({{eventName}})",
+    text: "The student {{studentName}} did not show up for {{eventName}}.",
+    html: wrapLayout(
+      "Co-host Update: No-Show",
+      `<p>Hi there,</p>
+       <p>The following session has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> {{eventName}}<br/>
+         <strong>Time:</strong> {{startTime}}<br/>
+         <strong>Student:</strong> {{studentName}}
+       </p>`
     ),
     attachmentRequired: false,
   },
   TEAM_BOOKING_CONFIRMED: {
-    subject: "🏢 Team Update: New Booking ({{eventName}})",
-    text: "A new booking has been created for {{teamName}}. Student: {{studentName}}. Coach: {{coachName}}. Time: {{startTime}} ({{timezone}}).",
+    subject: "Team Update: New Booking ({{eventName}})",
+    text: "A new booking has been created for {{teamName}}. Student: {{studentName}}. Time: {{startTime}}.{{coHostDetails}}",
     html: wrapLayout(
-      "A new booking for {{teamName}}",
+      "New Team Booking",
       `<p>A new session has been added to your team's schedule.</p>
-       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #8C99A3; font-weight: 700;">Session Breakdown</p>
-         <p style="margin: 12px 0 4px; font-size: 14px;"><strong>Event:</strong> {{eventName}}</p>
-         <p style="margin: 0 0 4px; font-size: 14px;"><strong>Student:</strong> {{studentName}}</p>
-         <p style="margin: 0 0 4px; font-size: 14px;"><strong>Coach:</strong> {{coachName}}</p>
-         <p style="margin: 0 0 4px; font-size: 14px;"><strong>Time:</strong> {{startTime}} ({{timezone}})</p>
-       </div>`
-    ),
-    attachmentRequired: false,
-  },
-  TEAM_BOOKING_CANCELLED: {
-    subject: "🏢 Team Update: Session Cancelled ({{eventName}})",
-    text: "A booking for {{teamName}} / {{eventName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled.",
-    html: wrapLayout(
-      "Team session cancelled",
-      `<p>This is a notification for <strong>{{teamName}}</strong>.</p>
-       <p>The following session has been cancelled:</p>
-       <div style="background: #FFF0F0; padding: 20px; border-radius: 8px; border: 1px solid #FFDada; margin: 24px 0;">
-         <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #C0392B; font-weight: 700;">Cancelled Team Session</p>
-         <p style="margin: 8px 0 0; font-size: 18px; font-weight: 700; color: #C0392B;">{{eventName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #D98880;">{{startTime}} ({{timezone}})</p>
-         <p style="margin: 12px 0 0; font-size: 14px; color: #3E5363;"><strong>Student:</strong> {{studentName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;"><strong>Coach:</strong> {{coachName}}</p>
-       </div>`
-    ),
-    attachmentRequired: false,
-  },
-  TEAM_BOOKING_NO_SHOW: {
-    subject: "🏢 Team Update: No-Show ({{eventName}})",
-    text: "A booking for {{teamName}} / {{eventName}} at {{startTime}} ({{timezone}}) has been marked as a no-show.",
-    html: wrapLayout(
-      "Team Update: No-Show",
-      `<p>A session within <strong>{{teamName}}</strong> has been marked as a **no-show**.</p>
-       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-         <p style="margin: 0; font-size: 16px; font-weight: 700;">{{eventName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;">{{startTime}} ({{timezone}})</p>
-         <p style="margin: 8px 0 0; font-size: 14px; color: #3E5363;"><strong>Student:</strong> {{studentName}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; color: #3E5363;"><strong>Coach:</strong> {{coachName}}</p>
-       </div>`
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> {{eventName}}<br/>
+          <strong>Student:</strong> {{studentName}}<br/>
+          <strong>Coach:</strong> {{coachName}}<br/>
+          <strong>Time:</strong> {{startTime}} ({{timezone}}){{coHostDetailsHtml}}
+        </p>`,
+      { text: "View Team Schedule", url: "{{frontendUrl}}" }
     ),
     attachmentRequired: false,
   },
   SESSION_REMINDER_24H: {
-    subject: "⏰ Tomorrow: Your session for {{eventName}} starts soon!",
-    text: "Hi {{studentName}}, this is a reminder that your session for {{eventName}} is scheduled for tomorrow at {{startTime}}.",
+    subject: "Tomorrow: Your session for {{eventName}} starts soon!",
+    text: "Hi {{studentName}}, your session for {{eventName}} is scheduled for tomorrow at {{startTime}}.",
     html: wrapLayout(
-      "Your session starts in 24 hours",
+      "Upcoming Session Reminder",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
-       <p>This is a friendly reminder that your session for <strong>{{eventName}}</strong> is coming up tomorrow.</p>
-       <div style="background: ${BG_COLOR}; padding: 20px; border-radius: 8px; margin: 24px 0;">
-         <p style="margin: 0 0 4px; font-size: 14px;"><strong>Coach:</strong> {{coachName}}</p>
-         <p style="margin: 0 0 12px; font-size: 14px;"><strong>Time:</strong> {{startTime}} ({{timezone}})</p>
-         <p style="margin: 0; font-size: 14px;">Join using the link below:</p>
-       </div>`,
+       <p>This is a reminder that your session for <strong>{{eventName}}</strong> is scheduled for tomorrow.</p>
+       <p style="margin-top: 16px;">
+         <strong>Coach:</strong> {{coachName}}<br/>
+         <strong>Time:</strong> {{startTime}} ({{timezone}})
+       </p>`,
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
     ),
     attachmentRequired: false,
   },
   SESSION_REMINDER_1H: {
-    subject: "⚡ Starting Soon: {{eventName}} begins in 1 hour",
-    text: "Hi {{studentName}}, your session for {{eventName}} starts in about 1 hour at {{startTime}}.",
+    subject: "Starting Soon: {{eventName}} begins in 1 hour",
+    text: "Hi {{studentName}}, your session for {{eventName}} starts in about 1 hour.",
     html: wrapLayout(
-      "Almost time to start!",
+      "Session Starting Soon",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
-       <p>Your session for <strong>{{eventName}}</strong> with <strong>{{coachName}}</strong> starts in just <strong>1 hour</strong>.</p>
-       <div style="background: ${BRAND_DARK}; color: #ffffff; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
-         <p style="margin: 0; font-size: 20px; font-weight: 700;">{{startTime}}</p>
-         <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.8;">{{timezone}}</p>
-       </div>`,
+       <p>Your session for <strong>{{eventName}}</strong> with <strong>{{coachName}}</strong> starts in 1 hour.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         {{startTime}} ({{timezone}})
+       </p>`,
       { text: "Join Now", url: "{{meetingJoinUrl}}" }
     ),
     attachmentRequired: false,

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { statsApi, type StatsParams } from '@/api/stats'
+import { preservePreviousData } from './queryUtils'
 
 export const statsKeys = {
   all: ['stats'] as const,
@@ -12,72 +13,48 @@ export const statsKeys = {
   interactionTypes: (params?: StatsParams) => [...statsKeys.all, 'interaction-types', params] as const,
 }
 
+function useStatsQuery<TData>(
+  queryKey: readonly unknown[],
+  queryFn: () => Promise<TData>,
+) {
+  return useQuery({
+    queryKey,
+    queryFn,
+    placeholderData: preservePreviousData,
+  })
+}
+
 export function useDashboardStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-
-  return useQuery({
-    queryKey: statsKeys.dashboard(params),
-    queryFn: () => statsApi.getDashboard(params).then((r) => r.data.data),
-    placeholderData: (previousData) => previousData,
-  })
+  return useStatsQuery(statsKeys.dashboard(params), () => statsApi.getDashboard(params).then((r) => r.data.data))
 }
 
 export function useBookingStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-
-  return useQuery({
-    queryKey: statsKeys.bookings(params),
-    queryFn: () => statsApi.getBookings(params).then((r) => r.data.data),
-    placeholderData: (previousData) => previousData,
-  })
+  return useStatsQuery(statsKeys.bookings(params), () => statsApi.getBookings(params).then((r) => r.data.data))
 }
 
 export function useUserStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-
-  return useQuery({
-    queryKey: statsKeys.users(params),
-    queryFn: () => statsApi.getUsers(params).then((r) => r.data.data),
-    placeholderData: (previousData) => previousData,
-  })
+  return useStatsQuery(statsKeys.users(params), () => statsApi.getUsers(params).then((r) => r.data.data))
 }
 
 export function useTeamStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-
-  return useQuery({
-    queryKey: statsKeys.teams(params),
-    queryFn: () => statsApi.getTeams(params).then((r) => r.data.data),
-    placeholderData: (previousData) => previousData,
-  })
+  return useStatsQuery(statsKeys.teams(params), () => statsApi.getTeams(params).then((r) => r.data.data))
 }
 
 export function useEventStats(timeframe: StatsParams['timeframe'], teamId?: string) {
   const params = { timeframe, teamId }
-
-  return useQuery({
-    queryKey: statsKeys.events(params),
-    queryFn: () => statsApi.getEvents(params).then((r) => r.data.data),
-    placeholderData: (previousData) => previousData,
-  })
+  return useStatsQuery(statsKeys.events(params), () => statsApi.getEvents(params).then((r) => r.data.data))
 }
 
 export function useOfferingStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-
-  return useQuery({
-    queryKey: statsKeys.offerings(params),
-    queryFn: () => statsApi.getOfferings(params).then((r) => r.data.data),
-    placeholderData: (previousData) => previousData,
-  })
+  return useStatsQuery(statsKeys.offerings(params), () => statsApi.getOfferings(params).then((r) => r.data.data))
 }
 
 export function useInteractionTypeStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-
-  return useQuery({
-    queryKey: statsKeys.interactionTypes(params),
-    queryFn: () => statsApi.getInteractionTypes(params).then((r) => r.data.data),
-    placeholderData: (previousData) => previousData,
-  })
+  return useStatsQuery(statsKeys.interactionTypes(params), () => statsApi.getInteractionTypes(params).then((r) => r.data.data))
 }

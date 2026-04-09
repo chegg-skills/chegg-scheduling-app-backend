@@ -13,11 +13,13 @@ export function HostSection({ booking, onViewHost }: HostSectionProps) {
 
     return (
         <Box>
-            <SectionLabel label='Meeting Host' />
+            <SectionLabel label={booking.coHostUserIds?.length > 0 ? 'Lead Coach' : 'Meeting Host'} />
             <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
-                Host will attend this meeting
+                {booking.coHostUserIds?.length > 0
+                    ? 'This coach leads the session'
+                    : 'Coach will attend this meeting'}
             </Typography>
-            <Stack direction='row' spacing={1.5} alignItems='center'>
+            <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: booking.coHostUserIds?.length > 0 ? 3 : 0 }}>
                 <Avatar
                     src={booking.host?.avatarUrl ?? undefined}
                     sx={{
@@ -68,6 +70,52 @@ export function HostSection({ booking, onViewHost }: HostSectionProps) {
                     )}
                 </Box>
             </Stack>
+
+            {booking.coHostUserIds?.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                    <SectionLabel label='Co-hosts' />
+                    <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
+                        Supporting coaches for this session
+                    </Typography>
+                    <Stack spacing={1.5}>
+                        {booking.coHostUserIds.map((coHostId) => {
+                            const coHost = booking.event?.hosts?.find(h => h.hostUserId === coHostId)?.hostUser;
+                            if (!coHost) return null;
+
+                            return (
+                                <Stack key={coHostId} direction='row' spacing={1.5} alignItems='center'>
+                                    <Avatar
+                                        src={coHost.avatarUrl ?? undefined}
+                                        sx={{
+                                            width: 28,
+                                            height: 28,
+                                            fontSize: '0.75rem',
+                                            bgcolor: alpha(theme.palette.secondary.main, 0.03),
+                                            color: theme.palette.secondary.main,
+                                        }}
+                                    >
+                                        {coHost.firstName[0]}{coHost.lastName[0]}
+                                    </Avatar>
+                                    <Box>
+                                        <Typography
+                                            variant='body2'
+                                            onClick={() => onViewHost?.(coHost.id)}
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: '0.8125rem',
+                                                cursor: onViewHost ? 'pointer' : 'default',
+                                                '&:hover': { color: 'primary.main' }
+                                            }}
+                                        >
+                                            {coHost.firstName} {coHost.lastName}
+                                        </Typography>
+                                    </Box>
+                                </Stack>
+                            );
+                        })}
+                    </Stack>
+                </Box>
+            )}
         </Box>
     );
 }

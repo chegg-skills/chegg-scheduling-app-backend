@@ -1,6 +1,7 @@
 import {
   AssignmentStrategy,
   Prisma,
+  SessionLeadershipStrategy,
   UserRole,
   type EventInteractionType as EventInteractionTypeModel,
 } from "@prisma/client";
@@ -15,12 +16,16 @@ import {
   type ReplaceEventHostsInput,
   type SafeEvent,
 } from "./event.shared";
+import { queueEventHostAddedNotification } from "./eventHost.notification";
 
 const validateEventConfiguration = (
   interactionType: EventInteractionTypeModel,
   config: {
     assignmentStrategy: AssignmentStrategy;
     hostCount: number;
+    sessionLeadershipStrategy?: SessionLeadershipStrategy;
+    fixedLeadHostId?: string | null;
+    hostUserIds?: string[];
   },
 ): void => {
   if (
@@ -30,6 +35,39 @@ const validateEventConfiguration = (
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       `Interaction type "${interactionType.name}" does not support ROUND_ROBIN assignment.`,
+    );
+  }
+
+  if (
+    config.sessionLeadershipStrategy &&
+    config.sessionLeadershipStrategy !== SessionLeadershipStrategy.SINGLE_HOST &&
+    !interactionType.supportsSimultaneousCoaches
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      `Interaction type "${interactionType.name}" does not support simultaneous co-hosting.`,
+    );
+  }
+
+  if (
+    config.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD &&
+    !config.fixedLeadHostId
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "FIXED_LEAD events require a fixedLeadHostId.",
+    );
+  }
+
+  if (
+    config.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD &&
+    config.fixedLeadHostId &&
+    config.hostUserIds?.length &&
+    !config.hostUserIds.includes(config.fixedLeadHostId)
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "The fixed lead coach must be one of the event's assigned coaches.",
     );
   }
 
@@ -224,6 +262,11 @@ const replaceEventHosts = async (
     );
   }
 
+  const existingHostUserIds = new Set(event.hosts.map((h) => h.hostUserId));
+  const newlyAddedHostUserIds = normalizedHosts
+    .map((h) => h.userId)
+    .filter((userId) => !existingHostUserIds.has(userId));
+
   await validateEventHosts(event.teamId, event, normalizedHosts);
 
   await prisma.$transaction(async (tx) => {
@@ -253,6 +296,12 @@ const replaceEventHosts = async (
       normalizedHosts.length,
     );
   });
+
+  if (event.isActive) {
+    for (const userId of newlyAddedHostUserIds) {
+      void queueEventHostAddedNotification({ eventId, hostUserId: userId });
+    }
+  }
 
   const refreshedEvent = await prisma.event.findUniqueOrThrow({
     where: { id: eventId },

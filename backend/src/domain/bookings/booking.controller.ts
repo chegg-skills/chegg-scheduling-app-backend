@@ -8,6 +8,7 @@ import { CallerContext } from "../../shared/utils/userUtils";
 import {
     queueBookingCreatedNotifications,
     queueBookingStatusNotifications,
+    queueBookingUpdatedNotifications,
 } from "./booking.notification";
 
 const getStringParam = (value: unknown): string | undefined => {
@@ -40,8 +41,13 @@ export const getBooking = async (req: Request, res: Response) => {
     const caller = res.locals.authUser as CallerContext;
     const booking = await BookingService.getBooking(id);
 
-    if (caller.role === UserRole.COACH && booking.hostUserId !== caller.id) {
-        throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking.");
+    if (caller.role === UserRole.COACH) {
+        const isLead = booking.hostUserId === caller.id;
+        const isCoHost = ((booking as any).coHostUserIds || []).includes(caller.id);
+
+        if (!isLead && !isCoHost) {
+            throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking.");
+        }
     }
 
     return sendSuccessResponse(
@@ -94,19 +100,30 @@ export const listBookings = async (req: Request, res: Response) => {
     );
 };
 
-export const updateBookingStatus = async (req: Request, res: Response) => {
+export const updateBooking = async (req: Request, res: Response) => {
     const id = getStringParam(req.params.id);
     if (!id) {
         throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking ID is required.");
     }
-    const { status } = req.body;
-    const booking = await BookingService.updateBookingStatus(id, status as BookingStatus);
-    void queueBookingStatusNotifications(booking);
+
+    const oldBooking = await BookingService.getBooking(id);
+    const { status, coHostUserIds } = req.body;
+
+    const booking = await BookingService.updateBooking(id, {
+        status: status as BookingStatus | undefined,
+        coHostUserIds
+    });
+
+    if (status && status !== oldBooking.status) {
+        void queueBookingStatusNotifications(booking);
+    }
+
+    void queueBookingUpdatedNotifications(oldBooking, booking);
 
     return sendSuccessResponse(
         res,
         StatusCodes.OK,
         { booking },
-        "Booking status updated successfully."
+        "Booking updated successfully."
     );
 };

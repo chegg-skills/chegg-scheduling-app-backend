@@ -77,7 +77,7 @@ export function EventHostManager({
   const handleRemove = (hostUserId: string, name: string) => {
     handleAction(removeHost, hostUserId, {
       title: 'Remove Coach',
-      message: `Are you sure you want to remove ${name} as a host for this event?`,
+      message: `Are you sure you want to remove ${name} as a coach for this event?`,
       actionName: 'Remove',
     })
   }

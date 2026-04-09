@@ -91,3 +91,30 @@ export function getEventHostSetupStatus({
         : `This event needs ${missingHosts} more host${missingHosts === 1 ? '' : 's'} to satisfy the interaction type minimum of ${requiredHosts}.`,
   }
 }
+
+export const WEEKDAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+]
+
+/**
+ * Checks if a specific date (ISO string or Date object) is allowed based on the event's weekday configuration.
+ */
+export function isWeekdayAllowed(date: string | Date, allowedWeekdays: number[]): boolean {
+  if (allowedWeekdays.length === 0) return true
+  const d = typeof date === 'string' ? new Date(date) : date
+  return allowedWeekdays.includes(d.getDay())
+}
+
+/**
+ * Returns a human-readable list of allowed weekdays (e.g., "Tuesday, Friday").
+ */
+export function formatAllowedWeekdays(allowedWeekdays: number[]): string {
+  if (allowedWeekdays.length === 0) return 'All days'
+  return allowedWeekdays.map((d) => WEEKDAY_NAMES[d]).join(', ')
+}

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { teamMembersApi } from '@/api/teamMembers'
+import { invalidateQueryKeys } from './queryUtils'
 
 export const memberKeys = {
   all: ['team-members'] as const,
@@ -18,7 +19,7 @@ export function useAddTeamMember(teamId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (userIds: string | string[]) => teamMembersApi.add(teamId, userIds),
-    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.byTeam(teamId) }),
+    onSuccess: () => invalidateQueryKeys(qc, [memberKeys.byTeam(teamId)]),
   })
 }
 
@@ -26,6 +27,6 @@ export function useRemoveTeamMember(teamId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (userId: string) => teamMembersApi.remove(teamId, userId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.byTeam(teamId) }),
+    onSuccess: () => invalidateQueryKeys(qc, [memberKeys.byTeam(teamId)]),
   })
 }

@@ -1,17 +1,17 @@
-import type { UseFormRegister, FieldErrors } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
 import { Textarea } from '@/components/shared/Textarea'
 import type { EventFormValues } from './eventFormSchema'
 
-interface Props {
-  register: UseFormRegister<EventFormValues>
-  errors: FieldErrors<EventFormValues>
-}
+/** 
+ * Handles name and description fields.
+ * Consumes the EventForm context.
+ */
+export function EventBasicFields() {
+  const { register, formState: { errors } } = useFormContext<EventFormValues>()
 
-/** Handles name and description */
-export function EventBasicFields({ register, errors }: Props) {
   return (
     <Stack spacing={3}>
       <FormField label="Event Name" htmlFor="name" error={errors.name?.message} required>

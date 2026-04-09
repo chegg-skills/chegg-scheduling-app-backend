@@ -1,0 +1,915 @@
+
+> chegg-scheduling-app-backend@1.0.0 test
+> jest --runInBand --verbose
+
+[dotenv@17.3.1] injecting env (9) from .env.test -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[globalSetup] Running migrations...
+[dotenv@17.3.1] injecting env (14) from .env -- tip: ⚙️  override existing env vars with { override: true }
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "chegg-scheduling-app-test", schema "public" at "localhost:5432"
+
+21 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+[globalSetup] Migrations applied successfully.
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  suppress all logs with { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 86.322 ms - 801[0m
+[0mPOST /api/event-offerings [32m201[0m 6.091 ms - 417[0m
+[0mPOST /api/event-interaction-types [32m201[0m 4.428 ms - 565[0m
+[0mPOST /api/auth/register [32m201[0m 67.592 ms - 784[0m
+[0mPOST /api/auth/register [32m201[0m 66.686 ms - 767[0m
+[0mPOST /api/teams [32m201[0m 10.264 ms - 403[0m
+[0mPOST /api/teams/94467ce5-6b08-4db4-9f79-bce15554f768/members [32m201[0m 8.749 ms - 748[0m
+(node:90548) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[0mPOST /api/teams/94467ce5-6b08-4db4-9f79-bce15554f768/events [32m201[0m 33.147 ms - 1783[0m
+[0mPUT /api/events/e56db3f9-e212-4835-8dfe-eaffa9b34d80/hosts [32m200[0m 35.175 ms - 785[0m
+[0mGET /api/public/teams [32m200[0m 1.216 ms - 217[0m
+[0mGET /api/public/teams/94467ce5-6b08-4db4-9f79-bce15554f768/events [32m200[0m 2.737 ms - 590[0m
+[0mGET /api/public/teams/slug/public-team-55fff9 [32m200[0m 0.985 ms - 213[0m
+[0mGET /api/public/teams/slug/public-team-55fff9/events [32m200[0m 2.107 ms - 744[0m
+[0mGET /api/public/events/slug/public-intro-b76cf3 [32m200[0m 2.310 ms - 586[0m
+[0mGET /api/public/coaches/slug/public-coach-aa8c21 [32m200[0m 1.218 ms - 235[0m
+[0mGET /api/public/coaches/slug/public-coach-aa8c21/events [32m200[0m 3.736 ms - 766[0m
+[0mGET /api/public/events/e56db3f9-e212-4835-8dfe-eaffa9b34d80/slots?startDate=2026-04-09T06%3A22%3A43.234Z&endDate=2026-04-16T06%3A22%3A43.234Z [32m200[0m 1094.039 ms - 86[0m
+[0mPATCH /api/events/e56db3f9-e212-4835-8dfe-eaffa9b34d80 [32m200[0m 11.114 ms - 2483[0m
+[0mPOST /api/events/e56db3f9-e212-4835-8dfe-eaffa9b34d80/schedule-slots [32m201[0m 4.068 ms - 358[0m
+[0mPOST /api/events/e56db3f9-e212-4835-8dfe-eaffa9b34d80/schedule-slots [32m201[0m 3.499 ms - 358[0m
+  console.error
+    ReferenceError: Cannot access 'finalEnd' before initialization
+        at getSlotAvailability (/Users/mokumar/Documents/personal-directory/chegg-scheduling-app/backend/src/domain/availability/availability.service.ts:167:71)
+        at Object.getAvailableSlots (/Users/mokumar/Documents/personal-directory/chegg-scheduling-app/backend/src/domain/availability/availability.service.ts:247:35)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at getAvailableSlots (/Users/mokumar/Documents/personal-directory/chegg-scheduling-app/backend/src/domain/public/public.controller.ts:67:19)
+
+      81 |
+      82 |   // Truly unexpected error — always log at error level
+    > 83 |   console.error(err);
+         |           ^
+      84 |   return sendErrorResponse(
+      85 |     res,
+      86 |     StatusCodes.INTERNAL_SERVER_ERROR,
+
+      at errorHandler (src/shared/error/errorhandler.ts:83:11)
+      at Layer.handleError (node_modules/router/lib/layer.js:116:17)
+      at trimPrefix (node_modules/router/index.js:340:13)
+      at node_modules/router/index.js:297:9
+      at processParams (node_modules/router/index.js:582:12)
+      at next (node_modules/router/index.js:291:5)
+      at Layer.handleError (node_modules/router/lib/layer.js:111:12)
+      at trimPrefix (node_modules/router/index.js:340:13)
+      at node_modules/router/index.js:297:9
+      at processParams (node_modules/router/index.js:582:12)
+      at next (node_modules/router/index.js:291:5)
+      at node_modules/router/index.js:688:15
+      at next (node_modules/router/index.js:276:14)
+      at Layer.handleError (node_modules/router/lib/layer.js:111:12)
+      at trimPrefix (node_modules/router/index.js:340:13)
+      at node_modules/router/index.js:297:9
+      at processParams (node_modules/router/index.js:582:12)
+      at next (node_modules/router/index.js:291:5)
+      at Layer.handleError (node_modules/router/lib/layer.js:111:12)
+      at trimPrefix (node_modules/router/index.js:340:13)
+      at node_modules/router/index.js:297:9
+      at processParams (node_modules/router/index.js:582:12)
+      at Immediate.next (node_modules/router/index.js:291:5)
+      at Immediate._onImmediate (node_modules/router/index.js:688:15)
+
+[0mGET /api/public/events/e56db3f9-e212-4835-8dfe-eaffa9b34d80/slots?startDate=2026-04-09T06%3A22%3A44.352Z&endDate=2026-04-19T06%3A22%3A44.352Z [31m500[0m 7.967 ms - 51[0m
+[0mGET /api/public/events/e56db3f9-e212-4835-8dfe-eaffa9b34d80/slots [33m400[0m 0.292 ms - 65[0m
+FAIL tests/integration/public.test.ts
+  Public API
+    GET /api/public/teams
+      ✓ should list active teams without authentication (3 ms)
+    GET /api/public/teams/:teamId/events
+      ✓ should list active events for a team without authentication (4 ms)
+    slug-based public booking endpoints
+      ✓ should resolve a team by public slug (3 ms)
+      ✓ should list a team's public events by slug (3 ms)
+      ✓ should resolve an event by public slug (4 ms)
+      ✓ should resolve a coach by public slug and list their public events (7 ms)
+    GET /api/public/events/:eventId/slots
+      ✓ should return available slots without authentication (1096 ms)
+      ✕ returns only future predefined slots that satisfy the scheduling rules (32 ms)
+      ✓ should return 400 if dates are missing (1 ms)
+
+  ● Public API › GET /api/public/events/:eventId/slots › returns only future predefined slots that satisfy the scheduling rules
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      250 |                 });
+      251 |
+    > 252 |             expect(res.status).toBe(200);
+          |                                ^
+      253 |             expect(res.body.success).toBe(true);
+      254 |
+      255 |             const returnedStartTimes = res.body.data.slots.map(
+
+      at Object.<anonymous> (tests/integration/public.test.ts:252:32)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 68.546 ms - 808[0m
+[0mPOST /api/auth/bootstrap [32m201[0m 64.779 ms - 798[0m
+[0mPOST /api/auth/bootstrap [33m403[0m 0.667 ms - 122[0m
+[0mPOST /api/auth/bootstrap [33m403[0m 0.133 ms - 55[0m
+[0mPOST /api/auth/bootstrap [33m400[0m 0.629 ms - 83[0m
+[0mPOST /api/auth/bootstrap [32m201[0m 64.164 ms - 806[0m
+[0mPOST /api/auth/login [32m200[0m 64.889 ms - 792[0m
+[0mPOST /api/auth/login [33m401[0m 64.616 ms - 56[0m
+[0mPOST /api/auth/login [33m401[0m 0.575 ms - 56[0m
+[0mPOST /api/auth/login [33m400[0m 0.091 ms - 62[0m
+[0mPOST /api/auth/login [33m400[0m 0.081 ms - 62[0m
+[0mPOST /api/auth/bootstrap [32m201[0m 64.348 ms - 806[0m
+[0mPOST /api/auth/register [32m201[0m 67.545 ms - 776[0m
+[0mPOST /api/auth/register [32m201[0m 68.119 ms - 773[0m
+[0mPOST /api/auth/register [32m201[0m 66.726 ms - 802[0m
+[0mPOST /api/auth/register [33m401[0m 0.119 ms - 63[0m
+[0mPOST /api/auth/register [33m403[0m 1.037 ms - 80[0m
+[0mPOST /api/auth/register [32m201[0m 67.290 ms - 759[0m
+[0mPOST /api/auth/register [33m409[0m 1.894 ms - 68[0m
+[0mPOST /api/auth/register [33m400[0m 1.270 ms - 74[0m
+[0mPOST /api/auth/register [33m400[0m 1.031 ms - 83[0m
+[0mPOST /api/auth/register [33m400[0m 1.027 ms - 48[0m
+[0mPOST /api/auth/bootstrap [32m201[0m 66.033 ms - 799[0m
+[0mPOST /api/auth/logout [32m200[0m 1.219 ms - 93[0m
+[0mPOST /api/auth/logout [33m401[0m 0.140 ms - 63[0m
+[0mGET /api/auth/login [33m405[0m 0.116 ms - 53[0m
+[0mGET /api/totally-nonexistent-path [33m404[0m 0.191 ms - 75[0m
+PASS tests/integration/auth.test.ts
+  POST /api/auth/bootstrap
+    ✓ creates a SUPER_ADMIN when the database is empty (109 ms)
+    ✓ returns 403 when a user already exists (73 ms)
+    ✓ returns 403 when the bootstrap secret is wrong (4 ms)
+    ✓ returns 400 when required fields are missing (4 ms)
+  POST /api/auth/login
+    ✓ returns 200 with a JWT and safe user on valid credentials (67 ms)
+    ✓ returns 401 for a wrong password (65 ms)
+    ✓ returns 401 for an unknown email (1 ms)
+    ✓ returns 400 when email is missing (1 ms)
+    ✓ returns 400 when password is missing (1 ms)
+  POST /api/auth/register
+    ✓ SUPER_ADMIN can register a new COACH (69 ms)
+    ✓ SUPER_ADMIN can register a TEAM_ADMIN (67 ms)
+    ✓ returns 401 when no auth token is provided
+    ✓ COACH cannot register users (403) (1 ms)
+    ✓ returns 409 when the email is already registered (72 ms)
+    ✓ returns 400 when the password is shorter than 8 characters (2 ms)
+    ✓ returns 400 when required fields are missing (2 ms)
+    ✓ returns 400 for an invalid role value (2 ms)
+  POST /api/auth/logout
+    ✓ returns 200 when an authenticated user logs out (2 ms)
+    ✓ returns 401 when no auth token is provided
+  Error handling
+    ✓ returns 405 for an unsupported HTTP method on a known route
+    ✓ returns 404 for an unknown API path (1 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 69.041 ms - 801[0m
+[0mPOST /api/auth/register [32m201[0m 68.081 ms - 803[0m
+[0mPOST /api/auth/register [32m201[0m 65.939 ms - 819[0m
+[0mPOST /api/auth/register [32m201[0m 66.530 ms - 789[0m
+[0mPOST /api/auth/register [32m201[0m 68.267 ms - 789[0m
+[0mPOST /api/teams [32m201[0m 4.766 ms - 422[0m
+[0mPOST /api/teams [32m201[0m 3.298 ms - 431[0m
+[0mPOST /api/event-offerings [32m201[0m 2.849 ms - 428[0m
+[0mPOST /api/event-offerings [32m201[0m 1.699 ms - 452[0m
+[0mGET /api/event-offerings [32m200[0m 1.714 ms - 825[0m
+[0mPOST /api/event-offerings [32m201[0m 2.496 ms - 430[0m
+[0mPATCH /api/event-offerings/ac42ebce-c265-43b7-b06b-031460ead098 [32m200[0m 2.983 ms - 432[0m
+[0mPOST /api/event-offerings [33m403[0m 0.980 ms - 80[0m
+[0mPOST /api/event-offerings [32m201[0m 2.147 ms - 452[0m
+[0mDELETE /api/event-offerings/6f6853c0-70d5-4ffb-91f8-edbcee03a480 [32m200[0m 4.424 ms - 452[0m
+[0mGET /api/event-offerings [32m200[0m 1.812 ms - 1185[0m
+[0mPOST /api/event-offerings [32m201[0m 2.117 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 2.389 ms - 607[0m
+(node:90548) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 20.387 ms - 1880[0m
+[0mGET /api/event-offerings/28e10f29-90db-433b-817a-f6c53c98890c/usage [32m200[0m 1.835 ms - 238[0m
+[0mPOST /api/event-offerings [32m201[0m 2.367 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 3.055 ms - 607[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 7.602 ms - 1892[0m
+[0mDELETE /api/event-offerings/51f2e871-cec8-4f92-af33-1167059f27c4 [33m409[0m 1.647 ms - 127[0m
+[0mPOST /api/event-interaction-types [32m201[0m 2.017 ms - 560[0m
+[0mPOST /api/event-interaction-types [33m400[0m 0.804 ms - 91[0m
+[0mPOST /api/event-interaction-types [33m400[0m 0.763 ms - 102[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.362 ms - 607[0m
+[0mGET /api/event-interaction-types [32m200[0m 1.542 ms - 2183[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.906 ms - 585[0m
+[0mPATCH /api/event-interaction-types/a339d522-92bd-4e91-9239-f1641965f09c [32m200[0m 3.192 ms - 593[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.778 ms - 607[0m
+[0mDELETE /api/event-interaction-types/c8f1d9bc-63e6-4025-b5f9-b235ed4eb847 [32m200[0m 2.111 ms - 607[0m
+[0mGET /api/event-interaction-types [32m200[0m 1.144 ms - 2702[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.527 ms - 607[0m
+[0mPOST /api/event-offerings [32m201[0m 1.347 ms - 452[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 5.182 ms - 1872[0m
+[0mGET /api/event-interaction-types/b28ab7b0-0f56-4bbd-8989-61a0231ddd40/usage [32m200[0m 1.224 ms - 236[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.414 ms - 607[0m
+[0mPOST /api/event-offerings [32m201[0m 1.136 ms - 452[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 4.410 ms - 1892[0m
+[0mDELETE /api/event-interaction-types/8483a763-1544-4b85-81dd-fe5d1dbb6d99 [33m409[0m 1.148 ms - 99[0m
+[0mPOST /api/event-offerings [32m201[0m 1.218 ms - 435[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.199 ms - 586[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 4.483 ms - 1848[0m
+[0mPOST /api/event-offerings [32m201[0m 1.504 ms - 445[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.893 ms - 611[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 6.033 ms - 1869[0m
+[0mPOST /api/event-offerings [32m201[0m 1.327 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.221 ms - 607[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [33m403[0m 1.004 ms - 77[0m
+[0mPOST /api/event-offerings [32m201[0m 1.160 ms - 431[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.214 ms - 598[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 4.186 ms - 1838[0m
+[0mGET /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events?page=1&pageSize=10 [32m200[0m 6.709 ms - 12790[0m
+[0mPOST /api/event-offerings [32m201[0m 1.339 ms - 431[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.264 ms - 598[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 5.297 ms - 1838[0m
+[0mGET /api/events/83b7ce08-6ef2-45ea-a16d-98f4dab0d385 [32m200[0m 8.877 ms - 1838[0m
+[0mPATCH /api/events/83b7ce08-6ef2-45ea-a16d-98f4dab0d385 [32m200[0m 10.451 ms - 1850[0m
+[0mPOST /api/event-offerings [32m201[0m 1.954 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.574 ms - 607[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 5.541 ms - 1870[0m
+[0mDELETE /api/events/91bf9c33-efe3-4e9c-a02c-bf45504cff2d [32m200[0m 8.181 ms - 1870[0m
+[0mGET /api/events/91bf9c33-efe3-4e9c-a02c-bf45504cff2d [33m404[0m 1.589 ms - 46[0m
+[0mPOST /api/event-offerings [32m201[0m 2.073 ms - 451[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.499 ms - 618[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 7.296 ms - 1893[0m
+[0mPOST /api/events/d2f7c475-fe8b-4269-9b3e-a3b242508e2a/schedule-slots [32m201[0m 4.711 ms - 355[0m
+[0mPUT /api/events/d2f7c475-fe8b-4269-9b3e-a3b242508e2a/hosts [32m200[0m 9.873 ms - 791[0m
+[0mPOST /api/bookings [32m201[0m 14.633 ms - 3461[0m
+[0mDELETE /api/events/d2f7c475-fe8b-4269-9b3e-a3b242508e2a [33m409[0m 2.986 ms - 110[0m
+[0mPOST /api/event-offerings [32m201[0m 1.452 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.581 ms - 607[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 5.116 ms - 1878[0m
+[0mPATCH /api/events/036e0c69-4c9b-4b0a-ba4f-b56d86cb22a0 [32m200[0m 8.222 ms - 1879[0m
+[0mPOST /api/event-offerings [32m201[0m 1.497 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.370 ms - 607[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 4.731 ms - 1871[0m
+[0mPUT /api/events/23a53146-bfaa-4d1b-84e3-0bb0f88b91c9/hosts [32m200[0m 6.133 ms - 791[0m
+[0mPOST /api/events/23a53146-bfaa-4d1b-84e3-0bb0f88b91c9/duplicate [32m201[0m 11.191 ms - 2600[0m
+[0mPOST /api/event-offerings [32m201[0m 1.514 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 2.219 ms - 605[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 8.985 ms - 2612[0m
+[0mPOST /api/event-offerings [32m201[0m 1.652 ms - 443[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.928 ms - 595[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 6.257 ms - 1868[0m
+[0mPATCH /api/events/395fe5d4-01a6-4990-9f8f-afffacbf8003 [32m200[0m 8.263 ms - 1870[0m
+[0mPOST /api/event-offerings [32m201[0m 1.483 ms - 431[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.450 ms - 598[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 5.996 ms - 1840[0m
+[0mPOST /api/events/a0c39bd3-cf7e-4374-bee9-94f2b5998809/schedule-slots [32m201[0m 3.273 ms - 355[0m
+[0mGET /api/events/a0c39bd3-cf7e-4374-bee9-94f2b5998809/schedule-slots [32m200[0m 5.471 ms - 392[0m
+[0mPATCH /api/events/a0c39bd3-cf7e-4374-bee9-94f2b5998809/schedule-slots/db795128-1df5-4b9b-97cb-b36a8ee94ae3 [32m200[0m 5.058 ms - 355[0m
+[0mDELETE /api/events/a0c39bd3-cf7e-4374-bee9-94f2b5998809/schedule-slots/db795128-1df5-4b9b-97cb-b36a8ee94ae3 [32m200[0m 3.599 ms - 355[0m
+[0mPOST /api/event-offerings [32m201[0m 1.443 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.228 ms - 607[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 9.887 ms - 1886[0m
+[0mPOST /api/events/d8897a43-ba4c-4745-8d7e-327f81683d70/schedule-slots [32m201[0m 3.545 ms - 355[0m
+[0mPUT /api/events/d8897a43-ba4c-4745-8d7e-327f81683d70/hosts [32m200[0m 7.876 ms - 791[0m
+[0mPOST /api/bookings [32m201[0m 7.218 ms - 3453[0m
+[0mDELETE /api/events/d8897a43-ba4c-4745-8d7e-327f81683d70/schedule-slots/fbe2c7db-a1cf-443b-9000-647efbe02910 [33m409[0m 3.260 ms - 131[0m
+[0mPOST /api/event-offerings [32m201[0m 2.223 ms - 431[0m
+[0mPOST /api/event-interaction-types [32m201[0m 2.362 ms - 598[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 4.515 ms - 1834[0m
+[0mPUT /api/events/d9dea874-c1a3-4328-abf8-a77eda7c5adc/hosts [32m200[0m 6.565 ms - 791[0m
+[0mGET /api/events/d9dea874-c1a3-4328-abf8-a77eda7c5adc/hosts [32m200[0m 2.548 ms - 791[0m
+[0mPOST /api/event-offerings [32m201[0m 1.582 ms - 436[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.785 ms - 590[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 6.386 ms - 1847[0m
+[0mPUT /api/events/29bc1ca4-50a9-4ad4-84e1-c7c40e7e187e/hosts [33m400[0m 2.533 ms - 76[0m
+[0mPOST /api/event-offerings [32m201[0m 1.543 ms - 445[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.637 ms - 612[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 5.402 ms - 1874[0m
+[0mPUT /api/events/8638efa7-1571-4b2c-b264-a4e41be99b83/hosts [32m200[0m 6.728 ms - 791[0m
+[0mDELETE /api/events/8638efa7-1571-4b2c-b264-a4e41be99b83/hosts/7b0bf18e-a652-430c-ad2f-60a27389be33 [32m200[0m 5.139 ms - 81[0m
+[0mPOST /api/event-offerings [32m201[0m 1.413 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 2.037 ms - 608[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 18.821 ms - 1898[0m
+[0mPUT /api/events/5ebb6ffd-0a7d-4967-9a0e-db903cf17069/hosts [32m200[0m 19.790 ms - 1501[0m
+[0mDELETE /api/events/5ebb6ffd-0a7d-4967-9a0e-db903cf17069/hosts/7b0bf18e-a652-430c-ad2f-60a27389be33 [33m400[0m 2.946 ms - 76[0m
+[0mPOST /api/event-offerings [32m201[0m 1.825 ms - 452[0m
+[0mPOST /api/event-interaction-types [32m201[0m 1.760 ms - 608[0m
+[0mPOST /api/teams/cccf996c-27fc-4dd8-b1ef-40c1d1cb28ad/events [32m201[0m 5.468 ms - 1893[0m
+[0mPUT /api/events/406b9f0a-ee4a-480b-8cc6-64c5d5ec07d9/hosts [32m200[0m 6.212 ms - 791[0m
+[0mPATCH /api/events/406b9f0a-ee4a-480b-8cc6-64c5d5ec07d9 [33m400[0m 2.776 ms - 76[0m
+PASS tests/integration/events.test.ts
+  Event offerings routes
+    ✓ creates an event offering and normalizes the key (4 ms)
+    ✓ lists event offerings (4 ms)
+    ✓ updates an event offering (7 ms)
+    ✓ rejects event offering creation for a COACH (2 ms)
+    ✓ deletes an unused event offering (11 ms)
+    ✓ lists events using an event offering (30 ms)
+    ✓ blocks deletion of an event offering used by events (18 ms)
+  Interaction type routes
+    ✓ creates a valid interaction type (3 ms)
+    ✓ rejects invalid round robin interaction types (1 ms)
+    ✓ rejects contradictory multi-host interaction types (2 ms)
+    ✓ lists interaction types (4 ms)
+    ✓ updates an interaction type (7 ms)
+    ✓ deletes an unused interaction type (7 ms)
+    ✓ lists events and teams using an interaction type (12 ms)
+    ✓ blocks deletion of an interaction type used by events (11 ms)
+  Event CRUD routes
+    ✓ creates a team event (9 ms)
+    ✓ defaults to DIRECT assignment when the event does not choose a strategy (11 ms)
+    ✓ forbids a TEAM_ADMIN from managing another team (5 ms)
+    ✓ lists team events with pagination (16 ms)
+    ✓ reads and updates a specific event (31 ms)
+    ✓ hard deletes an event (23 ms)
+    ✓ blocks hard deletion of an event with bookings (50 ms)
+    ✓ deactivates an event via PATCH (20 ms)
+    ✓ duplicates an event with hosts (29 ms)
+    ✓ creates an event with FIXED_LEAD and automatically assigns the host (16 ms)
+  Event scheduling routes
+    ✓ creates and updates an event with advanced scheduling settings (22 ms)
+    ✓ creates, updates, lists, and deletes predefined schedule slots (33 ms)
+    ✓ blocks deletion of a schedule slot with active bookings (41 ms)
+  Event host routes
+    ✓ assigns and lists a single host for a one-to-one event (24 ms)
+    ✓ rejects assigning too few hosts for a round-robin event (18 ms)
+    ✓ removes an assigned host (25 ms)
+    ✓ rejects removing a host from a round-robin event if it leaves fewer than two hosts (50 ms)
+    ✓ rejects updating strategy to ROUND_ROBIN if event has fewer than two hosts (22 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 68.572 ms - 799[0m
+[0mPOST /api/auth/register [32m201[0m 67.276 ms - 782[0m
+[0mPOST /api/auth/register [32m201[0m 67.588 ms - 755[0m
+[0mGET /api/users [32m200[0m 3.943 ms - 1446[0m
+[0mGET /api/users [32m200[0m 2.390 ms - 1446[0m
+[0mGET /api/users [33m403[0m 1.142 ms - 80[0m
+[0mGET /api/users [33m401[0m 0.149 ms - 63[0m
+[0mGET /api/users?page=1&pageSize=2 [32m200[0m 2.417 ms - 1006[0m
+[0mGET /api/users?search=team [32m200[0m 3.355 ms - 580[0m
+[0mGET /api/users?search=coach@users [32m200[0m 1.561 ms - 565[0m
+[0mGET /api/users?page=abc&pageSize=-5 [32m200[0m 1.486 ms - 1446[0m
+[0mDELETE /api/users [33m405[0m 0.097 ms - 56[0m
+[0mGET /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [32m200[0m 9.455 ms - 580[0m
+[0mGET /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [32m200[0m 3.552 ms - 580[0m
+[0mGET /api/users/087c2f23-eec0-4b9a-9e5b-6dd230d11861 [33m403[0m 1.454 ms - 80[0m
+[0mGET /api/users/00000000-0000-0000-0000-000000000000 [33m404[0m 1.284 ms - 45[0m
+[0mGET /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [33m401[0m 0.141 ms - 63[0m
+[0mGET /api/users/me [32m200[0m 3.601 ms - 592[0m
+[0mGET /api/users/me [32m200[0m 3.192 ms - 595[0m
+[0mGET /api/users/me [32m200[0m 1.880 ms - 580[0m
+[0mGET /api/users/me [33m401[0m 0.136 ms - 63[0m
+[0mPATCH /api/users/me [32m200[0m 2.682 ms - 502[0m
+[0mPATCH /api/users/me [32m200[0m 1.476 ms - 492[0m
+[0mPATCH /api/users/me [33m400[0m 0.954 ms - 79[0m
+[0mPATCH /api/users/me [33m400[0m 0.936 ms - 79[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [32m200[0m 1.663 ms - 502[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [32m200[0m 1.649 ms - 502[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [32m200[0m 1.612 ms - 583[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [32m200[0m 1.953 ms - 588[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [32m200[0m 1.892 ms - 583[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [33m403[0m 0.695 ms - 78[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [33m403[0m 0.654 ms - 86[0m
+[0mPATCH /api/users/087c2f23-eec0-4b9a-9e5b-6dd230d11861 [33m403[0m 0.966 ms - 89[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [33m400[0m 0.802 ms - 95[0m
+[0mPATCH /api/users/00000000-0000-0000-0000-000000000000 [33m404[0m 41.692 ms - 45[0m
+[0mPATCH /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [33m401[0m 0.124 ms - 63[0m
+[0mPOST /api/auth/register [32m201[0m 66.328 ms - 766[0m
+[0mDELETE /api/users/0fa0e879-3f72-4481-b8ef-ee2c439ccb54 [32m200[0m 2.712 ms - 501[0m
+[0mPOST /api/auth/register [32m201[0m 66.779 ms - 779[0m
+[0mDELETE /api/users/ffa1b081-78b6-4e92-99a5-d2281265eeeb [32m200[0m 2.049 ms - 510[0m
+[0mDELETE /api/users/1a12976c-0d50-4a53-9079-c0b8ec477d0c [33m403[0m 1.521 ms - 81[0m
+[0mDELETE /api/users/087c2f23-eec0-4b9a-9e5b-6dd230d11861 [33m403[0m 2.384 ms - 105[0m
+[0mDELETE /api/users/3e7c8f9f-0499-4485-8a09-02c198bac284 [33m401[0m 0.138 ms - 63[0m
+PASS tests/integration/users.test.ts
+  GET /api/users
+    ✓ SUPER_ADMIN can list users with pagination metadata (5 ms)
+    ✓ TEAM_ADMIN can list users (4 ms)
+    ✓ COACH cannot list users (403) (2 ms)
+    ✓ returns 401 when no auth token is provided
+    ✓ respects the page and pageSize query parameters (3 ms)
+    ✓ supports partial search by name (4 ms)
+    ✓ supports partial search by email (2 ms)
+    ✓ falls back to defaults for invalid pagination params (2 ms)
+    ✓ returns 405 for DELETE on the /api/users collection (1 ms)
+  GET /api/users/:userId
+    ✓ SUPER_ADMIN can read a specific user (10 ms)
+    ✓ TEAM_ADMIN can read a user (5 ms)
+    ✓ COACH cannot read user details (403) (3 ms)
+    ✓ returns 404 for a non-existent userId (2 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+  GET /api/users/me
+    ✓ SUPER_ADMIN can read own profile (4 ms)
+    ✓ TEAM_ADMIN can read own profile (4 ms)
+    ✓ COACH can read own profile (2 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+  PATCH /api/users/me
+    ✓ COACH can update their own timezone (4 ms)
+    ✓ COACH cannot update their own email via /me (field ignored) (2 ms)
+    ✓ COACH cannot update their own role via /me (field ignored) (1 ms)
+    ✓ COACH cannot change their own isActive status via /me (field ignored) (2 ms)
+  PATCH /api/users/:userId
+    ✓ SUPER_ADMIN can update a user's timezone (2 ms)
+    ✓ SUPER_ADMIN can update a user's preferredLanguage (3 ms)
+    ✓ SUPER_ADMIN can save a Zoom ISV link on the user profile (2 ms)
+    ✓ SUPER_ADMIN can change a user's role (5 ms)
+    ✓ TEAM_ADMIN cannot change a user's role (403) (1 ms)
+    ✓ TEAM_ADMIN cannot change a user's isActive status (403) (1 ms)
+    ✓ TEAM_ADMIN cannot update a SUPER_ADMIN account (403) (1 ms)
+    ✓ returns 400 for an invalid timezone string (1 ms)
+    ✓ returns 404 for a non-existent user ID (44 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+  DELETE /api/users/:userId
+    ✓ SUPER_ADMIN can soft-delete (deactivate) a user (71 ms)
+    ✓ TEAM_ADMIN can soft-delete (deactivate) a COACH user (71 ms)
+    ✓ TEAM_ADMIN cannot delete a TEAM_ADMIN user (403) (4 ms)
+    ✓ returns 403 when trying to deactivate the last active SUPER_ADMIN (3 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 68.149 ms - 796[0m
+[0mPOST /api/auth/register [32m201[0m 66.708 ms - 759[0m
+[0mPOST /api/auth/register [32m201[0m 66.605 ms - 759[0m
+[0mPATCH /api/users/99306a09-cbaa-4ce9-b5d0-a8d9327a0534 [32m200[0m 2.421 ms - 574[0m
+(node:90548) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+[0mPOST /api/bookings [32m201[0m 26.164 ms - 3423[0m
+[0mPOST /api/bookings [32m201[0m 8.759 ms - 3431[0m
+[0mPOST /api/bookings [32m201[0m 10.934 ms - 3431[0m
+[0mPOST /api/bookings [33m409[0m 4.043 ms - 80[0m
+[0mPOST /api/bookings [33m409[0m 4.340 ms - 80[0m
+[0mPOST /api/bookings [33m409[0m 2.445 ms - 99[0m
+[0mPOST /api/bookings [33m409[0m 13.086 ms - 85[0m
+[0mPOST /api/bookings [32m201[0m 15.534 ms - 3804[0m
+[0mPOST /api/bookings [32m201[0m 15.518 ms - 3648[0m
+[0mGET /api/bookings?search=ali [32m200[0m 16.234 ms - 3126[0m
+[0mGET /api/bookings?search=bob.carter [32m200[0m 3.550 ms - 3128[0m
+[0mGET /api/bookings?search=e7b3d048 [32m200[0m 12.008 ms - 3126[0m
+[0mGET /api/bookings?search=charlie [32m200[0m 5.834 ms - 145[0m
+[0mGET /api/bookings?startDate=2026-04-01T00%3A00%3A00.000Z&endDate=2026-04-30T23%3A59%3A59.999Z [32m200[0m 4.609 ms - 3123[0m
+[0mGET /api/bookings?startDate=2026-05-01T00%3A00%3A00.000Z&endDate=2026-06-30T23%3A59%3A59.999Z [32m200[0m 4.925 ms - 6096[0m
+[0mGET /api/bookings [32m200[0m 3.894 ms - 9075[0m
+PASS tests/integration/bookings.test.ts
+  Booking Domain Integration Tests
+    POST /api/bookings (DIRECT)
+      ✓ successfully creates a booking for an available slot (39 ms)
+      ✓ creates and reuses a student profile across bookings with the same email (26 ms)
+      ✓ returns 409 conflict if host is unavailable (outside weekly schedule) (11 ms)
+      ✓ returns 409 conflict if there is a booking overlap (12 ms)
+      ✓ rejects bookings that do not match a predefined fixed slot (12 ms)
+      ✓ rejects bookings when a fixed slot has reached its participant limit (26 ms)
+    POST /api/bookings (ROUND-ROBIN)
+      ✓ assigns the first available host and updates routing state (32 ms)
+      ✓ skips unavailable host and assigns the next available one (28 ms)
+    GET /api/bookings search
+      ✓ filters bookings by partial student name (28 ms)
+      ✓ filters bookings by partial student email (14 ms)
+      ✓ filters bookings by partial booking ID (25 ms)
+      ✓ still enforces coach scoping while searching (18 ms)
+    GET /api/bookings date range filtering
+      ✓ filters bookings by date range (April only) (14 ms)
+      ✓ filters bookings by date range (May and June) (12 ms)
+      ✓ returns all bookings if no date range is provided (11 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 69.456 ms - 799[0m
+[0mPOST /api/auth/register [32m201[0m 65.998 ms - 782[0m
+[0mPOST /api/auth/register [32m201[0m 65.829 ms - 786[0m
+[0mPOST /api/auth/register [32m201[0m 65.703 ms - 755[0m
+[0mPOST /api/teams [32m201[0m 4.460 ms - 394[0m
+[0mPOST /api/teams [32m201[0m 3.025 ms - 384[0m
+[0mPOST /api/teams [33m403[0m 0.742 ms - 80[0m
+[0mPOST /api/teams [33m403[0m 0.753 ms - 80[0m
+[0mPOST /api/teams [33m409[0m 44.688 ms - 67[0m
+[0mPOST /api/teams [33m400[0m 1.117 ms - 52[0m
+[0mPOST /api/teams [33m400[0m 1.060 ms - 53[0m
+[0mPOST /api/teams [33m400[0m 1.223 ms - 70[0m
+[0mPOST /api/teams [33m400[0m 1.142 ms - 55[0m
+[0mPOST /api/teams [33m401[0m 0.107 ms - 63[0m
+[0mGET /api/teams [32m200[0m 2.820 ms - 792[0m
+[0mGET /api/teams [32m200[0m 1.544 ms - 792[0m
+[0mGET /api/teams [33m403[0m 0.793 ms - 80[0m
+[0mGET /api/teams [33m401[0m 0.147 ms - 63[0m
+[0mGET /api/teams?page=1&pageSize=1 [32m200[0m 1.816 ms - 459[0m
+[0mGET /api/teams?page=abc&pageSize=-5 [32m200[0m 1.410 ms - 792[0m
+[0mDELETE /api/teams [33m405[0m 0.095 ms - 56[0m
+[0mPOST /api/teams [32m201[0m 3.255 ms - 394[0m
+[0mGET /api/teams/9bc4f7e3-45d7-4e15-8b21-fd8e8b12bc3d [32m200[0m 1.601 ms - 394[0m
+[0mGET /api/teams/9bc4f7e3-45d7-4e15-8b21-fd8e8b12bc3d [32m200[0m 1.010 ms - 394[0m
+[0mGET /api/teams/9bc4f7e3-45d7-4e15-8b21-fd8e8b12bc3d [33m403[0m 0.882 ms - 80[0m
+[0mGET /api/teams/00000000-0000-0000-0000-000000000000 [33m404[0m 1.199 ms - 45[0m
+[0mGET /api/teams/9bc4f7e3-45d7-4e15-8b21-fd8e8b12bc3d [33m401[0m 0.144 ms - 63[0m
+[0mPOST /api/teams [32m201[0m 2.777 ms - 407[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [32m200[0m 2.261 ms - 409[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [32m200[0m 1.685 ms - 407[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [32m200[0m 2.063 ms - 409[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [32m200[0m 3.275 ms - 409[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [32m200[0m 1.803 ms - 410[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [32m200[0m 1.780 ms - 409[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [33m403[0m 0.718 ms - 80[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [33m403[0m 0.737 ms - 80[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [33m400[0m 1.045 ms - 52[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [33m400[0m 1.211 ms - 70[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [33m409[0m 2.171 ms - 67[0m
+[0mPATCH /api/teams/00000000-0000-0000-0000-000000000000 [33m404[0m 1.182 ms - 45[0m
+[0mPATCH /api/teams/16583195-5e9c-40ec-bcf7-93d909cc2613 [33m401[0m 0.130 ms - 63[0m
+[0mPOST /api/teams [32m201[0m 2.282 ms - 394[0m
+[0mDELETE /api/teams/d64343f9-4753-4b74-bf87-e42a739df430 [32m200[0m 2.757 ms - 394[0m
+[0mGET /api/teams/d64343f9-4753-4b74-bf87-e42a739df430 [33m404[0m 1.227 ms - 45[0m
+[0mPOST /api/teams [32m201[0m 2.422 ms - 394[0m
+[0mDELETE /api/teams/faa0d77e-6c75-47f7-97d8-02da899a2170 [33m403[0m 0.801 ms - 80[0m
+[0mPOST /api/teams [32m201[0m 2.327 ms - 406[0m
+[0mDELETE /api/teams/9f2a515e-805e-46b0-a616-cd7af61c22f0 [33m403[0m 0.779 ms - 80[0m
+[0mDELETE /api/teams/00000000-0000-0000-0000-000000000000 [33m404[0m 1.348 ms - 45[0m
+[0mPOST /api/teams [32m201[0m 2.308 ms - 398[0m
+[0mDELETE /api/teams/7067eecc-ed53-4ff9-9100-bc760e82d3fa [33m401[0m 0.157 ms - 63[0m
+[0mPOST /api/teams [32m201[0m 2.574 ms - 410[0m
+[0mDELETE /api/teams/b7e543e0-3c55-4d01-9682-01166a1add1b [33m409[0m 1.440 ms - 135[0m
+[0mPOST /api/teams [32m201[0m 2.485 ms - 400[0m
+[0mPOST /api/teams/904fa793-6103-4cce-bc28-4b88ec7a2e76 [33m405[0m 0.107 ms - 54[0m
+PASS tests/integration/teams.test.ts
+  POST /api/teams
+    ✓ SUPER_ADMIN can create a team and receives the created team in response (5 ms)
+    ✓ normalises team name to lowercase (4 ms)
+    ✓ TEAM_ADMIN cannot create a team (403) (2 ms)
+    ✓ COACH cannot create a team (403) (1 ms)
+    ✓ returns 409 when a team with that name already exists (46 ms)
+    ✓ returns 400 when name is missing (2 ms)
+    ✓ returns 400 when teamLeadId is missing (2 ms)
+    ✓ returns 400 when teamLeadId does not belong to a TEAM_ADMIN (2 ms)
+    ✓ returns 400 when teamLeadId does not exist (2 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+  GET /api/teams
+    ✓ SUPER_ADMIN can list teams with pagination metadata (4 ms)
+    ✓ TEAM_ADMIN can list teams (2 ms)
+    ✓ COACH cannot list teams (403) (2 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+    ✓ respects page and pageSize query parameters (2 ms)
+    ✓ falls back to defaults for invalid pagination params (2 ms)
+    ✓ returns 405 for DELETE on the /api/teams collection (1 ms)
+  GET /api/teams/:teamId
+    ✓ SUPER_ADMIN can read a specific team (3 ms)
+    ✓ TEAM_ADMIN can read a team (2 ms)
+    ✓ COACH cannot read a team (403) (1 ms)
+    ✓ returns 404 for a non-existent teamId (2 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+  PATCH /api/teams/:teamId
+    ✓ SUPER_ADMIN can update the team name (6 ms)
+    ✓ SUPER_ADMIN can update the team description (3 ms)
+    ✓ SUPER_ADMIN can change the teamLead to another TEAM_ADMIN (4 ms)
+    ✓ SUPER_ADMIN can toggle isActive (5 ms)
+    ✓ TEAM_ADMIN cannot update a team (403) (1 ms)
+    ✓ COACH cannot update a team (403) (1 ms)
+    ✓ returns 400 when name is blank (1 ms)
+    ✓ returns 400 when new teamLeadId does not belong to a TEAM_ADMIN (2 ms)
+    ✓ returns 409 when name conflicts with an existing team (3 ms)
+    ✓ returns 404 for a non-existent teamId (2 ms)
+    ✓ returns 401 when no auth token is provided (1 ms)
+  DELETE /api/teams/:teamId
+    ✓ SUPER_ADMIN can delete a team (8 ms)
+    ✓ TEAM_ADMIN cannot delete a team (403) (6 ms)
+    ✓ COACH cannot delete a team (403) (4 ms)
+    ✓ returns 404 for a non-existent teamId (2 ms)
+    ✓ returns 401 when no auth token is provided (3 ms)
+    ✓ blocks deletion of a team with active bookings (12 ms)
+    ✓ returns 405 for POST on a specific team resource (4 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 75.031 ms - 803[0m
+[0mPOST /api/auth/register [32m201[0m 67.943 ms - 805[0m
+[0mPOST /api/auth/register [32m201[0m 67.598 ms - 788[0m
+[0mPOST /api/auth/register [32m201[0m 68.421 ms - 791[0m
+[0mPOST /api/teams [32m201[0m 14.400 ms - 431[0m
+[0mPOST /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members [32m201[0m 4.870 ms - 757[0m
+[0mPOST /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members [32m201[0m 3.297 ms - 755[0m
+[0mGET /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members [32m200[0m 2.715 ms - 2157[0m
+[0mPOST /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members [32m201[0m 1.928 ms - 757[0m
+[0mPOST /api/event-offerings [32m201[0m 2.555 ms - 466[0m
+[0mPOST /api/event-interaction-types [32m201[0m 2.173 ms - 628[0m
+(node:90548) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+[0mPOST /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/events [32m201[0m 16.485 ms - 1948[0m
+[0mPUT /api/events/a4b41375-f65d-4a75-8d3e-16f9b4f5b652/hosts [32m200[0m 23.688 ms - 794[0m
+[0mDELETE /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members/57059688-7a5b-4bac-9cc6-b595ecb301ec [33m403[0m 4.886 ms - 102[0m
+[0mPOST /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members [32m201[0m 2.334 ms - 755[0m
+[0mDELETE /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members/76c0b597-588d-4a1c-a5c6-ea45424c68b6 [32m200[0m 4.292 ms - 758[0m
+[0mDELETE /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members/adda8594-9089-4686-b8e7-d10d5f776ee5 [33m409[0m 2.588 ms - 126[0m
+[0mPOST /api/teams/860d4ea9-265e-4228-b2e1-ef03ef38ab88/members/bulk [32m201[0m 3.049 ms - 760[0m
+PASS tests/integration/team-members.test.ts
+  Team member routes
+    ✓ adds a team member (6 ms)
+    ✓ lists active team members (8 ms)
+    ✓ prevents removing a member assigned to an active team event (56 ms)
+    ✓ removes an inactive-free team member (9 ms)
+    ✓ prevents removing the Team Lead (3 ms)
+    ✓ bulk adds multiple team members (4 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 69.008 ms - 820[0m
+[0mPOST /api/auth/register [32m201[0m 66.362 ms - 797[0m
+[0mPOST /api/teams [32m201[0m 4.506 ms - 401[0m
+[0mPOST /api/event-offerings [32m201[0m 1.904 ms - 400[0m
+[0mPOST /api/event-interaction-types [32m201[0m 2.357 ms - 559[0m
+(node:90548) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+[0mPOST /api/teams/b0cd11ad-f385-4228-a2ba-6868298e25fc/events [32m201[0m 20.284 ms - 1726[0m
+[0mPUT /api/events/944fb37c-90dc-4d99-8f27-d35d3b02d632/hosts [32m200[0m 26.005 ms - 798[0m
+[0mPOST /api/users/659afdf9-a5ca-43e9-b348-45edebeaaa0d/availability/weekly [32m200[0m 5.159 ms - 303[0m
+[0mGET /api/public/events/944fb37c-90dc-4d99-8f27-d35d3b02d632/slots?startDate=2026-12-07&endDate=2026-12-07 [32m200[0m 144.258 ms - 1295[0m
+PASS tests/integration/buffer.test.ts
+  Event Buffer Integration Tests
+    ✓ respects bufferAfterMinutes when calculating available slots (150 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  suppress all logs with { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 69.067 ms - 817[0m
+[0mPOST /api/auth/register [32m201[0m 69.070 ms - 779[0m
+[0mPOST /api/auth/register [32m201[0m 66.281 ms - 788[0m
+[0mPOST /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/weekly [33m403[0m 1.492 ms - 162[0m
+[0mPOST /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/weekly [32m200[0m 10.576 ms - 527[0m
+[0mGET /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/weekly [32m200[0m 1.319 ms - 527[0m
+[0mPOST /api/users/5e00ab79-ddbb-47d7-9e58-b84a0edc304d/availability/weekly [33m403[0m 1.116 ms - 92[0m
+[0mPOST /api/users/5e00ab79-ddbb-47d7-9e58-b84a0edc304d/availability/weekly [32m200[0m 2.700 ms - 303[0m
+[0mPOST /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/weekly [33m403[0m 0.972 ms - 162[0m
+[0mPOST /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/weekly [33m400[0m 0.952 ms - 63[0m
+[0mPOST /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/exceptions [32m201[0m 2.779 ms - 337[0m
+[0mGET /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/exceptions [32m200[0m 1.853 ms - 342[0m
+[0mDELETE /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/exceptions/cc97be0d-b74d-463f-be68-0faf35d3bc05 [32m200[0m 1.832 ms - 85[0m
+[0mGET /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/exceptions [32m200[0m 1.300 ms - 84[0m
+[0mDELETE /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/exceptions/00000000-0000-0000-0000-000000000000 [33m404[0m 40.296 ms - 63[0m
+[0mGET /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/effective?from=2026-03-01&to=2026-03-31 [32m200[0m 17.058 ms - 560[0m
+[0mGET /api/users/562963fc-c14b-47cb-a790-3d73e63dfefe/availability/effective [33m400[0m 2.266 ms - 81[0m
+PASS tests/integration/availability.test.ts
+  Availability Domain Integration Tests
+    Weekly Availability
+      ✓ COACH cannot set their own weekly availability (Policy Change) (3 ms)
+      ✓ COACH can get their own weekly availability (14 ms)
+      ✓ COACH cannot set another user's availability (2 ms)
+      ✓ SUPER_ADMIN can set any user's availability (4 ms)
+      ✓ rejects invalid time format (403 before 400 for COACH) (2 ms)
+      ✓ rejects startTime after endTime (as Admin) (3 ms)
+    Availability Exceptions
+      ✓ adds an availability exception (4 ms)
+      ✓ lists availability exceptions (3 ms)
+      ✓ removes an availability exception (4 ms)
+      ✓ returns 404 when removing non-existent exception (44 ms)
+    Effective Availability
+      ✓ calculates effective availability (18 ms)
+      ✓ rejects missing query parameters (3 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  override existing env vars with { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 92.875 ms - 803[0m
+[0mPOST /api/auth/register [32m201[0m 101.626 ms - 786[0m
+[0mPOST /api/auth/register [32m201[0m 74.354 ms - 759[0m
+[0mPOST /api/invites [32m201[0m 5.239 ms - 306[0m
+[0mPOST /api/invites [32m201[0m 4.137 ms - 306[0m
+[0mPOST /api/invites [33m403[0m 1.140 ms - 80[0m
+[0mPOST /api/invites [32m201[0m 2.361 ms - 308[0m
+[0mPOST /api/invites [33m409[0m 2.222 ms - 111[0m
+[0mPOST /api/invites [33m409[0m 1.136 ms - 68[0m
+[0mPOST /api/invites [33m400[0m 0.951 ms - 48[0m
+[0mPOST /api/invites [33m401[0m 0.116 ms - 63[0m
+[0mPOST /api/invites [32m201[0m 2.428 ms - 308[0m
+[0mPOST /api/invites/accept-invite [32m201[0m 76.981 ms - 801[0m
+[0mPOST /api/invites/accept-invite [33m409[0m 0.674 ms - 68[0m
+[0mPOST /api/invites/accept-invite [33m404[0m 1.005 ms - 51[0m
+[0mPOST /api/invites/accept-invite [33m400[0m 0.176 ms - 77[0m
+[0mPOST /api/invites [32m201[0m 2.761 ms - 310[0m
+[0mPOST /api/invites/accept-invite [33m400[0m 0.143 ms - 74[0m
+PASS tests/integration/invites.test.ts
+  POST /api/invites
+    ✓ SUPER_ADMIN can create an invite and receives the token in non-prod (8 ms)
+    ✓ TEAM_ADMIN can create an invite (5 ms)
+    ✓ COACH cannot create an invite (403) (3 ms)
+    ✓ returns 409 when an active invite already exists for the email (7 ms)
+    ✓ returns 409 when the email belongs to an existing user (2 ms)
+    ✓ returns 400 when the email field is missing (1 ms)
+    ✓ returns 401 when no auth token is provided
+  POST /api/invites/accept-invite
+    ✓ accepts a valid invite and creates a new user account (79 ms)
+    ✓ returns 409 when the invite token has already been accepted (2 ms)
+    ✓ returns 404 for a token that does not exist (2 ms)
+    ✓ returns 400 when required fields are missing (2 ms)
+    ✓ returns 400 when password is shorter than 8 characters (5 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 78.452 ms - 799[0m
+[0mPOST /api/auth/register [32m201[0m 74.024 ms - 768[0m
+[0mPOST /api/auth/register [32m201[0m 71.630 ms - 763[0m
+[0mGET /api/v1/stats/dashboard?timeframe=month [32m200[0m 15.786 ms - 352[0m
+[0mGET /api/v1/stats/bookings?timeframe=month [32m200[0m 10.349 ms - 436[0m
+[0mGET /api/v1/stats/users?timeframe=month [33m403[0m 1.235 ms - 73[0m
+[0mGET /api/v1/stats/users?timeframe=month [32m200[0m 3.012 ms - 315[0m
+PASS tests/integration/stats.test.ts
+  GET /api/v1/stats/dashboard
+    ✓ returns dashboard stats with timeframe metadata for admins (18 ms)
+  GET /api/v1/stats/bookings
+    ✓ scopes booking stats to the signed-in coach (12 ms)
+  GET /api/v1/stats/users
+    ✓ blocks coaches from admin-only stats endpoints (2 ms)
+    ✓ returns user summary metrics for admins (3 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mPOST /api/auth/bootstrap [32m201[0m 68.770 ms - 817[0m
+[0mPOST /api/auth/register [32m201[0m 71.327 ms - 785[0m
+(node:90548) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+[0mPOST /api/bookings [32m201[0m 41.137 ms - 3335[0m
+[0mPOST /api/bookings [32m201[0m 14.415 ms - 3335[0m
+[0mGET /api/students [32m200[0m 5.662 ms - 955[0m
+[0mGET /api/students/6898edef-2012-4195-a606-efb1c85d20c0 [32m200[0m 2.935 ms - 888[0m
+[0mGET /api/students/6898edef-2012-4195-a606-efb1c85d20c0/bookings [32m200[0m 8.272 ms - 6664[0m
+PASS tests/integration/students.test.ts
+  Students API
+    ✓ lists students with booking summary data (7 ms)
+    ✓ returns a student detail profile with latest booking info (4 ms)
+    ✓ returns the student's complete booking history (9 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (9) from .env.test -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (14) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+[0mGET /health [32m200[0m 0.181 ms - 54[0m
+PASS tests/integration/health.test.ts
+  GET /health
+    ✓ returns the application health status (2 ms)
+
+Test Suites: 1 failed, 12 passed, 13 total
+Tests:       1 failed, 193 passed, 194 total
+Snapshots:   0 total
+Time:        8.472 s, estimated 9 s
+Ran all test suites.

@@ -9,14 +9,16 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
-import { Layers, Edit } from 'lucide-react'
+import { Layers, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import type { EventOffering } from '@/types'
+import { useDeleteEventOffering, useUpdateEventOffering } from '@/hooks/useEventOfferings'
 import { Badge } from '@/components/shared/Badge'
 import { Modal } from '@/components/shared/Modal'
 import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
 import { OfferingForm } from './OfferingForm'
 import { RowActions } from '@/components/shared/RowActions'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 
 interface OfferingTableProps {
   offerings: EventOffering[]
@@ -40,6 +42,32 @@ const offeringSortAccessors: SortAccessorMap<EventOffering, OfferingSortKey> = {
 export function OfferingTable({ offerings }: OfferingTableProps) {
   const [editing, setEditing] = useState<EventOffering | null>(null)
   const { sortedItems: sortedOfferings, sortConfig, requestSort } = useTableSort(offerings, offeringSortAccessors)
+  const { mutate: deleteOffering } = useDeleteEventOffering()
+  const { mutate: updateOffering } = useUpdateEventOffering()
+  const { handleAction } = useAsyncAction()
+
+  const handleToggleActive = (offering: EventOffering) => {
+    const newStatus = !offering.isActive
+    handleAction(
+      updateOffering,
+      { offeringId: offering.id, data: { isActive: newStatus } },
+      {
+        title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+        message: newStatus
+          ? `Are you sure you want to mark offering "${offering.name}" as active? This will make it available for new events.`
+          : `Are you sure you want to mark offering "${offering.name}" as inactive? This will hide it from new selections but keep existing events linked.`,
+        actionName: 'Update',
+      }
+    )
+  }
+
+  const handleDelete = (offering: EventOffering) => {
+    handleAction(deleteOffering, offering.id, {
+      title: 'Delete Offering',
+      message: `Are you sure you want to PERMANENTLY delete offering "${offering.name}"?\n\nThis action will only succeed if no events are currenty using this offering.`,
+      actionName: 'Delete',
+    })
+  }
 
   return (
     <>
@@ -116,6 +144,17 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
                         label: 'Edit',
                         icon: <Edit size={16} />,
                         onClick: () => setEditing(o),
+                      },
+                      {
+                        label: o.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                        icon: o.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                        onClick: () => handleToggleActive(o),
+                      },
+                      {
+                        label: 'Delete',
+                        icon: <Trash2 size={16} />,
+                        color: 'error.main',
+                        onClick: () => handleDelete(o),
                       },
                     ]}
                   />

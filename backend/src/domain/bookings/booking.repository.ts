@@ -2,6 +2,7 @@ import { BookingStatus, Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { rethrowPrismaError } from "../../shared/error/prismaError";
 import {
     bookableEventInclude,
     bookingInclude,
@@ -99,25 +100,20 @@ const countBookings = async (
     });
 };
 
-const updateBookingStatusById = async (
+const updateBookingById = async (
     id: string,
-    status: BookingStatus,
+    data: { status?: BookingStatus; coHostUserIds?: string[] },
 ): Promise<SafeBooking> => {
     try {
         return await prisma.booking.update({
             where: { id },
-            data: { status },
+            data,
             include: bookingInclude,
         });
     } catch (error) {
-        if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === "P2025"
-        ) {
-            throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking not found.");
-        }
-
-        throw error;
+        return rethrowPrismaError(error, {
+            P2025: { status: StatusCodes.NOT_FOUND, message: "Booking not found." },
+        });
     }
 };
 
@@ -128,6 +124,6 @@ export {
     findBookingById,
     findBookings,
     countBookings,
-    updateBookingStatusById,
+    updateBookingById,
     upsertStudentForBooking,
 };

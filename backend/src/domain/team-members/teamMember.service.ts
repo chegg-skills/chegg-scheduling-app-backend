@@ -7,6 +7,7 @@ import {
   safeUserSelect,
   type CallerContext,
 } from "../../shared/utils/userUtils";
+import { queueTeamMemberAddedNotification } from "./teamMember.notification";
 
 const teamMemberInclude = Prisma.validator<Prisma.TeamMemberInclude>()({
   user: { select: safeUserSelect },
@@ -104,6 +105,8 @@ const addTeamMembers = async (
         data: { isActive: true },
         include: teamMemberInclude,
       });
+
+      void queueTeamMemberAddedNotification({ teamId, userId });
     } else {
       member = await prisma.teamMember.create({
         data: {
@@ -112,6 +115,8 @@ const addTeamMembers = async (
         },
         include: teamMemberInclude,
       });
+
+      void queueTeamMemberAddedNotification({ teamId, userId });
     }
     results.push(member);
   }

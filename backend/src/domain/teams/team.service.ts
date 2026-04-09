@@ -2,8 +2,14 @@ import { Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { resolvePagination } from "../../shared/utils/pagination";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
+import {
+  normalizeOptionalString,
+  requireEntityId,
+  requireTrimmedString,
+} from "../../shared/utils/validation";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import type { Team } from "@prisma/client";
 
@@ -30,27 +36,14 @@ type UpdateTeamInput = {
 
 const normalizeName = (name: string): string => name.trim().toLowerCase();
 
-const requireTeamId = (teamId: string): string => {
-  const normalizedTeamId = teamId?.trim();
-  if (!normalizedTeamId) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
-  }
+const requireTeamId = (teamId: string): string =>
+  requireEntityId(teamId, "teamId");
 
-  return normalizedTeamId;
-};
+const requireTeamName = (name: string): string =>
+  requireTrimmedString(name, "name", "Team name is required.");
 
-const requireTeamName = (name: string): string => {
-  const normalizedValue = name?.trim();
-  if (!normalizedValue) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team name is required.");
-  }
-
-  return normalizedValue;
-};
-
-const normalizeDescription = (description?: string): string | null => {
-  return description?.trim() || null;
-};
+const normalizeDescription = (description?: string): string | null =>
+  normalizeOptionalString(description, "description");
 
 const validateTeamLead = async (teamLeadId: string): Promise<void> => {
   const lead = await prisma.user.findUnique({
@@ -134,16 +127,12 @@ const createTeam = async (
 
     return team;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "A team with that name already exists.",
-      );
-    }
-    throw error;
+    return rethrowPrismaError(error, {
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "A team with that name already exists.",
+      },
+    });
   }
 };
 
@@ -248,18 +237,13 @@ const updateTeam = async (
 
     return team;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
-      }
-      if (error.code === "P2002") {
-        throw new ErrorHandler(
-          StatusCodes.CONFLICT,
-          "A team with that name already exists.",
-        );
-      }
-    }
-    throw error;
+    return rethrowPrismaError(error, {
+      P2025: { status: StatusCodes.NOT_FOUND, message: "Team not found." },
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "A team with that name already exists.",
+      },
+    });
   }
 };
 
@@ -291,13 +275,9 @@ const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
       where: { id: teamId },
     });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
-    }
-    throw error;
+    return rethrowPrismaError(error, {
+      P2025: { status: StatusCodes.NOT_FOUND, message: "Team not found." },
+    });
   }
 };
 

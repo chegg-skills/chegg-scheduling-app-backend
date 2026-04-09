@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { interactionTypesApi } from '@/api/interactionTypes'
 import type { CreateInteractionTypeDto, UpdateInteractionTypeDto } from '@/types'
+import { invalidateQueryKeys } from './queryUtils'
 import { statsKeys } from './useStats'
 
 export const interactionTypeKeys = {
@@ -19,10 +20,7 @@ export function useCreateInteractionType() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateInteractionTypeDto) => interactionTypesApi.create(data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: interactionTypeKeys.all })
-      qc.invalidateQueries({ queryKey: statsKeys.all })
-    },
+    onSuccess: () => invalidateQueryKeys(qc, [interactionTypeKeys.all, statsKeys.all]),
   })
 }
 
@@ -36,10 +34,7 @@ export function useUpdateInteractionType() {
       interactionTypeId: string
       data: UpdateInteractionTypeDto
     }) => interactionTypesApi.update(interactionTypeId, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: interactionTypeKeys.all })
-      qc.invalidateQueries({ queryKey: statsKeys.all })
-    },
+    onSuccess: () => invalidateQueryKeys(qc, [interactionTypeKeys.all, statsKeys.all]),
   })
 }
 
@@ -47,10 +42,7 @@ export function useDeleteInteractionType() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (interactionTypeId: string) => interactionTypesApi.delete(interactionTypeId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: interactionTypeKeys.all })
-      qc.invalidateQueries({ queryKey: statsKeys.all })
-    },
+    onSuccess: () => invalidateQueryKeys(qc, [interactionTypeKeys.all, statsKeys.all]),
   })
 }
 

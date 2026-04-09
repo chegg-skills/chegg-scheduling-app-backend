@@ -7,6 +7,8 @@ import {
 } from "../../shared/notifications/notification.publisher";
 import type { SafeBooking } from "./booking.service";
 
+import { formatNotificationDate } from "../../shared/utils/date";
+
 const getCoachName = (booking: SafeBooking): string => {
   const coachName = [booking.host?.firstName, booking.host?.lastName]
     .filter((value): value is string => Boolean(value))
@@ -16,20 +18,45 @@ const getCoachName = (booking: SafeBooking): string => {
   return coachName || "your coach";
 };
 
-const getBookingNotificationVariables = (booking: SafeBooking) => ({
-  bookingId: booking.id,
-  studentName: booking.studentName,
-  studentEmail: booking.studentEmail,
-  eventName: booking.event?.name ?? "your session",
-  teamName: booking.team?.name ?? "your team",
-  coachName: getCoachName(booking),
-  startTime: new Date(booking.startTime).toISOString(),
-  endTime: new Date(booking.endTime).toISOString(),
-  timezone: booking.timezone,
-  meetingJoinUrl: booking.meetingJoinUrl ?? "",
-  bookingStatus: booking.status,
-  frontendUrl: resolveFrontendUrl(),
-});
+const getBookingNotificationVariables = async (booking: SafeBooking) => {
+  const variables: any = {
+    bookingId: booking.id,
+    studentName: booking.studentName,
+    studentEmail: booking.studentEmail,
+    eventName: booking.event?.name ?? "your session",
+    teamName: booking.team?.name ?? "your team",
+    coachName: getCoachName(booking),
+    startTime: formatNotificationDate(new Date(booking.startTime), booking.timezone),
+    endTime: formatNotificationDate(new Date(booking.endTime), booking.timezone),
+    timezone: booking.timezone,
+    meetingJoinUrl: booking.meetingJoinUrl ?? "",
+    bookingStatus: booking.status,
+    frontendUrl: resolveFrontendUrl(),
+    publicBookingUrl: booking.event?.publicBookingSlug
+      ? `${resolveFrontendUrl()}/book/${booking.event.publicBookingSlug}`
+      : resolveFrontendUrl(),
+    coHostDetails: "",
+    coHostNames: "",
+  };
+
+  if (booking.coHostUserIds && booking.coHostUserIds.length > 0) {
+    const coHosts = await prisma.user.findMany({
+      where: { id: { in: booking.coHostUserIds }, isActive: true },
+      select: { firstName: true, lastName: true },
+    });
+
+    if (coHosts.length > 0) {
+      const names = coHosts
+        .map((u) => `${u.firstName} ${u.lastName}`.trim())
+        .join(", ");
+      variables.coHostNames = names;
+      variables.coHostDetails = `\nCo-hosts: ${names}`;
+      variables.coHostDetailsHtml = `<br/><strong>Co-hosts:</strong> ${names}`;
+    }
+  }
+
+  return variables;
+};
 
 const getTeamAdminRecipients = async (teamId: string): Promise<string[]> => {
   const members = await prisma.teamMember.findMany({
@@ -79,7 +106,7 @@ const queueStudentReminder = async (
     type,
     recipients: booking.studentEmail,
     userId: booking.hostUserId,
-    variables: getBookingNotificationVariables(booking),
+    variables: await getBookingNotificationVariables(booking),
     sendAt,
     notificationKey: `booking:${booking.id}:${type}`,
     entityType: "BOOKING",
@@ -127,7 +154,7 @@ const cancelScheduledBookingReminders = async (
 
 const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
   try {
-    const variables = getBookingNotificationVariables(booking);
+    const variables = await getBookingNotificationVariables(booking);
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
         type: "BOOKING_CONFIRMED",
@@ -160,6 +187,26 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
       );
     }
 
+    if (booking.coHostUserIds && booking.coHostUserIds.length > 0) {
+      const coHosts = await prisma.user.findMany({
+        where: { id: { in: booking.coHostUserIds }, isActive: true },
+        select: { id: true, email: true },
+      });
+
+      for (const coHost of coHosts) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "COACH_BOOKING_COHOST_ASSIGNED",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
+      }
+    }
+
     await Promise.all(publishTasks);
     await queueBookingReminderNotifications(booking);
   } catch (error) {
@@ -169,7 +216,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
 
 const queueBookingStatusNotifications = async (booking: SafeBooking) => {
   try {
-    const variables = getBookingNotificationVariables(booking);
+    const variables = await getBookingNotificationVariables(booking);
     const teamAdminRecipients = await getTeamAdminRecipients(booking.teamId);
 
     if (
@@ -178,6 +225,15 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     ) {
       await cancelScheduledBookingReminders(booking);
     }
+
+    // Fetch co-hosts if needed
+    const coHostUserIds = (booking as any).coHostUserIds as string[] | undefined;
+    const coHostUsers = coHostUserIds?.length
+      ? await prisma.user.findMany({
+        where: { id: { in: coHostUserIds }, isActive: true },
+        select: { id: true, email: true },
+      })
+      : [];
 
     if (booking.status === BookingStatus.CANCELLED) {
       const publishTasks: Array<Promise<boolean>> = [
@@ -198,6 +254,19 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
             variables,
           }),
         );
+      }
+
+      for (const coHost of coHostUsers) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "COACH_BOOKING_COHOST_CANCELLED",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
       }
 
       if (teamAdminRecipients.length > 0) {
@@ -235,6 +304,19 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         );
       }
 
+      for (const coHost of coHostUsers) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "COACH_BOOKING_COHOST_NO_SHOW",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
+      }
+
       if (teamAdminRecipients.length > 0) {
         publishTasks.push(
           publishNotificationSafely({
@@ -253,4 +335,51 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
   }
 };
 
-export { queueBookingCreatedNotifications, queueBookingStatusNotifications };
+const queueBookingUpdatedNotifications = async (
+  oldBooking: SafeBooking,
+  newBooking: SafeBooking,
+) => {
+  try {
+    const variables = await getBookingNotificationVariables(newBooking);
+    const publishTasks: Array<Promise<boolean>> = [];
+
+    // Notify newly added co-hosts
+    const oldCoHosts = new Set(oldBooking.coHostUserIds || []);
+    const newCoHosts = newBooking.coHostUserIds || [];
+    const addedCoHosts = newCoHosts.filter((id) => !oldCoHosts.has(id));
+
+    if (addedCoHosts.length > 0) {
+      const coHostUsers = await prisma.user.findMany({
+        where: { id: { in: addedCoHosts }, isActive: true },
+        select: { id: true, email: true },
+      });
+
+      for (const coHost of coHostUsers) {
+        if (coHost.email) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "COACH_BOOKING_COHOST_ASSIGNED",
+              recipients: coHost.email,
+              userId: coHost.id,
+              variables,
+            }),
+          );
+        }
+      }
+    }
+
+    // Handle status changes if they weren't already handled by separate status update call
+    // Note: status changes normally go through queueBookingStatusNotifications
+    // but if updateBooking changes status too, we should handle it here or ensure it's called.
+
+    await Promise.all(publishTasks);
+  } catch (error) {
+    console.error("Failed to queue booking update notifications:", error);
+  }
+};
+
+export {
+  queueBookingCreatedNotifications,
+  queueBookingStatusNotifications,
+  queueBookingUpdatedNotifications,
+};

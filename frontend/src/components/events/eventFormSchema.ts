@@ -14,8 +14,11 @@ export const eventFormSchema = z
         bookingMode: z.enum(['HOST_AVAILABILITY', 'FIXED_SLOTS'] as const).default('HOST_AVAILABILITY'),
         allowedWeekdays: z.array(z.number()).default([]),
         minimumNoticeMinutes: z.number().min(0).default(0),
+        sessionLeadershipStrategy: z.enum(['SINGLE_HOST', 'FIXED_LEAD', 'ROTATING_LEAD'] as const).default('SINGLE_HOST'),
+        fixedLeadHostId: z.string().nullable().optional(),
         minParticipantCount: z.number().int().min(1, 'Minimum participants must be at least 1').nullable().optional(),
         maxParticipantCount: z.number().int().min(1, 'Maximum participants must be at least 1').nullable().optional(),
+        bufferAfterMinutes: z.number().min(0).default(0),
         isActive: z.boolean().default(true),
     })
     .superRefine((values, context) => {
@@ -50,8 +53,11 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
             bookingMode: event.bookingMode,
             allowedWeekdays: event.allowedWeekdays,
             minimumNoticeMinutes: event.minimumNoticeMinutes,
+            sessionLeadershipStrategy: event.sessionLeadershipStrategy,
+            fixedLeadHostId: event.fixedLeadHostId,
             minParticipantCount: event.minParticipantCount,
             maxParticipantCount: event.maxParticipantCount,
+            bufferAfterMinutes: event.bufferAfterMinutes,
             isActive: event.isActive,
         }
     }
@@ -68,8 +74,11 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
         bookingMode: 'HOST_AVAILABILITY',
         allowedWeekdays: [],
         minimumNoticeMinutes: 0,
+        sessionLeadershipStrategy: 'SINGLE_HOST',
+        fixedLeadHostId: null,
         minParticipantCount: null,
         maxParticipantCount: null,
+        bufferAfterMinutes: 15,
         isActive: true,
     }
 }
