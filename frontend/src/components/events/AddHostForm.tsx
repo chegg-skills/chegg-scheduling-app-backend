@@ -1,8 +1,9 @@
+import * as React from 'react'
 import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import { Input } from '@/components/shared/Input'
 import type { TeamMember, EventHost } from '@/types'
 import { Button } from '@/components/shared/Button'
 import { Badge } from '@/components/shared/Badge'
@@ -71,16 +72,11 @@ export function AddHostForm({
                         </Box>
                     )}
 
-                    <TextField
-                        size="small"
+                    <Input
+                        isSearch
                         placeholder="Search coaches by name or email…"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: 1.5,
-                            },
-                        }}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                     />
 
                     <HostSelectionList

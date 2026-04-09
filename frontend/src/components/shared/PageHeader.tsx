@@ -77,7 +77,7 @@ export function PageHeader({
           {subtitle && <Typography variant="body2" color="text.secondary">{subtitle}</Typography>}
         </Stack>
       </Stack>
-      {actions ? <Stack direction="row" spacing={1.5}>{actions}</Stack> : null}
+      {actions ? <Stack direction="row" spacing={1.5} alignItems="center">{actions}</Stack> : null}
     </Stack>
   )
 }

@@ -52,6 +52,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           gap: 1,
           borderRadius: 1.5, // 12px
           height: size === 'sm' ? 40 : 48,
+          minHeight: size === 'sm' ? 40 : 48,
+          maxHeight: size === 'sm' ? 40 : 48,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxSizing: 'border-box',
           px: size === 'sm' ? 2 : 3,
           fontSize: size === 'sm' ? '0.875rem' : '1rem',
           '& .MuiCircularProgress-root': {

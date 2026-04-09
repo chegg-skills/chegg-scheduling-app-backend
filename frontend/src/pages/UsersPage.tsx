@@ -89,8 +89,8 @@ export function UsersPage() {
         title="Users"
         subtitle={`${pagination?.total ?? 0} total users`}
         actions={
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Box sx={{ width: { xs: '100%', sm: 360 }, maxWidth: 360 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Box sx={{ width: { xs: '100%', sm: 360 }, maxWidth: 360, height: 40, display: 'flex', alignItems: 'center' }}>
               <Input
                 isSearch
                 value={searchInput}
