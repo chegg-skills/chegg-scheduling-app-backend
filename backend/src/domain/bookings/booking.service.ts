@@ -180,6 +180,10 @@ const getBooking = async (id: string) => {
     return findBookingById(id);
 };
 
+const getBookingByToken = async (id: string, token: string) => {
+    return findBookingByToken(id, token);
+};
+
 const listBookings = async (filters: ListBookingsFilters) => {
     const [bookings, totalCount] = await Promise.all([
         findBookings(filters),
@@ -268,6 +272,7 @@ const rescheduleBooking = async (
 export {
     createBooking,
     getBooking,
+    getBookingByToken,
     listBookings,
     updateBooking,
     rescheduleBooking

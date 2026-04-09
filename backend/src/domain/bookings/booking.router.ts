@@ -30,6 +30,11 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/:id/public")
+  .get(BookingController.getPublicBooking)
+  .all(methodNotAllowed);
+
+router
   .route("/:id/reschedule")
   .post(BookingController.rescheduleBooking) // Token auth or session auth handled in controller
   .all(methodNotAllowed);

@@ -8,6 +8,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 import { publicApi } from '@/api/public';
+import { usePublicBooking } from '@/hooks/useBookings';
 import { bookingsApi } from '@/api/bookings';
 import { PageSpinner } from '@/components/shared/Spinner';
 import { SuccessStep } from '@/components/public/booking/SuccessStep';
@@ -34,12 +35,7 @@ export function PublicReschedulePage() {
     const [isSuccess, setIsSuccess] = React.useState(false);
 
     // 1. Fetch Booking Details
-    const { data: bookingData, isLoading: isLoadingBooking, error: bookingError } = useQuery({
-        queryKey: ['public', 'booking', bookingId, token],
-        queryFn: ({ signal }) => publicApi.getBooking(bookingId, token, signal).then(r => r.data.data?.booking),
-        enabled: !!bookingId && !!token,
-        retry: false,
-    });
+    const { data: bookingData, isLoading: isLoadingBooking, error: bookingError } = usePublicBooking(bookingId, token);
 
     // 2. Fetch Slots for the Event
     const { startDate, endDate } = React.useMemo(() => ({

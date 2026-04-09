@@ -59,6 +59,24 @@ export const getBooking = async (req: Request, res: Response) => {
     );
 };
 
+export const getPublicBooking = async (req: Request, res: Response) => {
+    const id = getStringParam(req.params.id);
+    const token = getStringParam(req.query.token);
+
+    if (!id || !token) {
+        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking ID and token are required.");
+    }
+
+    const booking = await BookingService.getBookingByToken(id, token);
+
+    return sendSuccessResponse(
+        res,
+        StatusCodes.OK,
+        { booking },
+        "Booking fetched successfully."
+    );
+};
+
 export const listBookings = async (req: Request, res: Response) => {
     const { teamId, eventId, hostUserId, status, search, startDate, endDate, page, limit } = req.query;
     const caller = res.locals.authUser as CallerContext;

@@ -23,6 +23,9 @@ export const bookingsApi = {
     getById: (id: string, token?: string, signal?: AbortSignal) =>
         apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`, { params: { token }, signal }),
 
+    getPublicById: (id: string, token: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<Booking>>(`/bookings/${id}/public`, { params: { token }, signal }),
+
     reschedule: (id: string, data: { startTime: Date | string; timezone?: string; token?: string }, signal?: AbortSignal) =>
         apiClient.post<ApiResponse<Booking>>(`/bookings/${id}/reschedule`, data, { signal }),
 

@@ -29,6 +29,14 @@ export function useBooking(id: string) {
     })
 }
 
+export function usePublicBooking(id: string, token: string) {
+    return useQuery({
+        queryKey: [...bookingKeys.detail(id), 'public', token],
+        queryFn: ({ signal }) => bookingsApi.getPublicById(id, token, signal).then(r => r.data.data),
+        enabled: !!id && !!token,
+    })
+}
+
 export function useUpdateBookingStatus() {
     const qc = useQueryClient()
     return useMutation({
