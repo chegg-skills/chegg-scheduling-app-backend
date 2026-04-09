@@ -1,6 +1,6 @@
 import { Box, Button, Collapse, Divider, TableCell, TableRow, alpha } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronDown, ChevronUp, Clock, XCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
 import type { Booking, BookingStatus } from '@/types'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { BookingStatusBadge } from './BookingStatusBadge'
@@ -117,16 +117,39 @@ export function BookingTableRow({
                 </Box>
 
                 {booking.status === 'CONFIRMED' && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    startIcon={<XCircle size={16} />}
-                    onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
-                    sx={{ fontWeight: 600, borderRadius: 1.5 }}
-                  >
-                    Cancel Booking
-                  </Button>
+                  <>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      startIcon={<XCircle size={16} />}
+                      onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
+                      sx={{ fontWeight: 600, borderRadius: 1.5 }}
+                    >
+                      Cancel Booking
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      component="a"
+                      href={`/reschedule/${booking.id}${booking.rescheduleToken ? `?token=${booking.rescheduleToken}` : ''}`}
+                      target="_blank"
+                      startIcon={<Calendar size={16} />}
+                      sx={{
+                        fontWeight: 600,
+                        borderRadius: 1.5,
+                        borderColor: 'divider',
+                        color: 'text.secondary',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
+                          bgcolor: 'primary.lighter'
+                        }
+                      }}
+                    >
+                      Reschedule
+                    </Button>
+                  </>
                 )}
 
                 {canMarkNoShow && (
