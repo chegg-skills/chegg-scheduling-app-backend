@@ -1,4 +1,4 @@
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import type { Booking } from '@/types';
 import { SectionLabel } from './Common';
 
@@ -43,29 +43,6 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
                 Timezone: {booking.timezone.replace(/_/g, ' ')}
             </Typography>
 
-            <Box sx={{ mt: 3 }}>
-                <Button
-                    variant="outlined"
-                    size="small"
-                    component="a"
-                    href={`/reschedule/${booking.id}${booking.rescheduleToken ? `?token=${booking.rescheduleToken}` : ''}`}
-                    target="_blank"
-                    sx={{
-                        borderRadius: 2,
-                        fontWeight: 700,
-                        textTransform: 'none',
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            color: 'primary.main',
-                            bgcolor: 'primary.lighter'
-                        }
-                    }}
-                >
-                    Reschedule Session
-                </Button>
-            </Box>
         </Box>
     );
 }

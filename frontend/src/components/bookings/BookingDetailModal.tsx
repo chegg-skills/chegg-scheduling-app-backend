@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
-import { Clock, XCircle } from 'lucide-react'
+import { Clock, XCircle, Calendar } from 'lucide-react'
 import type { Booking, BookingStatus } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
@@ -59,16 +59,39 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
                     </Box>
 
                     {booking.status === 'CONFIRMED' && (
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            startIcon={<XCircle size={16} />}
-                            onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
-                            sx={{ fontWeight: 600, borderRadius: 2 }}
-                        >
-                            Cancel Booking
-                        </Button>
+                        <>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                startIcon={<XCircle size={16} />}
+                                onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
+                                sx={{ fontWeight: 600, borderRadius: 2 }}
+                            >
+                                Cancel Booking
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                component="a"
+                                href={`/reschedule/${booking.id}${booking.rescheduleToken ? `?token=${booking.rescheduleToken}` : ''}`}
+                                target="_blank"
+                                startIcon={<Calendar size={16} />}
+                                sx={{
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    borderColor: 'divider',
+                                    color: 'text.secondary',
+                                    '&:hover': {
+                                        borderColor: 'primary.main',
+                                        color: 'primary.main',
+                                        bgcolor: 'primary.lighter'
+                                    }
+                                }}
+                            >
+                                Reschedule
+                            </Button>
+                        </>
                     )}
 
                     {canMarkNoShow && (
