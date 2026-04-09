@@ -16,6 +16,7 @@ import {
   type ReplaceEventHostsInput,
   type SafeEvent,
 } from "./event.shared";
+import { queueEventHostAddedNotification } from "./eventHost.notification";
 
 const validateEventConfiguration = (
   interactionType: EventInteractionTypeModel,
@@ -261,6 +262,11 @@ const replaceEventHosts = async (
     );
   }
 
+  const existingHostUserIds = new Set(event.hosts.map((h) => h.hostUserId));
+  const newlyAddedHostUserIds = normalizedHosts
+    .map((h) => h.userId)
+    .filter((userId) => !existingHostUserIds.has(userId));
+
   await validateEventHosts(event.teamId, event, normalizedHosts);
 
   await prisma.$transaction(async (tx) => {
@@ -290,6 +296,12 @@ const replaceEventHosts = async (
       normalizedHosts.length,
     );
   });
+
+  if (event.isActive) {
+    for (const userId of newlyAddedHostUserIds) {
+      void queueEventHostAddedNotification({ eventId, hostUserId: userId });
+    }
+  }
 
   const refreshedEvent = await prisma.event.findUniqueOrThrow({
     where: { id: eventId },

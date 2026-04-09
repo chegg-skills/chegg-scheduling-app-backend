@@ -15,7 +15,10 @@ type NotificationType =
   | "TEAM_BOOKING_NO_SHOW"
   | "SESSION_REMINDER_24H"
   | "SESSION_REMINDER_1H"
-  | "CANCEL_BOOKING_REMINDERS";
+  | "CANCEL_BOOKING_REMINDERS"
+  | "TEAM_MEMBER_ADDED"
+  | "EVENT_HOST_ADDED"
+  | "AVAILABILITY_EXCEPTION_CREATED";
 
 type NotificationPayload = {
   type: NotificationType;

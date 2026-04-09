@@ -19,9 +19,10 @@ interface UserFormProps {
   user: SafeUser
   currentUserRole: UserRole
   onSuccess?: () => void
+  onCancel?: () => void
 }
 
-export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
+export function UserForm({ user, currentUserRole, onSuccess, onCancel }: UserFormProps) {
   const { user: authUser } = useAuth()
   const updateAdmin = useUpdateUser()
   const updateSelf = useUpdateMyProfile()
@@ -60,6 +61,7 @@ export function UserForm({ user, currentUserRole, onSuccess }: UserFormProps) {
 
   function handleCancel() {
     reset(getUserFormDefaults(user))
+    onCancel?.()
   }
 
   const isPending = updateAdmin.isPending || updateSelf.isPending

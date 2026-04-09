@@ -16,7 +16,7 @@ import {
     findBookableEvent,
     findBookingById,
     findBookings,
-    updateBookingStatusById,
+    updateBookingById,
     upsertStudentForBooking,
 } from "./booking.repository";
 import {
@@ -187,13 +187,16 @@ const listBookings = async (filters: ListBookingsFilters) => {
     return { bookings, totalCount };
 };
 
-const updateBookingStatus = async (id: string, status: BookingStatus) => {
-    return updateBookingStatusById(id, status);
+const updateBooking = async (
+    id: string,
+    data: { status?: BookingStatus; coHostUserIds?: string[] }
+) => {
+    return updateBookingById(id, data);
 };
 
 export {
     createBooking,
     getBooking,
     listBookings,
-    updateBookingStatus
+    updateBooking
 };

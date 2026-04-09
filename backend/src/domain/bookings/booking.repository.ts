@@ -100,14 +100,14 @@ const countBookings = async (
     });
 };
 
-const updateBookingStatusById = async (
+const updateBookingById = async (
     id: string,
-    status: BookingStatus,
+    data: { status?: BookingStatus; coHostUserIds?: string[] },
 ): Promise<SafeBooking> => {
     try {
         return await prisma.booking.update({
             where: { id },
-            data: { status },
+            data,
             include: bookingInclude,
         });
     } catch (error) {
@@ -124,6 +124,6 @@ export {
     findBookingById,
     findBookings,
     countBookings,
-    updateBookingStatusById,
+    updateBookingById,
     upsertStudentForBooking,
 };

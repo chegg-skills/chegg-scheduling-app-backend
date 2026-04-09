@@ -127,6 +127,7 @@ export function UserTable({
             user={editingUser}
             currentUserRole={currentUserRole}
             onSuccess={() => setEditingUser(null)}
+            onCancel={() => setEditingUser(null)}
           />
         </Modal>
       )}

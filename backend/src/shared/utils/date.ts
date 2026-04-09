@@ -65,3 +65,32 @@ export const parseBoundedDateRange = ({
 
   return { start, end };
 };
+export const formatNotificationDate = (
+  date: Date,
+  timezone?: string | null,
+): string => {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+      timeZone: timezone || "UTC",
+    }).format(date);
+  } catch (error) {
+    // Fallback if timezone is invalid
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+      timeZone: "UTC",
+    }).format(date);
+  }
+};

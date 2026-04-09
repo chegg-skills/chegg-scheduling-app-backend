@@ -13,6 +13,7 @@ import {
     validateAvailabilityExceptionInput,
     validateWeeklySlots,
 } from './availability.shared';
+import { queueAvailabilityExceptionNotification } from './availability.notification';
 
 /**
  * Service responsible for managing the raw availability data (weekly and exceptions) for users.
@@ -74,7 +75,7 @@ export const addAvailabilityException = async (
     const date = parseAvailabilityExceptionDate(payload.date);
     validateAvailabilityExceptionInput(payload);
 
-    return prisma.userAvailabilityException.create({
+    const result = await prisma.userAvailabilityException.create({
         data: {
             userId,
             date,
@@ -83,6 +84,16 @@ export const addAvailabilityException = async (
             endTime: payload.endTime || null,
         },
     });
+
+    void queueAvailabilityExceptionNotification({
+        userId,
+        date,
+        isUnavailable: payload.isUnavailable,
+        startTime: payload.startTime,
+        endTime: payload.endTime,
+    });
+
+    return result;
 };
 
 export const removeAvailabilityException = async (

@@ -25,7 +25,7 @@ router
   .patch(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
-    BookingController.updateBookingStatus,
+    BookingController.updateBooking,
   )
   .all(methodNotAllowed);
 
