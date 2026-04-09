@@ -1,10 +1,11 @@
+import * as React from 'react'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import { Input } from '@/components/shared/Input'
 import { z } from 'zod'
 import { FormField } from '@/components/shared/FormField'
 import { Button } from '@/components/shared/Button'
@@ -91,17 +92,12 @@ export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }
                     </Box>
                   )}
 
-                  <TextField
-                    size="small"
+                  <Input
+                    isSearch
                     placeholder="Search members by name or email…"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    error={!!errors.userIds}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 1.5,
-                      },
-                    }}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                    hasError={!!errors.userIds}
                   />
 
                   <UserSelectionList

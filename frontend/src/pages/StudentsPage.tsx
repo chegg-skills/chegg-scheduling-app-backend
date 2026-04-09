@@ -45,7 +45,7 @@ export function StudentsPage() {
                 title="Students"
                 subtitle={`${pagination?.total ?? 0} total students`}
                 actions={
-                    <Box sx={{ width: { xs: '100%', sm: 360 }, maxWidth: 360 }}>
+                    <Box sx={{ width: { xs: '100%', sm: 360 }, maxWidth: 360, height: 40, display: 'flex', alignItems: 'center' }}>
                         <Input
                             isSearch
                             value={searchInput}

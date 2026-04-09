@@ -160,7 +160,7 @@ export function BookingsPage() {
                 title="Bookings"
                 subtitle="Manage your scheduled sessions and meetings"
                 actions={
-                    <Box sx={{ width: { xs: '100%', sm: 420 }, maxWidth: 420 }}>
+                    <Box sx={{ width: { xs: '100%', sm: 420 }, maxWidth: 420, height: 40, display: 'flex', alignItems: 'center' }}>
                         <Input
                             isSearch
                             value={searchInput}
@@ -284,7 +284,9 @@ export function BookingsPage() {
                                     borderRadius: 2,
                                     borderColor: 'divider',
                                     fontWeight: 600,
-                                    height: 35
+                                    height: 40,
+                                    minHeight: 40,
+                                    maxHeight: 40,
                                 }}
                             >
                                 Filter

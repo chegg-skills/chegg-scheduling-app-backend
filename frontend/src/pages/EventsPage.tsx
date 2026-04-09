@@ -72,13 +72,13 @@ export function EventsPage() {
         subtitle="View events by team"
         actions={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-            <Box sx={{ width: { xs: '100%', sm: 280 } }}>
-              <Box sx={{ position: 'relative', pt: 1 }}>
+            <Box sx={{ width: { xs: '100%', sm: 280 }, height: 40, display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ position: 'relative', width: '100%' }}>
                 <Typography
                   variant="caption"
                   sx={{
                     position: 'absolute',
-                    top: 0,
+                    top: -10,
                     right: 12,
                     zIndex: 1,
                     px: 0.75,
@@ -110,6 +110,8 @@ export function EventsPage() {
                     backgroundColor: '#F3F4F6', // Soft grey background
                     borderRadius: 1.5, // 12px
                     height: 40,
+                    minHeight: 40,
+                    maxHeight: 40,
                     '& .MuiOutlinedInput-notchedOutline': {
                       border: 'none', // Borderless like search
                     },
@@ -122,6 +124,8 @@ export function EventsPage() {
                     },
                     '& .MuiSelect-select': {
                       height: 40,
+                      minHeight: 40,
+                      maxHeight: 40,
                       display: 'flex',
                       alignItems: 'center',
                       pl: 2,

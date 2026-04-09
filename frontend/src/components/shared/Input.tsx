@@ -44,9 +44,24 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               },
               borderRadius: 1.5, // 12px
               height: 40,
+              minHeight: 40,
+              maxHeight: 40,
+              display: 'flex',
+              alignItems: 'center',
+              boxSizing: 'border-box',
               '& .MuiInputBase-root': {
                 height: 40,
+                minHeight: 40,
+                maxHeight: 40,
+                display: 'flex',
+                alignItems: 'center',
+                boxSizing: 'border-box',
               },
+              '& input': {
+                height: 40,
+                py: 0,
+                boxSizing: 'border-box',
+              }
             },
           }),
           ...sx,
