@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { statsApi, type StatsParams } from '@/api/stats'
-import { preservePreviousData } from './queryUtils'
 
 export const statsKeys = {
   all: ['stats'] as const,
@@ -20,7 +19,7 @@ function useStatsQuery<TData>(
   return useQuery({
     queryKey,
     queryFn,
-    placeholderData: preservePreviousData,
+    placeholderData: (prev) => prev,
   })
 }
 

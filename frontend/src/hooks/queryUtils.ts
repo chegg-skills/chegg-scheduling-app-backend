@@ -1,5 +1,4 @@
 import { type QueryClient, type QueryKey } from '@tanstack/react-query'
-export { keepPreviousData as preservePreviousData } from '@tanstack/react-query'
 
 export async function invalidateQueryKeys(
   queryClient: QueryClient,
