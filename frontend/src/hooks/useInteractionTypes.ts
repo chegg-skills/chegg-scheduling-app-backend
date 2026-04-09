@@ -12,7 +12,7 @@ export const interactionTypeKeys = {
 export function useInteractionTypes() {
   return useQuery({
     queryKey: interactionTypeKeys.list(),
-    queryFn: () => interactionTypesApi.list().then((r) => r.data.data),
+    queryFn: ({ signal }) => interactionTypesApi.list(signal).then((r) => r.data.data),
   })
 }
 
@@ -49,7 +49,7 @@ export function useDeleteInteractionType() {
 export function useInteractionTypeUsage(interactionTypeId: string) {
   return useQuery({
     queryKey: [...interactionTypeKeys.all, interactionTypeId, 'usage'],
-    queryFn: () => interactionTypesApi.getUsage(interactionTypeId).then((r) => r.data.data),
+    queryFn: ({ signal }) => interactionTypesApi.getUsage(interactionTypeId, signal).then((r) => r.data.data),
     enabled: !!interactionTypeId,
   })
 }

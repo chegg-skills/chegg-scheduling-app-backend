@@ -14,7 +14,7 @@ export const userKeys = {
 export function useUsers(params?: ListUsersParams) {
   return useQuery({
     queryKey: userKeys.list(params),
-    queryFn: () => usersApi.list(params).then((r) => r.data.data),
+    queryFn: ({ signal }) => usersApi.list(params, signal).then((r) => r.data.data),
     placeholderData: preservePreviousData,
   })
 }
@@ -22,7 +22,7 @@ export function useUsers(params?: ListUsersParams) {
 export function useUser(userId: string) {
   return useQuery<UserWithDetails | undefined>({
     queryKey: userKeys.detail(userId),
-    queryFn: () => usersApi.getById(userId).then((r) => r.data.data),
+    queryFn: ({ signal }) => usersApi.getById(userId, signal).then((r) => r.data.data),
     enabled: !!userId,
   })
 }

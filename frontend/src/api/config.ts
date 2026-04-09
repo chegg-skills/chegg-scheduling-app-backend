@@ -14,7 +14,7 @@ export interface LanguagesResponse {
 }
 
 export const configApi = {
-    getTimezones: () => apiClient.get<ApiResponse<TimezonesResponse>>('/config/timezones'),
-    getCountries: () => apiClient.get<ApiResponse<CountriesResponse>>('/config/countries'),
-    getLanguages: () => apiClient.get<ApiResponse<LanguagesResponse>>('/config/languages'),
+    getTimezones: (signal?: AbortSignal) => apiClient.get<ApiResponse<TimezonesResponse>>('/config/timezones', { signal }),
+    getCountries: (signal?: AbortSignal) => apiClient.get<ApiResponse<CountriesResponse>>('/config/countries', { signal }),
+    getLanguages: (signal?: AbortSignal) => apiClient.get<ApiResponse<LanguagesResponse>>('/config/languages', { signal }),
 }

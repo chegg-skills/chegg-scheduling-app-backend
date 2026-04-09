@@ -15,7 +15,7 @@ export const availabilityKeys = {
 export function useWeeklyAvailability(userId: string) {
     return useQuery({
         queryKey: availabilityKeys.weekly(userId),
-        queryFn: () => availabilityApi.getWeekly(userId).then((r) => r.data.data),
+        queryFn: ({ signal }) => availabilityApi.getWeekly(userId, signal).then((r) => r.data.data),
         enabled: !!userId,
     })
 }
@@ -33,7 +33,7 @@ export function useUpdateWeeklyAvailability() {
 export function useAvailabilityExceptions(userId: string, params?: GetExceptionsParams) {
     return useQuery({
         queryKey: availabilityKeys.exceptions(userId, params),
-        queryFn: () => availabilityApi.getExceptions(userId, params).then((r) => r.data.data),
+        queryFn: ({ signal }) => availabilityApi.getExceptions(userId, params, signal).then((r) => r.data.data),
         enabled: !!userId,
     })
 }
@@ -61,7 +61,7 @@ export function useRemoveAvailabilityException() {
 export function useEffectiveAvailability(userId: string, params: { from: string; to: string }) {
     return useQuery({
         queryKey: availabilityKeys.effective(userId, params),
-        queryFn: () => availabilityApi.getEffective(userId, params).then((r) => r.data.data),
+        queryFn: ({ signal }) => availabilityApi.getEffective(userId, params, signal).then((r) => r.data.data),
         enabled: !!userId && !!params.from && !!params.to,
     })
 }

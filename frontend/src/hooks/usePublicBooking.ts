@@ -17,14 +17,14 @@ export const publicKeys = {
 export function usePublicTeams() {
     return useQuery({
         queryKey: publicKeys.teams(),
-        queryFn: () => publicApi.listTeams().then((response) => response.data.data?.teams ?? []),
+        queryFn: ({ signal }) => publicApi.listTeams(signal).then((response) => response.data.data?.teams ?? []),
     })
 }
 
 export function usePublicTeamBySlug(slug: string) {
     return useQuery({
         queryKey: publicKeys.team(slug),
-        queryFn: () => publicApi.getTeamBySlug(slug).then((response) => response.data.data?.team ?? null),
+        queryFn: ({ signal }) => publicApi.getTeamBySlug(slug, signal).then((response) => response.data.data?.team ?? null),
         enabled: !!slug,
     })
 }
@@ -32,7 +32,7 @@ export function usePublicTeamBySlug(slug: string) {
 export function usePublicTeamEvents(teamId: string) {
     return useQuery({
         queryKey: publicKeys.events(teamId),
-        queryFn: () => publicApi.listTeamEvents(teamId).then((response) => response.data.data?.events ?? []),
+        queryFn: ({ signal }) => publicApi.listTeamEvents(teamId, signal).then((response) => response.data.data?.events ?? []),
         enabled: !!teamId,
     })
 }
@@ -40,7 +40,7 @@ export function usePublicTeamEvents(teamId: string) {
 export function usePublicTeamEventsBySlug(slug: string) {
     return useQuery({
         queryKey: publicKeys.teamEventsBySlug(slug),
-        queryFn: () => publicApi.listTeamEventsBySlug(slug).then((response) => response.data.data ?? null),
+        queryFn: ({ signal }) => publicApi.listTeamEventsBySlug(slug, signal).then((response) => response.data.data ?? null),
         enabled: !!slug,
     })
 }
@@ -48,7 +48,7 @@ export function usePublicTeamEventsBySlug(slug: string) {
 export function usePublicEventBySlug(slug: string) {
     return useQuery({
         queryKey: publicKeys.event(slug),
-        queryFn: () => publicApi.getEventBySlug(slug).then((response) => response.data.data?.event ?? null),
+        queryFn: ({ signal }) => publicApi.getEventBySlug(slug, signal).then((response) => response.data.data?.event ?? null),
         enabled: !!slug,
     })
 }
@@ -56,7 +56,7 @@ export function usePublicEventBySlug(slug: string) {
 export function usePublicCoachBySlug(slug: string) {
     return useQuery({
         queryKey: publicKeys.coach(slug),
-        queryFn: () => publicApi.getCoachBySlug(slug).then((response) => response.data.data?.coach ?? null),
+        queryFn: ({ signal }) => publicApi.getCoachBySlug(slug, signal).then((response) => response.data.data?.coach ?? null),
         enabled: !!slug,
     })
 }
@@ -64,7 +64,7 @@ export function usePublicCoachBySlug(slug: string) {
 export function usePublicCoachEventsBySlug(slug: string) {
     return useQuery({
         queryKey: publicKeys.coachEvents(slug),
-        queryFn: () => publicApi.listCoachEventsBySlug(slug).then((response) => response.data.data ?? null),
+        queryFn: ({ signal }) => publicApi.listCoachEventsBySlug(slug, signal).then((response) => response.data.data ?? null),
         enabled: !!slug,
     })
 }
@@ -72,7 +72,7 @@ export function usePublicCoachEventsBySlug(slug: string) {
 export function usePublicSlots(eventId: string, startDate: string, endDate: string, preferredHostId?: string) {
     return useQuery({
         queryKey: publicKeys.slots(eventId, startDate, endDate, preferredHostId),
-        queryFn: () => publicApi.getAvailableSlots(eventId, startDate, endDate, preferredHostId).then((response) => response.data.data?.slots ?? []),
+        queryFn: ({ signal }) => publicApi.getAvailableSlots(eventId, startDate, endDate, preferredHostId, signal).then((response) => response.data.data?.slots ?? []),
         enabled: !!eventId && !!startDate && !!endDate,
     })
 }

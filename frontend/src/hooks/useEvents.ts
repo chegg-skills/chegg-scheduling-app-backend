@@ -17,14 +17,14 @@ export const eventKeys = {
 export function useEvents(params?: ListEventsParams) {
   return useQuery({
     queryKey: eventKeys.list(params),
-    queryFn: () => eventsApi.listAll().then((r) => r.data.data),
+    queryFn: ({ signal }) => eventsApi.listAll(signal).then((r) => r.data.data),
   })
 }
 
 export function useEventScheduleSlots(eventId: string) {
   return useQuery({
     queryKey: eventKeys.scheduleSlots(eventId),
-    queryFn: () => eventsApi.listScheduleSlots(eventId).then((r) => r.data.data),
+    queryFn: ({ signal }) => eventsApi.listScheduleSlots(eventId, signal).then((r) => r.data.data),
     enabled: !!eventId,
   })
 }
@@ -57,7 +57,7 @@ export function useDeleteEventScheduleSlot(eventId: string) {
 export function useTeamEvents(teamId: string, params?: ListEventsParams) {
   return useQuery({
     queryKey: eventKeys.byTeam(teamId, params),
-    queryFn: () => eventsApi.listByTeam(teamId, params).then((r) => r.data.data),
+    queryFn: ({ signal }) => eventsApi.listByTeam(teamId, params, signal).then((r) => r.data.data),
     enabled: !!teamId,
   })
 }
@@ -65,7 +65,7 @@ export function useTeamEvents(teamId: string, params?: ListEventsParams) {
 export function useEvent(eventId: string) {
   return useQuery({
     queryKey: eventKeys.detail(eventId),
-    queryFn: () => eventsApi.getById(eventId).then((r) => r.data.data),
+    queryFn: ({ signal }) => eventsApi.getById(eventId, signal).then((r) => r.data.data),
     enabled: !!eventId,
   })
 }
@@ -107,7 +107,7 @@ export function useDuplicateEvent() {
 export function useEventHosts(eventId: string) {
   return useQuery({
     queryKey: eventKeys.hosts(eventId),
-    queryFn: () => eventsApi.listHosts(eventId).then((r) => r.data.data),
+    queryFn: ({ signal }) => eventsApi.listHosts(eventId, signal).then((r) => r.data.data),
     enabled: !!eventId,
   })
 }

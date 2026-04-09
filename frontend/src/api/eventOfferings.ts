@@ -14,8 +14,8 @@ export const eventOfferingsApi = {
   create: (data: CreateEventOfferingDto) =>
     apiClient.post<ApiResponse<EventOffering>>('/event-offerings', data),
 
-  list: () =>
-    apiClient.get<ApiResponse<ListOfferingsResponse>>('/event-offerings'),
+  list: (signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListOfferingsResponse>>('/event-offerings', { signal }),
 
   update: (offeringId: string, data: UpdateEventOfferingDto) =>
     apiClient.patch<ApiResponse<EventOffering>>(`/event-offerings/${offeringId}`, data),

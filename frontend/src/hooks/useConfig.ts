@@ -11,7 +11,7 @@ export const configKeys = {
 export function useLanguages() {
     return useQuery({
         queryKey: configKeys.languages(),
-        queryFn: () => configApi.getLanguages().then((r) => r.data?.data?.languages ?? []),
+        queryFn: ({ signal }) => configApi.getLanguages(signal).then((r) => r.data?.data?.languages ?? []),
         staleTime: Infinity,
     })
 }
@@ -19,7 +19,7 @@ export function useLanguages() {
 export function useCountries() {
     return useQuery({
         queryKey: configKeys.countries(),
-        queryFn: () => configApi.getCountries().then((r) => r.data?.data?.countries ?? []),
+        queryFn: ({ signal }) => configApi.getCountries(signal).then((r) => r.data?.data?.countries ?? []),
         staleTime: Infinity,
     })
 }
@@ -27,7 +27,7 @@ export function useCountries() {
 export function useTimezones() {
     return useQuery({
         queryKey: configKeys.timezones(),
-        queryFn: () => configApi.getTimezones().then((r) => r.data?.data?.timezones ?? []),
+        queryFn: ({ signal }) => configApi.getTimezones(signal).then((r) => r.data?.data?.timezones ?? []),
         staleTime: Infinity,
     })
 }

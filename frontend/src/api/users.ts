@@ -13,17 +13,17 @@ export interface ListUsersResponse {
 }
 
 export const usersApi = {
-  list: (params?: ListUsersParams) =>
-    apiClient.get<ApiResponse<ListUsersResponse>>('/users', { params }),
+  list: (params?: ListUsersParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListUsersResponse>>('/users', { params, signal }),
 
-  getMe: () =>
-    apiClient.get<ApiResponse<SafeUser>>('/users/me'),
+  getMe: (signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<SafeUser>>('/users/me', { signal }),
 
   updateMe: (data: Partial<UpdateUserDto>) =>
     apiClient.patch<ApiResponse<SafeUser>>('/users/me', data),
 
-  getById: (userId: string) =>
-    apiClient.get<ApiResponse<UserWithDetails>>(`/users/${userId}`),
+  getById: (userId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<UserWithDetails>>(`/users/${userId}`, { signal }),
 
   update: (userId: string, data: UpdateUserDto) =>
     apiClient.patch<ApiResponse<SafeUser>>(`/users/${userId}`, data),

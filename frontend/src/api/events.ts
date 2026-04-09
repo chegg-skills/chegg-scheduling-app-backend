@@ -22,28 +22,28 @@ export interface ListEventsResponse {
 }
 
 export const eventsApi = {
-  listAll: () =>
-    apiClient.get<ApiResponse<ListEventsResponse>>('/events'),
+  listAll: (signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListEventsResponse>>('/events', { signal }),
   create: (teamId: string, data: CreateEventDto) =>
     apiClient.post<ApiResponse<Event>>(`/teams/${teamId}/events`, data),
-  listByTeam: (teamId: string, params?: ListEventsParams) =>
-    apiClient.get<ApiResponse<ListEventsResponse>>(`/teams/${teamId}/events`, { params }),
-  getById: (eventId: string) =>
-    apiClient.get<ApiResponse<Event>>(`/events/${eventId}`),
+  listByTeam: (teamId: string, params?: ListEventsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListEventsResponse>>(`/teams/${teamId}/events`, { params, signal }),
+  getById: (eventId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<Event>>(`/events/${eventId}`, { signal }),
   update: (eventId: string, data: UpdateEventDto) =>
     apiClient.patch<ApiResponse<Event>>(`/events/${eventId}`, data),
   delete: (eventId: string) =>
     apiClient.delete<ApiResponse<Event>>(`/events/${eventId}`),
   duplicate: (eventId: string) =>
     apiClient.post<ApiResponse<Event>>(`/events/${eventId}/duplicate`),
-  listHosts: (eventId: string) =>
-    apiClient.get<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`),
+  listHosts: (eventId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`, { signal }),
   setHosts: (eventId: string, data: SetEventHostsDto) =>
     apiClient.put<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`, data),
   removeHost: (eventId: string, userId: string) =>
     apiClient.delete<ApiResponse<EventHost>>(`/events/${eventId}/hosts/${userId}`),
-  listScheduleSlots: (eventId: string) =>
-    apiClient.get<ApiResponse<{ slots: EventScheduleSlot[] }>>(`/events/${eventId}/schedule-slots`),
+  listScheduleSlots: (eventId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ slots: EventScheduleSlot[] }>>(`/events/${eventId}/schedule-slots`, { signal }),
   createScheduleSlot: (eventId: string, data: Partial<EventScheduleSlot>) =>
     apiClient.post<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots`, data),
   updateScheduleSlot: (eventId: string, slotId: string, data: Partial<EventScheduleSlot>) =>

@@ -13,7 +13,7 @@ export const studentKeys = {
 export function useStudents(filters: ListStudentsFilters = {}) {
     return useQuery({
         queryKey: studentKeys.list(filters),
-        queryFn: () => studentsApi.list(filters).then(r => r.data.data),
+        queryFn: ({ signal }) => studentsApi.list(filters, signal).then(r => r.data.data),
         placeholderData: (previousData) => previousData,
     })
 }
@@ -21,7 +21,7 @@ export function useStudents(filters: ListStudentsFilters = {}) {
 export function useStudent(id: string) {
     return useQuery({
         queryKey: studentKeys.detail(id),
-        queryFn: () => studentsApi.getById(id).then(r => r.data.data),
+        queryFn: ({ signal }) => studentsApi.getById(id, signal).then(r => r.data.data),
         enabled: !!id,
     })
 }
@@ -29,7 +29,7 @@ export function useStudent(id: string) {
 export function useStudentBookings(id: string, filters: { page?: number; pageSize?: number } = {}) {
     return useQuery({
         queryKey: studentKeys.bookings(id, filters),
-        queryFn: () => studentsApi.listBookings(id, filters).then(r => r.data.data),
+        queryFn: ({ signal }) => studentsApi.listBookings(id, filters, signal).then(r => r.data.data),
         enabled: !!id,
     })
 }

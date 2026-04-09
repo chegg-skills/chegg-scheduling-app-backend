@@ -17,11 +17,11 @@ export const bookingsApi = {
     create: (data: CreateBookingDto) =>
         apiClient.post<ApiResponse<Booking>>('/bookings', data),
 
-    list: (filters: ListBookingsFilters = {}) =>
-        apiClient.get<ApiResponse<ListBookingsResponse>>('/bookings', { params: filters }),
+    list: (filters: ListBookingsFilters = {}, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<ListBookingsResponse>>('/bookings', { params: filters, signal }),
 
-    getById: (id: string) =>
-        apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`),
+    getById: (id: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`, { signal }),
 
     updateStatus: (id: string, data: UpdateBookingStatusDto) =>
         apiClient.patch<ApiResponse<Booking>>(`/bookings/${id}`, data),
