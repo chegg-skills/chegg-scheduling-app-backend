@@ -77,6 +77,19 @@ const findBookingById = async (id: string): Promise<SafeBooking> => {
     return booking;
 };
 
+const findBookingByToken = async (id: string, token: string): Promise<SafeBooking> => {
+    const booking = await prisma.booking.findFirst({
+        where: { id, rescheduleToken: token } as any,
+        include: bookingInclude,
+    });
+
+    if (!booking) {
+        throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking not found or invalid token.");
+    }
+
+    return booking;
+};
+
 const findBookings = async (
     filters: ListBookingsFilters,
 ): Promise<SafeBooking[]> => {
@@ -102,7 +115,16 @@ const countBookings = async (
 
 const updateBookingById = async (
     id: string,
-    data: { status?: BookingStatus; coHostUserIds?: string[] },
+    data: {
+        status?: BookingStatus;
+        coHostUserIds?: string[];
+        startTime?: Date;
+        endTime?: Date;
+        timezone?: string;
+        hostUserId?: string;
+        meetingJoinUrl?: string | null;
+        scheduleSlotId?: string | null;
+    },
 ): Promise<SafeBooking> => {
     try {
         return await prisma.booking.update({
@@ -122,6 +144,7 @@ export {
     createBookingRecord,
     findBookableEvent,
     findBookingById,
+    findBookingByToken,
     findBookings,
     countBookings,
     updateBookingById,

@@ -93,6 +93,11 @@ const StudentDetailPage = lazy(() =>
     default: module.StudentDetailPage,
   })),
 );
+const PublicReschedulePage = lazy(() =>
+  import("@/pages/public/PublicReschedulePage").then((module) => ({
+    default: module.PublicReschedulePage,
+  })),
+);
 
 
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -138,13 +143,21 @@ export const router = createBrowserRouter([
   },
   {
     path: "/book",
-    element: <PublicLayout />,
+    element: <PublicLayout maxWidth="lg" />,
     children: [
       { path: "", element: renderLazyPage(PublicBookingPage) },
       { path: "team/:teamSlug", element: renderLazyPage(PublicBookingPage) },
       { path: "event/:eventSlug", element: renderLazyPage(PublicBookingPage) },
       { path: "coach/:coachSlug", element: renderLazyPage(PublicBookingPage) },
     ],
+  },
+  {
+    path: "/reschedule/:bookingId",
+    element: <PublicLayout maxWidth="lg" />,
+    children: [
+      { path: "", element: renderLazyPage(PublicReschedulePage) },
+    ],
+    errorElement: <RouteErrorPage />,
   },
 
   {

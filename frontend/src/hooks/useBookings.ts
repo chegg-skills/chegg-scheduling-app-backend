@@ -24,7 +24,7 @@ export function useBookings(filters: ListBookingsFilters = {}) {
 export function useBooking(id: string) {
     return useQuery({
         queryKey: bookingKeys.detail(id),
-        queryFn: ({ signal }) => bookingsApi.getById(id, signal).then(r => r.data.data),
+        queryFn: ({ signal }) => bookingsApi.getById(id, undefined, signal).then(r => r.data.data),
         enabled: !!id,
     })
 }

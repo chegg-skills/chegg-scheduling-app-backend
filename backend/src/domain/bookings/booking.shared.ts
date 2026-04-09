@@ -18,6 +18,12 @@ export type CreateBookingInput = {
     preferredHostId?: string;
 };
 
+export type RescheduleBookingInput = {
+    startTime: string | Date;
+    timezone?: string;
+    token?: string;
+};
+
 export type UpdateBookingStatusInput = {
     status: BookingStatus;
 };

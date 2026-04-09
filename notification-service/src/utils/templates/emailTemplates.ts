@@ -118,7 +118,7 @@ const emailTemplates: EmailTemplateMap = {
   },
   BOOKING_CONFIRMED: {
     subject: "Confirmed: {{eventName}} with {{coachName}}",
-    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}).{{coHostDetails}}",
+    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}).{{coHostDetails}} Reschedule here: {{rescheduleUrl}}",
     html: wrapLayout(
       "Booking Confirmation",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -127,6 +127,28 @@ const emailTemplates: EmailTemplateMap = {
           <strong>Time:</strong> {{startTime}}<br/>
           <strong>Timezone:</strong> {{timezone}}<br/>
           <strong>Team:</strong> {{teamName}}{{coHostDetailsHtml}}
+        </p>
+        <p style="margin-top: 16px; font-size: 13px;">
+          Need to change the time? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule session</a>
+        </p>`,
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
+    ),
+    attachmentRequired: false,
+  },
+  BOOKING_RESCHEDULED: {
+    subject: "Rescheduled: {{eventName}} on {{startTime}}",
+    text: "Hi {{studentName}}, your session for {{eventName}} has been successfully rescheduled to {{startTime}} ({{timezone}}).",
+    html: wrapLayout(
+      "Session Rescheduled",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your session for <strong>{{eventName}}</strong> has been successfully rescheduled.</p>
+       <p style="margin-top: 16px;">
+          <strong>New Time:</strong> {{startTime}}<br/>
+          <strong>Timezone:</strong> {{timezone}}<br/>
+          <strong>Coach:</strong> {{coachName}}{{coHostDetailsHtml}}
+        </p>
+        <p style="margin-top: 16px; font-size: 13px;">
+          Need to change it again? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule again</a>
         </p>`,
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
     ),
@@ -261,7 +283,7 @@ const emailTemplates: EmailTemplateMap = {
   },
   SESSION_REMINDER_24H: {
     subject: "Tomorrow: Your session for {{eventName}} starts soon!",
-    text: "Hi {{studentName}}, your session for {{eventName}} is scheduled for tomorrow at {{startTime}}.",
+    text: "Hi {{studentName}}, your session for {{eventName}} is scheduled for tomorrow at {{startTime}}. Reschedule: {{rescheduleUrl}}",
     html: wrapLayout(
       "Upcoming Session Reminder",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -269,6 +291,9 @@ const emailTemplates: EmailTemplateMap = {
        <p style="margin-top: 16px;">
          <strong>Coach:</strong> {{coachName}}<br/>
          <strong>Time:</strong> {{startTime}} ({{timezone}})
+       </p>
+       <p style="margin-top: 16px; font-size: 13px;">
+          Need to change the time? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule session</a>
        </p>`,
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
     ),
@@ -276,13 +301,16 @@ const emailTemplates: EmailTemplateMap = {
   },
   SESSION_REMINDER_1H: {
     subject: "Starting Soon: {{eventName}} begins in 1 hour",
-    text: "Hi {{studentName}}, your session for {{eventName}} starts in about 1 hour.",
+    text: "Hi {{studentName}}, your session for {{eventName}} starts in about 1 hour. Reschedule: {{rescheduleUrl}}",
     html: wrapLayout(
       "Session Starting Soon",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
        <p>Your session for <strong>{{eventName}}</strong> with <strong>{{coachName}}</strong> starts in 1 hour.</p>
        <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
          {{startTime}} ({{timezone}})
+       </p>
+       <p style="margin-top: 16px; font-size: 13px;">
+          Need to change the time? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule session</a>
        </p>`,
       { text: "Join Now", url: "{{meetingJoinUrl}}" }
     ),

@@ -9,6 +9,7 @@ import {
     queueBookingCreatedNotifications,
     queueBookingStatusNotifications,
     queueBookingUpdatedNotifications,
+    queueBookingRescheduledNotifications,
 } from "./booking.notification";
 
 const getStringParam = (value: unknown): string | undefined => {
@@ -125,5 +126,34 @@ export const updateBooking = async (req: Request, res: Response) => {
         StatusCodes.OK,
         { booking },
         "Booking updated successfully."
+    );
+};
+
+export const rescheduleBooking = async (req: Request, res: Response) => {
+    const id = getStringParam(req.params.id);
+    if (!id) {
+        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking ID is required.");
+    }
+
+    const { startTime, timezone, token } = req.body;
+    const caller = res.locals.authUser as CallerContext | undefined;
+
+    if (!caller && !token) {
+        throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Authentication or reschedule token is required.");
+    }
+
+    const booking = await BookingService.rescheduleBooking(id, {
+        startTime,
+        timezone,
+        token
+    });
+
+    void queueBookingUpdatedNotifications(booking, booking);
+
+    return sendSuccessResponse(
+        res,
+        StatusCodes.OK,
+        { booking },
+        "Booking rescheduled successfully."
     );
 };

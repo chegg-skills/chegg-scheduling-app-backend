@@ -400,6 +400,7 @@ export interface Booking {
   hostUserId: string
   coHostUserIds: string[]
   meetingJoinUrl: string | null
+  rescheduleToken: string | null
   createdAt: string
   updatedAt: string
   team?: Team

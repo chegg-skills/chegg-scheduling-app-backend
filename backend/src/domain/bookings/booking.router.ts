@@ -29,4 +29,9 @@ router
   )
   .all(methodNotAllowed);
 
+router
+  .route("/:id/reschedule")
+  .post(BookingController.rescheduleBooking) // Token auth or session auth handled in controller
+  .all(methodNotAllowed);
+
 export default router;

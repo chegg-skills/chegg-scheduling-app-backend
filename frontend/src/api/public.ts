@@ -1,6 +1,7 @@
 import apiClient from '@/lib/axios'
 import type {
     ApiResponse,
+    Booking,
     PublicCoachSummary,
     PublicEventSummary,
     PublicTeamSummary,
@@ -73,6 +74,12 @@ export const publicApi = {
     getAvailableSlots: (eventId: string, startDate: string, endDate: string, preferredHostId?: string, signal?: AbortSignal) =>
         apiClient.get<ApiResponse<ListSlotsResponse>>(`/public/events/${eventId}/slots`, {
             params: { startDate, endDate, preferredHostId },
+            signal
+        }),
+
+    getBooking: (id: string, token: string, signal?: AbortSignal) =>
+        apiClient.get<ApiResponse<{ booking: Booking }>>(`/public/bookings/${id}`, {
+            params: { token },
             signal
         }),
 }
