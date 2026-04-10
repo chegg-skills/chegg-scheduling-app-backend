@@ -65,7 +65,7 @@ export function EventStep({
                                 mb: 2,
                                 p: 1,
                                 width: 'fit-content',
-                                borderRadius: 0.75,
+                                borderRadius: 1,
                                 bgcolor: selectedEventId === event.id ? 'primary.main' : (theme) => alpha(theme.palette.secondary.main, 0.08),
                                 color: selectedEventId === event.id ? 'white' : 'secondary.main',
                                 display: 'flex',

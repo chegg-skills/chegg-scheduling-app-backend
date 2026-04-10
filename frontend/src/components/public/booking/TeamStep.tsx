@@ -41,7 +41,8 @@ export function TeamStep({
                     variant="outlined"
                     sx={{
                         borderColor: selectedTeamId === team.id ? 'primary.main' : 'divider',
-                        borderWidth: selectedTeamId === team.id ? 2 : 1
+                        borderWidth: selectedTeamId === team.id ? 2 : 1,
+                        borderRadius: 1
                     }}
                 >
                     <CardActionArea onClick={() => onSelect(team.id)}>

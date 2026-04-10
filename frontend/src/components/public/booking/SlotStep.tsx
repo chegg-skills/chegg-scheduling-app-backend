@@ -119,7 +119,7 @@ export function SlotStep({
                                                     sx={{
                                                         py: 1,
                                                         px: 0,
-                                                        borderRadius: 0.5,
+                                                        borderRadius: 1,
                                                         fontWeight: 700,
                                                         fontSize: '0.75rem',
                                                         textTransform: 'none',
