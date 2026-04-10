@@ -47,6 +47,8 @@ export function PublicBookingSummary({
         }).format(date)
     }
 
+    const displayTeam = teamDetails || eventDetails?.team
+
     return (
         <Box sx={{
             mt: compact ? 0.5 : 2,
@@ -68,7 +70,7 @@ export function PublicBookingSummary({
             </Typography>
 
             <Stack direction={compact ? 'row' : 'column'} spacing={compact ? 2 : 1.5} sx={{ flexWrap: 'wrap' }}>
-                {teamDetails && (
+                {displayTeam && (
                     <Box sx={{ minWidth: 0 }}>
                         {!compact && (
                             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
@@ -78,7 +80,7 @@ export function PublicBookingSummary({
                         <Typography variant="body2" fontWeight={800} color="text.primary" sx={{
                             fontSize: compact ? '0.75rem' : '0.875rem',
                         }}>
-                            {teamDetails.name}
+                            {displayTeam.name}
                         </Typography>
                     </Box>
                 )}
