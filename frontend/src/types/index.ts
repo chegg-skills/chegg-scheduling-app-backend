@@ -216,6 +216,42 @@ export interface StatsSummary<TMetrics = Record<string, any>> {
   metrics: TMetrics
 }
 
+export interface BookingTrend {
+  date: string
+  count: number
+  completed: number
+  noShow: number
+  cancelled: number
+}
+
+export interface BookingTrendsStats {
+  trends: BookingTrend[]
+}
+
+export interface TeamPerformanceMetric {
+  teamId: string
+  name: string
+  total: number
+  completed: number
+  cancelled: number
+  noShow: number
+}
+
+export interface TeamPerformanceStats {
+  performance: TeamPerformanceMetric[]
+}
+
+export interface PeakActivityMetric {
+  hour: number
+  count: number
+}
+
+export interface PeakActivityStats {
+  activity: PeakActivityMetric[]
+}
+
+
+
 // ─── Auth Payloads ────────────────────────────────────────────────────────────
 
 export interface AuthPayload {

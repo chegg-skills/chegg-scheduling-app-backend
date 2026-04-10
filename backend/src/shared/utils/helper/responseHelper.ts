@@ -21,4 +21,16 @@ const sendErrorResponse = <E>(
     return res.status(status).json(ResponseBody.errorResponse(message, error));
 };
 
-export { sendSuccessResponse, sendErrorResponse };  
+const sendFileResponse = (
+    res: Response,
+    status: number,
+    content: string | Buffer,
+    contentType: string,
+    filename: string
+) => {
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.status(status).send(content);
+};
+
+export { sendSuccessResponse, sendErrorResponse, sendFileResponse };  

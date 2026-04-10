@@ -11,5 +11,9 @@ router.route('/teams').get(statsController.getTeamStats).all(methodNotAllowed)
 router.route('/events').get(statsController.getEventStats).all(methodNotAllowed)
 router.route('/offerings').get(statsController.getOfferingStats).all(methodNotAllowed)
 router.route('/interaction-types').get(statsController.getInteractionTypeStats).all(methodNotAllowed)
+router.route('/trends').get(statsController.getBookingTrends).all(methodNotAllowed)
+router.route('/teams/performance').get(statsController.getTeamPerformance).all(methodNotAllowed)
+router.route('/activity/peaks').get(statsController.getPeakActivity).all(methodNotAllowed)
+
 
 export default router
