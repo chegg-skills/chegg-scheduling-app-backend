@@ -49,7 +49,7 @@ export function EventStep({
                     sx={{
                         borderColor: selectedEventId === event.id ? 'primary.main' : 'divider',
                         borderWidth: selectedEventId === event.id ? 2 : 1,
-                        borderRadius: 3,
+                        borderRadius: 1,
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         bgcolor: selectedEventId === event.id ? (theme) => alpha(theme.palette.primary.main, 0.03) : 'background.paper',
                         '&:hover': {
@@ -65,7 +65,7 @@ export function EventStep({
                                 mb: 2,
                                 p: 1,
                                 width: 'fit-content',
-                                borderRadius: 1.5,
+                                borderRadius: 1,
                                 bgcolor: selectedEventId === event.id ? 'primary.main' : (theme) => alpha(theme.palette.secondary.main, 0.08),
                                 color: selectedEventId === event.id ? 'white' : 'secondary.main',
                                 display: 'flex',
