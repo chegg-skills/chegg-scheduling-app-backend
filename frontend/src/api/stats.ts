@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios'
-import type { ApiResponse, StatsSummary, StatsTimeframe } from '@/types'
+import type { ApiResponse, StatsSummary, StatsTimeframe, BookingTrendsStats } from '@/types'
 
 export interface StatsParams {
   timeframe?: StatsTimeframe
@@ -27,4 +27,15 @@ export const statsApi = {
 
   getInteractionTypes: (params?: StatsParams, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/interaction-types', { params, signal }),
+
+  getTrends: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary<BookingTrendsStats>>>('/v1/stats/trends', { params, signal }),
+
+  getTeamPerformance: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary<any>>>('/v1/stats/teams/performance', { params, signal }),
+
+  getPeaks: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary<any>>>('/v1/stats/activity/peaks', { params, signal }),
 }
+
+

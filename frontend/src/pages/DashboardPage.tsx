@@ -17,7 +17,9 @@ import { useAuth } from "@/context/AuthContext";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatsOverview } from "@/components/shared/StatsOverview";
 import { useDashboardStats } from "@/hooks/useStats";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import type { StatsTimeframe } from "@/types";
+
 
 type QuickLink = {
   label: string;
@@ -125,7 +127,10 @@ export function DashboardPage() {
           isLoading={statsLoading}
         />
 
+        <DashboardCharts timeframe={timeframe} />
+
         {visibleLinks.length > 0 && (
+
           <Box sx={{ mt: 6, mb: 3 }}>
             <Typography
               variant="overline"

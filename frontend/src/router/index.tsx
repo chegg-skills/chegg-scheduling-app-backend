@@ -98,6 +98,12 @@ const PublicReschedulePage = lazy(() =>
     default: module.PublicReschedulePage,
   })),
 );
+const ReportsPage = lazy(() =>
+  import("@/pages/ReportsPage").then((module) => ({
+    default: module.ReportsPage,
+  })),
+);
+
 
 
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -185,7 +191,9 @@ export const router = createBrowserRouter([
             element: renderLazyPage(InteractionTypesPage),
           },
           { path: "/bookings", element: renderLazyPage(BookingsPage) },
+          { path: "/reports", element: renderLazyPage(ReportsPage) },
           { path: "/students", element: renderLazyPage(StudentsPage) },
+
           { path: "/students/:studentId", element: renderLazyPage(StudentDetailPage) },
         ],
       },

@@ -21,8 +21,10 @@ import {
   User,
   ClipboardList,
   GraduationCap,
+  BarChart3,
   type LucideIcon,
 } from 'lucide-react'
+
 
 interface NavItem {
   to: string
@@ -51,7 +53,14 @@ const navItems: NavItem[] = [
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'],
   },
   {
+    to: '/reports',
+    label: 'Reports',
+    Icon: BarChart3,
+    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
+  },
+  {
     to: '/users',
+
     label: 'Users',
     Icon: Users,
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],

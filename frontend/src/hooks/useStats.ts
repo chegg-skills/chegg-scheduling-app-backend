@@ -10,7 +10,12 @@ export const statsKeys = {
   events: (params?: StatsParams) => [...statsKeys.all, 'events', params] as const,
   offerings: (params?: StatsParams) => [...statsKeys.all, 'offerings', params] as const,
   interactionTypes: (params?: StatsParams) => [...statsKeys.all, 'interaction-types', params] as const,
+  trends: (params?: StatsParams) => [...statsKeys.all, 'trends', params] as const,
+  teamPerformance: (params?: StatsParams) => [...statsKeys.all, 'teams-performance', params] as const,
+  peakActivity: (params?: StatsParams) => [...statsKeys.all, 'peak-activity', params] as const,
 }
+
+
 
 function useStatsQuery<TData>(
   queryKey: readonly unknown[],
@@ -57,3 +62,20 @@ export function useInteractionTypeStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
   return useStatsQuery(statsKeys.interactionTypes(params), ({ signal }) => statsApi.getInteractionTypes(params, signal).then((r) => r.data.data))
 }
+
+export function useBookingTrends(timeframe: StatsParams['timeframe']) {
+  const params = { timeframe }
+  return useStatsQuery(statsKeys.trends(params), ({ signal }) => statsApi.getTrends(params, signal).then((r) => r.data.data))
+}
+
+export function useTeamPerformance(timeframe: StatsParams['timeframe']) {
+  const params = { timeframe }
+  return useStatsQuery(statsKeys.teamPerformance(params), ({ signal }) => statsApi.getTeamPerformance(params, signal).then((r) => r.data.data))
+}
+
+export function usePeakActivity(timeframe: StatsParams['timeframe']) {
+  const params = { timeframe }
+  return useStatsQuery(statsKeys.peakActivity(params), ({ signal }) => statsApi.getPeaks(params, signal).then((r) => r.data.data))
+}
+
+

@@ -81,3 +81,35 @@ export const getDashboardStats = async (req: Request, res: Response, next: NextF
     next(error)
   }
 }
+
+export const getBookingTrends = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext
+    const data = await statsService.getBookingTrends(caller, getTimeframeParam(req))
+    sendSuccessResponse(res, StatusCodes.OK, data, 'Booking trends fetched successfully.')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getTeamPerformance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext
+    const data = await statsService.getTeamPerformance(caller, getTimeframeParam(req))
+    sendSuccessResponse(res, StatusCodes.OK, data, 'Team performance stats fetched successfully.')
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getPeakActivity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext
+    const data = await statsService.getPeakActivity(caller, getTimeframeParam(req))
+    sendSuccessResponse(res, StatusCodes.OK, data, 'Peak activity stats fetched successfully.')
+  } catch (error) {
+    next(error)
+  }
+}
+
+

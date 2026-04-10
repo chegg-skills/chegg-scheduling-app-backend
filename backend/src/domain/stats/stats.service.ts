@@ -332,3 +332,128 @@ export const getDashboardStats = async (
         activeTeams,
     })
 }
+
+export const getBookingTrends = async (
+    caller: CallerContext,
+    timeframeRaw?: string,
+): Promise<StatsResponse<{
+    trends: { date: string; count: number; completed: number; noShow: number; cancelled: number }[]
+}>> => {
+    const timeframe = resolveTimeframe(timeframeRaw)
+    const bookingWhere = buildBookingWhere(caller, timeframe)
+
+    const bookings = await prisma.booking.findMany({
+        where: bookingWhere,
+        select: {
+            startTime: true,
+            status: true,
+        },
+    })
+
+    const trendsMap = new Map<string, { date: string; count: number; completed: number; noShow: number; cancelled: number }>()
+
+    if (timeframe.start && timeframe.end) {
+        const curr = new Date(timeframe.start)
+        while (curr <= timeframe.end) {
+            const dateStr = curr.toISOString().split('T')[0]
+            trendsMap.set(dateStr, { date: dateStr, count: 0, completed: 0, noShow: 0, cancelled: 0 })
+            curr.setDate(curr.getDate() + 1)
+        }
+    }
+
+    bookings.forEach(b => {
+        const dateStr = b.startTime.toISOString().split('T')[0]
+        const entry = trendsMap.get(dateStr) || { date: dateStr, count: 0, completed: 0, noShow: 0, cancelled: 0 }
+
+        entry.count++
+        if (b.status === BookingStatus.COMPLETED) entry.completed++
+        if (b.status === BookingStatus.NO_SHOW) entry.noShow++
+        if (b.status === BookingStatus.CANCELLED) entry.cancelled++
+
+        trendsMap.set(dateStr, entry)
+    })
+
+    const trends = Array.from(trendsMap.values()).sort((a, b) => a.date.localeCompare(b.date))
+
+    return buildStatsResponse(timeframe, { trends })
+}
+
+export const getTeamPerformance = async (
+    caller: CallerContext,
+    timeframeRaw?: string,
+): Promise<StatsResponse<{
+    performance: { teamId: string; name: string; total: number; completed: number; cancelled: number; noShow: number }[]
+}>> => {
+    requireAdmin(caller)
+    const timeframe = resolveTimeframe(timeframeRaw)
+    const bookingWhere = buildBookingWhere(caller, timeframe)
+
+    const teams = await prisma.team.findMany({
+        where: { isActive: true },
+        select: {
+            id: true,
+            name: true,
+            bookings: {
+                where: bookingWhere,
+                select: {
+                    status: true
+                }
+            }
+        }
+    })
+
+    const performance = teams.map(team => {
+        const stats = {
+            teamId: team.id,
+            name: team.name,
+            total: team.bookings.length,
+            completed: 0,
+            cancelled: 0,
+            noShow: 0
+        }
+
+        team.bookings.forEach(b => {
+            if (b.status === BookingStatus.COMPLETED) stats.completed++
+            if (b.status === BookingStatus.CANCELLED) stats.cancelled++
+            if (b.status === BookingStatus.NO_SHOW) stats.noShow++
+        })
+
+        return stats
+    }).sort((a, b) => b.total - a.total)
+
+    return buildStatsResponse(timeframe, { performance })
+}
+
+export const getPeakActivity = async (
+    caller: CallerContext,
+    timeframeRaw?: string,
+): Promise<StatsResponse<{
+    activity: { hour: number; count: number }[]
+}>> => {
+    const timeframe = resolveTimeframe(timeframeRaw)
+    const bookingWhere = buildBookingWhere(caller, timeframe)
+
+    const bookings = await prisma.booking.findMany({
+        where: bookingWhere,
+        select: {
+            startTime: true
+        }
+    })
+
+    const hourMap = new Map<number, number>()
+    for (let i = 0; i < 24; i++) hourMap.set(i, 0)
+
+    bookings.forEach(b => {
+        const hour = b.startTime.getHours()
+        hourMap.set(hour, (hourMap.get(hour) || 0) + 1)
+    })
+
+    const activity = Array.from(hourMap.entries()).map(([hour, count]) => ({
+        hour,
+        count
+    })).sort((a, b) => a.hour - b.hour)
+
+    return buildStatsResponse(timeframe, { activity })
+}
+
+
