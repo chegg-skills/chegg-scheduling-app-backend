@@ -19,6 +19,9 @@ import {
     findBookings,
     updateBookingById,
     upsertStudentForBooking,
+    lockScheduleSlot,
+    lockEvent,
+    lockHost,
 } from "./booking.repository";
 import {
     buildSchedulingContext,
@@ -114,6 +117,13 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
 
     // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
     return (prisma.$transaction(async (tx) => {
+        // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
+        if (matchedScheduleSlot) {
+            await lockScheduleSlot(tx, matchedScheduleSlot.id);
+        } else {
+            await lockEvent(tx, eventId);
+        }
+
         const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveBookingHostSelection({
             preferredHostId,
             activeHosts,
@@ -125,9 +135,13 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             tx,
         });
 
+        // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
+        await lockHost(tx, assignedHostId);
+
         const scheduleSlot = matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(
             event.id,
             start,
+            tx, // Pass tx to ensure we use the locked state if needed
         )) as any;
 
         const { maxParticipants } = getEffectiveParticipantPolicy(
@@ -216,6 +230,13 @@ const rescheduleBooking = async (
 
     // 3. Re-assign host (prefer current host if available)
     return (prisma.$transaction(async (tx) => {
+        // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
+        if (matchedScheduleSlot) {
+            await lockScheduleSlot(tx, matchedScheduleSlot.id);
+        } else {
+            await lockEvent(tx, event.id);
+        }
+
         const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveBookingHostSelection({
             preferredHostId: booking.hostUserId,
             activeHosts,
@@ -227,9 +248,13 @@ const rescheduleBooking = async (
             tx,
         });
 
+        // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
+        await lockHost(tx, assignedHostId);
+
         const scheduleSlot = matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(
             event.id,
             start,
+            tx,
         )) as any;
 
         // Check capacity for the NEW time

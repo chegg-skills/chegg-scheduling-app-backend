@@ -40,6 +40,30 @@ const upsertStudentForBooking = async (
     });
 };
 
+const lockScheduleSlot = async (
+    tx: Prisma.TransactionClient,
+    slotId: string,
+): Promise<void> => {
+    // Acquire a row-level lock on the schedule slot to prevent concurrent capacity checks
+    await tx.$executeRaw`SELECT id FROM "EventScheduleSlot" WHERE id = ${slotId} FOR UPDATE`;
+};
+
+const lockEvent = async (
+    tx: Prisma.TransactionClient,
+    eventId: string,
+): Promise<void> => {
+    // Acquire a row-level lock on the event to prevent concurrent capacity checks for non-slot events
+    await tx.$executeRaw`SELECT id FROM "Event" WHERE id = ${eventId} FOR UPDATE`;
+};
+
+const lockHost = async (
+    tx: Prisma.TransactionClient,
+    hostUserId: string,
+): Promise<void> => {
+    // Acquire a row-level lock on the host user to prevent concurrent double-booking of the same host
+    await tx.$executeRaw`SELECT id FROM "User" WHERE id = ${hostUserId} FOR UPDATE`;
+};
+
 const countActiveParticipantsForTime = async (
     tx: Prisma.TransactionClient,
     eventId: string,
@@ -149,4 +173,7 @@ export {
     countBookings,
     updateBookingById,
     upsertStudentForBooking,
+    lockScheduleSlot,
+    lockEvent,
+    lockHost,
 };
