@@ -208,8 +208,7 @@ export function BookingsPage() {
                         borderBottom: '1px solid',
                         borderColor: 'divider',
                         mt: 4,
-                        mb: 4,
-                        pb: 1,
+                        mb: 3,
                     }}
                 >
                     <Tabs
@@ -241,7 +240,6 @@ export function BookingsPage() {
                                 bgcolor: 'background.paper',
                                 '& .MuiToggleButton-root': {
                                     px: 2,
-                                    height: 38,
                                     border: '1px solid',
                                     borderColor: 'divider',
                                     textTransform: 'none',
@@ -285,9 +283,9 @@ export function BookingsPage() {
                                     borderRadius: 2,
                                     borderColor: 'divider',
                                     fontWeight: 600,
-                                    height: 38,
-                                    minHeight: 38,
-                                    maxHeight: 38,
+                                    height: 40,
+                                    minHeight: 40,
+                                    maxHeight: 40,
                                 }}
                             >
                                 Filter
