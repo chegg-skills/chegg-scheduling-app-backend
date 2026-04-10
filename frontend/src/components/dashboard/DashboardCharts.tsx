@@ -21,7 +21,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { Info } from 'lucide-react';
 import { useBookingTrends, useTeamPerformance, usePeakActivity } from '@/hooks/useStats';
-import type { StatsTimeframe } from '@/types';
+import type { StatsTimeframe, PeakActivityMetric } from '@/types';
 
 interface DashboardChartsProps {
     timeframe: StatsTimeframe;
@@ -68,11 +68,12 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
 
     const activityData = useMemo(() => {
         if (!peakData?.metrics.activity) return [];
-        return peakData.metrics.activity.map(a => ({
+        return peakData.metrics.activity.map((a: PeakActivityMetric) => ({
             ...a,
             displayHour: `${a.hour % 12 || 12}${a.hour >= 12 ? 'PM' : 'AM'}`
         }));
     }, [peakData]);
+
 
     if (trendsLoading || teamLoading || peakLoading) {
         return (
