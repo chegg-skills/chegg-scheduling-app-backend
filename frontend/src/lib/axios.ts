@@ -17,11 +17,16 @@ apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      const isAuthRoute =
-        window.location.pathname.startsWith('/login') ||
-        window.location.pathname.startsWith('/bootstrap') ||
-        window.location.pathname.startsWith('/accept-invite')
-      if (!isAuthRoute) {
+      const pathname = window.location.pathname
+      const isPublicRoute =
+        pathname.startsWith('/login') ||
+        pathname.startsWith('/register') ||
+        pathname.startsWith('/bootstrap') ||
+        pathname.startsWith('/accept-invite') ||
+        pathname.startsWith('/book') ||
+        pathname.startsWith('/reschedule')
+
+      if (!isPublicRoute) {
         window.location.href = '/login'
       }
     }
