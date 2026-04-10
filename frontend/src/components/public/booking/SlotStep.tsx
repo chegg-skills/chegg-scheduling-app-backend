@@ -59,7 +59,7 @@ export function SlotStep({
                     <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ display: 'block', mb: 2, letterSpacing: 1.2, fontSize: '0.7rem' }}>
                         Select Date
                     </Typography>
-                    <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 3, bgcolor: 'background.paper' }}>
+                    <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 1, bgcolor: 'background.paper' }}>
                         <StaticDatePicker
                             displayStaticWrapperAs="desktop"
                             value={selectedDate}
@@ -119,7 +119,7 @@ export function SlotStep({
                                                     sx={{
                                                         py: 1,
                                                         px: 0,
-                                                        borderRadius: 1,
+                                                        borderRadius: 0.5,
                                                         fontWeight: 700,
                                                         fontSize: '0.75rem',
                                                         textTransform: 'none',
@@ -161,7 +161,7 @@ export function SlotStep({
                                                     sx={{
                                                         py: 1,
                                                         px: 0,
-                                                        borderRadius: 1,
+                                                        borderRadius: 0.5,
                                                         fontWeight: 700,
                                                         fontSize: '0.75rem',
                                                         textTransform: 'none',

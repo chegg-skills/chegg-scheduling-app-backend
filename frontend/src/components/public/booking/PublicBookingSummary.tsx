@@ -52,7 +52,7 @@ export function PublicBookingSummary({
             mt: compact ? 0.5 : 2,
             ...(variant === 'current' && {
                 p: compact ? 1.5 : 2,
-                borderRadius: 2,
+                borderRadius: 1,
                 bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.04),
                 border: '1px solid',
                 borderColor: (theme) => alpha(theme.palette.secondary.main, 0.1),
