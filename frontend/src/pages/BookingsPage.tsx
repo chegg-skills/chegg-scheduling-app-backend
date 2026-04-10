@@ -240,7 +240,6 @@ export function BookingsPage() {
                                 bgcolor: 'background.paper',
                                 '& .MuiToggleButton-root': {
                                     px: 2,
-                                    py: 0.5,
                                     border: '1px solid',
                                     borderColor: 'divider',
                                     textTransform: 'none',
