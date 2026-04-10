@@ -103,8 +103,10 @@ const assertParticipantCapacityAvailable = (
 const resolveMatchingScheduleSlot = async (
   eventId: string,
   startTime: Date,
+  tx?: any, // Accept transaction client
 ) => {
-  return prisma.eventScheduleSlot.findFirst({
+  const client = tx || prisma;
+  return client.eventScheduleSlot.findFirst({
     where: {
       eventId,
       startTime,
