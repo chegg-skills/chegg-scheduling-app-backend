@@ -68,6 +68,21 @@ export function PublicBookingSummary({
             </Typography>
 
             <Stack direction={compact ? 'row' : 'column'} spacing={compact ? 2 : 1.5} sx={{ flexWrap: 'wrap' }}>
+                {teamDetails && (
+                    <Box sx={{ minWidth: 0 }}>
+                        {!compact && (
+                            <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
+                                Team
+                            </Typography>
+                        )}
+                        <Typography variant="body2" fontWeight={800} color="text.primary" sx={{
+                            fontSize: compact ? '0.75rem' : '0.875rem',
+                        }}>
+                            {teamDetails.name}
+                        </Typography>
+                    </Box>
+                )}
+
                 {eventDetails && (
                     <Box sx={{ minWidth: 0 }}>
                         {!compact && (
@@ -105,7 +120,25 @@ export function PublicBookingSummary({
                         }}>
                             {compact && <Clock size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
                             {formatDate(selectedDate)}
-                            {selectedSlot && `, ${formatSlot(selectedSlot)}`}
+                        </Typography>
+                    </Box>
+                )}
+
+                {selectedSlot && (
+                    <Box>
+                        {!compact && (
+                            <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                                <Clock size={14} color={variant === 'current' ? '#522D9B' : '#EB7100'} /> Time
+                            </Typography>
+                        )}
+                        <Typography variant="body2" fontWeight={700} color="text.primary" sx={{
+                            fontSize: compact ? '0.75rem' : '0.875rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5
+                        }}>
+                            {compact && !selectedDate && <Clock size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
+                            {formatSlot(selectedSlot)}
                         </Typography>
                     </Box>
                 )}
