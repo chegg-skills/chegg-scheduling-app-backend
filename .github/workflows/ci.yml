@@ -47,7 +47,7 @@ jobs:
         working-directory: backend
         run: |
           cat > .env.test <<'EOF'
-          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chegg_test
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chegg_test?sslmode=disable
           JWT_SECRET=ci-test-jwt-secret
           NODE_ENV=test
           ENABLE_RATE_LIMITS_IN_TEST=false
