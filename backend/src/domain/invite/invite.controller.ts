@@ -18,7 +18,7 @@ const createInvite = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const adminId = res.locals.authUser.id as string;
+    const adminId = res.locals.authUser?.id as string;
 
     const result = await inviteService.createInvite({
       email: req.body.email,
@@ -41,8 +41,6 @@ const createInvite = async (
         id: result.id,
         email: result.email,
         role: result.role,
-        // Expose the token in every non-production environment so integration
-        // tests (NODE_ENV=test) can use it without a real email service.
         token: process.env.NODE_ENV !== "production" ? result.token : undefined,
         expiresAt: result.expiresAt,
         createdAt: result.createdAt,
@@ -54,23 +52,13 @@ const createInvite = async (
   }
 };
 
-/**
- * POST /api/invites/accept
- * User accepts an invite using the token from the email link.
- */
 const acceptInvite = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const result = await inviteService.acceptInvite({
-      token: req.body.token,
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      password: req.body.password,
-      timezone: req.body.timezone,
-    });
+    const result = await inviteService.acceptInvite(req.body);
 
     setAuthCookie(res, result.token);
 

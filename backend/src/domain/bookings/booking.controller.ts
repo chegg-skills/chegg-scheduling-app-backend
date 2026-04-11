@@ -20,9 +20,6 @@ const getStringParam = (value: unknown): string | undefined => {
 
 
 export const createBooking = async (req: Request, res: Response) => {
-    if (!req.body || Object.keys(req.body).length === 0) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking details are required.");
-    }
     const booking = await BookingService.createBooking(req.body);
     void queueBookingCreatedNotifications(booking);
 
@@ -35,12 +32,9 @@ export const createBooking = async (req: Request, res: Response) => {
 };
 
 export const getBooking = async (req: Request, res: Response) => {
-    const id = getStringParam(req.params.id);
-    if (!id) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking ID is required.");
-    }
+    const { bookingId } = req.params as any;
     const caller = res.locals.authUser as CallerContext;
-    const booking = await BookingService.getBooking(id);
+    const booking = await BookingService.getBooking(bookingId);
 
     if (caller.role === UserRole.COACH) {
         const isLead = booking.hostUserId === caller.id;
@@ -60,30 +54,14 @@ export const getBooking = async (req: Request, res: Response) => {
 };
 
 export const listBookings = async (req: Request, res: Response) => {
-    const { teamId, eventId, hostUserId, status, search, startDate, endDate, page, limit } = req.query;
+    const filters = req.query as any;
     const caller = res.locals.authUser as CallerContext;
 
-    let targetHostId = getStringParam(hostUserId);
-    let targetTeamId = getStringParam(teamId);
-
     if (caller.role === UserRole.COACH) {
-        targetHostId = caller.id;
+        filters.hostUserId = caller.id;
     }
 
-    const pageNum = page ? parseInt(page as string, 10) : 1;
-    const limitNum = limit ? parseInt(limit as string, 10) : 10;
-
-    const { bookings, totalCount } = await BookingService.listBookings({
-        teamId: targetTeamId,
-        eventId: getStringParam(eventId),
-        hostUserId: targetHostId,
-        status: status as BookingStatus | undefined,
-        search: getStringParam(search),
-        startDate: getStringParam(startDate),
-        endDate: getStringParam(endDate),
-        page: pageNum,
-        limit: limitNum,
-    });
+    const { bookings, totalCount } = await BookingService.listBookings(filters);
 
     return sendSuccessResponse(
         res,
@@ -92,9 +70,9 @@ export const listBookings = async (req: Request, res: Response) => {
             bookings,
             pagination: {
                 total: totalCount,
-                page: pageNum,
-                pageSize: limitNum,
-                totalPages: Math.ceil(totalCount / limitNum)
+                page: filters.page,
+                pageSize: filters.pageSize || filters.limit,
+                totalPages: Math.ceil(totalCount / (filters.pageSize || filters.limit))
             }
         },
         "Bookings fetched successfully."
@@ -102,16 +80,12 @@ export const listBookings = async (req: Request, res: Response) => {
 };
 
 export const updateBooking = async (req: Request, res: Response) => {
-    const id = getStringParam(req.params.id);
-    if (!id) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking ID is required.");
-    }
-
-    const oldBooking = await BookingService.getBooking(id);
+    const { bookingId } = req.params as any;
+    const oldBooking = await BookingService.getBooking(bookingId);
     const { status, coHostUserIds } = req.body;
 
-    const booking = await BookingService.updateBooking(id, {
-        status: status as BookingStatus | undefined,
+    const booking = await BookingService.updateBooking(bookingId, {
+        status,
         coHostUserIds
     });
 
@@ -130,11 +104,7 @@ export const updateBooking = async (req: Request, res: Response) => {
 };
 
 export const rescheduleBooking = async (req: Request, res: Response) => {
-    const id = getStringParam(req.params.id);
-    if (!id) {
-        throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking ID is required.");
-    }
-
+    const { bookingId } = req.params as any;
     const { startTime, timezone, token } = req.body;
     const caller = res.locals.authUser as CallerContext | undefined;
 
@@ -142,7 +112,7 @@ export const rescheduleBooking = async (req: Request, res: Response) => {
         throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Authentication or reschedule token is required.");
     }
 
-    const booking = await BookingService.rescheduleBooking(id, {
+    const booking = await BookingService.rescheduleBooking(bookingId, {
         startTime,
         timezone,
         token

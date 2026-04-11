@@ -3,6 +3,13 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import * as eventController from "./event.controller";
+import { validate } from "../../shared/middleware/validate";
+import {
+  CreateEventSchema,
+  ListTeamEventsSchema,
+  ListAllEventsSchema,
+  UpdateEventSchema,
+} from "./event.schema";
 
 const router = express.Router();
 
@@ -85,11 +92,12 @@ router
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(CreateEventSchema),
     eventController.createEvent,
   )
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(ListTeamEventsSchema),
     eventController.listTeamEvents,
   )
   .all(methodNotAllowed);
@@ -99,6 +107,7 @@ router
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(ListAllEventsSchema),
     eventController.listAllEvents,
   )
   .all(methodNotAllowed);
@@ -113,6 +122,7 @@ router
   .patch(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(UpdateEventSchema),
     eventController.updateEvent,
   )
   .delete(

@@ -5,24 +5,6 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as availabilityService from "./availability.service";
 
-const getUserIdParam = (req: Request): string => {
-  const { userId } = req.params;
-  return Array.isArray(userId) ? userId[0] : userId;
-};
-
-const getExceptionIdParam = (req: Request): string => {
-  const { exceptionId } = req.params;
-  return Array.isArray(exceptionId) ? exceptionId[0] : exceptionId;
-};
-
-const parseDate = (value: unknown): Date | undefined => {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const date = new Date(value);
-  return isNaN(date.getTime()) ? undefined : date;
-};
-
 const getWeeklyAvailability = async (
   req: Request,
   res: Response,
@@ -30,8 +12,8 @@ const getWeeklyAvailability = async (
 ) => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const userId = getUserIdParam(req);
-    const slots = await availabilityService.getWeeklyAvailability(userId, caller);
+    const { userId } = req.params;
+    const slots = await availabilityService.getWeeklyAvailability(userId as any, caller);
     sendSuccessResponse(
       res,
       StatusCodes.OK,
@@ -50,9 +32,9 @@ const setWeeklyAvailability = async (
 ) => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const userId = getUserIdParam(req);
+    const { userId } = req.params;
     const slots = req.body;
-    const result = await availabilityService.setWeeklyAvailability(userId, slots, caller);
+    const result = await availabilityService.setWeeklyAvailability(userId as any, slots, caller);
     sendSuccessResponse(
       res,
       StatusCodes.OK,
@@ -71,8 +53,8 @@ const getAvailabilityExceptions = async (
 ) => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const userId = getUserIdParam(req);
-    const exceptions = await availabilityService.getAvailabilityExceptions(userId, caller);
+    const { userId } = req.params;
+    const exceptions = await availabilityService.getAvailabilityExceptions(userId as any, caller);
     sendSuccessResponse(
       res,
       StatusCodes.OK,
@@ -91,9 +73,9 @@ const addAvailabilityException = async (
 ) => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const userId = getUserIdParam(req);
+    const { userId } = req.params;
     const exception = req.body;
-    const result = await availabilityService.addAvailabilityException(userId, exception, caller);
+    const result = await availabilityService.addAvailabilityException(userId as any, exception, caller);
     sendSuccessResponse(
       res,
       StatusCodes.CREATED,
@@ -112,9 +94,8 @@ const removeAvailabilityException = async (
 ) => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const userId = getUserIdParam(req);
-    const exceptionId = getExceptionIdParam(req);
-    await availabilityService.removeAvailabilityException(userId, exceptionId, caller);
+    const { userId, exceptionId } = req.params;
+    await availabilityService.removeAvailabilityException(userId as any, exceptionId as any, caller);
     sendSuccessResponse(
       res,
       StatusCodes.OK,
@@ -133,16 +114,12 @@ const getEffectiveAvailability = async (
 ) => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const userId = getUserIdParam(req);
-    const from = parseDate(req.query.from);
-    const to = parseDate(req.query.to);
-
-    if (!from || !to) {
-      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Valid 'from' and 'to' date parameters are required.");
-    }
+    const { userId } = req.params;
+    const from = new Date(req.query.from as string);
+    const to = new Date(req.query.to as string);
 
     const result = await availabilityService.getEffectiveAvailability(
-      userId,
+      userId as any,
       from,
       to,
       caller,

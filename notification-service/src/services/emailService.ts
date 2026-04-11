@@ -2,10 +2,10 @@ import "dotenv/config";
 import {
   NotificationStatus,
   Prisma,
-  PrismaClient,
   type Notification,
 } from "@prisma/client";
 import nodemailer from "nodemailer";
+import { prisma } from "../db/prisma";
 import emailTemplatesHelper from "../utils/helper/emailTemplatesHelper";
 import type {
   CancelScheduledNotificationsInput,
@@ -16,7 +16,6 @@ type Transporter = ReturnType<typeof nodemailer.createTransport>;
 type SendMailOptions = Parameters<Transporter["sendMail"]>[0];
 type SentMessageInfo = Awaited<ReturnType<Transporter["sendMail"]>>;
 
-const prisma = new PrismaClient();
 const MAX_RETRIES = Number(process.env.EMAIL_MAX_RETRIES ?? 3);
 const RETRY_DELAY_MS = Number(process.env.EMAIL_RETRY_DELAY_MS ?? 3000);
 const MAX_SCHEDULED_BATCH_SIZE = Number(process.env.REMINDER_BATCH_SIZE ?? 25);

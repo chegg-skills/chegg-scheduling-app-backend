@@ -12,11 +12,10 @@ import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   eventInclude,
   getManagedEvent,
-  normalizeRequiredString,
-  type ReplaceEventHostsInput,
   type SafeEvent,
 } from "./event.shared";
 import { queueEventHostAddedNotification } from "./eventHost.notification";
+import { ReplaceEventHostsSchema } from "./event.schema";
 
 const validateEventConfiguration = (
   interactionType: EventInteractionTypeModel,
@@ -108,34 +107,14 @@ const validateEventConfiguration = (
 };
 
 const normalizeHostInputs = (
-  payload: ReplaceEventHostsInput,
+  payload: any,
 ): Array<{ userId: string; hostOrder: number }> => {
-  if (!Array.isArray(payload.hosts)) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "hosts must be an array.",
-    );
-  }
+  const validated = ReplaceEventHostsSchema.body.parse(payload);
 
-  const withOrder = payload.hosts.map((host, index) => {
-    const userId = normalizeRequiredString(host?.userId, "userId");
-    const rawHostOrder = host?.hostOrder;
-
-    if (
-      rawHostOrder !== undefined &&
-      (!Number.isInteger(rawHostOrder) || Number(rawHostOrder) <= 0)
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        "hostOrder must be a positive integer when provided.",
-      );
-    }
-
-    return {
-      userId,
-      hostOrder: rawHostOrder ?? index + 1,
-    };
-  });
+  const withOrder = validated.hosts.map((host, index) => ({
+    userId: host.userId,
+    hostOrder: host.hostOrder ?? index + 1,
+  }));
 
   const uniqueUserIds = new Set(withOrder.map((host) => host.userId));
   if (uniqueUserIds.size !== withOrder.length) {
@@ -246,7 +225,7 @@ const listEventHosts = async (
 
 const replaceEventHosts = async (
   eventId: string,
-  payload: ReplaceEventHostsInput,
+  payload: any,
   caller: CallerContext,
 ): Promise<{ hosts: SafeEvent["hosts"] }> => {
   const event = await getManagedEvent(eventId, caller);

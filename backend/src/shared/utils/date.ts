@@ -1,6 +1,5 @@
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
-import { parseDateInput } from "./validation";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -34,6 +33,21 @@ export const formatDateRangeLabel = (
 export const toDateOnlyString = (date: Date): string =>
   date.toISOString().split("T")[0];
 
+export const parseDateInput = (
+  value: Date | string,
+  fieldName = "date",
+): Date => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      `Invalid ${fieldName} provided.`,
+    );
+  }
+
+  return date;
+};
+
 export const parseBoundedDateRange = ({
   startDate,
   endDate,
@@ -65,6 +79,7 @@ export const parseBoundedDateRange = ({
 
   return { start, end };
 };
+
 export const formatNotificationDate = (
   date: Date,
   timezone?: string | null,

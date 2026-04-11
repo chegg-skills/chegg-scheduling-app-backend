@@ -51,7 +51,7 @@ export function UserForm({ user, currentUserRole, onSuccess, onCancel }: UserFor
     if (!payload.password) delete payload.password
 
     if (isSelf) {
-      const { email, role, isActive, ...selfPayload } = payload
+      const { email: _email, role: _role, isActive: _isActive, ...selfPayload } = payload
       updateSelf.mutate(selfPayload, { onSuccess })
       return
     }

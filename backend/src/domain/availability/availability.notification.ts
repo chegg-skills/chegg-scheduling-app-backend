@@ -1,4 +1,5 @@
 import { prisma } from "../../shared/db/prisma";
+import { logger } from "../../shared/logging/logger";
 import {
     publishNotificationSafely,
     resolveFrontendUrl,
@@ -80,7 +81,11 @@ const queueAvailabilityExceptionNotification = async (
             });
         }
     } catch (error) {
-        console.error("Failed to queue availability exception notification:", error);
+        logger.error("Failed to queue availability exception notification.", {
+            userId: input.userId,
+            date: input.date,
+            error,
+        });
     }
 };
 

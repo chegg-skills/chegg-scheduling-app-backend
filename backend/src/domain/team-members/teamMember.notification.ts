@@ -1,4 +1,5 @@
 import { prisma } from "../../shared/db/prisma";
+import { logger } from "../../shared/logging/logger";
 import {
     publishNotificationSafely,
     resolveFrontendUrl,
@@ -41,7 +42,11 @@ const queueTeamMemberAddedNotification = async (
             },
         });
     } catch (error) {
-        console.error("Failed to queue team member added notification:", error);
+        logger.error("Failed to queue team member added notification.", {
+            teamId: input.teamId,
+            userId: input.userId,
+            error,
+        });
     }
 };
 

@@ -5,10 +5,11 @@ import { UserRole } from "@prisma/client";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { prisma } from "../../shared/db/prisma";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
+import { logger } from "../../shared/logging/logger";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
-import { assertMinimumLength } from "../../shared/utils/validation";
 import { SALT_ROUNDS, type SafeUser, normalizeEmail, validateTimezone, toSafeUser } from "../../shared/utils/userUtils";
+import { AcceptInviteSchema, CreateInviteSchema } from "./invite.schema";
 
 const INVITE_EXPIRY_DAYS = Number(process.env.INVITE_EXPIRY_DAYS ?? 7);
 
@@ -46,12 +47,8 @@ const createInvite = async (
   expiresAt: Date;
   createdAt: Date;
 }> => {
-  const email = payload.email?.trim();
-  if (!email) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "email is required.");
-  }
-
-  const normalizedEmail = normalizeEmail(email);
+  const validated = CreateInviteSchema.body.parse(payload);
+  const normalizedEmail = normalizeEmail(validated.email);
 
   const existingUser = await prisma.user.findUnique({
     where: { email: normalizedEmail },
@@ -79,21 +76,23 @@ const createInvite = async (
     );
   }
 
-  if (!Object.values(UserRole).includes(payload.role)) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid user role.");
-  }
-
   const token = generateInviteToken();
   const expiresAt = getInviteExpiryDate();
 
   const invite = await prisma.userInvite.create({
     data: {
       email: normalizedEmail,
-      role: payload.role,
+      role: validated.role,
       token,
       expiresAt,
       createdBy: payload.createdByAdminId,
     },
+  });
+
+  logger.info("User invite created successfully.", {
+    inviteId: invite.id,
+    createdByAdminId: payload.createdByAdminId,
+    role: invite.role,
   });
 
   return {
@@ -109,30 +108,10 @@ const createInvite = async (
 const acceptInvite = async (
   payload: AcceptInviteInput
 ): Promise<{ user: SafeUser; token: string; invitedById: string }> => {
-  const token = payload.token?.trim();
-  const firstName = payload.firstName?.trim();
-  const lastName = payload.lastName?.trim();
-  const password = payload.password?.trim();
-
-  if (!token) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "token is required.");
-  }
-
-  if (!firstName || !lastName || !password) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "firstName, lastName, and password are required."
-    );
-  }
-
-  assertMinimumLength(
-    password,
-    8,
-    "Password must be at least 8 characters long.",
-  );
+  const validated = AcceptInviteSchema.body.parse(payload);
 
   const invite = await prisma.userInvite.findUnique({
-    where: { token },
+    where: { token: validated.token },
   });
 
   if (!invite) {
@@ -164,21 +143,21 @@ const acceptInvite = async (
     );
   }
 
-  const timezone = payload.timezone
-    ? validateTimezone(payload.timezone.trim())
+  const timezone = validated.timezone
+    ? validateTimezone(validated.timezone)
     : "UTC";
 
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  const hashedPassword = await bcrypt.hash(validated.password, SALT_ROUNDS);
 
   let createdUser: Awaited<ReturnType<typeof prisma.user.create>>;
   try {
     [createdUser] = await prisma.$transaction([
       prisma.user.create({
         data: {
-          firstName,
-          lastName,
+          firstName: validated.firstName,
+          lastName: validated.lastName,
           email: invite.email,
-          publicBookingSlug: createPublicBookingSlug(`${firstName} ${lastName}`, 'coach'),
+          publicBookingSlug: createPublicBookingSlug(`${validated.firstName} ${validated.lastName}`, 'coach'),
           password: hashedPassword,
           role: invite.role,
           timezone,
@@ -199,6 +178,12 @@ const acceptInvite = async (
   }
 
   const safeUser = toSafeUser(createdUser);
+
+  logger.info("Invite accepted and user account provisioned.", {
+    inviteId: invite.id,
+    userId: safeUser.id,
+    role: safeUser.role,
+  });
 
   return {
     user: safeUser,

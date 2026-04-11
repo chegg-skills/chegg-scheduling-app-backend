@@ -1,9 +1,10 @@
 import { prisma } from "../../shared/db/prisma";
+import { UserRole } from "@prisma/client";
+import { logger } from "../../shared/logging/logger";
 import {
   publishNotificationSafely,
   resolveFrontendUrl,
 } from "../../shared/notifications/notification.publisher";
-import { UserRole } from "@prisma/client";
 
 type InviteCreatedNotificationInput = {
   email: string;
@@ -39,7 +40,11 @@ const queueInviteCreatedNotification = async (
       },
     });
   } catch (error) {
-    console.error("Failed to queue invite created notification:", error);
+    logger.error("Failed to queue invite created notification.", {
+      email: input.email,
+      createdByAdminId: input.createdByAdminId,
+      error,
+    });
   }
 };
 
@@ -67,7 +72,11 @@ const queueInviteAcceptedNotification = async (
       },
     });
   } catch (error) {
-    console.error("Failed to queue invite accepted notification:", error);
+    logger.error("Failed to queue invite accepted notification.", {
+      invitedById: input.invitedById,
+      inviteeEmail: input.inviteeEmail,
+      error,
+    });
   }
 };
 

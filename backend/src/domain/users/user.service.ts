@@ -7,12 +7,6 @@ import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { resolvePagination } from "../../shared/utils/pagination";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
-  assertMinimumLength,
-  normalizeOptionalString,
-  requireEntityId,
-  requireTrimmedString,
-} from "../../shared/utils/validation";
-import {
   SALT_ROUNDS,
   type CallerContext,
   type SafeUser,
@@ -21,6 +15,7 @@ import {
   validateTimezone,
   validateZoomIsvLink,
 } from "../../shared/utils/userUtils";
+import { ListUsersSchema, UpdateUserSchema, UpdateMyProfileSchema } from "./user.schema";
 
 type ListUsersOptions = {
   page?: number;
@@ -55,32 +50,9 @@ type UpdateMyProfileInput = {
   zoomIsvLink?: string;
 };
 
-const isValidRole = (role: string): role is UserRole => {
-  return Object.values(UserRole).includes(role as UserRole);
-};
-
-type SharedProfileInput = Pick<
-  UpdateUserInput,
-  | "firstName"
-  | "lastName"
-  | "password"
-  | "phoneNumber"
-  | "country"
-  | "avatarUrl"
-  | "timezone"
-  | "preferredLanguage"
-  | "zoomIsvLink"
->;
-
-const requireUserId = (userId: string): string =>
-  requireEntityId(userId, "userId");
-
-const normalizeRequiredField = (value: string, fieldName: string): string =>
-  requireTrimmedString(value, fieldName, `${fieldName} cannot be empty.`);
-
 const assignCoachPublicBookingSlug = async (
   userId: string,
-  payload: Pick<SharedProfileInput, "firstName" | "lastName">,
+  payload: { firstName?: string; lastName?: string },
   updateData: Prisma.UserUpdateInput,
 ): Promise<void> => {
   const currentUser = await prisma.user.findUnique({
@@ -97,65 +69,12 @@ const assignCoachPublicBookingSlug = async (
     return;
   }
 
-  const firstName = payload.firstName?.trim() || currentUser.firstName;
-  const lastName = payload.lastName?.trim() || currentUser.lastName;
+  const firstName = payload.firstName || currentUser.firstName;
+  const lastName = payload.lastName || currentUser.lastName;
   updateData.publicBookingSlug = createPublicBookingSlug(
     `${firstName} ${lastName}`,
     "coach",
   );
-};
-
-const applySharedProfileUpdates = async (
-  userId: string,
-  payload: SharedProfileInput,
-  updateData: Prisma.UserUpdateInput,
-): Promise<void> => {
-  if (payload.firstName !== undefined) {
-    updateData.firstName = normalizeRequiredField(payload.firstName, "firstName");
-  }
-
-  if (payload.lastName !== undefined) {
-    updateData.lastName = normalizeRequiredField(payload.lastName, "lastName");
-  }
-
-  if (payload.password !== undefined) {
-    const value = assertMinimumLength(
-      payload.password.trim(),
-      8,
-      "Password must be at least 8 characters long.",
-    );
-    updateData.password = await bcrypt.hash(value, SALT_ROUNDS);
-  }
-
-  if (payload.phoneNumber !== undefined) {
-    updateData.phoneNumber = normalizeOptionalString(payload.phoneNumber, "phoneNumber");
-  }
-
-  if (payload.country !== undefined) {
-    updateData.country = normalizeOptionalString(payload.country, "country");
-  }
-
-  if (payload.avatarUrl !== undefined) {
-    updateData.avatarUrl = normalizeOptionalString(payload.avatarUrl, "avatarUrl");
-  }
-
-  if (payload.preferredLanguage !== undefined) {
-    updateData.preferredLanguage =
-      normalizeOptionalString(payload.preferredLanguage, "preferredLanguage") ?? "en";
-  }
-
-  if (payload.zoomIsvLink !== undefined) {
-    const value = normalizeOptionalString(payload.zoomIsvLink, "zoomIsvLink");
-    updateData.zoomIsvLink = value ? validateZoomIsvLink(value) : null;
-  }
-
-  if (payload.timezone !== undefined) {
-    updateData.timezone = validateTimezone(
-      normalizeRequiredField(payload.timezone, "timezone"),
-    );
-  }
-
-  await assignCoachPublicBookingSlug(userId, payload, updateData);
 };
 
 const listUsers = async (
@@ -169,8 +88,9 @@ const listUsers = async (
     totalPages: number;
   };
 }> => {
-  const { page, pageSize, skip } = resolvePagination(options);
-  const searchTerms = options.search?.trim().split(/\s+/).filter(Boolean) ?? [];
+  const validatedOptions = ListUsersSchema.query.parse(options);
+  const { page, pageSize, skip } = resolvePagination(validatedOptions);
+  const searchTerms = validatedOptions.search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
   const where: Prisma.UserWhereInput = searchTerms.length
     ? {
@@ -220,11 +140,9 @@ const listUsers = async (
   };
 };
 
-const readUser = async (userId: string): Promise<any> => {
-  const normalizedUserId = requireUserId(userId);
-
+const readUser = async (userId: string): Promise<SafeUser> => {
   const user = await prisma.user.findUnique({
-    where: { id: normalizedUserId },
+    where: { id: userId },
     include: {
       teamMemberships: {
         include: {
@@ -258,17 +176,17 @@ const updateUser = async (
   payload: UpdateUserInput,
   caller: CallerContext,
 ): Promise<SafeUser> => {
-  userId = requireUserId(userId);
+  const validated = await UpdateUserSchema.body.parseAsync(payload);
 
   // TEAM_ADMIN cannot change roles, active status, or touch SUPER_ADMIN accounts.
   if (caller.role === UserRole.TEAM_ADMIN) {
-    if (payload.role !== undefined) {
+    if (validated.role !== undefined) {
       throw new ErrorHandler(
         StatusCodes.FORBIDDEN,
         "You do not have permission to change user roles.",
       );
     }
-    if (payload.isActive !== undefined) {
+    if (validated.isActive !== undefined) {
       throw new ErrorHandler(
         StatusCodes.FORBIDDEN,
         "You do not have permission to change user active status.",
@@ -291,7 +209,7 @@ const updateUser = async (
   }
 
   // Prevent removing the last active SUPER_ADMIN (demotion or deactivation).
-  if (payload.role !== undefined || payload.isActive !== undefined) {
+  if (validated.role !== undefined || validated.isActive !== undefined) {
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { role: true, isActive: true },
@@ -301,8 +219,8 @@ const updateUser = async (
     }
     if (targetUser.role === UserRole.SUPER_ADMIN) {
       const isDemoting =
-        payload.role !== undefined && payload.role !== UserRole.SUPER_ADMIN;
-      const isDeactivating = payload.isActive === false;
+        validated.role !== undefined && validated.role !== UserRole.SUPER_ADMIN;
+      const isDeactivating = validated.isActive === false;
       if (isDemoting || isDeactivating) {
         const otherActiveSuperAdmins = await prisma.user.count({
           where: {
@@ -323,25 +241,24 @@ const updateUser = async (
 
   const updateData: Prisma.UserUpdateInput = {};
 
-  if (payload.email !== undefined) {
-    updateData.email = normalizeEmail(
-      normalizeRequiredField(payload.email, "email"),
-    );
+  if (validated.firstName !== undefined) updateData.firstName = validated.firstName;
+  if (validated.lastName !== undefined) updateData.lastName = validated.lastName;
+  if (validated.email !== undefined) updateData.email = normalizeEmail(validated.email);
+  if (validated.password !== undefined) {
+    updateData.password = await bcrypt.hash(validated.password, SALT_ROUNDS);
+  }
+  if (validated.phoneNumber !== undefined) updateData.phoneNumber = validated.phoneNumber;
+  if (validated.country !== undefined) updateData.country = validated.country;
+  if (validated.avatarUrl !== undefined) updateData.avatarUrl = validated.avatarUrl;
+  if (validated.role !== undefined) updateData.role = validated.role;
+  if (validated.isActive !== undefined) updateData.isActive = validated.isActive;
+  if (validated.preferredLanguage !== undefined) updateData.preferredLanguage = validated.preferredLanguage;
+  if (validated.timezone !== undefined) updateData.timezone = validateTimezone(validated.timezone);
+  if (validated.zoomIsvLink !== undefined) {
+    updateData.zoomIsvLink = validated.zoomIsvLink ? validateZoomIsvLink(validated.zoomIsvLink) : null;
   }
 
-  await applySharedProfileUpdates(userId, payload, updateData);
-
-  if (payload.role !== undefined) {
-    const role = payload.role.trim();
-    if (!isValidRole(role)) {
-      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid user role.");
-    }
-    updateData.role = role;
-  }
-
-  if (payload.isActive !== undefined) {
-    updateData.isActive = Boolean(payload.isActive);
-  }
+  await assignCoachPublicBookingSlug(userId, validated, updateData);
 
   if (Object.keys(updateData).length === 0) {
     throw new ErrorHandler(
@@ -372,8 +289,6 @@ const deleteUser = async (
   userId: string,
   caller: CallerContext,
 ): Promise<SafeUser> => {
-  userId = requireUserId(userId);
-
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
     select: { role: true, isActive: true },
@@ -427,10 +342,24 @@ const updateMyProfile = async (
   userId: string,
   payload: UpdateMyProfileInput,
 ): Promise<SafeUser> => {
-  userId = requireUserId(userId);
+  const validated = await UpdateMyProfileSchema.body.parseAsync(payload);
 
   const updateData: Prisma.UserUpdateInput = {};
-  await applySharedProfileUpdates(userId, payload, updateData);
+  if (validated.firstName !== undefined) updateData.firstName = validated.firstName;
+  if (validated.lastName !== undefined) updateData.lastName = validated.lastName;
+  if (validated.password !== undefined) {
+    updateData.password = await bcrypt.hash(validated.password, SALT_ROUNDS);
+  }
+  if (validated.phoneNumber !== undefined) updateData.phoneNumber = validated.phoneNumber;
+  if (validated.country !== undefined) updateData.country = validated.country;
+  if (validated.avatarUrl !== undefined) updateData.avatarUrl = validated.avatarUrl;
+  if (validated.preferredLanguage !== undefined) updateData.preferredLanguage = validated.preferredLanguage;
+  if (validated.timezone !== undefined) updateData.timezone = validateTimezone(validated.timezone);
+  if (validated.zoomIsvLink !== undefined) {
+    updateData.zoomIsvLink = validated.zoomIsvLink ? validateZoomIsvLink(validated.zoomIsvLink) : null;
+  }
+
+  await assignCoachPublicBookingSlug(userId, validated, updateData);
 
   if (Object.keys(updateData).length === 0) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "At least one field is required to update profile.");

@@ -1,5 +1,6 @@
 import { BookingStatus, UserRole } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
+import { logger } from "../../shared/logging/logger";
 import {
   publishNotificationSafely,
   resolveFrontendUrl,
@@ -129,7 +130,10 @@ const queueBookingReminderNotifications = async (
       queueStudentReminder(booking, "SESSION_REMINDER_1H", 1),
     ]);
   } catch (error) {
-    console.error("Failed to queue booking reminders:", error);
+    logger.error("Failed to queue booking reminders.", {
+      bookingId: booking.id,
+      error,
+    });
   }
 };
 
@@ -149,7 +153,10 @@ const cancelScheduledBookingReminders = async (
       },
     });
   } catch (error) {
-    console.error("Failed to cancel scheduled booking reminders:", error);
+    logger.error("Failed to cancel scheduled booking reminders.", {
+      bookingId: booking.id,
+      error,
+    });
   }
 };
 
@@ -211,7 +218,11 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
     await Promise.all(publishTasks);
     await queueBookingReminderNotifications(booking);
   } catch (error) {
-    console.error("Failed to queue booking creation notifications:", error);
+    logger.error("Failed to queue booking creation notifications.", {
+      bookingId: booking.id,
+      eventId: booking.eventId,
+      error,
+    });
   }
 };
 
@@ -332,7 +343,11 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
       await Promise.all(publishTasks);
     }
   } catch (error) {
-    console.error("Failed to queue booking status notifications:", error);
+    logger.error("Failed to queue booking status notifications.", {
+      bookingId: booking.id,
+      status: booking.status,
+      error,
+    });
   }
 };
 
@@ -375,7 +390,10 @@ const queueBookingUpdatedNotifications = async (
 
     await Promise.all(publishTasks);
   } catch (error) {
-    console.error("Failed to queue booking update notifications:", error);
+    logger.error("Failed to queue booking update notifications.", {
+      bookingId: newBooking.id,
+      error,
+    });
   }
 };
 
@@ -429,7 +447,11 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
     await cancelScheduledBookingReminders(booking);
     await queueBookingReminderNotifications(booking);
   } catch (error) {
-    console.error("Failed to queue booking rescheduled notifications:", error);
+    logger.error("Failed to queue booking rescheduled notifications.", {
+      bookingId: booking.id,
+      eventId: booking.eventId,
+      error,
+    });
   }
 };
 

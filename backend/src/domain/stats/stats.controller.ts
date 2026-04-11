@@ -4,18 +4,10 @@ import { sendSuccessResponse } from '../../shared/utils/helper/responseHelper'
 import type { CallerContext } from '../../shared/utils/userUtils'
 import * as statsService from './stats.service'
 
-const getTimeframeParam = (req: Request): string | undefined => {
-  return typeof req.query.timeframe === 'string' ? req.query.timeframe : undefined
-}
-
-const getTeamIdParam = (req: Request): string | undefined => {
-  return typeof req.query.teamId === 'string' ? req.query.teamId.trim() : undefined
-}
-
 export const getBookingStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getBookingStats(caller, getTimeframeParam(req))
+    const data = await statsService.getBookingStats(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Booking stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -25,7 +17,7 @@ export const getBookingStats = async (req: Request, res: Response, next: NextFun
 export const getUserStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getUserStats(caller, getTimeframeParam(req))
+    const data = await statsService.getUserStats(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'User stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -35,7 +27,7 @@ export const getUserStats = async (req: Request, res: Response, next: NextFuncti
 export const getTeamStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getTeamStats(caller, getTimeframeParam(req))
+    const data = await statsService.getTeamStats(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Team stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -45,7 +37,7 @@ export const getTeamStats = async (req: Request, res: Response, next: NextFuncti
 export const getEventStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getEventStats(caller, getTimeframeParam(req), getTeamIdParam(req))
+    const data = await statsService.getEventStats(caller, req.query.timeframe as string, req.query.teamId as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Event stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -55,7 +47,7 @@ export const getEventStats = async (req: Request, res: Response, next: NextFunct
 export const getOfferingStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getOfferingStats(caller, getTimeframeParam(req))
+    const data = await statsService.getOfferingStats(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Offering stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -65,7 +57,7 @@ export const getOfferingStats = async (req: Request, res: Response, next: NextFu
 export const getInteractionTypeStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getInteractionTypeStats(caller, getTimeframeParam(req))
+    const data = await statsService.getInteractionTypeStats(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Interaction type stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -75,7 +67,7 @@ export const getInteractionTypeStats = async (req: Request, res: Response, next:
 export const getDashboardStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getDashboardStats(caller, getTimeframeParam(req))
+    const data = await statsService.getDashboardStats(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Dashboard stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -85,7 +77,7 @@ export const getDashboardStats = async (req: Request, res: Response, next: NextF
 export const getBookingTrends = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getBookingTrends(caller, getTimeframeParam(req))
+    const data = await statsService.getBookingTrends(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Booking trends fetched successfully.')
   } catch (error) {
     next(error)
@@ -95,7 +87,7 @@ export const getBookingTrends = async (req: Request, res: Response, next: NextFu
 export const getTeamPerformance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getTeamPerformance(caller, getTimeframeParam(req))
+    const data = await statsService.getTeamPerformance(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Team performance stats fetched successfully.')
   } catch (error) {
     next(error)
@@ -105,7 +97,7 @@ export const getTeamPerformance = async (req: Request, res: Response, next: Next
 export const getPeakActivity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext
-    const data = await statsService.getPeakActivity(caller, getTimeframeParam(req))
+    const data = await statsService.getPeakActivity(caller, req.query.timeframe as string)
     sendSuccessResponse(res, StatusCodes.OK, data, 'Peak activity stats fetched successfully.')
   } catch (error) {
     next(error)

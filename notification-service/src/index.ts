@@ -1,11 +1,8 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./db/prisma";
 import { startDLQConsumer } from "./jobs/dlqConsumer";
 import { startNotificationConsumer } from "./jobs/notificationConsumer";
 import { startReminderScheduler } from "./jobs/reminderScheduler";
-
-
-const prisma = new PrismaClient();
 
 console.log("-----------------------------------------");
 console.log("NOTIFICATION SERVICE STARTUP");
@@ -40,7 +37,9 @@ async function startAllConsumers(): Promise<void> {
 const shutdown = (): void => {
   console.log("Received shutdown signal. Shutting down...");
   stopReminderScheduler();
-  process.exit(0);
+  void prisma.$disconnect().finally(() => {
+    process.exit(0);
+  });
 };
 
 process.on("SIGINT", shutdown);

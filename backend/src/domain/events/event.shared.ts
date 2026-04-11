@@ -10,15 +10,6 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import {
-  normalizeOptionalString,
-  normalizeRequiredString,
-  parseDurationSeconds,
-  parseNonNegativeInt,
-  parseOptionalEnum,
-  parsePositiveInt,
-  parseRequiredEnum,
-} from "../../shared/utils/validation";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import {
   safeUserSelect,
@@ -51,7 +42,7 @@ export type ListEventsOptions = {
 
 export type CreateEventInput = {
   name: string;
-  description?: string;
+  description?: string | null;
   offeringId?: string;
   interactionTypeId?: string;
   assignmentStrategy?: string;
@@ -62,14 +53,14 @@ export type CreateEventInput = {
   bookingMode?: string;
   allowedWeekdays?: number[];
   minimumNoticeMinutes?: number;
-  minParticipantCount?: number;
-  maxParticipantCount?: number;
+  minParticipantCount?: number | null;
+  maxParticipantCount?: number | null;
   sessionLeadershipStrategy?: string;
-  fixedLeadHostId?: string;
+  fixedLeadHostId?: string | null;
   bufferAfterMinutes?: number;
 };
 
-export type UpdateEventInput = CreateEventInput;
+export type UpdateEventInput = Partial<CreateEventInput>;
 
 export type UpsertEventOfferingInput = {
   key?: string;
@@ -122,16 +113,6 @@ export const isValidSessionLeadershipStrategy = (
   value: string,
 ): value is SessionLeadershipStrategy =>
   Object.values(SessionLeadershipStrategy).includes(value as SessionLeadershipStrategy);
-
-export {
-  normalizeOptionalString,
-  normalizeRequiredString,
-  parseDurationSeconds,
-  parseNonNegativeInt,
-  parseOptionalEnum,
-  parsePositiveInt,
-  parseRequiredEnum,
-} from "../../shared/utils/validation";
 
 export const normalizeKey = (value: string): string => {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");

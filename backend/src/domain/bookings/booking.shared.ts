@@ -114,7 +114,7 @@ export type BookableEvent = Prisma.EventGetPayload<{
 }>;
 
 export type BookingSchedulingContext = Pick<
-    BookableEvent & { sessionLeadershipStrategy?: any; fixedLeadHostId?: any },
+    BookableEvent,
     | "id"
     | "bookingMode"
     | "allowedWeekdays"
@@ -179,8 +179,8 @@ export const buildSchedulingContext = (
     minParticipantCount: event.minParticipantCount,
     maxParticipantCount: event.maxParticipantCount,
     interactionType: event.interactionType,
-    sessionLeadershipStrategy: (event as any).sessionLeadershipStrategy,
-    fixedLeadHostId: (event as any).fixedLeadHostId,
+    sessionLeadershipStrategy: event.sessionLeadershipStrategy,
+    fixedLeadHostId: event.fixedLeadHostId,
 });
 
 export const buildBookingListWhere = (
@@ -203,7 +203,7 @@ export const buildBookingListWhere = (
         and.push({
             OR: [
                 { hostUserId: filters.hostUserId },
-                { [("coHostUserIds" as any)]: { has: filters.hostUserId } },
+                { coHostUserIds: { has: filters.hostUserId } },
             ],
         });
     }

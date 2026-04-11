@@ -4,9 +4,9 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
+import { logger } from "../../shared/logging/logger";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
-import { assertMinimumLength } from "../../shared/utils/validation";
 import {
   SALT_ROUNDS,
   type SafeUser,
@@ -14,6 +14,7 @@ import {
   validateTimezone,
   toSafeUser,
 } from "../../shared/utils/userUtils";
+import { LoginSchema, RegisterSchema } from "./auth.schema";
 
 const MAX_FAILED_LOGIN_ATTEMPTS = Number(
   process.env.MAX_FAILED_LOGIN_ATTEMPTS ?? 5,
@@ -40,40 +41,15 @@ type LoginUserInput = {
   password: string;
 };
 
-const isValidRole = (role: string): role is UserRole => {
-  return Object.values(UserRole).includes(role as UserRole);
-};
-
 const register = async (
   payload: RegisterUserInput,
 ): Promise<{ user: SafeUser; token: string }> => {
-  const firstName = payload.firstName?.trim();
-  const lastName = payload.lastName?.trim();
-  const email = payload.email?.trim();
-  const password = payload.password?.trim();
+  const validated = await RegisterSchema.body.parseAsync(payload);
 
-  if (!firstName || !lastName || !email || !password) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "firstName, lastName, email and password are required.",
-    );
-  }
+  const normalizedEmail = normalizeEmail(validated.email);
 
-  assertMinimumLength(
-    password,
-    8,
-    "Password must be at least 8 characters long.",
-  );
-
-  const normalizedEmail = normalizeEmail(email);
-
-  const role = payload.role ? payload.role.trim() : UserRole.COACH;
-  if (!isValidRole(role)) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid user role.");
-  }
-
-  const timezone = payload.timezone
-    ? validateTimezone(payload.timezone.trim())
+  const timezone = validated.timezone
+    ? validateTimezone(validated.timezone)
     : "UTC";
 
   const existingUser = await prisma.user.findUnique({
@@ -87,27 +63,32 @@ const register = async (
     );
   }
 
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  const hashedPassword = await bcrypt.hash(validated.password, SALT_ROUNDS);
 
   try {
     const createdUser = await prisma.user.create({
       data: {
-        firstName,
-        lastName,
+        firstName: validated.firstName,
+        lastName: validated.lastName,
         email: normalizedEmail,
         publicBookingSlug: createPublicBookingSlug(
-          `${firstName} ${lastName}`,
+          `${validated.firstName} ${validated.lastName}`,
           "coach",
         ),
         password: hashedPassword,
-        phoneNumber: payload.phoneNumber?.trim(),
-        avatarUrl: payload.avatarUrl?.trim(),
-        role,
+        phoneNumber: validated.phoneNumber,
+        avatarUrl: validated.avatarUrl,
+        role: validated.role || UserRole.COACH,
         timezone,
       },
     });
 
     const safeUser = toSafeUser(createdUser);
+
+    logger.info("User registered successfully.", {
+      userId: safeUser.id,
+      role: safeUser.role,
+    });
 
     return {
       user: safeUser,
@@ -126,17 +107,9 @@ const register = async (
 const login = async (
   payload: LoginUserInput,
 ): Promise<{ user: SafeUser; token: string }> => {
-  const email = payload.email?.trim();
-  const password = payload.password?.trim();
-
-  if (!email || !password) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "email and password are required.",
-    );
-  }
-
-  const normalizedEmail = normalizeEmail(email);
+  const validated = await LoginSchema.body.parseAsync(payload);
+  const normalizedEmail = normalizeEmail(validated.email);
+  const password = validated.password;
 
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
@@ -150,6 +123,10 @@ const login = async (
   }
 
   if (!user.isActive) {
+    logger.warn("Inactive account login attempt blocked.", {
+      userId: user.id,
+      role: user.role,
+    });
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
       "This account is inactive. Please contact an administrator.",
@@ -157,6 +134,10 @@ const login = async (
   }
 
   if (user.lockedUntil && user.lockedUntil > new Date()) {
+    logger.warn("Locked account login attempt blocked.", {
+      userId: user.id,
+      lockedUntil: user.lockedUntil.toISOString(),
+    });
     throw new ErrorHandler(
       StatusCodes.LOCKED,
       "Too many failed attempts. Account is temporarily locked.",
@@ -168,21 +149,32 @@ const login = async (
   if (!isPasswordValid) {
     const nextFailedAttempts = user.failedLoginAttempts + 1;
     const shouldLockAccount = nextFailedAttempts >= MAX_FAILED_LOGIN_ATTEMPTS;
+    const lockedUntil = shouldLockAccount ? getLockoutUntil() : null;
 
     await prisma.user.update({
       where: { id: user.id },
       data: {
         failedLoginAttempts: shouldLockAccount ? 0 : nextFailedAttempts,
-        lockedUntil: shouldLockAccount ? getLockoutUntil() : null,
+        lockedUntil,
       },
     });
 
     if (shouldLockAccount) {
+      logger.warn("User account locked after repeated failed login attempts.", {
+        userId: user.id,
+        attempts: nextFailedAttempts,
+        lockedUntil: lockedUntil?.toISOString(),
+      });
       throw new ErrorHandler(
         StatusCodes.LOCKED,
         "Too many failed attempts. Account is temporarily locked.",
       );
     }
+
+    logger.warn("Invalid password attempt recorded.", {
+      userId: user.id,
+      failedLoginAttempts: nextFailedAttempts,
+    });
 
     throw new ErrorHandler(
       StatusCodes.UNAUTHORIZED,
@@ -200,6 +192,11 @@ const login = async (
   });
 
   const safeUser = toSafeUser(updatedUser);
+
+  logger.info("User logged in successfully.", {
+    userId: safeUser.id,
+    role: safeUser.role,
+  });
 
   return {
     user: safeUser,
@@ -230,8 +227,8 @@ const bootstrap = async (
 ): Promise<{ user: SafeUser; token: string }> => {
   const secret = process.env.BOOTSTRAP_SECRET;
   if (!secret) {
-    console.warn(
-      "[BOOTSTRAP] BOOTSTRAP_SECRET is not set. Configure it in .env to enable first-admin provisioning.",
+    logger.warn(
+      "Bootstrap attempted while BOOTSTRAP_SECRET is not configured.",
     );
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
@@ -252,7 +249,7 @@ const bootstrap = async (
   }
 
   // Force SUPER_ADMIN — ignore any role in the payload
-  return register({
+  const result = await register({
     firstName: payload.firstName,
     lastName: payload.lastName,
     email: payload.email,
@@ -260,5 +257,11 @@ const bootstrap = async (
     timezone: payload.timezone,
     role: UserRole.SUPER_ADMIN,
   });
+
+  logger.info("Bootstrap super admin provisioned.", {
+    userId: result.user.id,
+  });
+
+  return result;
 };
 export { bootstrap, login, logout, register };

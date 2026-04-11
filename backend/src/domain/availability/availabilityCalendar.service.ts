@@ -73,7 +73,7 @@ export const addAvailabilityException = async (
     await assertCanManageAvailability(userId, caller, 'exceptions', 'write');
 
     const date = parseAvailabilityExceptionDate(payload.date);
-    validateAvailabilityExceptionInput(payload);
+    validateAvailabilityExceptionInput({ ...payload, date: date.toISOString().split('T')[0] });
 
     const result = await prisma.userAvailabilityException.create({
         data: {
@@ -87,7 +87,7 @@ export const addAvailabilityException = async (
 
     void queueAvailabilityExceptionNotification({
         userId,
-        date,
+        date: date.toISOString().split('T')[0],
         isUnavailable: payload.isUnavailable,
         startTime: payload.startTime,
         endTime: payload.endTime,
