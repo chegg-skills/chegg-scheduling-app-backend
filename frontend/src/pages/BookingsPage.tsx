@@ -83,7 +83,7 @@ export function BookingsPage() {
     }), [debouncedSearch, statusFilter, advancedFilters, backendPage, pageSize])
 
     const { data, isLoading, error } = useBookings(serverFilters)
-    const bookings = data?.bookings ?? []
+    const bookings = useMemo(() => data?.bookings ?? [], [data?.bookings])
     const pagination = data?.pagination
 
     const filteredBookings = useMemo(() => {

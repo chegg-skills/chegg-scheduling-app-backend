@@ -1,16 +1,26 @@
-import { EventBookingMode, type EventInteractionType as EventInteractionTypeModel } from "@prisma/client";
+import { EventBookingMode, Prisma, type EventInteractionType as EventInteractionTypeModel, type EventScheduleSlot } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   getManagedEvent,
-  parseNonNegativeInt,
   type CreateEventInput,
   type SafeEvent,
   type UpdateEventInput,
   type UpsertEventScheduleSlotInput,
 } from "./event.shared";
+import { EventScheduleSlotSchema } from "./event.schema";
+
+type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
+  include: {
+    _count: {
+      select: {
+        bookings: true;
+      };
+    };
+  };
+}>;
 
 const resolveEventSchedulingConfig = (
   payload: CreateEventInput | UpdateEventInput,
@@ -103,9 +113,9 @@ const assertParticipantCapacityAvailable = (
 const resolveMatchingScheduleSlot = async (
   eventId: string,
   startTime: Date,
-  tx?: any, // Accept transaction client
-) => {
-  const client = tx || prisma;
+  tx?: Prisma.TransactionClient,
+): Promise<EventScheduleSlot | null> => {
+  const client = tx ?? prisma;
   return client.eventScheduleSlot.findFirst({
     where: {
       eventId,
@@ -118,7 +128,7 @@ const resolveMatchingScheduleSlot = async (
 const listEventScheduleSlots = async (
   eventId: string,
   caller: CallerContext,
-): Promise<{ slots: any[] }> => {
+): Promise<{ slots: EventScheduleSlotWithBookingCount[] }> => {
   await getManagedEvent(eventId, caller);
 
   const slots = await prisma.eventScheduleSlot.findMany({
@@ -141,18 +151,18 @@ const createEventScheduleSlot = async (
   eventId: string,
   payload: UpsertEventScheduleSlotInput,
   caller: CallerContext,
-): Promise<any> => {
+): Promise<EventScheduleSlot> => {
   await getManagedEvent(eventId, caller);
+
+  const validated = EventScheduleSlotSchema.body.parse(payload);
 
   return prisma.eventScheduleSlot.create({
     data: {
       eventId,
-      startTime: new Date(payload.startTime as string | Date),
-      endTime: new Date(payload.endTime as string | Date),
-      capacity: payload.capacity !== undefined && payload.capacity !== null
-        ? parseNonNegativeInt(payload.capacity, "capacity")
-        : null,
-      isActive: payload.isActive ?? true,
+      startTime: validated.startTime,
+      endTime: validated.endTime,
+      capacity: validated.capacity,
+      isActive: validated.isActive,
     },
   });
 };
@@ -162,7 +172,7 @@ const updateEventScheduleSlot = async (
   slotId: string,
   payload: UpsertEventScheduleSlotInput,
   caller: CallerContext,
-): Promise<any> => {
+): Promise<EventScheduleSlot> => {
   await getManagedEvent(eventId, caller);
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
@@ -171,17 +181,12 @@ const updateEventScheduleSlot = async (
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found for this event.");
   }
 
-  const data: Record<string, unknown> = {};
-  if (payload.startTime !== undefined) data.startTime = new Date(payload.startTime);
-  if (payload.endTime !== undefined) data.endTime = new Date(payload.endTime);
-  if (payload.isActive !== undefined) data.isActive = Boolean(payload.isActive);
-  if (payload.capacity !== undefined) {
-    data.capacity = payload.capacity !== null ? parseNonNegativeInt(payload.capacity, "capacity") : null;
-  }
+  // Use partial schema for updates to avoid refinement issues
+  const validated = EventScheduleSlotSchema.partial.parse(payload);
 
   return prisma.eventScheduleSlot.update({
     where: { id: slotId },
-    data,
+    data: validated,
   });
 };
 
@@ -189,7 +194,7 @@ const deleteEventScheduleSlot = async (
   eventId: string,
   slotId: string,
   caller: CallerContext,
-): Promise<any> => {
+): Promise<EventScheduleSlot> => {
   await getManagedEvent(eventId, caller);
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },

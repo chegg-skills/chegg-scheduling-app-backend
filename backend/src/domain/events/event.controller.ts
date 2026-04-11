@@ -4,49 +4,6 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as eventService from "./event.service";
 
-const getTeamIdParam = (req: Request): string => {
-  const { teamId } = req.params;
-  return Array.isArray(teamId) ? teamId[0] : teamId;
-};
-
-const getEventIdParam = (req: Request): string => {
-  const { eventId } = req.params;
-  return Array.isArray(eventId) ? eventId[0] : eventId;
-};
-
-const getOfferingIdParam = (req: Request): string => {
-  const { offeringId } = req.params;
-  return Array.isArray(offeringId) ? offeringId[0] : offeringId;
-};
-
-const getInteractionTypeIdParam = (req: Request): string => {
-  const { interactionTypeId } = req.params;
-  return Array.isArray(interactionTypeId) ? interactionTypeId[0] : interactionTypeId;
-};
-
-const getUserIdParam = (req: Request): string => {
-  const { userId } = req.params;
-  return Array.isArray(userId) ? userId[0] : userId;
-};
-
-const getSlotIdParam = (req: Request): string => {
-  const { slotId } = req.params;
-  return Array.isArray(slotId) ? slotId[0] : slotId;
-};
-
-const parsePositiveInt = (value: unknown): number | undefined => {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return undefined;
-  }
-
-  return parsed;
-};
-
 const createEvent = async (
   req: Request,
   res: Response,
@@ -55,7 +12,7 @@ const createEvent = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const event = await eventService.createEvent(
-      getTeamIdParam(req),
+      (req.params as any).teamId,
       req.body,
       caller,
     );
@@ -79,7 +36,7 @@ const duplicateEvent = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const event = await eventService.duplicateEvent(
-      getEventIdParam(req),
+      (req.params as any).eventId,
       caller,
     );
 
@@ -141,7 +98,7 @@ const updateEventOffering = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const offering = await eventService.updateEventOffering(
-      getOfferingIdParam(req),
+      (req.params as any).offeringId,
       req.body,
       caller,
     );
@@ -165,7 +122,7 @@ const deleteEventOffering = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const offering = await eventService.deleteEventOffering(
-      getOfferingIdParam(req),
+      (req.params as any).offeringId,
       caller,
     );
 
@@ -188,7 +145,7 @@ const getEventOfferingUsage = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const usage = await eventService.getEventOfferingUsage(
-      getOfferingIdParam(req),
+      (req.params as any).offeringId,
       caller,
     );
 
@@ -250,7 +207,7 @@ const updateInteractionType = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const interactionType = await eventService.updateInteractionType(
-      getInteractionTypeIdParam(req),
+      (req.params as any).interactionTypeId,
       req.body,
       caller,
     );
@@ -274,7 +231,7 @@ const deleteInteractionType = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const interactionType = await eventService.deleteInteractionType(
-      getInteractionTypeIdParam(req),
+      (req.params as any).interactionTypeId,
       caller,
     );
 
@@ -297,7 +254,7 @@ const getInteractionTypeUsage = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const usage = await eventService.getInteractionTypeUsage(
-      getInteractionTypeIdParam(req),
+      (req.params as any).interactionTypeId,
       caller,
     );
 
@@ -319,12 +276,11 @@ const listTeamEvents = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const page = parsePositiveInt(req.query.page);
-    const pageSize = parsePositiveInt(req.query.pageSize);
+    const filters = req.query as any;
     const result = await eventService.listTeamEvents(
-      getTeamIdParam(req),
+      (req.params as any).teamId,
       caller,
-      { page, pageSize },
+      { page: (req.query as any).page, pageSize: (req.query as any).pageSize },
     );
 
     sendSuccessResponse(
@@ -345,7 +301,7 @@ const readEvent = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.readEvent(getEventIdParam(req), caller);
+    const event = await eventService.readEvent((req.params as any).eventId, caller);
 
     sendSuccessResponse(
       res,
@@ -366,7 +322,7 @@ const updateEvent = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const event = await eventService.updateEvent(
-      getEventIdParam(req),
+      (req.params as any).eventId,
       req.body,
       caller,
     );
@@ -389,7 +345,7 @@ const deleteEvent = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.deleteEvent(getEventIdParam(req), caller);
+    const event = await eventService.deleteEvent((req.params as any).eventId, caller);
 
     sendSuccessResponse(
       res,
@@ -410,7 +366,7 @@ const listEventHosts = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.listEventHosts(
-      getEventIdParam(req),
+      (req.params as any).eventId,
       caller,
     );
 
@@ -433,7 +389,7 @@ const replaceEventHosts = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.replaceEventHosts(
-      getEventIdParam(req),
+      (req.params as any).eventId,
       req.body,
       caller,
     );
@@ -457,8 +413,8 @@ const removeEventHost = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.removeEventHost(
-      getEventIdParam(req),
-      getUserIdParam(req),
+      (req.params as any).eventId,
+      (req.params as any).userId,
       caller,
     );
 
@@ -481,7 +437,7 @@ const listEventScheduleSlots = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.listEventScheduleSlots(
-      getEventIdParam(req),
+      (req.params as any).eventId,
       caller,
     );
 
@@ -504,7 +460,7 @@ const createEventScheduleSlot = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const slot = await eventService.createEventScheduleSlot(
-      getEventIdParam(req),
+      (req.params as any).eventId,
       req.body,
       caller,
     );
@@ -528,8 +484,8 @@ const updateEventScheduleSlot = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const slot = await eventService.updateEventScheduleSlot(
-      getEventIdParam(req),
-      getSlotIdParam(req),
+      (req.params as any).eventId,
+      (req.params as any).slotId,
       req.body,
       caller,
     );
@@ -553,8 +509,8 @@ const deleteEventScheduleSlot = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const slot = await eventService.deleteEventScheduleSlot(
-      getEventIdParam(req),
-      getSlotIdParam(req),
+      (req.params as any).eventId,
+      (req.params as any).slotId,
       caller,
     );
 
@@ -576,9 +532,8 @@ const listAllEvents = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const page = parsePositiveInt(req.query.page);
-    const pageSize = parsePositiveInt(req.query.pageSize);
-    const result = await eventService.listAllEvents(caller, { page, pageSize });
+    const filters = req.query as any;
+    const result = await eventService.listAllEvents(caller, { page: filters.page, pageSize: filters.pageSize });
 
     sendSuccessResponse(
       res,

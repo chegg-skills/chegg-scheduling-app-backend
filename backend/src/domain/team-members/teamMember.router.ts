@@ -4,6 +4,13 @@ import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import * as teamMemberController from "./teamMember.controller";
 
+import { validate } from "../../shared/middleware/validate";
+import {
+  AddTeamMemberSchema,
+  TeamIdParamSchema,
+  RemoveTeamMemberSchema,
+} from "./teamMember.schema";
+
 const router = express.Router();
 
 router
@@ -11,11 +18,13 @@ router
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(AddTeamMemberSchema),
     teamMemberController.addTeamMember,
   )
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(TeamIdParamSchema),
     teamMemberController.listTeamMembers,
   )
   .all(methodNotAllowed);
@@ -25,6 +34,7 @@ router
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(AddTeamMemberSchema),
     teamMemberController.addTeamMember,
   )
   .all(methodNotAllowed);
@@ -34,6 +44,7 @@ router
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(RemoveTeamMemberSchema),
     teamMemberController.removeTeamMember,
   )
   .all(methodNotAllowed);

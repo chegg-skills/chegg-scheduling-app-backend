@@ -4,6 +4,12 @@ import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import * as userController from "./user.controller";
 import availabilityRouter from '../availability/availability.router';
+import { validate } from "../../shared/middleware/validate";
+import {
+  ListUsersSchema,
+  UpdateUserSchema,
+  UpdateMyProfileSchema,
+} from "./user.schema";
 
 const router = express.Router();
 
@@ -12,6 +18,7 @@ router
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(ListUsersSchema),
     userController.listUsers,
   )
   .all(methodNotAllowed);
@@ -24,6 +31,7 @@ router
   )
   .patch(
     authenticate,
+    validate(UpdateMyProfileSchema),
     userController.updateMyProfile,
   )
   .all(methodNotAllowed);
@@ -38,11 +46,13 @@ router
   .put(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(UpdateUserSchema),
     userController.updateUser,
   )
   .patch(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(UpdateUserSchema),
     userController.updateUser,
   )
   .delete(

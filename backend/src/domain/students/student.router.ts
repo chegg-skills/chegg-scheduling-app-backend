@@ -4,6 +4,9 @@ import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import * as studentController from "./student.controller";
 
+import { validate } from "../../shared/middleware/validate";
+import { ListStudentsSchema, StudentIdParamSchema } from "./student.schema";
+
 const router = express.Router();
 
 router
@@ -11,6 +14,7 @@ router
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(ListStudentsSchema),
     studentController.listStudents,
   )
   .all(methodNotAllowed);
@@ -20,6 +24,7 @@ router
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(StudentIdParamSchema),
     studentController.readStudent,
   )
   .all(methodNotAllowed);
@@ -29,6 +34,7 @@ router
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(StudentIdParamSchema),
     studentController.listStudentBookings,
   )
   .all(methodNotAllowed);

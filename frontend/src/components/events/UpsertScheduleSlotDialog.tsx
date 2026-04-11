@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { format, addSeconds } from 'date-fns'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
@@ -28,7 +28,7 @@ export function UpsertScheduleSlotDialog({
     onSave,
     isPending,
 }: UpsertScheduleSlotDialogProps) {
-    const allowedDays = event.allowedWeekdays || []
+    const allowedDays = useMemo(() => event.allowedWeekdays ?? [], [event.allowedWeekdays])
     const mode = slot ? 'Edit' : 'Add'
 
     // Local state for the form

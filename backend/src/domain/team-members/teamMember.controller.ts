@@ -4,16 +4,6 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as teamMemberService from "./teamMember.service";
 
-const getTeamIdParam = (req: Request): string => {
-  const { teamId } = req.params;
-  return Array.isArray(teamId) ? teamId[0] : teamId;
-};
-
-const getUserIdParam = (req: Request): string => {
-  const { userId } = req.params;
-  return Array.isArray(userId) ? userId[0] : userId;
-};
-
 const addTeamMember = async (
   req: Request,
   res: Response,
@@ -21,14 +11,14 @@ const addTeamMember = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const teamId = getTeamIdParam(req);
+    const { teamId } = req.params;
     const { userId, userIds } = req.body;
 
     let result;
     if (userIds && Array.isArray(userIds)) {
-      result = await teamMemberService.addTeamMembers(teamId, { userIds }, caller);
+      result = await teamMemberService.addTeamMembers(teamId as any, { userIds }, caller);
     } else {
-      result = await teamMemberService.addTeamMember(teamId, { userId }, caller);
+      result = await teamMemberService.addTeamMember(teamId as any, { userId }, caller);
     }
 
     sendSuccessResponse(
@@ -49,8 +39,9 @@ const listTeamMembers = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
+    const { teamId } = req.params;
     const result = await teamMemberService.listTeamMembers(
-      getTeamIdParam(req),
+      teamId as any,
       caller,
     );
 
@@ -72,9 +63,10 @@ const removeTeamMember = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
+    const { teamId, userId } = req.params;
     const member = await teamMemberService.removeTeamMember(
-      getTeamIdParam(req),
-      getUserIdParam(req),
+      teamId as any,
+      userId as any,
       caller,
     );
 

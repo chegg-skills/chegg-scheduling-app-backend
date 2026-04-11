@@ -13,9 +13,9 @@ const register = async (
     // When self-register is enabled (public endpoint), always force role to
     // COACH — callers must not be able to self-promote to SUPER_ADMIN/TEAM_ADMIN.
     const isSelfRegister = process.env.ALLOW_SELF_REGISTER === "true";
-    const body = isSelfRegister ? { ...req.body, role: undefined } : req.body;
+    const data = isSelfRegister ? { ...req.body, role: undefined } : req.body;
 
-    const result = await authService.register(body);
+    const result = await authService.register(data);
     setAuthCookie(res, result.token);
 
     sendSuccessResponse(

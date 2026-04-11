@@ -1,3 +1,5 @@
+import { logger } from "../logging/logger";
+
 type NotificationType =
   | "USER_INVITED"
   | "INVITE_ACCEPTED"
@@ -131,11 +133,15 @@ const publishNotificationSafely = async (
   try {
     return await publishNotification(payload);
   } catch (error) {
-    console.error("Failed to publish notification job:", error);
+    logger.error("Failed to publish notification job.", {
+      type: payload.type,
+      entityType: payload.entityType,
+      entityId: payload.entityId,
+      error,
+    });
     return false;
   }
 };
-
 const resolveFrontendUrl = (): string => {
   const rawUrl =
     process.env.FRONTEND_URL ??

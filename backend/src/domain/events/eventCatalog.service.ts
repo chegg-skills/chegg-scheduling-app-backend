@@ -6,16 +6,12 @@ import { rethrowPrismaError } from "../../shared/error/prismaError";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   assertCatalogManagementAllowed,
-  normalizeKey,
-  normalizeOptionalString,
-  normalizeRequiredString,
-  parseNonNegativeInt,
-  parsePositiveInt,
   type SafeEventInteractionType,
   type SafeEventOffering,
   type UpsertEventOfferingInput,
   type UpsertInteractionTypeInput,
 } from "./event.shared";
+import { EventOfferingSchema, InteractionTypeSchema } from "./event.schema";
 
 const createEventOffering = async (
   payload: UpsertEventOfferingInput,
@@ -23,20 +19,16 @@ const createEventOffering = async (
 ): Promise<SafeEventOffering> => {
   assertCatalogManagementAllowed(caller);
 
-  const key = normalizeKey(normalizeRequiredString(payload.key, "key"));
-  const name = normalizeRequiredString(payload.name, "name");
+  const validated = EventOfferingSchema.body.parse(payload);
 
   try {
     return await prisma.eventOffering.create({
       data: {
-        key,
-        name,
-        description: normalizeOptionalString(payload.description, "description"),
-        sortOrder:
-          payload.sortOrder !== undefined
-            ? parseNonNegativeInt(payload.sortOrder, "sortOrder")
-            : 0,
-        isActive: payload.isActive ?? true,
+        key: validated.key!,
+        name: validated.name!,
+        description: validated.description,
+        sortOrder: validated.sortOrder,
+        isActive: validated.isActive,
         createdById: caller.id,
         updatedById: caller.id,
       },
@@ -70,25 +62,17 @@ const updateEventOffering = async (
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "offeringId is required.");
   }
 
+  const validated = EventOfferingSchema.body.parse(payload);
+
+  // Strip non-Prisma fields
   const data: Prisma.EventOfferingUpdateInput = {
+    key: validated.key,
+    name: validated.name,
+    description: validated.description,
+    sortOrder: validated.sortOrder,
+    isActive: validated.isActive,
     updatedBy: { connect: { id: caller.id } },
   };
-
-  if (payload.key !== undefined) {
-    data.key = normalizeKey(normalizeRequiredString(payload.key, "key"));
-  }
-  if (payload.name !== undefined) {
-    data.name = normalizeRequiredString(payload.name, "name");
-  }
-  if (payload.description !== undefined) {
-    data.description = normalizeOptionalString(payload.description, "description");
-  }
-  if (payload.sortOrder !== undefined) {
-    data.sortOrder = parseNonNegativeInt(payload.sortOrder, "sortOrder");
-  }
-  if (payload.isActive !== undefined) {
-    data.isActive = Boolean(payload.isActive);
-  }
 
   try {
     return await prisma.eventOffering.update({
@@ -164,110 +148,29 @@ const deleteEventOffering = async (
   }
 };
 
-const validateInteractionTypePayload = (
-  payload: UpsertInteractionTypeInput,
-): {
-  supportsRoundRobin: boolean;
-  supportsMultipleHosts: boolean;
-  minHosts: number;
-  maxHosts: number | null;
-  minParticipants: number;
-  maxParticipants: number | null;
-  supportsSimultaneousCoaches: boolean;
-} => {
-  const supportsRoundRobin = Boolean(payload.supportsRoundRobin);
-  const supportsMultipleHosts = Boolean(payload.supportsMultipleHosts);
-  const minHosts =
-    payload.minHosts !== undefined ? parsePositiveInt(payload.minHosts, "minHosts") : 1;
-  const maxHosts =
-    payload.maxHosts === undefined || payload.maxHosts === null
-      ? null
-      : parsePositiveInt(payload.maxHosts, "maxHosts");
-  const supportsSimultaneousCoaches = Boolean(payload.supportsSimultaneousCoaches);
-  const minParticipants =
-    payload.minParticipants !== undefined
-      ? parsePositiveInt(payload.minParticipants, "minParticipants")
-      : 1;
-  const maxParticipants =
-    payload.maxParticipants === undefined || payload.maxParticipants === null
-      ? null
-      : parsePositiveInt(payload.maxParticipants, "maxParticipants");
-
-  if (!supportsMultipleHosts && minHosts > 1) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "minHosts cannot be greater than 1 when supportsMultipleHosts is false.",
-    );
-  }
-
-  if (maxHosts !== null && maxHosts < minHosts) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "maxHosts cannot be less than minHosts.",
-    );
-  }
-
-  if (maxParticipants !== null && maxParticipants < minParticipants) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "maxParticipants cannot be less than minParticipants.",
-    );
-  }
-
-  if (supportsRoundRobin && !supportsMultipleHosts) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "supportsRoundRobin requires supportsMultipleHosts to be true.",
-    );
-  }
-
-  if (supportsMultipleHosts && maxHosts !== null && maxHosts < 2) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "When supportsMultipleHosts is true, maxHosts must be at least 2 or null.",
-    );
-  }
-
-  if (supportsSimultaneousCoaches && !supportsMultipleHosts) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "supportsSimultaneousCoaches requires supportsMultipleHosts to be true.",
-    );
-  }
-
-  return {
-    supportsRoundRobin,
-    supportsMultipleHosts,
-    minHosts,
-    maxHosts,
-    minParticipants,
-    maxParticipants,
-    supportsSimultaneousCoaches,
-  };
-};
-
 const createInteractionType = async (
   payload: UpsertInteractionTypeInput,
   caller: CallerContext,
 ): Promise<SafeEventInteractionType> => {
   assertCatalogManagementAllowed(caller);
 
-  const key = normalizeKey(normalizeRequiredString(payload.key, "key"));
-  const name = normalizeRequiredString(payload.name, "name");
-  const validated = validateInteractionTypePayload(payload);
+  const validated = InteractionTypeSchema.body.parse(payload);
 
   try {
     return await prisma.eventInteractionType.create({
       data: {
-        key,
-        name,
-        description: normalizeOptionalString(payload.description, "description"),
-        ...validated,
-        sortOrder:
-          payload.sortOrder !== undefined
-            ? parseNonNegativeInt(payload.sortOrder, "sortOrder")
-            : 0,
-        isActive: payload.isActive ?? true,
+        key: validated.key!,
+        name: validated.name!,
+        description: validated.description,
+        supportsRoundRobin: validated.supportsRoundRobin,
+        supportsMultipleHosts: validated.supportsMultipleHosts,
+        minHosts: validated.minHosts,
+        maxHosts: validated.maxHosts,
+        minParticipants: validated.minParticipants,
+        maxParticipants: validated.maxParticipants,
+        supportsSimultaneousCoaches: validated.supportsSimultaneousCoaches,
+        sortOrder: validated.sortOrder,
+        isActive: validated.isActive,
         createdById: caller.id,
         updatedById: caller.id,
       },
@@ -312,45 +215,26 @@ const updateInteractionType = async (
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Interaction type not found.");
   }
 
-  const mergedPayload: UpsertInteractionTypeInput = {
-    supportsRoundRobin:
-      payload.supportsRoundRobin ?? existing.supportsRoundRobin,
-    supportsMultipleHosts:
-      payload.supportsMultipleHosts ?? existing.supportsMultipleHosts,
-    minHosts: payload.minHosts ?? existing.minHosts,
-    maxHosts:
-      payload.maxHosts !== undefined ? payload.maxHosts : existing.maxHosts,
-    minParticipants: payload.minParticipants ?? existing.minParticipants,
-    maxParticipants:
-      payload.maxParticipants !== undefined
-        ? payload.maxParticipants
-        : existing.maxParticipants,
-    supportsSimultaneousCoaches:
-      payload.supportsSimultaneousCoaches ?? existing.supportsSimultaneousCoaches,
-  };
+  // Zod can handle partial updates, but we need to ensure refinements work on merged state
+  const mergedPayload = { ...existing, ...payload };
+  const validated = InteractionTypeSchema.body.parse(mergedPayload);
 
-  const validated = validateInteractionTypePayload(mergedPayload);
-
+  // Strip non-Prisma fields and relationships
   const data: Prisma.EventInteractionTypeUpdateInput = {
+    key: validated.key,
+    name: validated.name,
+    description: validated.description,
+    supportsRoundRobin: validated.supportsRoundRobin,
+    supportsMultipleHosts: validated.supportsMultipleHosts,
+    minHosts: validated.minHosts,
+    maxHosts: validated.maxHosts,
+    minParticipants: validated.minParticipants,
+    maxParticipants: validated.maxParticipants,
+    supportsSimultaneousCoaches: validated.supportsSimultaneousCoaches,
+    sortOrder: validated.sortOrder,
+    isActive: validated.isActive,
     updatedBy: { connect: { id: caller.id } },
-    ...validated,
   };
-
-  if (payload.key !== undefined) {
-    data.key = normalizeKey(normalizeRequiredString(payload.key, "key"));
-  }
-  if (payload.name !== undefined) {
-    data.name = normalizeRequiredString(payload.name, "name");
-  }
-  if (payload.description !== undefined) {
-    data.description = normalizeOptionalString(payload.description, "description");
-  }
-  if (payload.sortOrder !== undefined) {
-    data.sortOrder = parseNonNegativeInt(payload.sortOrder, "sortOrder");
-  }
-  if (payload.isActive !== undefined) {
-    data.isActive = Boolean(payload.isActive);
-  }
 
   try {
     return await prisma.eventInteractionType.update({

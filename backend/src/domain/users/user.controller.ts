@@ -4,42 +4,13 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as userService from "./user.service";
 
-const getUserIdParam = (req: Request): string => {
-  const { userId } = req.params;
-  return Array.isArray(userId) ? userId[0] : userId;
-};
-
-const parsePositiveInt = (value: unknown): number | undefined => {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return undefined;
-  }
-
-  return parsed;
-};
-
-const parseString = (value: unknown): string | undefined => {
-  if (typeof value === "string") {
-    return value.trim() || undefined;
-  }
-
-  return undefined;
-};
-
 const listUsers = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const page = parsePositiveInt(req.query.page);
-    const pageSize = parsePositiveInt(req.query.pageSize);
-    const search = parseString(req.query.search);
-    const result = await userService.listUsers({ page, pageSize, search });
+    const result = await userService.listUsers(req.query as any);
 
     sendSuccessResponse(
       res,
@@ -58,7 +29,7 @@ const readUser = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const user = await userService.readUser(getUserIdParam(req));
+    const user = await userService.readUser((req.params as any).userId);
     sendSuccessResponse(
       res,
       StatusCodes.OK,
@@ -96,7 +67,7 @@ const updateUser = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const user = await userService.updateUser(getUserIdParam(req), req.body, caller);
+    const user = await userService.updateUser((req.params as any).userId, req.body, caller);
     sendSuccessResponse(
       res,
       StatusCodes.OK,
@@ -115,7 +86,7 @@ const deleteUser = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const user = await userService.deleteUser(getUserIdParam(req), caller);
+    const user = await userService.deleteUser((req.params as any).userId, caller);
     sendSuccessResponse(
       res,
       StatusCodes.OK,

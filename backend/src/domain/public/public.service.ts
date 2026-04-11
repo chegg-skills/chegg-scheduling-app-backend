@@ -1,9 +1,11 @@
 import { UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import { z } from "zod";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { requireTrimmedString } from "../../shared/utils/validation";
 import { bookingInclude } from "../bookings/booking.shared";
+
+const slugSchema = z.string().trim().min(1, "Slug is required");
 
 const publicTeamSelect = {
     id: true,
@@ -39,8 +41,8 @@ const publicCoachSelect = {
     publicBookingSlug: true,
 } as const;
 
-const normalizeSlug = (slug: string, label: string): string => {
-    return requireTrimmedString(slug, label, `${label} is required.`);
+const normalizeSlug = (slug: string): string => {
+    return slugSchema.parse(slug);
 };
 
 /**
@@ -55,7 +57,7 @@ export const listTeams = async () => {
 };
 
 export const getTeamBySlug = async (slug: string) => {
-    const normalizedSlug = normalizeSlug(slug, "teamSlug");
+    const normalizedSlug = normalizeSlug(slug);
 
     const team = await prisma.team.findFirst({
         where: {
@@ -94,7 +96,7 @@ export const listTeamEventsBySlug = async (slug: string) => {
 };
 
 export const getEventBySlug = async (slug: string) => {
-    const normalizedSlug = normalizeSlug(slug, "eventSlug");
+    const normalizedSlug = normalizeSlug(slug);
 
     const event = await prisma.event.findFirst({
         where: {
@@ -113,7 +115,7 @@ export const getEventBySlug = async (slug: string) => {
 };
 
 export const getCoachBySlug = async (slug: string) => {
-    const normalizedSlug = normalizeSlug(slug, "coachSlug");
+    const normalizedSlug = normalizeSlug(slug);
 
     const coach = await prisma.user.findUnique({
         where: { publicBookingSlug: normalizedSlug },

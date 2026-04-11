@@ -10,12 +10,12 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import {
   toDateOnlyString,
 } from "../../shared/utils/date";
-import {
-  assertStartBeforeEnd,
-  parseDateInput,
-  validateTimeFormat,
-} from "../../shared/utils/validation";
 import type { CallerContext } from "../../shared/utils/userUtils";
+import {
+  AddAvailabilityExceptionSchema,
+  AvailabilitySchemas,
+  SetWeeklyAvailabilitySchema,
+} from "./availability.schema";
 
 export type AvailabilityClient = Prisma.TransactionClient | PrismaClient;
 
@@ -53,63 +53,31 @@ export const assertCanManageAvailability = (
   }
 };
 
-export { validateTimeFormat };
-
 export const validateWeeklySlots = (
   slots: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
 ): void => {
-  for (const slot of slots) {
-    if (
-      !Number.isInteger(slot.dayOfWeek) ||
-      slot.dayOfWeek < 0 ||
-      slot.dayOfWeek > 6
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        "dayOfWeek must be an integer between 0 and 6.",
-      );
-    }
-
-    validateTimeFormat(slot.startTime, "startTime");
-    validateTimeFormat(slot.endTime, "endTime");
-
-    assertStartBeforeEnd(slot.startTime, slot.endTime);
-  }
+  SetWeeklyAvailabilitySchema.body.parse(slots);
 };
 
 export const parseAvailabilityExceptionDate = (value: Date | string): Date => {
-  return parseDateInput(value, "date");
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "Invalid date provided.",
+    );
+  }
+  return date;
 };
+
 export const validateAvailabilityExceptionInput = (payload: {
   isUnavailable: boolean;
   startTime?: string | null;
   endTime?: string | null;
+  date?: string;
 }): void => {
-  if (payload.isUnavailable) {
-    if (payload.startTime) {
-      validateTimeFormat(payload.startTime, "startTime");
-    }
-    if (payload.endTime) {
-      validateTimeFormat(payload.endTime, "endTime");
-    }
-
-    if (payload.startTime && payload.endTime) {
-      assertStartBeforeEnd(payload.startTime, payload.endTime);
-    }
-    return;
-  }
-
-  if (!payload.startTime || !payload.endTime) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "startTime and endTime are required if user is not unavailable for the whole day.",
-    );
-  }
-
-  validateTimeFormat(payload.startTime, "startTime");
-  validateTimeFormat(payload.endTime, "endTime");
-
-  assertStartBeforeEnd(payload.startTime, payload.endTime);
+  // Use improved partial schema to avoid refinement issues
+  AvailabilitySchemas.exception.partial.parse(payload);
 };
 
 export const buildSameSessionExclusion = (

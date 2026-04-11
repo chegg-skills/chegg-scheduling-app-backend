@@ -2,6 +2,7 @@ import { BookingStatus } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { logger } from "../../shared/logging/logger";
 import {
     assertBookingNoticeSatisfied,
     assertBookingWeekdayAllowed,
@@ -112,11 +113,15 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     const activeHosts = event.hosts as HostCandidate[];
 
     if (activeHosts.length === 0) {
+        logger.warn("Booking blocked because no active hosts are available for the event.", {
+            eventId,
+            teamId,
+        });
         throw new ErrorHandler(StatusCodes.SERVICE_UNAVAILABLE, "No active hosts available for this event.");
     }
 
     // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
-    return (prisma.$transaction(async (tx) => {
+    const booking = await prisma.$transaction(async (tx) => {
         // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
         if (matchedScheduleSlot) {
             await lockScheduleSlot(tx, matchedScheduleSlot.id);
@@ -138,15 +143,15 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
         await lockHost(tx, assignedHostId);
 
-        const scheduleSlot = matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(
+        const scheduleSlot = matchedScheduleSlot ?? await resolveMatchingScheduleSlot(
             event.id,
             start,
-            tx, // Pass tx to ensure we use the locked state if needed
-        )) as any;
+            tx,
+        );
 
         const { maxParticipants } = getEffectiveParticipantPolicy(
             schedulingContext,
-            scheduleSlot ?? (schedulingContext.interactionType as any),
+            scheduleSlot ?? schedulingContext.interactionType,
         );
 
         const currentParticipantCount = await countActiveParticipantsForTime(
@@ -187,9 +192,18 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
             meetingJoinUrl,
             status: BookingStatus.CONFIRMED,
         });
-    })) as any;
-};
+    });
 
+    logger.info("Booking created successfully.", {
+        bookingId: booking.id,
+        eventId: booking.eventId,
+        teamId: booking.teamId,
+        hostUserId: booking.hostUserId,
+        status: booking.status,
+    });
+
+    return booking;
+};
 const getBooking = async (id: string) => {
     return findBookingById(id);
 };
@@ -229,7 +243,7 @@ const rescheduleBooking = async (
     const activeHosts = event.hosts as HostCandidate[];
 
     // 3. Re-assign host (prefer current host if available)
-    return (prisma.$transaction(async (tx) => {
+    const updatedBooking = await prisma.$transaction(async (tx) => {
         // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
         if (matchedScheduleSlot) {
             await lockScheduleSlot(tx, matchedScheduleSlot.id);
@@ -251,17 +265,17 @@ const rescheduleBooking = async (
         // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
         await lockHost(tx, assignedHostId);
 
-        const scheduleSlot = matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(
+        const scheduleSlot = matchedScheduleSlot ?? await resolveMatchingScheduleSlot(
             event.id,
             start,
             tx,
-        )) as any;
+        );
 
         // Check capacity for the NEW time
         const schedulingContext = buildSchedulingContext(event);
         const { maxParticipants } = getEffectiveParticipantPolicy(
             schedulingContext,
-            scheduleSlot ?? (schedulingContext.interactionType as any),
+            scheduleSlot ?? schedulingContext.interactionType,
         );
 
         const currentParticipantCount = await countActiveParticipantsForTime(
@@ -287,9 +301,18 @@ const rescheduleBooking = async (
             scheduleSlotId: scheduleSlot?.id ?? null,
             status: BookingStatus.CONFIRMED, // Reset to confirmed if it was something else
         });
-    })) as any;
-};
+    });
 
+    logger.info("Booking rescheduled successfully.", {
+        bookingId: updatedBooking.id,
+        eventId: updatedBooking.eventId,
+        teamId: updatedBooking.teamId,
+        hostUserId: updatedBooking.hostUserId,
+        startTime: updatedBooking.startTime,
+    });
+
+    return updatedBooking;
+};
 export {
     createBooking,
     getBooking,

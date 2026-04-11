@@ -2,6 +2,14 @@ import express from "express";
 import * as PublicController from "./public.controller";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 
+import { validate } from "../../shared/middleware/validate";
+import {
+    PublicSlugSchema,
+    ListTeamEventsSchema,
+    GetAvailableSlotsSchema,
+    GetPublicBookingSchema,
+} from "./public.schema";
+
 const router = express.Router();
 
 router
@@ -11,42 +19,42 @@ router
 
 router
     .route("/teams/slug/:slug")
-    .get(PublicController.getTeamBySlug)
+    .get(validate(PublicSlugSchema), PublicController.getTeamBySlug)
     .all(methodNotAllowed);
 
 router
     .route("/teams/slug/:slug/events")
-    .get(PublicController.listTeamEventsBySlug)
+    .get(validate(PublicSlugSchema), PublicController.listTeamEventsBySlug)
     .all(methodNotAllowed);
 
 router
     .route("/teams/:teamId/events")
-    .get(PublicController.listTeamEvents)
+    .get(validate(ListTeamEventsSchema), PublicController.listTeamEvents)
     .all(methodNotAllowed);
 
 router
     .route("/events/slug/:slug")
-    .get(PublicController.getEventBySlug)
+    .get(validate(PublicSlugSchema), PublicController.getEventBySlug)
     .all(methodNotAllowed);
 
 router
     .route("/coaches/slug/:slug")
-    .get(PublicController.getCoachBySlug)
+    .get(validate(PublicSlugSchema), PublicController.getCoachBySlug)
     .all(methodNotAllowed);
 
 router
     .route("/coaches/slug/:slug/events")
-    .get(PublicController.listCoachEventsBySlug)
+    .get(validate(PublicSlugSchema), PublicController.listCoachEventsBySlug)
     .all(methodNotAllowed);
 
 router
     .route("/events/:eventId/slots")
-    .get(PublicController.getAvailableSlots)
+    .get(validate(GetAvailableSlotsSchema), PublicController.getAvailableSlots)
     .all(methodNotAllowed);
 
 router
     .route("/bookings/:id")
-    .get(PublicController.getPublicBooking)
+    .get(validate(GetPublicBookingSchema), PublicController.getPublicBooking)
     .all(methodNotAllowed);
 
 export default router;
