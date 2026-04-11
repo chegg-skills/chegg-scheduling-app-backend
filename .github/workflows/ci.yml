@@ -8,6 +8,20 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,6 +42,17 @@ jobs:
       - name: Build backend
         working-directory: backend
         run: npm run build
+
+      - name: Create backend test env
+        working-directory: backend
+        run: |
+          cat > .env.test <<'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chegg_test
+          JWT_SECRET=ci-test-jwt-secret
+          NODE_ENV=test
+          ENABLE_RATE_LIMITS_IN_TEST=false
+          LOG_LEVEL=warn
+          EOF
 
       - name: Test backend
         working-directory: backend
