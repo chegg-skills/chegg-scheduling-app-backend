@@ -36,10 +36,10 @@ export function StatsOverview({
       sx={{
         mb: 4,
         mt: 2,
-        borderRadius: 1.2, // 12px - Aligns with Paper standard
-        backgroundColor: '#F9FAFB',
+        borderRadius: 2,
+        backgroundColor: '#FFFFFF', // Changed from #F9FAFB for cleaner contrast
         borderColor: 'divider',
-        boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)'
       }}
     >
       <CardContent sx={{ p: 3 }}>

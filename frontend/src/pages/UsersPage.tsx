@@ -3,7 +3,7 @@ import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import Stack from '@mui/material/Stack'
 import { useEffect, useState } from 'react'
-import { Search, ShieldCheck, UserPlus, Users, UsersRound, X } from 'lucide-react'
+import { Search, UserPlus, Users, X, GraduationCap, UserCheck } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useUsers } from '@/hooks/useUsers'
 import type { StatsTimeframe, UserRole } from '@/types'
@@ -64,7 +64,7 @@ export function UsersPage() {
       label: 'Active users',
       value: userStats?.metrics.activeUsers ?? 0,
       helperText: 'Accounts currently enabled in the app',
-      icon: <ShieldCheck size={18} />,
+      icon: <UserCheck size={18} />,
       accent: 'green' as const,
     },
     {
@@ -78,7 +78,7 @@ export function UsersPage() {
       label: 'Active coaches',
       value: userStats?.metrics.coaches ?? 0,
       helperText: 'Coaches available for scheduling',
-      icon: <UsersRound size={18} />,
+      icon: <GraduationCap size={18} />,
       accent: 'purple' as const,
     },
   ]
