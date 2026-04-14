@@ -1,13 +1,25 @@
 import emailTemplates from "../templates/emailTemplates";
 import type { EmailTemplate, TemplateVariables } from "../../types/notification";
 
+const escapeHtml = (unsafe: string): string => {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 const replacePlaceholders = (
   template: string,
   templateData: TemplateVariables,
+  shouldEscape: boolean
 ): string => {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
     const value = templateData[key];
-    return value == null ? "" : String(value);
+    if (value == null) return "";
+    const strValue = String(value);
+    return shouldEscape ? escapeHtml(strValue) : strValue;
   });
 };
 
@@ -22,9 +34,9 @@ function emailTemplatesHelper(
   }
 
   return {
-    subject: replacePlaceholders(template.subject, templateData),
-    text: replacePlaceholders(template.text, templateData),
-    html: replacePlaceholders(template.html, templateData),
+    subject: replacePlaceholders(template.subject, templateData, false),
+    text: replacePlaceholders(template.text, templateData, false),
+    html: replacePlaceholders(template.html, templateData, true),
     attachmentRequired: template.attachmentRequired ?? false,
   };
 }

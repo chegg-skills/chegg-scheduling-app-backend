@@ -14,7 +14,9 @@ import {
     X,
     SlidersHorizontal,
     LayoutList,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    GraduationCap,
+    UsersRound
 } from 'lucide-react'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
@@ -142,14 +144,14 @@ export function BookingsPage() {
             label: 'Top Coach',
             value: bookingStats?.metrics.mostBookedCoach?.name ?? 'N/A',
             helperText: bookingStats?.metrics.mostBookedCoach ? `${bookingStats.metrics.mostBookedCoach.count} bookings assigned` : 'No coach metrics',
-            icon: <CheckCircle2 size={18} />,
+            icon: <GraduationCap size={18} />,
             accent: 'purple' as const,
         },
         {
             label: 'Top Team',
             value: bookingStats?.metrics.mostBookedTeam?.name ?? 'N/A',
             helperText: bookingStats?.metrics.mostBookedTeam ? `${bookingStats.metrics.mostBookedTeam.count} team bookings` : 'No team metrics',
-            icon: <CalendarDays size={18} />,
+            icon: <UsersRound size={18} />,
             accent: 'green' as const,
         },
     ]

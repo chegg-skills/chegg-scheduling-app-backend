@@ -7,20 +7,20 @@ import type { ReactNode } from 'react'
 
 const accentStyles = {
   orange: {
-    color: '#EB7100',
-    backgroundColor: 'rgba(235, 113, 0, 0.10)',
+    color: '#FF7500',
+    backgroundColor: 'rgba(255, 117, 0, 0.08)',
   },
   purple: {
-    color: '#522D9B',
-    backgroundColor: 'rgba(82, 45, 155, 0.10)',
+    color: '#8133FF',
+    backgroundColor: 'rgba(129, 51, 255, 0.08)',
   },
   teal: {
-    color: '#397F89',
-    backgroundColor: 'rgba(57, 127, 137, 0.10)',
+    color: '#00BEA4',
+    backgroundColor: 'rgba(0, 190, 164, 0.08)',
   },
   green: {
-    color: '#2E7D32',
-    backgroundColor: 'rgba(46, 125, 50, 0.10)',
+    color: '#10B981',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
   },
 } as const
 
@@ -47,13 +47,18 @@ export function StatCard({
       sx={{
         height: '100%',
         minHeight: 120,
-        borderRadius: 1.2, // 12px - Aligns with Paper standard
+        borderRadius: 2,
         borderColor: 'divider',
-        backgroundColor: '#FFFFFF',
-        backgroundImage: `linear-gradient(${accentStyle.backgroundColor}, ${accentStyle.backgroundColor})`,
-        boxShadow: 'none',
+        backgroundColor: accentStyle.backgroundColor.replace('0.08', '0.06'),
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          borderColor: accentStyle.color,
+          transform: 'translateY(-4px)',
+          boxShadow: `0 12px 24px -8px ${accentStyle.backgroundColor.replace('0.08', '0.2')}`,
+        },
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
       <CardContent sx={{ p: 2.25, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', '&:last-child': { pb: 2.25 } }}>
@@ -64,9 +69,9 @@ export function StatCard({
                 variant="overline"
                 noWrap
                 sx={{
-                  color: 'text.secondary',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
+                  color: '#4B5563', // Darker gray for overline
+                  fontWeight: 800, // Even bolder
+                  letterSpacing: '0.1em',
                   display: 'block'
                 }}
               >
@@ -91,14 +96,19 @@ export function StatCard({
             {icon ? (
               <Box
                 sx={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   borderRadius: 2,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: accentStyle.color,
+                  bgcolor: accentStyle.backgroundColor,
                   flexShrink: 0,
+                  transition: 'transform 0.2s ease',
+                  '.MuiCard-root:hover &': {
+                    transform: 'scale(1.1)',
+                  }
                 }}
               >
                 {icon}
