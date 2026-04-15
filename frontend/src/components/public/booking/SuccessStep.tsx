@@ -17,6 +17,7 @@ interface SuccessStepProps {
 }
 
 export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDate, newTime, mentorName }: SuccessStepProps) {
+    const isReschedule = mode === 'reschedule';
     const theme = useTheme();
 
     return (
@@ -25,7 +26,8 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
             mx: 'auto',
             py: { xs: 4, sm: 6 },
             px: { xs: 2, sm: 4 },
-            textAlign: 'center'
+            textAlign: 'center',
+            fontFamily: theme.typography.fontFamily
         }}>
             <Box
                 component="img"
@@ -40,7 +42,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                         width: 72,
                         height: 72,
                         borderRadius: '50%',
-                        bgcolor: '#1DA275',
+                        bgcolor: 'success.main',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -53,11 +55,11 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
 
             <Typography
                 variant="h4"
-                fontWeight={900}
                 sx={{
                     color: 'primary.main',
                     mb: 1.5,
-                    letterSpacing: -0.5
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
                 }}
             >
                 {isReschedule ? 'Reschedule Confirmed!' : 'Booking Confirmed!'}
@@ -71,17 +73,16 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                 sx={{
                     p: 4,
                     mb: 4,
-                    bgcolor: '#FFF5EF', // Very light peach
+                    bgcolor: 'accent.peach',
                     borderRadius: 2,
                     textAlign: 'left',
                     border: '1px solid',
-                    borderColor: 'rgba(232, 113, 0, 0.1)'
+                    borderColor: 'divider'
                 }}
             >
                 <Typography
                     variant="subtitle2"
-                    fontWeight={800}
-                    sx={{ color: 'text.primary', mb: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}
+                    sx={{ color: 'text.primary', mb: 2 }}
                 >
                     Session Details:
                 </Typography>
@@ -125,11 +126,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                     fontSize: '1rem',
                     fontWeight: 800,
                     borderRadius: 2,
-                    bgcolor: 'primary.main',
                     textTransform: 'none',
-                    '&:hover': {
-                        bgcolor: 'primary.dark',
-                    }
                 }}
             >
                 {isReschedule ? 'Return to Dashboard' : 'Book Another Session'}
