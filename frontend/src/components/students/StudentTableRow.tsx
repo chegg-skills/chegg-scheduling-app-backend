@@ -1,6 +1,6 @@
-import { TableRow, TableCell, Typography, Box, Avatar, alpha } from '@mui/material'
+import { TableRow, TableCell, Typography, Box, Avatar, alpha, Link as MuiLink } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { StudentSummary } from '@/types'
@@ -11,13 +11,17 @@ interface StudentTableRowProps {
 
 export function StudentTableRow({ student }: StudentTableRowProps) {
     const theme = useTheme()
+    const navigate = useNavigate()
+
+    const handleRowClick = () => {
+        navigate(`/students/${student.id}`)
+    }
 
     return (
         <TableRow
             hover
-            component={Link}
-            to={`/students/${student.id}`}
-            sx={{ textDecoration: 'none', cursor: 'pointer' }}
+            onClick={handleRowClick}
+            sx={{ cursor: 'pointer' }}
         >
             <TableCell sx={{ py: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -38,7 +42,21 @@ export function StudentTableRow({ student }: StudentTableRowProps) {
                             .toUpperCase()}
                     </Avatar>
                     <Typography variant="body2" fontWeight={600}>
-                        {toTitleCase(student.fullName)}
+                        <MuiLink
+                            component={Link}
+                            to={`/students/${student.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{
+                                color: 'inherit',
+                                textDecoration: 'none',
+                                '&:hover': {
+                                    color: 'primary.main',
+                                    textDecoration: 'underline'
+                                }
+                            }}
+                        >
+                            {toTitleCase(student.fullName)}
+                        </MuiLink>
                     </Typography>
                 </Box>
             </TableCell>
