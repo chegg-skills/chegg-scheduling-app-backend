@@ -17,7 +17,7 @@ export function LoginPage() {
             src={LogoOrange}
             alt="Chegg Skills"
             sx={{
-              height: 48,
+              height: 40,
               width: 'auto',
               mx: 'auto',
               display: 'block',

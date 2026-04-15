@@ -74,7 +74,7 @@ export function PublicBookingHeader({
           src={LogoOrange}
           alt="Chegg Skills"
           sx={{
-            height: { xs: 40, md: 50, lg: 60 },
+            height: { xs: 24, md: 32, lg: 36 },
             width: 'auto',
             objectFit: 'contain',
             display: 'block',

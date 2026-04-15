@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import type { Breakpoint } from '@mui/material'
-import LogoOrange from '@/assets/Color=Orange.svg'
 
 interface PublicLayoutProps {
     maxWidth?: Breakpoint
@@ -23,23 +22,6 @@ export function PublicLayout({ maxWidth = 'md' }: PublicLayoutProps) {
             }}
         >
             <Container maxWidth={maxWidth} disableGutters>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        mb: 3
-                    }}
-                >
-                    <img
-                        src={LogoOrange}
-                        alt="Chegg Skills"
-                        style={{
-                            height: 48,
-                            width: 'auto',
-                            display: 'block'
-                        }}
-                    />
-                </Box>
                 <Box
                     sx={{
                         bgcolor: 'background.paper',

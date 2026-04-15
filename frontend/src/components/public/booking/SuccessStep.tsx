@@ -25,7 +25,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                 component="img"
                 src={LogoOrange}
                 alt="Chegg Skills"
-                sx={{ width: 220, height: 'auto', mb: 6 }}
+                sx={{ width: 180, height: 'auto', mb: 6 }}
             />
 
             <Typography variant="h4" fontWeight={900} gutterBottom sx={{
