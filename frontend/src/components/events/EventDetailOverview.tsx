@@ -34,7 +34,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
     const DataField = ({ label, value, tooltip, sm = 4 }: { label: string, value: string | number, tooltip?: string, sm?: number }) => (
         <Grid size={{ xs: 12, sm: sm }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                <Typography variant="caption" color="text.primary" sx={{ fontWeight: 600,fontSize: '0.85rem' }}>
                     {label}
                 </Typography>
                 {tooltip && <InfoTooltip title={tooltip} size={12} />}
@@ -51,17 +51,18 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
         <Paper component="section" variant="outlined" sx={{ p: 3, borderRadius: 1.5 }}>
             <Typography
                 variant="subtitle2"
-                color="text.secondary"
+                color="text.primary"
                 sx={{
                     textTransform: 'uppercase',
                     letterSpacing: 1,
                     mb: 2,
                     fontSize: '0.75rem',
-                    fontWeight: 700,
+                    fontWeight: 800,
                 }}
             >
                 General Details
             </Typography>
+            
 
             <Grid container spacing={2}>
                 {/* Core Configuration */}
