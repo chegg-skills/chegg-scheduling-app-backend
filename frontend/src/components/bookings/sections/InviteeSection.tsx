@@ -1,4 +1,4 @@
-import { Avatar, Box, Stack, Typography, useTheme } from '@mui/material';
+import { Avatar, Box, Stack, Typography, alpha, useTheme } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import type { Booking } from '@/types';
 import { SectionLabel } from './Common';
@@ -19,7 +19,7 @@ export function InviteeSection({ booking }: InviteeSectionProps) {
                         width: 44,
                         height: 44,
                         fontSize: '1rem',
-                        bgcolor: 'accent.lavender',
+                        bgcolor: alpha(theme.palette.secondary.main, 0.08),
                         color: theme.palette.secondary.main,
                         fontWeight: 700,
                     }}
