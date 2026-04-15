@@ -97,7 +97,7 @@ export function BookingTableRow({
               sx={{
                 py: 3,
                 px: 3,
-                bgcolor: 'grey.50',
+                bgcolor: 'accent.peach',
                 borderTop: '1px solid',
                 borderBottom: '1px solid',
                 borderColor: 'divider',
