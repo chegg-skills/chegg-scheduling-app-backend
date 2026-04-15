@@ -34,6 +34,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                 borderRadius: 1.5,
                 border: '1.5px solid #1DA275',
                 bgcolor: 'background.paper',
+                boxShadow: 'none',
                 fontFamily: theme.typography.fontFamily,
                 // Ensure it takes center stage if it's the only element
                 display: 'block',
