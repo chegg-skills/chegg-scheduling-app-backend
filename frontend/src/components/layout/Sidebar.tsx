@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { alpha } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
@@ -39,7 +38,7 @@ export function Sidebar() {
         '& .MuiDrawer-paper': {
           width: SIDEBAR_WIDTH,
           boxSizing: 'border-box',
-          borderRight: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.12)}`,
+          borderRightColor: 'divider',
           borderRadius: 0,
           transition: (theme) =>
             theme.transitions.create('width', {
