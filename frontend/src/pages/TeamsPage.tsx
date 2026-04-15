@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import { useState } from 'react'
-import { CalendarDays, Plus, ShieldCheck, Users, UsersRound } from 'lucide-react'
+import { CalendarDays, Plus, ToggleRight, Users, UsersRound } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTeams } from '@/hooks/useTeams'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -52,7 +52,7 @@ export function TeamsPage() {
       label: 'Active teams',
       value: teamStats?.metrics.activeTeams ?? 0,
       helperText: 'Teams currently enabled for use',
-      icon: <ShieldCheck size={18} />,
+      icon: <ToggleRight size={18} />,
       accent: 'green' as const,
     },
     {

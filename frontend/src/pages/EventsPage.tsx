@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import { CalendarDays, Plus, Repeat2, ShieldCheck, Users } from 'lucide-react';
+import { CalendarDays, Plus, Repeat2, ToggleRight, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTeams } from '@/hooks/useTeams';
@@ -46,7 +46,7 @@ export function EventsPage() {
       label: 'Active events',
       value: eventStats?.metrics.activeEvents ?? 0,
       helperText: 'Events currently available for booking',
-      icon: <ShieldCheck size={18} />,
+      icon: <ToggleRight size={18} />,
       accent: 'green' as const,
     },
     {

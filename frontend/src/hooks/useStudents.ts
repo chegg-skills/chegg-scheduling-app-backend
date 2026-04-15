@@ -21,7 +21,7 @@ export function useStudents(filters: ListStudentsFilters = {}) {
 export function useStudent(id: string) {
     return useQuery({
         queryKey: studentKeys.detail(id),
-        queryFn: ({ signal }) => studentsApi.getById(id, signal).then(r => r.data.data),
+        queryFn: ({ signal }) => studentsApi.getById(id, signal).then(r => r.data.data!.student),
         enabled: !!id,
     })
 }

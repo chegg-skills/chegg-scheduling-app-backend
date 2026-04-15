@@ -11,42 +11,17 @@ import { useTeamEvents } from '@/hooks/useEvents'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { TabPanel } from '@/components/shared/TabPanel'
 import { Button } from '@/components/shared/Button'
 import { Modal } from '@/components/shared/Modal'
 import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { Badge } from '@/components/shared/Badge'
 import { TeamForm } from '@/components/teams/TeamForm'
-import { TeamMemberList } from '@/components/team-members/TeamMemberList'
-import { AddMemberForm } from '@/components/team-members/AddMemberForm'
-import { EventTable } from '@/components/events/EventTable'
-import { EventForm } from '@/components/events/EventForm'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { RowActions } from '@/components/shared/RowActions'
-
-interface TabPanelProps {
-  children?: React.ReactNode
-  index: number
-  value: number
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`team-tabpanel-${index}`}
-      aria-labelledby={`team-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ py: 3 }}>{children}</Box>
-      )}
-    </div>
-  )
-}
+import { TeamMembersTab } from '@/components/teams/tabs/TeamMembersTab'
+import { TeamEventsTab } from '@/components/teams/tabs/TeamEventsTab'
 
 export function TeamDetailPage() {
   const { teamId = '' } = useParams<{ teamId: string }>()
@@ -67,7 +42,7 @@ export function TeamDetailPage() {
 
   const members = membersResponse?.members ?? []
   const teamEvents = events?.events ?? []
-  const existingMemberIds = members.map((member) => member.userId)
+  const existingMemberIds = members.map((m) => m.userId)
 
   if (teamLoading) return <PageSpinner />
   if (teamError || !team) return <ErrorAlert message="Failed to load team details." />
@@ -163,16 +138,8 @@ export function TeamDetailPage() {
               },
             }}
           >
-            <Tab
-              label={`Members (${members.length})`}
-              icon={<Users size={18} />}
-              iconPosition="start"
-            />
-            <Tab
-              label={`Events (${teamEvents.length})`}
-              icon={<Calendar size={18} />}
-              iconPosition="start"
-            />
+            <Tab label={`Members (${members.length})`} icon={<Users size={18} />} iconPosition="start" />
+            <Tab label={`Events (${teamEvents.length})`} icon={<Calendar size={18} />} iconPosition="start" />
           </Tabs>
 
           <Box sx={{ mb: 1 }}>
@@ -185,26 +152,28 @@ export function TeamDetailPage() {
           </Box>
         </Box>
 
-        <TabPanel value={tabValue} index={0}>
-          {membersLoading ? (
-            <PageSpinner />
-          ) : (
-            <TeamMemberList
-              members={members}
-              teamId={teamId}
-              currentUserRole={user?.role ?? 'TEAM_ADMIN'}
-              teamLeadId={team.teamLeadId}
-              onViewUser={setViewingUserId}
-            />
-          )}
+        <TabPanel value={tabValue} index={0} prefix="team">
+          <TeamMembersTab
+            members={members}
+            teamId={teamId}
+            currentUserRole={user?.role ?? 'TEAM_ADMIN'}
+            teamLeadId={team.teamLeadId}
+            isLoading={membersLoading}
+            existingMemberIds={existingMemberIds}
+            showAddModal={showAddMember}
+            onCloseAddModal={() => setShowAddMember(false)}
+            onViewUser={setViewingUserId}
+          />
         </TabPanel>
 
-        <TabPanel value={tabValue} index={1}>
-          {eventsLoading ? (
-            <PageSpinner />
-          ) : (
-            <EventTable events={teamEvents} teamId={teamId} />
-          )}
+        <TabPanel value={tabValue} index={1} prefix="team">
+          <TeamEventsTab
+            events={teamEvents}
+            teamId={teamId}
+            isLoading={eventsLoading}
+            showCreateModal={showCreateEvent}
+            onCloseCreateModal={() => setShowCreateEvent(false)}
+          />
         </TabPanel>
       </Box>
 
@@ -217,23 +186,6 @@ export function TeamDetailPage() {
           />
         </Modal>
       )}
-
-      <Modal isOpen={showAddMember} onClose={() => setShowAddMember(false)} title="Add member">
-        <AddMemberForm
-          teamId={teamId}
-          existingMemberIds={existingMemberIds}
-          onSuccess={() => setShowAddMember(false)}
-          onCancel={() => setShowAddMember(false)}
-        />
-      </Modal>
-
-      <Modal isOpen={showCreateEvent} onClose={() => setShowCreateEvent(false)} title="New event" size="lg">
-        <EventForm
-          teamId={teamId}
-          onSuccess={() => setShowCreateEvent(false)}
-          onCancel={() => setShowCreateEvent(false)}
-        />
-      </Modal>
 
       {viewingUserId && (
         <UserDetailModal

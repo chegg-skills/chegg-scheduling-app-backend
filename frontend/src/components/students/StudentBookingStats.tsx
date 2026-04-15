@@ -2,7 +2,7 @@ import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
-import { BookOpen, CheckCircle, XCircle, UserX } from 'lucide-react'
+import { CalendarDays, CheckCircle, XCircle, UserX } from 'lucide-react'
 import { StatCard } from '@/components/shared/StatCard'
 import type { Booking } from '@/types'
 
@@ -21,7 +21,7 @@ export function StudentBookingStats({ bookings, totalCount }: StudentBookingStat
             label: 'Total Bookings',
             value: totalCount,
             helperText: 'All sessions booked',
-            icon: <BookOpen size={22} />,
+            icon: <CalendarDays size={22} />,
             accent: 'orange' as const,
         },
         {

@@ -25,12 +25,16 @@ export interface ListStudentBookingsResponse {
     pagination: Pagination
 }
 
+export interface GetStudentResponse {
+    student: StudentSummary
+}
+
 export const studentsApi = {
     list: (params: ListStudentsFilters = {}, signal?: AbortSignal) =>
         apiClient.get<ApiResponse<ListStudentsResponse>>('/students', { params, signal }),
 
     getById: (id: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<StudentSummary>>(`/students/${id}`, { signal }),
+        apiClient.get<ApiResponse<GetStudentResponse>>(`/students/${id}`, { signal }),
 
     listBookings: (id: string, params: { page?: number; pageSize?: number } = {}, signal?: AbortSignal) =>
         apiClient.get<ApiResponse<ListStudentBookingsResponse>>(`/students/${id}/bookings`, { params, signal }),

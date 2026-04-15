@@ -10,7 +10,7 @@ import {
   UsersRound,
   CalendarDays,
   Layers,
-  GitMerge,
+  ArrowLeftRight,
   Clock3,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -56,7 +56,7 @@ const QUICK_LINKS: QuickLink[] = [
   {
     label: "Interaction Types",
     to: "/interaction-types",
-    icon: <GitMerge size={24} />,
+    icon: <ArrowLeftRight size={24} />,
     roles: ["SUPER_ADMIN"],
   },
 ];

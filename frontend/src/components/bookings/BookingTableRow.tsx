@@ -1,8 +1,8 @@
 import { Box, Button, Collapse, Divider, TableCell, TableRow } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
-import type { Booking, BookingStatus } from '@/types'
-import { useAsyncAction } from '@/hooks/useAsyncAction'
+import type { Booking } from '@/types'
+import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
 import { BookingStudentCell } from './cells/BookingStudentCell'
@@ -11,7 +11,6 @@ import { BookingHostInfo } from './cells/BookingHostInfo'
 
 interface BookingTableRowProps {
   booking: Booking
-  onUpdateStatus: (id: string, status: BookingStatus) => void
   isExpanded: boolean
   onToggle: () => void
   onViewHost?: (userId: string) => void
@@ -19,30 +18,11 @@ interface BookingTableRowProps {
 
 export function BookingTableRow({
   booking,
-  onUpdateStatus,
   isExpanded,
   onToggle,
   onViewHost,
 }: BookingTableRowProps) {
-  const { handleAction } = useAsyncAction()
-
-  const startTime = new Date(booking.startTime)
-  const now = new Date()
-  const tenMinutesAfterStart = new Date(startTime.getTime() + 10 * 60 * 1000)
-  const canMarkNoShow = booking.status === 'CONFIRMED' && now >= tenMinutesAfterStart
-
-  const handleStatusUpdate = async (status: BookingStatus, label: string) => {
-    handleAction(
-      ({ id, status: nextStatus }: { id: string; status: BookingStatus }) =>
-        onUpdateStatus(id, nextStatus),
-      { id: booking.id, status },
-      {
-        title: `${label} Booking`,
-        message: `Are you sure you want to ${label.toLowerCase()} the booking for ${toTitleCase(booking.studentName)}?`,
-        actionName: label,
-      }
-    )
-  }
+  const { handleStatusUpdate, canMarkNoShow } = useBookingStatusUpdate()
 
   return (
     <>
@@ -124,7 +104,7 @@ export function BookingTableRow({
                       color="error"
                       size="small"
                       startIcon={<XCircle size={16} />}
-                      onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
+                      onClick={() => handleStatusUpdate(booking, 'CANCELLED', 'Cancel')}
                       sx={{ fontWeight: 600, borderRadius: 1.5 }}
                     >
                       Cancel Booking
@@ -153,13 +133,13 @@ export function BookingTableRow({
                   </>
                 )}
 
-                {canMarkNoShow && (
+                {canMarkNoShow(booking) && (
                   <Button
                     variant="contained"
                     color="warning"
                     size="small"
                     startIcon={<Clock size={16} />}
-                    onClick={() => handleStatusUpdate('NO_SHOW', 'No Show')}
+                    onClick={() => handleStatusUpdate(booking, 'NO_SHOW', 'No Show')}
                     sx={{ fontWeight: 600, borderRadius: 1.5 }}
                   >
                     Mark as No Show

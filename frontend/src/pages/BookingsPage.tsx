@@ -4,7 +4,7 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
-import { useState, useMemo, useEffect } from 'react'
+import { useMemo } from 'react'
 import { alpha, useTheme } from '@mui/material/styles'
 import {
     CalendarDays,
@@ -28,63 +28,44 @@ import { BookingCalendar } from '@/components/bookings/BookingCalendar'
 import { BookingDetailModal } from '@/components/bookings/BookingDetailModal'
 import { BookingFilterDialog } from '@/components/bookings/filters/BookingFilterDialog'
 import { useBookings } from '@/hooks/useBookings'
-import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Input } from '@/components/shared/Input'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useBookingStats } from '@/hooks/useStats'
-import { usePagination } from '@/hooks/usePagination'
+import { useBookingFilters } from '@/hooks/useBookingFilters'
 import { Badge, Button as MuiButton } from '@mui/material'
-import type { BookingStatus, StatsTimeframe, Booking } from '@/types'
-
-type FilterType = 'UPCOMING' | 'ALL' | BookingStatus
+import type { Booking } from '@/types'
+import { useState } from 'react'
 
 export function BookingsPage() {
     const theme = useTheme()
-    const {
-        pageSize,
-        backendPage,
-        onPageChange,
-        onRowsPerPageChange,
-        resetPage
-    } = usePagination(25)
-
-    const [statusFilter, setStatusFilter] = useState<FilterType>('UPCOMING')
-    const [searchInput, setSearchInput] = useState('')
     const [viewingUserId, setViewingUserId] = useState<string | null>(null)
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-    const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
-    const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
-    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
-    // New Advanced Filters
-    const [advancedFilters, setAdvancedFilters] = useState({
-        teamId: '',
-        eventId: '',
-        startDate: null as Date | null,
-        endDate: null as Date | null,
-    })
-
-    const debouncedSearch = useDebouncedValue(searchInput, 250)
-
-    useEffect(() => {
-        resetPage()
-    }, [debouncedSearch, statusFilter, advancedFilters, resetPage])
+    const {
+        statusFilter,
+        searchInput,
+        setSearchInput,
+        advancedFilters,
+        setAdvancedFilters,
+        isFilterDialogOpen,
+        setIsFilterDialogOpen,
+        serverFilters,
+        handleTabChange,
+        handleFilterChange,
+        handleResetFilters,
+        activeFilterCount,
+        viewMode,
+        setViewMode,
+        timeframe,
+        setTimeframe,
+        onPageChange,
+        onRowsPerPageChange,
+    } = useBookingFilters()
 
     const { data: bookingStats, isLoading: statsLoading } = useBookingStats(timeframe)
-
-    const serverFilters = useMemo(() => ({
-        search: debouncedSearch.trim() || undefined,
-        status: statusFilter === 'UPCOMING' ? 'CONFIRMED' : (statusFilter === 'ALL' ? undefined : statusFilter),
-        teamId: advancedFilters.teamId || undefined,
-        eventId: advancedFilters.eventId || undefined,
-        startDate: advancedFilters.startDate?.toISOString(),
-        endDate: advancedFilters.endDate?.toISOString(),
-        page: backendPage,
-        pageSize: pageSize,
-    }), [debouncedSearch, statusFilter, advancedFilters, backendPage, pageSize])
-
     const { data, isLoading, error } = useBookings(serverFilters)
+
     const bookings = useMemo(() => data?.bookings ?? [], [data?.bookings])
     const pagination = data?.pagination
 
@@ -92,38 +73,14 @@ export function BookingsPage() {
         let result = bookings
         if (statusFilter === 'UPCOMING') {
             const now = new Date()
-            result = bookings.filter(b => {
-                const startTime = new Date(b.startTime)
-                return b.status === 'CONFIRMED' && startTime >= now
-            })
+            result = bookings.filter(b =>
+                b.status === 'CONFIRMED' && new Date(b.startTime) >= now
+            )
         }
-
         return [...result].sort((a, b) =>
             new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         )
     }, [bookings, statusFilter])
-
-    const handleTabChange = (_: React.SyntheticEvent, newValue: FilterType) => {
-        setStatusFilter(newValue)
-    }
-
-    const handleFilterChange = (key: string, value: any) => {
-        setAdvancedFilters(prev => {
-            const next = { ...prev, [key]: value }
-            // If teamId changes, reset eventId
-            if (key === 'teamId') next.eventId = ''
-            return next
-        })
-    }
-
-    const handleResetFilters = () => {
-        setAdvancedFilters({
-            teamId: '',
-            eventId: '',
-            startDate: null,
-            endDate: null,
-        })
-    }
 
     const bookingStatItems = [
         {
@@ -143,14 +100,18 @@ export function BookingsPage() {
         {
             label: 'Top Coach',
             value: bookingStats?.metrics.mostBookedCoach?.name ?? 'N/A',
-            helperText: bookingStats?.metrics.mostBookedCoach ? `${bookingStats.metrics.mostBookedCoach.count} bookings assigned` : 'No coach metrics',
+            helperText: bookingStats?.metrics.mostBookedCoach
+                ? `${bookingStats.metrics.mostBookedCoach.count} bookings assigned`
+                : 'No coach metrics',
             icon: <GraduationCap size={18} />,
             accent: 'purple' as const,
         },
         {
             label: 'Top Team',
             value: bookingStats?.metrics.mostBookedTeam?.name ?? 'N/A',
-            helperText: bookingStats?.metrics.mostBookedTeam ? `${bookingStats.metrics.mostBookedTeam.count} team bookings` : 'No team metrics',
+            helperText: bookingStats?.metrics.mostBookedTeam
+                ? `${bookingStats.metrics.mostBookedTeam.count} team bookings`
+                : 'No team metrics',
             icon: <UsersRound size={18} />,
             accent: 'green' as const,
         },
@@ -268,12 +229,10 @@ export function BookingsPage() {
                         </ToggleButtonGroup>
 
                         <Badge
-                            badgeContent={
-                                Object.values(advancedFilters).filter(v => v !== '' && v !== null).length
-                            }
+                            badgeContent={activeFilterCount}
                             color="primary"
                             variant="dot"
-                            invisible={Object.values(advancedFilters).every(v => v === '' || v === null)}
+                            invisible={activeFilterCount === 0}
                         >
                             <MuiButton
                                 startIcon={<SlidersHorizontal size={18} />}

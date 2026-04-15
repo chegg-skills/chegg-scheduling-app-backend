@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import { useState } from 'react'
-import { CheckCircle2, GitMerge, Plus, Repeat2, Users } from 'lucide-react'
+import { ArrowLeftRight, CheckCircle2, Plus, Repeat2, Users } from 'lucide-react'
 import { useInteractionTypes } from '@/hooks/useInteractionTypes'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/Button'
@@ -29,7 +29,7 @@ export function InteractionTypesPage() {
       label: 'New types',
       value: interactionStats?.metrics.newInteractionTypes ?? 0,
       helperText: 'Interaction types added in the selected time frame',
-      icon: <GitMerge size={18} />,
+      icon: <ArrowLeftRight size={18} />,
       accent: 'orange' as const,
     },
     {

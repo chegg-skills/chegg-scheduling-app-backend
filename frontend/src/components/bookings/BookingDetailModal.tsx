@@ -3,11 +3,10 @@ import { toTitleCase } from '@/utils/toTitleCase'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import { Clock, XCircle, Calendar } from 'lucide-react'
-import type { Booking, BookingStatus } from '@/types'
+import type { Booking } from '@/types'
 import { Modal } from '@/components/shared/Modal'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
-import { useAsyncAction } from '@/hooks/useAsyncAction'
-import { useUpdateBookingStatus } from '@/hooks/useBookings'
+import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
 
 interface BookingDetailModalProps {
     booking: Booking | null
@@ -16,28 +15,9 @@ interface BookingDetailModalProps {
 }
 
 export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDetailModalProps) {
-    const { handleAction } = useAsyncAction()
-    const { mutate: updateStatus } = useUpdateBookingStatus()
+    const { handleStatusUpdate, canMarkNoShow } = useBookingStatusUpdate()
 
     if (!booking) return null
-
-    const startTime = new Date(booking.startTime)
-    const now = new Date()
-    const tenMinutesAfterStart = new Date(startTime.getTime() + 10 * 60 * 1000)
-    const canMarkNoShow = booking.status === 'CONFIRMED' && now >= tenMinutesAfterStart
-
-    const handleStatusUpdate = async (status: BookingStatus, label: string) => {
-        handleAction(
-            ({ id, status: nextStatus }: { id: string; status: BookingStatus }) =>
-                updateStatus({ id, status: nextStatus }),
-            { id: booking.id, status },
-            {
-                title: `${label.toLowerCase()} booking`,
-                message: `Are you sure you want to ${label.toLowerCase()} the booking for ${toTitleCase(booking.studentName)}?`,
-                actionName: label,
-            }
-        )
-    }
 
     return (
         <Modal
@@ -66,7 +46,7 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
                                 color="error"
                                 size="small"
                                 startIcon={<XCircle size={16} />}
-                                onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
+                                onClick={() => handleStatusUpdate(booking, 'CANCELLED', 'Cancel')}
                                 sx={{ fontWeight: 600, borderRadius: 2 }}
                             >
                                 Cancel booking
@@ -95,13 +75,13 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
                         </>
                     )}
 
-                    {canMarkNoShow && (
+                    {canMarkNoShow(booking) && (
                         <Button
                             variant="contained"
                             color="warning"
                             size="small"
                             startIcon={<Clock size={16} />}
-                            onClick={() => handleStatusUpdate('NO_SHOW', 'No show')}
+                            onClick={() => handleStatusUpdate(booking, 'NO_SHOW', 'No show')}
                             sx={{ fontWeight: 600, borderRadius: 2 }}
                         >
                             Mark as no show
