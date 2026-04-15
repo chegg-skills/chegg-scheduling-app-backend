@@ -15,9 +15,11 @@ interface UserHostedEventsTabProps {
 export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
   if (user.hostedEvents.length === 0) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Calendar size={40} color="#ccc" style={{ marginBottom: 8 }} />
-        <Typography color="text.secondary">This user is not hosting any events.</Typography>
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Calendar size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
+        <Typography color="text.secondary" fontWeight={500}>
+          This user is not hosting any events.
+        </Typography>
       </Box>
     )
   }

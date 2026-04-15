@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import { alpha } from '@mui/material/styles'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Skeleton from '@mui/material/Skeleton'
@@ -37,7 +38,7 @@ export function StatsOverview({
         mb: 4,
         mt: 2,
         borderRadius: 2,
-        backgroundColor: '#FFFFFF', // Changed from #F9FAFB for cleaner contrast
+        backgroundColor: 'background.paper',
         borderColor: 'divider',
         boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)'
       }}
@@ -70,12 +71,12 @@ export function StatsOverview({
               height: 38,
               px: 2.5,
               borderRadius: 2,
-              backgroundColor: '#fff',
+              backgroundColor: 'background.paper',
               border: '1px solid',
               borderColor: 'divider',
               boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
               '&:hover': {
-                backgroundColor: '#F3F4F6'
+                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04)
               }
             }}
           >

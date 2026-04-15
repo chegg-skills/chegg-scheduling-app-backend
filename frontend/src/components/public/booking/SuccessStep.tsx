@@ -37,7 +37,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                 color: (theme) => theme.palette.primary.main
             }}>
                 {isReschedule ? 'Reschedule Confirmed!' : 'Booking Confirmed!'}
-                <CheckCircle2 size={36} color="#397F89" strokeWidth={3} />
+                <CheckCircle2 size={36} color="#1DA275" strokeWidth={3} />
             </Typography>
 
             <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem', fontWeight: 500 }}>

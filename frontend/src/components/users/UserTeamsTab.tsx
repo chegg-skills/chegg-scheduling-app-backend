@@ -13,9 +13,11 @@ interface UserTeamsTabProps {
 export function UserTeamsTab({ user }: UserTeamsTabProps) {
   if (user.teamMemberships.length === 0) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Users size={40} color="#ccc" style={{ marginBottom: 8 }} />
-        <Typography color="text.secondary">This user is not a member of any teams.</Typography>
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Users size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
+        <Typography color="text.secondary" fontWeight={500}>
+          This user is not a member of any teams.
+        </Typography>
       </Box>
     )
   }

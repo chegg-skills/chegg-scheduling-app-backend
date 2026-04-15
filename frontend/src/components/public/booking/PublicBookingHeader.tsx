@@ -85,7 +85,7 @@ export function PublicBookingHeader({
 
       {/* Row 2: Header Content */}
       <Box sx={{ mt: { xs: 2.5, md: 3 }, mb: 1.5 }}>
-        <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: -0.5, lineHeight: 1.1 }}>
+        <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: -0.5, lineHeight: 1.1 }}>
           {customHeading || heading}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontWeight: 500, lineHeight: 1.4 }}>

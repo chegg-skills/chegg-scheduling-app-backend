@@ -23,7 +23,7 @@ interface AvailabilityDayRowProps {
 const timeInputStyle = {
   padding: '4px 8px',
   borderRadius: '4px',
-  border: '1px solid #ccc',
+  border: '1px solid #DEE3ED',
   background: 'transparent',
   color: 'inherit',
   fontSize: '0.875rem',

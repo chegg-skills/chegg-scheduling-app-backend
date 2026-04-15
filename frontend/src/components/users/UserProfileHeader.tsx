@@ -37,7 +37,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
 
       <Box sx={{ flex: 1 }}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-          <Typography variant="h5" fontWeight={700}>
+          <Typography variant="h5" fontWeight={800}>
             {user.firstName} {user.lastName}
           </Typography>
           <Chip
@@ -94,7 +94,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
                       target="_blank"
                       rel="noreferrer"
                       sx={{
-                        color: '#ff9800',
+                        color: 'primary.main',
                         textDecoration: 'none',
                         '&:hover': { textDecoration: 'underline' },
                         wordBreak: 'break-all',

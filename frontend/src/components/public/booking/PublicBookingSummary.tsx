@@ -89,7 +89,7 @@ export function PublicBookingSummary({
                     <Box sx={{ minWidth: 0 }}>
                         {!compact && (
                             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                                <Calendar size={14} color={variant === 'current' ? '#522D9B' : '#EB7100'} /> Session
+                                <Calendar size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Session
                             </Typography>
                         )}
                         <Typography variant="body2" fontWeight={800} color="text.primary" sx={{
@@ -101,7 +101,7 @@ export function PublicBookingSummary({
                             alignItems: 'center',
                             gap: 0.5
                         }}>
-                            {compact && <Calendar size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
+                            {compact && <Calendar size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
                             {eventDetails.name}
                         </Typography>
                     </Box>
@@ -111,7 +111,7 @@ export function PublicBookingSummary({
                     <Box>
                         {!compact && (
                             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                                <Calendar size={14} color={variant === 'current' ? '#522D9B' : '#EB7100'} /> Date
+                                <Calendar size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Date
                             </Typography>
                         )}
                         <Typography variant="body2" fontWeight={700} color="text.primary" sx={{
@@ -120,7 +120,7 @@ export function PublicBookingSummary({
                             alignItems: 'center',
                             gap: 0.5
                         }}>
-                            {compact && <Clock size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
+                            {compact && <Clock size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
                             {formatDate(selectedDate)}
                         </Typography>
                     </Box>
@@ -130,7 +130,7 @@ export function PublicBookingSummary({
                     <Box>
                         {!compact && (
                             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                                <Clock size={14} color={variant === 'current' ? '#522D9B' : '#EB7100'} /> Time
+                                <Clock size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Time
                             </Typography>
                         )}
                         <Typography variant="body2" fontWeight={700} color="text.primary" sx={{
@@ -139,7 +139,7 @@ export function PublicBookingSummary({
                             alignItems: 'center',
                             gap: 0.5
                         }}>
-                            {compact && !selectedDate && <Clock size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
+                            {compact && !selectedDate && <Clock size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
                             {formatSlot(selectedSlot)}
                         </Typography>
                     </Box>
