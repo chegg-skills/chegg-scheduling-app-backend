@@ -1,5 +1,4 @@
-import { Box, Button, Collapse, Divider, TableCell, TableRow, alpha } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { Box, Button, Collapse, Divider, TableCell, TableRow } from '@mui/material'
 import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
 import type { Booking, BookingStatus } from '@/types'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
@@ -24,7 +23,6 @@ export function BookingTableRow({
   onToggle,
   onViewHost,
 }: BookingTableRowProps) {
-  const theme = useTheme()
   const { handleAction } = useAsyncAction()
 
   const startTime = new Date(booking.startTime)
@@ -51,7 +49,7 @@ export function BookingTableRow({
       <TableRow
         hover
         sx={{
-          bgcolor: isExpanded ? alpha(theme.palette.secondary.main, 0.03) : 'inherit',
+          bgcolor: isExpanded ? 'action.hover' : 'inherit',
           transition: 'background-color 0.2s ease',
         }}
       >
@@ -99,9 +97,12 @@ export function BookingTableRow({
               sx={{
                 py: 3,
                 px: 3,
-                bgcolor: alpha(theme.palette.secondary.main, 0.02),
+                bgcolor: 'grey.50',
                 borderTop: '1px solid',
-                borderColor: theme.palette.divider,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                borderLeft: '4px solid',
+                borderLeftColor: 'primary.main'
               }}
             >
               <BookingDetailsPanel booking={booking} onViewHost={onViewHost} />
