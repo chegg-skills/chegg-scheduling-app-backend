@@ -6,7 +6,6 @@ import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { StudentBookingHistory } from '@/components/students/StudentBookingHistory'
 import { StudentBookingStats } from '@/components/students/StudentBookingStats'
-import { StudentLastBookingCard } from '@/components/students/StudentLastBookingCard'
 import { useStudent, useStudentBookings } from '@/hooks/useStudents'
 
 export function StudentDetailPage() {
@@ -28,14 +27,6 @@ export function StudentDetailPage() {
             />
 
             <Stack spacing={4} sx={{ px: { xs: 2.5, md: 4 }, pb: 6 }}>
-                {student.latestBooking && (
-                    <StudentLastBookingCard
-                        latestBooking={student.latestBooking}
-                        firstBookedAt={student.firstBookedAt}
-                        lastBookedAt={student.lastBookedAt}
-                    />
-                )}
-
                 <StudentBookingStats
                     bookings={bookingsData?.bookings ?? []}
                     totalCount={student.bookingCount}
