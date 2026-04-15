@@ -55,7 +55,14 @@ export function PublicBookingPage() {
   if (currentStepKey === null || activeStep >= completionStep) {
     return (
       <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <SuccessStep email={studentInfo.email} onReset={() => window.location.reload()} />
+        <SuccessStep
+          email={studentInfo.email}
+          eventName={eventDetails?.name}
+          newDate={selectedDate}
+          newTime={selectedSlot ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(selectedSlot)) : ''}
+          mentorName={coachDetails ? `${coachDetails.firstName} ${coachDetails.lastName}` : ''}
+          onReset={() => window.location.reload()}
+        />
       </LocalizationProvider>
     )
   }

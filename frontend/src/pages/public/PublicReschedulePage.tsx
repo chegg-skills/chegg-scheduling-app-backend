@@ -96,6 +96,7 @@ export function PublicReschedulePage() {
                     newDate={selectedDate}
                     newTime={selectedSlot ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(selectedSlot)) : ''}
                     eventName={bookingData.event?.name || ''}
+                    mentorName={bookingData.host ? `${bookingData.host.firstName} ${bookingData.host.lastName}` : ''}
                     onReset={() => window.location.reload()}
                 />
             </LocalizationProvider>
