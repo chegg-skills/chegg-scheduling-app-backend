@@ -58,8 +58,6 @@ export function Sidebar() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: isCollapsed ? 'center' : 'space-between',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
         }}
       >
         {!isCollapsed && (
