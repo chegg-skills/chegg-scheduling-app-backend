@@ -8,6 +8,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import { Badge } from '@/components/shared/Badge'
 import { RowActions } from '@/components/shared/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
+import { toTitleCase } from '@/utils/toTitleCase'
 import type { Team } from '@/types'
 
 interface TeamTableRowProps {
@@ -54,7 +55,7 @@ export function TeamTableRow({
               '&:hover': { color: 'primary.main', textDecoration: 'underline' },
             }}
           >
-            {team.name}
+            {toTitleCase(team.name)}
           </Link>
         </Stack>
       </TableCell>
@@ -80,7 +81,7 @@ export function TeamTableRow({
                 onClick: () => onEdit(team),
               },
               {
-                label: team.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                label: team.isActive ? 'Mark as inactive' : 'Mark as active',
                 icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
                 onClick: () => onToggleActive(team),
               },

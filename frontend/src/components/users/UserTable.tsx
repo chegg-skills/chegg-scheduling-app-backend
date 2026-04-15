@@ -44,7 +44,7 @@ export function UserTable({
 
   async function handleDeactivate(user: SafeUser) {
     const confirmed = await confirm({
-      title: 'Deactivate User',
+      title: 'Deactivate user',
       message: `Are you sure you want to deactivate ${user.firstName} ${user.lastName}?`,
     })
 

@@ -61,7 +61,7 @@ export function PublicMobileHeader({
                     {currentBookingDetails && (
                         <Box sx={{ flex: 1 }}>
                             <PublicBookingSummary
-                                title="Current Session"
+                                title="Current session"
                                 variant="current"
                                 compact={true}
                                 teamDetails={currentBookingDetails.teamDetails}
@@ -75,7 +75,7 @@ export function PublicMobileHeader({
 
                     <Box sx={{ flex: 1 }}>
                         <PublicBookingSummary
-                            title={currentBookingDetails ? "New Selection" : "Your Selection"}
+                            title={currentBookingDetails ? "New selection" : "Your selection"}
                             compact={true}
                             teamDetails={teamDetails}
                             eventDetails={eventDetails}

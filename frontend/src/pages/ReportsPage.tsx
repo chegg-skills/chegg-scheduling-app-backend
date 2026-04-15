@@ -46,21 +46,21 @@ export function ReportsPage() {
             title: 'Bookings Master Report',
             description: 'Full lifecycle data for all sessions including coach, student, status, and custom session details.',
             icon: <ClipboardList size={24} />,
-            color: '#FF7500',
+            color: '#E87100',
         },
         {
             id: 'performance',
             title: 'Coach Performance Report',
             description: 'Aggregated analytics per coach showing total bookings, completion rates, and no-show frequency.',
             icon: <Users size={24} />,
-            color: '#8133FF',
+            color: '#3A2C41',
         },
         {
             id: 'students',
             title: 'Student Engagement Report',
             description: 'Analysis of student activity including first/last booking dates and total session volume.',
             icon: <GraduationCap size={24} />,
-            color: '#00BEA4',
+            color: '#2E8AEE',
         },
     ];
 
@@ -88,7 +88,7 @@ export function ReportsPage() {
                         p: 3,
                         mb: 4,
                         borderRadius: 2,
-                        bgcolor: '#F9FAFB',
+                        bgcolor: 'grey.50',
                         display: 'flex',
                         flexDirection: { xs: 'column', sm: 'row' },
                         justifyContent: 'space-between',
@@ -169,7 +169,7 @@ export function ReportsPage() {
                                     {report.description}
                                 </Typography>
                             </Box>
-                            <Box sx={{ p: 2, bgcolor: '#F9FAFB', borderTop: '1px solid', borderColor: 'divider' }}>
+                            <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
                                 <Button
                                     fullWidth
                                     variant="contained"
@@ -187,7 +187,7 @@ export function ReportsPage() {
                 {/* Info Box */}
                 <Card variant="outlined" sx={{ mt: 6, p: 3, borderRadius: 2, borderStyle: 'dashed', bgcolor: 'transparent' }}>
                     <Stack direction="row" spacing={2} alignItems="center">
-                        <Info size={20} color="#6B7280" />
+                        <Info size={20} color="#525252" />
                         <Typography variant="body2" color="text.secondary">
                             Generated reports are scoped to your administrative permissions. **Team Admins** will only export data for their assigned teams.
                         </Typography>

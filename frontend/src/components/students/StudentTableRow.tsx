@@ -2,6 +2,7 @@ import { TableRow, TableCell, Typography, Box, Avatar, alpha } from '@mui/materi
 import { useTheme } from '@mui/material/styles'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
+import { toTitleCase } from '@/utils/toTitleCase'
 import type { StudentSummary } from '@/types'
 
 interface StudentTableRowProps {
@@ -37,7 +38,7 @@ export function StudentTableRow({ student }: StudentTableRowProps) {
                             .toUpperCase()}
                     </Avatar>
                     <Typography variant="body2" fontWeight={600}>
-                        {student.fullName}
+                        {toTitleCase(student.fullName)}
                     </Typography>
                 </Box>
             </TableCell>
@@ -65,7 +66,7 @@ export function StudentTableRow({ student }: StudentTableRowProps) {
                 {student.latestBooking ? (
                     <Box>
                         <Typography variant="body2" fontWeight={500}>
-                            {student.latestBooking.event.name}
+                            {toTitleCase(student.latestBooking.event.name)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                             {format(new Date(student.latestBooking.startTime), 'MMM d, yyyy')}

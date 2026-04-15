@@ -3,6 +3,7 @@ import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { APP_HEADER_MIN_HEIGHT } from './layoutConstants'
 
 import { Link as RouterLink } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
@@ -35,6 +36,8 @@ export function PageHeader({
         top: 0,
         zIndex: 100,
         width: '100%',
+        minHeight: APP_HEADER_MIN_HEIGHT,
+        boxSizing: 'border-box',
         px: { xs: 2.5, md: 4 },
         py: 2,
         backgroundColor: "white",

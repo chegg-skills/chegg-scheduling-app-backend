@@ -5,6 +5,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/FormField'
 import { Select } from '@/components/shared/Select'
+import { toTitleCase } from '@/utils/toTitleCase'
 import { useEventOfferings } from '@/hooks/useEventOfferings'
 import { useInteractionTypes } from '@/hooks/useInteractionTypes'
 import { formatCapacityRange } from './eventCapabilityRules'
@@ -25,7 +26,7 @@ export function EventResourceFields() {
   return (
     <Stack spacing={2}>
       <FormField
-        label="Event Category"
+        label="Event category"
         htmlFor="offeringId"
         error={errors.offeringId?.message}
         info="The category or type of service for this event (e.g., Tutorial)."
@@ -40,14 +41,14 @@ export function EventResourceFields() {
           <MenuItem value="">Select a category…</MenuItem>
           {offerings.map((o) => (
             <MenuItem key={o.id} value={o.id}>
-              {o.name}
+              {toTitleCase(o.name)}
             </MenuItem>
           ))}
         </Select>
       </FormField>
 
       <FormField
-        label="Interaction Type"
+        label="Interaction type"
         htmlFor="interactionTypeId"
         error={errors.interactionTypeId?.message}
         info="The method of communication for the event (e.g., Zoom, In Person)."
@@ -64,13 +65,13 @@ export function EventResourceFields() {
             <MenuItem key={t.id} value={t.id} sx={{ py: 1.5 }}>
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {t.name}
+                  {toTitleCase(t.name)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                   Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} • Coaches: {formatCapacityRange(t.minHosts, t.maxHosts)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t.supportsRoundRobin ? 'Supports Round Robin roster' : 'Direct assignment only'}
+                  {t.supportsRoundRobin ? 'Supports round-robin roster' : 'Direct assignment only'}
                 </Typography>
               </Box>
             </MenuItem>

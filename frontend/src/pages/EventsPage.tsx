@@ -107,7 +107,7 @@ export function EventsPage() {
                   }}
                   sx={{
                     minWidth: { xs: '100%', sm: 280 },
-                    backgroundColor: '#F3F4F6', // Soft grey background
+                    backgroundColor: 'grey.50', // Brand-neutral soft background
                     borderRadius: 1.5, // 12px
                     height: 40,
                     minHeight: 40,

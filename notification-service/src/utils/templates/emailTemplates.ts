@@ -1,10 +1,10 @@
 import type { EmailTemplateMap } from "../../types/notification";
 
-const BRAND_ORANGE = "#FF7500";
-const BRAND_DARK = "#00253C";
-const TEXT_MAIN = "#1B2D38";
-const TEXT_SECONDARY = "#6B7280";
-const DIVIDER = "#E5E7EB";
+const BRAND_ORANGE = "#E87100";
+const BRAND_DARK = "#3A2C41";
+const TEXT_MAIN = "#3A2C41";
+const TEXT_SECONDARY = "#525252";
+const DIVIDER = "#DEE3ED";
 
 const LOGO_URL = "https://img.logokit.com/chegg.com";
 
@@ -22,19 +22,19 @@ const wrapLayout = (title: string, content: string, cta?: { text: string; url: s
         }
       </style>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #F3F4F6;">
-      <div class="email-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F3F4F6; padding: 40px 20px; color: ${TEXT_MAIN}; line-height: 1.6;">
-        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; box-sizing: border-box;">
-          <h1 class="email-title" style="font-size: 18px; font-weight: 700; margin: 0 0 20px; color: ${BRAND_DARK}; text-align: left;">${title}</h1>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: ${TEXT_MAIN}; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid ${DIVIDER};">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: ${BRAND_DARK}; text-align: left; letter-spacing: -0.01em;">${title}</h1>
           
-          <div class="email-content" style="font-size: 14px; color: ${TEXT_MAIN}; text-align: left;">
+          <div class="email-content" style="font-size: 15px; color: ${TEXT_MAIN}; text-align: left; font-weight: 500;">
             ${content}
           </div>
           
           ${cta ? `
-            <div style="margin: 24px 0; text-align: left;">
-              <a href="${cta.url}" style="color: ${BRAND_ORANGE}; font-weight: 600; text-decoration: none; border-bottom: 2px solid ${BRAND_ORANGE}; padding-bottom: 2px; font-size: 14px;">
-                ${cta.text} &rarr;
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="${cta.url}" style="display: inline-block; background-color: ${BRAND_ORANGE}; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                ${cta.text}
               </a>
             </div>
           ` : ""}

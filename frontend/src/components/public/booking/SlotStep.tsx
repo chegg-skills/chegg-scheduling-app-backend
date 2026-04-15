@@ -57,7 +57,7 @@ export function SlotStep({
                 {/* Column 1: Calendar Picker */}
                 <Box sx={{ width: { xs: '100%', lg: 400 }, flexShrink: 0, p: 3 }}>
                     <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ display: 'block', mb: 2, letterSpacing: 1.2, fontSize: '0.7rem' }}>
-                        Select Date
+                        Select date
                     </Typography>
                     <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: 1, bgcolor: 'background.paper' }}>
                         <StaticDatePicker
@@ -82,7 +82,7 @@ export function SlotStep({
                 <Box sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                     <Box sx={{ mb: 2 }}>
                         <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ display: 'block', mb: 1, letterSpacing: 1.2, fontSize: '0.7rem' }}>
-                            Available Slots
+                            Available slots
                         </Typography>
                         <Typography variant="h6" fontWeight={800} color="text.primary">
                             {new Intl.DateTimeFormat('en-US', {

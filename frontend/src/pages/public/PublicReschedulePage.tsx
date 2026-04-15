@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { startOfDay, endOfDay } from 'date-fns';
 import Box from '@mui/material/Box';
@@ -21,6 +21,8 @@ import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel';
 import { PublicMainContent } from '@/components/public/layout/PublicMainContent';
 import { PublicNavigationFooter } from '@/components/public/layout/PublicNavigationFooter';
 import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeader';
+import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader';
+import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout';
 
 export function PublicReschedulePage() {
     const { bookingId = '' } = useParams();
@@ -32,6 +34,12 @@ export function PublicReschedulePage() {
     const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isSuccess, setIsSuccess] = React.useState(false);
+    const { setFramed } = useOutletContext<PublicLayoutOutletContext>();
+
+    React.useEffect(() => {
+        setFramed(!isSuccess);
+        return () => setFramed(true);
+    }, [isSuccess, setFramed]);
 
     // 1. Fetch Booking Details
     const { data: bookingData, isLoading: isLoadingBooking, error: bookingError } = useQuery({
@@ -95,6 +103,7 @@ export function PublicReschedulePage() {
                     newDate={selectedDate}
                     newTime={selectedSlot ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(selectedSlot)) : ''}
                     eventName={bookingData.event?.name || ''}
+                    mentorName={bookingData.host ? `${bookingData.host.firstName} ${bookingData.host.lastName}` : ''}
                     onReset={() => window.location.reload()}
                 />
             </LocalizationProvider>
@@ -123,7 +132,7 @@ export function PublicReschedulePage() {
                     />
 
                     <PublicBookingSummary
-                        title="Current Session"
+                        title="Current session"
                         variant="current"
                         {...currentBookingInfo}
                         selectedDate={currentBookingInfo.date}
@@ -131,7 +140,7 @@ export function PublicReschedulePage() {
                     />
 
                     <PublicBookingSummary
-                        title="New Selection"
+                        title="New selection"
                         selectedDate={selectedDate}
                         selectedSlot={selectedSlot}
                     />
@@ -139,16 +148,18 @@ export function PublicReschedulePage() {
 
                 {/* Column 2: Content Area */}
                 <PublicMainContent>
-                    {/* Mobile Header */}
-                    <PublicMobileHeader
-                        scope="event"
-                        customHeading="Reschedule your current session"
-                        eventDetails={bookingData.event as any}
-                        coachDetails={bookingData.host as any}
-                        selectedDate={selectedDate}
-                        selectedSlot={selectedSlot}
-                        currentBookingDetails={currentBookingInfo}
-                    />
+                    <PublicStepHeader showStepper={false}>
+                        {/* Mobile Header */}
+                        <PublicMobileHeader
+                            scope="event"
+                            customHeading="Reschedule your current session"
+                            eventDetails={bookingData.event as any}
+                            coachDetails={bookingData.host as any}
+                            selectedDate={selectedDate}
+                            selectedSlot={selectedSlot}
+                            currentBookingDetails={currentBookingInfo}
+                        />
+                    </PublicStepHeader>
 
                     {/* Main Step Content */}
                     <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
@@ -166,7 +177,7 @@ export function PublicReschedulePage() {
                         onBack={() => navigate('/')}
                         onNext={handleReschedule}
                         backLabel="Cancel"
-                        nextLabel="Confirm Reschedule"
+                        nextLabel="Confirm reschedule"
                         submittingLabel="Updating..."
                         nextDisabled={!selectedSlot}
                         isSubmitting={isSubmitting}

@@ -23,6 +23,7 @@ import { useDeleteInteractionType } from '@/hooks/useInteractionTypes'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { extractApiError } from '@/utils/apiError'
 import { InteractionTypeUsageList } from './InteractionTypeUsageList'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface InteractionTypeTableProps {
   interactionTypes: EventInteractionType[]
@@ -57,8 +58,8 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
 
   const handleDelete = async (t: EventInteractionType) => {
     handleAction(deleteInteractionType, t.id, {
-      title: 'Delete Interaction Type',
-      message: `Are you sure you want to permanently delete "${t.name}"? This action cannot be undone.`,
+      title: 'Delete interaction type',
+      message: `Are you sure you want to permanently delete "${toTitleCase(t.name)}"? This action cannot be undone.`,
       confirmText: 'Yes',
       actionName: 'Delete',
       onError: (error: any) => {
@@ -82,8 +83,8 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
             <TableRow>
               {[
                 { label: 'Interaction Type', sortKey: 'interactionType' as const, tooltip: headerTooltips['Interaction Type'] },
-                { label: 'Multi-Host', sortKey: 'multiHost' as const, tooltip: headerTooltips['Multi-Host'] },
-                { label: 'Round Robin', sortKey: 'roundRobin' as const, tooltip: headerTooltips['Round Robin'] },
+                { label: 'Multi-host', sortKey: 'multiHost' as const, tooltip: headerTooltips['Multi-Host'] },
+                { label: 'Round-robin', sortKey: 'roundRobin' as const, tooltip: headerTooltips['Round Robin'] },
                 { label: 'Sort', sortKey: 'sort' as const, tooltip: headerTooltips.Sort },
                 { label: 'Status', sortKey: 'status' as const },
               ].map((col) => (
@@ -140,7 +141,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                       </Box>
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {t.name}
+                          {toTitleCase(t.name)}
                         </Typography>
                         <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
                           {t.key}
@@ -167,7 +168,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                           onClick: () => setEditing(t),
                         },
                         {
-                          label: 'View Usage',
+                          label: 'View usage',
                           icon: <Info size={16} />,
                           onClick: () => setUsageId(t.id),
                         },
@@ -192,7 +193,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
           isOpen
           size="lg"
           onClose={() => setEditing(null)}
-          title={`Edit "${editing.name}"`}
+          title={`Edit "${toTitleCase(editing.name)}"`}
           footer={
             <>
               <Button variant="secondary" onClick={() => setEditing(null)} sx={{ minWidth: 120 }}>
@@ -221,7 +222,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
           isOpen
           size="md"
           onClose={() => setUsageId(null)}
-          title={`Usage: ${usageTarget.name}`}
+          title={`Usage: ${toTitleCase(usageTarget.name)}`}
           footer={
             <Button variant="secondary" onClick={() => setUsageId(null)}>
               Close

@@ -1,5 +1,6 @@
 import type { SafeUser, UserRole } from '@/types'
 import type { SortAccessorMap } from '@/hooks/useTableSort'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 export type UserSortKey = 'user' | 'role' | 'timezone' | 'status' | 'bookingLink'
 
@@ -16,7 +17,7 @@ export const userTableColumns: Array<{ label: string; sortKey: UserSortKey }> = 
   { label: 'Role', sortKey: 'role' },
   { label: 'Timezone', sortKey: 'timezone' },
   { label: 'Status', sortKey: 'status' },
-  { label: 'Booking Link', sortKey: 'bookingLink' },
+  { label: 'Booking link', sortKey: 'bookingLink' },
 ]
 
 export function getUserStatusBadgeProps(isActive: boolean) {
@@ -34,7 +35,7 @@ export function getUserRoleBadgeProps(role: UserRole) {
   }
 
   return {
-    label: role.replace('_', ' '),
+    label: toTitleCase(role.replace('_', ' ')),
     variant: variants[role],
   } as const
 }

@@ -60,7 +60,7 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
           {error && <ErrorAlert message={extractApiError(error)} />}
 
           <Stack spacing={2}>
-            <Typography {...sectionLabelStyle}>Basic Info</Typography>
+            <Typography {...sectionLabelStyle}>Basic info</Typography>
             <EventBasicFields />
           </Stack>
 
@@ -81,7 +81,7 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
           <Divider />
 
           <Stack spacing={2}>
-            <Typography {...sectionLabelStyle}>Schedule & Assignment</Typography>
+            <Typography {...sectionLabelStyle}>Schedule & assignment</Typography>
             <EventScheduleFields
               selectedInteractionType={selectedInteractionType}
               event={event}
@@ -92,7 +92,7 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
           <Divider />
 
           <Stack spacing={2}>
-            <Typography {...sectionLabelStyle}>Booking Rules & Policy</Typography>
+            <Typography {...sectionLabelStyle}>Booking rules & policy</Typography>
             <EventSchedulingPolicyFields
               selectedInteractionType={selectedInteractionType}
             />

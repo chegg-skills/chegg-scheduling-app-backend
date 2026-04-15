@@ -1,5 +1,5 @@
-import { Box, Button, Collapse, Divider, TableCell, TableRow, alpha } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { Box, Button, Collapse, Divider, TableCell, TableRow } from '@mui/material'
+import { toTitleCase } from '@/utils/toTitleCase'
 import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
 import type { Booking, BookingStatus } from '@/types'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
@@ -24,7 +24,6 @@ export function BookingTableRow({
   onToggle,
   onViewHost,
 }: BookingTableRowProps) {
-  const theme = useTheme()
   const { handleAction } = useAsyncAction()
 
   const startTime = new Date(booking.startTime)
@@ -39,8 +38,7 @@ export function BookingTableRow({
       { id: booking.id, status },
       {
         title: `${label} Booking`,
-        message: `Are you sure you want to ${label.toLowerCase()} the booking for ${booking.studentName
-          }?`,
+        message: `Are you sure you want to ${label.toLowerCase()} the booking for ${toTitleCase(booking.studentName)}?`,
         actionName: label,
       }
     )
@@ -51,12 +49,12 @@ export function BookingTableRow({
       <TableRow
         hover
         sx={{
-          bgcolor: isExpanded ? alpha(theme.palette.secondary.main, 0.03) : 'inherit',
+          bgcolor: isExpanded ? 'action.hover' : 'inherit',
           transition: 'background-color 0.2s ease',
         }}
       >
         <TableCell sx={{ pl: 3 }}>
-          <BookingStudentCell name={booking.studentName} email={booking.studentEmail} />
+          <BookingStudentCell name={toTitleCase(booking.studentName)} email={booking.studentEmail} />
         </TableCell>
 
         <TableCell>
@@ -99,9 +97,12 @@ export function BookingTableRow({
               sx={{
                 py: 3,
                 px: 3,
-                bgcolor: alpha(theme.palette.secondary.main, 0.02),
+                bgcolor: 'grey.50',
                 borderTop: '1px solid',
-                borderColor: theme.palette.divider,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                borderLeft: '4px solid',
+                borderLeftColor: 'primary.main'
               }}
             >
               <BookingDetailsPanel booking={booking} onViewHost={onViewHost} />
@@ -112,7 +113,7 @@ export function BookingTableRow({
                 <Box sx={{ mr: 'auto', alignSelf: 'center', color: 'text.secondary', typography: 'caption', display: 'flex', flexDirection: 'column', gap: 0.25 }}>
                   <Box sx={{ fontWeight: 600 }}>Booking ID: {booking.id.slice(0, 8).toUpperCase()}</Box>
                   <Box>
-                    Created on {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(booking.createdAt))} by {booking.studentName}
+                    Created on {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(booking.createdAt))} by {toTitleCase(booking.studentName)}
                   </Box>
                 </Box>
 

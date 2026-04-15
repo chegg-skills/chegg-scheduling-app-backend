@@ -72,7 +72,7 @@ export function UserForm({ user, currentUserRole, onSuccess, onCancel }: UserFor
       <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={4}>
         {error && <ErrorAlert message={extractApiError(error)} />}
 
-        <UserFormSection title="Personal Information">
+        <UserFormSection title="Personal information">
           <UserPersonalFields
             register={register}
             errors={errors}
@@ -84,7 +84,7 @@ export function UserForm({ user, currentUserRole, onSuccess, onCancel }: UserFor
 
         <Divider />
 
-        <UserFormSection title="Account Settings">
+        <UserFormSection title="Account settings">
           <UserSystemFields
             errors={errors}
             control={control}

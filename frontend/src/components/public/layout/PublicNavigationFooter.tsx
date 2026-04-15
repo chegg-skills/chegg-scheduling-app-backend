@@ -75,7 +75,7 @@ export function PublicNavigationFooter({
                     sx={{
                         px: 6,
                         py: 1.25,
-                        fontWeight: 900,
+                        fontWeight: 800,
                         borderRadius: 3,
                         bgcolor: 'primary.main',
                         boxShadow: (theme) => `0 12px 24px -8px ${alpha(theme.palette.primary.main, 0.4)}`,

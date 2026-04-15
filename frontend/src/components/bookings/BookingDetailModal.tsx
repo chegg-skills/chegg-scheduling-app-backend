@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import { toTitleCase } from '@/utils/toTitleCase'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import { Clock, XCircle, Calendar } from 'lucide-react'
@@ -31,8 +32,8 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
                 updateStatus({ id, status: nextStatus }),
             { id: booking.id, status },
             {
-                title: `${label} Booking`,
-                message: `Are you sure you want to ${label.toLowerCase()} the booking for ${booking.studentName}?`,
+                title: `${label.toLowerCase()} booking`,
+                message: `Are you sure you want to ${label.toLowerCase()} the booking for ${toTitleCase(booking.studentName)}?`,
                 actionName: label,
             }
         )
@@ -42,7 +43,7 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
         <Modal
             isOpen={!!booking}
             onClose={onClose}
-            title={`Booking Details - ${booking.studentName}`}
+            title={`Booking details — ${toTitleCase(booking.studentName)}`}
             size="lg"
         >
             <Box sx={{ p: 1 }}>
@@ -68,7 +69,7 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
                                 onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
                                 sx={{ fontWeight: 600, borderRadius: 2 }}
                             >
-                                Cancel Booking
+                                Cancel booking
                             </Button>
                             <Button
                                 variant="outlined"
@@ -100,10 +101,10 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
                             color="warning"
                             size="small"
                             startIcon={<Clock size={16} />}
-                            onClick={() => handleStatusUpdate('NO_SHOW', 'No Show')}
+                            onClick={() => handleStatusUpdate('NO_SHOW', 'No show')}
                             sx={{ fontWeight: 600, borderRadius: 2 }}
                         >
-                            Mark as No Show
+                            Mark as no show
                         </Button>
                     )}
 

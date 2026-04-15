@@ -15,6 +15,7 @@ import { useTableSort } from '@/hooks/useTableSort'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { EventForm } from './EventForm'
 import { EventTableRow } from './EventTableRow'
+import { toTitleCase } from '@/utils/toTitleCase'
 import { eventSortAccessors, eventTableColumns } from './eventTableUtils'
 
 interface EventTableProps {
@@ -38,10 +39,10 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
       updateEvent,
       { eventId: event.id, data: { isActive: newStatus } },
       {
-        title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+        title: newStatus ? 'Mark as active' : 'Mark as inactive',
         message: newStatus
-          ? `Are you sure you want to mark event "${event.name}" as active? This will make it visible on the public booking page.`
-          : `Are you sure you want to mark event "${event.name}" as inactive? This will hide it from the public booking page but keep all its configuration.`,
+          ? `Are you sure you want to mark event "${toTitleCase(event.name)}" as active? This will make it visible on the public booking page.`
+          : `Are you sure you want to mark event "${toTitleCase(event.name)}" as inactive? This will hide it from the public booking page but keep all its configuration.`,
         actionName: 'Update',
       }
     )
@@ -49,16 +50,16 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
 
   async function handleDuplicate(event: Event) {
     handleAction(duplicateEvent, event.id, {
-      title: 'Duplicate Event',
-      message: `Are you sure you want to create a duplicate of "${event.name}"?\n\nThe new copy will be set to inactive so you can review its settings before publishing.`,
+      title: 'Duplicate event',
+      message: `Are you sure you want to create a duplicate of "${toTitleCase(event.name)}"?\n\nThe new copy will be set to inactive so you can review its settings before publishing.`,
       actionName: 'Duplicate',
     })
   }
 
   async function handleDelete(event: Event) {
     handleAction(deleteEvent, event.id, {
-      title: 'Delete Event',
-      message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated host assignments will be lost.`,
+      title: 'Delete event',
+      message: `Are you sure you want to PERMANENTLY delete event "${toTitleCase(event.name)}"?\n\nThis action cannot be undone and all associated host assignments will be lost.`,
       actionName: 'Delete',
     })
   }
@@ -125,7 +126,7 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
           isOpen
           size="lg"
           onClose={() => setEditingEvent(null)}
-          title={`Edit "${editingEvent.name}"`}
+          title={`Edit "${toTitleCase(editingEvent.name)}"`}
         >
           <EventForm
             teamId={teamId ?? ''}

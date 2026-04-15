@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography'
 import { Users } from 'lucide-react'
 import type { UserWithDetails } from '@/types'
 import { formatDate } from './userDetailUtils'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface UserTeamsTabProps {
   user: UserWithDetails
@@ -13,9 +14,11 @@ interface UserTeamsTabProps {
 export function UserTeamsTab({ user }: UserTeamsTabProps) {
   if (user.teamMemberships.length === 0) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Users size={40} color="#ccc" style={{ marginBottom: 8 }} />
-        <Typography color="text.secondary">This user is not a member of any teams.</Typography>
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Users size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
+        <Typography color="text.secondary" fontWeight={500}>
+          This user is not a member of any teams.
+        </Typography>
       </Box>
     )
   }
@@ -26,7 +29,7 @@ export function UserTeamsTab({ user }: UserTeamsTabProps) {
         <Grid size={{ xs: 12, sm: 6 }} key={membership.id}>
           <Paper variant="outlined" sx={{ p: 2, '&:hover': { bgcolor: 'action.hover' } }}>
             <Typography variant="subtitle2" fontWeight={700}>
-              {membership.team.name}
+              {toTitleCase(membership.team.name)}
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
               Joined {formatDate(membership.team.createdAt)}

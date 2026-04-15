@@ -103,6 +103,11 @@ const ReportsPage = lazy(() =>
     default: module.ReportsPage,
   })),
 );
+const NotFoundPage = lazy(() =>
+  import("@/pages/NotFoundPage").then((module) => ({
+    default: module.NotFoundPage,
+  })),
+);
 
 
 
@@ -198,5 +203,9 @@ export const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    path: "*",
+    element: renderLazyPage(NotFoundPage),
   },
 ]);

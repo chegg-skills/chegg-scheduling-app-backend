@@ -33,7 +33,7 @@ export function InteractionTypeLimitsSection({
           }}
         >
           <FormField
-            label="Min Assigned Coaches"
+            label="Min assigned coaches"
             htmlFor="minHosts"
             error={errors.minHosts?.message}
             hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'Minimum number of coaches that must be assigned to an event.'}
@@ -42,7 +42,7 @@ export function InteractionTypeLimitsSection({
           </FormField>
 
           <FormField
-            label="Max Assigned Coaches (blank = unlimited)"
+            label="Max assigned coaches (blank = unlimited)"
             htmlFor="maxHosts"
             error={errors.maxHosts?.message}
             hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'No limit if left blank.'}
@@ -69,7 +69,7 @@ export function InteractionTypeLimitsSection({
           </FormField>
 
           <FormField
-            label="Min Participants"
+            label="Min participants"
             htmlFor="minParticipants"
             error={errors.minParticipants?.message}
           >
@@ -77,7 +77,7 @@ export function InteractionTypeLimitsSection({
           </FormField>
 
           <FormField
-            label="Max Participants (blank = unlimited)"
+            label="Max participants (blank = unlimited)"
             htmlFor="maxParticipants"
             error={errors.maxParticipants?.message}
           >

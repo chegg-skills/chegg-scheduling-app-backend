@@ -52,7 +52,7 @@ export function TeamLeadSelector({
 }: TeamLeadSelectorProps) {
   return (
     <FormField
-      label="Team Lead"
+      label="Team lead"
       htmlFor="teamLeadId"
       error={errors.teamLeadId?.message}
       hint="Must be an active Team Admin user."

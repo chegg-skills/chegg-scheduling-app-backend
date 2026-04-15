@@ -1,4 +1,5 @@
 import { Avatar, Box, Stack, Typography, alpha, useTheme } from '@mui/material';
+import { toTitleCase } from '@/utils/toTitleCase';
 import { User } from 'lucide-react';
 import type { Booking } from '@/types';
 import { SectionLabel } from './Common';
@@ -55,7 +56,7 @@ export function HostSection({ booking, onViewHost }: HostSectionProps) {
                                     }
                                 }}
                             >
-                                {host.firstName} {host.lastName}
+                                {toTitleCase(host.firstName)} {toTitleCase(host.lastName)}
                             </Typography>
                         );
                     })() : (
@@ -107,7 +108,7 @@ export function HostSection({ booking, onViewHost }: HostSectionProps) {
                                                 '&:hover': { color: 'primary.main' }
                                             }}
                                         >
-                                            {coHost.firstName} {coHost.lastName}
+                                            {toTitleCase(coHost.firstName)} {toTitleCase(coHost.lastName)}
                                         </Typography>
                                     </Box>
                                 </Stack>

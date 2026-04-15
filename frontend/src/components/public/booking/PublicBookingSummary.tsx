@@ -5,6 +5,7 @@ import Divider from '@mui/material/Divider'
 import { alpha } from '@mui/material/styles'
 import { Calendar, Clock } from 'lucide-react'
 import type { PublicEventSummary, PublicTeamSummary, PublicCoachSummary } from '@/types'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface PublicBookingSummaryProps {
     teamDetails?: PublicTeamSummary | null
@@ -23,7 +24,7 @@ export function PublicBookingSummary({
     coachDetails,
     selectedDate,
     selectedSlot,
-    title = 'Your Selection',
+    title = 'Your selection',
     variant = 'default',
     compact = false
 }: PublicBookingSummaryProps) {
@@ -80,7 +81,7 @@ export function PublicBookingSummary({
                         <Typography variant="body2" fontWeight={800} color="text.primary" sx={{
                             fontSize: compact ? '0.75rem' : '0.875rem',
                         }}>
-                            {displayTeam.name}
+                            {toTitleCase(displayTeam.name)}
                         </Typography>
                     </Box>
                 )}
@@ -89,7 +90,7 @@ export function PublicBookingSummary({
                     <Box sx={{ minWidth: 0 }}>
                         {!compact && (
                             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                                <Calendar size={14} color={variant === 'current' ? '#522D9B' : '#EB7100'} /> Session
+                                <Calendar size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Session
                             </Typography>
                         )}
                         <Typography variant="body2" fontWeight={800} color="text.primary" sx={{
@@ -101,8 +102,8 @@ export function PublicBookingSummary({
                             alignItems: 'center',
                             gap: 0.5
                         }}>
-                            {compact && <Calendar size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
-                            {eventDetails.name}
+                            {compact && <Calendar size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
+                            {toTitleCase(eventDetails.name)}
                         </Typography>
                     </Box>
                 )}
@@ -111,7 +112,7 @@ export function PublicBookingSummary({
                     <Box>
                         {!compact && (
                             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                                <Calendar size={14} color={variant === 'current' ? '#522D9B' : '#EB7100'} /> Date
+                                <Calendar size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Date
                             </Typography>
                         )}
                         <Typography variant="body2" fontWeight={700} color="text.primary" sx={{
@@ -120,7 +121,7 @@ export function PublicBookingSummary({
                             alignItems: 'center',
                             gap: 0.5
                         }}>
-                            {compact && <Clock size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
+                            {compact && <Clock size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
                             {formatDate(selectedDate)}
                         </Typography>
                     </Box>
@@ -130,7 +131,7 @@ export function PublicBookingSummary({
                     <Box>
                         {!compact && (
                             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                                <Clock size={14} color={variant === 'current' ? '#522D9B' : '#EB7100'} /> Time
+                                <Clock size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Time
                             </Typography>
                         )}
                         <Typography variant="body2" fontWeight={700} color="text.primary" sx={{
@@ -139,7 +140,7 @@ export function PublicBookingSummary({
                             alignItems: 'center',
                             gap: 0.5
                         }}>
-                            {compact && !selectedDate && <Clock size={12} color={variant === 'current' ? '#522D9B' : '#EB7100'} />}
+                            {compact && !selectedDate && <Clock size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
                             {formatSlot(selectedSlot)}
                         </Typography>
                     </Box>

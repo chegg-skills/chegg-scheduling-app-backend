@@ -1,3 +1,4 @@
+import { useTheme, alpha } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -5,31 +6,12 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import type { ReactNode } from 'react'
 
-const accentStyles = {
-  orange: {
-    color: '#FF7500',
-    backgroundColor: 'rgba(255, 117, 0, 0.08)',
-  },
-  purple: {
-    color: '#8133FF',
-    backgroundColor: 'rgba(129, 51, 255, 0.08)',
-  },
-  teal: {
-    color: '#00BEA4',
-    backgroundColor: 'rgba(0, 190, 164, 0.08)',
-  },
-  green: {
-    color: '#10B981',
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-  },
-} as const
-
 export interface StatCardProps {
   label: string
   value: number | string
   helperText?: string
   icon?: ReactNode
-  accent?: keyof typeof accentStyles
+  accent?: 'orange' | 'purple' | 'teal' | 'green'
 }
 
 export function StatCard({
@@ -39,7 +21,28 @@ export function StatCard({
   icon,
   accent = 'orange',
 }: StatCardProps) {
-  const accentStyle = accentStyles[accent]
+  const theme = useTheme()
+
+  const accentMap = {
+    orange: {
+      color: theme.palette.primary.main,
+      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    },
+    purple: {
+      color: theme.palette.secondary.main,
+      backgroundColor: alpha(theme.palette.secondary.main, 0.08),
+    },
+    teal: {
+      color: theme.palette.info.main,
+      backgroundColor: alpha(theme.palette.info.main, 0.08),
+    },
+    green: {
+      color: theme.palette.success.main,
+      backgroundColor: alpha(theme.palette.success.main, 0.08),
+    },
+  }
+
+  const accentStyle = accentMap[accent]
 
   return (
     <Card
@@ -69,7 +72,7 @@ export function StatCard({
                 variant="overline"
                 noWrap
                 sx={{
-                  color: '#4B5563', // Darker gray for overline
+                  color: '#525252', // Darker gray for overline
                   fontWeight: 800, // Even bolder
                   letterSpacing: '0.1em',
                   display: 'block'
@@ -81,7 +84,7 @@ export function StatCard({
                 variant={typeof value === 'string' && value.length > 15 ? 'h6' : 'h5'}
                 sx={{
                   mt: 0.5,
-                  color: '#111827',
+                  color: '#3A2C41',
                   fontWeight: 700,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',

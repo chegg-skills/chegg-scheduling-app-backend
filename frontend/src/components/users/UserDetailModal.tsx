@@ -14,7 +14,7 @@ export function UserDetailModal({ onClose, userId }: UserDetailModalProps) {
   const { data: user, isLoading } = useUser(userId)
 
   return (
-    <Modal isOpen onClose={onClose} title="User Details" size="lg">
+    <Modal isOpen onClose={onClose} title="User details" size="lg">
       {isLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress size={40} />

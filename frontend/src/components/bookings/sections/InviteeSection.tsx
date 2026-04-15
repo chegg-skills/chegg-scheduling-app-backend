@@ -1,4 +1,5 @@
 import { Avatar, Box, Stack, Typography, alpha, useTheme } from '@mui/material';
+import { toTitleCase } from '@/utils/toTitleCase';
 import { Link as RouterLink } from 'react-router-dom';
 import type { Booking } from '@/types';
 import { SectionLabel } from './Common';
@@ -24,7 +25,7 @@ export function InviteeSection({ booking }: InviteeSectionProps) {
                         fontWeight: 700,
                     }}
                 >
-                    {booking.studentName
+                    {toTitleCase(booking.studentName)
                         .split(' ')
                         .map((name) => name[0])
                         .join('')
@@ -46,14 +47,14 @@ export function InviteeSection({ booking }: InviteeSectionProps) {
                                 }
                             }}
                         >
-                            {booking.studentName}
+                            {toTitleCase(booking.studentName)}
                         </Typography>
                     ) : (
                         <Typography
                             variant='body1'
                             sx={{ fontWeight: 600, color: theme.palette.text.primary }}
                         >
-                            {booking.studentName}
+                            {toTitleCase(booking.studentName)}
                         </Typography>
                     )}
                     <Typography variant='body2' color='text.secondary'>

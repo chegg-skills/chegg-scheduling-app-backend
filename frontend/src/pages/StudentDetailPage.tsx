@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { Box, Stack, Typography, Breadcrumbs, Link as MuiLink } from '@mui/material'
+import { toTitleCase } from '@/utils/toTitleCase'
 import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -36,13 +37,13 @@ export function StudentDetailPage() {
                         Students
                     </MuiLink>
                     <Typography color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                        {student.fullName}
+                        {toTitleCase(student.fullName)}
                     </Typography>
                 </Breadcrumbs>
             </Box>
 
             <PageHeader
-                title={student.fullName}
+                title={toTitleCase(student.fullName)}
                 subtitle={student.email}
             />
 

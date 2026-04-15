@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { Calendar } from 'lucide-react'
 import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/Badge'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface UserHostedEventsTabProps {
   user: UserWithDetails
@@ -15,9 +16,11 @@ interface UserHostedEventsTabProps {
 export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
   if (user.hostedEvents.length === 0) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Calendar size={40} color="#ccc" style={{ marginBottom: 8 }} />
-        <Typography color="text.secondary">This user is not hosting any events.</Typography>
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Calendar size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
+        <Typography color="text.secondary" fontWeight={500}>
+          This user is not hosting any events.
+        </Typography>
       </Box>
     )
   }
@@ -38,14 +41,14 @@ export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
             primary={
               <Stack direction="row" spacing={1} alignItems="center">
                 <Typography variant="subtitle2" fontWeight={700}>
-                  {host.event.name}
+                  {toTitleCase(host.event.name)}
                 </Typography>
-                <Badge label={host.event.offering.name} variant="blue" />
+                <Badge label={toTitleCase(host.event.offering.name)} variant="blue" />
               </Stack>
             }
             secondary={
               <Typography variant="caption" color="text.secondary">
-                {host.event.interactionType.name} • {Math.round(host.event.durationSeconds / 60)} mins
+                {toTitleCase(host.event.interactionType.name)} • {Math.round(host.event.durationSeconds / 60)} mins
               </Typography>
             }
           />

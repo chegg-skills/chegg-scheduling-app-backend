@@ -1,6 +1,8 @@
 import Box from '@mui/material/Box'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { useEffect } from 'react'
+import { useOutletContext } from 'react-router-dom'
 
 import { SuccessStep } from '@/components/public/booking/SuccessStep'
 import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHeader'
@@ -13,6 +15,7 @@ import { PublicMainContent } from '@/components/public/layout/PublicMainContent'
 import { PublicNavigationFooter } from '@/components/public/layout/PublicNavigationFooter'
 import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeader'
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
+import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
 
 import { usePublicBookingState } from './hooks/usePublicBookingState'
 
@@ -50,12 +53,26 @@ export function PublicBookingPage() {
     coachDetails,
     eventDetailsError,
   } = usePublicBookingState()
+  const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
+  const isSuccess = currentStepKey === null || activeStep >= completionStep
+
+  useEffect(() => {
+    setFramed(!isSuccess)
+    return () => setFramed(true)
+  }, [isSuccess, setFramed])
 
   // Handle successful booking (no layout needed)
-  if (currentStepKey === null || activeStep >= completionStep) {
+  if (isSuccess) {
     return (
       <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <SuccessStep email={studentInfo.email} onReset={() => window.location.reload()} />
+        <SuccessStep
+          email={studentInfo.email}
+          eventName={eventDetails?.name}
+          newDate={selectedDate}
+          newTime={selectedSlot ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(selectedSlot)) : ''}
+          mentorName={coachDetails ? `${coachDetails.firstName} ${coachDetails.lastName}` : ''}
+          onReset={() => window.location.reload()}
+        />
       </LocalizationProvider>
     )
   }
@@ -136,7 +153,7 @@ export function PublicBookingPage() {
               (currentStepKey === 'confirm' && (!studentInfo.name || !studentInfo.email))
             }
             isSubmitting={isSubmitting}
-            nextLabel={currentStepKey === 'confirm' ? 'Confirm Booking' : 'Next'}
+            nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
           />
         </PublicMainContent>

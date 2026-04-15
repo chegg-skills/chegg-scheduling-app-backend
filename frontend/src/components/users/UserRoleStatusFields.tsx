@@ -40,7 +40,7 @@ export function UserRoleStatusFields({
       </FormField>
 
       {canChangeActiveStatus && (
-        <FormField label="Active Status" htmlFor="isActive" error={errors.isActive?.message}>
+        <FormField label="Active status" htmlFor="isActive" error={errors.isActive?.message}>
           <Controller
             name="isActive"
             control={control}

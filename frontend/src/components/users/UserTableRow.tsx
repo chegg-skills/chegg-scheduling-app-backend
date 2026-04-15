@@ -8,6 +8,7 @@ import { Edit, Eye, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/shared/Badge'
 import { RowActions } from '@/components/shared/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
+import { toTitleCase } from '@/utils/toTitleCase'
 import type { SafeUser } from '@/types'
 import { getUserRoleBadgeProps, getUserStatusBadgeProps } from './userTableUtils'
 
@@ -59,7 +60,7 @@ export function UserTableRow({
                 },
               }}
             >
-              {user.firstName} {user.lastName}
+              {toTitleCase(user.firstName)} {toTitleCase(user.lastName)}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
               {user.email}
@@ -90,7 +91,7 @@ export function UserTableRow({
         <RowActions
           actions={[
             {
-              label: 'View Details',
+              label: 'View details',
               icon: <Eye size={16} />,
               onClick: () => onView(user.id),
             },

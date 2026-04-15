@@ -1,93 +1,125 @@
 import { createTheme, alpha } from '@mui/material/styles'
 
-const cheggOrange = '#EB7100'
-const indigoPurple = '#522D9B'
-const tealCyan = '#397F89'
-const deepBlack = '#000000'
-const errorRed = '#CF2E2E'
+const cheggOrange = '#E87100'
+const neutral900 = '#3A2C41'
+const white = '#FFFFFF'
+const peachAccent = '#FFF6F0'
+const lavenderAccent = '#E2DFFF'
+
+const success500 = '#1DA275'
+const success100 = '#ECFEFA'
+const error500 = '#E5222F'
+const error100 = '#FFEAEB'
+const warning500 = '#AC8B14'
+const warning100 = '#FFFBE9'
+const info500 = '#2E8AEE'
+const info100 = '#ECF5FF'
+
 const softBorder = '#DEE3ED'
+
+declare module '@mui/material/styles' {
+  interface Palette {
+    accent: {
+      peach: string;
+      lavender: string;
+    };
+  }
+  interface PaletteOptions {
+    accent?: {
+      peach?: string;
+      lavender?: string;
+    };
+  }
+}
 
 export const appTheme = createTheme({
   palette: {
     primary: {
       main: cheggOrange,
       light: alpha(cheggOrange, 0.1),
-      dark: '#c76000',
-      contrastText: '#ffffff',
+      dark: alpha(cheggOrange, 0.8),
+      contrastText: white,
     },
     secondary: {
-      main: indigoPurple,
-      light: alpha(indigoPurple, 0.1),
-      dark: '#3e2275',
+      main: neutral900,
+      light: alpha(neutral900, 0.1),
+      dark: alpha(neutral900, 0.9),
     },
     info: {
-      main: tealCyan,
-      light: alpha(tealCyan, 0.1),
+      main: info500,
+      light: info100,
     },
     error: {
-      main: errorRed,
-      light: '#fff1f1',
+      main: error500,
+      light: error100,
     },
     warning: {
-      main: '#f1c21b',
-      light: '#fcf4d6',
+      main: warning500,
+      light: warning100,
     },
     success: {
-      main: '#6D8B77', // Muted Sage from palette
-      light: '#f0f4f1',
+      main: success500,
+      light: success100,
     },
     background: {
-      default: '#ffffff',
-      paper: '#ffffff',
+      default: white,
+      paper: white,
     },
     text: {
-      primary: '#1a1a1a', // Darker gray for better contrast on white
-      secondary: '#525252',
+      primary: neutral900,
+      secondary: alpha(neutral900, 0.7),
     },
     divider: softBorder,
+    // Brand Accents
+    accent: {
+      peach: peachAccent,
+      lavender: lavenderAccent,
+    },
   },
   shape: {
     borderRadius: 10,
   },
   typography: {
     fontFamily: '"Outfit", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    h1: { color: deepBlack, fontWeight: 800 },
-    h2: { color: deepBlack, fontWeight: 800 },
-    h3: { color: deepBlack, fontWeight: 700 },
+    h1: { color: neutral900, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' },
+    h2: { color: neutral900, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' },
+    h3: { color: neutral900, fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.01em' },
     h4: {
       fontWeight: 700,
-      letterSpacing: '-0.02em',
-      color: deepBlack,
+      lineHeight: 1.3,
+      letterSpacing: '-0.01em',
+      color: neutral900,
     },
     h5: {
       fontWeight: 700,
-      letterSpacing: '-0.01em',
-      color: deepBlack,
+      lineHeight: 1.3,
+      letterSpacing: '0',
+      color: neutral900,
     },
     h6: {
       fontWeight: 600,
+      lineHeight: 1.3,
       letterSpacing: '0',
-      color: deepBlack,
+      color: neutral900,
     },
     subtitle1: {
       fontWeight: 600,
-      fontSize: '1rem',
+      lineHeight: 1.3,
     },
     subtitle2: {
       fontWeight: 600,
-      fontSize: '0.875rem',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
     },
     body1: {
       fontSize: '1rem',
       lineHeight: 1.6,
-      color: '#1a1a1a',
+      color: neutral900,
     },
     body2: {
       fontSize: '0.875rem',
       lineHeight: 1.6,
-      color: '#1a1a1a',
+      color: neutral900,
     },
     button: {
       textTransform: 'none',
@@ -98,9 +130,9 @@ export const appTheme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: '#ffffff',
+          backgroundColor: white,
           backgroundAttachment: 'fixed',
-          color: '#1a1a1a',
+          color: neutral900,
         },
       },
     },
@@ -122,15 +154,15 @@ export const appTheme = createTheme({
         containedPrimary: {
           backgroundColor: cheggOrange,
           '&:hover': {
-            backgroundColor: '#d86800',
+            backgroundColor: alpha(cheggOrange, 0.9),
             boxShadow: `0 4px 14px ${alpha(cheggOrange, 0.25)}`,
           },
         },
         containedSecondary: {
-          backgroundColor: indigoPurple,
+          backgroundColor: neutral900,
           '&:hover': {
-            backgroundColor: '#43257e',
-            boxShadow: `0 4px 14px ${alpha(indigoPurple, 0.25)}`,
+            backgroundColor: alpha(neutral900, 0.9),
+            boxShadow: `0 4px 14px ${alpha(neutral900, 0.25)}`,
           },
         },
         outlined: {
@@ -203,7 +235,7 @@ export const appTheme = createTheme({
         root: {
           padding: '24px',
           '& .MuiTypography-root': {
-            color: '#1a1a1a',
+            color: neutral900,
             lineHeight: 1.6,
           },
         },
@@ -224,25 +256,28 @@ export const appTheme = createTheme({
           fontWeight: 500,
         },
         standardInfo: {
-          backgroundColor: alpha(tealCyan, 0.08),
-          color: '#24535a',
-          border: `1px solid ${alpha(tealCyan, 0.15)}`,
-          '& .MuiAlert-icon': { color: tealCyan },
+          backgroundColor: info100,
+          color: '#263A63',
+          border: `1px solid ${alpha(info500, 0.2)}`,
+          '& .MuiAlert-icon': { color: info500 },
         },
         standardSuccess: {
-          backgroundColor: '#f0fdf4',
-          color: '#166534',
-          border: '1px solid #bcf0da',
+          backgroundColor: success100,
+          color: '#223D44',
+          border: `1px solid ${alpha(success500, 0.2)}`,
+          '& .MuiAlert-icon': { color: success500 },
         },
         standardWarning: {
-          backgroundColor: '#fffbeb',
-          color: '#92400e',
-          border: '1px solid #fde68a',
+          backgroundColor: warning100,
+          color: '#473C2C',
+          border: `1px solid ${alpha(warning500, 0.2)}`,
+          '& .MuiAlert-icon': { color: warning500 },
         },
         standardError: {
-          backgroundColor: '#fef2f2',
-          color: '#991b1b',
-          border: '1px solid #fecaca',
+          backgroundColor: error100,
+          color: '#482034',
+          border: `1px solid ${alpha(error500, 0.2)}`,
+          '& .MuiAlert-icon': { color: error500 },
         },
       },
     },
@@ -276,7 +311,7 @@ export const appTheme = createTheme({
           padding: '16px 20px',
           borderColor: softBorder,
           fontSize: '0.875rem',
-          color: '#1a1a1a',
+          color: neutral900,
           '&:first-of-type': {
             paddingLeft: '24px',
           },
@@ -294,7 +329,7 @@ export const appTheme = createTheme({
         root: {
           transition: 'all 0.2s ease',
           '&.MuiTableRow-hover:hover': {
-            backgroundColor: alpha(indigoPurple, 0.03),
+            backgroundColor: alpha(neutral900, 0.03),
           },
           '&:last-child .MuiTableCell-root': {
             borderBottom: 0,

@@ -11,7 +11,7 @@ interface UserZoomLinkFieldProps {
 export function UserZoomLinkField({ control, errors }: UserZoomLinkFieldProps) {
   return (
     <FormField
-      label="Zoom ISV Meeting Link"
+      label="Zoom ISV meeting link"
       htmlFor="zoomIsvLink"
       error={errors.zoomIsvLink?.message}
       hint="This coach-specific link is used for scheduled sessions and can be shared with learners."

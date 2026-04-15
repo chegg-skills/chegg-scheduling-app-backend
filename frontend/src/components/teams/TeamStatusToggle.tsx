@@ -11,7 +11,7 @@ interface TeamStatusToggleProps {
 
 export function TeamStatusToggle({ control, errors }: TeamStatusToggleProps) {
   return (
-    <FormField label="Team Status" htmlFor="isActive" error={errors.isActive?.message}>
+    <FormField label="Team status" htmlFor="isActive" error={errors.isActive?.message}>
       <Controller
         name="isActive"
         control={control}

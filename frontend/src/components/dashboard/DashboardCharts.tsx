@@ -28,12 +28,12 @@ interface DashboardChartsProps {
 }
 
 const COLORS = {
-    primary: '#FF7500', // Chegg Orange
-    secondary: '#00253C', // Chegg Navy
-    completed: '#10B981', // Emerald
-    cancelled: '#EF4444', // Red
-    noShow: '#6B7280', // Gray
-    planned: '#3B82F6', // Blue
+    primary: '#E87100', // Chegg Orange
+    secondary: '#3A2C41', // Neutral 900
+    completed: '#1DA275', // Success 500
+    cancelled: '#E5222F', // Error 500
+    noShow: '#525252', // Grey 700 / Secondary Text
+    planned: '#2E8AEE', // Info 500
 };
 
 const ChartHeader = ({ title, description }: { title: string; description: string }) => (
@@ -155,13 +155,13 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
                                         dataKey="displayDate"
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                                        tick={{ fontSize: 12, fill: '#525252' }}
                                         dy={10}
                                     />
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                                        tick={{ fontSize: 12, fill: '#525252' }}
                                     />
                                     <ChartTooltip
                                         contentStyle={{
@@ -209,13 +209,13 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
                                         dataKey="displayDate"
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                                        tick={{ fontSize: 12, fill: '#525252' }}
                                         dy={10}
                                     />
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                                        tick={{ fontSize: 12, fill: '#525252' }}
                                     />
                                     <ChartTooltip
                                         contentStyle={{
@@ -308,13 +308,13 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
                                         dataKey="displayHour"
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 10, fill: '#6B7280' }}
+                                        tick={{ fontSize: 10, fill: '#525252' }}
                                         interval={2}
                                     />
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                                        tick={{ fontSize: 12, fill: '#525252' }}
                                     />
                                     <ChartTooltip
                                         contentStyle={{

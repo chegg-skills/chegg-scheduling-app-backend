@@ -12,7 +12,7 @@ interface TeamIdentityFieldsProps {
 export function TeamIdentityFields({ errors, register }: TeamIdentityFieldsProps) {
   return (
     <>
-      <FormField label="Team Name" htmlFor="name" error={errors.name?.message} required>
+      <FormField label="Team name" htmlFor="name" error={errors.name?.message} required>
         <Input id="name" hasError={!!errors.name} {...register('name')} />
       </FormField>
 

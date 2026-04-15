@@ -2,102 +2,151 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
-import { alpha } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import Stack from '@mui/material/Stack'
-import { CheckCircle2 } from 'lucide-react'
-import cheggLogo from '@/assets/chegg-logo.png'
+import { toTitleCase } from '@/utils/toTitleCase'
+import { Check } from 'lucide-react'
+import LogoOrange from '@/assets/Color=Orange.svg'
 
 interface SuccessStepProps {
     email: string
     onReset: () => void
     mode?: 'booking' | 'reschedule'
     eventName?: string
-    newDate?: Date
-    newTime?: string
+    newDate?: Date | null
+    newTime?: string | null
+    mentorName?: string | null
 }
 
-export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDate, newTime }: SuccessStepProps) {
+export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDate, newTime, mentorName }: SuccessStepProps) {
     const isReschedule = mode === 'reschedule';
+    const theme = useTheme();
 
     return (
-        <Box sx={{ textAlign: 'center', py: 8, px: 2, maxWidth: 600, mx: 'auto' }}>
+        <Paper
+            elevation={0}
+            sx={{
+                maxWidth: 480,
+                width: '100%',
+                mx: 'auto',
+                my: { xs: 2, sm: 4 },
+                p: { xs: 3, sm: 4 },
+                textAlign: 'center',
+                borderRadius: 1.5,
+                border: '1.5px solid #1DA275',
+                bgcolor: 'background.paper',
+                boxShadow: 'none',
+                fontFamily: theme.typography.fontFamily,
+                display: 'block',
+                position: 'relative'
+            }}
+        >
             <Box
                 component="img"
-                src={cheggLogo}
-                alt="Chegg"
-                sx={{ width: 180, height: 'auto', mb: 6 }}
+                src={LogoOrange}
+                alt="Chegg Skills"
+                sx={{ width: 140, height: 'auto', mb: 4 }}
             />
 
-            <Typography variant="h4" fontWeight={900} gutterBottom sx={{
-                letterSpacing: -1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1.5,
-                color: (theme) => theme.palette.primary.main
-            }}>
-                {isReschedule ? 'Reschedule Confirmed!' : 'Booking Confirmed!'}
-                <CheckCircle2 size={36} color="#397F89" strokeWidth={3} />
-            </Typography>
-
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem', fontWeight: 500 }}>
-                {isReschedule
-                    ? `Your session${eventName ? ` for ${eventName}` : ''} has been successfully rescheduled.`
-                    : `Your session${eventName ? ` for ${eventName}` : ''} has been successfully booked.`
-                }
-            </Typography>
-
-            {(newDate || newTime) && (
-                <Paper
-                    variant="outlined"
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                <Box
                     sx={{
-                        p: 3,
-                        mb: 4,
-                        bgcolor: (theme) => alpha(theme.palette.info.main, 0.03),
-                        borderColor: (theme) => alpha(theme.palette.info.main, 0.1),
-                        borderRadius: 3,
-                        textAlign: 'left',
-                        borderLeft: '4px solid',
-                        borderLeftColor: 'info.main'
+                        width: 56,
+                        height: 56,
+                        borderRadius: '50%',
+                        bgcolor: 'success.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
                     }}
                 >
-                    <Stack spacing={2}>
+                    <Check size={28} strokeWidth={3} />
+                </Box>
+            </Box>
+
+            <Typography
+                variant="h5"
+                sx={{
+                    color: 'primary.main',
+                    mb: 1,
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                }}
+            >
+                {isReschedule ? 'Reschedule confirmed!' : 'Booking confirmed!'}
+            </Typography>
+
+            <Typography variant="body2" sx={{ color: 'text.primary', mb: 3, fontWeight: 500 }}>
+                Your session has been successfully {isReschedule ? 'rescheduled' : 'booked'}.
+            </Typography>
+
+            <Box
+                sx={{
+                    p: 2.5,
+                    mb: 3,
+                    bgcolor: 'accent.peach',
+                    borderRadius: 1.5,
+                    textAlign: 'left',
+                    border: '1px solid',
+                    borderColor: 'divider'
+                }}
+            >
+                <Typography
+                    variant="caption"
+                    sx={{ color: 'text.primary', fontWeight: 700, mb: 1.5, display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                >
+                    Session details
+                </Typography>
+
+                <Stack spacing={1}>
+                    <Box>
+                        <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                            {toTitleCase(eventName || 'Session Title')}
+                        </Typography>
                         {newDate && (
-                            <Box>
-                                <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ display: 'block', mb: 0.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                                    New Date
-                                </Typography>
-                                <Typography variant="body1" fontWeight={700} color="info.dark">
-                                    {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(newDate)}
-                                </Typography>
-                            </Box>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
+                                {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(newDate)}
+                            </Typography>
                         )}
                         {newTime && (
-                            <Box>
-                                <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ display: 'block', mb: 0.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                                    New Time
-                                </Typography>
-                                <Typography variant="body1" fontWeight={700} color="info.dark">
-                                    {newTime}
-                                </Typography>
-                            </Box>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                {newTime}
+                            </Typography>
                         )}
-                    </Stack>
-                </Paper>
-            )}
+                    </Box>
 
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-                A confirmation email has been sent to <strong>{email}</strong>. Please check your inbox for the calendar invite and details.
+                    {mentorName && (
+                        <Typography variant="caption" fontWeight={700} sx={{ color: 'text.primary' }}>
+                            Mentor: {toTitleCase(mentorName)}
+                        </Typography>
+                    )}
+                </Stack>
+            </Box>
+
+            <Typography variant="caption" sx={{ color: 'text.secondary', mb: 3.5, display: 'block', lineHeight: 1.5 }}>
+                A confirmation email has been sent to <strong>{email}</strong>.<br />
+                Check your inbox for the calendar invite and details.
             </Typography>
 
             <Button
                 variant="contained"
                 onClick={onReset}
-                size="large"
-                sx={{ px: 4, py: 1.5, fontWeight: 700, borderRadius: 2 }}
+                sx={{
+                    px: 4,
+                    py: 1.25,
+                    fontSize: '0.875rem',
+                    fontWeight: 800,
+                    borderRadius: 1.5,
+                    bgcolor: 'primary.main',
+                    textTransform: 'none',
+                    '&:hover': {
+                        bgcolor: 'primary.dark',
+                    }
+                }}
             >
-                {isReschedule ? 'Back to Dashboard' : 'Book Another Session'}
+                {isReschedule ? 'Return to dashboard' : 'Book another session'}
             </Button>
-        </Box>
+        </Paper>
     )
 }
