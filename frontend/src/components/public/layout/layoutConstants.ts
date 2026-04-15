@@ -1,0 +1,1 @@
+export const PUBLIC_MAIN_HEADER_MIN_HEIGHT = 140

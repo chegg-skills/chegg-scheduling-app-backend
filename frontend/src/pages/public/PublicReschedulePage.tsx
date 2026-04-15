@@ -21,6 +21,7 @@ import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel';
 import { PublicMainContent } from '@/components/public/layout/PublicMainContent';
 import { PublicNavigationFooter } from '@/components/public/layout/PublicNavigationFooter';
 import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeader';
+import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader';
 
 export function PublicReschedulePage() {
     const { bookingId = '' } = useParams();
@@ -139,16 +140,18 @@ export function PublicReschedulePage() {
 
                 {/* Column 2: Content Area */}
                 <PublicMainContent>
-                    {/* Mobile Header */}
-                    <PublicMobileHeader
-                        scope="event"
-                        customHeading="Reschedule your current session"
-                        eventDetails={bookingData.event as any}
-                        coachDetails={bookingData.host as any}
-                        selectedDate={selectedDate}
-                        selectedSlot={selectedSlot}
-                        currentBookingDetails={currentBookingInfo}
-                    />
+                    <PublicStepHeader showStepper={false}>
+                        {/* Mobile Header */}
+                        <PublicMobileHeader
+                            scope="event"
+                            customHeading="Reschedule your current session"
+                            eventDetails={bookingData.event as any}
+                            coachDetails={bookingData.host as any}
+                            selectedDate={selectedDate}
+                            selectedSlot={selectedSlot}
+                            currentBookingDetails={currentBookingInfo}
+                        />
+                    </PublicStepHeader>
 
                     {/* Main Step Content */}
                     <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>

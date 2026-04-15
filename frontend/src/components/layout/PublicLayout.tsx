@@ -25,8 +25,10 @@ export function PublicLayout({ maxWidth = 'md' }: PublicLayoutProps) {
                 <Box
                     sx={{
                         bgcolor: 'background.paper',
-                        borderRadius: { xs: 0, sm: 2 },
-                        boxShadow: { xs: 0, sm: 1 },
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        boxShadow: '0 16px 36px -24px rgb(15 23 42 / 0.42), 0 3px 10px -4px rgb(15 23 42 / 0.2)',
                         overflow: 'hidden'
                     }}
                 >

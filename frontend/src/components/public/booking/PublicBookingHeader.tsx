@@ -3,6 +3,7 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import LogoOrange from '@/assets/Color=Orange.svg'
+import { PUBLIC_MAIN_HEADER_MIN_HEIGHT } from '@/components/public/layout/layoutConstants'
 import type { BookingScope } from '@/pages/public/hooks/usePublicBookingState'
 import type { PublicCoachSummary, PublicEventSummary, PublicTeamSummary } from '@/types'
 
@@ -59,6 +60,8 @@ export function PublicBookingHeader({
       <Box
         sx={{
           bgcolor: (theme) => theme.palette.primary.light,
+          minHeight: PUBLIC_MAIN_HEADER_MIN_HEIGHT,
+          boxSizing: 'border-box',
           py: { xs: 2.5, md: 3, lg: 4 }, // Moderate height
           display: 'flex',
           justifyContent: 'center',
