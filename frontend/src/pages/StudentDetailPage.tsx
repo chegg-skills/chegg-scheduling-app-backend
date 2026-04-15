@@ -1,8 +1,6 @@
 import { useParams } from 'react-router-dom'
-import { Box, Stack, Typography, Breadcrumbs, Link as MuiLink } from '@mui/material'
+import { Box, Stack } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { ChevronRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
@@ -21,30 +19,11 @@ export function StudentDetailPage() {
 
     return (
         <Box>
-            <Box sx={{ px: { xs: 2.5, md: 4 }, pt: 3, pb: 1 }}>
-                <Breadcrumbs
-                    separator={<ChevronRight size={14} />}
-                    aria-label="breadcrumb"
-                    sx={{ mb: 2 }}
-                >
-                    <MuiLink
-                        component={Link}
-                        to="/students"
-                        underline="hover"
-                        color="inherit"
-                        sx={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: 500 }}
-                    >
-                        Students
-                    </MuiLink>
-                    <Typography color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                        {toTitleCase(student.fullName)}
-                    </Typography>
-                </Breadcrumbs>
-            </Box>
-
             <PageHeader
                 title={toTitleCase(student.fullName)}
                 subtitle={student.email}
+                backTo="/students"
+                backLabel="Students"
             />
 
             <Stack spacing={4} sx={{ px: { xs: 2.5, md: 4 }, pb: 6 }}>
