@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { startOfDay, endOfDay } from 'date-fns';
 import Box from '@mui/material/Box';
@@ -22,6 +22,7 @@ import { PublicMainContent } from '@/components/public/layout/PublicMainContent'
 import { PublicNavigationFooter } from '@/components/public/layout/PublicNavigationFooter';
 import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeader';
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader';
+import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout';
 
 export function PublicReschedulePage() {
     const { bookingId = '' } = useParams();
@@ -33,6 +34,12 @@ export function PublicReschedulePage() {
     const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isSuccess, setIsSuccess] = React.useState(false);
+    const { setFramed } = useOutletContext<PublicLayoutOutletContext>();
+
+    React.useEffect(() => {
+        setFramed(!isSuccess);
+        return () => setFramed(true);
+    }, [isSuccess, setFramed]);
 
     // 1. Fetch Booking Details
     const { data: bookingData, isLoading: isLoadingBooking, error: bookingError } = useQuery({
