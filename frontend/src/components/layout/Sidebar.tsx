@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
-import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
+import LogoOrange from '@/assets/Color=Orange.svg'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { APP_HEADER_MIN_HEIGHT } from '@/components/shared/layoutConstants'
@@ -63,9 +63,17 @@ export function Sidebar() {
         }}
       >
         {!isCollapsed && (
-          <Typography variant="h6" color="primary.main" fontWeight={800} noWrap>
-            Scheduling App
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+            <img
+              src={LogoOrange}
+              alt="Chegg Skills"
+              style={{
+                height: 32,
+                width: 'auto',
+                display: 'block'
+              }}
+            />
+          </Box>
         )}
         <IconButton
           onClick={() => setIsCollapsed(!isCollapsed)}

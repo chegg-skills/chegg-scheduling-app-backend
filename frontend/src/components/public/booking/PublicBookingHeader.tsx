@@ -2,7 +2,7 @@ import * as React from 'react'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
-import cheggLogo from '@/assets/chegg-logo.png'
+import LogoOrange from '@/assets/Color=Orange.svg'
 import type { BookingScope } from '@/pages/public/hooks/usePublicBookingState'
 import type { PublicCoachSummary, PublicEventSummary, PublicTeamSummary } from '@/types'
 
@@ -71,14 +71,14 @@ export function PublicBookingHeader({
       >
         <Box
           component="img"
-          src={cheggLogo}
-          alt="Chegg"
+          src={LogoOrange}
+          alt="Chegg Skills"
           sx={{
-            height: { xs: 64, md: 80, lg: 100 }, // Scaled up for better prominence
+            height: { xs: 40, md: 50, lg: 60 },
             width: 'auto',
             objectFit: 'contain',
             display: 'block',
-            margin: '0 auto' // Extra centering insurance
+            margin: '0 auto'
           }}
         />
       </Box>

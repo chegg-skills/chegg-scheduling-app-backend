@@ -5,7 +5,7 @@ import Paper from '@mui/material/Paper'
 import { alpha } from '@mui/material/styles'
 import Stack from '@mui/material/Stack'
 import { CheckCircle2 } from 'lucide-react'
-import cheggLogo from '@/assets/chegg-logo.png'
+import LogoOrange from '@/assets/Color=Orange.svg'
 
 interface SuccessStepProps {
     email: string
@@ -23,9 +23,9 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
         <Box sx={{ textAlign: 'center', py: 8, px: 2, maxWidth: 600, mx: 'auto' }}>
             <Box
                 component="img"
-                src={cheggLogo}
-                alt="Chegg"
-                sx={{ width: 180, height: 'auto', mb: 6 }}
+                src={LogoOrange}
+                alt="Chegg Skills"
+                sx={{ width: 220, height: 'auto', mb: 6 }}
             />
 
             <Typography variant="h4" fontWeight={900} gutterBottom sx={{
