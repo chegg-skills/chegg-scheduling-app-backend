@@ -40,7 +40,7 @@ export function StatsOverview({
         borderRadius: 2,
         backgroundColor: 'background.paper',
         borderColor: 'divider',
-        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)'
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)',
       }}
     >
       <CardContent sx={{ p: 3 }}>
@@ -76,8 +76,8 @@ export function StatsOverview({
               borderColor: 'divider',
               boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
               '&:hover': {
-                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04)
-              }
+                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
+              },
             }}
           >
             {timeframeInfo?.label ?? 'Select Date Range'}
@@ -93,12 +93,21 @@ export function StatsOverview({
         >
           {isLoading && !timeframeInfo
             ? Array.from({ length: cardCount }).map((_, index) => (
-              <Box key={index} sx={{ p: 2, borderRadius: 1.2, border: 1, borderColor: 'divider', backgroundColor: '#fff' }}>
-                <Skeleton variant="text" width="40%" height={20} />
-                <Skeleton variant="text" width="55%" height={42} />
-                <Skeleton variant="text" width="85%" height={18} />
-              </Box>
-            ))
+                <Box
+                  key={index}
+                  sx={{
+                    p: 2,
+                    borderRadius: 1.2,
+                    border: 1,
+                    borderColor: 'divider',
+                    backgroundColor: '#fff',
+                  }}
+                >
+                  <Skeleton variant="text" width="40%" height={20} />
+                  <Skeleton variant="text" width="55%" height={42} />
+                  <Skeleton variant="text" width="85%" height={18} />
+                </Box>
+              ))
             : items.map((item) => <StatCard key={item.label} {...item} />)}
         </Box>
       </CardContent>

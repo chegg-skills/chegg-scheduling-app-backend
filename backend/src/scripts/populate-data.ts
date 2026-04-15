@@ -1,9 +1,4 @@
-import {
-  AssignmentStrategy,
-  BookingStatus,
-  EventLocationType,
-  UserRole,
-} from "@prisma/client";
+import { AssignmentStrategy, BookingStatus, EventLocationType, UserRole } from "@prisma/client";
 import "dotenv/config";
 import request from "supertest";
 import app from "../app";
@@ -131,8 +126,7 @@ const demoTeams: DemoTeamDefinition[] = [
   {
     key: "engineering",
     name: "Engineering Team",
-    description:
-      "Backend systems design, debugging, and software architecture support.",
+    description: "Backend systems design, debugging, and software architecture support.",
     admin: {
       firstName: "Ethan",
       lastName: "Engineer",
@@ -158,8 +152,7 @@ const demoTeams: DemoTeamDefinition[] = [
     events: [
       {
         name: "System Design Review",
-        description:
-          "Architecture reviews for scalable applications and platform design.",
+        description: "Architecture reviews for scalable applications and platform design.",
         offeringKey: "project_review",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -167,8 +160,7 @@ const demoTeams: DemoTeamDefinition[] = [
       },
       {
         name: "API Debugging Lab",
-        description:
-          "Hands-on help with backend bugs, integrations, and service failures.",
+        description: "Hands-on help with backend bugs, integrations, and service failures.",
         offeringKey: "qa",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
@@ -179,8 +171,7 @@ const demoTeams: DemoTeamDefinition[] = [
   {
     key: "data-science",
     name: "Data Science Team",
-    description:
-      "Machine learning, experimentation, and model evaluation guidance.",
+    description: "Machine learning, experimentation, and model evaluation guidance.",
     admin: {
       firstName: "Maya",
       lastName: "Insights",
@@ -206,8 +197,7 @@ const demoTeams: DemoTeamDefinition[] = [
     events: [
       {
         name: "ML Model Review",
-        description:
-          "Discuss model quality, validation strategy, and practical improvements.",
+        description: "Discuss model quality, validation strategy, and practical improvements.",
         offeringKey: "mentorship",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -215,8 +205,7 @@ const demoTeams: DemoTeamDefinition[] = [
       },
       {
         name: "Experiment Design Office Hours",
-        description:
-          "Support for A/B testing, feature evaluation, and experiment setup.",
+        description: "Support for A/B testing, feature evaluation, and experiment setup.",
         offeringKey: "live_lessons",
         interactionKey: "one_to_many",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -227,8 +216,7 @@ const demoTeams: DemoTeamDefinition[] = [
   {
     key: "uiux",
     name: "UI/UX Team",
-    description:
-      "Design systems, user journeys, and portfolio feedback sessions.",
+    description: "Design systems, user journeys, and portfolio feedback sessions.",
     admin: {
       firstName: "Olivia",
       lastName: "Design",
@@ -254,8 +242,7 @@ const demoTeams: DemoTeamDefinition[] = [
     events: [
       {
         name: "Portfolio Critique",
-        description:
-          "Detailed feedback for case studies, resumes, and design storytelling.",
+        description: "Detailed feedback for case studies, resumes, and design storytelling.",
         offeringKey: "portfolio_review",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -263,8 +250,7 @@ const demoTeams: DemoTeamDefinition[] = [
       },
       {
         name: "Figma Design Review",
-        description:
-          "Collaborative design reviews for interfaces, prototypes, and usability.",
+        description: "Collaborative design reviews for interfaces, prototypes, and usability.",
         offeringKey: "project_review",
         interactionKey: "one_to_many",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -275,8 +261,7 @@ const demoTeams: DemoTeamDefinition[] = [
   {
     key: "cyber-security",
     name: "Cyber Security Team",
-    description:
-      "Application security, threat modeling, and secure coding sessions.",
+    description: "Application security, threat modeling, and secure coding sessions.",
     admin: {
       firstName: "Arjun",
       lastName: "Shield",
@@ -302,8 +287,7 @@ const demoTeams: DemoTeamDefinition[] = [
     events: [
       {
         name: "Security Audit Clinic",
-        description:
-          "Walk through vulnerabilities, checklists, and remediation strategies.",
+        description: "Walk through vulnerabilities, checklists, and remediation strategies.",
         offeringKey: "project_review",
         interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -311,8 +295,7 @@ const demoTeams: DemoTeamDefinition[] = [
       },
       {
         name: "Threat Modeling Session",
-        description:
-          "Map risks and attack surfaces for product or infrastructure changes.",
+        description: "Map risks and attack surfaces for product or infrastructure changes.",
         offeringKey: "mentorship",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
@@ -323,8 +306,7 @@ const demoTeams: DemoTeamDefinition[] = [
   {
     key: "ai-dev",
     name: "AI in Development Team",
-    description:
-      "AI-assisted software development, LLM apps, and developer productivity coaching.",
+    description: "AI-assisted software development, LLM apps, and developer productivity coaching.",
     admin: {
       firstName: "Priyank",
       lastName: "Copilot",
@@ -350,8 +332,7 @@ const demoTeams: DemoTeamDefinition[] = [
     events: [
       {
         name: "AI Pair Programming",
-        description:
-          "Use AI tools effectively for code generation, refactors, and debugging.",
+        description: "Use AI tools effectively for code generation, refactors, and debugging.",
         offeringKey: "live_lessons",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
@@ -359,8 +340,7 @@ const demoTeams: DemoTeamDefinition[] = [
       },
       {
         name: "LLM App Architecture Review",
-        description:
-          "Design scalable and secure AI-powered application workflows.",
+        description: "Design scalable and secure AI-powered application workflows.",
         offeringKey: "project_review",
         interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -397,8 +377,7 @@ const demoTeams: DemoTeamDefinition[] = [
     events: [
       {
         name: "Dashboard Review Session",
-        description:
-          "Improve visual storytelling and executive reporting dashboards.",
+        description: "Improve visual storytelling and executive reporting dashboards.",
         offeringKey: "analytics_consulting",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -406,8 +385,7 @@ const demoTeams: DemoTeamDefinition[] = [
       },
       {
         name: "SQL Optimization Workshop",
-        description:
-          "Tune heavy queries and improve reporting workflows with experts.",
+        description: "Tune heavy queries and improve reporting workflows with experts.",
         offeringKey: "qa",
         interactionKey: "one_to_many",
         assignmentStrategy: AssignmentStrategy.DIRECT,
@@ -529,10 +507,7 @@ async function apiRequest<T>(
 
   const res = await req;
   if (!res.ok) {
-    console.error(
-      `❌ API Error [${res.status}] ${path}:`,
-      JSON.stringify(res.body, null, 2),
-    );
+    console.error(`❌ API Error [${res.status}] ${path}:`, JSON.stringify(res.body, null, 2));
     throw new Error(res.body?.message || `API call failed for ${path}`);
   }
 
@@ -547,9 +522,7 @@ async function ensureAuthenticatedAdmin(): Promise<{
 
   if (totalUsers === 0) {
     if (!BOOTSTRAP_SECRET) {
-      throw new Error(
-        "BOOTSTRAP_SECRET is required to create the initial super admin.",
-      );
+      throw new Error("BOOTSTRAP_SECRET is required to create the initial super admin.");
     }
 
     console.log("🔐 Bootstrapping the first super admin...");
@@ -569,14 +542,10 @@ async function ensureAuthenticatedAdmin(): Promise<{
   }
 
   console.log(`🔐 Logging in as ${SUPER_ADMIN_EMAIL}...`);
-  const result = await apiRequest<{ token: string; user: { id: string } }>(
-    "POST",
-    "/auth/login",
-    {
-      email: SUPER_ADMIN_EMAIL,
-      password: DEFAULT_PASSWORD,
-    },
-  );
+  const result = await apiRequest<{ token: string; user: { id: string } }>("POST", "/auth/login", {
+    email: SUPER_ADMIN_EMAIL,
+    password: DEFAULT_PASSWORD,
+  });
 
   return { token: result.token, userId: result.user.id };
 }
@@ -586,9 +555,7 @@ async function resetDemoDataKeepingAdmin(adminId?: string) {
     return;
   }
 
-  console.log(
-    "🧹 Resetting existing demo data while keeping the super admin account...",
-  );
+  console.log("🧹 Resetting existing demo data while keeping the super admin account...");
   await prisma.booking.deleteMany();
   await prisma.student.deleteMany();
   await prisma.userAvailabilityException.deleteMany();
@@ -719,8 +686,7 @@ async function main() {
   const { token, userId } = await ensureAuthenticatedAdmin();
   await resetDemoDataKeepingAdmin(userId);
 
-  const { createdOfferings, createdInteractionTypes } =
-    await seedCatalog(token);
+  const { createdOfferings, createdInteractionTypes } = await seedCatalog(token);
 
   const seededTeams: Array<{
     key: string;
@@ -731,11 +697,7 @@ async function main() {
   }> = [];
 
   for (const teamDefinition of demoTeams) {
-    const admin = await ensureUser(
-      token,
-      teamDefinition.admin,
-      UserRole.TEAM_ADMIN,
-    );
+    const admin = await ensureUser(token, teamDefinition.admin, UserRole.TEAM_ADMIN);
     const coaches: SeedUser[] = [];
 
     for (const coachDefinition of teamDefinition.coaches) {
@@ -776,14 +738,10 @@ async function main() {
     const createdEvents: Array<{ id: string; name: string }> = [];
     for (const eventDefinition of teamDefinition.events) {
       const offering = createdOfferings.get(eventDefinition.offeringKey);
-      const interactionType = createdInteractionTypes.get(
-        eventDefinition.interactionKey,
-      );
+      const interactionType = createdInteractionTypes.get(eventDefinition.interactionKey);
 
       if (!offering || !interactionType) {
-        throw new Error(
-          `Missing seed catalog dependency for ${eventDefinition.name}`,
-        );
+        throw new Error(`Missing seed catalog dependency for ${eventDefinition.name}`);
       }
 
       const event = await apiRequest<{ id: string; name: string }>(
@@ -846,36 +804,24 @@ async function main() {
     const event = team?.events.find((entry) => entry.name === plan.eventName);
 
     if (!team || !event) {
-      throw new Error(
-        `Unable to find seeded event ${plan.eventName} for ${plan.teamKey}`,
-      );
+      throw new Error(`Unable to find seeded event ${plan.eventName} for ${plan.teamKey}`);
     }
 
-    const startTime = getFutureWeekdaySlot(
-      plan.dayOffset,
-      plan.hour,
-    ).toISOString();
-    const bookingResult = await apiRequest<{ booking: { id: string } }>(
-      "POST",
-      "/bookings",
-      {
-        studentName: plan.studentName,
-        studentEmail: plan.studentEmail,
-        teamId: team.id,
-        eventId: event.id,
-        startTime,
-        timezone: "UTC",
-        notes: `Seeded demo booking for ${team.name}`,
-      },
-    );
+    const startTime = getFutureWeekdaySlot(plan.dayOffset, plan.hour).toISOString();
+    const bookingResult = await apiRequest<{ booking: { id: string } }>("POST", "/bookings", {
+      studentName: plan.studentName,
+      studentEmail: plan.studentEmail,
+      teamId: team.id,
+      eventId: event.id,
+      startTime,
+      timezone: "UTC",
+      notes: `Seeded demo booking for ${team.name}`,
+    });
 
     createdBookingIds.push(bookingResult.booking.id);
 
     if (plan.status === BookingStatus.COMPLETED) {
-      const completedStart = getFutureWeekdaySlot(
-        -Math.max(plan.dayOffset, 2),
-        plan.hour,
-      );
+      const completedStart = getFutureWeekdaySlot(-Math.max(plan.dayOffset, 2), plan.hour);
       const completedEnd = new Date(completedStart.getTime() + 45 * 60 * 1000);
       await prisma.booking.update({
         where: { id: bookingResult.booking.id },
@@ -899,22 +845,20 @@ async function main() {
 
   for (const student of students) {
     const firstBookedAt = student.bookings[0]?.startTime ?? null;
-    const lastBookedAt =
-      student.bookings[student.bookings.length - 1]?.startTime ?? null;
+    const lastBookedAt = student.bookings[student.bookings.length - 1]?.startTime ?? null;
     await prisma.student.update({
       where: { id: student.id },
       data: { firstBookedAt, lastBookedAt },
     });
   }
 
-  const [userCount, teamCount, eventCount, bookingCount, studentCount] =
-    await Promise.all([
-      prisma.user.count(),
-      prisma.team.count(),
-      prisma.event.count(),
-      prisma.booking.count(),
-      prisma.student.count(),
-    ]);
+  const [userCount, teamCount, eventCount, bookingCount, studentCount] = await Promise.all([
+    prisma.user.count(),
+    prisma.team.count(),
+    prisma.event.count(),
+    prisma.booking.count(),
+    prisma.student.count(),
+  ]);
 
   console.log("✅ Demo data is ready.");
   console.log(

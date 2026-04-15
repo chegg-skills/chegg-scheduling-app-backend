@@ -18,9 +18,7 @@ export const getJwtSecret = (): string => {
 
 export const buildAuthToken = (user: SafeUser): string => {
   const expiresInSeconds = Number(process.env.JWT_EXPIRES_IN_SECONDS ?? 86400);
-  return jwt.sign(
-    { sub: user.id, role: user.role, email: user.email },
-    getJwtSecret(),
-    { expiresIn: expiresInSeconds },
-  );
+  return jwt.sign({ sub: user.id, role: user.role, email: user.email }, getJwtSecret(), {
+    expiresIn: expiresInSeconds,
+  });
 };

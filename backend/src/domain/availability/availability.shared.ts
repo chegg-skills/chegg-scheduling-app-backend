@@ -7,9 +7,7 @@ import {
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import {
-  toDateOnlyString,
-} from "../../shared/utils/date";
+import { toDateOnlyString } from "../../shared/utils/date";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   AddAvailabilityExceptionSchema,
@@ -28,13 +26,10 @@ export type LocalAvailabilityInfo = {
 export const assertCanManageAvailability = (
   targetUserId: string,
   caller: CallerContext,
-  mode: 'weekly' | 'exceptions',
-  action: 'read' | 'write' = 'write'
+  mode: "weekly" | "exceptions",
+  action: "read" | "write" = "write",
 ): void => {
-  if (
-    caller.role === UserRole.SUPER_ADMIN ||
-    caller.role === UserRole.TEAM_ADMIN
-  ) {
+  if (caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN) {
     return;
   }
 
@@ -45,7 +40,7 @@ export const assertCanManageAvailability = (
     );
   }
 
-  if (mode === 'weekly' && action === 'write' && caller.role === UserRole.COACH) {
+  if (mode === "weekly" && action === "write" && caller.role === UserRole.COACH) {
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
       "Coaches are not allowed to manage their own recurring weekly availability. Please contact a team administrator for schedule changes.",
@@ -62,10 +57,7 @@ export const validateWeeklySlots = (
 export const parseAvailabilityExceptionDate = (value: Date | string): Date => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Invalid date provided.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Invalid date provided.");
   }
   return date;
 };
@@ -96,17 +88,14 @@ export const buildSameSessionExclusion = (
     NOT: options.scheduleSlotId
       ? { scheduleSlotId: options.scheduleSlotId }
       : {
-        eventId: options.eventId,
-        startTime,
-        endTime,
-      },
+          eventId: options.eventId,
+          startTime,
+          endTime,
+        },
   };
 };
 
-export const toLocalAvailabilityInfo = (
-  date: Date,
-  timeZone: string,
-): LocalAvailabilityInfo => {
+export const toLocalAvailabilityInfo = (date: Date, timeZone: string): LocalAvailabilityInfo => {
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour12: false,
@@ -119,8 +108,7 @@ export const toLocalAvailabilityInfo = (
   });
 
   const parts = formatter.formatToParts(date);
-  const getPart = (type: string) =>
-    parts.find((part) => part.type === type)?.value;
+  const getPart = (type: string) => parts.find((part) => part.type === type)?.value;
 
   const year = getPart("year")!;
   const month = getPart("month")!;
@@ -168,27 +156,15 @@ export const resolveAvailabilityFromException = (
     return false;
   }
 
-  if (
-    dayException.isUnavailable &&
-    dayException.startTime &&
-    dayException.endTime
-  ) {
+  if (dayException.isUnavailable && dayException.startTime && dayException.endTime) {
     const overlapsException =
-      startLocal.hhmm < dayException.endTime &&
-      endLocal.hhmm > dayException.startTime;
+      startLocal.hhmm < dayException.endTime && endLocal.hhmm > dayException.startTime;
 
     return overlapsException ? false : null;
   }
 
-  if (
-    !dayException.isUnavailable &&
-    dayException.startTime &&
-    dayException.endTime
-  ) {
-    return (
-      startLocal.hhmm >= dayException.startTime &&
-      endLocal.hhmm <= dayException.endTime
-    );
+  if (!dayException.isUnavailable && dayException.startTime && dayException.endTime) {
+    return startLocal.hhmm >= dayException.startTime && endLocal.hhmm <= dayException.endTime;
   }
 
   return null;
@@ -199,12 +175,9 @@ export const isWithinWeeklyAvailability = (
   startLocal: LocalAvailabilityInfo,
   endLocal: LocalAvailabilityInfo,
 ): boolean => {
-  const daySlots = weekly.filter(
-    (slot) => slot.dayOfWeek === startLocal.dayOfWeek,
-  );
+  const daySlots = weekly.filter((slot) => slot.dayOfWeek === startLocal.dayOfWeek);
 
   return daySlots.some(
-    (slot) =>
-      startLocal.hhmm >= slot.startTime && endLocal.hhmm <= slot.endTime,
+    (slot) => startLocal.hhmm >= slot.startTime && endLocal.hhmm <= slot.endTime,
   );
 };

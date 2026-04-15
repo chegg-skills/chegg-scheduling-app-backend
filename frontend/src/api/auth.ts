@@ -9,11 +9,9 @@ import type {
 } from '@/types'
 
 export const authApi = {
-  register: (data: RegisterDto) =>
-    apiClient.post<ApiResponse<AuthPayload>>('/auth/register', data),
+  register: (data: RegisterDto) => apiClient.post<ApiResponse<AuthPayload>>('/auth/register', data),
 
-  login: (data: LoginDto) =>
-    apiClient.post<ApiResponse<AuthPayload>>('/auth/login', data),
+  login: (data: LoginDto) => apiClient.post<ApiResponse<AuthPayload>>('/auth/login', data),
 
   logout: (signal?: AbortSignal) =>
     apiClient.post<ApiResponse<null>>('/auth/logout', null, { signal }),

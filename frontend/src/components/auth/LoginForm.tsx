@@ -47,12 +47,7 @@ export function LoginForm() {
         />
       </FormField>
 
-      <FormField
-        label="Password"
-        htmlFor="password"
-        error={errors.password?.message}
-        required
-      >
+      <FormField label="Password" htmlFor="password" error={errors.password?.message} required>
         <Input
           id="password"
           type="password"

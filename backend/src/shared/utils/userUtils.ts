@@ -32,8 +32,7 @@ export const safeUserSelect = Prisma.validator<Prisma.UserSelect>()({
   updatedAt: true,
 });
 
-export const normalizeEmail = (email: string): string =>
-  email.trim().toLowerCase();
+export const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
 export const validateTimezone = (timezone: string): string => {
   try {
@@ -43,7 +42,7 @@ export const validateTimezone = (timezone: string): string => {
   } catch {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
-      'Invalid timezone. Use an IANA timezone like "America/New_York".'
+      'Invalid timezone. Use an IANA timezone like "America/New_York".',
     );
   }
 };
@@ -52,11 +51,8 @@ export const validateZoomIsvLink = (zoomIsvLink: string): string => {
   try {
     const url = new URL(zoomIsvLink);
 
-    if (url.protocol !== 'https:') {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        'Zoom ISV link must use https.'
-      );
+    if (url.protocol !== "https:") {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Zoom ISV link must use https.");
     }
 
     return url.toString();
@@ -67,7 +63,7 @@ export const validateZoomIsvLink = (zoomIsvLink: string): string => {
 
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
-      'Invalid Zoom ISV link. Provide a full https meeting URL.'
+      "Invalid Zoom ISV link. Provide a full https meeting URL.",
     );
   }
 };

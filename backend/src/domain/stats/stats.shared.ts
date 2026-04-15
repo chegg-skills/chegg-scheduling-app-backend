@@ -1,11 +1,7 @@
 import { Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import {
-  formatDateRangeLabel,
-  getEndOfDate,
-  getStartOfDate,
-} from "../../shared/utils/date";
+import { formatDateRangeLabel, getEndOfDate, getStartOfDate } from "../../shared/utils/date";
 import type { CallerContext } from "../../shared/utils/userUtils";
 
 export type StatsTimeframeKey =
@@ -41,7 +37,6 @@ export type StatsResponse<TMetrics extends Record<string, unknown>> = {
   metrics: TMetrics;
 };
 
-
 export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
   const customPrefix = "custom:";
   if (timeframe?.startsWith(customPrefix)) {
@@ -73,14 +68,26 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
     case "today": {
       const start = getStartOfDate(now);
       const end = getEndOfDate(now);
-      return { key: "today", label: "Today", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "today",
+        label: "Today",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "yesterday": {
       const date = new Date(now);
       date.setDate(date.getDate() - 1);
       const start = getStartOfDate(date);
       const end = getEndOfDate(date);
-      return { key: "yesterday", label: "Yesterday", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "yesterday",
+        label: "Yesterday",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "thisWeek": {
       const start = getStartOfDate(now);
@@ -89,7 +96,13 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
       start.setDate(start.getDate() + diff);
       const end = getEndOfDate(start);
       end.setDate(end.getDate() + 6);
-      return { key: "thisWeek", label: "This week", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "thisWeek",
+        label: "This week",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "lastWeek": {
       const start = getStartOfDate(now);
@@ -98,21 +111,39 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
       start.setDate(start.getDate() + diff - 7);
       const end = getEndOfDate(start);
       end.setDate(end.getDate() + 6);
-      return { key: "lastWeek", label: "Last week", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "lastWeek",
+        label: "Last week",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "thisMonth": {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
       start.setHours(0, 0, 0, 0);
       const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       end.setHours(23, 59, 59, 999);
-      return { key: "thisMonth", label: "This month", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "thisMonth",
+        label: "This month",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "lastMonth": {
       const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       start.setHours(0, 0, 0, 0);
       const end = new Date(now.getFullYear(), now.getMonth(), 0);
       end.setHours(23, 59, 59, 999);
-      return { key: "lastMonth", label: "Last month", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "lastMonth",
+        label: "Last month",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "thisQuarter": {
       const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
@@ -120,7 +151,13 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
       start.setHours(0, 0, 0, 0);
       const end = new Date(now.getFullYear(), quarterStartMonth + 3, 0);
       end.setHours(23, 59, 59, 999);
-      return { key: "thisQuarter", label: "This quarter", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "thisQuarter",
+        label: "This quarter",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "lastQuarter": {
       const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3 - 3;
@@ -128,21 +165,39 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
       start.setHours(0, 0, 0, 0);
       const end = new Date(now.getFullYear(), quarterStartMonth + 3, 0);
       end.setHours(23, 59, 59, 999);
-      return { key: "lastQuarter", label: "Last quarter", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "lastQuarter",
+        label: "Last quarter",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "thisYear": {
       const start = new Date(now.getFullYear(), 0, 1);
       start.setHours(0, 0, 0, 0);
       const end = new Date(now.getFullYear(), 11, 31);
       end.setHours(23, 59, 59, 999);
-      return { key: "thisYear", label: "This year", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "thisYear",
+        label: "This year",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "lastYear": {
       const start = new Date(now.getFullYear() - 1, 0, 1);
       start.setHours(0, 0, 0, 0);
       const end = new Date(now.getFullYear() - 1, 11, 31);
       end.setHours(23, 59, 59, 999);
-      return { key: "lastYear", label: "Last year", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "lastYear",
+        label: "Last year",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
     case "all":
       return { key: "all", label: "All time", start: null, end: null, rangeLabel: "All time" };
@@ -151,7 +206,13 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
       start.setHours(0, 0, 0, 0);
       const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       end.setHours(23, 59, 59, 999);
-      return { key: "thisMonth", label: "This month", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return {
+        key: "thisMonth",
+        label: "This month",
+        start,
+        end,
+        rangeLabel: formatDateRangeLabel(start, end),
+      };
     }
   }
 };
@@ -173,14 +234,8 @@ export const buildStatsResponse = <TMetrics extends Record<string, unknown>>(
 });
 
 export const requireAdmin = (caller: CallerContext): void => {
-  if (
-    caller.role !== UserRole.SUPER_ADMIN &&
-    caller.role !== UserRole.TEAM_ADMIN
-  ) {
-    throw new ErrorHandler(
-      StatusCodes.FORBIDDEN,
-      "You are not authorized to view these stats.",
-    );
+  if (caller.role !== UserRole.SUPER_ADMIN && caller.role !== UserRole.TEAM_ADMIN) {
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view these stats.");
   }
 };
 

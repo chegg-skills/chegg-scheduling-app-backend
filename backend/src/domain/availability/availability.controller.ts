@@ -5,52 +5,30 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as availabilityService from "./availability.service";
 
-const getWeeklyAvailability = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const getWeeklyAvailability = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { userId } = req.params;
     const slots = await availabilityService.getWeeklyAvailability(userId as any, caller);
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      slots,
-      "Weekly availability fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, slots, "Weekly availability fetched successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const setWeeklyAvailability = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const setWeeklyAvailability = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { userId } = req.params;
     const slots = req.body;
     const result = await availabilityService.setWeeklyAvailability(userId as any, slots, caller);
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Weekly availability updated successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Weekly availability updated successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const getAvailabilityExceptions = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const getAvailabilityExceptions = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { userId } = req.params;
@@ -66,16 +44,16 @@ const getAvailabilityExceptions = async (
   }
 };
 
-const addAvailabilityException = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const addAvailabilityException = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { userId } = req.params;
     const exception = req.body;
-    const result = await availabilityService.addAvailabilityException(userId as any, exception, caller);
+    const result = await availabilityService.addAvailabilityException(
+      userId as any,
+      exception,
+      caller,
+    );
     sendSuccessResponse(
       res,
       StatusCodes.CREATED,
@@ -87,31 +65,22 @@ const addAvailabilityException = async (
   }
 };
 
-const removeAvailabilityException = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const removeAvailabilityException = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { userId, exceptionId } = req.params;
-    await availabilityService.removeAvailabilityException(userId as any, exceptionId as any, caller);
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      null,
-      "Availability exception removed successfully.",
+    await availabilityService.removeAvailabilityException(
+      userId as any,
+      exceptionId as any,
+      caller,
     );
+    sendSuccessResponse(res, StatusCodes.OK, null, "Availability exception removed successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const getEffectiveAvailability = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const getEffectiveAvailability = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { userId } = req.params;

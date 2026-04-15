@@ -49,7 +49,7 @@ export function EventHostManager({
 
   const currentHostUserIds = new Set(activeHosts.map((h) => h.hostUserId))
   const eligibleCount = teamMembers.filter(
-    (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentHostUserIds.has(m.userId),
+    (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentHostUserIds.has(m.userId)
   ).length
 
   function handleAdd(userIds: string[]) {
@@ -70,7 +70,7 @@ export function EventHostManager({
             setLocalShowAddModal(false)
           }
         },
-      },
+      }
     )
   }
 

@@ -10,29 +10,27 @@ export const interactionTypeFormSchema = z
     supportsRoundRobin: z.boolean().optional(),
     supportsSimultaneousCoaches: z.boolean().optional(),
     minHosts: z.coerce.number().int().min(1).optional(),
-    maxHosts: z.preprocess(
-      (value) => {
+    maxHosts: z
+      .preprocess((value) => {
         if (typeof value === 'string' && value.trim() === '') return null
         if (value === null || value === undefined) return null
         if (typeof value === 'number') return value
 
         const parsedValue = Number(value)
         return Number.isNaN(parsedValue) ? null : parsedValue
-      },
-      z.number().int().min(1, 'If set, must be at least 1').nullable(),
-    ).optional(),
+      }, z.number().int().min(1, 'If set, must be at least 1').nullable())
+      .optional(),
     minParticipants: z.coerce.number().int().min(1).optional(),
-    maxParticipants: z.preprocess(
-      (value) => {
+    maxParticipants: z
+      .preprocess((value) => {
         if (typeof value === 'string' && value.trim() === '') return null
         if (value === null || value === undefined) return null
         if (typeof value === 'number') return value
 
         const parsedValue = Number(value)
         return Number.isNaN(parsedValue) ? null : parsedValue
-      },
-      z.number().int().min(1, 'If set, must be at least 1').nullable(),
-    ).optional(),
+      }, z.number().int().min(1, 'If set, must be at least 1').nullable())
+      .optional(),
     sortOrder: z.coerce.number().nonnegative().optional(),
     isActive: z.boolean().optional(),
   })
@@ -102,7 +100,7 @@ export const interactionTypeFormSchema = z
 export type InteractionTypeFormValues = z.infer<typeof interactionTypeFormSchema>
 
 export function getInteractionTypeFormDefaults(
-  interactionType?: EventInteractionType,
+  interactionType?: EventInteractionType
 ): InteractionTypeFormValues {
   return {
     key: interactionType?.key ?? '',

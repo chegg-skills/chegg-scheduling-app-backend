@@ -1,8 +1,4 @@
-import {
-  AssignmentStrategy,
-  Prisma,
-  SessionLeadershipStrategy,
-} from "@prisma/client";
+import { AssignmentStrategy, Prisma, SessionLeadershipStrategy } from "@prisma/client";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   getActiveInteractionType,
@@ -33,10 +29,7 @@ const resolveSessionLeadershipConfig = ({
   interactionType: Awaited<ReturnType<typeof getActiveInteractionType>>;
   existingEvent?: SafeEvent;
   payload: Pick<UpdateEventInput, "sessionLeadershipStrategy" | "fixedLeadHostId">;
-}): Pick<
-  ResolvedEventMutationContext,
-  "sessionLeadershipStrategy" | "fixedLeadHostId"
-> => {
+}): Pick<ResolvedEventMutationContext, "sessionLeadershipStrategy" | "fixedLeadHostId"> => {
   // 1. Initial Default (The Baseline)
   let strategy: SessionLeadershipStrategy = interactionType.supportsSimultaneousCoaches
     ? SessionLeadershipStrategy.ROTATING_LEAD
@@ -79,11 +72,10 @@ export const resolveCreateEventContext = async (
 
   const assignmentStrategy = validated.assignmentStrategy;
 
-  const { sessionLeadershipStrategy, fixedLeadHostId } =
-    resolveSessionLeadershipConfig({
-      interactionType,
-      payload: validated,
-    });
+  const { sessionLeadershipStrategy, fixedLeadHostId } = resolveSessionLeadershipConfig({
+    interactionType,
+    payload: validated,
+  });
 
   validateEventConfiguration(interactionType, {
     assignmentStrategy,
@@ -122,12 +114,11 @@ export const resolveUpdateEventContext = async ({
 
   const assignmentStrategy = validated.assignmentStrategy ?? existingEvent.assignmentStrategy;
 
-  const { sessionLeadershipStrategy, fixedLeadHostId } =
-    resolveSessionLeadershipConfig({
-      interactionType,
-      existingEvent,
-      payload: validated,
-    });
+  const { sessionLeadershipStrategy, fixedLeadHostId } = resolveSessionLeadershipConfig({
+    interactionType,
+    existingEvent,
+    payload: validated,
+  });
 
   validateEventConfiguration(interactionType, {
     assignmentStrategy,

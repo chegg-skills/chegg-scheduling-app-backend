@@ -53,8 +53,11 @@ export function UserTimezoneField({ control, errors }: UserTimezoneFieldProps) {
   }, [])
 
   const groupedTimezones = useMemo(
-    () => groupTimezonesByRegion(timezones.filter((timezone): timezone is string => typeof timezone === 'string')),
-    [timezones],
+    () =>
+      groupTimezonesByRegion(
+        timezones.filter((timezone): timezone is string => typeof timezone === 'string')
+      ),
+    [timezones]
   )
 
   return (

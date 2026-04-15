@@ -123,10 +123,17 @@ export function EventTableRow({
       </TableCell>
 
       <TableCell>
-        <Badge label={event.isActive ? 'Active' : 'Inactive'} variant={event.isActive ? 'green' : 'red'} />
+        <Badge
+          label={event.isActive ? 'Active' : 'Inactive'}
+          variant={event.isActive ? 'green' : 'red'}
+        />
       </TableCell>
       <TableCell>
-        <PublicBookingLinkCell type="event" slug={event.publicBookingSlug} isActive={event.isActive} />
+        <PublicBookingLinkCell
+          type="event"
+          slug={event.publicBookingSlug}
+          isActive={event.isActive}
+        />
       </TableCell>
 
       <TableCell>

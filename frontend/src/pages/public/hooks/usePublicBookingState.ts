@@ -16,7 +16,11 @@ import type { PublicEventSummary } from '@/types'
 export type BookingScope = 'directory' | 'team' | 'event' | 'coach'
 export type BookingStepKey = 'team' | 'event' | 'schedule' | 'confirm'
 
-const getBookingScope = (teamSlug?: string, eventSlug?: string, coachSlug?: string): BookingScope => {
+const getBookingScope = (
+  teamSlug?: string,
+  eventSlug?: string,
+  coachSlug?: string
+): BookingScope => {
   if (teamSlug) return 'team'
   if (eventSlug) return 'event'
   if (coachSlug) return 'coach'
@@ -100,7 +104,7 @@ export function usePublicBookingState() {
   const teamDetails = React.useMemo(() => {
     if (scope === 'team') return teamDetailsFromSlug
     if (selectedTeam) {
-      return teams.find(t => t.id === selectedTeam) || null
+      return teams.find((t) => t.id === selectedTeam) || null
     }
     return null
   }, [scope, teamDetailsFromSlug, selectedTeam, teams])
@@ -142,7 +146,13 @@ export function usePublicBookingState() {
       default:
         return directoryEvents
     }
-  }, [coachEventsResult?.events, directoryEvents, eventDetailsFromSlug, scope, teamEventsResult?.events])
+  }, [
+    coachEventsResult?.events,
+    directoryEvents,
+    eventDetailsFromSlug,
+    scope,
+    teamEventsResult?.events,
+  ])
 
   const eventsLoading =
     scope === 'team'
@@ -156,7 +166,7 @@ export function usePublicBookingState() {
   const eventDetails = React.useMemo(() => {
     if (scope === 'event') return eventDetailsFromSlug
     if (selectedEvent) {
-      return visibleEvents.find(e => e.id === selectedEvent) || null
+      return visibleEvents.find((e) => e.id === selectedEvent) || null
     }
     return null
   }, [scope, eventDetailsFromSlug, selectedEvent, visibleEvents])

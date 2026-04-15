@@ -14,13 +14,7 @@ export interface StatCardProps {
   accent?: 'orange' | 'purple' | 'teal' | 'green'
 }
 
-export function StatCard({
-  label,
-  value,
-  helperText,
-  icon,
-  accent = 'orange',
-}: StatCardProps) {
+export function StatCard({ label, value, helperText, icon, accent = 'orange' }: StatCardProps) {
   const theme = useTheme()
 
   const accentMap = {
@@ -64,7 +58,16 @@ export function StatCard({
         overflow: 'hidden',
       }}
     >
-      <CardContent sx={{ p: 2.25, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', '&:last-child': { pb: 2.25 } }}>
+      <CardContent
+        sx={{
+          p: 2.25,
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          '&:last-child': { pb: 2.25 },
+        }}
+      >
         <Stack spacing={1}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
@@ -75,7 +78,7 @@ export function StatCard({
                   color: '#525252', // Darker gray for overline
                   fontWeight: 800, // Even bolder
                   letterSpacing: '0.1em',
-                  display: 'block'
+                  display: 'block',
                 }}
               >
                 {label}
@@ -88,7 +91,7 @@ export function StatCard({
                   fontWeight: 700,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  textOverflow: 'ellipsis',
                 }}
                 title={String(value)}
               >
@@ -111,7 +114,7 @@ export function StatCard({
                   transition: 'transform 0.2s ease',
                   '.MuiCard-root:hover &': {
                     transform: 'scale(1.1)',
-                  }
+                  },
                 }}
               >
                 {icon}

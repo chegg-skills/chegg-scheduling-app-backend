@@ -4,7 +4,16 @@ import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { useParams } from 'react-router-dom'
-import { Edit, Trash2, Eye, EyeOff, Plus, Users, Info, Calendar as CalendarIcon } from 'lucide-react'
+import {
+  Edit,
+  Trash2,
+  Eye,
+  EyeOff,
+  Plus,
+  Users,
+  Info,
+  Calendar as CalendarIcon,
+} from 'lucide-react'
 import { useEvent, useDeleteEvent, useUpdateEvent, useEventScheduleSlots } from '@/hooks/useEvents'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
@@ -66,15 +75,11 @@ export function EventDetailPage() {
   }
 
   const handleDelete = () => {
-    handleAction(
-      (id) => deleteEventMutation.mutate(id),
-      eventId,
-      {
-        title: 'Delete Event',
-        message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated host assignments will be lost.`,
-        actionName: 'Deletion',
-      }
-    )
+    handleAction((id) => deleteEventMutation.mutate(id), eventId, {
+      title: 'Delete Event',
+      message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated host assignments will be lost.`,
+      actionName: 'Deletion',
+    })
   }
 
   return (
@@ -150,7 +155,11 @@ export function EventDetailPage() {
             }}
           >
             <Tab label="Details" icon={<Info size={18} />} iconPosition="start" />
-            <Tab label={`Coaches (${event.hosts?.length ?? 0})`} icon={<Users size={18} />} iconPosition="start" />
+            <Tab
+              label={`Coaches (${event.hosts?.length ?? 0})`}
+              icon={<Users size={18} />}
+              iconPosition="start"
+            />
             <Tab label="Sessions" icon={<Plus size={18} />} iconPosition="start" />
             {event.bookingMode === 'FIXED_SLOTS' && (
               <Tab label="Schedule" icon={<CalendarIcon size={18} />} iconPosition="start" />
@@ -204,10 +213,7 @@ export function EventDetailPage() {
         </Modal>
 
         {viewingUserId && (
-          <UserDetailModal
-            userId={viewingUserId}
-            onClose={() => setViewingUserId(null)}
-          />
+          <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
         )}
       </Box>
     </Stack>

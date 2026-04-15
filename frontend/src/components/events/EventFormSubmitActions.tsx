@@ -7,46 +7,41 @@ import { Button } from '@/components/shared/Button'
 import type { EventFormValues } from './eventFormSchema'
 
 interface EventFormSubmitActionsProps {
-    isPending: boolean
-    isEdit: boolean
-    onCancel?: () => void
-    defaultActive?: boolean
+  isPending: boolean
+  isEdit: boolean
+  onCancel?: () => void
+  defaultActive?: boolean
 }
 
-/** 
+/**
  * Handles form submission and active/inactive toggle.
  * Consumes the EventForm context for the register function.
  */
 export function EventFormSubmitActions({
-    isPending,
-    isEdit,
-    onCancel,
-    defaultActive = true,
+  isPending,
+  isEdit,
+  onCancel,
+  defaultActive = true,
 }: EventFormSubmitActionsProps) {
-    const { register } = useFormContext<EventFormValues>()
+  const { register } = useFormContext<EventFormValues>()
 
-    return (
-        <Stack spacing={4}>
-            <Box sx={{ py: 1 }}>
-                <FormControlLabel
-                    label="Event is Active"
-                    control={
-                        <Switch
-                            defaultChecked={defaultActive}
-                            {...register('isActive')}
-                        />
-                    }
-                />
-            </Box>
+  return (
+    <Stack spacing={4}>
+      <Box sx={{ py: 1 }}>
+        <FormControlLabel
+          label="Event is Active"
+          control={<Switch defaultChecked={defaultActive} {...register('isActive')} />}
+        />
+      </Box>
 
-            <Stack direction="row" justifyContent="flex-end" spacing={1.5} sx={{ pt: 1 }}>
-                <Button variant="secondary" onClick={onCancel} disabled={isPending}>
-                    Cancel
-                </Button>
-                <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
-                    {isEdit ? 'Save changes' : 'Create event'}
-                </Button>
-            </Stack>
-        </Stack>
-    )
+      <Stack direction="row" justifyContent="flex-end" spacing={1.5} sx={{ pt: 1 }}>
+        <Button variant="secondary" onClick={onCancel} disabled={isPending}>
+          Cancel
+        </Button>
+        <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
+          {isEdit ? 'Save changes' : 'Create event'}
+        </Button>
+      </Stack>
+    </Stack>
+  )
 }

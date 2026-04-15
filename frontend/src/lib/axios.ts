@@ -14,9 +14,7 @@ const getCookieValue = (name: string): string | undefined => {
     return undefined
   }
 
-  const cookie = document.cookie
-    .split('; ')
-    .find((entry) => entry.startsWith(`${name}=`))
+  const cookie = document.cookie.split('; ').find((entry) => entry.startsWith(`${name}=`))
 
   if (!cookie) {
     return undefined
@@ -65,7 +63,7 @@ apiClient.interceptors.response.use(
       }
     }
     return Promise.reject(error)
-  },
+  }
 )
 
 export default apiClient

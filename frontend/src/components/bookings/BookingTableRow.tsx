@@ -34,7 +34,10 @@ export function BookingTableRow({
         }}
       >
         <TableCell sx={{ pl: 3 }}>
-          <BookingStudentCell name={toTitleCase(booking.studentName)} email={booking.studentEmail} />
+          <BookingStudentCell
+            name={toTitleCase(booking.studentName)}
+            email={booking.studentEmail}
+          />
         </TableCell>
 
         <TableCell>
@@ -82,7 +85,7 @@ export function BookingTableRow({
                 borderBottom: '1px solid',
                 borderColor: 'divider',
                 borderLeft: '4px solid',
-                borderLeftColor: 'primary.main'
+                borderLeftColor: 'primary.main',
               }}
             >
               <BookingDetailsPanel booking={booking} onViewHost={onViewHost} />
@@ -90,10 +93,27 @@ export function BookingTableRow({
               <Divider sx={{ my: 3 }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Box sx={{ mr: 'auto', alignSelf: 'center', color: 'text.secondary', typography: 'caption', display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                  <Box sx={{ fontWeight: 600 }}>Booking ID: {booking.id.slice(0, 8).toUpperCase()}</Box>
+                <Box
+                  sx={{
+                    mr: 'auto',
+                    alignSelf: 'center',
+                    color: 'text.secondary',
+                    typography: 'caption',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.25,
+                  }}
+                >
+                  <Box sx={{ fontWeight: 600 }}>
+                    Booking ID: {booking.id.slice(0, 8).toUpperCase()}
+                  </Box>
                   <Box>
-                    Created on {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(booking.createdAt))} by {toTitleCase(booking.studentName)}
+                    Created on{' '}
+                    {new Intl.DateTimeFormat('en-US', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    }).format(new Date(booking.createdAt))}{' '}
+                    by {toTitleCase(booking.studentName)}
                   </Box>
                 </Box>
 
@@ -124,8 +144,8 @@ export function BookingTableRow({
                         '&:hover': {
                           borderColor: 'primary.main',
                           color: 'primary.main',
-                          bgcolor: 'primary.lighter'
-                        }
+                          bgcolor: 'primary.lighter',
+                        },
                       }}
                     >
                       Reschedule

@@ -3,8 +3,7 @@ import app from "../../src/app";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
-const BOOTSTRAP_SECRET =
-  process.env.BOOTSTRAP_SECRET ?? "test-bootstrap-secret-abc123";
+const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET ?? "test-bootstrap-secret-abc123";
 
 afterAll(clearTables);
 
@@ -119,17 +118,13 @@ describe("POST /api/auth/login", () => {
   });
 
   it("returns 400 when email is missing", async () => {
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({ password: "SomePass123" });
+    const res = await request(app).post("/api/auth/login").send({ password: "SomePass123" });
 
     expect(res.status).toBe(400);
   });
 
   it("returns 400 when password is missing", async () => {
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({ email: loginEmail });
+    const res = await request(app).post("/api/auth/login").send({ email: loginEmail });
 
     expect(res.status).toBe(400);
   });
@@ -295,9 +290,7 @@ describe("POST /api/auth/logout", () => {
   });
 
   it("returns 200 when an authenticated user logs out", async () => {
-    const res = await request(app)
-      .post("/api/auth/logout")
-      .set("Authorization", `Bearer ${token}`);
+    const res = await request(app).post("/api/auth/logout").set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

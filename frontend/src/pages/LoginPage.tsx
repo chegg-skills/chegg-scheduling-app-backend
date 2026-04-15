@@ -9,7 +9,16 @@ import LogoOrange from '@/assets/Color=Orange.svg'
 
 export function LoginPage() {
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2, bgcolor: 'background.default' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
+        bgcolor: 'background.default',
+      }}
+    >
       <Stack spacing={3} sx={{ width: '100%', maxWidth: 420 }}>
         <Stack spacing={4} textAlign="center">
           <Box
@@ -21,11 +30,13 @@ export function LoginPage() {
               width: 'auto',
               mx: 'auto',
               display: 'block',
-              mb: 1
+              mb: 1,
             }}
           />
           <Box>
-            <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: -1 }}>Sign in</Typography>
+            <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: -1 }}>
+              Sign in
+            </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary">
             Enter your credentials to access the scheduling app.

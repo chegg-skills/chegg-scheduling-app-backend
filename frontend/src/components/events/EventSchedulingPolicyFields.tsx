@@ -10,66 +10,72 @@ import { WeekdaySelector } from './WeekdaySelector'
 import { ParticipantCapacityFields } from './ParticipantCapacityFields'
 
 interface EventSchedulingPolicyFieldsProps {
-    selectedInteractionType?: EventInteractionType | null
+  selectedInteractionType?: EventInteractionType | null
 }
 
-/** 
+/**
  * Handles booking mode, weekdays, notice, and capacity fields.
  * Consumes the EventForm context.
  */
 export function EventSchedulingPolicyFields({
-    selectedInteractionType,
+  selectedInteractionType,
 }: EventSchedulingPolicyFieldsProps) {
-    const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
-    const bookingMode = watch('bookingMode')
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext<EventFormValues>()
+  const bookingMode = watch('bookingMode')
 
-    return (
-        <Stack spacing={3}>
-            <FormField
-                label="Booking mode"
-                htmlFor="bookingMode"
-                error={errors.bookingMode?.message}
-                info="Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions."
-            >
-                <Select id="bookingMode" value={bookingMode || 'HOST_AVAILABILITY'} {...register('bookingMode')}>
-                    <MenuItem value="HOST_AVAILABILITY">Flexible — based on coach availability</MenuItem>
-                    <MenuItem value="FIXED_SLOTS">Fixed — predefined session slots only</MenuItem>
-                </Select>
-            </FormField>
+  return (
+    <Stack spacing={3}>
+      <FormField
+        label="Booking mode"
+        htmlFor="bookingMode"
+        error={errors.bookingMode?.message}
+        info="Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions."
+      >
+        <Select
+          id="bookingMode"
+          value={bookingMode || 'HOST_AVAILABILITY'}
+          {...register('bookingMode')}
+        >
+          <MenuItem value="HOST_AVAILABILITY">Flexible — based on coach availability</MenuItem>
+          <MenuItem value="FIXED_SLOTS">Fixed — predefined session slots only</MenuItem>
+        </Select>
+      </FormField>
 
-            <WeekdaySelector />
+      <WeekdaySelector />
 
-            <FormField
-                label="Minimum Notice (minutes)"
-                htmlFor="minimumNoticeMinutes"
-                error={errors.minimumNoticeMinutes?.message}
-                info="How much time in advance must a booking be made? (e.g., 180 for 3 hours)."
-            >
-                <Input
-                    id="minimumNoticeMinutes"
-                    type="number"
-                    min="0"
-                    {...register('minimumNoticeMinutes', { valueAsNumber: true })}
-                />
-            </FormField>
+      <FormField
+        label="Minimum Notice (minutes)"
+        htmlFor="minimumNoticeMinutes"
+        error={errors.minimumNoticeMinutes?.message}
+        info="How much time in advance must a booking be made? (e.g., 180 for 3 hours)."
+      >
+        <Input
+          id="minimumNoticeMinutes"
+          type="number"
+          min="0"
+          {...register('minimumNoticeMinutes', { valueAsNumber: true })}
+        />
+      </FormField>
 
-            <FormField
-                label="Buffer After Session (minutes)"
-                htmlFor="bufferAfterMinutes"
-                error={errors.bufferAfterMinutes?.message}
-                info="Mandatory cooldown period added after each session (e.g., 15 for a 15-minute break)."
-            >
-                <Input
-                    id="bufferAfterMinutes"
-                    type="number"
-                    min="0"
-                    {...register('bufferAfterMinutes', { valueAsNumber: true })}
-                />
-            </FormField>
+      <FormField
+        label="Buffer After Session (minutes)"
+        htmlFor="bufferAfterMinutes"
+        error={errors.bufferAfterMinutes?.message}
+        info="Mandatory cooldown period added after each session (e.g., 15 for a 15-minute break)."
+      >
+        <Input
+          id="bufferAfterMinutes"
+          type="number"
+          min="0"
+          {...register('bufferAfterMinutes', { valueAsNumber: true })}
+        />
+      </FormField>
 
-            <ParticipantCapacityFields
-                selectedInteractionType={selectedInteractionType}
-            />
-        </Stack>
-    )
+      <ParticipantCapacityFields selectedInteractionType={selectedInteractionType} />
+    </Stack>
+  )
 }

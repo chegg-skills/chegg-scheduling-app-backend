@@ -6,7 +6,14 @@ export function formatEventDuration(seconds: number) {
   return minutes < 60 ? `${minutes}m` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`
 }
 
-export type EventSortKey = 'event' | 'offering' | 'duration' | 'hosts' | 'strategy' | 'status' | 'bookingLink'
+export type EventSortKey =
+  | 'event'
+  | 'offering'
+  | 'duration'
+  | 'hosts'
+  | 'strategy'
+  | 'status'
+  | 'bookingLink'
 
 export const eventSortAccessors: SortAccessorMap<Event, EventSortKey> = {
   event: (event) => event.name,
@@ -23,19 +30,19 @@ export const eventTableColumns: Array<{
   sortKey: EventSortKey
   tooltip?: string
 }> = [
-    { label: 'Event', sortKey: 'event' },
-    {
-      label: 'Event Category',
-      sortKey: 'offering',
-      tooltip: 'The category this event belongs to (e.g., Tutorial).',
-    },
-    { label: 'Duration', sortKey: 'duration' },
-    { label: 'Hosts', sortKey: 'hosts' },
-    {
-      label: 'Strategy',
-      sortKey: 'strategy',
-      tooltip: 'How hosts are assigned (Direct or Round Robin).',
-    },
-    { label: 'Status', sortKey: 'status' },
-    { label: 'Booking Link', sortKey: 'bookingLink' },
-  ]
+  { label: 'Event', sortKey: 'event' },
+  {
+    label: 'Event Category',
+    sortKey: 'offering',
+    tooltip: 'The category this event belongs to (e.g., Tutorial).',
+  },
+  { label: 'Duration', sortKey: 'duration' },
+  { label: 'Hosts', sortKey: 'hosts' },
+  {
+    label: 'Strategy',
+    sortKey: 'strategy',
+    tooltip: 'How hosts are assigned (Direct or Round Robin).',
+  },
+  { label: 'Status', sortKey: 'status' },
+  { label: 'Booking Link', sortKey: 'bookingLink' },
+]

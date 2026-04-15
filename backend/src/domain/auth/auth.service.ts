@@ -16,9 +16,7 @@ import {
 } from "../../shared/utils/userUtils";
 import { LoginSchema, RegisterSchema } from "./auth.schema";
 
-const MAX_FAILED_LOGIN_ATTEMPTS = Number(
-  process.env.MAX_FAILED_LOGIN_ATTEMPTS ?? 5,
-);
+const MAX_FAILED_LOGIN_ATTEMPTS = Number(process.env.MAX_FAILED_LOGIN_ATTEMPTS ?? 5);
 const LOGIN_LOCKOUT_MINUTES = Number(process.env.LOGIN_LOCKOUT_MINUTES ?? 15);
 
 const getLockoutUntil = (): Date => {
@@ -41,26 +39,19 @@ type LoginUserInput = {
   password: string;
 };
 
-const register = async (
-  payload: RegisterUserInput,
-): Promise<{ user: SafeUser; token: string }> => {
+const register = async (payload: RegisterUserInput): Promise<{ user: SafeUser; token: string }> => {
   const validated = await RegisterSchema.body.parseAsync(payload);
 
   const normalizedEmail = normalizeEmail(validated.email);
 
-  const timezone = validated.timezone
-    ? validateTimezone(validated.timezone)
-    : "UTC";
+  const timezone = validated.timezone ? validateTimezone(validated.timezone) : "UTC";
 
   const existingUser = await prisma.user.findUnique({
     where: { email: normalizedEmail },
   });
 
   if (existingUser) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "A user with this email already exists.",
-    );
+    throw new ErrorHandler(StatusCodes.CONFLICT, "A user with this email already exists.");
   }
 
   const hashedPassword = await bcrypt.hash(validated.password, SALT_ROUNDS);
@@ -104,9 +95,7 @@ const register = async (
   }
 };
 
-const login = async (
-  payload: LoginUserInput,
-): Promise<{ user: SafeUser; token: string }> => {
+const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: string }> => {
   const validated = await LoginSchema.body.parseAsync(payload);
   const normalizedEmail = normalizeEmail(validated.email);
   const password = validated.password;
@@ -116,10 +105,7 @@ const login = async (
   });
 
   if (!user) {
-    throw new ErrorHandler(
-      StatusCodes.UNAUTHORIZED,
-      "Invalid email or password.",
-    );
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid email or password.");
   }
 
   if (!user.isActive) {
@@ -176,10 +162,7 @@ const login = async (
       failedLoginAttempts: nextFailedAttempts,
     });
 
-    throw new ErrorHandler(
-      StatusCodes.UNAUTHORIZED,
-      "Invalid email or password.",
-    );
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid email or password.");
   }
 
   const updatedUser = await prisma.user.update({
@@ -222,18 +205,11 @@ type BootstrapInput = {
  * Permanently disabled once any user exists.
  * Requires BOOTSTRAP_SECRET env var to prevent unauthorized use.
  */
-const bootstrap = async (
-  payload: BootstrapInput,
-): Promise<{ user: SafeUser; token: string }> => {
+const bootstrap = async (payload: BootstrapInput): Promise<{ user: SafeUser; token: string }> => {
   const secret = process.env.BOOTSTRAP_SECRET;
   if (!secret) {
-    logger.warn(
-      "Bootstrap attempted while BOOTSTRAP_SECRET is not configured.",
-    );
-    throw new ErrorHandler(
-      StatusCodes.FORBIDDEN,
-      "Bootstrap is not enabled on this server.",
-    );
+    logger.warn("Bootstrap attempted while BOOTSTRAP_SECRET is not configured.");
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "Bootstrap is not enabled on this server.");
   }
 
   if (payload.bootstrapSecret !== secret) {

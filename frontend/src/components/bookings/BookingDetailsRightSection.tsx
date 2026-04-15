@@ -1,22 +1,20 @@
-import { Box, Stack, Typography, alpha } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import type { Booking } from '@/types';
+import { Box, Stack, Typography, alpha } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import type { Booking } from '@/types'
 
 const contextItems = [
   { label: 'Specific Question', field: 'specificQuestion' },
   { label: 'Attempted Solutions', field: 'triedSolutions' },
   { label: 'Resources Used', field: 'usedResources' },
   { label: 'Session Objectives', field: 'sessionObjectives' },
-] as const satisfies Array<{ label: string; field: keyof Booking }>;
+] as const satisfies Array<{ label: string; field: keyof Booking }>
 
 interface BookingDetailsRightSectionProps {
-  booking: Booking;
+  booking: Booking
 }
 
-export function BookingDetailsRightSection({
-  booking,
-}: BookingDetailsRightSectionProps) {
-  const theme = useTheme();
+export function BookingDetailsRightSection({ booking }: BookingDetailsRightSectionProps) {
+  const theme = useTheme()
 
   return (
     <Box
@@ -28,7 +26,7 @@ export function BookingDetailsRightSection({
       }}
     >
       <Typography
-        variant='caption'
+        variant="caption"
         sx={{
           fontWeight: 700,
           mb: 2,
@@ -72,7 +70,7 @@ export function BookingDetailsRightSection({
                 }}
               />
               <Typography
-                variant='caption'
+                variant="caption"
                 sx={{
                   fontWeight: 700,
                   color: theme.palette.primary.main,
@@ -84,7 +82,7 @@ export function BookingDetailsRightSection({
               >
                 {item.label}
               </Typography>
-              <Typography variant='body2' sx={{ lineHeight: 1.5 }}>
+              <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
                 {booking[item.field] || 'None provided'}
               </Typography>
             </Box>
@@ -92,5 +90,5 @@ export function BookingDetailsRightSection({
         </Stack>
       </Box>
     </Box>
-  );
+  )
 }

@@ -35,7 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       ...props
     },
-    ref,
+    ref
   ) => {
     const mappedVariant = variantMap[variant]
 
@@ -71,7 +71,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </MuiButton>
     )
-  },
+  }
 )
 
 Button.displayName = 'Button'

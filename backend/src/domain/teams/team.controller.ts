@@ -16,11 +16,7 @@ const parsePositiveInt = (value: unknown): number | undefined => {
   return parsed;
 };
 
-const createTeam = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const createTeam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const team = await teamService.createTeam(req.body, caller);
@@ -30,11 +26,7 @@ const createTeam = async (
   }
 };
 
-const listTeams = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const listTeams = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await teamService.listTeams(req.query as any);
     sendSuccessResponse(res, StatusCodes.OK, result, "Teams fetched successfully.");
@@ -43,11 +35,7 @@ const listTeams = async (
   }
 };
 
-const readTeam = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const readTeam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const team = await teamService.readTeam((req.params as any).teamId);
     sendSuccessResponse(res, StatusCodes.OK, team, "Team fetched successfully.");
@@ -56,11 +44,7 @@ const readTeam = async (
   }
 };
 
-const updateTeam = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const updateTeam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const team = await teamService.updateTeam((req.params as any).teamId, req.body);
     sendSuccessResponse(res, StatusCodes.OK, team, "Team updated successfully.");
@@ -69,11 +53,7 @@ const updateTeam = async (
   }
 };
 
-const deleteTeam = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const deleteTeam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const team = await teamService.deleteTeam((req.params as any).teamId);
     sendSuccessResponse(res, StatusCodes.OK, team, "Team deleted successfully.");

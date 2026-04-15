@@ -34,7 +34,11 @@ export function TeamDetailPage() {
   const { handleAction } = useAsyncAction()
 
   const { data: team, isLoading: teamLoading, error: teamError } = useTeam(teamId)
-  const { data: membersResponse, isLoading: membersLoading, error: membersError } = useTeamMembers(teamId)
+  const {
+    data: membersResponse,
+    isLoading: membersLoading,
+    error: membersError,
+  } = useTeamMembers(teamId)
   const { data: events, isLoading: eventsLoading, error: eventsError } = useTeamEvents(teamId)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
@@ -138,8 +142,16 @@ export function TeamDetailPage() {
               },
             }}
           >
-            <Tab label={`Members (${members.length})`} icon={<Users size={18} />} iconPosition="start" />
-            <Tab label={`Events (${teamEvents.length})`} icon={<Calendar size={18} />} iconPosition="start" />
+            <Tab
+              label={`Members (${members.length})`}
+              icon={<Users size={18} />}
+              iconPosition="start"
+            />
+            <Tab
+              label={`Events (${teamEvents.length})`}
+              icon={<Calendar size={18} />}
+              iconPosition="start"
+            />
           </Tabs>
 
           <Box sx={{ mb: 1 }}>
@@ -188,10 +200,7 @@ export function TeamDetailPage() {
       )}
 
       {viewingUserId && (
-        <UserDetailModal
-          userId={viewingUserId}
-          onClose={() => setViewingUserId(null)}
-        />
+        <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
       )}
     </Stack>
   )

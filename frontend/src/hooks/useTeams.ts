@@ -40,7 +40,12 @@ export function useUpdateTeam() {
     mutationFn: ({ teamId, data }: { teamId: string; data: UpdateTeamDto }) =>
       teamsApi.update(teamId, data),
     onSuccess: (_, { teamId }) =>
-      invalidateQueryKeys(qc, [teamKeys.all, teamKeys.detail(teamId), memberKeys.byTeam(teamId), statsKeys.all]),
+      invalidateQueryKeys(qc, [
+        teamKeys.all,
+        teamKeys.detail(teamId),
+        memberKeys.byTeam(teamId),
+        statsKeys.all,
+      ]),
   })
 }
 

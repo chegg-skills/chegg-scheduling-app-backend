@@ -33,58 +33,64 @@ export function WeeklyAvailabilityPicker({
   }, [value])
 
   const handleToggleDay = (dayIndex: number) => {
-    setDays((prev) => prev.map((day, index) => (
-      index === dayIndex ? { ...day, enabled: !day.enabled } : day
-    )))
+    setDays((prev) =>
+      prev.map((day, index) => (index === dayIndex ? { ...day, enabled: !day.enabled } : day))
+    )
   }
 
   const handleAddSlot = (dayIndex: number) => {
-    setDays((prev) => prev.map((day, index) => (
-      index === dayIndex
-        ? { ...day, slots: [...day.slots, createNextSlot(day.slots)] }
-        : day
-    )))
+    setDays((prev) =>
+      prev.map((day, index) =>
+        index === dayIndex ? { ...day, slots: [...day.slots, createNextSlot(day.slots)] } : day
+      )
+    )
   }
 
   const handleRemoveSlot = (dayIndex: number, slotIndex: number) => {
-    setDays((prev) => prev.map((day, index) => {
-      if (index !== dayIndex) return day
+    setDays((prev) =>
+      prev.map((day, index) => {
+        if (index !== dayIndex) return day
 
-      const nextSlots = day.slots.filter((_, currentIndex) => currentIndex !== slotIndex)
-      return nextSlots.length === 0
-        ? { ...day, enabled: false, slots: [getDefaultSlot()] }
-        : { ...day, slots: nextSlots }
-    }))
+        const nextSlots = day.slots.filter((_, currentIndex) => currentIndex !== slotIndex)
+        return nextSlots.length === 0
+          ? { ...day, enabled: false, slots: [getDefaultSlot()] }
+          : { ...day, slots: nextSlots }
+      })
+    )
   }
 
   const handleTimeChange = (
     dayIndex: number,
     slotIndex: number,
     field: 'startTime' | 'endTime',
-    nextValue: string,
+    nextValue: string
   ) => {
-    setDays((prev) => prev.map((day, index) => {
-      if (index !== dayIndex) return day
+    setDays((prev) =>
+      prev.map((day, index) => {
+        if (index !== dayIndex) return day
 
-      return {
-        ...day,
-        slots: day.slots.map((slot, currentIndex) => (
-          currentIndex === slotIndex ? { ...slot, [field]: nextValue } : slot
-        )),
-      }
-    }))
+        return {
+          ...day,
+          slots: day.slots.map((slot, currentIndex) =>
+            currentIndex === slotIndex ? { ...slot, [field]: nextValue } : slot
+          ),
+        }
+      })
+    )
   }
 
   const handleCopyDay = (fromIndex: number) => {
     const slotsToCopy = days[fromIndex].slots.map(cloneSlot)
 
-    setDays((prev) => prev.map((day, index) => {
-      if (index !== fromIndex && day.enabled) {
-        return { ...day, slots: slotsToCopy.map(cloneSlot) }
-      }
+    setDays((prev) =>
+      prev.map((day, index) => {
+        if (index !== fromIndex && day.enabled) {
+          return { ...day, slots: slotsToCopy.map(cloneSlot) }
+        }
 
-      return day
-    }))
+        return day
+      })
+    )
   }
 
   const handleReset = () => {
@@ -129,12 +135,7 @@ export function WeeklyAvailabilityPicker({
           <Button variant="secondary" onClick={handleReset} disabled={disabled}>
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={disabled}
-            sx={{ minWidth: 160 }}
-          >
+          <Button variant="primary" onClick={handleSave} disabled={disabled} sx={{ minWidth: 160 }}>
             Save changes
           </Button>
         </Box>

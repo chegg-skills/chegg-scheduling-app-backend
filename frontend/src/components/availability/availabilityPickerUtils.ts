@@ -1,14 +1,6 @@
 import type { SetWeeklyAvailabilityDto } from '@/types'
 
-export const DAYS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-]
+export const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export interface TimeSlot {
   startTime: string
@@ -35,9 +27,10 @@ export const buildDaysFromValue = (value: SetWeeklyAvailabilityDto): DayAvailabi
 
     return {
       enabled: daySlots.length > 0,
-      slots: daySlots.length > 0
-        ? daySlots.map(({ startTime, endTime }) => ({ startTime, endTime }))
-        : [getDefaultSlot()],
+      slots:
+        daySlots.length > 0
+          ? daySlots.map(({ startTime, endTime }) => ({ startTime, endTime }))
+          : [getDefaultSlot()],
     }
   })
 }

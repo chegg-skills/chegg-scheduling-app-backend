@@ -11,10 +11,7 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
-import {
-  safeUserSelect,
-  type CallerContext,
-} from "../../shared/utils/userUtils";
+import { safeUserSelect, type CallerContext } from "../../shared/utils/userUtils";
 
 export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
   offering: true,
@@ -99,14 +96,10 @@ export type UpsertEventScheduleSlotInput = {
   capacity?: number | null;
 };
 
-export const isValidAssignmentStrategy = (
-  value: string,
-): value is AssignmentStrategy =>
+export const isValidAssignmentStrategy = (value: string): value is AssignmentStrategy =>
   Object.values(AssignmentStrategy).includes(value as AssignmentStrategy);
 
-export const isValidLocationType = (
-  value: string,
-): value is EventLocationType =>
+export const isValidLocationType = (value: string): value is EventLocationType =>
   Object.values(EventLocationType).includes(value as EventLocationType);
 
 export const isValidSessionLeadershipStrategy = (
@@ -115,14 +108,14 @@ export const isValidSessionLeadershipStrategy = (
   Object.values(SessionLeadershipStrategy).includes(value as SessionLeadershipStrategy);
 
 export const normalizeKey = (value: string): string => {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
 };
 
 export const assertCatalogManagementAllowed = (caller: CallerContext): void => {
-  if (
-    caller.role !== UserRole.SUPER_ADMIN &&
-    caller.role !== UserRole.TEAM_ADMIN
-  ) {
+  if (caller.role !== UserRole.SUPER_ADMIN && caller.role !== UserRole.TEAM_ADMIN) {
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
       "You do not have permission to manage event catalogs.",

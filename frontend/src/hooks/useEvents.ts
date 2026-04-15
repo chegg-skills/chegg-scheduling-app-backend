@@ -33,7 +33,8 @@ export function useCreateEventScheduleSlot(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: any) => eventsApi.createScheduleSlot(eventId, data),
-    onSuccess: () => invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
   })
 }
 
@@ -42,7 +43,8 @@ export function useUpdateEventScheduleSlot(eventId: string) {
   return useMutation({
     mutationFn: ({ slotId, data }: { slotId: string; data: any }) =>
       eventsApi.updateScheduleSlot(eventId, slotId, data),
-    onSuccess: () => invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
   })
 }
 
@@ -50,7 +52,8 @@ export function useDeleteEventScheduleSlot(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (slotId: string) => eventsApi.deleteScheduleSlot(eventId, slotId),
-    onSuccess: () => invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
   })
 }
 
@@ -116,7 +119,8 @@ export function useSetEventHosts(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: SetEventHostsDto) => eventsApi.setHosts(eventId, data),
-    onSuccess: () => invalidateQueryKeys(qc, [eventKeys.hosts(eventId), eventKeys.detail(eventId), statsKeys.all]),
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.hosts(eventId), eventKeys.detail(eventId), statsKeys.all]),
   })
 }
 
@@ -124,6 +128,7 @@ export function useRemoveEventHost(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (userId: string) => eventsApi.removeHost(eventId, userId),
-    onSuccess: () => invalidateQueryKeys(qc, [eventKeys.hosts(eventId), eventKeys.detail(eventId), statsKeys.all]),
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.hosts(eventId), eventKeys.detail(eventId), statsKeys.all]),
   })
 }

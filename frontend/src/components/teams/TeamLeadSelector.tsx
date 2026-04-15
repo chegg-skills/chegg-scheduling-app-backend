@@ -45,11 +45,7 @@ function TeamLeadOptionLabel({ user, isCompact = false }: { user: SafeUser; isCo
   )
 }
 
-export function TeamLeadSelector({
-  control,
-  errors,
-  teamLeadOptions,
-}: TeamLeadSelectorProps) {
+export function TeamLeadSelector({ control, errors, teamLeadOptions }: TeamLeadSelectorProps) {
   return (
     <FormField
       label="Team lead"
@@ -71,7 +67,11 @@ export function TeamLeadSelector({
               hasError={!!errors.teamLeadId}
               displayEmpty
               renderValue={() =>
-                selectedUser ? <TeamLeadOptionLabel user={selectedUser} isCompact /> : 'Select a team lead…'
+                selectedUser ? (
+                  <TeamLeadOptionLabel user={selectedUser} isCompact />
+                ) : (
+                  'Select a team lead…'
+                )
               }
             >
               <MenuItem value="">Select a team lead…</MenuItem>

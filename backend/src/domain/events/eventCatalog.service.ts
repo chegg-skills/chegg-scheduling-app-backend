@@ -185,7 +185,9 @@ const createInteractionType = async (
   }
 };
 
-const listInteractionTypes = async (): Promise<{ interactionTypes: SafeEventInteractionType[] }> => {
+const listInteractionTypes = async (): Promise<{
+  interactionTypes: SafeEventInteractionType[];
+}> => {
   const interactionTypes = await prisma.eventInteractionType.findMany({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
@@ -201,10 +203,7 @@ const updateInteractionType = async (
   assertCatalogManagementAllowed(caller);
 
   if (!interactionTypeId?.trim()) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "interactionTypeId is required.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "interactionTypeId is required.");
   }
 
   const existing = await prisma.eventInteractionType.findUnique({

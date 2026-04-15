@@ -93,9 +93,7 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
 
           <Stack spacing={2}>
             <Typography {...sectionLabelStyle}>Booking rules & policy</Typography>
-            <EventSchedulingPolicyFields
-              selectedInteractionType={selectedInteractionType}
-            />
+            <EventSchedulingPolicyFields selectedInteractionType={selectedInteractionType} />
           </Stack>
 
           <EventAssignmentAlert

@@ -33,7 +33,8 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
           color: 'primary.dark',
         }}
       >
-        {user.firstName[0]}{user.lastName[0]}
+        {user.firstName[0]}
+        {user.lastName[0]}
       </Avatar>
 
       <Box sx={{ flex: 1 }}>

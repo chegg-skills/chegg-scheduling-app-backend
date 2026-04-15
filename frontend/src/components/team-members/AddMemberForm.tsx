@@ -26,17 +26,22 @@ interface AddMemberFormProps {
   onCancel?: () => void
 }
 
-export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }: AddMemberFormProps) {
+export function AddMemberForm({
+  teamId,
+  existingMemberIds,
+  onSuccess,
+  onCancel,
+}: AddMemberFormProps) {
   const [search, setSearch] = useState('')
   const { mutate, isPending, error } = useAddTeamMember(teamId)
   const { data: usersData } = useUsers({ pageSize: 200 })
 
   const eligible = (usersData?.users ?? []).filter(
-    (u) => u.isActive && u.role !== 'SUPER_ADMIN' && !existingMemberIds.includes(u.id),
+    (u) => u.isActive && u.role !== 'SUPER_ADMIN' && !existingMemberIds.includes(u.id)
   )
 
   const filteredEligible = eligible.filter((u) =>
-    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(search.toLowerCase()),
+    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(search.toLowerCase())
   )
 
   const {
@@ -47,7 +52,7 @@ export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { userIds: [] }
+    defaultValues: { userIds: [] },
   })
 
   const selectedUserIds = watch('userIds')
@@ -76,7 +81,9 @@ export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }
             control={control}
             render={({ field: { value, onChange } }) => {
               const handleToggle = (id: string) => {
-                const newSelected = value.includes(id) ? value.filter((v) => v !== id) : [...value, id]
+                const newSelected = value.includes(id)
+                  ? value.filter((v) => v !== id)
+                  : [...value, id]
                 onChange(newSelected)
               }
 
@@ -87,7 +94,13 @@ export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }
                       {value.map((id) => {
                         const user = usersData?.users.find((u) => u.id === id)
                         if (!user) return null
-                        return <Badge key={id} label={`${user.firstName} ${user.lastName}`} variant="blue" />
+                        return (
+                          <Badge
+                            key={id}
+                            label={`${user.firstName} ${user.lastName}`}
+                            variant="blue"
+                          />
+                        )
                       })}
                     </Box>
                   )}
@@ -119,7 +132,11 @@ export function AddMemberForm({ teamId, existingMemberIds, onSuccess, onCancel }
             Cancel
           </Button>
         )}
-        <Button type="submit" isLoading={isPending} disabled={!selectedUserIds || selectedUserIds.length === 0}>
+        <Button
+          type="submit"
+          isLoading={isPending}
+          disabled={!selectedUserIds || selectedUserIds.length === 0}
+        >
           Add members
         </Button>
       </Stack>

@@ -1,16 +1,9 @@
 import "dotenv/config";
-import {
-  NotificationStatus,
-  Prisma,
-  type Notification,
-} from "@prisma/client";
+import { NotificationStatus, Prisma, type Notification } from "@prisma/client";
 import nodemailer from "nodemailer";
 import { prisma } from "../db/prisma";
 import emailTemplatesHelper from "../utils/helper/emailTemplatesHelper";
-import type {
-  CancelScheduledNotificationsInput,
-  NotificationPayload,
-} from "../types/notification";
+import type { CancelScheduledNotificationsInput, NotificationPayload } from "../types/notification";
 
 type Transporter = ReturnType<typeof nodemailer.createTransport>;
 type SendMailOptions = Parameters<Transporter["sendMail"]>[0];
@@ -38,8 +31,7 @@ type NotificationSendResult =
   | { scheduled: true; notificationId: number; sendAt: string }
   | null;
 
-const wait = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const buildTransporter = (): Transporter => {
   if (process.env.SMTP_HOST) {
@@ -104,12 +96,9 @@ const sendEmailWithRetry = async (
     }
   }
 
-  const errorMessage =
-    lastError instanceof Error ? lastError.message : "Unknown error";
+  const errorMessage = lastError instanceof Error ? lastError.message : "Unknown error";
 
-  throw new Error(
-    `Failed to send email after ${maxRetries} attempts: ${errorMessage}`,
-  );
+  throw new Error(`Failed to send email after ${maxRetries} attempts: ${errorMessage}`);
 };
 
 const createNotificationRecord = async (
@@ -162,9 +151,7 @@ const createNotificationRecord = async (
   }
 };
 
-const getMailContent = (
-  payload: Prisma.JsonValue,
-): NotificationMailContent => {
+const getMailContent = (payload: Prisma.JsonValue): NotificationMailContent => {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return {};
   }
@@ -186,9 +173,7 @@ const buildMailOptions = (
   };
 };
 
-const markNotificationAsSent = async (
-  notificationId?: number | null,
-): Promise<void> => {
+const markNotificationAsSent = async (notificationId?: number | null): Promise<void> => {
   if (!notificationId) {
     return;
   }
@@ -256,10 +241,7 @@ const sendStoredNotification = async (
   try {
     const info = await sendEmailWithRetry(buildMailOptions(notificationRecord));
 
-    console.log(
-      "Email sent successfully:",
-      info.messageId ?? info.response ?? info,
-    );
+    console.log("Email sent successfully:", info.messageId ?? info.response ?? info);
     await markNotificationAsSent(notificationRecord.id);
 
     return info;
@@ -300,9 +282,7 @@ async function sendNotification(
   const emailTemplate = emailTemplatesHelper(type, variables);
   const now = new Date();
   const notificationStatus =
-    scheduledFor && scheduledFor > now
-      ? NotificationStatus.SCHEDULED
-      : NotificationStatus.PENDING;
+    scheduledFor && scheduledFor > now ? NotificationStatus.SCHEDULED : NotificationStatus.PENDING;
 
   const notificationRecord = await createNotificationRecord({
     userId,
@@ -336,9 +316,7 @@ async function sendNotification(
 
   if (scheduledFor && scheduledFor > now) {
     if (!notificationRecord) {
-      throw new Error(
-        "Could not persist scheduled notification for later delivery.",
-      );
+      throw new Error("Could not persist scheduled notification for later delivery.");
     }
 
     console.log(
@@ -368,9 +346,7 @@ async function sendNotification(
   return sendStoredNotification(notificationRecord);
 }
 
-async function processScheduledNotifications(
-  limit = MAX_SCHEDULED_BATCH_SIZE,
-): Promise<number> {
+async function processScheduledNotifications(limit = MAX_SCHEDULED_BATCH_SIZE): Promise<number> {
   const dueNotifications = await prisma.notification.findMany({
     where: {
       status: {
@@ -401,11 +377,7 @@ async function cancelScheduledNotifications(
       entityType,
       entityId,
       status: {
-        in: [
-          NotificationStatus.SCHEDULED,
-          NotificationStatus.PENDING,
-          NotificationStatus.RETRYING,
-        ],
+        in: [NotificationStatus.SCHEDULED, NotificationStatus.PENDING, NotificationStatus.RETRYING],
       },
     },
     data: {
@@ -423,8 +395,4 @@ async function cancelScheduledNotifications(
   return result.count;
 }
 
-export {
-  sendNotification,
-  processScheduledNotifications,
-  cancelScheduledNotifications,
-};
+export { sendNotification, processScheduledNotifications, cancelScheduledNotifications };

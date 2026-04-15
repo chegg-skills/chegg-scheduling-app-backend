@@ -27,13 +27,8 @@ export function useCreateEventOffering() {
 export function useUpdateEventOffering() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      offeringId,
-      data,
-    }: {
-      offeringId: string
-      data: UpdateEventOfferingDto
-    }) => eventOfferingsApi.update(offeringId, data),
+    mutationFn: ({ offeringId, data }: { offeringId: string; data: UpdateEventOfferingDto }) =>
+      eventOfferingsApi.update(offeringId, data),
     onSuccess: () => invalidateQueryKeys(qc, [offeringKeys.all, statsKeys.all]),
   })
 }

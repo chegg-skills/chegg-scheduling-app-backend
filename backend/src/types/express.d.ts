@@ -1,20 +1,20 @@
-import type { UserRole } from '@prisma/client'
+import type { UserRole } from "@prisma/client";
 
 declare global {
   namespace Express {
     interface Request {
-      requestId?: string
+      requestId?: string;
     }
 
     interface Locals {
-      requestId?: string
+      requestId?: string;
       authUser?: {
-        id: string
-        email: string
-        role: UserRole
-      }
+        id: string;
+        email: string;
+        role: UserRole;
+      };
     }
   }
 }
 
-export {}
+export {};

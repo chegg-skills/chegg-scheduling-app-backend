@@ -32,20 +32,14 @@ const getManagedTeam = async (
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
   }
 
-  if (
-    caller.role === UserRole.TEAM_ADMIN &&
-    team.teamLeadId !== caller.id
-  ) {
+  if (caller.role === UserRole.TEAM_ADMIN && team.teamLeadId !== caller.id) {
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
       "You do not have permission to manage this team.",
     );
   }
 
-  if (
-    caller.role !== UserRole.SUPER_ADMIN &&
-    caller.role !== UserRole.TEAM_ADMIN
-  ) {
+  if (caller.role !== UserRole.SUPER_ADMIN && caller.role !== UserRole.TEAM_ADMIN) {
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
       "You do not have permission to manage this team.",
@@ -53,10 +47,7 @@ const getManagedTeam = async (
   }
 
   if (options.allowInactive === false && !team.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "This team is inactive.",
-    );
+    throw new ErrorHandler(StatusCodes.CONFLICT, "This team is inactive.");
   }
 
   return team;

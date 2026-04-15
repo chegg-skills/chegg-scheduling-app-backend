@@ -30,7 +30,11 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
   const { mutate: updateEvent } = useUpdateEvent()
   const { mutate: duplicateEvent } = useDuplicateEvent()
   const { handleAction } = useAsyncAction()
-  const { sortedItems: sortedEvents, sortConfig, requestSort } = useTableSort(events, eventSortAccessors)
+  const {
+    sortedItems: sortedEvents,
+    sortConfig,
+    requestSort,
+  } = useTableSort(events, eventSortAccessors)
 
   async function handleToggleActive(event: Event) {
     const newStatus = !event.isActive

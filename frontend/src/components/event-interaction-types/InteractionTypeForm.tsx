@@ -103,7 +103,12 @@ export function InteractionTypeForm({
       <Stack component="form" id={formId} onSubmit={handleSubmit(onSubmit)} noValidate spacing={3}>
         {error && <ErrorAlert message={extractApiError(error)} />}
 
-        <InteractionTypeBasicFields errors={errors} isEdit={isEdit} register={register} control={control} />
+        <InteractionTypeBasicFields
+          errors={errors}
+          isEdit={isEdit}
+          register={register}
+          control={control}
+        />
         <InteractionTypeCapabilitiesSection control={control} errors={errors} />
         <InteractionTypeLimitsSection
           control={control}

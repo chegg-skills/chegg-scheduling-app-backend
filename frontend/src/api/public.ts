@@ -1,85 +1,97 @@
 import apiClient from '@/lib/axios'
 import type {
-    ApiResponse,
-    Booking,
-    PublicCoachSummary,
-    PublicEventSummary,
-    PublicTeamSummary,
+  ApiResponse,
+  Booking,
+  PublicCoachSummary,
+  PublicEventSummary,
+  PublicTeamSummary,
 } from '@/types'
 
 export interface ListPublicTeamsResponse {
-    teams: PublicTeamSummary[]
+  teams: PublicTeamSummary[]
 }
 
 export interface GetPublicTeamResponse {
-    team: PublicTeamSummary
+  team: PublicTeamSummary
 }
 
 export interface GetPublicEventResponse {
-    event: PublicEventSummary
+  event: PublicEventSummary
 }
 
 export interface GetPublicCoachResponse {
-    coach: PublicCoachSummary
+  coach: PublicCoachSummary
 }
 
 export interface ListPublicEventsResponse {
-    events: PublicEventSummary[]
+  events: PublicEventSummary[]
 }
 
 export interface ListCoachEventsResponse {
-    coach: PublicCoachSummary
-    events: PublicEventSummary[]
+  coach: PublicCoachSummary
+  events: PublicEventSummary[]
 }
 
 export interface ListTeamEventsBySlugResponse {
-    team: PublicTeamSummary
-    events: PublicEventSummary[]
+  team: PublicTeamSummary
+  events: PublicEventSummary[]
 }
 
 export interface AvailableSlot {
-    startTime: string;
-    endTime: string;
-    scheduleSlotId?: string;
-    remainingSeats?: number | null;
-    maxSeats?: number | null;
+  startTime: string
+  endTime: string
+  scheduleSlotId?: string
+  remainingSeats?: number | null
+  maxSeats?: number | null
 }
 
 export interface ListSlotsResponse {
-    slots: AvailableSlot[]
+  slots: AvailableSlot[]
 }
 
 export const publicApi = {
-    listTeams: (signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<ListPublicTeamsResponse>>('/public/teams', { signal }),
+  listTeams: (signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListPublicTeamsResponse>>('/public/teams', { signal }),
 
-    getTeamBySlug: (slug: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<GetPublicTeamResponse>>(`/public/teams/slug/${slug}`, { signal }),
+  getTeamBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<GetPublicTeamResponse>>(`/public/teams/slug/${slug}`, { signal }),
 
-    listTeamEvents: (teamId: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<ListPublicEventsResponse>>(`/public/teams/${teamId}/events`, { signal }),
+  listTeamEvents: (teamId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListPublicEventsResponse>>(`/public/teams/${teamId}/events`, {
+      signal,
+    }),
 
-    listTeamEventsBySlug: (slug: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<ListTeamEventsBySlugResponse>>(`/public/teams/slug/${slug}/events`, { signal }),
+  listTeamEventsBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListTeamEventsBySlugResponse>>(`/public/teams/slug/${slug}/events`, {
+      signal,
+    }),
 
-    getEventBySlug: (slug: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<GetPublicEventResponse>>(`/public/events/slug/${slug}`, { signal }),
+  getEventBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<GetPublicEventResponse>>(`/public/events/slug/${slug}`, { signal }),
 
-    getCoachBySlug: (slug: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<GetPublicCoachResponse>>(`/public/coaches/slug/${slug}`, { signal }),
+  getCoachBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<GetPublicCoachResponse>>(`/public/coaches/slug/${slug}`, { signal }),
 
-    listCoachEventsBySlug: (slug: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<ListCoachEventsResponse>>(`/public/coaches/slug/${slug}/events`, { signal }),
+  listCoachEventsBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListCoachEventsResponse>>(`/public/coaches/slug/${slug}/events`, {
+      signal,
+    }),
 
-    getAvailableSlots: (eventId: string, startDate: string, endDate: string, preferredHostId?: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<ListSlotsResponse>>(`/public/events/${eventId}/slots`, {
-            params: { startDate, endDate, preferredHostId },
-            signal
-        }),
+  getAvailableSlots: (
+    eventId: string,
+    startDate: string,
+    endDate: string,
+    preferredHostId?: string,
+    signal?: AbortSignal
+  ) =>
+    apiClient.get<ApiResponse<ListSlotsResponse>>(`/public/events/${eventId}/slots`, {
+      params: { startDate, endDate, preferredHostId },
+      signal,
+    }),
 
-    getBooking: (id: string, token: string, signal?: AbortSignal) =>
-        apiClient.get<ApiResponse<{ booking: Booking }>>(`/public/bookings/${id}`, {
-            params: { token },
-            signal
-        }),
+  getBooking: (id: string, token: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ booking: Booking }>>(`/public/bookings/${id}`, {
+      params: { token },
+      signal,
+    }),
 }

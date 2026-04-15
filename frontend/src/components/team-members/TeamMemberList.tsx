@@ -14,12 +14,22 @@ interface TeamMemberListProps {
   onViewUser?: (userId: string) => void
 }
 
-export function TeamMemberList({ teamId, members, currentUserRole, teamLeadId, onViewUser }: TeamMemberListProps) {
+export function TeamMemberList({
+  teamId,
+  members,
+  currentUserRole,
+  teamLeadId,
+  onViewUser,
+}: TeamMemberListProps) {
   const { mutate: remove } = useRemoveTeamMember(teamId)
   const { handleAction } = useAsyncAction()
 
   if (members.length === 0) {
-    return <Typography variant="body2" color="text.secondary">No members yet.</Typography>
+    return (
+      <Typography variant="body2" color="text.secondary">
+        No members yet.
+      </Typography>
+    )
   }
 
   const sortedMembers = [...members].sort((a, b) => {

@@ -8,7 +8,16 @@ import { BootstrapForm } from '@/components/auth/BootstrapForm'
 
 export function BootstrapPage() {
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2, bgcolor: 'background.default' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
+        bgcolor: 'background.default',
+      }}
+    >
       <Stack spacing={3} sx={{ width: '100%', maxWidth: 420 }}>
         <Stack spacing={1} textAlign="center">
           <Typography variant="h4">Initial Setup</Typography>

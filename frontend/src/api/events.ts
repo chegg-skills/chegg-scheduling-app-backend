@@ -1,4 +1,3 @@
-
 import apiClient from '@/lib/axios'
 import type {
   ApiResponse,
@@ -32,8 +31,7 @@ export const eventsApi = {
     apiClient.get<ApiResponse<Event>>(`/events/${eventId}`, { signal }),
   update: (eventId: string, data: UpdateEventDto) =>
     apiClient.patch<ApiResponse<Event>>(`/events/${eventId}`, data),
-  delete: (eventId: string) =>
-    apiClient.delete<ApiResponse<Event>>(`/events/${eventId}`),
+  delete: (eventId: string) => apiClient.delete<ApiResponse<Event>>(`/events/${eventId}`),
   duplicate: (eventId: string) =>
     apiClient.post<ApiResponse<Event>>(`/events/${eventId}/duplicate`),
   listHosts: (eventId: string, signal?: AbortSignal) =>
@@ -43,11 +41,17 @@ export const eventsApi = {
   removeHost: (eventId: string, userId: string) =>
     apiClient.delete<ApiResponse<EventHost>>(`/events/${eventId}/hosts/${userId}`),
   listScheduleSlots: (eventId: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<{ slots: EventScheduleSlot[] }>>(`/events/${eventId}/schedule-slots`, { signal }),
+    apiClient.get<ApiResponse<{ slots: EventScheduleSlot[] }>>(
+      `/events/${eventId}/schedule-slots`,
+      { signal }
+    ),
   createScheduleSlot: (eventId: string, data: Partial<EventScheduleSlot>) =>
     apiClient.post<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots`, data),
   updateScheduleSlot: (eventId: string, slotId: string, data: Partial<EventScheduleSlot>) =>
-    apiClient.patch<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}`, data),
+    apiClient.patch<ApiResponse<EventScheduleSlot>>(
+      `/events/${eventId}/schedule-slots/${slotId}`,
+      data
+    ),
   deleteScheduleSlot: (eventId: string, slotId: string) =>
     apiClient.delete<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}`),
 }

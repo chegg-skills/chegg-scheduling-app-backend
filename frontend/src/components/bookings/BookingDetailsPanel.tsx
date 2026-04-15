@@ -10,14 +10,13 @@ interface BookingDetailsPanelProps {
   onViewHost?: (userId: string) => void
 }
 
-
 export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   const fallbackLocation = booking.event?.locationValue ?? ''
 
   return (
-    booking.meetingJoinUrl
-    ?? booking.host?.zoomIsvLink
-    ?? (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
+    booking.meetingJoinUrl ??
+    booking.host?.zoomIsvLink ??
+    (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
       ? fallbackLocation
       : null)
   )

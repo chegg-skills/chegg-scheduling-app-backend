@@ -21,18 +21,10 @@ export function TeamEventsTab({
 }: TeamEventsTabProps) {
   return (
     <>
-      {isLoading ? (
-        <PageSpinner />
-      ) : (
-        <EventTable events={events} teamId={teamId} />
-      )}
+      {isLoading ? <PageSpinner /> : <EventTable events={events} teamId={teamId} />}
 
       <Modal isOpen={showCreateModal} onClose={onCloseCreateModal} title="New event" size="lg">
-        <EventForm
-          teamId={teamId}
-          onSuccess={onCloseCreateModal}
-          onCancel={onCloseCreateModal}
-        />
+        <EventForm teamId={teamId} onSuccess={onCloseCreateModal} onCancel={onCloseCreateModal} />
       </Modal>
     </>
   )

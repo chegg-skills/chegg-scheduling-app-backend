@@ -16,7 +16,12 @@ interface AvailabilityDayRowProps {
   onToggleDay: (dayIndex: number) => void
   onAddSlot: (dayIndex: number) => void
   onRemoveSlot: (dayIndex: number, slotIndex: number) => void
-  onTimeChange: (dayIndex: number, slotIndex: number, field: 'startTime' | 'endTime', value: string) => void
+  onTimeChange: (
+    dayIndex: number,
+    slotIndex: number,
+    field: 'startTime' | 'endTime',
+    value: string
+  ) => void
   onCopyDay: (dayIndex: number) => void
 }
 
@@ -73,11 +78,13 @@ export function AvailabilityDayRow({
                 <input
                   type="time"
                   value={slot.startTime}
-                  onChange={(event) => onTimeChange(dayIndex, slotIndex, 'startTime', event.target.value)}
+                  onChange={(event) =>
+                    onTimeChange(dayIndex, slotIndex, 'startTime', event.target.value)
+                  }
                   disabled={disabled}
                   style={{
                     ...timeInputStyle,
-                    ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {})
+                    ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {}),
                   }}
                 />
                 <Typography variant="body2" color="text.secondary">
@@ -86,11 +93,13 @@ export function AvailabilityDayRow({
                 <input
                   type="time"
                   value={slot.endTime}
-                  onChange={(event) => onTimeChange(dayIndex, slotIndex, 'endTime', event.target.value)}
+                  onChange={(event) =>
+                    onTimeChange(dayIndex, slotIndex, 'endTime', event.target.value)
+                  }
                   disabled={disabled}
                   style={{
                     ...timeInputStyle,
-                    ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {})
+                    ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {}),
                   }}
                 />
                 {!disabled && (
@@ -112,7 +121,12 @@ export function AvailabilityDayRow({
       {day.enabled && !disabled && (
         <Stack direction="row" spacing={1}>
           <Tooltip title="Add slot">
-            <IconButton size="small" color="primary" onClick={() => onAddSlot(dayIndex)} disabled={disabled}>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => onAddSlot(dayIndex)}
+              disabled={disabled}
+            >
               <Plus size={16} />
             </IconButton>
           </Tooltip>

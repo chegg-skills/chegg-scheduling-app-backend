@@ -6,7 +6,10 @@ import { FormField } from '@/components/shared/FormField'
 import { Input } from '@/components/shared/Input'
 import { Select } from '@/components/shared/Select'
 import type { EventFormValues } from './eventFormSchema'
-import { getAllowedAssignmentStrategies, getDefaultEventAssignmentStrategy } from './eventCapabilityRules'
+import {
+  getAllowedAssignmentStrategies,
+  getDefaultEventAssignmentStrategy,
+} from './eventCapabilityRules'
 import type { Event, EventInteractionType, TeamMember } from '@/types'
 
 interface EventScheduleFieldsProps {
@@ -15,7 +18,7 @@ interface EventScheduleFieldsProps {
   teamMembers?: TeamMember[]
 }
 
-/** 
+/**
  * Handles duration and event-level assignment behavior.
  * Consumes the EventForm context for core form state.
  */
@@ -24,23 +27,29 @@ export function EventScheduleFields({
   event,
   teamMembers,
 }: EventScheduleFieldsProps) {
-  const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext<EventFormValues>()
 
   const assignmentOptions = getAllowedAssignmentStrategies(selectedInteractionType)
-  const selectedStrategy = watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(selectedInteractionType)
+  const selectedStrategy =
+    watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(selectedInteractionType)
   const canChooseStrategy = assignmentOptions.length > 1
 
   const leadershipStrategy = watch('sessionLeadershipStrategy')
   const eventHosts = event?.hosts ?? []
-  const leadSelectionOptions = eventHosts.length > 0
-    ? eventHosts.map((host) => ({
-      value: host.hostUserId,
-      label: `${host.hostUser.firstName} ${host.hostUser.lastName}`,
-    }))
-    : (teamMembers ?? []).map((member) => ({
-      value: member.userId,
-      label: `${member.user.firstName} ${member.user.lastName}`,
-    }))
+  const leadSelectionOptions =
+    eventHosts.length > 0
+      ? eventHosts.map((host) => ({
+          value: host.hostUserId,
+          label: `${host.hostUser.firstName} ${host.hostUser.lastName}`,
+        }))
+      : (teamMembers ?? []).map((member) => ({
+          value: member.userId,
+          label: `${member.user.firstName} ${member.user.lastName}`,
+        }))
 
   return (
     <Stack spacing={2}>
@@ -73,7 +82,9 @@ export function EventScheduleFields({
             hasError={!!errors.assignmentStrategy}
             {...register('assignmentStrategy')}
           >
-            <MenuItem value="DIRECT">Direct — pick from this event&apos;s assigned coaches</MenuItem>
+            <MenuItem value="DIRECT">
+              Direct — pick from this event&apos;s assigned coaches
+            </MenuItem>
             <MenuItem value="ROUND_ROBIN">Round Robin — rotate across the coach pool</MenuItem>
           </Select>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
@@ -113,8 +124,12 @@ export function EventScheduleFields({
               hasError={!!errors.sessionLeadershipStrategy}
               {...register('sessionLeadershipStrategy')}
             >
-              <MenuItem value="SINGLE_HOST">Single host — only one coach joins (traditional)</MenuItem>
-              <MenuItem value="ROTATING_LEAD">Rotating lead — round-robin lead, others as co-hosts</MenuItem>
+              <MenuItem value="SINGLE_HOST">
+                Single host — only one coach joins (traditional)
+              </MenuItem>
+              <MenuItem value="ROTATING_LEAD">
+                Rotating lead — round-robin lead, others as co-hosts
+              </MenuItem>
               <MenuItem value="FIXED_LEAD">Fixed lead — one specific coach always leads</MenuItem>
             </Select>
           </FormField>
@@ -143,8 +158,13 @@ export function EventScheduleFields({
                 ))}
               </Select>
               {eventHosts.length === 0 && !event && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Note: The selected coach will be automatically assigned to this event upon creation.
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: 'block' }}
+                >
+                  Note: The selected coach will be automatically assigned to this event upon
+                  creation.
                 </Typography>
               )}
             </FormField>

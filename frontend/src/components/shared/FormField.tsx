@@ -37,7 +37,7 @@ export function FormField({
           color: 'text.primary',
           display: 'flex',
           alignItems: 'center',
-          mb: 0.25
+          mb: 0.25,
         }}
       >
         {label}
@@ -54,7 +54,10 @@ export function FormField({
           {error}
         </Typography>
       ) : hint ? (
-        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.25, display: 'block', opacity: 0.8 }}>
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', mt: 0.25, display: 'block', opacity: 0.8 }}
+        >
           {hint}
         </Typography>
       ) : null}

@@ -17,12 +17,7 @@ import { usePagination } from '@/hooks/usePagination'
 
 export function TeamsPage() {
   const { user } = useAuth()
-  const {
-    pageSize,
-    backendPage,
-    onPageChange,
-    onRowsPerPageChange
-  } = usePagination(20)
+  const { pageSize, backendPage, onPageChange, onRowsPerPageChange } = usePagination(20)
 
   const [showCreate, setShowCreate] = useState(false)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
@@ -30,7 +25,7 @@ export function TeamsPage() {
 
   const { data, isLoading, error } = useTeams({
     page: backendPage,
-    pageSize
+    pageSize,
   })
   const { data: teamStats, isLoading: statsLoading } = useTeamStats(timeframe)
 

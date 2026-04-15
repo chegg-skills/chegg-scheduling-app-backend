@@ -48,14 +48,25 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
   })
 
   useEffect(() => {
-    if (offering) reset({ key: offering.key, name: offering.name, description: offering.description ?? '', sortOrder: offering.sortOrder })
+    if (offering)
+      reset({
+        key: offering.key,
+        name: offering.name,
+        description: offering.description ?? '',
+        sortOrder: offering.sortOrder,
+      })
   }, [offering, reset])
 
   function onSubmit(values: FormValues) {
     if (isEdit && offering) {
       update({ offeringId: offering.id, data: values }, { onSuccess })
     } else {
-      create(values, { onSuccess: () => { reset(); onSuccess?.() } })
+      create(values, {
+        onSuccess: () => {
+          reset()
+          onSuccess?.()
+        },
+      })
     }
   }
 
@@ -92,7 +103,13 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
           error={errors.sortOrder?.message}
           info="The order in which this offering appears in lists (lower numbers come first)."
         >
-          <Input id="sortOrder" type="number" min="0" hasError={!!errors.sortOrder} {...register('sortOrder')} />
+          <Input
+            id="sortOrder"
+            type="number"
+            min="0"
+            hasError={!!errors.sortOrder}
+            {...register('sortOrder')}
+          />
         </FormField>
 
         <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>

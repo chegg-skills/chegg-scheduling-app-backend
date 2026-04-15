@@ -25,8 +25,7 @@ const getDatabaseUrl = (): string => {
 
 const createPgPool = (): Pool => {
   const dbUrl = getDatabaseUrl();
-  const isProduction =
-    process.env.NODE_ENV === "production" || !dbUrl.includes("localhost");
+  const isProduction = process.env.NODE_ENV === "production" || !dbUrl.includes("localhost");
 
   return new Pool({
     connectionString: dbUrl,

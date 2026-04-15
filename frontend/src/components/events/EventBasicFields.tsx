@@ -5,12 +5,15 @@ import { Input } from '@/components/shared/Input'
 import { Textarea } from '@/components/shared/Textarea'
 import type { EventFormValues } from './eventFormSchema'
 
-/** 
+/**
  * Handles name and description fields.
  * Consumes the EventForm context.
  */
 export function EventBasicFields() {
-  const { register, formState: { errors } } = useFormContext<EventFormValues>()
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<EventFormValues>()
 
   return (
     <Stack spacing={3}>

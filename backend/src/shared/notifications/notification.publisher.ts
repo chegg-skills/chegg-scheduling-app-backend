@@ -36,10 +36,8 @@ type NotificationPayload = {
   metadata?: Record<string, unknown>;
 };
 
-const NOTIFICATION_EXCHANGE =
-  process.env.NOTIFICATION_EXCHANGE ?? "notificationExchange";
-const NOTIFICATION_ROUTING_KEY =
-  process.env.NOTIFICATION_ROUTING_KEY ?? "notification.send";
+const NOTIFICATION_EXCHANGE = process.env.NOTIFICATION_EXCHANGE ?? "notificationExchange";
+const NOTIFICATION_ROUTING_KEY = process.env.NOTIFICATION_ROUTING_KEY ?? "notification.send";
 
 let connectionPromise: Promise<any> | null = null;
 let channelPromise: Promise<any> | null = null;
@@ -99,9 +97,7 @@ const normalizeRecipients = (recipients: string | string[]): string => {
   return recipients.trim();
 };
 
-const publishNotification = async (
-  payload: NotificationPayload,
-): Promise<boolean> => {
+const publishNotification = async (payload: NotificationPayload): Promise<boolean> => {
   const recipients = normalizeRecipients(payload.recipients);
 
   if (!notificationsEnabled() || !recipients) {
@@ -127,9 +123,7 @@ const publishNotification = async (
   return wasPublished;
 };
 
-const publishNotificationSafely = async (
-  payload: NotificationPayload,
-): Promise<boolean> => {
+const publishNotificationSafely = async (payload: NotificationPayload): Promise<boolean> => {
   try {
     return await publishNotification(payload);
   } catch (error) {
@@ -144,9 +138,7 @@ const publishNotificationSafely = async (
 };
 const resolveFrontendUrl = (): string => {
   const rawUrl =
-    process.env.FRONTEND_URL ??
-    process.env.CLIENT_FRONTEND_URL ??
-    "http://localhost:5173";
+    process.env.FRONTEND_URL ?? process.env.CLIENT_FRONTEND_URL ?? "http://localhost:5173";
 
   return rawUrl.replace(/\/$/, "");
 };

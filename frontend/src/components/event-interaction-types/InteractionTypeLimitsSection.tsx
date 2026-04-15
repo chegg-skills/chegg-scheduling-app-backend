@@ -36,16 +36,30 @@ export function InteractionTypeLimitsSection({
             label="Min assigned coaches"
             htmlFor="minHosts"
             error={errors.minHosts?.message}
-            hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'Minimum number of coaches that must be assigned to an event.'}
+            hint={
+              !supportsMultipleHosts
+                ? 'Single-coach types are locked to 1.'
+                : 'Minimum number of coaches that must be assigned to an event.'
+            }
           >
-            <Input id="minHosts" type="number" min="1" disabled={!supportsMultipleHosts} {...register('minHosts')} />
+            <Input
+              id="minHosts"
+              type="number"
+              min="1"
+              disabled={!supportsMultipleHosts}
+              {...register('minHosts')}
+            />
           </FormField>
 
           <FormField
             label="Max assigned coaches (blank = unlimited)"
             htmlFor="maxHosts"
             error={errors.maxHosts?.message}
-            hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'No limit if left blank.'}
+            hint={
+              !supportsMultipleHosts
+                ? 'Single-coach types are locked to 1.'
+                : 'No limit if left blank.'
+            }
           >
             <Controller
               name="maxHosts"
@@ -57,7 +71,9 @@ export function InteractionTypeLimitsSection({
                   min="1"
                   placeholder={supportsMultipleHosts ? '∞' : '1'}
                   disabled={!supportsMultipleHosts}
-                  value={field.value === null || typeof field.value === 'undefined' ? '' : field.value}
+                  value={
+                    field.value === null || typeof field.value === 'undefined' ? '' : field.value
+                  }
                   onChange={(event) => {
                     const { value } = event.target
                     field.onChange(value === '' ? null : Number(value))

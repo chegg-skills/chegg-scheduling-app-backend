@@ -49,7 +49,8 @@ export function useDeleteInteractionType() {
 export function useInteractionTypeUsage(interactionTypeId: string) {
   return useQuery({
     queryKey: [...interactionTypeKeys.all, interactionTypeId, 'usage'],
-    queryFn: ({ signal }) => interactionTypesApi.getUsage(interactionTypeId, signal).then((r) => r.data.data),
+    queryFn: ({ signal }) =>
+      interactionTypesApi.getUsage(interactionTypeId, signal).then((r) => r.data.data),
     enabled: !!interactionTypeId,
   })
 }

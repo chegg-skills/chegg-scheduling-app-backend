@@ -17,14 +17,7 @@ interface ModalProps {
 
 const maxWidthMap = { sm: 'sm', md: 'md', lg: 'lg' } as const
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  footer,
-  size = 'md',
-}: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }: ModalProps) {
   return (
     <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth={maxWidthMap[size]}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

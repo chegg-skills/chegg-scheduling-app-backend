@@ -8,7 +8,13 @@ import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { logger } from "../../shared/logging/logger";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
-import { SALT_ROUNDS, type SafeUser, normalizeEmail, validateTimezone, toSafeUser } from "../../shared/utils/userUtils";
+import {
+  SALT_ROUNDS,
+  type SafeUser,
+  normalizeEmail,
+  validateTimezone,
+  toSafeUser,
+} from "../../shared/utils/userUtils";
 import { AcceptInviteSchema, CreateInviteSchema } from "./invite.schema";
 
 const INVITE_EXPIRY_DAYS = Number(process.env.INVITE_EXPIRY_DAYS ?? 7);
@@ -38,7 +44,7 @@ const getInviteExpiryDate = (): Date => {
 };
 
 const createInvite = async (
-  payload: CreateInviteInput
+  payload: CreateInviteInput,
 ): Promise<{
   id: string;
   email: string;
@@ -55,10 +61,7 @@ const createInvite = async (
   });
 
   if (existingUser) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "A user with this email already exists."
-    );
+    throw new ErrorHandler(StatusCodes.CONFLICT, "A user with this email already exists.");
   }
 
   const existingInvite = await prisma.userInvite.findFirst({
@@ -72,7 +75,7 @@ const createInvite = async (
   if (existingInvite) {
     throw new ErrorHandler(
       StatusCodes.CONFLICT,
-      "An active invite already exists for this email. Please resend or revoke it first."
+      "An active invite already exists for this email. Please resend or revoke it first.",
     );
   }
 
@@ -106,7 +109,7 @@ const createInvite = async (
 };
 
 const acceptInvite = async (
-  payload: AcceptInviteInput
+  payload: AcceptInviteInput,
 ): Promise<{ user: SafeUser; token: string; invitedById: string }> => {
   const validated = AcceptInviteSchema.body.parse(payload);
 
@@ -119,17 +122,11 @@ const acceptInvite = async (
   }
 
   if (invite.acceptedAt) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "This invite has already been accepted."
-    );
+    throw new ErrorHandler(StatusCodes.CONFLICT, "This invite has already been accepted.");
   }
 
   if (new Date() > invite.expiresAt) {
-    throw new ErrorHandler(
-      StatusCodes.GONE,
-      "This invite has expired. Please request a new one."
-    );
+    throw new ErrorHandler(StatusCodes.GONE, "This invite has expired. Please request a new one.");
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -137,15 +134,10 @@ const acceptInvite = async (
   });
 
   if (existingUser) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "A user with this email already exists."
-    );
+    throw new ErrorHandler(StatusCodes.CONFLICT, "A user with this email already exists.");
   }
 
-  const timezone = validated.timezone
-    ? validateTimezone(validated.timezone)
-    : "UTC";
+  const timezone = validated.timezone ? validateTimezone(validated.timezone) : "UTC";
 
   const hashedPassword = await bcrypt.hash(validated.password, SALT_ROUNDS);
 
@@ -157,7 +149,10 @@ const acceptInvite = async (
           firstName: validated.firstName,
           lastName: validated.lastName,
           email: invite.email,
-          publicBookingSlug: createPublicBookingSlug(`${validated.firstName} ${validated.lastName}`, 'coach'),
+          publicBookingSlug: createPublicBookingSlug(
+            `${validated.firstName} ${validated.lastName}`,
+            "coach",
+          ),
           password: hashedPassword,
           role: invite.role,
           timezone,

@@ -50,32 +50,18 @@ export function ProfilePage() {
               },
             }}
           >
-            <Tab
-              label="Profile Info"
-              icon={<User size={18} />}
-              iconPosition="start"
-            />
-            <Tab
-              label="My Availability"
-              icon={<Clock size={18} />}
-              iconPosition="start"
-            />
+            <Tab label="Profile Info" icon={<User size={18} />} iconPosition="start" />
+            <Tab label="My Availability" icon={<Clock size={18} />} iconPosition="start" />
           </Tabs>
         </Box>
 
         {activeTab === 0 && (
           <Paper variant="outlined" sx={{ mt: 3, maxWidth: 760, p: 3, borderRadius: 2 }}>
-            <UserForm
-              user={user}
-              currentUserRole={user.role}
-              onSuccess={refreshUser}
-            />
+            <UserForm user={user} currentUserRole={user.role} onSuccess={refreshUser} />
           </Paper>
         )}
 
-        {activeTab === 1 && (
-          <AvailabilityView userId={user.id} />
-        )}
+        {activeTab === 1 && <AvailabilityView userId={user.id} />}
       </Box>
     </Box>
   )

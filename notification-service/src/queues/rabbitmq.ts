@@ -7,9 +7,7 @@ let connection: RabbitConnection | null = null;
 const getRabbitConnection = async (): Promise<RabbitConnection> => {
   if (!connection) {
     try {
-      const rabbitConnection = await amqp.connect(
-        process.env.RABBITMQ_URL || "amqp://localhost",
-      );
+      const rabbitConnection = await amqp.connect(process.env.RABBITMQ_URL || "amqp://localhost");
 
       rabbitConnection.on("close", () => {
         connection = null;

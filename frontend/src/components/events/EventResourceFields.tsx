@@ -11,12 +11,16 @@ import { useInteractionTypes } from '@/hooks/useInteractionTypes'
 import { formatCapacityRange } from './eventCapabilityRules'
 import type { EventFormValues } from './eventFormSchema'
 
-/** 
+/**
  * Handles offeringId and interactionTypeId fields.
  * Consumes the EventForm context.
  */
 export function EventResourceFields() {
-  const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext<EventFormValues>()
   const { data: offeringsData } = useEventOfferings()
   const { data: interactionData } = useInteractionTypes()
 
@@ -68,7 +72,8 @@ export function EventResourceFields() {
                   {toTitleCase(t.name)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} • Coaches: {formatCapacityRange(t.minHosts, t.maxHosts)}
+                  Participants: {formatCapacityRange(t.minParticipants, t.maxParticipants)} •
+                  Coaches: {formatCapacityRange(t.minHosts, t.maxHosts)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {t.supportsRoundRobin ? 'Supports round-robin roster' : 'Direct assignment only'}

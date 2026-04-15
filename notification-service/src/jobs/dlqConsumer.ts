@@ -1,10 +1,7 @@
 import { getChannel } from "../dispatcher/channelDispatcher";
 import { getRabbitConnection } from "../queues/rabbitmq";
 import { cancelScheduledNotifications } from "../services/emailService";
-import type {
-  CancelScheduledNotificationsInput,
-  NotificationPayload,
-} from "../types/notification";
+import type { CancelScheduledNotificationsInput, NotificationPayload } from "../types/notification";
 
 async function processNotification(notification: NotificationPayload): Promise<void> {
   if (notification.type === "CANCEL_BOOKING_REMINDERS") {
@@ -49,9 +46,7 @@ async function startDLQConsumer(): Promise<void> {
       }
 
       try {
-        const notificationPayload = JSON.parse(
-          msg.content.toString(),
-        ) as NotificationPayload;
+        const notificationPayload = JSON.parse(msg.content.toString()) as NotificationPayload;
 
         console.log("+-----------------------------------------------------------------+");
         const maskedVariables = {

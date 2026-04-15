@@ -17,7 +17,7 @@ router
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     validate(CreateInviteSchema),
-    inviteController.createInvite
+    inviteController.createInvite,
   )
   .all(methodNotAllowed);
 

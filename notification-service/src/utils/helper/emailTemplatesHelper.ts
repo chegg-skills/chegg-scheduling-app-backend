@@ -13,7 +13,7 @@ const escapeHtml = (unsafe: string): string => {
 const replacePlaceholders = (
   template: string,
   templateData: TemplateVariables,
-  shouldEscape: boolean
+  shouldEscape: boolean,
 ): string => {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
     const value = templateData[key];

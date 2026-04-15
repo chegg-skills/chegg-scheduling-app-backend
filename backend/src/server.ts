@@ -10,13 +10,9 @@ const validateEnv = (): void => {
   const required = ["DATABASE_URL", "JWT_SECRET"];
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`,
-    );
+    throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
   }
-  if (
-    process.env.JWT_SECRET === "replace-this-with-a-long-random-secret"
-  ) {
+  if (process.env.JWT_SECRET === "replace-this-with-a-long-random-secret") {
     logger.warn(
       "JWT_SECRET is still set to the placeholder value. Replace it before production deployment.",
     );

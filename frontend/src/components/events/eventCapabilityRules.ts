@@ -12,20 +12,20 @@ type HostSetupStatusInput = {
 }
 
 export function getAllowedAssignmentStrategies(
-  interactionType?: EventInteractionType | null,
+  interactionType?: EventInteractionType | null
 ): AssignmentStrategy[] {
   return interactionType?.supportsRoundRobin ? ['DIRECT', 'ROUND_ROBIN'] : ['DIRECT']
 }
 
 export function getDefaultEventAssignmentStrategy(
-  interactionType?: EventInteractionType | null,
+  interactionType?: EventInteractionType | null
 ): AssignmentStrategy {
   return getAllowedAssignmentStrategies(interactionType)[0] ?? 'DIRECT'
 }
 
 export function clampEventParticipantConfig(
   interactionType: EventInteractionType | null | undefined,
-  currentConfig: ParticipantConfig,
+  currentConfig: ParticipantConfig
 ): Required<ParticipantConfig> {
   if (!interactionType) {
     return {
@@ -36,10 +36,11 @@ export function clampEventParticipantConfig(
 
   let minParticipantCount = Math.max(
     interactionType.minParticipants,
-    currentConfig.minParticipantCount ?? interactionType.minParticipants,
+    currentConfig.minParticipantCount ?? interactionType.minParticipants
   )
 
-  let maxParticipantCount = currentConfig.maxParticipantCount ?? interactionType.maxParticipants ?? null
+  let maxParticipantCount =
+    currentConfig.maxParticipantCount ?? interactionType.maxParticipants ?? null
 
   if (interactionType.maxParticipants !== null) {
     maxParticipantCount =
@@ -64,7 +65,7 @@ export function formatCapacityRange(minimum: number, maximum: number | null): st
 
 export function getRequiredEventHostCount(
   interactionType?: EventInteractionType | null,
-  assignmentStrategy?: AssignmentStrategy | null,
+  assignmentStrategy?: AssignmentStrategy | null
 ): number {
   const interactionMinimum = interactionType?.minHosts ?? 1
   const roundRobinMinimum = assignmentStrategy === 'ROUND_ROBIN' ? 2 : 1

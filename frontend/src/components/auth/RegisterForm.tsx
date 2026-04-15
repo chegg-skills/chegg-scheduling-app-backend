@@ -51,7 +51,12 @@ export function RegisterForm() {
       {error && <ErrorAlert message={extractApiError(error)} />}
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <FormField label="First Name" htmlFor="firstName" error={errors.firstName?.message} required>
+        <FormField
+          label="First Name"
+          htmlFor="firstName"
+          error={errors.firstName?.message}
+          required
+        >
           <Input id="firstName" hasError={!!errors.firstName} {...register('firstName')} />
         </FormField>
         <FormField label="Last Name" htmlFor="lastName" error={errors.lastName?.message} required>
@@ -85,12 +90,7 @@ export function RegisterForm() {
         error={errors.timezone?.message}
         hint="Select your preferred timezone. Defaults to system timezone."
       >
-        <Select
-          id="timezone"
-          hasError={!!errors.timezone}
-          {...register('timezone')}
-          displayEmpty
-        >
+        <Select id="timezone" hasError={!!errors.timezone} {...register('timezone')} displayEmpty>
           <MenuItem value="">
             <em>Choose a timezone...</em>
           </MenuItem>

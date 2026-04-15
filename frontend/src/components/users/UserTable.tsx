@@ -34,13 +34,17 @@ export function UserTable({
   onPageChange,
   onRowsPerPageChange,
   currentUserRole,
-  currentUserId
+  currentUserId,
 }: UserTableProps) {
   const [editingUser, setEditingUser] = useState<SafeUser | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const { mutate: deactivate } = useDeactivateUser()
   const { confirm } = useConfirm()
-  const { sortedItems: sortedUsers, sortConfig, requestSort } = useTableSort(users, userSortAccessors)
+  const {
+    sortedItems: sortedUsers,
+    sortConfig,
+    requestSort,
+  } = useTableSort(users, userSortAccessors)
 
   async function handleDeactivate(user: SafeUser) {
     const confirmed = await confirm({
@@ -114,7 +118,9 @@ export function UserTable({
         )}
       </TableContainer>
 
-      {viewingUserId && <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />}
+      {viewingUserId && (
+        <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
+      )}
 
       {editingUser && (
         <Modal

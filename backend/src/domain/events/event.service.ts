@@ -1,7 +1,4 @@
-import {
-  AssignmentStrategy,
-  Prisma,
-} from "@prisma/client";
+import { AssignmentStrategy, Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -82,10 +79,7 @@ const listEventsByQuery = async (
 };
 
 const assertRoundRobinHostCount = (event: SafeEvent): void => {
-  if (
-    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
-    event.hosts.length < 2
-  ) {
+  if (event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && event.hosts.length < 2) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       "ROUND_ROBIN events require at least two hosts.",
@@ -131,10 +125,7 @@ const listTeamEvents = async (
   return listEventsByQuery({ teamId }, options);
 };
 
-const readEvent = async (
-  eventId: string,
-  caller: CallerContext,
-): Promise<SafeEvent> => {
+const readEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
   return getManagedEvent(eventId, caller);
 };
 
@@ -166,12 +157,7 @@ const updateEvent = async (
   assertRoundRobinHostCount(updatedEvent);
 
   await prisma.$transaction(async (tx) => {
-    await syncRoutingState(
-      tx,
-      eventId,
-      updatedEvent.assignmentStrategy,
-      updatedEvent.hosts.length,
-    );
+    await syncRoutingState(tx, eventId, updatedEvent.assignmentStrategy, updatedEvent.hosts.length);
   });
 
   return prisma.event.findUniqueOrThrow({
@@ -180,10 +166,7 @@ const updateEvent = async (
   });
 };
 
-const deleteEvent = async (
-  eventId: string,
-  caller: CallerContext,
-): Promise<SafeEvent> => {
+const deleteEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
   const event = await getManagedEvent(eventId, caller);
 
   // Check for bookings
@@ -204,11 +187,7 @@ const deleteEvent = async (
   });
 };
 
-
-const duplicateEvent = async (
-  eventId: string,
-  caller: CallerContext,
-): Promise<SafeEvent> => {
+const duplicateEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
   const sourceEvent = await getManagedEvent(eventId, caller);
 
   return prisma.$transaction(async (tx) => {
@@ -233,12 +212,7 @@ const duplicateEvent = async (
     }
 
     // Initialize routing state if needed
-    await syncRoutingState(
-      tx,
-      newEvent.id,
-      newEvent.assignmentStrategy,
-      sourceEvent.hosts.length,
-    );
+    await syncRoutingState(tx, newEvent.id, newEvent.assignmentStrategy, sourceEvent.hosts.length);
 
     return tx.event.findUniqueOrThrow({
       where: { id: newEvent.id },

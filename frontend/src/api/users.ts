@@ -16,8 +16,7 @@ export const usersApi = {
   list: (params?: ListUsersParams, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<ListUsersResponse>>('/users', { params, signal }),
 
-  getMe: (signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<SafeUser>>('/users/me', { signal }),
+  getMe: (signal?: AbortSignal) => apiClient.get<ApiResponse<SafeUser>>('/users/me', { signal }),
 
   updateMe: (data: Partial<UpdateUserDto>) =>
     apiClient.patch<ApiResponse<SafeUser>>('/users/me', data),
@@ -31,6 +30,5 @@ export const usersApi = {
   replace: (userId: string, data: UpdateUserDto) =>
     apiClient.put<ApiResponse<SafeUser>>(`/users/${userId}`, data),
 
-  deactivate: (userId: string) =>
-    apiClient.delete<ApiResponse<SafeUser>>(`/users/${userId}`),
+  deactivate: (userId: string) => apiClient.delete<ApiResponse<SafeUser>>(`/users/${userId}`),
 }

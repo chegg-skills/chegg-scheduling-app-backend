@@ -31,13 +31,17 @@ const wrapLayout = (title: string, content: string, cta?: { text: string; url: s
             ${content}
           </div>
           
-          ${cta ? `
+          ${
+            cta
+              ? `
             <div style="margin: 32px 0; text-align: left;">
               <a href="${cta.url}" style="display: inline-block; background-color: ${BRAND_ORANGE}; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
                 ${cta.text}
               </a>
             </div>
-          ` : ""}
+          `
+              : ""
+          }
           
           <div style="margin-top: 40px; padding-top: 20px;">
             <img src="${LOGO_URL}" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
@@ -64,7 +68,7 @@ const emailTemplates: EmailTemplateMap = {
        <p>You've been invited to join the <strong>Chegg Scheduling App</strong> as a <strong>{{role}}</strong>.</p>
        <p>This invitation will expire on <strong>{{expiresAt}}</strong>.</p>
        <p>Please accept your invitation to finalize your account setup.</p>`,
-      { text: "Accept Invitation", url: "{{inviteUrl}}" }
+      { text: "Accept Invitation", url: "{{inviteUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -74,7 +78,7 @@ const emailTemplates: EmailTemplateMap = {
     html: wrapLayout(
       "Invitation Accepted",
       `<p><strong>{{inviteeName}}</strong> ({{inviteeEmail}}) has successfully joined the application.</p>
-       <p style="margin-top: 16px;"><strong>Assigned Role:</strong> {{role}}</p>`
+       <p style="margin-top: 16px;"><strong>Assigned Role:</strong> {{role}}</p>`,
     ),
     attachmentRequired: false,
   },
@@ -86,7 +90,7 @@ const emailTemplates: EmailTemplateMap = {
       `<p>Hi <strong>{{userName}}</strong>,</p>
        <p>You have been officially added to the <strong>{{teamName}}</strong> team on the Chegg Scheduling App.</p>
        <p>You can now manage events and view availability for this team.</p>`,
-      { text: "Go to Dashboard", url: "{{frontendUrl}}" }
+      { text: "Go to Dashboard", url: "{{frontendUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -98,7 +102,7 @@ const emailTemplates: EmailTemplateMap = {
       `<p>Hi <strong>{{userName}}</strong>,</p>
        <p>You have been assigned as a host for: <strong>{{eventName}}</strong>.</p>
        <p>Please ensure your availability is up to date in the dashboard.</p>`,
-      { text: "View Event Details", url: "{{frontendUrl}}" }
+      { text: "View Event Details", url: "{{frontendUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -112,7 +116,7 @@ const emailTemplates: EmailTemplateMap = {
          <strong>Date:</strong> {{date}}<br/>
          <strong>Time Range:</strong> {{timeRange}}
        </p>`,
-      { text: "Manage Availability", url: "{{frontendUrl}}" }
+      { text: "Manage Availability", url: "{{frontendUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -131,7 +135,7 @@ const emailTemplates: EmailTemplateMap = {
         <p style="margin-top: 16px; font-size: 13px;">
           Need to change the time? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule session</a>
         </p>`,
-      { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -150,7 +154,7 @@ const emailTemplates: EmailTemplateMap = {
         <p style="margin-top: 16px; font-size: 13px;">
           Need to change it again? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule again</a>
         </p>`,
-      { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -166,7 +170,7 @@ const emailTemplates: EmailTemplateMap = {
           <strong>Event:</strong> {{eventName}}<br/>
           <strong>Time:</strong> {{startTime}} ({{timezone}}){{coHostDetailsHtml}}
         </p>`,
-      { text: "View Details", url: "{{meetingJoinUrl}}" }
+      { text: "View Details", url: "{{meetingJoinUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -183,7 +187,7 @@ const emailTemplates: EmailTemplateMap = {
          <strong>Student:</strong> {{studentName}}<br/>
          <strong>Time:</strong> {{startTime}} ({{timezone}})
        </p>`,
-      { text: "Join Session", url: "{{meetingJoinUrl}}" }
+      { text: "Join Session", url: "{{meetingJoinUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -200,7 +204,7 @@ const emailTemplates: EmailTemplateMap = {
          <strong>Coach:</strong> {{coachName}}
        </p>
        <p style="margin-top: 16px;">You can reschedule your session by visiting our booking page.</p>`,
-      { text: "Reschedule Now", url: "{{publicBookingUrl}}" }
+      { text: "Reschedule Now", url: "{{publicBookingUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -216,7 +220,7 @@ const emailTemplates: EmailTemplateMap = {
          <strong>Time:</strong> {{startTime}}<br/>
          <strong>Coach:</strong> {{coachName}}
        </p>`,
-      { text: "Book New Session", url: "{{publicBookingUrl}}" }
+      { text: "Book New Session", url: "{{publicBookingUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -231,7 +235,7 @@ const emailTemplates: EmailTemplateMap = {
          <strong>Event:</strong> {{eventName}}<br/>
          <strong>Time:</strong> {{startTime}}<br/>
          <strong>Student:</strong> {{studentName}}
-       </p>`
+       </p>`,
     ),
     attachmentRequired: false,
   },
@@ -246,7 +250,7 @@ const emailTemplates: EmailTemplateMap = {
          <strong>Event:</strong> {{eventName}}<br/>
          <strong>Time:</strong> {{startTime}}<br/>
          <strong>Student:</strong> {{studentName}}
-       </p>`
+       </p>`,
     ),
     attachmentRequired: false,
   },
@@ -261,7 +265,7 @@ const emailTemplates: EmailTemplateMap = {
          <strong>Event:</strong> {{eventName}}<br/>
          <strong>Time:</strong> {{startTime}}<br/>
          <strong>Student:</strong> {{studentName}}
-       </p>`
+       </p>`,
     ),
     attachmentRequired: false,
   },
@@ -277,7 +281,7 @@ const emailTemplates: EmailTemplateMap = {
           <strong>Coach:</strong> {{coachName}}<br/>
           <strong>Time:</strong> {{startTime}} ({{timezone}}){{coHostDetailsHtml}}
         </p>`,
-      { text: "View Team Schedule", url: "{{frontendUrl}}" }
+      { text: "View Team Schedule", url: "{{frontendUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -295,7 +299,7 @@ const emailTemplates: EmailTemplateMap = {
        <p style="margin-top: 16px; font-size: 13px;">
           Need to change the time? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule session</a>
        </p>`,
-      { text: "Join Meeting", url: "{{meetingJoinUrl}}" }
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
     ),
     attachmentRequired: false,
   },
@@ -312,7 +316,7 @@ const emailTemplates: EmailTemplateMap = {
        <p style="margin-top: 16px; font-size: 13px;">
           Need to change the time? <a href="{{rescheduleUrl}}" style="color: ${BRAND_ORANGE}; text-decoration: none; font-weight: 600;">Reschedule session</a>
        </p>`,
-      { text: "Join Now", url: "{{meetingJoinUrl}}" }
+      { text: "Join Now", url: "{{meetingJoinUrl}}" },
     ),
     attachmentRequired: false,
   },

@@ -37,7 +37,7 @@ const buildAvailabilityOptions = ({
 >) => ({
   ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
   eventId: allowSharedSessionOverlap ? event.id : undefined,
-  scheduleSlotId: allowSharedSessionOverlap ? matchedScheduleSlotId ?? null : undefined,
+  scheduleSlotId: allowSharedSessionOverlap ? (matchedScheduleSlotId ?? null) : undefined,
   tx,
 });
 
@@ -48,7 +48,10 @@ const buildAssignmentContext = ({
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
   tx,
-}: Omit<ResolveBookingHostSelectionInput, "preferredHostId" | "activeHosts">): AssignmentContext => ({
+}: Omit<
+  ResolveBookingHostSelectionInput,
+  "preferredHostId" | "activeHosts"
+>): AssignmentContext => ({
   prisma: tx,
   eventId: event.id,
   start,
@@ -98,7 +101,9 @@ const resolvePreferredSingleHost = async ({
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
   tx,
-}: ResolveBookingHostSelectionInput & { preferredHostId: string }): Promise<ResolvedBookingHostSelection> => {
+}: ResolveBookingHostSelectionInput & {
+  preferredHostId: string;
+}): Promise<ResolvedBookingHostSelection> => {
   const preferredHost = activeHosts.find((candidate) => candidate.hostUserId === preferredHostId);
 
   if (!preferredHost) {
@@ -185,7 +190,9 @@ const resolveFixedLeadSelection = async (
     );
   }
 
-  const fixedLeadHost = input.activeHosts.find((candidate) => candidate.hostUserId === fixedLeadHostId);
+  const fixedLeadHost = input.activeHosts.find(
+    (candidate) => candidate.hostUserId === fixedLeadHostId,
+  );
   if (!fixedLeadHost) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,

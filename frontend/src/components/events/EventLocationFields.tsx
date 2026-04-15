@@ -19,12 +19,16 @@ const locationHint: Record<EventLocationType, string> = {
   CUSTOM: 'Any custom location string.',
 }
 
-/** 
+/**
  * Handles locationType and locationValue fields.
  * Consumes the EventForm context.
  */
 export function EventLocationFields() {
-  const { register, watch, formState: { errors } } = useFormContext<EventFormValues>()
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext<EventFormValues>()
   const locationType = watch('locationType')
 
   return (

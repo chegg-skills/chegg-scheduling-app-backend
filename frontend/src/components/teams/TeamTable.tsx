@@ -31,13 +31,17 @@ export function TeamTable({
   pagination,
   onPageChange,
   onRowsPerPageChange,
-  canManageTeam
+  canManageTeam,
 }: TeamTableProps) {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
   const { handleAction } = useAsyncAction()
-  const { sortedItems: sortedTeams, sortConfig, requestSort } = useTableSort(teams, teamSortAccessors)
+  const {
+    sortedItems: sortedTeams,
+    sortConfig,
+    requestSort,
+  } = useTableSort(teams, teamSortAccessors)
 
   async function handleToggleActive(team: Team) {
     const newStatus = !team.isActive

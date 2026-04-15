@@ -61,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 height: 40,
                 py: 0,
                 boxSizing: 'border-box',
-              }
+              },
             },
           }),
           ...sx,
@@ -69,7 +69,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {...props}
       />
     )
-  },
+  }
 )
 
 Input.displayName = 'Input'

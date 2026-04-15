@@ -19,9 +19,9 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
               sx: {
                 borderRadius: 1.5,
                 boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                mt: 0.5
-              }
-            }
+                mt: 0.5,
+              },
+            },
           }}
           {...props}
         >
@@ -29,7 +29,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(
         </MuiSelect>
       </FormControl>
     )
-  },
+  }
 )
 
 Select.displayName = 'Select'

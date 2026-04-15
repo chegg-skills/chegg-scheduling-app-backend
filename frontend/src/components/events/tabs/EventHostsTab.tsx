@@ -9,7 +9,13 @@ interface EventHostsTabProps {
   onViewUser: (userId: string) => void
 }
 
-export function EventHostsTab({ event, teamMembers, showAddModal, onCloseAddModal, onViewUser }: EventHostsTabProps) {
+export function EventHostsTab({
+  event,
+  teamMembers,
+  showAddModal,
+  onCloseAddModal,
+  onViewUser,
+}: EventHostsTabProps) {
   return (
     <EventHostManager
       eventId={event.id}

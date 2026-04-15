@@ -9,7 +9,11 @@ interface EventDetailsTabProps {
   needsScheduleSlots: boolean
 }
 
-export function EventDetailsTab({ event, hostSetupStatus, needsScheduleSlots }: EventDetailsTabProps) {
+export function EventDetailsTab({
+  event,
+  hostSetupStatus,
+  needsScheduleSlots,
+}: EventDetailsTabProps) {
   return (
     <Stack spacing={2}>
       {!hostSetupStatus.isReady && (
@@ -19,7 +23,8 @@ export function EventDetailsTab({ event, hostSetupStatus, needsScheduleSlots }: 
       )}
       {needsScheduleSlots && (
         <Alert severity="info" variant="standard" sx={{ mt: 2 }}>
-          This event is in fixed-slot mode, so add one or more schedule slots before sharing it for booking.
+          This event is in fixed-slot mode, so add one or more schedule slots before sharing it for
+          booking.
         </Alert>
       )}
       <EventDetailOverview event={event} />

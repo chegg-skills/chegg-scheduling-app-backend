@@ -28,7 +28,7 @@ export function TeamForm({ team, onSuccess, onCancel }: TeamFormProps) {
 
   const { data: usersData } = useUsers({ pageSize: 200 })
   const teamLeadOptions = (usersData?.users ?? []).filter(
-    (user) => user.role === 'TEAM_ADMIN' && user.isActive,
+    (user) => user.role === 'TEAM_ADMIN' && user.isActive
   )
 
   const {

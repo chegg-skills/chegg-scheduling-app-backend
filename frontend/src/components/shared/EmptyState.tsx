@@ -18,8 +18,14 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
         <Box sx={{ color: 'text.secondary' }}>
           <Inbox size={48} />
         </Box>
-        <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
-        {description ? <Typography variant="body2" color="text.secondary">{description}</Typography> : null}
+        <Typography variant="subtitle1" fontWeight={700}>
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+        ) : null}
         {action}
       </Stack>
     </Paper>

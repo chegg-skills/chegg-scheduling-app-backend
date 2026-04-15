@@ -20,9 +20,7 @@ function startReminderScheduler(): () => void {
     return () => {};
   }
 
-  const intervalMs = Number(
-    process.env.REMINDER_SCHEDULER_INTERVAL_MS ?? 60_000,
-  );
+  const intervalMs = Number(process.env.REMINDER_SCHEDULER_INTERVAL_MS ?? 60_000);
 
   void runReminderSweep();
 

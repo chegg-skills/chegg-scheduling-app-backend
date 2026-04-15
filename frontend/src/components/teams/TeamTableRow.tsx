@@ -65,7 +65,10 @@ export function TeamTableRow({
       </TableCell>
 
       <TableCell>
-        <Badge label={team.isActive ? 'Active' : 'Inactive'} variant={team.isActive ? 'green' : 'red'} />
+        <Badge
+          label={team.isActive ? 'Active' : 'Inactive'}
+          variant={team.isActive ? 'green' : 'red'}
+        />
       </TableCell>
       <TableCell>
         <PublicBookingLinkCell type="team" slug={team.publicBookingSlug} isActive={team.isActive} />

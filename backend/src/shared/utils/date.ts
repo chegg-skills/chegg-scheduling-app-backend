@@ -19,10 +19,7 @@ export const getEndOfDate = (date: Date): Date => {
   return result;
 };
 
-export const formatDateRangeLabel = (
-  start: Date | null,
-  end: Date | null,
-): string => {
+export const formatDateRangeLabel = (start: Date | null, end: Date | null): string => {
   if (!start || !end) {
     return "All time";
   }
@@ -30,19 +27,12 @@ export const formatDateRangeLabel = (
   return `${DATE_FORMATTER.format(start)} – ${DATE_FORMATTER.format(end)}`;
 };
 
-export const toDateOnlyString = (date: Date): string =>
-  date.toISOString().split("T")[0];
+export const toDateOnlyString = (date: Date): string => date.toISOString().split("T")[0];
 
-export const parseDateInput = (
-  value: Date | string,
-  fieldName = "date",
-): Date => {
+export const parseDateInput = (value: Date | string, fieldName = "date"): Date => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `Invalid ${fieldName} provided.`,
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, `Invalid ${fieldName} provided.`);
   }
 
   return date;
@@ -80,10 +70,7 @@ export const parseBoundedDateRange = ({
   return { start, end };
 };
 
-export const formatNotificationDate = (
-  date: Date,
-  timezone?: string | null,
-): string => {
+export const formatNotificationDate = (date: Date, timezone?: string | null): string => {
   try {
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",

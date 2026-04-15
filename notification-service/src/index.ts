@@ -7,16 +7,18 @@ import { startReminderScheduler } from "./jobs/reminderScheduler";
 console.log("-----------------------------------------");
 console.log("NOTIFICATION SERVICE STARTUP");
 console.log("NODE_ENV:", process.env.NODE_ENV || "not set");
-console.log("DATABASE_URL:", process.env.DATABASE_URL ? "SET (ends in " + process.env.DATABASE_URL.slice(-10) + ")" : "NOT SET");
+console.log(
+  "DATABASE_URL:",
+  process.env.DATABASE_URL
+    ? "SET (ends in " + process.env.DATABASE_URL.slice(-10) + ")"
+    : "NOT SET",
+);
 console.log("-----------------------------------------");
 
-let stopReminderScheduler: () => void = () => { };
+let stopReminderScheduler: () => void = () => {};
 
 async function startAllConsumers(): Promise<void> {
-  const results = await Promise.allSettled([
-    startNotificationConsumer(),
-    startDLQConsumer(),
-  ]);
+  const results = await Promise.allSettled([startNotificationConsumer(), startDLQConsumer()]);
 
   const failed = results.filter(
     (result): result is PromiseRejectedResult => result.status === "rejected",

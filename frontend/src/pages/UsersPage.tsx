@@ -22,13 +22,7 @@ import { usePagination } from '@/hooks/usePagination'
 
 export function UsersPage() {
   const { user: currentUser } = useAuth()
-  const {
-    pageSize,
-    backendPage,
-    onPageChange,
-    onRowsPerPageChange,
-    resetPage
-  } = usePagination(20)
+  const { pageSize, backendPage, onPageChange, onRowsPerPageChange, resetPage } = usePagination(20)
   const [showInvite, setShowInvite] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
@@ -43,7 +37,7 @@ export function UsersPage() {
   const { data, isLoading, error } = useUsers({
     page: backendPage,
     pageSize,
-    search: debouncedSearch.trim() || undefined
+    search: debouncedSearch.trim() || undefined,
   })
 
   const users = data?.users ?? []
@@ -89,8 +83,21 @@ export function UsersPage() {
         title="Users"
         subtitle={`${pagination?.total ?? 0} total users`}
         actions={
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Box sx={{ width: { xs: '100%', sm: 360 }, maxWidth: 360, height: 40, display: 'flex', alignItems: 'center' }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems="center"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
+            <Box
+              sx={{
+                width: { xs: '100%', sm: 360 },
+                maxWidth: 360,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
               <Input
                 isSearch
                 value={searchInput}
@@ -147,11 +154,7 @@ export function UsersPage() {
           />
         </Box>
 
-        <Modal
-          isOpen={showInvite}
-          onClose={() => setShowInvite(false)}
-          title="Invite user"
-        >
+        <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite user">
           <InviteForm
             onSuccess={() => setShowInvite(false)}
             onCancel={() => setShowInvite(false)}
