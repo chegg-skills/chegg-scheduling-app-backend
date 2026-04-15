@@ -34,7 +34,7 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
             <Typography variant='body2' color='text.secondary' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <span>{formatTime(start)} – {formatTime(end)}</span>
                 {booking.event?.durationSeconds && (
-                    <Typography variant='caption' sx={{ bgcolor: 'action.hover', px: 1, py: 0.25, borderRadius: 1, fontWeight: 600 }}>
+                    <Typography variant='caption' sx={{ bgcolor: 'accent.lavender', px: 1, py: 0.25, borderRadius: 1, fontWeight: 700, color: 'secondary.main' }}>
                         {booking.event.durationSeconds / 60} mins
                     </Typography>
                 )}

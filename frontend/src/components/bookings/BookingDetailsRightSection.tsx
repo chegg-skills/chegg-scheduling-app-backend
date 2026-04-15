@@ -21,10 +21,10 @@ export function BookingDetailsRightSection({
   return (
     <Box
       sx={{
-        bgcolor: alpha(theme.palette.secondary.main, 0.03),
+        bgcolor: 'accent.lavender',
         p: 2.5,
         borderRadius: 2,
-        border: `1px solid ${alpha(theme.palette.secondary.main, 0.05)}`,
+        border: (theme) => `1px solid ${alpha(theme.palette.accent.lavender, 0.5)}`,
       }}
     >
       <Typography
