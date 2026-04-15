@@ -141,8 +141,8 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
                             title="Daily Booking Volume"
                             description="Shows the total number of sessions scheduled each day within the selected timeframe. Ideal for tracking system growth and seasonal spikes."
                         />
-                        <Box sx={{ width: '100%', height: 300 }}>
-                            <ResponsiveContainer>
+                        <Box sx={{ width: '100%', height: 300, minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" debounce={100} minHeight={0}>
                                 <AreaChart data={chartData}>
                                     <defs>
                                         <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
@@ -201,8 +201,8 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
                             title="Session Outcomes"
                             description="Displays the status distribution of all sessions. High completion rates indicate system health, while excessive cancellations may suggest scheduling issues."
                         />
-                        <Box sx={{ width: '100%', height: 300 }}>
-                            <ResponsiveContainer>
+                        <Box sx={{ width: '100%', height: 300, minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" debounce={100} minHeight={0}>
                                 <BarChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                                     <XAxis
@@ -250,8 +250,8 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
                             title="Team Performance Benchmark"
                             description="Compares different teams based on successful session completion. Used to identify top-performing teams and those needing additional support."
                         />
-                        <Box sx={{ width: '100%', height: 300 }}>
-                            <ResponsiveContainer>
+                        <Box sx={{ width: '100%', height: 300, minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" debounce={100} minHeight={0}>
                                 <BarChart data={performanceData} layout="vertical">
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
                                     <XAxis type="number" hide />
@@ -294,8 +294,8 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
                             title="Peak Hourly Activity"
                             description="Identifies system-wide usage patterns by hour of day. Use this to optimize staffing and ensure coach availability during high-demand windows."
                         />
-                        <Box sx={{ width: '100%', height: 300 }}>
-                            <ResponsiveContainer>
+                        <Box sx={{ width: '100%', height: 300, minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" debounce={100} minHeight={0}>
                                 <AreaChart data={activityData}>
                                     <defs>
                                         <linearGradient id="colorPeak" x1="0" y1="0" x2="0" y2="1">
