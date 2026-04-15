@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import type { Event } from '@/types'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface EventDetailOverviewProps {
     event: Event
@@ -34,7 +35,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
     const DataField = ({ label, value, tooltip, sm = 4 }: { label: string, value: string | number, tooltip?: string, sm?: number }) => (
         <Grid size={{ xs: 12, sm: sm }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography variant="caption" color="text.primary" sx={{ fontWeight: 600,fontSize: '0.85rem' }}>
+                <Typography variant="caption" color="text.primary" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
                     {label}
                 </Typography>
                 {tooltip && <InfoTooltip title={tooltip} size={12} />}
@@ -62,14 +63,14 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
             >
                 General Details
             </Typography>
-            
+
 
             <Grid container spacing={2}>
                 {/* Core Configuration */}
-                <DataField label="Offering" value={event.offering.name} />
+                <DataField label="Offering" value={toTitleCase(event.offering.name)} />
                 <DataField
                     label="Interaction type"
-                    value={`${event.interactionType.name} (${formatEnumLabel(event.interactionType.key)})`}
+                    value={`${toTitleCase(event.interactionType.name)} (${formatEnumLabel(event.interactionType.key)})`}
                     tooltip={TOOLTIPS.INTERACTION_TYPE}
                 />
                 <DataField
@@ -110,7 +111,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
                 {event.sessionLeadershipStrategy === 'FIXED_LEAD' && (
                     <DataField
                         label="Fixed lead coach"
-                        value={fixedLeadHost ? `${fixedLeadHost.firstName} ${fixedLeadHost.lastName}` : 'Not assigned'}
+                        value={fixedLeadHost ? `${toTitleCase(fixedLeadHost.firstName)} ${toTitleCase(fixedLeadHost.lastName)}` : 'Not assigned'}
                     />
                 )}
                 <DataField label="Round robin" value={event.interactionType.supportsRoundRobin ? 'Enabled' : 'Disabled'} />

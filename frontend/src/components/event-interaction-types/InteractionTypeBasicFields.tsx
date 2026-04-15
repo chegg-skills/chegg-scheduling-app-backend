@@ -42,7 +42,7 @@ export function InteractionTypeBasicFields({
       </FormField>
 
       <FormField
-        label="Sort Order"
+        label="Sort order"
         htmlFor="sortOrder"
         info="The order in which this interaction type appears in lists (lower numbers come first)."
       >

@@ -13,6 +13,7 @@ import { Badge } from '@/components/shared/Badge'
 import { RowActions } from '@/components/shared/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import type { Event } from '@/types'
+import { toTitleCase } from '@/utils/toTitleCase'
 import { formatEventDuration } from './eventTableUtils'
 
 interface EventTableRowProps {
@@ -68,13 +69,13 @@ export function EventTableRow({
               '&:hover': { color: 'primary.main', textDecoration: 'underline' },
             }}
           >
-            {event.name}
+            {toTitleCase(event.name)}
           </Link>
         </Stack>
       </TableCell>
 
       <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-        {event.offering?.name ?? '—'}
+        {event.offering?.name ? toTitleCase(event.offering.name) : '—'}
       </TableCell>
 
       <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
@@ -92,7 +93,7 @@ export function EventTableRow({
           {event.hosts.map((host) => (
             <Tooltip
               key={host.id}
-              title={`${host.hostUser.firstName} ${host.hostUser.lastName} (${host.hostUser.email})`}
+              title={`${toTitleCase(host.hostUser.firstName)} ${toTitleCase(host.hostUser.lastName)} (${host.hostUser.email})`}
               arrow
             >
               <Avatar
@@ -116,7 +117,7 @@ export function EventTableRow({
 
       <TableCell>
         <Badge
-          label={event.assignmentStrategy === 'ROUND_ROBIN' ? 'Round Robin' : 'Direct'}
+          label={event.assignmentStrategy === 'ROUND_ROBIN' ? 'Round robin' : 'Direct'}
           variant={event.assignmentStrategy === 'ROUND_ROBIN' ? 'blue' : 'gray'}
         />
       </TableCell>
@@ -142,7 +143,7 @@ export function EventTableRow({
               onClick: () => onDuplicate(event),
             },
             {
-              label: event.isActive ? 'Mark as Inactive' : 'Mark as Active',
+              label: event.isActive ? 'Mark as inactive' : 'Mark as active',
               icon: event.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
               onClick: () => onToggleActive(event),
             },

@@ -32,7 +32,7 @@ export function UserPersonalFields({
     <Stack spacing={2}>
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' } }}>
         <FormField
-          label="First Name"
+          label="First name"
           htmlFor="firstName"
           error={errors.firstName?.message}
           required
@@ -45,7 +45,7 @@ export function UserPersonalFields({
         </FormField>
 
         <FormField
-          label="Last Name"
+          label="Last name"
           htmlFor="lastName"
           error={errors.lastName?.message}
           required
@@ -82,7 +82,7 @@ export function UserPersonalFields({
       </FormField>
 
       <FormField
-        label="Phone Number"
+        label="Phone number"
         htmlFor="phoneNumber"
         error={errors.phoneNumber?.message}
       >
@@ -126,7 +126,7 @@ export function UserPersonalFields({
       </FormField>
 
       <FormField
-        label="Preferred Language"
+        label="Preferred language"
         htmlFor="preferredLanguage"
         error={errors.preferredLanguage?.message}
       >

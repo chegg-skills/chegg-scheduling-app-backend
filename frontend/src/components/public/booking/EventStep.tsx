@@ -7,6 +7,7 @@ import { alpha } from '@mui/material/styles'
 import { Award, ChevronRight } from 'lucide-react'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { PageSpinner } from '@/components/shared/Spinner'
+import { toTitleCase } from '@/utils/toTitleCase'
 import type { PublicEventSummary } from '@/types'
 
 interface EventStepProps {
@@ -78,7 +79,7 @@ export function EventStep({
 
                             <Box sx={{ flexGrow: 1 }}>
                                 <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 0.5, letterSpacing: -0.3, lineHeight: 1.2 }}>
-                                    {event.name}
+                                    {toTitleCase(event.name)}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <span>{Math.floor(event.durationSeconds / 60)}m</span>

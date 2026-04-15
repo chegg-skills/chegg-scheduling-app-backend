@@ -14,7 +14,7 @@ export function EventBasicFields() {
 
   return (
     <Stack spacing={3}>
-      <FormField label="Event Name" htmlFor="name" error={errors.name?.message} required>
+      <FormField label="Event name" htmlFor="name" error={errors.name?.message} required>
         <Input id="name" hasError={!!errors.name} {...register('name')} />
       </FormField>
 

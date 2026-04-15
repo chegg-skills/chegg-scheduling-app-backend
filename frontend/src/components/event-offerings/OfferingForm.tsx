@@ -87,7 +87,7 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
         </FormField>
 
         <FormField
-          label="Sort Order"
+          label="Sort order"
           htmlFor="sortOrder"
           error={errors.sortOrder?.message}
           info="The order in which this offering appears in lists (lower numbers come first)."

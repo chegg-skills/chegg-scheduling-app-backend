@@ -6,6 +6,7 @@ import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Clock, Mail, MapPin, Phone, Video } from 'lucide-react'
+import { toTitleCase } from '@/utils/toTitleCase'
 import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/Badge'
 
@@ -38,7 +39,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
       <Box sx={{ flex: 1 }}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="h5" fontWeight={800}>
-            {user.firstName} {user.lastName}
+            {toTitleCase(user.firstName)} {toTitleCase(user.lastName)}
           </Typography>
           <Chip
             label={user.role.replace(/_/g, ' ')}

@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface StudentInfo {
     name: string
@@ -37,7 +38,7 @@ export function ConfirmationForm({
                     Registration
                 </Typography>
                 <Typography variant="h5" fontWeight={900} sx={{ mb: 0.5, letterSpacing: -0.5 }}>
-                    Your Information
+                    Your information
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                     Please provide your details to finalize the booking.
@@ -48,7 +49,7 @@ export function ConfirmationForm({
                 <Stack spacing={2} sx={{ pb: 2, px: 0.5, maxWidth: 800 }}>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                         <TextField
-                            label="Full Name"
+                            label="Full name"
                             fullWidth
                             required
                             size="small"
@@ -57,11 +58,11 @@ export function ConfirmationForm({
                                 '& .MuiOutlinedInput-root': { minHeight: 'unset' },
                                 '& .MuiInputBase-input': { py: 1.25 }
                             }}
-                            value={studentInfo.name}
+                            value={toTitleCase(studentInfo.name)}
                             onChange={handleChange('name')}
                         />
                         <TextField
-                            label="Email Address"
+                            label="Email address"
                             fullWidth
                             required
                             size="small"
@@ -114,7 +115,7 @@ export function ConfirmationForm({
                             placeholder="e.g., Textbook chapter 4..."
                         />
                         <TextField
-                            label="Session Objectives"
+                            label="Session objectives"
                             fullWidth
                             size="small"
                             multiline
@@ -128,7 +129,7 @@ export function ConfirmationForm({
                     </Box>
 
                     <TextField
-                        label="Additional Notes (Optional)"
+                        label="Additional notes (optional)"
                         fullWidth
                         multiline
                         rows={2}

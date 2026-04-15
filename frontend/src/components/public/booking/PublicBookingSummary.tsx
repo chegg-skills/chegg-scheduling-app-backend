@@ -5,6 +5,7 @@ import Divider from '@mui/material/Divider'
 import { alpha } from '@mui/material/styles'
 import { Calendar, Clock } from 'lucide-react'
 import type { PublicEventSummary, PublicTeamSummary, PublicCoachSummary } from '@/types'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface PublicBookingSummaryProps {
     teamDetails?: PublicTeamSummary | null
@@ -23,7 +24,7 @@ export function PublicBookingSummary({
     coachDetails,
     selectedDate,
     selectedSlot,
-    title = 'Your Selection',
+    title = 'Your selection',
     variant = 'default',
     compact = false
 }: PublicBookingSummaryProps) {
@@ -80,7 +81,7 @@ export function PublicBookingSummary({
                         <Typography variant="body2" fontWeight={800} color="text.primary" sx={{
                             fontSize: compact ? '0.75rem' : '0.875rem',
                         }}>
-                            {displayTeam.name}
+                            {toTitleCase(displayTeam.name)}
                         </Typography>
                     </Box>
                 )}
@@ -102,7 +103,7 @@ export function PublicBookingSummary({
                             gap: 0.5
                         }}>
                             {compact && <Calendar size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
-                            {eventDetails.name}
+                            {toTitleCase(eventDetails.name)}
                         </Typography>
                     </Box>
                 )}

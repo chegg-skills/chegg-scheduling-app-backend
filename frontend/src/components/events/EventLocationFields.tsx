@@ -9,7 +9,7 @@ import type { EventLocationType } from '@/types'
 
 const LOCATION_TYPES: { value: EventLocationType; label: string }[] = [
   { value: 'VIRTUAL', label: 'Virtual (URL)' },
-  { value: 'IN_PERSON', label: 'In Person (Address)' },
+  { value: 'IN_PERSON', label: 'In person (address)' },
   { value: 'CUSTOM', label: 'Custom' },
 ]
 
@@ -30,7 +30,7 @@ export function EventLocationFields() {
   return (
     <Stack spacing={2}>
       <FormField
-        label="Location Type"
+        label="Location type"
         htmlFor="locationType"
         error={errors.locationType?.message}
         info="The format of the meeting (Virtual link, Physical address, etc.)."

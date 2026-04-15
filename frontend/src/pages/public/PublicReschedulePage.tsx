@@ -132,7 +132,7 @@ export function PublicReschedulePage() {
                     />
 
                     <PublicBookingSummary
-                        title="Current Session"
+                        title="Current session"
                         variant="current"
                         {...currentBookingInfo}
                         selectedDate={currentBookingInfo.date}
@@ -140,7 +140,7 @@ export function PublicReschedulePage() {
                     />
 
                     <PublicBookingSummary
-                        title="New Selection"
+                        title="New selection"
                         selectedDate={selectedDate}
                         selectedSlot={selectedSlot}
                     />
@@ -177,7 +177,7 @@ export function PublicReschedulePage() {
                         onBack={() => navigate('/')}
                         onNext={handleReschedule}
                         backLabel="Cancel"
-                        nextLabel="Confirm Reschedule"
+                        nextLabel="Confirm reschedule"
                         submittingLabel="Updating..."
                         nextDisabled={!selectedSlot}
                         isSubmitting={isSubmitting}

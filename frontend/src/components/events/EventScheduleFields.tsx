@@ -102,7 +102,7 @@ export function EventScheduleFields({
       {selectedInteractionType?.supportsSimultaneousCoaches && (
         <Stack spacing={2}>
           <FormField
-            label="Leadership Strategy"
+            label="Leadership strategy"
             htmlFor="sessionLeadershipStrategy"
             error={errors.sessionLeadershipStrategy?.message}
             info="Define how the 'Lead' coach is chosen for each session. Co-hosts will also be added to the session."
@@ -113,15 +113,15 @@ export function EventScheduleFields({
               hasError={!!errors.sessionLeadershipStrategy}
               {...register('sessionLeadershipStrategy')}
             >
-              <MenuItem value="SINGLE_HOST">Single Host — Only one coach joins (Traditional)</MenuItem>
-              <MenuItem value="ROTATING_LEAD">Rotating Lead — Round-robin lead, others as co-hosts</MenuItem>
-              <MenuItem value="FIXED_LEAD">Fixed Lead — One specific coach always leads</MenuItem>
+              <MenuItem value="SINGLE_HOST">Single host — only one coach joins (traditional)</MenuItem>
+              <MenuItem value="ROTATING_LEAD">Rotating lead — round-robin lead, others as co-hosts</MenuItem>
+              <MenuItem value="FIXED_LEAD">Fixed lead — one specific coach always leads</MenuItem>
             </Select>
           </FormField>
 
           {leadershipStrategy === 'FIXED_LEAD' && (
             <FormField
-              label="Fixed Lead Coach"
+              label="Fixed lead coach"
               htmlFor="fixedLeadHostId"
               error={errors.fixedLeadHostId?.message}
               info="Select the coach who will always lead sessions for this event."

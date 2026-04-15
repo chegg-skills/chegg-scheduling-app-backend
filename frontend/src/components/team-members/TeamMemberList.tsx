@@ -30,7 +30,7 @@ export function TeamMemberList({ teamId, members, currentUserRole, teamLeadId, o
 
   const handleRemove = (userId: string, name: string) => {
     handleAction(remove, userId, {
-      title: 'Remove Member',
+      title: 'Remove member',
       message: `Are you sure you want to remove ${name} from this team?`,
       actionName: 'Removal',
     })

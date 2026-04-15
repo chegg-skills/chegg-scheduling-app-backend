@@ -153,7 +153,7 @@ export function PublicBookingPage() {
               (currentStepKey === 'confirm' && (!studentInfo.name || !studentInfo.email))
             }
             isSubmitting={isSubmitting}
-            nextLabel={currentStepKey === 'confirm' ? 'Confirm Booking' : 'Next'}
+            nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
           />
         </PublicMainContent>

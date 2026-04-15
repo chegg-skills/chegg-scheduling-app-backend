@@ -1,4 +1,5 @@
 import { Avatar, Box, Stack, Typography, alpha, useTheme } from '@mui/material'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface BookingStudentCellProps {
     name: string
@@ -20,7 +21,7 @@ export function BookingStudentCell({ name, email }: BookingStudentCellProps) {
                     fontWeight: 700,
                 }}
             >
-                {name
+                {toTitleCase(name)
                     .split(' ')
                     .map((n) => n[0])
                     .join('')
@@ -28,7 +29,7 @@ export function BookingStudentCell({ name, email }: BookingStudentCellProps) {
             </Avatar>
             <Box>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {name}
+                    {toTitleCase(name)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                     {email}

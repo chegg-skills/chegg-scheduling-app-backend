@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import { useTheme } from '@mui/material/styles'
 import Stack from '@mui/material/Stack'
+import { toTitleCase } from '@/utils/toTitleCase'
 import { Check } from 'lucide-react'
 import LogoOrange from '@/assets/Color=Orange.svg'
 
@@ -73,7 +74,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                     letterSpacing: '-0.02em',
                 }}
             >
-                {isReschedule ? 'Reschedule Confirmed!' : 'Booking Confirmed!'}
+                {isReschedule ? 'Reschedule confirmed!' : 'Booking confirmed!'}
             </Typography>
 
             <Typography variant="body2" sx={{ color: 'text.primary', mb: 3, fontWeight: 500 }}>
@@ -95,13 +96,13 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                     variant="caption"
                     sx={{ color: 'text.primary', fontWeight: 700, mb: 1.5, display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}
                 >
-                    Session Details
+                    Session details
                 </Typography>
 
                 <Stack spacing={1}>
                     <Box>
                         <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
-                            {eventName || 'Session Title'}
+                            {toTitleCase(eventName || 'Session Title')}
                         </Typography>
                         {newDate && (
                             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
@@ -117,7 +118,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
 
                     {mentorName && (
                         <Typography variant="caption" fontWeight={700} sx={{ color: 'text.primary' }}>
-                            Mentor: {mentorName}
+                            Mentor: {toTitleCase(mentorName)}
                         </Typography>
                     )}
                 </Stack>
@@ -144,7 +145,7 @@ export function SuccessStep({ email, onReset, mode = 'booking', eventName, newDa
                     }
                 }}
             >
-                {isReschedule ? 'Return to Dashboard' : 'Book Another Session'}
+                {isReschedule ? 'Return to dashboard' : 'Book another session'}
             </Button>
         </Paper>
     )

@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack'
 import { Users } from 'lucide-react'
 import { PageSpinner } from '@/components/shared/Spinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { toTitleCase } from '@/utils/toTitleCase'
 import type { Team } from '@/types'
 
 interface TeamStepProps {
@@ -52,7 +53,7 @@ export function TeamStep({
                                     <Users size={24} />
                                 </Box>
                                 <Box>
-                                    <Typography variant="h6">{team.name}</Typography>
+                                    <Typography variant="h6">{toTitleCase(team.name)}</Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         {team.description}
                                     </Typography>

@@ -19,6 +19,7 @@ import { OfferingForm } from './OfferingForm'
 import { RowActions } from '@/components/shared/RowActions'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface OfferingTableProps {
   offerings: EventOffering[]
@@ -52,10 +53,10 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
       updateOffering,
       { offeringId: offering.id, data: { isActive: newStatus } },
       {
-        title: newStatus ? 'Mark as Active' : 'Mark as Inactive',
+        title: newStatus ? 'Mark as active' : 'Mark as inactive',
         message: newStatus
-          ? `Are you sure you want to mark offering "${offering.name}" as active? This will make it available for new events.`
-          : `Are you sure you want to mark offering "${offering.name}" as inactive? This will hide it from new selections but keep existing events linked.`,
+          ? `Are you sure you want to mark offering "${toTitleCase(offering.name)}" as active? This will make it available for new events.`
+          : `Are you sure you want to mark offering "${toTitleCase(offering.name)}" as inactive? This will hide it from new selections but keep existing events linked.`,
         actionName: 'Update',
       }
     )
@@ -63,8 +64,8 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
 
   const handleDelete = (offering: EventOffering) => {
     handleAction(deleteOffering, offering.id, {
-      title: 'Delete Offering',
-      message: `Are you sure you want to PERMANENTLY delete offering "${offering.name}"?\n\nThis action will only succeed if no events are currenty using this offering.`,
+      title: 'Delete offering',
+      message: `Are you sure you want to PERMANENTLY delete offering "${toTitleCase(offering.name)}"?\n\nThis action will only succeed if no events are currenty using this offering.`,
       actionName: 'Delete',
     })
   }
@@ -124,7 +125,7 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
                       <Layers size={18} />
                     </Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {o.name}
+                      {toTitleCase(o.name)}
                     </Typography>
                   </Stack>
                 </TableCell>
@@ -146,7 +147,7 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
                         onClick: () => setEditing(o),
                       },
                       {
-                        label: o.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                        label: o.isActive ? 'Mark as inactive' : 'Mark as active',
                         icon: o.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
                         onClick: () => handleToggleActive(o),
                       },
@@ -166,7 +167,7 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
       </TableContainer>
 
       {editing && (
-        <Modal isOpen onClose={() => setEditing(null)} title={`Edit "${editing.name}"`}>
+        <Modal isOpen onClose={() => setEditing(null)} title={`Edit "${toTitleCase(editing.name)}"`}>
           <OfferingForm offering={editing} onSuccess={() => setEditing(null)} />
         </Modal>
       )}
