@@ -25,6 +25,7 @@ export function TablePagination({
             page={pagination.page - 1} // MUI is 0-indexed, Backend is 1-indexed
             onPageChange={(_, nextPage) => onPageChange(nextPage)}
             rowsPerPage={pagination.pageSize}
+            rowsPerPageOptions={[10, 20, 25, 50, 100]}
             onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
             sx={{
                 borderTop: '1px solid',
