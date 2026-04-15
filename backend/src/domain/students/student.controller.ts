@@ -25,7 +25,7 @@ const readStudent = async (req: Request, res: Response) => {
   return sendSuccessResponse(
     res,
     StatusCodes.OK,
-    { student },
+    student,
     "Student fetched successfully.",
   );
 };
