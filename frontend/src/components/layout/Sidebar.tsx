@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
@@ -8,7 +9,9 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
+import IconButton from '@mui/material/IconButton'
 import { useAuth } from '@/context/AuthContext'
+import { APP_HEADER_MIN_HEIGHT } from '@/components/shared/layoutConstants'
 import type { UserRole } from '@/types'
 import {
   LayoutDashboard,
@@ -22,6 +25,8 @@ import {
   ClipboardList,
   GraduationCap,
   BarChart3,
+  ChevronsLeft,
+  ChevronsRight,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -115,12 +120,21 @@ export function Sidebar() {
 
       }}
     >
-      <Box sx={{ px: 3, py: 2.5 }}>
+      <Box
+        sx={{
+          px: 3,
+          minHeight: APP_HEADER_MIN_HEIGHT,
+          boxSizing: 'border-box',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
         <Typography variant="h6" color="primary.main" fontWeight={800}>
           Scheduling App
         </Typography>
       </Box>
-      <Divider />
       <List sx={{ flex: 1, px: 1.5, py: 2 }}>
         {visibleItems.map(({ to, label, Icon }) => {
           const selected = location.pathname === to || location.pathname.startsWith(`${to}/`)
