@@ -1,12 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  ReactNode,
-  useEffect,
-  useRef,
-} from 'react'
+import React, { useEffect, useRef } from 'react'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import Dialog from '@mui/material/Dialog'
@@ -16,34 +8,9 @@ import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import { X } from 'lucide-react'
 import Button from '@mui/material/Button'
+import type { ConfirmDialogProps } from './types'
 
-interface ConfirmOptions {
-  title?: string
-  message: string
-  confirmText?: string
-  cancelText?: string
-  isAlert?: boolean
-}
-
-interface ConfirmContextType {
-  confirm: (options: ConfirmOptions) => Promise<boolean>
-  alert: (options: ConfirmOptions) => Promise<void>
-}
-
-const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined)
-
-interface ConfirmDialogProps {
-  isOpen: boolean
-  title: string
-  message: string
-  confirmText?: string
-  cancelText?: string
-  isAlert?: boolean
-  onConfirm: () => void
-  onCancel: () => void
-}
-
-function ConfirmDialog({
+export function ConfirmDialog({
   isOpen,
   title,
   message,
@@ -117,60 +84,4 @@ function ConfirmDialog({
   function handleCancel() {
     onCancel()
   }
-}
-
-export function ConfirmProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [options, setOptions] = useState<ConfirmOptions>({ message: '' })
-  const [resolve, setResolve] = useState<(value: boolean) => void>(() => {})
-
-  const confirm = useCallback((confirmOptions: ConfirmOptions): Promise<boolean> => {
-    setOptions({ ...confirmOptions, isAlert: false })
-    setIsOpen(true)
-    return new Promise((res) => {
-      setResolve(() => res)
-    })
-  }, [])
-
-  const alert = useCallback((alertOptions: ConfirmOptions): Promise<void> => {
-    setOptions({ ...alertOptions, isAlert: true })
-    setIsOpen(true)
-    return new Promise((res) => {
-      setResolve(() => (_: boolean) => res())
-    })
-  }, [])
-
-  const handleConfirm = () => {
-    setIsOpen(false)
-    resolve(true)
-  }
-
-  const handleCancel = () => {
-    setIsOpen(false)
-    resolve(false)
-  }
-
-  return (
-    <ConfirmContext.Provider value={{ confirm, alert }}>
-      {children}
-      <ConfirmDialog
-        isOpen={isOpen}
-        title={options.title || (options.isAlert ? 'Alert' : 'Confirm Action')}
-        message={options.message}
-        confirmText={options.confirmText}
-        cancelText={options.cancelText}
-        isAlert={options.isAlert}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-      />
-    </ConfirmContext.Provider>
-  )
-}
-
-export function useConfirm() {
-  const context = useContext(ConfirmContext)
-  if (!context) {
-    throw new Error('useConfirm must be used within a ConfirmProvider')
-  }
-  return context
 }

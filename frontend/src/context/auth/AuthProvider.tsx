@@ -1,18 +1,8 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { SafeUser } from '@/types'
 import { usersApi } from '@/api/users'
 import { authApi } from '@/api/auth'
-
-interface AuthContextValue {
-  user: SafeUser | null
-  isLoading: boolean
-  isAuthenticated: boolean
-  setUser: (user: SafeUser | null) => void
-  logout: () => Promise<void>
-  refreshUser: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+import { AuthContext } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SafeUser | null>(null)
@@ -53,10 +43,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
 }

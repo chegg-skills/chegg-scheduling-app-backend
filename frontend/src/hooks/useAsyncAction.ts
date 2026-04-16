@@ -1,4 +1,4 @@
-import { useConfirm } from '@/context/ConfirmContext'
+import { useConfirm } from '@/context/confirm'
 import { extractApiError } from '@/utils/apiError'
 
 interface AsyncActionOptions<TData> {

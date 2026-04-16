@@ -3,7 +3,7 @@ import { toTitleCase } from '@/utils/toTitleCase'
 import { User } from 'lucide-react'
 import type { Booking } from '@/types'
 import { SectionLabel } from './Common'
-import { useBookingView } from '@/context/BookingViewContext'
+import { useBookingView } from '@/context/bookingView'
 
 interface HostSectionProps {
   booking: Booking

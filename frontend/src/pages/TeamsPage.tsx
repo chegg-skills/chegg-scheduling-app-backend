@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box'
 import { useState } from 'react'
 import { CalendarDays, Plus, ToggleRight, Users, UsersRound } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/auth'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/ui/Button'

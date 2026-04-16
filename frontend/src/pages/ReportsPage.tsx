@@ -8,7 +8,7 @@ import { FileDown, CalendarRange, Users, ClipboardList, GraduationCap, Info } fr
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DateFilterModal } from '@/components/shared/form/DateFilterModal'
 import type { StatsTimeframe } from '@/types'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/auth'
 import { getBaseURL } from '@/lib/axios'
 
 const BASE_URL = getBaseURL()

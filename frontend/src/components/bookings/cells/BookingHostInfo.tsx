@@ -1,6 +1,6 @@
 import Typography from '@mui/material/Typography'
 import type { SafeUser } from '@/types'
-import { useBookingView } from '@/context/BookingViewContext'
+import { useBookingView } from '@/context/bookingView'
 
 interface BookingHostInfoProps {
   host?: SafeUser | null

@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react'
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/auth'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { RouteErrorPage } from '@/pages/RouteErrorPage'
 

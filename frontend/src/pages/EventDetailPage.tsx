@@ -30,7 +30,7 @@ import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { EventDetailsTab } from '@/components/events/tabs/EventDetailsTab'
 import { EventHostsTab } from '@/components/events/tabs/EventHostsTab'
 import { EventBookingsTab } from '@/components/events/tabs/EventBookingsTab'
-import { BookingViewProvider } from '@/context/BookingViewContext'
+import { BookingViewProvider } from '@/context/bookingView'
 import { EventScheduleTab } from '@/components/events/tabs/EventScheduleTab'
 import { getEventHostSetupStatus } from '@/components/events/form/eventCapabilityRules'
 
