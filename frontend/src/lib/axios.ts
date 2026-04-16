@@ -29,19 +29,19 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-apiClient.interceptors.request.use((config) => {
-  const method = config.method?.toLowerCase()
+apiClient.interceptors.request.use((req) => {
+  const method = req.method?.toLowerCase()
   const isSafeMethod = method === undefined || ['get', 'head', 'options'].includes(method)
 
   if (!isSafeMethod) {
     const csrfToken = getCookieValue(CSRF_COOKIE_NAME)
     if (csrfToken) {
-      config.headers = config.headers ?? {}
-      config.headers[CSRF_HEADER_NAME] = csrfToken
+      req.headers = req.headers ?? {}
+      req.headers[CSRF_HEADER_NAME] = csrfToken
     }
   }
 
-  return config
+  return req
 })
 
 // Redirect to login on 401 without creating a circular dependency on AuthContext
