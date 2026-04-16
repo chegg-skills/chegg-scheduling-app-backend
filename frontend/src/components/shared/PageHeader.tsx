@@ -17,14 +17,7 @@ interface PageHeaderProps {
   tags?: ReactNode
 }
 
-export function PageHeader({
-  title,
-  subtitle,
-  actions,
-  backTo,
-  backLabel,
-  tags
-}: PageHeaderProps) {
+export function PageHeader({ title, subtitle, actions, backTo, backLabel, tags }: PageHeaderProps) {
   return (
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
@@ -40,7 +33,7 @@ export function PageHeader({
         boxSizing: 'border-box',
         px: { xs: 2.5, md: 4 },
         py: 2,
-        backgroundColor: "white",
+        backgroundColor: 'white',
         borderBottom: '1px solid',
         borderColor: 'divider',
         mb: 4,
@@ -65,7 +58,7 @@ export function PageHeader({
                 '&:hover': {
                   bgcolor: 'action.hover',
                   borderColor: 'text.secondary',
-                }
+                },
               }}
             >
               <ChevronLeft size={20} />
@@ -74,13 +67,27 @@ export function PageHeader({
         )}
         <Stack spacing={0.5}>
           <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>{title}</Typography>
-            {tags && <Stack direction="row" spacing={1}>{tags}</Stack>}
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              {title}
+            </Typography>
+            {tags && (
+              <Stack direction="row" spacing={1}>
+                {tags}
+              </Stack>
+            )}
           </Stack>
-          {subtitle && <Typography variant="body2" color="text.secondary">{subtitle}</Typography>}
+          {subtitle && (
+            <Typography variant="body2" color="text.secondary">
+              {subtitle}
+            </Typography>
+          )}
         </Stack>
       </Stack>
-      {actions ? <Stack direction="row" spacing={1.5} alignItems="center">{actions}</Stack> : null}
+      {actions ? (
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          {actions}
+        </Stack>
+      ) : null}
     </Stack>
   )
 }

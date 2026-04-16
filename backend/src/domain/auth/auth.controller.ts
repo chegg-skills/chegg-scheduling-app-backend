@@ -4,11 +4,7 @@ import * as authService from "./auth.service";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import { setAuthCookie, clearAuthCookie } from "../../shared/utils/cookie";
 
-const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // When self-register is enabled (public endpoint), always force role to
     // COACH — callers must not be able to self-promote to SUPER_ADMIN/TEAM_ADMIN.
@@ -18,22 +14,13 @@ const register = async (
     const result = await authService.register(data);
     setAuthCookie(res, result.token);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.CREATED,
-      result,
-      "User registered successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.CREATED, result, "User registered successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await authService.login(req.body);
     setAuthCookie(res, result.token);
@@ -44,11 +31,7 @@ const login = async (
   }
 };
 
-const logout = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const logout = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await authService.logout();
     clearAuthCookie(res);
@@ -59,11 +42,7 @@ const logout = async (
   }
 };
 
-const bootstrap = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const bootstrap = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await authService.bootstrap(req.body);
     setAuthCookie(res, result.token);

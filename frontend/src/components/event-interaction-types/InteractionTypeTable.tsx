@@ -11,15 +11,15 @@ import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import { Monitor, Edit, Trash2, Info } from 'lucide-react'
 import type { EventInteractionType } from '@/types'
-import { Badge } from '@/components/shared/Badge'
-import { Modal } from '@/components/shared/Modal'
-import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
+import { Badge } from '@/components/shared/ui/Badge'
+import { Modal } from '@/components/shared/ui/Modal'
+import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { InteractionTypeForm } from './InteractionTypeForm'
-import { RowActions } from '@/components/shared/RowActions'
-import { Button } from '@/components/shared/Button'
+import { RowActions } from '@/components/shared/table/RowActions'
+import { Button } from '@/components/shared/ui/Button'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
-import { useConfirm } from '@/context/ConfirmContext'
-import { useDeleteInteractionType } from '@/hooks/useInteractionTypes'
+import { useConfirm } from '@/context/confirm'
+import { useDeleteInteractionType } from '@/hooks/queries/useInteractionTypes'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { extractApiError } from '@/utils/apiError'
 import { InteractionTypeUsageList } from './InteractionTypeUsageList'
@@ -38,23 +38,28 @@ const headerTooltips: Record<string, string> = {
 
 type InteractionTypeSortKey = 'interactionType' | 'multiHost' | 'roundRobin' | 'sort' | 'status'
 
-const interactionTypeSortAccessors: SortAccessorMap<EventInteractionType, InteractionTypeSortKey> = {
-  interactionType: (interactionType) => interactionType.name,
-  multiHost: (interactionType) => interactionType.supportsMultipleHosts,
-  roundRobin: (interactionType) => interactionType.supportsRoundRobin,
-  sort: (interactionType) => interactionType.sortOrder,
-  status: (interactionType) => interactionType.isActive,
-}
+const interactionTypeSortAccessors: SortAccessorMap<EventInteractionType, InteractionTypeSortKey> =
+  {
+    interactionType: (interactionType) => interactionType.name,
+    multiHost: (interactionType) => interactionType.supportsMultipleHosts,
+    roundRobin: (interactionType) => interactionType.supportsRoundRobin,
+    sort: (interactionType) => interactionType.sortOrder,
+    status: (interactionType) => interactionType.isActive,
+  }
 
 export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableProps) {
   const [editing, setEditing] = useState<EventInteractionType | null>(null)
   const [usageId, setUsageId] = useState<string | null>(null)
-  const { sortedItems: sortedInteractionTypes, sortConfig, requestSort } = useTableSort(interactionTypes, interactionTypeSortAccessors)
+  const {
+    sortedItems: sortedInteractionTypes,
+    sortConfig,
+    requestSort,
+  } = useTableSort(interactionTypes, interactionTypeSortAccessors)
   const { alert } = useConfirm()
   const { mutate: deleteInteractionType } = useDeleteInteractionType()
   const { handleAction } = useAsyncAction()
 
-  const usageTarget = usageId ? interactionTypes.find(t => t.id === usageId) : null
+  const usageTarget = usageId ? interactionTypes.find((t) => t.id === usageId) : null
 
   const handleDelete = async (t: EventInteractionType) => {
     handleAction(deleteInteractionType, t.id, {
@@ -71,7 +76,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
             message: extractApiError(error),
           })
         }
-      }
+      },
     })
   }
 
@@ -82,9 +87,21 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
           <TableHead>
             <TableRow>
               {[
-                { label: 'Interaction Type', sortKey: 'interactionType' as const, tooltip: headerTooltips['Interaction Type'] },
-                { label: 'Multi-host', sortKey: 'multiHost' as const, tooltip: headerTooltips['Multi-Host'] },
-                { label: 'Round-robin', sortKey: 'roundRobin' as const, tooltip: headerTooltips['Round Robin'] },
+                {
+                  label: 'Interaction Type',
+                  sortKey: 'interactionType' as const,
+                  tooltip: headerTooltips['Interaction Type'],
+                },
+                {
+                  label: 'Multi-host',
+                  sortKey: 'multiHost' as const,
+                  tooltip: headerTooltips['Multi-Host'],
+                },
+                {
+                  label: 'Round-robin',
+                  sortKey: 'roundRobin' as const,
+                  tooltip: headerTooltips['Round Robin'],
+                },
                 { label: 'Sort', sortKey: 'sort' as const, tooltip: headerTooltips.Sort },
                 { label: 'Status', sortKey: 'status' as const },
               ].map((col) => (
@@ -143,21 +160,33 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {toTitleCase(t.name)}
                         </Typography>
-                        <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+                        >
                           {t.key}
                         </Typography>
                       </Box>
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <Badge label={t.supportsMultipleHosts ? 'Yes' : 'No'} variant={t.supportsMultipleHosts ? 'green' : 'gray'} />
+                    <Badge
+                      label={t.supportsMultipleHosts ? 'Yes' : 'No'}
+                      variant={t.supportsMultipleHosts ? 'green' : 'gray'}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Badge label={t.supportsRoundRobin ? 'Yes' : 'No'} variant={t.supportsRoundRobin ? 'green' : 'gray'} />
+                    <Badge
+                      label={t.supportsRoundRobin ? 'Yes' : 'No'}
+                      variant={t.supportsRoundRobin ? 'green' : 'gray'}
+                    />
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.875rem' }}>{t.sortOrder}</TableCell>
                   <TableCell>
-                    <Badge label={t.isActive ? 'Active' : 'Inactive'} variant={t.isActive ? 'green' : 'red'} />
+                    <Badge
+                      label={t.isActive ? 'Active' : 'Inactive'}
+                      variant={t.isActive ? 'green' : 'red'}
+                    />
                   </TableCell>
                   <TableCell>
                     <RowActions
@@ -199,11 +228,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
               <Button variant="secondary" onClick={() => setEditing(null)} sx={{ minWidth: 120 }}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                form="interaction-type-form"
-                sx={{ minWidth: 160, ml: 2 }}
-              >
+              <Button type="submit" form="interaction-type-form" sx={{ minWidth: 160, ml: 2 }}>
                 Save changes
               </Button>
             </>
@@ -231,7 +256,9 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
         >
           <Box sx={{ p: 1 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              This interaction type is currently used by the following events. To delete it, you must first change the interaction type for these events or deactivate this interaction type.
+              This interaction type is currently used by the following events. To delete it, you
+              must first change the interaction type for these events or deactivate this interaction
+              type.
             </Typography>
 
             <InteractionTypeUsageList interactionTypeId={usageTarget.id} />
@@ -241,7 +268,9 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                 💡 Recommendation: Deactivate
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                If you no longer want to offer this interaction type, uncheck <strong>"Is active"</strong> in the Edit form. This prevents new events from using it while keeping historical data intact.
+                If you no longer want to offer this interaction type, uncheck{' '}
+                <strong>"Is active"</strong> in the Edit form. This prevents new events from using
+                it while keeping historical data intact.
               </Typography>
             </Box>
           </Box>
@@ -250,4 +279,3 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
     </>
   )
 }
-

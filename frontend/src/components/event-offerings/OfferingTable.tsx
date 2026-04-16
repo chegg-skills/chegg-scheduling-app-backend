@@ -11,12 +11,12 @@ import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import { Layers, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import type { EventOffering } from '@/types'
-import { useDeleteEventOffering, useUpdateEventOffering } from '@/hooks/useEventOfferings'
-import { Badge } from '@/components/shared/Badge'
-import { Modal } from '@/components/shared/Modal'
-import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
+import { useDeleteEventOffering, useUpdateEventOffering } from '@/hooks/queries/useEventOfferings'
+import { Badge } from '@/components/shared/ui/Badge'
+import { Modal } from '@/components/shared/ui/Modal'
+import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { OfferingForm } from './OfferingForm'
-import { RowActions } from '@/components/shared/RowActions'
+import { RowActions } from '@/components/shared/table/RowActions'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { toTitleCase } from '@/utils/toTitleCase'
@@ -42,7 +42,11 @@ const offeringSortAccessors: SortAccessorMap<EventOffering, OfferingSortKey> = {
 
 export function OfferingTable({ offerings }: OfferingTableProps) {
   const [editing, setEditing] = useState<EventOffering | null>(null)
-  const { sortedItems: sortedOfferings, sortConfig, requestSort } = useTableSort(offerings, offeringSortAccessors)
+  const {
+    sortedItems: sortedOfferings,
+    sortConfig,
+    requestSort,
+  } = useTableSort(offerings, offeringSortAccessors)
   const { mutate: deleteOffering } = useDeleteEventOffering()
   const { mutate: updateOffering } = useUpdateEventOffering()
   const { handleAction } = useAsyncAction()
@@ -77,7 +81,11 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
           <TableHead>
             <TableRow>
               {[
-                { label: 'Offering', sortKey: 'offering' as const, tooltip: headerTooltips.Offering },
+                {
+                  label: 'Offering',
+                  sortKey: 'offering' as const,
+                  tooltip: headerTooltips.Offering,
+                },
                 { label: 'Key', sortKey: 'key' as const, tooltip: headerTooltips.Key },
                 { label: 'Sort', sortKey: 'sort' as const, tooltip: headerTooltips.Sort },
                 { label: 'Status', sortKey: 'status' as const },
@@ -130,13 +138,25 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="caption" sx={{ fontFamily: 'monospace', bgcolor: 'grey.100', px: 0.75, py: 0.25, borderRadius: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontFamily: 'monospace',
+                      bgcolor: 'grey.100',
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: 0.5,
+                    }}
+                  >
                     {o.key}
                   </Typography>
                 </TableCell>
                 <TableCell sx={{ fontSize: '0.875rem' }}>{o.sortOrder}</TableCell>
                 <TableCell>
-                  <Badge label={o.isActive ? 'Active' : 'Inactive'} variant={o.isActive ? 'green' : 'red'} />
+                  <Badge
+                    label={o.isActive ? 'Active' : 'Inactive'}
+                    variant={o.isActive ? 'green' : 'red'}
+                  />
                 </TableCell>
                 <TableCell>
                   <RowActions
@@ -167,7 +187,11 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
       </TableContainer>
 
       {editing && (
-        <Modal isOpen onClose={() => setEditing(null)} title={`Edit "${toTitleCase(editing.name)}"`}>
+        <Modal
+          isOpen
+          onClose={() => setEditing(null)}
+          title={`Edit "${toTitleCase(editing.name)}"`}
+        >
           <OfferingForm offering={editing} onSuccess={() => setEditing(null)} />
         </Modal>
       )}

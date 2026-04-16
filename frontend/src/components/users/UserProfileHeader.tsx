@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography'
 import { Clock, Mail, MapPin, Phone, Video } from 'lucide-react'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { UserWithDetails } from '@/types'
-import { Badge } from '@/components/shared/Badge'
+import { Badge } from '@/components/shared/ui/Badge'
 
 interface UserProfileHeaderProps {
   user: UserWithDetails
@@ -33,7 +33,8 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
           color: 'primary.dark',
         }}
       >
-        {user.firstName[0]}{user.lastName[0]}
+        {user.firstName[0]}
+        {user.lastName[0]}
       </Avatar>
 
       <Box sx={{ flex: 1 }}>

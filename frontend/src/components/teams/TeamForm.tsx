@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import { Button } from '@/components/shared/Button'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
-import { useCreateTeam, useUpdateTeam } from '@/hooks/useTeams'
-import { useUsers } from '@/hooks/useUsers'
+import { Button } from '@/components/shared/ui/Button'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { useCreateTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
+import { useUsers } from '@/hooks/queries/useUsers'
 import { extractApiError } from '@/utils/apiError'
 import type { Team } from '@/types'
 import { TeamIdentityFields } from './TeamIdentityFields'
@@ -28,7 +28,7 @@ export function TeamForm({ team, onSuccess, onCancel }: TeamFormProps) {
 
   const { data: usersData } = useUsers({ pageSize: 200 })
   const teamLeadOptions = (usersData?.users ?? []).filter(
-    (user) => user.role === 'TEAM_ADMIN' && user.isActive,
+    (user) => user.role === 'TEAM_ADMIN' && user.isActive
   )
 
   const {

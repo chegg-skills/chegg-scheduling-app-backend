@@ -1,21 +1,21 @@
 import Box from '@mui/material/Box'
 import { useState } from 'react'
-import { CheckCircle2, GitMerge, Plus, Repeat2, Users } from 'lucide-react'
-import { useInteractionTypes } from '@/hooks/useInteractionTypes'
+import { ArrowLeftRight, CheckCircle2, Plus, Repeat2, Users } from 'lucide-react'
+import { useInteractionTypes } from '@/hooks/queries/useInteractionTypes'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { Button } from '@/components/shared/Button'
-import { Modal } from '@/components/shared/Modal'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { Button } from '@/components/shared/ui/Button'
+import { Modal } from '@/components/shared/ui/Modal'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { InteractionTypeTable } from '@/components/event-interaction-types/InteractionTypeTable'
 import { InteractionTypeForm } from '@/components/event-interaction-types/InteractionTypeForm'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useInteractionTypeStats } from '@/hooks/useStats'
+import { useInteractionTypeStats } from '@/hooks/queries/useStats'
 import type { StatsTimeframe } from '@/types'
 
 export function InteractionTypesPage() {
   const [showCreate, setShowCreate] = useState(false)
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const { data, isLoading, error } = useInteractionTypes()
   const { data: interactionStats, isLoading: statsLoading } = useInteractionTypeStats(timeframe)
 
@@ -29,7 +29,7 @@ export function InteractionTypesPage() {
       label: 'New types',
       value: interactionStats?.metrics.newInteractionTypes ?? 0,
       helperText: 'Interaction types added in the selected time frame',
-      icon: <GitMerge size={18} />,
+      icon: <ArrowLeftRight size={18} />,
       accent: 'orange' as const,
     },
     {

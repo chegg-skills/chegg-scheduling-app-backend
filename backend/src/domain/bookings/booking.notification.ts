@@ -48,9 +48,7 @@ const getBookingNotificationVariables = async (booking: SafeBooking) => {
     });
 
     if (coHosts.length > 0) {
-      const names = coHosts
-        .map((u) => `${u.firstName} ${u.lastName}`.trim())
-        .join(", ");
+      const names = coHosts.map((u) => `${u.firstName} ${u.lastName}`.trim()).join(", ");
       variables.coHostNames = names;
       variables.coHostDetails = `\nCo-hosts: ${names}`;
       variables.coHostDetailsHtml = `<br/><strong>Co-hosts:</strong> ${names}`;
@@ -79,15 +77,10 @@ const getTeamAdminRecipients = async (teamId: string): Promise<string[]> => {
     },
   });
 
-  return Array.from(
-    new Set(members.map((member: any) => member.user.email).filter(Boolean)),
-  );
+  return Array.from(new Set(members.map((member: any) => member.user.email).filter(Boolean)));
 };
 
-const buildReminderSendAt = (
-  startTime: Date,
-  hoursBefore: number,
-): string | null => {
+const buildReminderSendAt = (startTime: Date, hoursBefore: number): string | null => {
   const sendAt = new Date(startTime.getTime() - hoursBefore * 60 * 60 * 1000);
 
   return sendAt.getTime() > Date.now() ? sendAt.toISOString() : null;
@@ -121,9 +114,7 @@ const queueStudentReminder = async (
   });
 };
 
-const queueBookingReminderNotifications = async (
-  booking: SafeBooking,
-): Promise<void> => {
+const queueBookingReminderNotifications = async (booking: SafeBooking): Promise<void> => {
   try {
     await Promise.all([
       queueStudentReminder(booking, "SESSION_REMINDER_24H", 24),
@@ -137,9 +128,7 @@ const queueBookingReminderNotifications = async (
   }
 };
 
-const cancelScheduledBookingReminders = async (
-  booking: SafeBooking,
-): Promise<void> => {
+const cancelScheduledBookingReminders = async (booking: SafeBooking): Promise<void> => {
   try {
     await publishNotificationSafely({
       type: "CANCEL_BOOKING_REMINDERS",
@@ -231,10 +220,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     const variables = await getBookingNotificationVariables(booking);
     const teamAdminRecipients = await getTeamAdminRecipients(booking.teamId);
 
-    if (
-      booking.status === BookingStatus.CANCELLED ||
-      booking.status === BookingStatus.NO_SHOW
-    ) {
+    if (booking.status === BookingStatus.CANCELLED || booking.status === BookingStatus.NO_SHOW) {
       await cancelScheduledBookingReminders(booking);
     }
 
@@ -242,9 +228,9 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     const coHostUserIds = (booking as any).coHostUserIds as string[] | undefined;
     const coHostUsers = coHostUserIds?.length
       ? await prisma.user.findMany({
-        where: { id: { in: coHostUserIds }, isActive: true },
-        select: { id: true, email: true },
-      })
+          where: { id: { in: coHostUserIds }, isActive: true },
+          select: { id: true, email: true },
+        })
       : [];
 
     if (booking.status === BookingStatus.CANCELLED) {

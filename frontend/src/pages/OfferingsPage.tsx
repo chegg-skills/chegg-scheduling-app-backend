@@ -1,21 +1,21 @@
 import Box from '@mui/material/Box'
 import { useState } from 'react'
 import { CheckCircle2, Layers, Link2, Plus, XCircle } from 'lucide-react'
-import { useEventOfferings } from '@/hooks/useEventOfferings'
+import { useEventOfferings } from '@/hooks/queries/useEventOfferings'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { Button } from '@/components/shared/Button'
-import { Modal } from '@/components/shared/Modal'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { Button } from '@/components/shared/ui/Button'
+import { Modal } from '@/components/shared/ui/Modal'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { OfferingTable } from '@/components/event-offerings/OfferingTable'
 import { OfferingForm } from '@/components/event-offerings/OfferingForm'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useOfferingStats } from '@/hooks/useStats'
+import { useOfferingStats } from '@/hooks/queries/useStats'
 import type { StatsTimeframe } from '@/types'
 
 export function OfferingsPage() {
   const [showCreate, setShowCreate] = useState(false)
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const { data, isLoading, error } = useEventOfferings()
   const { data: offeringStats, isLoading: statsLoading } = useOfferingStats(timeframe)
 

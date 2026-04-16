@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import { z } from 'zod'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
-import { Textarea } from '@/components/shared/Textarea'
-import { Button } from '@/components/shared/Button'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
-import { useCreateEventOffering, useUpdateEventOffering } from '@/hooks/useEventOfferings'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
+import { Textarea } from '@/components/shared/form/Textarea'
+import { Button } from '@/components/shared/ui/Button'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { useCreateEventOffering, useUpdateEventOffering } from '@/hooks/queries/useEventOfferings'
 import { extractApiError } from '@/utils/apiError'
 import type { EventOffering } from '@/types'
 
@@ -48,14 +48,25 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
   })
 
   useEffect(() => {
-    if (offering) reset({ key: offering.key, name: offering.name, description: offering.description ?? '', sortOrder: offering.sortOrder })
+    if (offering)
+      reset({
+        key: offering.key,
+        name: offering.name,
+        description: offering.description ?? '',
+        sortOrder: offering.sortOrder,
+      })
   }, [offering, reset])
 
   function onSubmit(values: FormValues) {
     if (isEdit && offering) {
       update({ offeringId: offering.id, data: values }, { onSuccess })
     } else {
-      create(values, { onSuccess: () => { reset(); onSuccess?.() } })
+      create(values, {
+        onSuccess: () => {
+          reset()
+          onSuccess?.()
+        },
+      })
     }
   }
 
@@ -92,7 +103,13 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
           error={errors.sortOrder?.message}
           info="The order in which this offering appears in lists (lower numbers come first)."
         >
-          <Input id="sortOrder" type="number" min="0" hasError={!!errors.sortOrder} {...register('sortOrder')} />
+          <Input
+            id="sortOrder"
+            type="number"
+            min="0"
+            hasError={!!errors.sortOrder}
+            {...register('sortOrder')}
+          />
         </FormField>
 
         <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>

@@ -1,38 +1,45 @@
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
-import { CalendarDays, Plus, Repeat2, ShieldCheck, Users } from 'lucide-react';
-import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useTeams } from '@/hooks/useTeams';
-import { useTeamEvents } from '@/hooks/useEvents';
-import { PageHeader } from '@/components/shared/PageHeader';
-import { Button } from '@/components/shared/Button';
-import { Modal } from '@/components/shared/Modal';
-import { EventForm } from '@/components/events/EventForm';
-import { PageSpinner } from '@/components/shared/Spinner';
-import { ErrorAlert } from '@/components/shared/ErrorAlert';
-import { EventTable } from '@/components/events/EventTable';
-import { UserDetailModal } from '@/components/users/UserDetailModal';
-import { Select } from '@/components/shared/Select';
-import { StatsOverview } from '@/components/shared/StatsOverview';
-import { useEventStats } from '@/hooks/useStats';
-import type { StatsTimeframe } from '@/types';
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import MenuItem from '@mui/material/MenuItem'
+import Typography from '@mui/material/Typography'
+import { CalendarDays, Plus, Repeat2, ToggleRight, Users } from 'lucide-react'
+import { useState } from 'react'
+import { useAuth } from '@/context/auth'
+import { useTeams } from '@/hooks/queries/useTeams'
+import { useTeamEvents } from '@/hooks/queries/useEvents'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { Button } from '@/components/shared/ui/Button'
+import { Modal } from '@/components/shared/ui/Modal'
+import { EventForm } from '@/components/events/form/EventForm'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { EventTable } from '@/components/events/table/EventTable'
+import { UserDetailModal } from '@/components/users/UserDetailModal'
+import { Select } from '@/components/shared/form/Select'
+import { StatsOverview } from '@/components/shared/StatsOverview'
+import { useEventStats } from '@/hooks/queries/useStats'
+import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
-  const { user } = useAuth();
-  const [selectedTeamId, setSelectedTeamId] = useState<string>('');
-  const [showCreateEvent, setShowCreateEvent] = useState(false);
-  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month');
-  const canManageTeam = user?.role === 'SUPER_ADMIN';
-  const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams();
-  const { data: eventsData, isLoading: eventsLoading, error: eventsError } = useTeamEvents(selectedTeamId, { page: 1, pageSize: 100 });
-  const { data: eventStats, isLoading: statsLoading } = useEventStats(timeframe, selectedTeamId || undefined);
+  const { user } = useAuth()
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('')
+  const [showCreateEvent, setShowCreateEvent] = useState(false)
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
+  const canManageTeam = user?.role === 'SUPER_ADMIN'
+  const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
+  const {
+    data: eventsData,
+    isLoading: eventsLoading,
+    error: eventsError,
+  } = useTeamEvents(selectedTeamId, { page: 1, pageSize: 100 })
+  const { data: eventStats, isLoading: statsLoading } = useEventStats(
+    timeframe,
+    selectedTeamId || undefined
+  )
 
-  if (teamsLoading) return <PageSpinner />;
-  if (teamsError) return <ErrorAlert message="Failed to load teams." />;
+  if (teamsLoading) return <PageSpinner />
+  if (teamsError) return <ErrorAlert message="Failed to load teams." />
 
   const eventStatItems = [
     {
@@ -46,7 +53,7 @@ export function EventsPage() {
       label: 'Active events',
       value: eventStats?.metrics.activeEvents ?? 0,
       helperText: 'Events currently available for booking',
-      icon: <ShieldCheck size={18} />,
+      icon: <ToggleRight size={18} />,
       accent: 'green' as const,
     },
     {
@@ -63,7 +70,7 @@ export function EventsPage() {
       icon: <Users size={18} />,
       accent: 'teal' as const,
     },
-  ];
+  ]
 
   return (
     <Box>
@@ -72,7 +79,14 @@ export function EventsPage() {
         subtitle="View events by team"
         actions={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-            <Box sx={{ width: { xs: '100%', sm: 280 }, height: 40, display: 'flex', alignItems: 'center' }}>
+            <Box
+              sx={{
+                width: { xs: '100%', sm: 280 },
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
               <Box sx={{ position: 'relative', width: '100%' }}>
                 <Typography
                   variant="caption"
@@ -95,15 +109,22 @@ export function EventsPage() {
 
                 <Select
                   value={selectedTeamId}
-                  onChange={e => setSelectedTeamId(e.target.value as string)}
+                  onChange={(e) => setSelectedTeamId(e.target.value as string)}
                   displayEmpty
                   inputProps={{ 'aria-label': 'Select team' }}
-                  renderValue={value => {
+                  renderValue={(value) => {
                     if (!value) {
-                      return <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>Choose a team...</Box>;
+                      return (
+                        <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+                          Choose a team...
+                        </Box>
+                      )
                     }
 
-                    return teamsData?.teams?.find(team => team.id === value)?.name ?? 'Choose a team...';
+                    return (
+                      teamsData?.teams?.find((team) => team.id === value)?.name ??
+                      'Choose a team...'
+                    )
                   }}
                   sx={{
                     minWidth: { xs: '100%', sm: 280 },
@@ -138,10 +159,8 @@ export function EventsPage() {
                     },
                   }}
                 >
-                  <MenuItem value="">
-                    Choose a team...
-                  </MenuItem>
-                  {teamsData?.teams?.map(team => (
+                  <MenuItem value="">Choose a team...</MenuItem>
+                  {teamsData?.teams?.map((team) => (
                     <MenuItem key={team.id} value={team.id}>
                       {team.name}
                     </MenuItem>
@@ -154,7 +173,7 @@ export function EventsPage() {
                 size="sm"
                 onClick={() => setShowCreateEvent(true)}
                 disabled={!selectedTeamId}
-                title={!selectedTeamId ? "Please select a team first" : ""}
+                title={!selectedTeamId ? 'Please select a team first' : ''}
               >
                 <Plus size={16} />
                 New event
@@ -174,19 +193,30 @@ export function EventsPage() {
         />
 
         {selectedTeamId === '' ? (
-          <Typography variant="body2" color="text.secondary">Please select a team to view its events.</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Please select a team to view its events.
+          </Typography>
         ) : eventsLoading ? (
           <PageSpinner />
         ) : eventsError ? (
           <ErrorAlert message="Failed to load events." />
         ) : (
           <Box sx={{ mt: 3 }}>
-            <EventTable events={eventsData?.events ?? []} teamId={selectedTeamId} onViewUser={setViewingUserId} />
+            <EventTable
+              events={eventsData?.events ?? []}
+              teamId={selectedTeamId}
+              onViewUser={setViewingUserId}
+            />
           </Box>
         )}
 
         {canManageTeam && (
-          <Modal isOpen={showCreateEvent} onClose={() => setShowCreateEvent(false)} title="New event" size="lg">
+          <Modal
+            isOpen={showCreateEvent}
+            onClose={() => setShowCreateEvent(false)}
+            title="New event"
+            size="lg"
+          >
             <EventForm
               teamId={selectedTeamId}
               onSuccess={() => setShowCreateEvent(false)}
@@ -196,12 +226,9 @@ export function EventsPage() {
         )}
 
         {viewingUserId && (
-          <UserDetailModal
-            userId={viewingUserId}
-            onClose={() => setViewingUserId(null)}
-          />
+          <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
         )}
       </Box>
     </Box>
-  );
+  )
 }

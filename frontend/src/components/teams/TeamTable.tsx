@@ -8,15 +8,15 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import type { Team, Pagination } from '@/types'
-import { Modal } from '@/components/shared/Modal'
-import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
-import { useDeleteTeam, useUpdateTeam } from '@/hooks/useTeams'
+import { Modal } from '@/components/shared/ui/Modal'
+import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
+import { useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { TeamForm } from './TeamForm'
 import { TeamTableRow } from './TeamTableRow'
 import { teamSortAccessors, teamTableColumns } from './teamTableUtils'
-import { TablePagination } from '@/components/shared/TablePagination'
+import { TablePagination } from '@/components/shared/table/TablePagination'
 
 interface TeamTableProps {
   teams: Team[]
@@ -31,13 +31,17 @@ export function TeamTable({
   pagination,
   onPageChange,
   onRowsPerPageChange,
-  canManageTeam
+  canManageTeam,
 }: TeamTableProps) {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
   const { handleAction } = useAsyncAction()
-  const { sortedItems: sortedTeams, sortConfig, requestSort } = useTableSort(teams, teamSortAccessors)
+  const {
+    sortedItems: sortedTeams,
+    sortConfig,
+    requestSort,
+  } = useTableSort(teams, teamSortAccessors)
 
   async function handleToggleActive(team: Team) {
     const newStatus = !team.isActive

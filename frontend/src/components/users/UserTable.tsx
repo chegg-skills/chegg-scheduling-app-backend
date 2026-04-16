@@ -8,16 +8,16 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import type { SafeUser, UserRole, Pagination } from '@/types'
-import { Modal } from '@/components/shared/Modal'
-import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
-import { useDeactivateUser } from '@/hooks/useUsers'
-import { useConfirm } from '@/context/ConfirmContext'
+import { Modal } from '@/components/shared/ui/Modal'
+import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
+import { useDeactivateUser } from '@/hooks/queries/useUsers'
+import { useConfirm } from '@/context/confirm'
 import { useTableSort } from '@/hooks/useTableSort'
 import { UserDetailModal } from './UserDetailModal'
 import { UserForm } from './UserForm'
 import { UserTableRow } from './UserTableRow'
 import { userSortAccessors, userTableColumns } from './userTableUtils'
-import { TablePagination } from '@/components/shared/TablePagination'
+import { TablePagination } from '@/components/shared/table/TablePagination'
 
 interface UserTableProps {
   users: SafeUser[]
@@ -34,13 +34,17 @@ export function UserTable({
   onPageChange,
   onRowsPerPageChange,
   currentUserRole,
-  currentUserId
+  currentUserId,
 }: UserTableProps) {
   const [editingUser, setEditingUser] = useState<SafeUser | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const { mutate: deactivate } = useDeactivateUser()
   const { confirm } = useConfirm()
-  const { sortedItems: sortedUsers, sortConfig, requestSort } = useTableSort(users, userSortAccessors)
+  const {
+    sortedItems: sortedUsers,
+    sortConfig,
+    requestSort,
+  } = useTableSort(users, userSortAccessors)
 
   async function handleDeactivate(user: SafeUser) {
     const confirmed = await confirm({
@@ -114,7 +118,9 @@ export function UserTable({
         )}
       </TableContainer>
 
-      {viewingUserId && <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />}
+      {viewingUserId && (
+        <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
+      )}
 
       {editingUser && (
         <Modal

@@ -5,13 +5,13 @@ import Stack from '@mui/material/Stack'
 import MenuItem from '@mui/material/MenuItem'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
-import { Select } from '@/components/shared/Select'
-import { Button } from '@/components/shared/Button'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
-import { useAcceptInvite } from '@/hooks/useAuthMutations'
-import { useTimezones } from '@/hooks/useConfig'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
+import { Select } from '@/components/shared/form/Select'
+import { Button } from '@/components/shared/ui/Button'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { useAcceptInvite } from '@/hooks/queries/useAuthMutations'
+import { useTimezones } from '@/hooks/queries/useConfig'
 import { extractApiError } from '@/utils/apiError'
 
 const schema = z.object({
@@ -45,36 +45,30 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
   const { data: timezones = [] } = useTimezones()
 
   function onSubmit(values: FormValues) {
-    mutate(
-      { ...values, token },
-      { onSuccess: () => navigate('/dashboard') },
-    )
+    mutate({ ...values, token }, { onSuccess: () => navigate('/dashboard') })
   }
 
   return (
     <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={2.5}>
       {error && <ErrorAlert message={extractApiError(error)} />}
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' } }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+        }}
+      >
         <FormField
           label="First Name"
           htmlFor="firstName"
           error={errors.firstName?.message}
           required
         >
-          <Input
-            id="firstName"
-            hasError={!!errors.firstName}
-            {...register('firstName')}
-          />
+          <Input id="firstName" hasError={!!errors.firstName} {...register('firstName')} />
         </FormField>
 
-        <FormField
-          label="Last Name"
-          htmlFor="lastName"
-          error={errors.lastName?.message}
-          required
-        >
+        <FormField label="Last Name" htmlFor="lastName" error={errors.lastName?.message} required>
           <Input id="lastName" hasError={!!errors.lastName} {...register('lastName')} />
         </FormField>
       </Box>
@@ -101,12 +95,7 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
         error={errors.timezone?.message}
         hint="Select your preferred timezone. Defaults to system timezone."
       >
-        <Select
-          id="timezone"
-          hasError={!!errors.timezone}
-          {...register('timezone')}
-          displayEmpty
-        >
+        <Select id="timezone" hasError={!!errors.timezone} {...register('timezone')} displayEmpty>
           <MenuItem value="">
             <em>Choose a timezone...</em>
           </MenuItem>

@@ -12,22 +12,18 @@ export interface TestUser {
 /** Bootstrap the very first SUPER_ADMIN on an empty database. */
 export const bootstrapAdmin = async (
   email = "super@test.com",
-  password = "TestAdmin1234"
+  password = "TestAdmin1234",
 ): Promise<TestUser> => {
-  const res = await request(app)
-    .post("/api/auth/bootstrap")
-    .send({
-      bootstrapSecret: process.env.BOOTSTRAP_SECRET,
-      firstName: "Test",
-      lastName: "Admin",
-      email,
-      password,
-    });
+  const res = await request(app).post("/api/auth/bootstrap").send({
+    bootstrapSecret: process.env.BOOTSTRAP_SECRET,
+    firstName: "Test",
+    lastName: "Admin",
+    email,
+    password,
+  });
 
   if (res.status !== 201) {
-    throw new Error(
-      `bootstrapAdmin failed (${res.status}): ${JSON.stringify(res.body)}`
-    );
+    throw new Error(`bootstrapAdmin failed (${res.status}): ${JSON.stringify(res.body)}`);
   }
 
   return {
@@ -48,7 +44,7 @@ export const registerUser = async (
     email: string;
     password: string;
     role?: string;
-  }
+  },
 ): Promise<TestUser> => {
   const res = await request(app)
     .post("/api/auth/register")
@@ -56,9 +52,7 @@ export const registerUser = async (
     .send(payload);
 
   if (res.status !== 201) {
-    throw new Error(
-      `registerUser failed (${res.status}): ${JSON.stringify(res.body)}`
-    );
+    throw new Error(`registerUser failed (${res.status}): ${JSON.stringify(res.body)}`);
   }
 
   return {

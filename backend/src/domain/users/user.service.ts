@@ -71,10 +71,7 @@ const assignCoachPublicBookingSlug = async (
 
   const firstName = payload.firstName || currentUser.firstName;
   const lastName = payload.lastName || currentUser.lastName;
-  updateData.publicBookingSlug = createPublicBookingSlug(
-    `${firstName} ${lastName}`,
-    "coach",
-  );
+  updateData.publicBookingSlug = createPublicBookingSlug(`${firstName} ${lastName}`, "coach");
 };
 
 const listUsers = async (
@@ -94,29 +91,29 @@ const listUsers = async (
 
   const where: Prisma.UserWhereInput = searchTerms.length
     ? {
-      AND: searchTerms.map((term) => ({
-        OR: [
-          {
-            firstName: {
-              contains: term,
-              mode: "insensitive",
+        AND: searchTerms.map((term) => ({
+          OR: [
+            {
+              firstName: {
+                contains: term,
+                mode: "insensitive",
+              },
             },
-          },
-          {
-            lastName: {
-              contains: term,
-              mode: "insensitive",
+            {
+              lastName: {
+                contains: term,
+                mode: "insensitive",
+              },
             },
-          },
-          {
-            email: {
-              contains: term,
-              mode: "insensitive",
+            {
+              email: {
+                contains: term,
+                mode: "insensitive",
+              },
             },
-          },
-        ],
-      })),
-    }
+          ],
+        })),
+      }
     : {};
 
   const [users, total] = await prisma.$transaction([
@@ -218,8 +215,7 @@ const updateUser = async (
       throw new ErrorHandler(StatusCodes.NOT_FOUND, "User not found.");
     }
     if (targetUser.role === UserRole.SUPER_ADMIN) {
-      const isDemoting =
-        validated.role !== undefined && validated.role !== UserRole.SUPER_ADMIN;
+      const isDemoting = validated.role !== undefined && validated.role !== UserRole.SUPER_ADMIN;
       const isDeactivating = validated.isActive === false;
       if (isDemoting || isDeactivating) {
         const otherActiveSuperAdmins = await prisma.user.count({
@@ -252,10 +248,13 @@ const updateUser = async (
   if (validated.avatarUrl !== undefined) updateData.avatarUrl = validated.avatarUrl;
   if (validated.role !== undefined) updateData.role = validated.role;
   if (validated.isActive !== undefined) updateData.isActive = validated.isActive;
-  if (validated.preferredLanguage !== undefined) updateData.preferredLanguage = validated.preferredLanguage;
+  if (validated.preferredLanguage !== undefined)
+    updateData.preferredLanguage = validated.preferredLanguage;
   if (validated.timezone !== undefined) updateData.timezone = validateTimezone(validated.timezone);
   if (validated.zoomIsvLink !== undefined) {
-    updateData.zoomIsvLink = validated.zoomIsvLink ? validateZoomIsvLink(validated.zoomIsvLink) : null;
+    updateData.zoomIsvLink = validated.zoomIsvLink
+      ? validateZoomIsvLink(validated.zoomIsvLink)
+      : null;
   }
 
   await assignCoachPublicBookingSlug(userId, validated, updateData);
@@ -285,10 +284,7 @@ const updateUser = async (
   }
 };
 
-const deleteUser = async (
-  userId: string,
-  caller: CallerContext,
-): Promise<SafeUser> => {
+const deleteUser = async (userId: string, caller: CallerContext): Promise<SafeUser> => {
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
     select: { role: true, isActive: true },
@@ -307,10 +303,7 @@ const deleteUser = async (
   }
 
   if (!targetUser.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "User account is already inactive.",
-    );
+    throw new ErrorHandler(StatusCodes.CONFLICT, "User account is already inactive.");
   }
 
   // Prevent deactivating the last active SUPER_ADMIN.
@@ -353,16 +346,22 @@ const updateMyProfile = async (
   if (validated.phoneNumber !== undefined) updateData.phoneNumber = validated.phoneNumber;
   if (validated.country !== undefined) updateData.country = validated.country;
   if (validated.avatarUrl !== undefined) updateData.avatarUrl = validated.avatarUrl;
-  if (validated.preferredLanguage !== undefined) updateData.preferredLanguage = validated.preferredLanguage;
+  if (validated.preferredLanguage !== undefined)
+    updateData.preferredLanguage = validated.preferredLanguage;
   if (validated.timezone !== undefined) updateData.timezone = validateTimezone(validated.timezone);
   if (validated.zoomIsvLink !== undefined) {
-    updateData.zoomIsvLink = validated.zoomIsvLink ? validateZoomIsvLink(validated.zoomIsvLink) : null;
+    updateData.zoomIsvLink = validated.zoomIsvLink
+      ? validateZoomIsvLink(validated.zoomIsvLink)
+      : null;
   }
 
   await assignCoachPublicBookingSlug(userId, validated, updateData);
 
   if (Object.keys(updateData).length === 0) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "At least one field is required to update profile.");
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "At least one field is required to update profile.",
+    );
   }
 
   try {

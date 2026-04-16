@@ -21,9 +21,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS ?? "")
   .filter((origin) => origin.length > 0);
 
 if (isProduction && allowedOrigins.length === 0) {
-  logger.warn(
-    "CORS_ORIGINS is empty in production; only same-origin requests will be accepted.",
-  );
+  logger.warn("CORS_ORIGINS is empty in production; only same-origin requests will be accepted.");
 }
 
 const corsOptions: cors.CorsOptions = {

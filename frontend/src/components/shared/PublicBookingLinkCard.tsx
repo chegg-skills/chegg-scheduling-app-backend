@@ -4,7 +4,7 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Copy, ExternalLink, Link2 } from 'lucide-react'
-import { Button } from './Button'
+import { Button } from './ui/Button'
 
 interface PublicBookingLinkCardProps {
   title: string
@@ -57,8 +57,12 @@ export function PublicBookingLinkCard({
             <Link2 size={18} />
           </Box>
           <Box>
-            <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
-            <Typography variant="body2" color="text.secondary">{description}</Typography>
+            <Typography variant="subtitle1" fontWeight={700}>
+              {title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {description}
+            </Typography>
           </Box>
         </Stack>
 
@@ -76,7 +80,9 @@ export function PublicBookingLinkCard({
             color: shareUrl ? 'text.primary' : 'text.secondary',
           }}
         >
-          {shareUrl || disabledReason || 'Public link will appear once this record has a booking slug.'}
+          {shareUrl ||
+            disabledReason ||
+            'Public link will appear once this record has a booking slug.'}
         </Box>
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>

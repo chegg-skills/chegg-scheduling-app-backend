@@ -2,10 +2,10 @@ import { Controller } from 'react-hook-form'
 import type { UseFormRegister, FieldErrors, Control } from 'react-hook-form'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
-import { Autocomplete } from '@/components/shared/Autocomplete'
-import { useCountries, useLanguages } from '@/hooks/useConfig'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
+import { Autocomplete } from '@/components/shared/form/Autocomplete'
+import { useCountries, useLanguages } from '@/hooks/queries/useConfig'
 import type { UserFormValues } from './userFormSchema'
 
 interface UserPersonalFieldsProps {
@@ -30,26 +30,23 @@ export function UserPersonalFields({
   const { data: languages = [] } = useLanguages()
   return (
     <Stack spacing={2}>
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' } }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+        }}
+      >
         <FormField
           label="First name"
           htmlFor="firstName"
           error={errors.firstName?.message}
           required
         >
-          <Input
-            id="firstName"
-            hasError={!!errors.firstName}
-            {...register('firstName')}
-          />
+          <Input id="firstName" hasError={!!errors.firstName} {...register('firstName')} />
         </FormField>
 
-        <FormField
-          label="Last name"
-          htmlFor="lastName"
-          error={errors.lastName?.message}
-          required
-        >
+        <FormField label="Last name" htmlFor="lastName" error={errors.lastName?.message} required>
           <Input id="lastName" hasError={!!errors.lastName} {...register('lastName')} />
         </FormField>
       </Box>
@@ -81,11 +78,7 @@ export function UserPersonalFields({
         />
       </FormField>
 
-      <FormField
-        label="Phone number"
-        htmlFor="phoneNumber"
-        error={errors.phoneNumber?.message}
-      >
+      <FormField label="Phone number" htmlFor="phoneNumber" error={errors.phoneNumber?.message}>
         <Input
           id="phoneNumber"
           type="tel"
@@ -94,11 +87,7 @@ export function UserPersonalFields({
         />
       </FormField>
 
-      <FormField
-        label="Country"
-        htmlFor="country"
-        error={errors.country?.message}
-      >
+      <FormField label="Country" htmlFor="country" error={errors.country?.message}>
         <Controller
           name="country"
           control={control}
@@ -142,7 +131,7 @@ export function UserPersonalFields({
                 const valName = typeof val === 'string' ? val : val?.name
                 return optionName === valName
               }}
-              value={languages.find(l => l.name === value) || value || null}
+              value={languages.find((l) => l.name === value) || value || null}
               onChange={(_, newValue) => {
                 onChange(typeof newValue === 'string' ? newValue : newValue?.name || '')
               }}

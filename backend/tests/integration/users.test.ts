@@ -74,9 +74,7 @@ describe("GET /api/users", () => {
   });
 
   it("COACH cannot list users (403)", async () => {
-    const res = await request(app)
-      .get("/api/users")
-      .set("Authorization", `Bearer ${coachToken}`);
+    const res = await request(app).get("/api/users").set("Authorization", `Bearer ${coachToken}`);
 
     expect(res.status).toBe(403);
   });
@@ -105,7 +103,9 @@ describe("GET /api/users", () => {
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data.users)).toBe(true);
-    expect(res.body.data.users.some((user: { email: string }) => user.email === "teamadmin@users.com")).toBe(true);
+    expect(
+      res.body.data.users.some((user: { email: string }) => user.email === "teamadmin@users.com"),
+    ).toBe(true);
   });
 
   it("supports partial search by email", async () => {
@@ -117,7 +117,6 @@ describe("GET /api/users", () => {
     expect(res.body.data.users).toHaveLength(1);
     expect(res.body.data.users[0].email).toBe("coach@users.com");
   });
-
 
   it("falls back to defaults for invalid pagination params", async () => {
     const res = await request(app)
@@ -268,7 +267,7 @@ describe("PATCH /api/users/me", () => {
       .set("Authorization", `Bearer ${coachToken}`)
       .send({ role: "SUPER_ADMIN" });
 
-    // The field is ignored, but since no other fields were provided, 
+    // The field is ignored, but since no other fields were provided,
     // it will return 400 "At least one field is required to update profile."
     expect(res.status).toBe(400);
     expect(res.body.message).toContain("required");
@@ -309,7 +308,8 @@ describe("PATCH /api/users/:userId", () => {
   });
 
   it("SUPER_ADMIN can save a Zoom ISV link on the user profile", async () => {
-    const zoomIsvLink = "https://students.skills.chegg.com/meeting/join/7d26db62-1f37-49f5-8b49-97a66444007b";
+    const zoomIsvLink =
+      "https://students.skills.chegg.com/meeting/join/7d26db62-1f37-49f5-8b49-97a66444007b";
 
     const res = await request(app)
       .patch(`/api/users/${coachId}`)
@@ -382,9 +382,7 @@ describe("PATCH /api/users/:userId", () => {
   });
 
   it("returns 401 when no auth token is provided", async () => {
-    const res = await request(app)
-      .patch(`/api/users/${coachId}`)
-      .send({ timezone: "UTC" });
+    const res = await request(app).patch(`/api/users/${coachId}`).send({ timezone: "UTC" });
 
     expect(res.status).toBe(401);
   });

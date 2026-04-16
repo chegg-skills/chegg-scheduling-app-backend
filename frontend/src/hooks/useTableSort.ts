@@ -9,7 +9,10 @@ export interface TableSortConfig<K extends string> {
   direction: TableSortDirection
 }
 
-const compareValues = (left: Exclude<SortValue, null | undefined>, right: Exclude<SortValue, null | undefined>) => {
+const compareValues = (
+  left: Exclude<SortValue, null | undefined>,
+  right: Exclude<SortValue, null | undefined>
+) => {
   if (left instanceof Date && right instanceof Date) {
     return left.getTime() - right.getTime()
   }
@@ -31,7 +34,7 @@ const compareValues = (left: Exclude<SortValue, null | undefined>, right: Exclud
 export function useTableSort<T, K extends string>(
   items: T[],
   sortAccessors: SortAccessorMap<T, K>,
-  initialSort?: TableSortConfig<K>,
+  initialSort?: TableSortConfig<K>
 ) {
   const [sortConfig, setSortConfig] = useState<TableSortConfig<K> | null>(initialSort ?? null)
 

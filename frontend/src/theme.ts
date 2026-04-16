@@ -20,15 +20,15 @@ const softBorder = '#DEE3ED'
 declare module '@mui/material/styles' {
   interface Palette {
     accent: {
-      peach: string;
-      lavender: string;
-    };
+      peach: string
+      lavender: string
+    }
   }
   interface PaletteOptions {
     accent?: {
-      peach?: string;
-      lavender?: string;
-    };
+      peach?: string
+      lavender?: string
+    }
   }
 }
 
@@ -80,7 +80,8 @@ export const appTheme = createTheme({
     borderRadius: 10,
   },
   typography: {
-    fontFamily: '"Outfit", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily:
+      '"Outfit", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     h1: { color: neutral900, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' },
     h2: { color: neutral900, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' },
     h3: { color: neutral900, fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.01em' },

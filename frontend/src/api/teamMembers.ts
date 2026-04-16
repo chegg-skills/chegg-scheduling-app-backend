@@ -7,8 +7,11 @@ export interface ListTeamMembersResponse {
 
 export const teamMembersApi = {
   add: (teamId: string, userIds: string | string[]) => {
-    const payload = Array.isArray(userIds) ? { userIds } : { userId: userIds };
-    return apiClient.post<ApiResponse<TeamMember | TeamMember[]>>(`/teams/${teamId}/members`, payload);
+    const payload = Array.isArray(userIds) ? { userIds } : { userId: userIds }
+    return apiClient.post<ApiResponse<TeamMember | TeamMember[]>>(
+      `/teams/${teamId}/members`,
+      payload
+    )
   },
 
   list: (teamId: string, signal?: AbortSignal) =>

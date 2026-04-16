@@ -7,23 +7,21 @@ import { BookingDetailsRightSection } from './BookingDetailsRightSection'
 
 interface BookingDetailsPanelProps {
   booking: Booking
-  onViewHost?: (userId: string) => void
 }
-
 
 export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   const fallbackLocation = booking.event?.locationValue ?? ''
 
   return (
-    booking.meetingJoinUrl
-    ?? booking.host?.zoomIsvLink
-    ?? (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
+    booking.meetingJoinUrl ??
+    booking.host?.zoomIsvLink ??
+    (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
       ? fallbackLocation
       : null)
   )
 }
 
-export function BookingDetailsPanel({ booking, onViewHost }: BookingDetailsPanelProps) {
+export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
   const theme = useTheme()
 
   return (
@@ -44,7 +42,7 @@ export function BookingDetailsPanel({ booking, onViewHost }: BookingDetailsPanel
       </Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4 }}>
-        <BookingDetailsLeftSection booking={booking} onViewHost={onViewHost} />
+        <BookingDetailsLeftSection booking={booking} />
         <BookingDetailsRightSection booking={booking} />
       </Box>
     </>

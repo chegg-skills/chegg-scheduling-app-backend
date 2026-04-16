@@ -80,17 +80,9 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     } else {
       logClientError(err as Error, requestId);
     }
-    return sendErrorResponse(
-      res,
-      frameworkStatus,
-      err.message ?? "Bad request.",
-    );
+    return sendErrorResponse(res, frameworkStatus, err.message ?? "Bad request.");
   }
 
   logger.error("Unexpected server error", { requestId, error: err });
-  return sendErrorResponse(
-    res,
-    StatusCodes.INTERNAL_SERVER_ERROR,
-    "Internal Server Error",
-  );
+  return sendErrorResponse(res, StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error");
 };

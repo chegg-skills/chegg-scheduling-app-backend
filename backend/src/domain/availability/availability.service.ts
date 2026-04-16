@@ -1,23 +1,19 @@
-import {
-  EventBookingMode,
-  Prisma,
-  UserRole,
-} from '@prisma/client';
-import { prisma } from '../../shared/db/prisma';
-import type { CallerContext } from '../../shared/utils/userUtils';
+import { EventBookingMode, Prisma, UserRole } from "@prisma/client";
+import { prisma } from "../../shared/db/prisma";
+import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   findAvailabilityException,
   isWithinWeeklyAvailability,
   toLocalAvailabilityInfo,
   resolveAvailabilityFromException,
   type AvailabilityClient,
-} from './availability.shared';
-import { type SafeEvent } from '../events/event.shared';
+} from "./availability.shared";
+import { type SafeEvent } from "../events/event.shared";
 import {
   assertBookingNoticeSatisfied,
   assertBookingWeekdayAllowed,
   getEffectiveParticipantPolicy,
-} from '../events/eventScheduling.service';
+} from "../events/eventScheduling.service";
 import {
   getWeeklyAvailability,
   setWeeklyAvailability,
@@ -25,8 +21,8 @@ import {
   addAvailabilityException,
   removeAvailabilityException,
   getEffectiveAvailabilityData as getEffectiveAvailability,
-} from './availabilityCalendar.service';
-import { getHostConflicts } from './availabilityConflict.service';
+} from "./availabilityCalendar.service";
+import { getHostConflicts } from "./availabilityConflict.service";
 
 /**
  * Facade service for availability lookups.
@@ -44,11 +40,11 @@ const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
     where: {
       isActive: true,
     },
-    orderBy: { startTime: 'asc' },
+    orderBy: { startTime: "asc" },
   },
   hosts: {
     where: { isActive: true },
-    orderBy: { hostOrder: 'asc' },
+    orderBy: { hostOrder: "asc" },
   },
 });
 
@@ -79,7 +75,10 @@ const isHostAvailable = async (
     : endTime;
 
   const [calendar, conflicts] = await Promise.all([
-    getEffectiveAvailability(userId, startTime, effectiveEndTime, { id: userId, role: UserRole.COACH }),
+    getEffectiveAvailability(userId, startTime, effectiveEndTime, {
+      id: userId,
+      role: UserRole.COACH,
+    }),
     getHostConflicts(userId, startTime, effectiveEndTime, options),
   ]);
 
@@ -97,11 +96,7 @@ const isHostAvailable = async (
   }
 
   const dayException = findAvailabilityException(calendar.exceptions, startLocal.dateString);
-  const exceptionDecision = resolveAvailabilityFromException(
-    dayException,
-    startLocal,
-    endLocal,
-  );
+  const exceptionDecision = resolveAvailabilityFromException(dayException, startLocal, endLocal);
 
   if (exceptionDecision !== null) {
     return exceptionDecision;
@@ -141,7 +136,7 @@ const getAvailableSlots = async (
             lte: endDate,
           },
         },
-        orderBy: { startTime: 'asc' },
+        orderBy: { startTime: "asc" },
       },
     },
   });
@@ -150,7 +145,7 @@ const getAvailableSlots = async (
     return [];
   }
 
-  const event = eventResult as (typeof eventResult & { bufferAfterMinutes: number });
+  const event = eventResult as typeof eventResult & { bufferAfterMinutes: number };
 
   const eligibleHosts = preferredHostId
     ? event.hosts.filter((host: { hostUserId: string }) => host.hostUserId === preferredHostId)
@@ -186,35 +181,37 @@ const getAvailableSlots = async (
     const currentBookings = await prisma.booking.count({
       where: (scheduleSlot
         ? {
-          scheduleSlotId: scheduleSlot.id,
-          status: { not: "CANCELLED" },
-        }
+            scheduleSlotId: scheduleSlot.id,
+            status: { not: "CANCELLED" },
+          }
         : {
-          eventId,
-          startTime: slotStart,
-          endTime: slotEnd,
-          status: { not: "CANCELLED" },
-        }) as any,
+            eventId,
+            startTime: slotStart,
+            endTime: slotEnd,
+            status: { not: "CANCELLED" },
+          }) as any,
     });
 
     if (maxParticipants !== null && currentBookings >= maxParticipants) {
       return null;
     }
 
-    const allowSharedSessionOverlap =
-      event.bookingMode === EventBookingMode.FIXED_SLOTS;
+    const allowSharedSessionOverlap = event.bookingMode === EventBookingMode.FIXED_SLOTS;
 
     let isAvailable = false;
 
     // Assignment specific availability check
     if (event.assignmentStrategy === "DIRECT" && !preferredHostId) {
       const primaryHost = eligibleHosts[0];
-      if (primaryHost && await isHostAvailable(primaryHost.hostUserId, slotStart, slotEnd, {
-        ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
-        eventId: allowSharedSessionOverlap ? eventId : undefined,
-        scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
-        bufferAfterMinutes: event.bufferAfterMinutes,
-      })) {
+      if (
+        primaryHost &&
+        (await isHostAvailable(primaryHost.hostUserId, slotStart, slotEnd, {
+          ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
+          eventId: allowSharedSessionOverlap ? eventId : undefined,
+          scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
+          bufferAfterMinutes: event.bufferAfterMinutes,
+        }))
+      ) {
         isAvailable = true;
       }
     } else {
@@ -223,7 +220,7 @@ const getAvailableSlots = async (
           await isHostAvailable(host.hostUserId, slotStart, slotEnd, {
             ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
             eventId: allowSharedSessionOverlap ? eventId : undefined,
-            scheduleSlotId: allowSharedSessionOverlap ? scheduleSlot?.id ?? null : undefined,
+            scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
             bufferAfterMinutes: event.bufferAfterMinutes,
           })
         ) {
@@ -250,7 +247,11 @@ const getAvailableSlots = async (
   // Mode based resolution
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
     for (const scheduleSlot of event.scheduleSlots) {
-      const availableSlot = await getSlotAvailability(scheduleSlot.startTime, scheduleSlot.endTime, scheduleSlot);
+      const availableSlot = await getSlotAvailability(
+        scheduleSlot.startTime,
+        scheduleSlot.endTime,
+        scheduleSlot,
+      );
       if (availableSlot) {
         slots.push(availableSlot);
       }

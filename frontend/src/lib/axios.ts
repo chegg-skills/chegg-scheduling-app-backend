@@ -14,9 +14,7 @@ const getCookieValue = (name: string): string | undefined => {
     return undefined
   }
 
-  const cookie = document.cookie
-    .split('; ')
-    .find((entry) => entry.startsWith(`${name}=`))
+  const cookie = document.cookie.split('; ').find((entry) => entry.startsWith(`${name}=`))
 
   if (!cookie) {
     return undefined
@@ -31,19 +29,19 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-apiClient.interceptors.request.use((config) => {
-  const method = config.method?.toLowerCase()
+apiClient.interceptors.request.use((req) => {
+  const method = req.method?.toLowerCase()
   const isSafeMethod = method === undefined || ['get', 'head', 'options'].includes(method)
 
   if (!isSafeMethod) {
     const csrfToken = getCookieValue(CSRF_COOKIE_NAME)
     if (csrfToken) {
-      config.headers = config.headers ?? {}
-      config.headers[CSRF_HEADER_NAME] = csrfToken
+      req.headers = req.headers ?? {}
+      req.headers[CSRF_HEADER_NAME] = csrfToken
     }
   }
 
-  return config
+  return req
 })
 
 // Redirect to login on 401 without creating a circular dependency on AuthContext
@@ -65,7 +63,7 @@ apiClient.interceptors.response.use(
       }
     }
     return Promise.reject(error)
-  },
+  }
 )
 
 export default apiClient

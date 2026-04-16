@@ -1,5 +1,5 @@
 import Stack from '@mui/material/Stack'
-import { Button } from '@/components/shared/Button'
+import { Button } from '@/components/shared/ui/Button'
 
 interface UserFormActionBarProps {
   isPending: boolean

@@ -3,11 +3,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import Stack from '@mui/material/Stack'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
-import { Button } from '@/components/shared/Button'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
-import { useLogin } from '@/hooks/useAuthMutations'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
+import { Button } from '@/components/shared/ui/Button'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { useLogin } from '@/hooks/queries/useAuthMutations'
 import { extractApiError } from '@/utils/apiError'
 
 const schema = z.object({
@@ -47,12 +47,7 @@ export function LoginForm() {
         />
       </FormField>
 
-      <FormField
-        label="Password"
-        htmlFor="password"
-        error={errors.password?.message}
-        required
-      >
+      <FormField label="Password" htmlFor="password" error={errors.password?.message} required>
         <Input
           id="password"
           type="password"

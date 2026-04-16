@@ -5,8 +5,8 @@ import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 import { Edit, Eye, EyeOff, Trash2, Users } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
-import { Badge } from '@/components/shared/Badge'
-import { RowActions } from '@/components/shared/RowActions'
+import { Badge } from '@/components/shared/ui/Badge'
+import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { Team } from '@/types'
@@ -65,7 +65,10 @@ export function TeamTableRow({
       </TableCell>
 
       <TableCell>
-        <Badge label={team.isActive ? 'Active' : 'Inactive'} variant={team.isActive ? 'green' : 'red'} />
+        <Badge
+          label={team.isActive ? 'Active' : 'Inactive'}
+          variant={team.isActive ? 'green' : 'red'}
+        />
       </TableCell>
       <TableCell>
         <PublicBookingLinkCell type="team" slug={team.publicBookingSlug} isActive={team.isActive} />

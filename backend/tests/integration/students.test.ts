@@ -10,15 +10,17 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
   const currentDay = now.getUTCDay();
   const daysAhead = (targetDay - currentDay + 7) % 7 || 7;
 
-  return new Date(Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate() + daysAhead,
-    hour,
-    minute,
-    0,
-    0,
-  ));
+  return new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + daysAhead,
+      hour,
+      minute,
+      0,
+      0,
+    ),
+  );
 };
 
 let adminToken: string;
@@ -117,29 +119,26 @@ beforeAll(async () => {
   const firstStart = getNextUtcWeekdayAt(1, 10, 0).toISOString();
   const secondStart = getNextUtcWeekdayAt(1, 12, 0).toISOString();
 
-  const firstBookingRes = await request(app)
-    .post("/api/bookings")
-    .send({
-      studentName: "History Student",
-      studentEmail: "history.student@example.com",
-      teamId,
-      eventId,
-      startTime: firstStart,
-      timezone: "UTC",
-    });
+  const firstBookingRes = await request(app).post("/api/bookings").send({
+    studentName: "History Student",
+    studentEmail: "history.student@example.com",
+    teamId,
+    eventId,
+    startTime: firstStart,
+    timezone: "UTC",
+  });
 
-  const secondBookingRes = await request(app)
-    .post("/api/bookings")
-    .send({
-      studentName: "History Student",
-      studentEmail: "history.student@example.com",
-      teamId,
-      eventId,
-      startTime: secondStart,
-      timezone: "UTC",
-    });
+  const secondBookingRes = await request(app).post("/api/bookings").send({
+    studentName: "History Student",
+    studentEmail: "history.student@example.com",
+    teamId,
+    eventId,
+    startTime: secondStart,
+    timezone: "UTC",
+  });
 
-  studentId = secondBookingRes.body.data.booking.student?.id ?? firstBookingRes.body.data.booking.student?.id;
+  studentId =
+    secondBookingRes.body.data.booking.student?.id ?? firstBookingRes.body.data.booking.student?.id;
 });
 
 afterAll(async () => {

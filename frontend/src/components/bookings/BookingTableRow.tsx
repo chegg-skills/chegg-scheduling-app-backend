@@ -1,8 +1,8 @@
 import { Box, Button, Collapse, Divider, TableCell, TableRow } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
-import type { Booking, BookingStatus } from '@/types'
-import { useAsyncAction } from '@/hooks/useAsyncAction'
+import type { Booking } from '@/types'
+import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
 import { BookingStudentCell } from './cells/BookingStudentCell'
@@ -11,38 +11,12 @@ import { BookingHostInfo } from './cells/BookingHostInfo'
 
 interface BookingTableRowProps {
   booking: Booking
-  onUpdateStatus: (id: string, status: BookingStatus) => void
   isExpanded: boolean
   onToggle: () => void
-  onViewHost?: (userId: string) => void
 }
 
-export function BookingTableRow({
-  booking,
-  onUpdateStatus,
-  isExpanded,
-  onToggle,
-  onViewHost,
-}: BookingTableRowProps) {
-  const { handleAction } = useAsyncAction()
-
-  const startTime = new Date(booking.startTime)
-  const now = new Date()
-  const tenMinutesAfterStart = new Date(startTime.getTime() + 10 * 60 * 1000)
-  const canMarkNoShow = booking.status === 'CONFIRMED' && now >= tenMinutesAfterStart
-
-  const handleStatusUpdate = async (status: BookingStatus, label: string) => {
-    handleAction(
-      ({ id, status: nextStatus }: { id: string; status: BookingStatus }) =>
-        onUpdateStatus(id, nextStatus),
-      { id: booking.id, status },
-      {
-        title: `${label} Booking`,
-        message: `Are you sure you want to ${label.toLowerCase()} the booking for ${toTitleCase(booking.studentName)}?`,
-        actionName: label,
-      }
-    )
-  }
+export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableRowProps) {
+  const { handleStatusUpdate, canMarkNoShow } = useBookingStatusUpdate()
 
   return (
     <>
@@ -54,7 +28,10 @@ export function BookingTableRow({
         }}
       >
         <TableCell sx={{ pl: 3 }}>
-          <BookingStudentCell name={toTitleCase(booking.studentName)} email={booking.studentEmail} />
+          <BookingStudentCell
+            name={toTitleCase(booking.studentName)}
+            email={booking.studentEmail}
+          />
         </TableCell>
 
         <TableCell>
@@ -64,7 +41,7 @@ export function BookingTableRow({
         </TableCell>
 
         <TableCell>
-          <BookingHostInfo host={booking.host} onViewHost={onViewHost} />
+          <BookingHostInfo host={booking.host ?? null} />
         </TableCell>
 
         <TableCell>
@@ -102,18 +79,35 @@ export function BookingTableRow({
                 borderBottom: '1px solid',
                 borderColor: 'divider',
                 borderLeft: '4px solid',
-                borderLeftColor: 'primary.main'
+                borderLeftColor: 'primary.main',
               }}
             >
-              <BookingDetailsPanel booking={booking} onViewHost={onViewHost} />
+              <BookingDetailsPanel booking={booking} />
 
               <Divider sx={{ my: 3 }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Box sx={{ mr: 'auto', alignSelf: 'center', color: 'text.secondary', typography: 'caption', display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                  <Box sx={{ fontWeight: 600 }}>Booking ID: {booking.id.slice(0, 8).toUpperCase()}</Box>
+                <Box
+                  sx={{
+                    mr: 'auto',
+                    alignSelf: 'center',
+                    color: 'text.secondary',
+                    typography: 'caption',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.25,
+                  }}
+                >
+                  <Box sx={{ fontWeight: 600 }}>
+                    Booking ID: {booking.id.slice(0, 8).toUpperCase()}
+                  </Box>
                   <Box>
-                    Created on {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(booking.createdAt))} by {toTitleCase(booking.studentName)}
+                    Created on{' '}
+                    {new Intl.DateTimeFormat('en-US', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    }).format(new Date(booking.createdAt))}{' '}
+                    by {toTitleCase(booking.studentName)}
                   </Box>
                 </Box>
 
@@ -124,7 +118,7 @@ export function BookingTableRow({
                       color="error"
                       size="small"
                       startIcon={<XCircle size={16} />}
-                      onClick={() => handleStatusUpdate('CANCELLED', 'Cancel')}
+                      onClick={() => handleStatusUpdate(booking, 'CANCELLED', 'Cancel')}
                       sx={{ fontWeight: 600, borderRadius: 1.5 }}
                     >
                       Cancel Booking
@@ -144,8 +138,8 @@ export function BookingTableRow({
                         '&:hover': {
                           borderColor: 'primary.main',
                           color: 'primary.main',
-                          bgcolor: 'primary.lighter'
-                        }
+                          bgcolor: 'primary.lighter',
+                        },
                       }}
                     >
                       Reschedule
@@ -153,13 +147,13 @@ export function BookingTableRow({
                   </>
                 )}
 
-                {canMarkNoShow && (
+                {canMarkNoShow(booking) && (
                   <Button
                     variant="contained"
                     color="warning"
                     size="small"
                     startIcon={<Clock size={16} />}
-                    onClick={() => handleStatusUpdate('NO_SHOW', 'No Show')}
+                    onClick={() => handleStatusUpdate(booking, 'NO_SHOW', 'No Show')}
                     sx={{ fontWeight: 600, borderRadius: 1.5 }}
                   >
                     Mark as No Show

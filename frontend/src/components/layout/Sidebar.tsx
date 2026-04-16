@@ -5,7 +5,7 @@ import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import LogoOrange from '@/assets/Color=Orange.svg'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/auth'
 import { APP_HEADER_MIN_HEIGHT } from '@/components/shared/layoutConstants'
 import { navItems } from './sidebar/navConfig'
 import { ExpandedSidebarContent } from './sidebar/ExpandedSidebarContent'
@@ -18,9 +18,7 @@ export function Sidebar() {
 
   if (!user) return null
 
-  const visibleItems = navItems.filter((item) =>
-    item.allowedRoles.includes(user.role),
-  )
+  const visibleItems = navItems.filter((item) => item.allowedRoles.includes(user.role))
 
   const SIDEBAR_WIDTH = isCollapsed ? 85 : 260
 
@@ -68,7 +66,7 @@ export function Sidebar() {
               style={{
                 height: 32,
                 width: 'auto',
-                display: 'block'
+                display: 'block',
               }}
             />
           </Box>
@@ -89,11 +87,7 @@ export function Sidebar() {
           logout={logout}
         />
       ) : (
-        <ExpandedSidebarContent
-          items={visibleItems}
-          pathname={location.pathname}
-          logout={logout}
-        />
+        <ExpandedSidebarContent items={visibleItems} pathname={location.pathname} logout={logout} />
       )}
     </Drawer>
   )

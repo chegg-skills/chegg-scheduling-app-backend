@@ -1,4 +1,9 @@
-import { EventBookingMode, Prisma, type EventInteractionType as EventInteractionTypeModel, type EventScheduleSlot } from "@prisma/client";
+import {
+  EventBookingMode,
+  Prisma,
+  type EventInteractionType as EventInteractionTypeModel,
+  type EventScheduleSlot,
+} from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -28,10 +33,12 @@ const resolveEventSchedulingConfig = (
   existing?: SafeEvent,
 ) => {
   return {
-    bookingMode: (payload.bookingMode as EventBookingMode) ?? existing?.bookingMode ?? EventBookingMode.HOST_AVAILABILITY,
+    bookingMode:
+      (payload.bookingMode as EventBookingMode) ??
+      existing?.bookingMode ??
+      EventBookingMode.HOST_AVAILABILITY,
     allowedWeekdays: payload.allowedWeekdays ?? existing?.allowedWeekdays ?? [],
-    minimumNoticeMinutes:
-      payload.minimumNoticeMinutes ?? existing?.minimumNoticeMinutes ?? 0,
+    minimumNoticeMinutes: payload.minimumNoticeMinutes ?? existing?.minimumNoticeMinutes ?? 0,
     minParticipantCount:
       payload.minParticipantCount ??
       existing?.minParticipantCount ??
@@ -40,16 +47,11 @@ const resolveEventSchedulingConfig = (
       payload.maxParticipantCount ??
       existing?.maxParticipantCount ??
       interactionType.maxParticipants,
-    bufferAfterMinutes:
-      payload.bufferAfterMinutes ??
-      existing?.bufferAfterMinutes ?? 0,
+    bufferAfterMinutes: payload.bufferAfterMinutes ?? existing?.bufferAfterMinutes ?? 0,
   };
 };
 
-const assertBookingNoticeSatisfied = (
-  minimumNoticeMinutes: number,
-  bookingStartTime: Date,
-) => {
+const assertBookingNoticeSatisfied = (minimumNoticeMinutes: number, bookingStartTime: Date) => {
   const now = new Date();
   const noticeMs = minimumNoticeMinutes * 60 * 1000;
   if (bookingStartTime.getTime() - now.getTime() < noticeMs) {
@@ -60,10 +62,7 @@ const assertBookingNoticeSatisfied = (
   }
 };
 
-const assertBookingWeekdayAllowed = (
-  allowedWeekdays: number[],
-  bookingTime: Date,
-) => {
+const assertBookingWeekdayAllowed = (allowedWeekdays: number[], bookingTime: Date) => {
   if (allowedWeekdays.length === 0) return;
   const day = bookingTime.getUTCDay();
   if (!allowedWeekdays.includes(day)) {
@@ -89,7 +88,11 @@ const getEffectiveParticipantPolicy = (
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
     return {
       minParticipants: event.minParticipantCount ?? slotOrInteraction.minParticipants ?? 1,
-      maxParticipants: slotOrInteraction.capacity ?? event.maxParticipantCount ?? slotOrInteraction.maxParticipants ?? null,
+      maxParticipants:
+        slotOrInteraction.capacity ??
+        event.maxParticipantCount ??
+        slotOrInteraction.maxParticipants ??
+        null,
     };
   }
   return {

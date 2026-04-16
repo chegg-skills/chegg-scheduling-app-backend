@@ -30,7 +30,9 @@ export function UserAvailabilityTab({ user }: UserAvailabilityTabProps) {
         <Paper variant="outlined">
           <List disablePadding>
             {DAYS.map((day, idx) => {
-              const slots = user.weeklyAvailability.filter((availability) => availability.dayOfWeek === idx)
+              const slots = user.weeklyAvailability.filter(
+                (availability) => availability.dayOfWeek === idx
+              )
 
               return (
                 <ListItem key={day} divider={idx < 6}>
@@ -89,7 +91,9 @@ export function UserAvailabilityTab({ user }: UserAvailabilityTabProps) {
                       {formatDate(exception.date)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {exception.isUnavailable ? 'Unavailable' : `${exception.startTime} - ${exception.endTime}`}
+                      {exception.isUnavailable
+                        ? 'Unavailable'
+                        : `${exception.startTime} - ${exception.endTime}`}
                     </Typography>
                   </Box>
                   <Chip

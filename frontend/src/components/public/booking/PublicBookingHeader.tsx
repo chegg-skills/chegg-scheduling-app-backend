@@ -28,7 +28,9 @@ export function PublicBookingHeader({
   const heading = React.useMemo(() => {
     switch (scope) {
       case 'team':
-        return teamDetails?.name ? `Book with ${toTitleCase(teamDetails.name)}` : 'Book with this team'
+        return teamDetails?.name
+          ? `Book with ${toTitleCase(teamDetails.name)}`
+          : 'Book with this team'
       case 'event':
         return eventDetails?.name ? `Book ${toTitleCase(eventDetails.name)}` : 'Book this session'
       case 'coach':
@@ -70,7 +72,7 @@ export function PublicBookingHeader({
           mx: { xs: -2, lg: -3 }, // Bleed out to touch edges
           mt: { xs: -1.5, md: -3, lg: -3 }, // Match parent py: 1.5
           borderBottom: '1px solid',
-          borderColor: (theme) => (theme.palette as any).divider
+          borderColor: (theme) => (theme.palette as any).divider,
         }}
       >
         <Box
@@ -82,7 +84,7 @@ export function PublicBookingHeader({
             width: 'auto',
             objectFit: 'contain',
             display: 'block',
-            margin: '0 auto'
+            margin: '0 auto',
           }}
         />
       </Box>
@@ -92,7 +94,11 @@ export function PublicBookingHeader({
         <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: -0.5, lineHeight: 1.1 }}>
           {customHeading || heading}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontWeight: 500, lineHeight: 1.4 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: 1, fontWeight: 500, lineHeight: 1.4 }}
+        >
           {customSubtitle || subtitle}
         </Typography>
       </Box>

@@ -43,11 +43,7 @@ router
 
 router
   .route("/event-offerings/:offeringId/usage")
-  .get(
-    authenticate,
-    authorize(UserRole.SUPER_ADMIN),
-    eventController.getEventOfferingUsage,
-  )
+  .get(authenticate, authorize(UserRole.SUPER_ADMIN), eventController.getEventOfferingUsage)
   .all(methodNotAllowed);
 
 router
@@ -80,11 +76,7 @@ router
 
 router
   .route("/event-interaction-types/:interactionTypeId/usage")
-  .get(
-    authenticate,
-    authorize(UserRole.SUPER_ADMIN),
-    eventController.getInteractionTypeUsage,
-  )
+  .get(authenticate, authorize(UserRole.SUPER_ADMIN), eventController.getInteractionTypeUsage)
   .all(methodNotAllowed);
 
 router
@@ -95,11 +87,7 @@ router
     validate(CreateEventSchema),
     eventController.createEvent,
   )
-  .get(
-    authenticate,
-    validate(ListTeamEventsSchema),
-    eventController.listTeamEvents,
-  )
+  .get(authenticate, validate(ListTeamEventsSchema), eventController.listTeamEvents)
   .all(methodNotAllowed);
 
 router

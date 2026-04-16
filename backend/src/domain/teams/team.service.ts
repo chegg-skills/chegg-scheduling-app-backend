@@ -37,22 +37,13 @@ const validateTeamLead = async (teamLeadId: string): Promise<void> => {
   });
 
   if (!lead) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Team lead user not found.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead user not found.");
   }
   if (!lead.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Team lead must be an active user.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead must be an active user.");
   }
   if (lead.role !== UserRole.TEAM_ADMIN) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Team lead must have the TEAM_ADMIN role.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead must have the TEAM_ADMIN role.");
   }
 };
 
@@ -79,10 +70,7 @@ const upsertTeamLeadMembership = async (
   });
 };
 
-const createTeam = async (
-  payload: CreateTeamInput,
-  caller: CallerContext,
-): Promise<SafeTeam> => {
+const createTeam = async (payload: CreateTeamInput, caller: CallerContext): Promise<SafeTeam> => {
   const validated = await CreateTeamSchema.body.parseAsync(payload);
 
   await validateTeamLead(validated.teamLeadId);
@@ -162,10 +150,7 @@ const readTeam = async (teamId: string): Promise<SafeTeam> => {
   return team;
 };
 
-const updateTeam = async (
-  teamId: string,
-  payload: UpdateTeamInput,
-): Promise<SafeTeam> => {
+const updateTeam = async (teamId: string, payload: UpdateTeamInput): Promise<SafeTeam> => {
   const validated = await UpdateTeamSchema.body.parseAsync(payload);
   const existingTeam = await readTeam(teamId);
 

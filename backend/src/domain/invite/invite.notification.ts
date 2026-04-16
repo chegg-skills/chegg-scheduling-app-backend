@@ -21,9 +21,7 @@ type InviteAcceptedNotificationInput = {
   role: UserRole;
 };
 
-const queueInviteCreatedNotification = async (
-  input: InviteCreatedNotificationInput,
-) => {
+const queueInviteCreatedNotification = async (input: InviteCreatedNotificationInput) => {
   try {
     const inviteUrl = `${resolveFrontendUrl()}/accept-invite?token=${encodeURIComponent(
       input.token,
@@ -48,9 +46,7 @@ const queueInviteCreatedNotification = async (
   }
 };
 
-const queueInviteAcceptedNotification = async (
-  input: InviteAcceptedNotificationInput,
-) => {
+const queueInviteAcceptedNotification = async (input: InviteAcceptedNotificationInput) => {
   try {
     const inviter = await prisma.user.findUnique({
       where: { id: input.invitedById },

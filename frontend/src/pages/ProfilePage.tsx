@@ -4,10 +4,10 @@ import Paper from '@mui/material/Paper'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import { User, Clock } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/context/auth'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { UserForm } from '@/components/users/UserForm'
-import { PageSpinner } from '@/components/shared/Spinner'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { AvailabilityView } from '@/components/availability/AvailabilityView'
 
 export function ProfilePage() {
@@ -50,32 +50,18 @@ export function ProfilePage() {
               },
             }}
           >
-            <Tab
-              label="Profile Info"
-              icon={<User size={18} />}
-              iconPosition="start"
-            />
-            <Tab
-              label="My Availability"
-              icon={<Clock size={18} />}
-              iconPosition="start"
-            />
+            <Tab label="Profile Info" icon={<User size={18} />} iconPosition="start" />
+            <Tab label="My Availability" icon={<Clock size={18} />} iconPosition="start" />
           </Tabs>
         </Box>
 
         {activeTab === 0 && (
           <Paper variant="outlined" sx={{ mt: 3, maxWidth: 760, p: 3, borderRadius: 2 }}>
-            <UserForm
-              user={user}
-              currentUserRole={user.role}
-              onSuccess={refreshUser}
-            />
+            <UserForm user={user} currentUserRole={user.role} onSuccess={refreshUser} />
           </Paper>
         )}
 
-        {activeTab === 1 && (
-          <AvailabilityView userId={user.id} />
-        )}
+        {activeTab === 1 && <AvailabilityView userId={user.id} />}
       </Box>
     </Box>
   )

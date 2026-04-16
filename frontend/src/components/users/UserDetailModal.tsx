@@ -1,8 +1,8 @@
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-import { Modal } from '@/components/shared/Modal'
-import { useUser } from '@/hooks/useUsers'
+import { Modal } from '@/components/shared/ui/Modal'
+import { useUser } from '@/hooks/queries/useUsers'
 import { UserDetailView } from './UserDetailView'
 
 interface UserDetailModalProps {

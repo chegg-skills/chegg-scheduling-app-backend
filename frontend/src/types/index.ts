@@ -4,16 +4,19 @@ export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
 export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
 export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
-export type SessionLeadershipStrategy =
-  | 'SINGLE_HOST'
-  | 'FIXED_LEAD'
-  | 'ROTATING_LEAD'
+export type SessionLeadershipStrategy = 'SINGLE_HOST' | 'FIXED_LEAD' | 'ROTATING_LEAD'
 export type StatsTimeframe =
-  | 'today' | 'yesterday'
-  | 'thisWeek' | 'lastWeek'
-  | 'thisMonth' | 'lastMonth'
-  | 'thisQuarter' | 'lastQuarter'
-  | 'thisYear' | 'lastYear' | 'all'
+  | 'today'
+  | 'yesterday'
+  | 'thisWeek'
+  | 'lastWeek'
+  | 'thisMonth'
+  | 'lastMonth'
+  | 'thisQuarter'
+  | 'lastQuarter'
+  | 'thisYear'
+  | 'lastYear'
+  | 'all'
   | string // to support 'custom:ISO_START:ISO_END' in URL/params
 
 // ─── Core Models ──────────────────────────────────────────────────────────────
@@ -177,11 +180,26 @@ export interface Event {
   scheduleSlots?: EventScheduleSlot[]
 }
 
-export interface PublicTeamSummary extends Pick<Team, 'id' | 'name' | 'description' | 'publicBookingSlug'> { }
+export interface PublicTeamSummary extends Pick<
+  Team,
+  'id' | 'name' | 'description' | 'publicBookingSlug'
+> {}
 
-export interface PublicCoachSummary extends Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'> { }
+export interface PublicCoachSummary extends Pick<
+  SafeUser,
+  'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'
+> {}
 
-export interface PublicEventSummary extends Pick<Event, 'id' | 'name' | 'description' | 'durationSeconds' | 'locationType' | 'teamId' | 'publicBookingSlug'> {
+export interface PublicEventSummary extends Pick<
+  Event,
+  | 'id'
+  | 'name'
+  | 'description'
+  | 'durationSeconds'
+  | 'locationType'
+  | 'teamId'
+  | 'publicBookingSlug'
+> {
   team: PublicTeamSummary
 }
 
@@ -250,8 +268,6 @@ export interface PeakActivityStats {
   activity: PeakActivityMetric[]
 }
 
-
-
 // ─── Auth Payloads ────────────────────────────────────────────────────────────
 
 export interface AuthPayload {
@@ -317,10 +333,10 @@ export interface UpdateUserDto {
 }
 
 export interface CreateTeamDto {
-  name: string;
-  teamLeadId: string;
-  description?: string;
-  isActive?: boolean;
+  name: string
+  teamLeadId: string
+  description?: string
+  isActive?: boolean
 }
 
 export interface UpdateTeamDto {
@@ -348,7 +364,7 @@ export interface CreateEventDto {
   isActive?: boolean
 }
 
-export interface UpdateEventDto extends Partial<CreateEventDto> { }
+export interface UpdateEventDto extends Partial<CreateEventDto> {}
 
 export interface SetEventHostsDto {
   hosts: Array<{ userId: string; hostOrder?: number }>
@@ -362,7 +378,7 @@ export interface CreateEventOfferingDto {
   isActive?: boolean
 }
 
-export interface UpdateEventOfferingDto extends Partial<CreateEventOfferingDto> { }
+export interface UpdateEventOfferingDto extends Partial<CreateEventOfferingDto> {}
 
 export interface CreateInteractionTypeDto {
   key: string
@@ -378,7 +394,7 @@ export interface CreateInteractionTypeDto {
   isActive?: boolean
 }
 
-export interface UpdateInteractionTypeDto extends Partial<CreateInteractionTypeDto> { }
+export interface UpdateInteractionTypeDto extends Partial<CreateInteractionTypeDto> {}
 
 export interface UserWeeklyAvailability {
   id: string

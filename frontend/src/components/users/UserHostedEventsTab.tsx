@@ -6,7 +6,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Calendar } from 'lucide-react'
 import type { UserWithDetails } from '@/types'
-import { Badge } from '@/components/shared/Badge'
+import { Badge } from '@/components/shared/ui/Badge'
 import { toTitleCase } from '@/utils/toTitleCase'
 
 interface UserHostedEventsTabProps {
@@ -48,7 +48,8 @@ export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
             }
             secondary={
               <Typography variant="caption" color="text.secondary">
-                {toTitleCase(host.event.interactionType.name)} • {Math.round(host.event.durationSeconds / 60)} mins
+                {toTitleCase(host.event.interactionType.name)} •{' '}
+                {Math.round(host.event.durationSeconds / 60)} mins
               </Typography>
             }
           />

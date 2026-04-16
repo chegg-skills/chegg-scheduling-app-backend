@@ -162,7 +162,9 @@ const buildStudentWhere = (
   return conditions.length > 0 ? { AND: conditions } : {};
 };
 
-const mapLatestBookingSummary = (booking?: LatestBookingRecord): {
+const mapLatestBookingSummary = (
+  booking?: LatestBookingRecord,
+): {
   id: string;
   startTime: Date;
   endTime: Date;
@@ -225,10 +227,7 @@ const listStudents = async (
     prisma.student.findMany({
       where,
       include: studentSummaryInclude,
-      orderBy: [
-        { lastBookedAt: "desc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ lastBookedAt: "desc" }, { createdAt: "desc" }],
       skip,
       take: pageSize,
     }),

@@ -2,7 +2,7 @@ import type { TeamMember, UserRole } from '@/types'
 import List from '@mui/material/List'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
-import { useRemoveTeamMember } from '@/hooks/useTeamMembers'
+import { useRemoveTeamMember } from '@/hooks/queries/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { TeamMemberRow } from './TeamMemberRow'
 
@@ -14,12 +14,22 @@ interface TeamMemberListProps {
   onViewUser?: (userId: string) => void
 }
 
-export function TeamMemberList({ teamId, members, currentUserRole, teamLeadId, onViewUser }: TeamMemberListProps) {
+export function TeamMemberList({
+  teamId,
+  members,
+  currentUserRole,
+  teamLeadId,
+  onViewUser,
+}: TeamMemberListProps) {
   const { mutate: remove } = useRemoveTeamMember(teamId)
   const { handleAction } = useAsyncAction()
 
   if (members.length === 0) {
-    return <Typography variant="body2" color="text.secondary">No members yet.</Typography>
+    return (
+      <Typography variant="body2" color="text.secondary">
+        No members yet.
+      </Typography>
+    )
   }
 
   const sortedMembers = [...members].sort((a, b) => {

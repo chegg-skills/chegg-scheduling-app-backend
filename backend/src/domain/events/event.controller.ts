@@ -4,48 +4,23 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as eventService from "./event.service";
 
-const createEvent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const createEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.createEvent(
-      (req.params as any).teamId,
-      req.body,
-      caller,
-    );
+    const event = await eventService.createEvent((req.params as any).teamId, req.body, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.CREATED,
-      event,
-      "Event created successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.CREATED, event, "Event created successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const duplicateEvent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const duplicateEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.duplicateEvent(
-      (req.params as any).eventId,
-      caller,
-    );
+    const event = await eventService.duplicateEvent((req.params as any).eventId, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.CREATED,
-      event,
-      "Event duplicated successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.CREATED, event, "Event duplicated successfully.");
   } catch (error) {
     next(error);
   }
@@ -60,12 +35,7 @@ const createEventOffering = async (
     const caller = res.locals.authUser as CallerContext;
     const offering = await eventService.createEventOffering(req.body, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.CREATED,
-      offering,
-      "Event offering created successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.CREATED, offering, "Event offering created successfully.");
   } catch (error) {
     next(error);
   }
@@ -79,12 +49,7 @@ const listEventOfferings = async (
   try {
     const result = await eventService.listEventOfferings();
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Event offerings fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event offerings fetched successfully.");
   } catch (error) {
     next(error);
   }
@@ -103,12 +68,7 @@ const updateEventOffering = async (
       caller,
     );
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      offering,
-      "Event offering updated successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, offering, "Event offering updated successfully.");
   } catch (error) {
     next(error);
   }
@@ -121,17 +81,9 @@ const deleteEventOffering = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.deleteEventOffering(
-      (req.params as any).offeringId,
-      caller,
-    );
+    const offering = await eventService.deleteEventOffering((req.params as any).offeringId, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      offering,
-      "Event offering deleted successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, offering, "Event offering deleted successfully.");
   } catch (error) {
     next(error);
   }
@@ -144,17 +96,9 @@ const getEventOfferingUsage = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const usage = await eventService.getEventOfferingUsage(
-      (req.params as any).offeringId,
-      caller,
-    );
+    const usage = await eventService.getEventOfferingUsage((req.params as any).offeringId, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      usage,
-      "Event offering usage fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, usage, "Event offering usage fetched successfully.");
   } catch (error) {
     next(error);
   }
@@ -188,12 +132,7 @@ const listInteractionTypes = async (
   try {
     const result = await eventService.listInteractionTypes();
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Interaction types fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Interaction types fetched successfully.");
   } catch (error) {
     next(error);
   }
@@ -258,124 +197,66 @@ const getInteractionTypeUsage = async (
       caller,
     );
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      usage,
-      "Interaction type usage fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, usage, "Interaction type usage fetched successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const listTeamEvents = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const listTeamEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const filters = req.query as any;
-    const result = await eventService.listTeamEvents(
-      (req.params as any).teamId,
-      caller,
-      { page: (req.query as any).page, pageSize: (req.query as any).pageSize },
-    );
+    const result = await eventService.listTeamEvents((req.params as any).teamId, caller, {
+      page: (req.query as any).page,
+      pageSize: (req.query as any).pageSize,
+    });
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Events fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Events fetched successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const readEvent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const readEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const event = await eventService.readEvent((req.params as any).eventId, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      event,
-      "Event fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, event, "Event fetched successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const updateEvent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const updateEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.updateEvent(
-      (req.params as any).eventId,
-      req.body,
-      caller,
-    );
+    const event = await eventService.updateEvent((req.params as any).eventId, req.body, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      event,
-      "Event updated successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, event, "Event updated successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const deleteEvent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const deleteEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const event = await eventService.deleteEvent((req.params as any).eventId, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      event,
-      "Event deleted successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, event, "Event deleted successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const listEventHosts = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const listEventHosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.listEventHosts(
-      (req.params as any).eventId,
-      caller,
-    );
+    const result = await eventService.listEventHosts((req.params as any).eventId, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Event hosts fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event hosts fetched successfully.");
   } catch (error) {
     next(error);
   }
@@ -394,22 +275,13 @@ const replaceEventHosts = async (
       caller,
     );
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Event hosts updated successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event hosts updated successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const removeEventHost = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const removeEventHost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.removeEventHost(
@@ -418,12 +290,7 @@ const removeEventHost = async (
       caller,
     );
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Event host removed successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event host removed successfully.");
   } catch (error) {
     next(error);
   }
@@ -436,17 +303,9 @@ const listEventScheduleSlots = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.listEventScheduleSlots(
-      (req.params as any).eventId,
-      caller,
-    );
+    const result = await eventService.listEventScheduleSlots((req.params as any).eventId, caller);
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Event schedule slots fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event schedule slots fetched successfully.");
   } catch (error) {
     next(error);
   }
@@ -490,12 +349,7 @@ const updateEventScheduleSlot = async (
       caller,
     );
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      slot,
-      "Event schedule slot updated successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, slot, "Event schedule slot updated successfully.");
   } catch (error) {
     next(error);
   }
@@ -514,33 +368,22 @@ const deleteEventScheduleSlot = async (
       caller,
     );
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      slot,
-      "Event schedule slot deleted successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, slot, "Event schedule slot deleted successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const listAllEvents = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const listAllEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const filters = req.query as any;
-    const result = await eventService.listAllEvents(caller, { page: filters.page, pageSize: filters.pageSize });
+    const result = await eventService.listAllEvents(caller, {
+      page: filters.page,
+      pageSize: filters.pageSize,
+    });
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      result,
-      "Events fetched successfully.",
-    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Events fetched successfully.");
   } catch (error) {
     next(error);
   }

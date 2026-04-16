@@ -11,7 +11,10 @@ function getErrorMessage(error: unknown) {
   if (isRouteErrorResponse(error)) {
     return {
       title: `${error.status} ${error.statusText}`,
-      message: typeof error.data === 'string' ? error.data : 'Something went wrong while loading this page.',
+      message:
+        typeof error.data === 'string'
+          ? error.data
+          : 'Something went wrong while loading this page.',
     }
   }
 

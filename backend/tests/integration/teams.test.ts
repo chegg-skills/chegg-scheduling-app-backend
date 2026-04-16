@@ -183,9 +183,7 @@ describe("GET /api/teams", () => {
   });
 
   it("COACH cannot list teams (403)", async () => {
-    const res = await request(app)
-      .get("/api/teams")
-      .set("Authorization", `Bearer ${coachToken}`);
+    const res = await request(app).get("/api/teams").set("Authorization", `Bearer ${coachToken}`);
 
     expect(res.status).toBe(403);
   });
@@ -408,9 +406,7 @@ describe("PATCH /api/teams/:teamId", () => {
   });
 
   it("returns 401 when no auth token is provided", async () => {
-    const res = await request(app)
-      .patch(`/api/teams/${teamId}`)
-      .send({ name: "Anon Update" });
+    const res = await request(app).patch(`/api/teams/${teamId}`).send({ name: "Anon Update" });
 
     expect(res.status).toBe(401);
   });

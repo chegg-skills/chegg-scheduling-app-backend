@@ -4,9 +4,9 @@ import ListSubheader from '@mui/material/ListSubheader'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { Controller, useWatch, type Control, type FieldErrors } from 'react-hook-form'
-import { FormField } from '@/components/shared/FormField'
-import { Select } from '@/components/shared/Select'
-import { useTimezones } from '@/hooks/useConfig'
+import { FormField } from '@/components/shared/form/FormField'
+import { Select } from '@/components/shared/form/Select'
+import { useTimezones } from '@/hooks/queries/useConfig'
 import type { UserFormValues } from './userFormSchema'
 import { getTimezoneInfo, groupTimezonesByRegion } from './userSystemFieldUtils'
 
@@ -53,8 +53,11 @@ export function UserTimezoneField({ control, errors }: UserTimezoneFieldProps) {
   }, [])
 
   const groupedTimezones = useMemo(
-    () => groupTimezonesByRegion(timezones.filter((timezone): timezone is string => typeof timezone === 'string')),
-    [timezones],
+    () =>
+      groupTimezonesByRegion(
+        timezones.filter((timezone): timezone is string => typeof timezone === 'string')
+      ),
+    [timezones]
   )
 
   return (

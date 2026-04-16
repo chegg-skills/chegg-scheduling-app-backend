@@ -2,16 +2,11 @@ import rateLimit from "express-rate-limit";
 
 type RateLimitOptions = NonNullable<Parameters<typeof rateLimit>[0]>;
 
-const isTestRuntime =
-  process.env.NODE_ENV === "test" ||
-  process.env.JEST_WORKER_ID !== undefined;
+const isTestRuntime = process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID !== undefined;
 
-const shouldBypassRateLimit =
-  isTestRuntime && process.env.ENABLE_RATE_LIMITS_IN_TEST !== "true";
+const shouldBypassRateLimit = isTestRuntime && process.env.ENABLE_RATE_LIMITS_IN_TEST !== "true";
 
-const withTestBypass = <T extends RateLimitOptions>(
-  options: T,
-): T => ({
+const withTestBypass = <T extends RateLimitOptions>(options: T): T => ({
   ...options,
   skip: (req, res) => {
     if (shouldBypassRateLimit) {

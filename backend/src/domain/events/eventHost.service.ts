@@ -9,11 +9,7 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
-import {
-  eventInclude,
-  getManagedEvent,
-  type SafeEvent,
-} from "./event.shared";
+import { eventInclude, getManagedEvent, type SafeEvent } from "./event.shared";
 import { queueEventHostAddedNotification } from "./eventHost.notification";
 import { ReplaceEventHostsSchema } from "./event.schema";
 
@@ -52,10 +48,7 @@ const validateEventConfiguration = (
     config.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD &&
     !config.fixedLeadHostId
   ) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "FIXED_LEAD events require a fixedLeadHostId.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "FIXED_LEAD events require a fixedLeadHostId.");
   }
 
   if (
@@ -79,10 +72,7 @@ const validateEventConfiguration = (
   }
 
   if (config.hostCount > 0 && config.hostCount < requiredMinHosts) {
-    if (
-      config.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
-      config.hostCount < 2
-    ) {
+    if (config.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && config.hostCount < 2) {
       throw new ErrorHandler(
         StatusCodes.BAD_REQUEST,
         "ROUND_ROBIN events require at least two hosts.",
@@ -95,10 +85,7 @@ const validateEventConfiguration = (
     );
   }
 
-  if (
-    interactionType.maxHosts !== null &&
-    config.hostCount > interactionType.maxHosts
-  ) {
+  if (interactionType.maxHosts !== null && config.hostCount > interactionType.maxHosts) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       `This event exceeds the maximum host limit of ${interactionType.maxHosts} for its interaction type.`,
@@ -106,9 +93,7 @@ const validateEventConfiguration = (
   }
 };
 
-const normalizeHostInputs = (
-  payload: any,
-): Array<{ userId: string; hostOrder: number }> => {
+const normalizeHostInputs = (payload: any): Array<{ userId: string; hostOrder: number }> => {
   const validated = ReplaceEventHostsSchema.body.parse(payload);
 
   const withOrder = validated.hosts.map((host, index) => ({
@@ -118,10 +103,7 @@ const normalizeHostInputs = (
 
   const uniqueUserIds = new Set(withOrder.map((host) => host.userId));
   if (uniqueUserIds.size !== withOrder.length) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Each host userId must be unique.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Each host userId must be unique.");
   }
 
   return withOrder
@@ -166,10 +148,7 @@ const validateEventHosts = async (
   ]);
 
   if (users.length !== userIds.length) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "One or more selected hosts do not exist.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "One or more selected hosts do not exist.");
   }
 
   const membershipIds = new Set(memberships.map((membership) => membership.userId));
@@ -231,10 +210,7 @@ const replaceEventHosts = async (
   const event = await getManagedEvent(eventId, caller);
   const normalizedHosts = normalizeHostInputs(payload);
 
-  if (
-    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
-    normalizedHosts.length < 2
-  ) {
+  if (event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && normalizedHosts.length < 2) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       "ROUND_ROBIN events require at least two hosts.",
@@ -268,12 +244,7 @@ const replaceEventHosts = async (
       },
     });
 
-    await syncRoutingState(
-      tx,
-      eventId,
-      event.assignmentStrategy,
-      normalizedHosts.length,
-    );
+    await syncRoutingState(tx, eventId, event.assignmentStrategy, normalizedHosts.length);
   });
 
   if (event.isActive) {
@@ -332,12 +303,7 @@ const removeEventHost = async (
       data: { updatedById: caller.id },
     });
 
-    await syncRoutingState(
-      tx,
-      eventId,
-      event.assignmentStrategy,
-      remainingHosts.length,
-    );
+    await syncRoutingState(tx, eventId, event.assignmentStrategy, remainingHosts.length);
   });
 
   const refreshedEvent = await prisma.event.findUniqueOrThrow({

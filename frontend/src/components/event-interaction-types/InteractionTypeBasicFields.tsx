@@ -2,9 +2,9 @@ import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Stack from '@mui/material/Stack'
 import { Controller, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
-import { Textarea } from '@/components/shared/Textarea'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
+import { Textarea } from '@/components/shared/form/Textarea'
 import type { InteractionTypeFormValues } from './interactionTypeFormSchema'
 
 interface InteractionTypeBasicFieldsProps {

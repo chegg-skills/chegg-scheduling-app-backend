@@ -37,10 +37,7 @@ const getTokenFromRequest = (req: Request): string | undefined => {
 
 const parseJwtPayload = (payload: string | JwtPayload): AuthUser => {
   if (typeof payload === "string") {
-    throw new ErrorHandler(
-      StatusCodes.UNAUTHORIZED,
-      "Invalid authentication token payload.",
-    );
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid authentication token payload.");
   }
 
   const role = payload.role;
@@ -51,10 +48,7 @@ const parseJwtPayload = (payload: string | JwtPayload): AuthUser => {
     typeof role !== "string" ||
     !Object.values(UserRole).includes(role as UserRole)
   ) {
-    throw new ErrorHandler(
-      StatusCodes.UNAUTHORIZED,
-      "Invalid authentication token payload.",
-    );
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid authentication token payload.");
   }
 
   return {
@@ -64,21 +58,12 @@ const parseJwtPayload = (payload: string | JwtPayload): AuthUser => {
   };
 };
 
-const authenticate = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const authenticate = (req: Request, res: Response, next: NextFunction): Promise<void> => {
   return (async () => {
     const token = getTokenFromRequest(req);
 
     if (!token) {
-      next(
-        new ErrorHandler(
-          StatusCodes.UNAUTHORIZED,
-          "Authentication token is required.",
-        ),
-      );
+      next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Authentication token is required."));
       return;
     }
 
@@ -95,10 +80,7 @@ const authenticate = (
 
       if (!user || !user.isActive) {
         next(
-          new ErrorHandler(
-            StatusCodes.UNAUTHORIZED,
-            "Invalid or expired authentication token.",
-          ),
+          new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."),
         );
         return;
       }
@@ -107,12 +89,7 @@ const authenticate = (
       res.locals.authUser = { id: user.id, email: user.email, role: user.role };
       next();
     } catch {
-      next(
-        new ErrorHandler(
-          StatusCodes.UNAUTHORIZED,
-          "Invalid or expired authentication token.",
-        ),
-      );
+      next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
     }
   })();
 };
@@ -122,12 +99,7 @@ const authorize = (...allowedRoles: UserRole[]) => {
     const authUser = res.locals.authUser as AuthUser | undefined;
 
     if (!authUser) {
-      next(
-        new ErrorHandler(
-          StatusCodes.UNAUTHORIZED,
-          "Authentication is required.",
-        ),
-      );
+      next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Authentication is required."));
       return;
     }
 

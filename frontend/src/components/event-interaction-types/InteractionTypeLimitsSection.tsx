@@ -3,8 +3,8 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Controller, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
 import type { InteractionTypeFormValues } from './interactionTypeFormSchema'
 
 interface InteractionTypeLimitsSectionProps {
@@ -36,16 +36,30 @@ export function InteractionTypeLimitsSection({
             label="Min assigned coaches"
             htmlFor="minHosts"
             error={errors.minHosts?.message}
-            hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'Minimum number of coaches that must be assigned to an event.'}
+            hint={
+              !supportsMultipleHosts
+                ? 'Single-coach types are locked to 1.'
+                : 'Minimum number of coaches that must be assigned to an event.'
+            }
           >
-            <Input id="minHosts" type="number" min="1" disabled={!supportsMultipleHosts} {...register('minHosts')} />
+            <Input
+              id="minHosts"
+              type="number"
+              min="1"
+              disabled={!supportsMultipleHosts}
+              {...register('minHosts')}
+            />
           </FormField>
 
           <FormField
             label="Max assigned coaches (blank = unlimited)"
             htmlFor="maxHosts"
             error={errors.maxHosts?.message}
-            hint={!supportsMultipleHosts ? 'Single-coach types are locked to 1.' : 'No limit if left blank.'}
+            hint={
+              !supportsMultipleHosts
+                ? 'Single-coach types are locked to 1.'
+                : 'No limit if left blank.'
+            }
           >
             <Controller
               name="maxHosts"
@@ -57,7 +71,9 @@ export function InteractionTypeLimitsSection({
                   min="1"
                   placeholder={supportsMultipleHosts ? '∞' : '1'}
                   disabled={!supportsMultipleHosts}
-                  value={field.value === null || typeof field.value === 'undefined' ? '' : field.value}
+                  value={
+                    field.value === null || typeof field.value === 'undefined' ? '' : field.value
+                  }
                   onChange={(event) => {
                     const { value } = event.target
                     field.onChange(value === '' ? null : Number(value))

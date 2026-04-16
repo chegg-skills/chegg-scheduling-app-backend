@@ -39,10 +39,7 @@ const createOffering = async (token: string, payload?: Record<string, unknown>) 
   return res;
 };
 
-const createInteractionType = async (
-  token: string,
-  payload?: Record<string, unknown>,
-) => {
+const createInteractionType = async (token: string, payload?: Record<string, unknown>) => {
   const res = await request(app)
     .post("/api/event-interaction-types")
     .set("Authorization", `Bearer ${token}`)
@@ -64,11 +61,7 @@ const createInteractionType = async (
   return res;
 };
 
-const createEvent = async (
-  teamId: string,
-  token: string,
-  payload: Record<string, unknown>,
-) => {
+const createEvent = async (teamId: string, token: string, payload: Record<string, unknown>) => {
   return request(app)
     .post(`/api/teams/${teamId}/events`)
     .set("Authorization", `Bearer ${token}`)
@@ -234,9 +227,7 @@ describe("Event offerings routes", () => {
     const listRes = await request(app)
       .get("/api/event-offerings")
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
-    expect(
-      listRes.body.data.offerings.some((o: { id: string }) => o.id === id),
-    ).toBe(false);
+    expect(listRes.body.data.offerings.some((o: { id: string }) => o.id === id)).toBe(false);
   });
 
   it("lists events using an event offering", async () => {
@@ -378,9 +369,7 @@ describe("Interaction type routes", () => {
     const listRes = await request(app)
       .get("/api/event-interaction-types")
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
-    expect(
-      listRes.body.data.interactionTypes.some((t: { id: string }) => t.id === id),
-    ).toBe(false);
+    expect(listRes.body.data.interactionTypes.some((t: { id: string }) => t.id === id)).toBe(false);
   });
 
   it("lists events and teams using an interaction type", async () => {
@@ -524,9 +513,7 @@ describe("Event CRUD routes", () => {
       totalPages: expect.any(Number),
     });
     expect(
-      res.body.data.events.some(
-        (event: { id: string }) => event.id === created.body.data.id,
-      ),
+      res.body.data.events.some((event: { id: string }) => event.id === created.body.data.id),
     ).toBe(true);
   });
 

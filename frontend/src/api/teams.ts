@@ -12,8 +12,7 @@ export interface ListTeamsResponse {
 }
 
 export const teamsApi = {
-  create: (data: CreateTeamDto) =>
-    apiClient.post<ApiResponse<Team>>('/teams', data),
+  create: (data: CreateTeamDto) => apiClient.post<ApiResponse<Team>>('/teams', data),
 
   list: (params?: ListTeamsParams, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<ListTeamsResponse>>('/teams', { params, signal }),
@@ -24,6 +23,5 @@ export const teamsApi = {
   update: (teamId: string, data: UpdateTeamDto) =>
     apiClient.patch<ApiResponse<Team>>(`/teams/${teamId}`, data),
 
-  delete: (teamId: string) =>
-    apiClient.delete<ApiResponse<Team>>(`/teams/${teamId}`),
+  delete: (teamId: string) => apiClient.delete<ApiResponse<Team>>(`/teams/${teamId}`),
 }

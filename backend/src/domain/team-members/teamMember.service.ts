@@ -3,10 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
-import {
-  safeUserSelect,
-  type CallerContext,
-} from "../../shared/utils/userUtils";
+import { safeUserSelect, type CallerContext } from "../../shared/utils/userUtils";
 import { queueTeamMemberAddedNotification } from "./teamMember.notification";
 
 const teamMemberInclude = Prisma.validator<Prisma.TeamMemberInclude>()({
@@ -36,10 +33,7 @@ const validateAssignableUser = async (userId: string) => {
   }
 
   if (!user.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Only active users can be added to a team.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Only active users can be added to a team.");
   }
 
   if (user.role === UserRole.SUPER_ADMIN) {
@@ -92,7 +86,7 @@ const addTeamMembers = async (
     });
 
     if (existingMembership?.isActive) {
-      // Skip if already active, or we could collect these as errors? 
+      // Skip if already active, or we could collect these as errors?
       // For bulk, let's just skip or return the existing one.
       results.push(existingMembership);
       continue;
@@ -165,10 +159,7 @@ const removeTeamMember = async (
   }
 
   if (!membership.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "This team membership is already inactive.",
-    );
+    throw new ErrorHandler(StatusCodes.CONFLICT, "This team membership is already inactive.");
   }
 
   const team = await prisma.team.findUnique({
@@ -208,10 +199,4 @@ const removeTeamMember = async (
   });
 };
 
-export {
-  addTeamMember,
-  addTeamMembers,
-  listTeamMembers,
-  removeTeamMember,
-  type SafeTeamMember,
-};
+export { addTeamMember, addTeamMembers, listTeamMembers, removeTeamMember, type SafeTeamMember };

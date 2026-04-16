@@ -12,11 +12,7 @@ import {
  * POST /api/invites
  * Admin sends invite to a user with a specific role.
  */
-const createInvite = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const createInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const adminId = res.locals.authUser?.id as string;
 
@@ -45,18 +41,14 @@ const createInvite = async (
         expiresAt: result.expiresAt,
         createdAt: result.createdAt,
       },
-      "Invite sent successfully."
+      "Invite sent successfully.",
     );
   } catch (error) {
     next(error);
   }
 };
 
-const acceptInvite = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const acceptInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await inviteService.acceptInvite(req.body);
 
@@ -73,7 +65,7 @@ const acceptInvite = async (
       res,
       StatusCodes.CREATED,
       { user: result.user, token: result.token },
-      "Invite accepted. Account created and logged in."
+      "Invite accepted. Account created and logged in.",
     );
   } catch (error) {
     next(error);

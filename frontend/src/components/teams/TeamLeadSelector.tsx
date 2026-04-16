@@ -4,8 +4,8 @@ import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
-import { FormField } from '@/components/shared/FormField'
-import { Select } from '@/components/shared/Select'
+import { FormField } from '@/components/shared/form/FormField'
+import { Select } from '@/components/shared/form/Select'
 import type { SafeUser } from '@/types'
 import type { TeamFormValues } from './teamFormSchema'
 
@@ -45,11 +45,7 @@ function TeamLeadOptionLabel({ user, isCompact = false }: { user: SafeUser; isCo
   )
 }
 
-export function TeamLeadSelector({
-  control,
-  errors,
-  teamLeadOptions,
-}: TeamLeadSelectorProps) {
+export function TeamLeadSelector({ control, errors, teamLeadOptions }: TeamLeadSelectorProps) {
   return (
     <FormField
       label="Team lead"
@@ -71,7 +67,11 @@ export function TeamLeadSelector({
               hasError={!!errors.teamLeadId}
               displayEmpty
               renderValue={() =>
-                selectedUser ? <TeamLeadOptionLabel user={selectedUser} isCompact /> : 'Select a team lead…'
+                selectedUser ? (
+                  <TeamLeadOptionLabel user={selectedUser} isCompact />
+                ) : (
+                  'Select a team lead…'
+                )
               }
             >
               <MenuItem value="">Select a team lead…</MenuItem>
