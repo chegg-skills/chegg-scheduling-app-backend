@@ -6,7 +6,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Calendar } from 'lucide-react'
 import type { UserWithDetails } from '@/types'
-import { Badge } from '@/components/shared/Badge'
+import { Badge } from '@/components/shared/ui/Badge'
 import { toTitleCase } from '@/utils/toTitleCase'
 
 interface UserHostedEventsTabProps {

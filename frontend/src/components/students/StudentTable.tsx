@@ -9,11 +9,11 @@ import {
   Typography,
 } from '@mui/material'
 import type { StudentSummary, Pagination } from '@/types'
-import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
+import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { useTableSort } from '@/hooks/useTableSort'
 import { StudentTableRow } from './StudentTableRow'
 import { studentSortAccessors, studentTableColumns } from './StudentTableUtils'
-import { TablePagination } from '@/components/shared/TablePagination'
+import { TablePagination } from '@/components/shared/table/TablePagination'
 
 interface StudentTableProps {
   students: StudentSummary[]

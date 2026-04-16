@@ -9,10 +9,9 @@ import { HostSection } from './sections/HostSection'
 
 interface BookingDetailsLeftSectionProps {
   booking: Booking
-  onViewHost?: (userId: string) => void
 }
 
-export function BookingDetailsLeftSection({ booking, onViewHost }: BookingDetailsLeftSectionProps) {
+export function BookingDetailsLeftSection({ booking }: BookingDetailsLeftSectionProps) {
   const theme = useTheme()
   const meetingJoinUrl = getBookingMeetingJoinUrl(booking)
 
@@ -30,7 +29,7 @@ export function BookingDetailsLeftSection({ booking, onViewHost }: BookingDetail
 
       <Divider flexItem sx={{ borderColor: alpha(theme.palette.secondary.main, 0.08) }} />
 
-      <HostSection booking={booking} onViewHost={onViewHost} />
+      <HostSection booking={booking} />
     </Stack>
   )
 }

@@ -2,7 +2,7 @@ import type { TeamMember, UserRole } from '@/types'
 import List from '@mui/material/List'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
-import { useRemoveTeamMember } from '@/hooks/useTeamMembers'
+import { useRemoveTeamMember } from '@/hooks/queries/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { TeamMemberRow } from './TeamMemberRow'
 

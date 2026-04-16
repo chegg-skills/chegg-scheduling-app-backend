@@ -3,7 +3,7 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import type { Event } from '@/types'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 import { toTitleCase } from '@/utils/toTitleCase'
 
 interface EventDetailOverviewProps {

@@ -7,7 +7,7 @@ import { User, Clock } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { UserForm } from '@/components/users/UserForm'
-import { PageSpinner } from '@/components/shared/Spinner'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { AvailabilityView } from '@/components/availability/AvailabilityView'
 
 export function ProfilePage() {

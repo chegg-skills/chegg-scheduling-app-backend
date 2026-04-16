@@ -1,6 +1,6 @@
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
-import { Textarea } from '@/components/shared/Textarea'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
+import { Textarea } from '@/components/shared/form/Textarea'
 import type { FieldErrors, UseFormRegister } from 'react-hook-form'
 import type { TeamFormValues } from './teamFormSchema'
 

@@ -8,8 +8,8 @@ import {
   getDefaultEventAssignmentStrategy,
   getRequiredEventHostCount,
 } from '../eventCapabilityRules'
-import { useCreateEvent, useUpdateEvent } from '@/hooks/useEvents'
-import { useInteractionTypes } from '@/hooks/useInteractionTypes'
+import { useCreateEvent, useUpdateEvent } from '@/hooks/queries/useEvents'
+import { useInteractionTypes } from '@/hooks/queries/useInteractionTypes'
 import type { Event } from '@/types'
 
 interface UseEventFormProps {

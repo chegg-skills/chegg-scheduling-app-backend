@@ -3,14 +3,15 @@ import { toTitleCase } from '@/utils/toTitleCase'
 import { User } from 'lucide-react'
 import type { Booking } from '@/types'
 import { SectionLabel } from './Common'
+import { useBookingView } from '@/context/BookingViewContext'
 
 interface HostSectionProps {
   booking: Booking
-  onViewHost?: (userId: string) => void
 }
 
-export function HostSection({ booking, onViewHost }: HostSectionProps) {
+export function HostSection({ booking }: HostSectionProps) {
   const theme = useTheme()
+  const { onViewHost } = useBookingView()
 
   return (
     <Box>

@@ -1,7 +1,7 @@
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
-import { FormField } from '@/components/shared/FormField'
+import { FormField } from '@/components/shared/form/FormField'
 import type { TeamFormValues } from './teamFormSchema'
 
 interface TeamStatusToggleProps {

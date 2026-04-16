@@ -9,7 +9,7 @@ import {
   usePublicCoachBySlug,
   usePublicCoachEventsBySlug,
   usePublicSlots,
-} from '@/hooks/usePublicBooking'
+} from '@/hooks/queries/usePublicBooking'
 import { bookingsApi } from '@/api/bookings'
 import type { PublicEventSummary } from '@/types'
 

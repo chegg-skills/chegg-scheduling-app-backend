@@ -2,7 +2,7 @@ import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import Select, { SelectChangeEvent } from '@mui/material/Select'
-import { useTeams } from '@/hooks/useTeams'
+import { useTeams } from '@/hooks/queries/useTeams'
 
 interface TeamFilterProps {
   value: string

@@ -3,8 +3,8 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Controller, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
 import type { InteractionTypeFormValues } from './interactionTypeFormSchema'
 
 interface InteractionTypeLimitsSectionProps {

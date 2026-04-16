@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { TeamStep } from '@/components/public/booking/TeamStep'
 import { EventStep } from '@/components/public/booking/EventStep'
 import { SlotStep } from '@/components/public/booking/SlotStep'

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '@/api/bookings'
 import type { ListBookingsFilters, BookingStatus } from '@/types'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
 export const bookingKeys = {

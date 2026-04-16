@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack'
 import TableCell from '@mui/material/TableCell'
 import TableSortLabel from '@mui/material/TableSortLabel'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 import type { TableSortDirection } from '@/hooks/useTableSort'
 
 interface SortableHeaderCellProps<K extends string> {

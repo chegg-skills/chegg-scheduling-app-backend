@@ -7,7 +7,7 @@ import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
 import { alpha } from '@mui/material/styles'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
-import { PageSpinner } from '@/components/shared/Spinner'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
 import type { AvailableSlot } from '@/api/public'
 
 interface SlotStepProps {

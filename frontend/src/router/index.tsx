@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react'
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { PageSpinner } from '@/components/shared/Spinner'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { RouteErrorPage } from '@/pages/RouteErrorPage'
 
 const AppLayout = lazy(() =>
@@ -10,20 +10,20 @@ const AppLayout = lazy(() =>
   }))
 )
 const LoginPage = lazy(() =>
-  import('@/pages/LoginPage').then((module) => ({ default: module.LoginPage }))
+  import('@/pages/auth/LoginPage').then((module) => ({ default: module.LoginPage }))
 )
 const RegisterPage = lazy(() =>
-  import('@/pages/RegisterPage').then((module) => ({
+  import('@/pages/auth/RegisterPage').then((module) => ({
     default: module.RegisterPage,
   }))
 )
 const BootstrapPage = lazy(() =>
-  import('@/pages/BootstrapPage').then((module) => ({
+  import('@/pages/auth/BootstrapPage').then((module) => ({
     default: module.BootstrapPage,
   }))
 )
 const AcceptInvitePage = lazy(() =>
-  import('@/pages/AcceptInvitePage').then((module) => ({
+  import('@/pages/auth/AcceptInvitePage').then((module) => ({
     default: module.AcceptInvitePage,
   }))
 )

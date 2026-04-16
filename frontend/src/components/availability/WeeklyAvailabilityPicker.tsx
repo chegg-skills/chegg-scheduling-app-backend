@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
-import { Button } from '@/components/shared/Button'
+import { Button } from '@/components/shared/ui/Button'
 import type { SetWeeklyAvailabilityDto } from '@/types'
 import { AvailabilityDayRow } from './AvailabilityDayRow'
 import {

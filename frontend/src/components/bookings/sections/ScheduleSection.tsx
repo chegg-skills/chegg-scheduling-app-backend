@@ -2,6 +2,19 @@ import { Box, Typography } from '@mui/material'
 import type { Booking } from '@/types'
 import { SectionLabel } from './Common'
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+})
+
+const timeFormatter = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+})
+
 interface ScheduleSectionProps {
   booking: Booking
 }
@@ -10,23 +23,11 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
   const start = new Date(booking.startTime)
   const end = new Date(booking.endTime)
 
-  const formatTime = (date: Date) =>
-    new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    }).format(date)
-
   return (
     <Box>
       <SectionLabel label="Session Date & Time" />
       <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-        {new Intl.DateTimeFormat('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }).format(start)}
+        {dateFormatter.format(start)}
       </Typography>
       <Typography
         variant="body2"
@@ -34,7 +35,7 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
         sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
       >
         <span>
-          {formatTime(start)} – {formatTime(end)}
+          {timeFormatter.format(start)} – {timeFormatter.format(end)}
         </span>
         {booking.event?.durationSeconds && (
           <Typography

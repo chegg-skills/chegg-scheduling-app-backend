@@ -2,11 +2,11 @@ import { useParams } from 'react-router-dom'
 import { Box, Stack } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { StudentBookingHistory } from '@/components/students/StudentBookingHistory'
 import { StudentBookingStats } from '@/components/students/StudentBookingStats'
-import { useStudent, useStudentBookings } from '@/hooks/useStudents'
+import { useStudent, useStudentBookings } from '@/hooks/queries/useStudents'
 
 export function StudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()

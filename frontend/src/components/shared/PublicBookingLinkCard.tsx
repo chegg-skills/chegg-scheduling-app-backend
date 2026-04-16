@@ -4,7 +4,7 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Copy, ExternalLink, Link2 } from 'lucide-react'
-import { Button } from './Button'
+import { Button } from './ui/Button'
 
 interface PublicBookingLinkCardProps {
   title: string

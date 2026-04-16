@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { teamsApi, type ListTeamsParams } from '@/api/teams'
 import type { CreateTeamDto, UpdateTeamDto } from '@/types'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 import { memberKeys } from './useTeamMembers'
 import { statsKeys } from './useStats'
 

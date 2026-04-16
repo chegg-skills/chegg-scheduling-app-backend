@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { interactionTypesApi } from '@/api/interactionTypes'
 import type { CreateInteractionTypeDto, UpdateInteractionTypeDto } from '@/types'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
 export const interactionTypeKeys = {

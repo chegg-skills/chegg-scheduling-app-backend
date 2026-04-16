@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { availabilityApi, type GetExceptionsParams } from '@/api/availability'
 import type { SetWeeklyAvailabilityDto, CreateAvailabilityExceptionDto } from '@/types'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 
 export const availabilityKeys = {
   all: ['availability'] as const,

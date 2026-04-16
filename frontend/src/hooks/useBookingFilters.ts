@@ -27,7 +27,7 @@ export function useBookingFilters() {
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(DEFAULT_ADVANCED_FILTERS)
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
 
   const debouncedSearch = useDebouncedValue(searchInput, 250)
 

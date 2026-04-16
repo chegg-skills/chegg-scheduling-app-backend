@@ -1,7 +1,7 @@
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { Booking, BookingStatus } from '@/types'
 import { useAsyncAction } from './useAsyncAction'
-import { useUpdateBookingStatus } from './useBookings'
+import { useUpdateBookingStatus } from './queries/useBookings'
 
 export function useBookingStatusUpdate() {
   const { handleAction } = useAsyncAction()

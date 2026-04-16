@@ -1,7 +1,7 @@
-import { Modal } from '@/components/shared/Modal'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { EventTable } from '@/components/events/EventTable'
-import { EventForm } from '@/components/events/EventForm'
+import { Modal } from '@/components/shared/ui/Modal'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { EventTable } from '@/components/events/table/EventTable'
+import { EventForm } from '@/components/events/form/EventForm'
 import type { Event } from '@/types'
 
 interface TeamEventsTabProps {

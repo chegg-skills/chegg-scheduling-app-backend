@@ -3,16 +3,16 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Plus } from 'lucide-react'
-import { Button } from '@/components/shared/Button'
-import { Spinner } from '@/components/shared/Spinner'
+import { Button } from '@/components/shared/ui/Button'
+import { Spinner } from '@/components/shared/ui/Spinner'
 import {
   useCreateEventScheduleSlot,
   useUpdateEventScheduleSlot,
   useDeleteEventScheduleSlot,
-} from '@/hooks/useEvents'
+} from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import type { Event, EventScheduleSlot } from '@/types'
-import { UpsertScheduleSlotDialog } from './UpsertScheduleSlotDialog'
+import { UpsertScheduleSlotDialog } from './dialogs/UpsertScheduleSlotDialog'
 import { ScheduleSlotList } from './ScheduleSlotList'
 
 interface Props {

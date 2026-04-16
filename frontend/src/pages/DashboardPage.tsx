@@ -9,7 +9,7 @@ import { Users, UsersRound, CalendarDays, Layers, ArrowLeftRight, Clock3 } from 
 import { useAuth } from '@/context/AuthContext'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useDashboardStats } from '@/hooks/useStats'
+import { useDashboardStats } from '@/hooks/queries/useStats'
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts'
 import type { StatsTimeframe } from '@/types'
 
@@ -55,7 +55,7 @@ const QUICK_LINKS: QuickLink[] = [
 
 export function DashboardPage() {
   const { user } = useAuth()
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const { data: dashboardStats, isLoading: statsLoading } = useDashboardStats(timeframe)
 
   const visibleLinks = QUICK_LINKS.filter((l) => user && l.roles.includes(user.role))

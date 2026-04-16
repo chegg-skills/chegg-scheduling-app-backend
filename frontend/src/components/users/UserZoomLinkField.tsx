@@ -1,6 +1,6 @@
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
 import type { UserFormValues } from './userFormSchema'
 
 interface UserZoomLinkFieldProps {

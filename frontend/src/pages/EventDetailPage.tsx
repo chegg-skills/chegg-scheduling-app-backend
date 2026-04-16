@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
@@ -14,24 +14,25 @@ import {
   Info,
   Calendar as CalendarIcon,
 } from 'lucide-react'
-import { useEvent, useDeleteEvent, useUpdateEvent, useEventScheduleSlots } from '@/hooks/useEvents'
-import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useEvent, useDeleteEvent, useUpdateEvent, useEventScheduleSlots } from '@/hooks/queries/useEvents'
+import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { TabPanel } from '@/components/shared/TabPanel'
-import { Button } from '@/components/shared/Button'
-import { Modal } from '@/components/shared/Modal'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
-import { Badge } from '@/components/shared/Badge'
-import { EventForm } from '@/components/events/EventForm'
-import { RowActions } from '@/components/shared/RowActions'
+import { TabPanel } from '@/components/shared/ui/TabPanel'
+import { Button } from '@/components/shared/ui/Button'
+import { Modal } from '@/components/shared/ui/Modal'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { Badge } from '@/components/shared/ui/Badge'
+import { EventForm } from '@/components/events/form/EventForm'
+import { RowActions } from '@/components/shared/table/RowActions'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { EventDetailsTab } from '@/components/events/tabs/EventDetailsTab'
 import { EventHostsTab } from '@/components/events/tabs/EventHostsTab'
 import { EventBookingsTab } from '@/components/events/tabs/EventBookingsTab'
+import { BookingViewProvider } from '@/context/BookingViewContext'
 import { EventScheduleTab } from '@/components/events/tabs/EventScheduleTab'
-import { getEventHostSetupStatus } from '@/components/events/eventCapabilityRules'
+import { getEventHostSetupStatus } from '@/components/events/form/eventCapabilityRules'
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams<{ eventId: string }>()
@@ -49,6 +50,7 @@ export function EventDetailPage() {
 
   const slots = slotsRes?.slots ?? []
   const teamMembers = teamMembersResponse?.members ?? []
+  const bookingViewValue = useMemo(() => ({ onViewHost: setViewingUserId }), [])
 
   if (isLoading) return <PageSpinner />
   if (error || !event) return <ErrorAlert message="Failed to load event." />
@@ -194,7 +196,9 @@ export function EventDetailPage() {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2} prefix="event">
-          <EventBookingsTab eventId={eventId} onViewHost={setViewingUserId} />
+          <BookingViewProvider value={bookingViewValue}>
+            <EventBookingsTab eventId={eventId} />
+          </BookingViewProvider>
         </TabPanel>
 
         {event.bookingMode === 'FIXED_SLOTS' && (

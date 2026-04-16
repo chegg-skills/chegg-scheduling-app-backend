@@ -5,8 +5,8 @@ import ListItem from '@mui/material/ListItem'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { UserMinus } from 'lucide-react'
-import { Badge } from '@/components/shared/Badge'
-import { RowActions } from '@/components/shared/RowActions'
+import { Badge } from '@/components/shared/ui/Badge'
+import { RowActions } from '@/components/shared/table/RowActions'
 
 interface TeamMemberRowProps {
   member: TeamMember

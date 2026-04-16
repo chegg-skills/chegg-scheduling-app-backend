@@ -3,7 +3,7 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
-import { Button } from '@/components/shared/Button'
+import { Button } from '@/components/shared/ui/Button'
 import type { EventFormValues } from './eventFormSchema'
 
 interface EventFormSubmitActionsProps {

@@ -4,17 +4,16 @@ import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import { Clock, XCircle, Calendar } from 'lucide-react'
 import type { Booking } from '@/types'
-import { Modal } from '@/components/shared/Modal'
+import { Modal } from '@/components/shared/ui/Modal'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
 import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
 
 interface BookingDetailModalProps {
   booking: Booking | null
   onClose: () => void
-  onViewHost?: (userId: string) => void
 }
 
-export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDetailModalProps) {
+export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
   const { handleStatusUpdate, canMarkNoShow } = useBookingStatusUpdate()
 
   if (!booking) return null
@@ -27,7 +26,7 @@ export function BookingDetailModal({ booking, onClose, onViewHost }: BookingDeta
       size="lg"
     >
       <Box sx={{ p: 1 }}>
-        <BookingDetailsPanel booking={booking} onViewHost={onViewHost} />
+        <BookingDetailsPanel booking={booking} />
 
         <Divider sx={{ my: 4 }} />
 

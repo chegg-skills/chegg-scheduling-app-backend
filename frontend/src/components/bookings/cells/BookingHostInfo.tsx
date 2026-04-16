@@ -1,12 +1,14 @@
 import Typography from '@mui/material/Typography'
 import type { SafeUser } from '@/types'
+import { useBookingView } from '@/context/BookingViewContext'
 
 interface BookingHostInfoProps {
   host?: SafeUser | null
-  onViewHost?: (userId: string) => void
 }
 
-export function BookingHostInfo({ host, onViewHost }: BookingHostInfoProps) {
+export function BookingHostInfo({ host }: BookingHostInfoProps) {
+  const { onViewHost } = useBookingView()
+
   if (!host) {
     return (
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>

@@ -1,5 +1,5 @@
 import Alert from '@mui/material/Alert'
-import { getEventHostSetupStatus } from './eventCapabilityRules'
+import { getEventHostSetupStatus } from './form/eventCapabilityRules'
 
 interface EventHostStatusAlertProps {
   activeHostCount: number

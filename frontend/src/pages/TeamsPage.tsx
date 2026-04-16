@@ -2,16 +2,16 @@ import Box from '@mui/material/Box'
 import { useState } from 'react'
 import { CalendarDays, Plus, ToggleRight, Users, UsersRound } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { useTeams } from '@/hooks/useTeams'
+import { useTeams } from '@/hooks/queries/useTeams'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { Button } from '@/components/shared/Button'
-import { Modal } from '@/components/shared/Modal'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { Button } from '@/components/shared/ui/Button'
+import { Modal } from '@/components/shared/ui/Modal'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { TeamTable } from '@/components/teams/TeamTable'
 import { TeamForm } from '@/components/teams/TeamForm'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useTeamStats } from '@/hooks/useStats'
+import { useTeamStats } from '@/hooks/queries/useStats'
 import type { StatsTimeframe } from '@/types'
 import { usePagination } from '@/hooks/usePagination'
 
@@ -20,7 +20,7 @@ export function TeamsPage() {
   const { pageSize, backendPage, onPageChange, onRowsPerPageChange } = usePagination(20)
 
   const [showCreate, setShowCreate] = useState(false)
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const canManageTeam = user?.role === 'SUPER_ADMIN'
 
   const { data, isLoading, error } = useTeams({

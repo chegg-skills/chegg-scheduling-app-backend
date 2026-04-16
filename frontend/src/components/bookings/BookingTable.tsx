@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   Paper,
   Table,
@@ -10,17 +10,16 @@ import {
   Typography,
 } from '@mui/material'
 import type { Booking, Pagination } from '@/types'
-import { SortableHeaderCell } from '@/components/shared/SortableHeaderCell'
+import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { BookingTableRow } from './BookingTableRow'
-import { TablePagination } from '@/components/shared/TablePagination'
+import { TablePagination } from '@/components/shared/table/TablePagination'
 
 interface Props {
   bookings: Booking[]
   pagination?: Pagination
   onPageChange?: (page: number) => void
   onRowsPerPageChange?: (rowsPerPage: number) => void
-  onViewHost?: (userId: string) => void
 }
 
 type BookingSortKey = 'student' | 'event' | 'host' | 'date' | 'status'
@@ -33,12 +32,26 @@ const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
   status: (booking) => booking.status,
 }
 
+const COLUMNS = [
+  { label: 'Student', sortKey: 'student' as const, width: '25%' },
+  { label: 'Event', sortKey: 'event' as const, width: '20%' },
+  { label: 'Host', sortKey: 'host' as const, width: '20%' },
+  { label: 'Date / Time', sortKey: 'date' as const, width: '20%' },
+  { label: 'Status', sortKey: 'status' as const, width: '15%' },
+]
+
+const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+})
+
 export function BookingTable({
   bookings,
   pagination,
   onPageChange,
   onRowsPerPageChange,
-  onViewHost,
 }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const {
@@ -47,9 +60,9 @@ export function BookingTable({
     requestSort,
   } = useTableSort(bookings, bookingSortAccessors)
 
-  const handleToggle = (id: string) => {
+  const handleToggle = useCallback((id: string) => {
     setExpandedId((prev) => (prev === id ? null : id))
-  }
+  }, [])
 
   if (bookings.length === 0 && !pagination?.total) {
     return (
@@ -75,13 +88,7 @@ export function BookingTable({
       <Table>
         <TableHead>
           <TableRow>
-            {[
-              { label: 'Student', sortKey: 'student' as const, width: '25%' },
-              { label: 'Event', sortKey: 'event' as const, width: '20%' },
-              { label: 'Host', sortKey: 'host' as const, width: '20%' },
-              { label: 'Date / Time', sortKey: 'date' as const, width: '20%' },
-              { label: 'Status', sortKey: 'status' as const, width: '15%' },
-            ].map((col) => (
+            {COLUMNS.map((col) => (
               <SortableHeaderCell
                 key={col.sortKey}
                 label={col.label}
@@ -112,14 +119,7 @@ export function BookingTable({
           {(() => {
             let lastDateHeader = ''
             return sortedBookings.map((booking) => {
-              const date = new Date(booking.startTime)
-              const dateHeader = new Intl.DateTimeFormat('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              }).format(date)
-
+              const dateHeader = dateHeaderFormatter.format(new Date(booking.startTime))
               const showHeader = dateHeader !== lastDateHeader
               lastDateHeader = dateHeader
 
@@ -149,7 +149,6 @@ export function BookingTable({
                     booking={booking}
                     isExpanded={expandedId === booking.id}
                     onToggle={() => handleToggle(booking.id)}
-                    onViewHost={onViewHost}
                   />
                 </React.Fragment>
               )

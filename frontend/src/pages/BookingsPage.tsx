@@ -21,18 +21,19 @@ import {
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { BookingTable } from '@/components/bookings/BookingTable'
 import { BookingCalendar } from '@/components/bookings/BookingCalendar'
 import { BookingDetailModal } from '@/components/bookings/BookingDetailModal'
 import { BookingFilterDialog } from '@/components/bookings/filters/BookingFilterDialog'
-import { useBookings } from '@/hooks/useBookings'
+import { useBookings } from '@/hooks/queries/useBookings'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
-import { Input } from '@/components/shared/Input'
+import { Input } from '@/components/shared/form/Input'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useBookingStats } from '@/hooks/useStats'
+import { useBookingStats } from '@/hooks/queries/useStats'
 import { useBookingFilters } from '@/hooks/useBookingFilters'
+import { BookingViewProvider } from '@/context/BookingViewContext'
 import { Badge, Button as MuiButton } from '@mui/material'
 import type { Booking } from '@/types'
 import { useState } from 'react'
@@ -67,6 +68,7 @@ export function BookingsPage() {
   const { data, isLoading, error } = useBookings(serverFilters)
 
   const bookings = useMemo(() => data?.bookings ?? [], [data?.bookings])
+  const bookingViewValue = useMemo(() => ({ onViewHost: setViewingUserId }), [])
   const pagination = data?.pagination
 
   const filteredBookings = useMemo(() => {
@@ -160,6 +162,7 @@ export function BookingsPage() {
         }
       />
 
+      <BookingViewProvider value={bookingViewValue}>
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
         <StatsOverview
           timeframe={timeframe}
@@ -302,7 +305,6 @@ export function BookingsPage() {
                 pagination={pagination}
                 onPageChange={onPageChange}
                 onRowsPerPageChange={onRowsPerPageChange}
-                onViewHost={setViewingUserId}
               />
             ) : (
               <BookingCalendar bookings={filteredBookings} onViewDetail={setSelectedBooking} />
@@ -313,13 +315,13 @@ export function BookingsPage() {
         <BookingDetailModal
           booking={selectedBooking}
           onClose={() => setSelectedBooking(null)}
-          onViewHost={setViewingUserId}
         />
 
         {viewingUserId && (
           <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
         )}
       </Box>
+      </BookingViewProvider>
     </Box>
   )
 }

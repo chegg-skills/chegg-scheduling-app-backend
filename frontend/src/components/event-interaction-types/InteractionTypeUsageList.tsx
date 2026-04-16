@@ -1,8 +1,8 @@
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { useInteractionTypeUsage } from '@/hooks/useInteractionTypes'
-import { Badge } from '@/components/shared/Badge'
+import { useInteractionTypeUsage } from '@/hooks/queries/useInteractionTypes'
+import { Badge } from '@/components/shared/ui/Badge'
 
 interface InteractionTypeUsageListProps {
   interactionTypeId: string

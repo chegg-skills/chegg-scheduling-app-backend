@@ -5,19 +5,19 @@ import Stack from '@mui/material/Stack'
 import { useEffect, useState } from 'react'
 import { Search, UserPlus, Users, X, GraduationCap, UserCheck } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
-import { useUsers } from '@/hooks/useUsers'
+import { useUsers } from '@/hooks/queries/useUsers'
 import type { StatsTimeframe, UserRole } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { Button } from '@/components/shared/Button'
-import { Input } from '@/components/shared/Input'
-import { Modal } from '@/components/shared/Modal'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { Button } from '@/components/shared/ui/Button'
+import { Input } from '@/components/shared/form/Input'
+import { Modal } from '@/components/shared/ui/Modal'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { UserTable } from '@/components/users/UserTable'
 import { InviteForm } from '@/components/users/InviteForm'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useUserStats } from '@/hooks/useStats'
+import { useUserStats } from '@/hooks/queries/useStats'
 import { usePagination } from '@/hooks/usePagination'
 
 export function UsersPage() {
@@ -25,7 +25,7 @@ export function UsersPage() {
   const { pageSize, backendPage, onPageChange, onRowsPerPageChange, resetPage } = usePagination(20)
   const [showInvite, setShowInvite] = useState(false)
   const [searchInput, setSearchInput] = useState('')
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const debouncedSearch = useDebouncedValue(searchInput, 250)
 
   const { data: userStats, isLoading: statsLoading } = useUserStats(timeframe)

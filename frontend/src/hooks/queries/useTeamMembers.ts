@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { teamMembersApi } from '@/api/teamMembers'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 
 export const memberKeys = {
   all: ['team-members'] as const,

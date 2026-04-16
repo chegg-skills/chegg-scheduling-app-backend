@@ -11,7 +11,7 @@ import Avatar from '@mui/material/Avatar'
 import Typography from '@mui/material/Typography'
 import { Trash2 } from 'lucide-react'
 import type { EventHost } from '@/types'
-import { RowActions } from '@/components/shared/RowActions'
+import { RowActions } from '@/components/shared/table/RowActions'
 
 interface EventHostTableProps {
   hosts: EventHost[]

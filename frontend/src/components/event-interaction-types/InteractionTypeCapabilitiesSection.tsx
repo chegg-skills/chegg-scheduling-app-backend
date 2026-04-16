@@ -5,7 +5,7 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 import type { InteractionTypeFormValues } from './interactionTypeFormSchema'
 
 interface InteractionTypeCapabilitiesSectionProps {

@@ -20,7 +20,7 @@ import {
 } from 'recharts'
 import { format, parseISO } from 'date-fns'
 import { Info } from 'lucide-react'
-import { useBookingTrends, useTeamPerformance, usePeakActivity } from '@/hooks/useStats'
+import { useBookingTrends, useTeamPerformance, usePeakActivity } from '@/hooks/queries/useStats'
 import type { StatsTimeframe, PeakActivityMetric } from '@/types'
 
 interface DashboardChartsProps {

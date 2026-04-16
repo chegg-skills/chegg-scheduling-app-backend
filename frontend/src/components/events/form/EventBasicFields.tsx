@@ -1,8 +1,8 @@
 import { useFormContext } from 'react-hook-form'
 import Stack from '@mui/material/Stack'
-import { FormField } from '@/components/shared/FormField'
-import { Input } from '@/components/shared/Input'
-import { Textarea } from '@/components/shared/Textarea'
+import { FormField } from '@/components/shared/form/FormField'
+import { Input } from '@/components/shared/form/Input'
+import { Textarea } from '@/components/shared/form/Textarea'
 import type { EventFormValues } from './eventFormSchema'
 
 /**

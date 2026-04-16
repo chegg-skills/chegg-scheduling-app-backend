@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventsApi, type ListEventsParams } from '@/api/events'
 import type { CreateEventDto, UpdateEventDto, SetEventHostsDto } from '@/types'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
 export const eventKeys = {

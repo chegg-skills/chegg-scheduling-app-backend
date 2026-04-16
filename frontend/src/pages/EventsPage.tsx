@@ -5,19 +5,19 @@ import Typography from '@mui/material/Typography'
 import { CalendarDays, Plus, Repeat2, ToggleRight, Users } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { useTeams } from '@/hooks/useTeams'
-import { useTeamEvents } from '@/hooks/useEvents'
+import { useTeams } from '@/hooks/queries/useTeams'
+import { useTeamEvents } from '@/hooks/queries/useEvents'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { Button } from '@/components/shared/Button'
-import { Modal } from '@/components/shared/Modal'
-import { EventForm } from '@/components/events/EventForm'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
-import { EventTable } from '@/components/events/EventTable'
+import { Button } from '@/components/shared/ui/Button'
+import { Modal } from '@/components/shared/ui/Modal'
+import { EventForm } from '@/components/events/form/EventForm'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { EventTable } from '@/components/events/table/EventTable'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
-import { Select } from '@/components/shared/Select'
+import { Select } from '@/components/shared/form/Select'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useEventStats } from '@/hooks/useStats'
+import { useEventStats } from '@/hooks/queries/useStats'
 import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
@@ -25,7 +25,7 @@ export function EventsPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('')
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>('month')
+  const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const canManageTeam = user?.role === 'SUPER_ADMIN'
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
   const {

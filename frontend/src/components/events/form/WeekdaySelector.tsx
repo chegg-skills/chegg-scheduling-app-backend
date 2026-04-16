@@ -1,7 +1,7 @@
 import { Controller, useFormContext } from 'react-hook-form'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import { FormField } from '@/components/shared/FormField'
+import { FormField } from '@/components/shared/form/FormField'
 import type { EventFormValues } from './eventFormSchema'
 
 const WEEKDAYS = [

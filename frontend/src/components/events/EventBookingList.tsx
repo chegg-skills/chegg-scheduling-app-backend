@@ -1,17 +1,16 @@
 import { useState, useMemo } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { useBookings } from '@/hooks/useBookings'
+import { useBookings } from '@/hooks/queries/useBookings'
 import { BookingTable } from '@/components/bookings/BookingTable'
-import { PageSpinner } from '@/components/shared/Spinner'
-import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import type { BookingStatus } from '@/types'
 
 interface EventBookingListProps {
   eventId: string
-  onViewHost?: (userId: string) => void
 }
 
-export function EventBookingList({ eventId, onViewHost }: EventBookingListProps) {
+export function EventBookingList({ eventId }: EventBookingListProps) {
   const [params, setParams] = useState({
     page: 1,
     limit: 10,
@@ -62,7 +61,6 @@ export function EventBookingList({ eventId, onViewHost }: EventBookingListProps)
         pagination={pagination}
         onPageChange={(page) => setParams((p) => ({ ...p, page }))}
         onRowsPerPageChange={(limit) => setParams((p) => ({ ...p, limit, page: 1 }))}
-        onViewHost={onViewHost}
       />
     </Stack>
   )

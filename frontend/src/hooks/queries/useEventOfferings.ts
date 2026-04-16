@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventOfferingsApi } from '@/api/eventOfferings'
 import type { CreateEventOfferingDto, UpdateEventOfferingDto } from '@/types'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
 export const offeringKeys = {

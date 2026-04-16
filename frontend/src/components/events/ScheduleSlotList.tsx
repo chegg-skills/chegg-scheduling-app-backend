@@ -7,7 +7,7 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import { RowActions } from '@/components/shared/RowActions'
+import { RowActions } from '@/components/shared/table/RowActions'
 import { Edit, Trash2 } from 'lucide-react'
 import type { EventScheduleSlot, Event } from '@/types'
 

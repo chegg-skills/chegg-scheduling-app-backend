@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import { useTheme } from '@mui/material/styles'
@@ -55,20 +55,23 @@ export function BookingCalendar({ bookings, onViewDetail }: BookingCalendarProps
     end: endDate,
   })
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return theme.palette.success.main
-      case 'CANCELLED':
-        return theme.palette.error.main
-      case 'COMPLETED':
-        return theme.palette.info.main
-      case 'PENDING':
-        return theme.palette.warning.main
-      default:
-        return theme.palette.text.secondary
-    }
-  }
+  const getStatusColor = useCallback(
+    (status: string) => {
+      switch (status) {
+        case 'CONFIRMED':
+          return theme.palette.success.main
+        case 'CANCELLED':
+          return theme.palette.error.main
+        case 'COMPLETED':
+          return theme.palette.info.main
+        case 'PENDING':
+          return theme.palette.warning.main
+        default:
+          return theme.palette.text.secondary
+      }
+    },
+    [theme]
+  )
 
   return (
     <Paper

@@ -3,11 +3,11 @@ import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { Input } from '@/components/shared/Input'
+import { Input } from '@/components/shared/form/Input'
 import type { TeamMember, EventHost } from '@/types'
-import { Button } from '@/components/shared/Button'
-import { Badge } from '@/components/shared/Badge'
-import { HostSelectionList } from './HostSelectionList'
+import { Button } from '@/components/shared/ui/Button'
+import { Badge } from '@/components/shared/ui/Badge'
+import { HostSelectionList } from '../HostSelectionList'
 
 interface AddHostFormProps {
   activeHosts: EventHost[]

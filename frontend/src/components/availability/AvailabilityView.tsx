@@ -8,11 +8,11 @@ import {
   useAvailabilityExceptions,
   useAddAvailabilityException,
   useRemoveAvailabilityException,
-} from '@/hooks/useAvailability'
+} from '@/hooks/queries/useAvailability'
 import { useAuth } from '@/context/AuthContext'
 import { WeeklyAvailabilityPicker } from './WeeklyAvailabilityPicker'
 import { AvailabilityExceptionsManager } from './AvailabilityExceptionsManager'
-import { PageSpinner } from '@/components/shared/Spinner'
+import { PageSpinner } from '@/components/shared/ui/Spinner'
 
 interface AvailabilityViewProps {
   userId: string

@@ -13,15 +13,9 @@ interface BookingTableRowProps {
   booking: Booking
   isExpanded: boolean
   onToggle: () => void
-  onViewHost?: (userId: string) => void
 }
 
-export function BookingTableRow({
-  booking,
-  isExpanded,
-  onToggle,
-  onViewHost,
-}: BookingTableRowProps) {
+export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableRowProps) {
   const { handleStatusUpdate, canMarkNoShow } = useBookingStatusUpdate()
 
   return (
@@ -47,7 +41,7 @@ export function BookingTableRow({
         </TableCell>
 
         <TableCell>
-          <BookingHostInfo host={booking.host} onViewHost={onViewHost} />
+          <BookingHostInfo host={booking.host ?? null} />
         </TableCell>
 
         <TableCell>
@@ -88,7 +82,7 @@ export function BookingTableRow({
                 borderLeftColor: 'primary.main',
               }}
             >
-              <BookingDetailsPanel booking={booking} onViewHost={onViewHost} />
+              <BookingDetailsPanel booking={booking} />
 
               <Divider sx={{ my: 3 }} />
 

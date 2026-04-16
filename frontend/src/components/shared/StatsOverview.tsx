@@ -10,7 +10,7 @@ import { StatCard, type StatCardProps } from './StatCard'
 import type { StatsTimeframe, StatsTimeframeInfo } from '@/types'
 import Button from '@mui/material/Button'
 import { useState } from 'react'
-import { DateFilterModal } from './DateFilterModal'
+import { DateFilterModal } from './form/DateFilterModal'
 
 interface StatsOverviewProps {
   timeframe: StatsTimeframe

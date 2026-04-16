@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi, type ListUsersParams } from '@/api/users'
 import type { UpdateUserDto, UserWithDetails } from '@/types'
-import { invalidateQueryKeys } from './queryUtils'
+import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
 export const userKeys = {
