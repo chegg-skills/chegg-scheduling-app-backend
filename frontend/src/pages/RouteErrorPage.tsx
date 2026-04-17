@@ -1,11 +1,10 @@
-import Alert from '@mui/material/Alert'
-import AlertTitle from '@mui/material/AlertTitle'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 
 function getErrorMessage(error: unknown) {
   if (isRouteErrorResponse(error)) {
@@ -41,10 +40,7 @@ export function RouteErrorPage() {
       <Paper variant="outlined" sx={{ width: '100%', maxWidth: 640, p: 4 }}>
         <Stack spacing={2}>
           <Typography variant="h4">Something went wrong</Typography>
-          <Alert severity="error" variant="outlined">
-            <AlertTitle>{title}</AlertTitle>
-            {message}
-          </Alert>
+          <ErrorAlert title={title} message={message} />
           <Stack direction="row" spacing={1.5}>
             <Button variant="contained" onClick={() => navigate('/dashboard')}>
               Go to dashboard

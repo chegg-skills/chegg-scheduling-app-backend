@@ -9,6 +9,7 @@ import { Users, UsersRound, CalendarDays, Layers, ArrowLeftRight, Clock3 } from 
 import { useAuth } from '@/context/auth'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsOverview } from '@/components/shared/StatsOverview'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useDashboardStats } from '@/hooks/queries/useStats'
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts'
 import type { StatsTimeframe } from '@/types'
@@ -56,7 +57,11 @@ const QUICK_LINKS: QuickLink[] = [
 export function DashboardPage() {
   const { user } = useAuth()
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
-  const { data: dashboardStats, isLoading: statsLoading } = useDashboardStats(timeframe)
+  const {
+    data: dashboardStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useDashboardStats(timeframe)
 
   const visibleLinks = QUICK_LINKS.filter((l) => user && l.roles.includes(user.role))
 
@@ -105,13 +110,17 @@ export function DashboardPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <StatsOverview
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-          timeframeInfo={dashboardStats?.timeframe}
-          items={dashboardCards}
-          isLoading={statsLoading}
-        />
+        {statsError ? (
+          <ErrorAlert message="Failed to load dashboard statistics. Please refresh the page." />
+        ) : (
+          <StatsOverview
+            timeframe={timeframe}
+            onTimeframeChange={setTimeframe}
+            timeframeInfo={dashboardStats?.timeframe}
+            items={dashboardCards}
+            isLoading={statsLoading}
+          />
+        )}
 
         <DashboardCharts timeframe={timeframe} />
 

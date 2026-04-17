@@ -13,7 +13,7 @@ import type { Team } from '@/types'
 interface TeamStepProps {
   teams: Pick<Team, 'id' | 'name' | 'description'>[]
   loading: boolean
-  error: any
+  error?: unknown
   selectedTeamId: string | null
   onSelect: (teamId: string) => void
 }

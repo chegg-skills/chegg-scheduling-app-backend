@@ -12,7 +12,11 @@ export function StudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()
 
   const { data: student, isLoading: studentLoading, error: studentError } = useStudent(studentId!)
-  const { data: bookingsData, isLoading: bookingsLoading } = useStudentBookings(studentId!)
+  const {
+    data: bookingsData,
+    isLoading: bookingsLoading,
+    error: bookingsError,
+  } = useStudentBookings(studentId!)
 
   if (studentLoading) return <PageSpinner />
   if (studentError || !student) return <ErrorAlert message="Student not found." />
@@ -35,6 +39,8 @@ export function StudentDetailPage() {
         <Box sx={{ mt: 2 }}>
           {bookingsLoading && !bookingsData ? (
             <PageSpinner />
+          ) : bookingsError ? (
+            <ErrorAlert message="Failed to load session history. Please refresh the page." />
           ) : (
             <StudentBookingHistory bookings={bookingsData?.bookings ?? []} />
           )}

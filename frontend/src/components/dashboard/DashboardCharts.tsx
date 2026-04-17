@@ -5,6 +5,7 @@ import Skeleton from '@mui/material/Skeleton'
 import { format, parseISO } from 'date-fns'
 import { useBookingTrends, useTeamPerformance, usePeakActivity } from '@/hooks/queries/useStats'
 import type { StatsTimeframe, PeakActivityMetric } from '@/types'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { BookingVolumeTrendChart } from './charts/BookingVolumeTrendChart'
 import { SessionOutcomesChart } from './charts/SessionOutcomesChart'
 import { TeamPerformanceChart } from './charts/TeamPerformanceChart'
@@ -15,9 +16,9 @@ interface DashboardChartsProps {
 }
 
 export function DashboardCharts({ timeframe }: DashboardChartsProps) {
-  const { data: trendsData, isLoading: trendsLoading } = useBookingTrends(timeframe)
-  const { data: teamData, isLoading: teamLoading } = useTeamPerformance(timeframe)
-  const { data: peakData, isLoading: peakLoading } = usePeakActivity(timeframe)
+  const { data: trendsData, isLoading: trendsLoading, error: trendsError } = useBookingTrends(timeframe)
+  const { data: teamData, isLoading: teamLoading, error: teamError } = useTeamPerformance(timeframe)
+  const { data: peakData, isLoading: peakLoading, error: peakError } = usePeakActivity(timeframe)
 
   const chartData = useMemo(() => {
     if (!trendsData?.metrics.trends) return []
@@ -38,6 +39,14 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
       displayHour: `${a.hour % 12 || 12}${a.hour >= 12 ? 'PM' : 'AM'}`,
     }))
   }, [peakData])
+
+  if (trendsError || teamError || peakError) {
+    return (
+      <Box sx={{ mt: 4 }}>
+        <ErrorAlert message="Failed to load dashboard charts. Please refresh the page." />
+      </Box>
+    )
+  }
 
   if (trendsLoading || teamLoading || peakLoading) {
     return (

@@ -13,15 +13,15 @@ interface PublicBookingFlowProps {
   scope: BookingScope
   teams: PublicTeamSummary[]
   loadingTeams: boolean
-  teamsError: any
+  teamsError: unknown
   selectedTeam: string | null
   handleTeamSelect: (id: string) => void
   visibleEvents: PublicEventSummary[]
   eventsLoading: boolean
-  eventsError: any
+  eventsError: unknown
   selectedEvent: string | null
   handleEventSelect: (id: string) => void
-  eventDetailsError: any
+  eventDetailsError: unknown
   slots: AvailableSlot[]
   loadingSlots: boolean
   selectedDate: Date

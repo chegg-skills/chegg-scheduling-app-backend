@@ -8,3 +8,10 @@ export function extractApiError(error: unknown): string {
   if (error instanceof Error) return error.message
   return 'An unexpected error occurred.'
 }
+
+export function getApiStatus(error: unknown): number | undefined {
+  if (axios.isAxiosError(error)) {
+    return error.response?.status
+  }
+  return undefined
+}

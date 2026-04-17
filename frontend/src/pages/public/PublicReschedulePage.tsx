@@ -9,6 +9,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 
 import { publicApi } from '@/api/public'
 import { bookingsApi } from '@/api/bookings'
+import { extractApiError } from '@/utils/apiError'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { SuccessStep } from '@/components/public/booking/SuccessStep'
 import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHeader'
@@ -34,6 +35,7 @@ export function PublicReschedulePage() {
   const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isSuccess, setIsSuccess] = React.useState(false)
+  const [rescheduleError, setRescheduleError] = React.useState<string | null>(null)
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
 
   React.useEffect(() => {
@@ -77,6 +79,7 @@ export function PublicReschedulePage() {
   const handleReschedule = async () => {
     if (!selectedSlot) return
 
+    setRescheduleError(null)
     setIsSubmitting(true)
     try {
       await bookingsApi.reschedule(bookingId, {
@@ -84,8 +87,8 @@ export function PublicReschedulePage() {
         token,
       })
       setIsSuccess(true)
-    } catch (error: any) {
-      console.error('Reschedule failed:', error)
+    } catch (error) {
+      setRescheduleError(extractApiError(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -94,12 +97,11 @@ export function PublicReschedulePage() {
   if (isLoadingBooking) return <PageSpinner />
 
   if (bookingError || !bookingData) {
-    const errorMessage =
-      (bookingError as any)?.response?.data?.message ||
-      (bookingError as Error)?.message ||
-      (!token
+    const errorMessage = bookingError
+      ? extractApiError(bookingError)
+      : !token
         ? 'Reschedule token is missing from the link.'
-        : 'Booking not found or link has expired.')
+        : 'Booking not found or link has expired.'
     return (
       <Box sx={{ p: { xs: 2, sm: 4 } }}>
         <ErrorAlert message={errorMessage} />
@@ -202,6 +204,11 @@ export function PublicReschedulePage() {
             />
           </Box>
 
+          {rescheduleError && (
+            <Box sx={{ px: 2, pb: 1 }}>
+              <ErrorAlert message={rescheduleError} />
+            </Box>
+          )}
           <PublicNavigationFooter
             onBack={() => navigate('/')}
             onNext={handleReschedule}

@@ -8,6 +8,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import type { SafeUser, UserRole, Pagination } from '@/types'
+import { extractApiError } from '@/utils/apiError'
 import { Modal } from '@/components/shared/ui/Modal'
 import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { useDeactivateUser } from '@/hooks/queries/useUsers'
@@ -39,7 +40,7 @@ export function UserTable({
   const [editingUser, setEditingUser] = useState<SafeUser | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const { mutate: deactivate } = useDeactivateUser()
-  const { confirm } = useConfirm()
+  const { confirm, alert } = useConfirm()
   const {
     sortedItems: sortedUsers,
     sortConfig,
@@ -53,7 +54,13 @@ export function UserTable({
     })
 
     if (confirmed) {
-      deactivate(user.id)
+      deactivate(user.id, {
+        onError: (error) =>
+          alert({
+            title: 'Deactivation Failed',
+            message: extractApiError(error),
+          }),
+      })
     }
   }
 
