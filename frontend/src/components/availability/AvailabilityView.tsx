@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
@@ -13,6 +14,8 @@ import { useAuth } from '@/context/auth'
 import { WeeklyAvailabilityPicker } from './WeeklyAvailabilityPicker'
 import { AvailabilityExceptionsManager } from './AvailabilityExceptionsManager'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { extractApiError } from '@/utils/apiError'
 
 interface AvailabilityViewProps {
   userId: string
@@ -35,6 +38,9 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
   const addException = useAddAvailabilityException()
   const removeException = useRemoveAvailabilityException()
 
+  const [weeklyError, setWeeklyError] = useState<string | null>(null)
+  const [exceptionError, setExceptionError] = useState<string | null>(null)
+
   const isAdmin = authUser?.role === 'SUPER_ADMIN' || authUser?.role === 'TEAM_ADMIN'
   const isTargetSelf = authUser?.id === userId
   const showWeeklyEditor = isAdmin || (isTargetSelf && authUser?.role !== 'COACH')
@@ -45,9 +51,9 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
 
   if (errorWeekly || errorExceptions) {
     return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        Error loading availability data. Please try again later.
-      </Alert>
+      <Box sx={{ mt: 2 }}>
+        <ErrorAlert message="Error loading availability data. Please try again later." />
+      </Box>
     )
   }
 
@@ -72,9 +78,16 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
                   Set your default working hours for each day of the week. These will repeat
                   indefinitely.
                 </Typography>
+                {weeklyError && <ErrorAlert message={weeklyError} />}
                 <WeeklyAvailabilityPicker
                   value={weekly || []}
-                  onChange={(data) => updateWeekly.mutate({ userId, data })}
+                  onChange={(data) => {
+                    setWeeklyError(null)
+                    updateWeekly.mutate(
+                      { userId, data },
+                      { onError: (error) => setWeeklyError(extractApiError(error)) }
+                    )
+                  }}
                   disabled={updateWeekly.isPending}
                 />
               </>
@@ -99,13 +112,28 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
             <AvailabilityExceptionsManager
               exceptions={exceptions || []}
               onAdd={async (data) => {
-                await addException.mutateAsync({ userId, data })
+                setExceptionError(null)
+                try {
+                  await addException.mutateAsync({ userId, data })
+                } catch (error) {
+                  setExceptionError(extractApiError(error))
+                }
               }}
               onRemove={async (exceptionId) => {
-                await removeException.mutateAsync({ userId, exceptionId })
+                setExceptionError(null)
+                try {
+                  await removeException.mutateAsync({ userId, exceptionId })
+                } catch (error) {
+                  setExceptionError(extractApiError(error))
+                }
               }}
               disabled={addException.isPending || removeException.isPending}
             />
+            {exceptionError && (
+              <Box sx={{ mt: 2 }}>
+                <ErrorAlert message={exceptionError} />
+              </Box>
+            )}
             <Box sx={{ mt: 3 }}>
               <Alert severity="info">
                 Exceptions take precedence over your weekly schedule for specific dates. Use them

@@ -21,7 +21,7 @@ import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { useConfirm } from '@/context/confirm'
 import { useDeleteInteractionType } from '@/hooks/queries/useInteractionTypes'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
-import { extractApiError } from '@/utils/apiError'
+import { extractApiError, getApiStatus } from '@/utils/apiError'
 import { InteractionTypeUsageList } from './InteractionTypeUsageList'
 import { toTitleCase } from '@/utils/toTitleCase'
 
@@ -67,8 +67,8 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
       message: `Are you sure you want to permanently delete "${toTitleCase(t.name)}"? This action cannot be undone.`,
       confirmText: 'Yes',
       actionName: 'Delete',
-      onError: (error: any) => {
-        if (error.response?.status === 409) {
+      onError: (error: unknown) => {
+        if (getApiStatus(error) === 409) {
           setUsageId(t.id)
         } else {
           alert({

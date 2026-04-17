@@ -1,8 +1,10 @@
 import Box from '@mui/material/Box'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { extractApiError } from '@/utils/apiError'
 
 import { SuccessStep } from '@/components/public/booking/SuccessStep'
 import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHeader'
@@ -55,6 +57,16 @@ export function PublicBookingPage() {
   } = usePublicBookingState()
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
+  const [bookError, setBookError] = useState<string | null>(null)
+
+  const handleBookWithError = async () => {
+    setBookError(null)
+    try {
+      await handleBook()
+    } catch (error) {
+      setBookError(extractApiError(error))
+    }
+  }
 
   useEffect(() => {
     setFramed(!isSuccess)
@@ -150,9 +162,14 @@ export function PublicBookingPage() {
             />
           </Box>
 
+          {bookError && (
+            <Box sx={{ px: 2, pb: 1 }}>
+              <ErrorAlert message={bookError} />
+            </Box>
+          )}
           <PublicNavigationFooter
             onBack={handleBack}
-            onNext={currentStepKey === 'confirm' ? handleBook : handleNext}
+            onNext={currentStepKey === 'confirm' ? handleBookWithError : handleNext}
             backDisabled={activeStep === 0}
             nextDisabled={
               (currentStepKey === 'team' && !selectedTeam) ||

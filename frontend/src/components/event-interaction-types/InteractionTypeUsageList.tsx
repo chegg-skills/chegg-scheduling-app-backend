@@ -3,16 +3,21 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { useInteractionTypeUsage } from '@/hooks/queries/useInteractionTypes'
 import { Badge } from '@/components/shared/ui/Badge'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 
 interface InteractionTypeUsageListProps {
   interactionTypeId: string
 }
 
 export function InteractionTypeUsageList({ interactionTypeId }: InteractionTypeUsageListProps) {
-  const { data: usage, isLoading } = useInteractionTypeUsage(interactionTypeId)
+  const { data: usage, isLoading, error } = useInteractionTypeUsage(interactionTypeId)
 
   if (isLoading) {
     return <Typography variant="body2">Loading usage data...</Typography>
+  }
+
+  if (error) {
+    return <ErrorAlert message="Failed to load usage data. Please try again." />
   }
 
   if (!usage || usage.length === 0) {

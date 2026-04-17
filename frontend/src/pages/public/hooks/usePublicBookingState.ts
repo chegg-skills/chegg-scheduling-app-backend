@@ -241,7 +241,6 @@ export function usePublicBookingState() {
       })
       handleNext()
     } catch (error) {
-      console.error('Booking failed:', error)
       throw error
     } finally {
       setIsSubmitting(false)

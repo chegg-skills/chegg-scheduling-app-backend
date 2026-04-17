@@ -5,8 +5,10 @@ import { Plus } from 'lucide-react'
 import type { EventHost, TeamMember } from '@/types'
 import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useEventHosts, useSetEventHosts, useRemoveEventHost } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { extractApiError } from '@/utils/apiError'
 import { AddHostForm } from './form/AddHostForm'
 import { EventHostTable } from './EventHostTable'
 import { EventHostStatusAlert } from './EventHostStatusAlert'
@@ -37,6 +39,7 @@ export function EventHostManager({
   onViewUser,
 }: EventHostManagerProps) {
   const [localShowAddModal, setLocalShowAddModal] = useState(false)
+  const [addHostError, setAddHostError] = useState<string | null>(null)
   const showAddModal = showAddModalOverride ?? localShowAddModal
   const setShowAddModal = onCloseAddModal ?? setLocalShowAddModal
   const { handleAction } = useAsyncAction()
@@ -64,11 +67,15 @@ export function EventHostManager({
       { hosts: newHosts },
       {
         onSuccess: () => {
+          setAddHostError(null)
           if (onCloseAddModal) {
             onCloseAddModal()
           } else {
             setLocalShowAddModal(false)
           }
+        },
+        onError: (error) => {
+          setAddHostError(extractApiError(error))
         },
       }
     )
@@ -109,18 +116,27 @@ export function EventHostManager({
 
       <Modal
         isOpen={showAddModal}
-        onClose={() => (onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false))}
+        onClose={() => {
+          setAddHostError(null)
+          onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false)
+        }}
         title="Add coach to event"
         size="sm"
       >
-        <AddHostForm
-          activeHosts={activeHosts}
-          teamMembers={teamMembers}
-          assignmentStrategy={assignmentStrategy}
-          isPending={setting}
-          onAdd={handleAdd}
-          onCancel={() => (onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false))}
-        />
+        <Stack spacing={2}>
+          {addHostError && <ErrorAlert message={addHostError} />}
+          <AddHostForm
+            activeHosts={activeHosts}
+            teamMembers={teamMembers}
+            assignmentStrategy={assignmentStrategy}
+            isPending={setting}
+            onAdd={handleAdd}
+            onCancel={() => {
+              setAddHostError(null)
+              onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false)
+            }}
+          />
+        </Stack>
       </Modal>
     </Stack>
   )

@@ -8,8 +8,8 @@ interface ErrorAlertProps {
 
 export function ErrorAlert({ title = 'Error', message }: ErrorAlertProps) {
   return (
-    <Alert severity="error" variant="outlined">
-      <AlertTitle>{title}</AlertTitle>
+    <Alert severity="error">
+      <AlertTitle sx={{ fontWeight: 600, mb: 0.25 }}>{title}</AlertTitle>
       {message}
     </Alert>
   )

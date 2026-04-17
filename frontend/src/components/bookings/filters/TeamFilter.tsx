@@ -1,5 +1,6 @@
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
+import FormHelperText from '@mui/material/FormHelperText'
 import InputLabel from '@mui/material/InputLabel'
 import Select, { SelectChangeEvent } from '@mui/material/Select'
 import { useTeams } from '@/hooks/queries/useTeams'
@@ -10,7 +11,7 @@ interface TeamFilterProps {
 }
 
 export function TeamFilter({ value, onChange }: TeamFilterProps) {
-  const { data, isLoading } = useTeams()
+  const { data, isLoading, error } = useTeams()
   const teams = data?.teams ?? []
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -18,7 +19,7 @@ export function TeamFilter({ value, onChange }: TeamFilterProps) {
   }
 
   return (
-    <FormControl size="small" sx={{ minWidth: 200 }}>
+    <FormControl size="small" sx={{ minWidth: 200 }} error={!!error}>
       <InputLabel id="team-filter-label">Filter by Team</InputLabel>
       <Select
         labelId="team-filter-label"
@@ -26,7 +27,7 @@ export function TeamFilter({ value, onChange }: TeamFilterProps) {
         value={value}
         label="Filter by Team"
         onChange={handleChange}
-        disabled={isLoading}
+        disabled={isLoading || !!error}
       >
         <MenuItem value="">
           <em>All Teams</em>
@@ -37,6 +38,7 @@ export function TeamFilter({ value, onChange }: TeamFilterProps) {
           </MenuItem>
         ))}
       </Select>
+      {error && <FormHelperText>Failed to load teams</FormHelperText>}
     </FormControl>
   )
 }
