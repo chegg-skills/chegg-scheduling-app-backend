@@ -1,0 +1,1268 @@
+◇ injected env (9) from .env.test // tip: ◈ secrets for agents [www.dotenvx.com]
+[globalSetup] Syncing database schema...
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "chegg-scheduling-app-test", schema "public" at "localhost:5432"
+
+The database is already in sync with the Prisma schema.
+
+[globalSetup] Database synchronized successfully.
+POST /api/auth/bootstrap 201 95.981 ms reqId=0d8b51d7-1b43-45ae-8d0e-b093b9510c14
+POST /api/auth/register 201 72.097 ms reqId=0427ece1-b8a1-4d13-8a40-65ca49d3bdc4
+POST /api/auth/register 201 72.348 ms reqId=2d82d1b7-1191-4a00-b697-ccbb6eca6577
+GET /api/users 200 10.370 ms reqId=dffc1cf8-0ffc-4641-a026-5ed7ce21b55b
+GET /api/users 200 4.115 ms reqId=25e58dc2-2dfc-4494-93b3-ccb1c460847c
+GET /api/users 403 5.399 ms reqId=48101db9-4fea-412a-8808-db2a38df2935
+GET /api/users 401 0.316 ms reqId=67611047-2d97-4d6e-8f9c-1977629ad040
+GET /api/users?page=1&pageSize=2 200 15.815 ms reqId=d01d357d-7015-4267-ac01-b417bdcf7d4d
+GET /api/users?search=team 200 8.620 ms reqId=fd738e7d-f2e3-4994-b421-56bef274dcc2
+GET /api/users?search=coach@users 200 3.127 ms reqId=7fb45eb7-afd2-4d90-87e8-2bd1d6f7b678
+GET /api/users?page=abc&pageSize=-5 200 2.434 ms reqId=1e704ab0-976e-4667-aa16-68d39094361f
+DELETE /api/users 405 0.157 ms reqId=0fe9ed39-be00-44c5-a1eb-ff12505b7d1c
+GET /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 200 17.564 ms reqId=3b07d859-d4f2-47f1-97a1-150c913e5f46
+GET /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 200 3.829 ms reqId=6d5f3673-a0ad-4563-ad8d-cdec81a162ed
+GET /api/users/7b2a87d7-337e-45ce-8637-335973ca920b 403 1.078 ms reqId=b669692f-a0f2-459d-aaa7-6c5255a6ba39
+GET /api/users/00000000-0000-0000-0000-000000000000 404 1.396 ms reqId=778349e7-7556-450f-a63b-1b5313632991
+GET /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 401 0.153 ms reqId=3403f226-6bea-4699-814d-57d925698572
+GET /api/users/me 200 3.913 ms reqId=d5bff80d-ef26-4897-be6a-a63c8dbc809f
+GET /api/users/me 200 6.068 ms reqId=0b4968ce-d11b-4f00-95b8-833fb674fb3d
+GET /api/users/me 200 3.601 ms reqId=105bbdd6-5bf6-447d-9354-f8b3b5b4e2ef
+GET /api/users/me 401 0.142 ms reqId=1f5b9c29-06e3-42fc-98f9-133f784ecf96
+PATCH /api/users/me 200 5.035 ms reqId=da919473-fc92-4431-bbbe-9fb6c8c5b1b2
+PATCH /api/users/me 200 2.036 ms reqId=f87ba05c-dd22-4949-b2a1-808ecbf6ff5b
+PATCH /api/users/me 400 1.350 ms reqId=b1598f56-4caf-4fb2-ba0e-d284f4cf1c62
+PATCH /api/users/me 400 1.142 ms reqId=6d77e24d-3380-4073-b090-6ec9b7c2bc19
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 200 2.185 ms reqId=0e5418e3-2cd0-4d92-9fe7-b1408ad60ffe
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 200 2.987 ms reqId=0bc53778-3212-4ad8-aeae-866577ec6894
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 200 2.797 ms reqId=cf614280-3d9c-4d86-8fb8-54c583d766e4
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 200 3.609 ms reqId=527973ab-2d69-4443-a361-08aa16ef36d8
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 200 3.196 ms reqId=51b4ef7e-04ca-4c0a-8efe-9ce026ec6996
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 403 1.063 ms reqId=efdc86a5-8ee7-4454-abe0-3a84cea3dfde
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 403 0.976 ms reqId=e85b30c5-d8aa-4ad9-abea-70ae51445932
+PATCH /api/users/7b2a87d7-337e-45ce-8637-335973ca920b 403 1.619 ms reqId=3b207b67-6525-4583-a689-63007069ea6c
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 400 1.107 ms reqId=544ad7dc-de97-462d-8f73-d08f615689f1
+PATCH /api/users/00000000-0000-0000-0000-000000000000 404 49.938 ms reqId=6c2426ea-2d3a-42e7-b964-0cbef6793422
+PATCH /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 401 0.134 ms reqId=25335da6-f430-4c5d-9aab-ef3960e74d00
+POST /api/auth/register 201 67.754 ms reqId=f98e3a31-979d-4cdf-be96-557d84d9a7b0
+DELETE /api/users/c1d846f5-2a81-4eaa-a440-7bc153fb44ea 200 3.575 ms reqId=1af28da9-bc33-470c-b087-ed3139b0bbaa
+FAIL tests/integration/users.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.098Z","level":"info","message":"User registered successfully.","userId":"7b2a87d7-337e-45ce-8637-335973ca920b","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.102Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"7b2a87d7-337e-45ce-8637-335973ca920b"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.180Z","level":"info","message":"User registered successfully.","userId":"b14deb4e-9514-4c5c-8f8f-a101be2898ae","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.254Z","level":"info","message":"User registered successfully.","userId":"7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.544Z","level":"info","message":"User registered successfully.","userId":"c1d846f5-2a81-4eaa-a440-7bc153fb44ea","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.618Z","level":"info","message":"User registered successfully.","userId":"ac9b9e3a-e52f-44a5-98a6-0bc7f73671b0","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+  ● GET /api/users/:userId › SUPER_ADMIN can read a specific user
+
+    expect(received).toBeDefined()
+
+    Received: undefined
+
+      155 |     // Verify detailed fields are present (even if empty)
+      156 |     expect(res.body.data.teamMemberships).toBeDefined();
+    > 157 |     expect(res.body.data.hostedEvents).toBeDefined();
+          |                                        ^
+      158 |     expect(res.body.data.weeklyAvailability).toBeDefined();
+      159 |     expect(res.body.data.availabilityExceptions).toBeDefined();
+      160 |     expect(Array.isArray(res.body.data.teamMemberships)).toBe(true);
+
+      at Object.<anonymous> (tests/integration/users.test.ts:157:40)
+
+POST /api/auth/register 201 68.253 ms reqId=b0ab7781-7836-49f4-b5ba-03cb57a489cd
+DELETE /api/users/ac9b9e3a-e52f-44a5-98a6-0bc7f73671b0 200 2.986 ms reqId=ee017a4a-570a-4125-94e9-d44350d008bc
+DELETE /api/users/b14deb4e-9514-4c5c-8f8f-a101be2898ae 403 1.739 ms reqId=903419ef-1666-4d15-82ac-f2b7c5217e02
+DELETE /api/users/7b2a87d7-337e-45ce-8637-335973ca920b 403 3.772 ms reqId=246423d4-615c-4270-91f0-874cfa5cdb1a
+DELETE /api/users/7ba4e216-d9b9-401c-8cb6-ad13ebd1e2da 401 0.147 ms reqId=ed4a58a5-1398-4681-b0c4-7e0379c0616b
+POST /api/auth/bootstrap 201 70.740 ms reqId=f11a2cce-ff76-4ff5-8699-de9cb4c55b1e
+POST /api/auth/register 201 69.123 ms reqId=9527e388-2bb5-4c6d-8ae0-230895917b49
+POST /api/auth/register 201 67.796 ms reqId=ed75d32c-621d-4d91-9007-963ae26cf579
+POST /api/auth/register 201 68.691 ms reqId=a52ef5ac-edf3-4e35-9e2e-2527225564fd
+POST /api/auth/register 201 68.287 ms reqId=c630befd-767c-4d16-a2a4-2c2624bcdeaa
+POST /api/teams 201 9.543 ms reqId=584bb020-125c-416a-bd51-d33d2b9e41ed
+POST /api/teams 201 5.548 ms reqId=ee838a42-f3ba-49ba-85a2-3d2fbcdb8b30
+POST /api/event-offerings 201 4.103 ms reqId=eb2e6f01-bee9-4ce1-8a1e-57242894d9d0
+POST /api/event-offerings 201 2.730 ms reqId=7ecca005-f3b6-4de4-ab89-5f302fb5c4b1
+GET /api/event-offerings 200 3.244 ms reqId=7def5e68-ab87-406d-87d1-09611a6b56f5
+POST /api/event-offerings 201 1.808 ms reqId=f96c9a2a-ccc4-40d0-9240-c97b52615159
+PATCH /api/event-offerings/37c6e027-bdee-48fa-8e3b-01aff4efc2a2 200 9.071 ms reqId=f36a2627-62e7-4846-b39e-d3be47a72658
+POST /api/event-offerings 403 2.440 ms reqId=2e7e4289-fa6a-46e9-ba2c-90a35e91b14b
+POST /api/event-offerings 201 1.990 ms reqId=1f26ef83-443f-4861-a93a-9439e7664a7f
+DELETE /api/event-offerings/05fa35f2-3d69-4afa-b243-8b3486888e5a 200 4.307 ms reqId=f081001b-bd3a-4eb8-a8a1-2fc710a5b492
+GET /api/event-offerings 200 1.837 ms reqId=030c016b-8867-4664-bd16-fab05752f525
+POST /api/event-offerings 201 2.520 ms reqId=e39d919b-1595-482e-9f2e-a72dc497bd31
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 11.311 ms reqId=273cb4cb-f88d-4c47-90f2-e88f1401f0c5
+GET /api/event-offerings/d05ae576-9c68-4add-9a01-eb7668d53a3f/usage 200 1.823 ms reqId=1a199c3c-a602-4bf2-9df8-3cf471371d49
+POST /api/event-offerings 201 2.265 ms reqId=69462a19-ea7c-4ad0-a122-af21983db673
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 6.459 ms reqId=9ec04a54-1df4-46a5-bacf-4c71ea708775
+DELETE /api/event-offerings/fe518cca-2f58-4250-9ec6-c1e9118bf74e 409 1.946 ms reqId=6d02d988-1111-4aa2-aaad-940144b7598f
+GET /api/event-interaction-types 200 1.152 ms reqId=44736477-bbf1-48b9-a93b-e8a264347e7a
+POST /api/event-offerings 201 1.962 ms reqId=210521b4-a94e-4359-b71f-6107281bce6d
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 6.141 ms reqId=ee04747a-1e9a-45d5-ab45-96b869bcdb5d
+POST /api/event-offerings 201 2.120 ms reqId=390a6273-1424-485f-901e-72f1db6860ab
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 14.432 ms reqId=dc6ba088-5875-452c-a13b-42b84f329e3d
+POST /api/event-offerings 201 2.755 ms reqId=580b1a01-e622-4e6f-94dd-423372ea0096
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 403 1.837 ms reqId=c95c4aa9-7a37-49d3-b78b-d8a99044951b
+POST /api/event-offerings 201 4.119 ms reqId=6ff90901-8edc-4383-bc55-92122e7ba098
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 7.612 ms reqId=d3c62026-9866-4f10-8637-0f6446ed1803
+GET /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events?page=1&pageSize=10 200 7.189 ms reqId=ba1911c8-f7c9-4875-afa8-1c0a2e9c9246
+POST /api/event-offerings 201 2.300 ms reqId=7e77712c-a212-4373-b73e-44b5efeab2c5
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 13.452 ms reqId=afa14e19-61f4-488b-9315-7f330e04e5a4
+GET /api/events/29906ff2-4433-4171-8e46-56f40cf4f3d0 200 26.966 ms reqId=663fd763-50d9-4574-9943-a436aced551b
+PATCH /api/events/29906ff2-4433-4171-8e46-56f40cf4f3d0 200 110.136 ms reqId=38150bcf-b178-4a51-b7fa-cc459823e253
+POST /api/event-offerings 201 9.915 ms reqId=9dade3b2-dedd-4e39-bb9a-9e03d3c0bb43
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 17.456 ms reqId=52af7d5b-3a7c-4d9a-bc45-a646bb0c2a6d
+DELETE /api/events/43afb0f8-c7c8-4441-9d07-44d1c96dacb8 200 21.686 ms reqId=42dbffbb-1746-4527-abd8-05c5816d95a9
+GET /api/events/43afb0f8-c7c8-4441-9d07-44d1c96dacb8 404 9.954 ms reqId=20b1ac3f-f18c-4150-a157-b6814bb31678
+POST /api/event-offerings 201 6.983 ms reqId=920851a2-c2e9-415e-a850-d69e59212e7d
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 15.026 ms reqId=855bd1fb-e36e-4241-b219-de50eea86ee4
+POST /api/events/ff9e880d-9fb7-46b9-85a9-eaa1339412a0/schedule-slots 201 6.777 ms reqId=08af9695-fc93-4536-af03-e5fef7958bc3
+PUT /api/events/ff9e880d-9fb7-46b9-85a9-eaa1339412a0/coaches 200 48.610 ms reqId=89fc911f-4255-4d27-a22a-04dab27b097d
+(node:78292) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+POST /api/bookings 201 37.323 ms reqId=36202a9d-8883-4c39-be12-4b39e07d4fb3
+DELETE /api/events/ff9e880d-9fb7-46b9-85a9-eaa1339412a0 409 5.733 ms reqId=c9081f04-2a92-4947-83b8-f441ac449c99
+POST /api/event-offerings 201 4.181 ms reqId=768a8f88-ae77-4349-994d-066761860c85
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 6.924 ms reqId=c3597241-778f-4d25-9a07-39c48f444eda
+PATCH /api/events/40a645c4-6d27-4832-8a10-7d623428e4e8 200 16.853 ms reqId=1a5edf7d-fe23-4552-9576-1aa44fae83b3
+POST /api/event-offerings 201 2.115 ms reqId=208628d8-48db-40c4-8759-37e4d84ed051
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 6.067 ms reqId=cc29a028-3787-4c9a-8211-476ec8db77f3
+PUT /api/events/bbd65287-7544-4901-86d5-2d8c59504f74/coaches 200 17.246 ms reqId=647964ad-76ff-4688-82e8-e3de9212731b
+POST /api/events/bbd65287-7544-4901-86d5-2d8c59504f74/duplicate 201 17.201 ms reqId=5f7190d3-211b-43c4-8813-4ee3c6c9bfea
+POST /api/event-offerings 201 2.015 ms reqId=6658eb33-f899-481e-8c3d-dc9991cc4f1c
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 8.508 ms reqId=218fc4ec-f824-4873-b017-137268ef8105
+POST /api/event-offerings 201 2.353 ms reqId=03f1df53-ce91-4148-b965-e6760e275c40
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 9.290 ms reqId=a4305e86-26fd-460f-acb5-8ce9aa88d19d
+PATCH /api/events/1a7282d1-0321-4a84-a9d0-955fe490552f 200 12.710 ms reqId=e8fcca0f-42b7-429a-866a-d1c3359bc2c0
+POST /api/event-offerings 201 2.073 ms reqId=9ef7e03c-a600-4e36-a6da-3137edbf68c2
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 8.726 ms reqId=7fd0b1c1-1f56-4182-876a-befb9bc7e269
+POST /api/events/fe27ff8c-9211-4579-b5ef-97ae7b7fc532/schedule-slots 201 4.796 ms reqId=89c31a0d-1e86-4e12-b409-b404f699034d
+GET /api/events/fe27ff8c-9211-4579-b5ef-97ae7b7fc532/schedule-slots 200 6.770 ms reqId=ecfe8fa3-fd8d-4418-9a6e-f0b800f6b99e
+PATCH /api/events/fe27ff8c-9211-4579-b5ef-97ae7b7fc532/schedule-slots/8058f274-6fa5-41be-9ced-50c1e9e54231 200 4.095 ms reqId=77448505-388e-4e6c-93f8-c0e4e86dc6ea
+DELETE /api/events/fe27ff8c-9211-4579-b5ef-97ae7b7fc532/schedule-slots/8058f274-6fa5-41be-9ced-50c1e9e54231 200 4.284 ms reqId=b3a7297a-bd7e-4b6b-a4f7-af9e63355e2a
+POST /api/event-offerings 201 1.750 ms reqId=061a1c7b-1046-4fb4-98ef-1f3c240c8f9f
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 5.508 ms reqId=5595243d-f35c-4a8c-8ca3-cd7bf28f9222
+POST /api/events/76f523d9-93e0-4a5e-81ab-ccd39b6b1f59/schedule-slots 201 4.430 ms reqId=9e100ef6-c446-4cb5-856c-7ab9949a8c2c
+PUT /api/events/76f523d9-93e0-4a5e-81ab-ccd39b6b1f59/coaches 200 8.150 ms reqId=5efb1f66-f1fa-4db6-958e-1da880d053e9
+POST /api/bookings 201 10.579 ms reqId=7cf5632b-6cdd-4267-94a3-ba491a127622
+DELETE /api/events/76f523d9-93e0-4a5e-81ab-ccd39b6b1f59/schedule-slots/27c32ff1-e095-4fa0-bd33-0acc30b5162e 409 3.134 ms reqId=9c7f9a30-68e5-4d03-968d-93e9d94283d3
+POST /api/event-offerings 201 1.557 ms reqId=5b97af41-6b28-47c7-9559-e2f5d5cb562e
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 6.979 ms reqId=c1c37bc6-fba6-4cd2-80bb-2abb244b93a4
+PUT /api/events/6366af71-bc57-4d14-80df-84749af6130c/coaches 200 9.057 ms reqId=abc420aa-bcd9-426e-b194-7e5a6c17e448
+GET /api/events/6366af71-bc57-4d14-80df-84749af6130c/coaches 200 2.891 ms reqId=4822343f-2e0b-4ee1-b883-70c7dc904c64
+POST /api/event-offerings 201 1.640 ms reqId=688dcf37-c3e0-4770-84de-913c47c48363
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 9.875 ms reqId=264b99bc-e528-478b-afc4-cfb5a11c2455
+PUT /api/events/77410d61-e04b-4609-8938-28029ef759c9/coaches 400 6.244 ms reqId=211dea12-22d3-4ba8-bfec-983ddfb6e7a6
+POST /api/event-offerings 201 1.949 ms reqId=3e560b08-34ee-4dd5-89b4-dbaf8a6f7cfd
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 7.134 ms reqId=0304d4c4-6401-4752-97fc-6301834a1a68
+PUT /api/events/7a5f7358-f04b-40fa-b05c-4bf3a4e8c226/coaches 200 7.082 ms reqId=3de33562-4cb8-495d-858e-2373e2524604
+DELETE /api/events/7a5f7358-f04b-40fa-b05c-4bf3a4e8c226/coaches/47a9d018-1c89-4d1b-a8bc-0123264fe50a 200 5.094 ms reqId=d58d7c17-ca11-477e-ac4a-ed08625f5754
+POST /api/event-offerings 201 1.437 ms reqId=fa46cc15-2b9c-4c6b-871d-8d3ffbe60c07
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 5.941 ms reqId=f73225e2-e358-42a4-95fe-9ffdffb942fc
+PUT /api/events/b036e365-270f-4ebb-97a4-9288c582ffa1/coaches 200 8.810 ms reqId=c890383b-adb7-4a54-87a7-ade3eb2555e2
+DELETE /api/events/b036e365-270f-4ebb-97a4-9288c582ffa1/coaches/47a9d018-1c89-4d1b-a8bc-0123264fe50a 400 2.484 ms reqId=b1eac942-352d-4dc8-90f7-525ec5a662aa
+POST /api/event-offerings 201 1.619 ms reqId=1142fbae-e18b-4b84-b1eb-a0773432ac30
+FAIL tests/integration/events.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.875Z","level":"info","message":"User registered successfully.","userId":"d4e88617-45a8-4eab-af79-cce83926e11b","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.875Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"d4e88617-45a8-4eab-af79-cce83926e11b"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:11.945Z","level":"info","message":"User registered successfully.","userId":"fe3d7233-21df-4180-bb64-bbaa8138e538","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:12.014Z","level":"info","message":"User registered successfully.","userId":"34229428-e0e3-4176-93a3-228b905ba4d9","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:12.084Z","level":"info","message":"User registered successfully.","userId":"47a9d018-1c89-4d1b-a8bc-0123264fe50a","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:12.154Z","level":"info","message":"User registered successfully.","userId":"16f8a41a-4c2b-4113-98dd-1da655f82f78","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:12.691Z","level":"info","message":"Booking created successfully.","bookingId":"b3c15239-7b61-4d61-9138-fef2213ae286","eventId":"ff9e880d-9fb7-46b9-85a9-eaa1339412a0","teamId":"44dafa99-9fde-403b-bc32-f4f0492cf275","coachUserId":"47a9d018-1c89-4d1b-a8bc-0123264fe50a","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:12.894Z","level":"info","message":"Booking created successfully.","bookingId":"8e51a46a-6601-4aff-851f-3c6bd465da4b","eventId":"76f523d9-93e0-4a5e-81ab-ccd39b6b1f59","teamId":"44dafa99-9fde-403b-bc32-f4f0492cf275","coachUserId":"47a9d018-1c89-4d1b-a8bc-0123264fe50a","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+  ● Interaction type routes › lists the four hardcoded interaction types
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 1
+    + Received  + 0
+
+      Object {
+        "caps": Object {
+    -     "multipleHosts": Any<Boolean>,
+          "multipleParticipants": Any<Boolean>,
+        },
+        "key": Any<String>,
+        "label": Any<String>,
+      }
+
+      264 |       res.body.data.interactionTypes.map((t: { key: string }) => t.key),
+      265 |     ).toEqual(expect.arrayContaining(["ONE_TO_ONE", "ONE_TO_MANY", "MANY_TO_ONE", "MANY_TO_MANY"]));
+    > 266 |     expect(res.body.data.interactionTypes[0]).toMatchObject({
+          |                                               ^
+      267 |       key: expect.any(String),
+      268 |       label: expect.any(String),
+      269 |       caps: {
+
+      at Object.<anonymous> (tests/integration/events.test.ts:266:47)
+
+  ● Event coach routes › rejects assigning too few coaches for a round-robin event
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /ROUND_ROBIN events require at least two hosts/i
+    Received string:  "ROUND_ROBIN events require at least two coaches."
+
+      742 |
+      743 |     expect(res.status).toBe(400);
+    > 744 |     expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two hosts/i);
+          |                              ^
+      745 |   });
+      746 |
+      747 |   it("removes an assigned coach", async () => {
+
+      at Object.<anonymous> (tests/integration/events.test.ts:744:30)
+
+  ● Event coach routes › rejects removing a coach from a round-robin event if it leaves fewer than two coaches
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /ROUND_ROBIN events require at least two hosts/i
+    Received string:  "ROUND_ROBIN events require at least two coaches."
+
+      798 |
+      799 |     expect(res.status).toBe(400);
+    > 800 |     expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two hosts/i);
+          |                              ^
+      801 |   });
+      802 |
+      803 |   it("rejects updating strategy to ROUND_ROBIN if event has fewer than two coaches", async () => {
+
+      at Object.<anonymous> (tests/integration/events.test.ts:800:30)
+
+  ● Event coach routes › rejects updating strategy to ROUND_ROBIN if event has fewer than two coaches
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /ROUND_ROBIN events require at least two hosts/i
+    Received string:  "ROUND_ROBIN events require at least two coaches."
+
+      827 |
+      828 |     expect(res.status).toBe(400);
+    > 829 |     expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two hosts/i);
+          |                              ^
+      830 |   });
+      831 | });
+      832 |
+
+      at Object.<anonymous> (tests/integration/events.test.ts:829:30)
+
+POST /api/teams/44dafa99-9fde-403b-bc32-f4f0492cf275/events 201 6.347 ms reqId=ad319f0c-7f39-4ddc-a780-ef2f89964452
+PUT /api/events/92997a46-f639-4058-a72a-e2989c21598d/coaches 200 8.879 ms reqId=6dd02779-636b-4eb7-acef-127c10622712
+PATCH /api/events/92997a46-f639-4058-a72a-e2989c21598d 400 4.257 ms reqId=ee56a9a0-464b-4657-8e57-67a83831d7b8
+POST /api/auth/bootstrap 201 73.162 ms reqId=c04b542c-baf7-4c2d-892f-38d80fca6de6
+POST /api/auth/register 201 70.412 ms reqId=a1b26007-5462-48ab-945c-e9f71bd8a329
+POST /api/auth/register 201 68.730 ms reqId=53701b59-988c-402e-96de-8ea4ac05d741
+POST /api/auth/register 201 68.524 ms reqId=b7458383-0793-4fa0-a11f-b6503266e8c8
+POST /api/teams 201 6.852 ms reqId=4640386e-7a7b-4d29-9802-f5cf271b4d61
+POST /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members 201 6.604 ms reqId=a018ed87-7553-47b2-91ec-bbf4fdd51a1f
+POST /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members 201 5.756 ms reqId=a29f562b-a9bb-4961-941a-eadb5fffef8a
+GET /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members 200 3.124 ms reqId=2f0c639a-9973-431a-9a10-1c12ef6e8f26
+FAIL tests/integration/team-members.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.254Z","level":"info","message":"User registered successfully.","userId":"9a272a37-b76d-4d1a-8054-e6419f37defd","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.255Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"9a272a37-b76d-4d1a-8054-e6419f37defd"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.326Z","level":"info","message":"User registered successfully.","userId":"08c50dcc-493c-4d4b-b0fc-a553d36cbe83","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.396Z","level":"info","message":"User registered successfully.","userId":"54e61f38-cede-4453-9e1d-2af9a6ed3680","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.466Z","level":"info","message":"User registered successfully.","userId":"4af1b829-bb67-49f5-bd8b-d333b6759480","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+  ● Team member routes › prevents removing a member assigned to an active team event
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      139 |         description: "Event blocking member removal",
+      140 |         offeringId: offering.body.data.id,
+    > 141 |         interactionTypeId: interactionType.body.data.id,
+          |                                                      ^
+      142 |         assignmentStrategy: "DIRECT",
+      143 |         durationSeconds: 1800,
+      144 |         locationType: "VIRTUAL",
+
+      at Object.<anonymous> (tests/integration/team-members.test.ts:141:54)
+
+POST /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members 201 2.691 ms reqId=8474c73f-32c2-401f-a06f-7561048ae03c
+POST /api/event-offerings 201 2.613 ms reqId=a4da919b-4ab2-4da8-acd9-c1c086c55ded
+POST /api/event-interaction-types 405 0.137 ms reqId=ce3c35bb-0d4a-40ec-b58b-c49f88c963b9
+POST /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members 201 2.802 ms reqId=66d1f8af-7a4f-4466-a8c1-a655bfd051b7
+DELETE /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members/4af1b829-bb67-49f5-bd8b-d333b6759480 200 7.543 ms reqId=15e81920-39d3-49af-a322-e0d759aa51d8
+DELETE /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members/08c50dcc-493c-4d4b-b0fc-a553d36cbe83 409 3.044 ms reqId=9ecc2759-9562-4913-9aa5-c91eae88e7b3
+POST /api/teams/59370d83-e6d1-4869-a9cc-cfcb2d88d376/members/bulk 201 3.377 ms reqId=54110514-55a6-4104-9133-1cfcf5a18d93
+FAIL tests/integration/buffer.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.731Z","level":"info","message":"User registered successfully.","userId":"6c8b31d1-1891-4256-992d-d0eff2060e67","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.731Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"6c8b31d1-1891-4256-992d-d0eff2060e67"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:13.801Z","level":"info","message":"User registered successfully.","userId":"95af4b0d-b2a5-40d8-b519-0b4d51940eb3","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+  ● Event Buffer Integration Tests › respects bufferAfterMinutes when calculating available slots
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      58 |       maxParticipants: 1,
+      59 |     });
+    > 60 |   interactionTypeId = interactionRes.body.data.id;
+         |                                                ^
+      61 |
+      62 |   // 4. Create Event with 15-minute buffer
+      63 |   const eventRes = await request(app)
+
+      at Object.<anonymous> (tests/integration/buffer.test.ts:60:48)
+
+POST /api/auth/bootstrap 201 72.490 ms reqId=06b23fa4-47c5-4f55-8b93-0ebbc001f7a5
+POST /api/auth/register 201 68.653 ms reqId=8ef4b3e0-e8ae-43ca-acdb-821233a3eb97
+POST /api/teams 201 5.134 ms reqId=a3fd00b1-f951-46f9-a63f-283f3d458f18
+POST /api/event-offerings 201 2.472 ms reqId=03bbe637-bed5-4aa3-8fdb-e3b03ee89930
+POST /api/event-interaction-types 405 0.133 ms reqId=36b94812-352d-4cdb-8bfc-340042c5a67b
+FAIL tests/integration/public.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.022Z","level":"info","message":"User registered successfully.","userId":"bff640a1-c46f-4988-a357-7714bab3d7e0","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.023Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"bff640a1-c46f-4988-a357-7714bab3d7e0"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+  ● Public API › GET /api/public/teams › should list active teams without authentication
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › GET /api/public/teams/:teamId/events › should list active events for a team without authentication
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › slug-based public booking endpoints › should resolve a team by public slug
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › slug-based public booking endpoints › should list a team's public events by slug
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › slug-based public booking endpoints › should resolve an event by public slug
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › slug-based public booking endpoints › should resolve a coach by public slug and list their public events
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › GET /api/public/events/:eventId/slots › should return available slots without authentication
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › GET /api/public/events/:eventId/slots › returns only future predefined slots that satisfy the scheduling rules
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+  ● Public API › GET /api/public/events/:eventId/slots › should return 400 if dates are missing
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |       isActive: true,
+      68 |     });
+    > 69 |   const interactionTypeId = interactionRes.body.data.id;
+         |                                                      ^
+      70 |
+      71 |   const teamAdmin = await registerUser(superAdminToken, {
+      72 |     firstName: "Team",
+
+      at Object.<anonymous> (tests/integration/public.test.ts:69:54)
+
+POST /api/auth/bootstrap 201 75.291 ms reqId=243a13ad-126f-450a-91a5-6fd516f32105
+POST /api/event-offerings 201 4.185 ms reqId=8f1c07fd-f85a-4845-9b81-48d0ed44ecde
+POST /api/event-interaction-types 405 0.140 ms reqId=dcf7176e-048e-4b92-9414-e51fea8acae9
+POST /api/auth/bootstrap 201 71.347 ms reqId=8b96c101-ec1d-4d05-be81-aae9bfcc9e00
+POST /api/auth/bootstrap 201 67.447 ms reqId=5eaaf796-1082-494c-8429-de01c0fe0ee2
+POST /api/auth/bootstrap 403 0.636 ms reqId=444bd45a-2330-4a58-b3f9-3c35df593abc
+POST /api/auth/bootstrap 403 0.138 ms reqId=f78246f9-d11b-4273-a887-148d28701adb
+POST /api/auth/bootstrap 400 0.863 ms reqId=6e2e1d9d-4fa8-4a2c-9976-555a23b3e108
+POST /api/auth/bootstrap 201 66.931 ms reqId=c09d9b27-1f8a-4d44-ac7a-79b8f5726776
+POST /api/auth/login 200 68.313 ms reqId=cab8e6c1-96b5-4276-bd99-c651e499c13c
+POST /api/auth/login 401 69.094 ms reqId=5abb2897-b0a4-4582-bdce-2171d3005c06
+POST /api/auth/login 401 1.056 ms reqId=4c425f9b-411c-4a9b-80a0-695dc91b2c31
+POST /api/auth/login 400 0.157 ms reqId=cdcf5d0e-5b6d-4f4f-96a3-c91db66817b6
+POST /api/auth/login 400 0.226 ms reqId=e16d3d07-4a08-479f-945d-12fc66cd727c
+POST /api/auth/bootstrap 201 67.313 ms reqId=6ae151d3-2ae9-4e8d-8b83-bebcbc69529d
+POST /api/auth/register 201 68.797 ms reqId=67497d8d-f467-4367-8c36-2c6e4cedbe65
+POST /api/auth/register 201 67.860 ms reqId=4f7a20ca-08ae-4eee-9f92-05df3cc4ef19
+POST /api/auth/register 201 68.183 ms reqId=f0ca2699-6e3e-4dba-84aa-204d9d2209cc
+POST /api/auth/register 401 0.145 ms reqId=7d07ab31-1647-4cf0-9b33-002361f8fe07
+POST /api/auth/register 403 1.085 ms reqId=43c283a6-7d0b-416a-8732-fbfa7e426cdd
+POST /api/auth/register 201 67.746 ms reqId=cbf2229c-4220-456f-bdf3-eed47d79a507
+POST /api/auth/register 409 2.214 ms reqId=dbb87223-56be-4afe-843a-3d54249c80ad
+POST /api/auth/register 400 1.225 ms reqId=de1a4e3a-331e-466f-b22f-6027e66a1454
+POST /api/auth/register 400 1.294 ms reqId=b3d5f044-fdeb-44ad-981d-96156b707d3c
+POST /api/auth/register 400 1.259 ms reqId=0bca7db6-b212-4eab-9a2b-a21422dc1ff1
+PASS tests/integration/auth.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.249Z","level":"info","message":"User registered successfully.","userId":"1cdc103a-cd17-472a-a65d-ad410f31d603","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.250Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"1cdc103a-cd17-472a-a65d-ad410f31d603"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.327Z","level":"info","message":"User registered successfully.","userId":"3f22e425-033f-45b5-8da8-b3ce78f4b641","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.327Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"3f22e425-033f-45b5-8da8-b3ce78f4b641"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.406Z","level":"info","message":"User registered successfully.","userId":"60be7129-e044-487f-8235-b2173389f4a9","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.406Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"60be7129-e044-487f-8235-b2173389f4a9"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.475Z","level":"info","message":"User logged in successfully.","userId":"60be7129-e044-487f-8235-b2173389f4a9","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.warn
+      {"timestamp":"2026-04-17T09:06:14.546Z","level":"warn","message":"Invalid password attempt recorded.","userId":"60be7129-e044-487f-8235-b2173389f4a9","failedLoginAttempts":1}
+
+      44 |
+      45 |   if (level === "warn") {
+    > 46 |     console.warn(line);
+         |             ^
+      47 |     return;
+      48 |   }
+      49 |
+
+      at writeLog (src/shared/logging/logger.ts:46:13)
+      at Object.warn (src/shared/logging/logger.ts:56:46)
+      at Object.login (src/domain/auth/auth.service.ts:160:12)
+      at login (src/domain/auth/auth.controller.ts:25:20)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.623Z","level":"info","message":"User registered successfully.","userId":"e05d4515-a710-4d7f-a397-ce56b630b39a","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.624Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"e05d4515-a710-4d7f-a397-ce56b630b39a"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.693Z","level":"info","message":"User registered successfully.","userId":"39f6dd59-91da-47a5-a2df-6ed8a2199fce","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.762Z","level":"info","message":"User registered successfully.","userId":"6a649bc1-5ff3-4d06-852f-1c00c300ac43","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.833Z","level":"info","message":"User registered successfully.","userId":"98321358-6d86-47ec-8fdd-122311e42e32","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.904Z","level":"info","message":"User registered successfully.","userId":"45d7ecee-a58d-4304-8415-358b01fe1d72","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.988Z","level":"info","message":"User registered successfully.","userId":"445a97fa-cdc1-4fd7-9243-47c12c9e5506","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:14.988Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"445a97fa-cdc1-4fd7-9243-47c12c9e5506"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+POST /api/auth/bootstrap 201 68.694 ms reqId=f8253573-c06d-4347-8d58-eccc9cb97d3d
+POST /api/auth/logout 200 1.621 ms reqId=23abdbca-b49d-43ad-9c16-8d29d02c6d84
+POST /api/auth/logout 401 0.189 ms reqId=b2e7ba2f-13d7-484d-97dc-67707c20e00c
+GET /api/auth/login 405 0.138 ms reqId=22d470d3-2147-4bc9-9c78-79ea39ea0d45
+GET /api/totally-nonexistent-path 404 0.144 ms reqId=d17fce8f-a4a0-4e0d-b9c8-dd8d7e31359f
+POST /api/auth/bootstrap 201 70.630 ms reqId=dc91a540-845d-4430-818a-7e8a45c3cb16
+POST /api/auth/register 201 70.002 ms reqId=94f57326-0baf-4ddc-8d78-9305065e88b9
+POST /api/auth/register 201 68.833 ms reqId=a82d51a0-0660-42bb-86b6-80b9c8587e80
+POST /api/auth/register 201 68.355 ms reqId=65459795-fb93-4410-877b-360511b23134
+POST /api/teams 201 6.756 ms reqId=7b7edeff-e0fd-48b2-a7ac-0d6da169cab4
+POST /api/teams 201 4.612 ms reqId=3f4dca1c-7cc8-433f-8e36-0a3c3bd2f767
+POST /api/teams 403 1.107 ms reqId=c360ea04-aec6-424d-ad87-b8dffd80c47c
+POST /api/teams 403 1.201 ms reqId=57450f26-6add-40cc-8dc9-e10f757c8356
+POST /api/teams 409 46.778 ms reqId=0380980d-e84e-40f3-b90b-5bba6da818fa
+POST /api/teams 400 1.432 ms reqId=5ccc4c60-9ccd-41f3-9d71-041ddeb609d7
+POST /api/teams 400 1.110 ms reqId=822e1bb1-9158-4a3d-87d6-345db9fc8b4f
+POST /api/teams 400 1.451 ms reqId=ce2c2870-b4d8-485e-ac99-53de3940c81e
+POST /api/teams 400 1.479 ms reqId=ebccbe3e-9e42-4aca-afcf-b400f6e29f82
+POST /api/teams 401 0.102 ms reqId=ab1131f1-084d-406d-a836-6dc29d111fc6
+GET /api/teams 200 3.613 ms reqId=b95a8b7c-fe02-4101-ad98-a72d4884bb43
+GET /api/teams 200 2.252 ms reqId=3970c23e-664a-4ab4-9f81-a28e869c91a0
+GET /api/teams 403 1.009 ms reqId=58a386b6-23e7-40ea-a392-46f0d8aae7e4
+GET /api/teams 401 0.119 ms reqId=718286e4-35bb-4721-bc55-4dde722e200a
+GET /api/teams?page=1&pageSize=1 200 4.889 ms reqId=d5cbbf16-68b0-49ca-9ec7-beee07ff137a
+GET /api/teams?page=abc&pageSize=-5 200 2.197 ms reqId=ad8c09c3-1f82-4438-8fa0-16ad44859767
+DELETE /api/teams 405 0.111 ms reqId=b2a51133-c1d6-460a-938c-4aa5a5e12451
+POST /api/teams 201 3.306 ms reqId=a866b3c1-126e-45aa-9d3f-10b99807ef1b
+GET /api/teams/351d4c69-a157-4ca8-b5a9-d3628982703b 200 1.419 ms reqId=624e4f83-d3a1-4015-a31e-300cafb33346
+GET /api/teams/351d4c69-a157-4ca8-b5a9-d3628982703b 200 1.244 ms reqId=41230fb8-4bc4-4a6c-b178-b2fd380f5475
+GET /api/teams/351d4c69-a157-4ca8-b5a9-d3628982703b 403 0.901 ms reqId=b597a6e8-710d-4573-b4a0-1acce62e9a62
+GET /api/teams/00000000-0000-0000-0000-000000000000 404 1.097 ms reqId=d8a0758a-b23d-47fd-b7b3-4e8c910f66dd
+GET /api/teams/351d4c69-a157-4ca8-b5a9-d3628982703b 401 0.145 ms reqId=e460900f-0ee0-4434-9622-bef064107649
+POST /api/teams 201 2.749 ms reqId=8f402c72-bfbe-427d-b18e-00995bd55259
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 200 2.400 ms reqId=b85e600c-c770-4fd8-8555-b4e376b76174
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 200 1.974 ms reqId=f1272ce1-894d-42db-836f-7b443521b77c
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 200 2.151 ms reqId=f1ea97b0-b2e2-4df5-83d7-51f36e3fe2bf
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 200 3.558 ms reqId=21c232d7-e3ff-4b46-8359-3979f5ac03df
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 200 2.001 ms reqId=2319c21e-7e6d-42f8-a9a3-7a7936adc449
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 200 1.894 ms reqId=f847afbc-a867-4300-8ed0-762f3242b2b3
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 403 0.881 ms reqId=34a3c3c1-0a2a-4c4b-ad7b-c6ff15efc974
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 403 0.821 ms reqId=a11f5367-c919-41d9-9419-9f35ba54d7e7
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 400 1.048 ms reqId=9099c68d-e6ac-4377-9c81-68a44919b373
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 400 1.615 ms reqId=cc9a8888-245f-441b-8674-f57eef647059
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 409 4.833 ms reqId=165eaf2d-61aa-40ef-9f87-85d3932538e5
+PATCH /api/teams/00000000-0000-0000-0000-000000000000 404 1.380 ms reqId=3dee1e37-35cc-4e5d-830f-9e9ebdcdd979
+PATCH /api/teams/46febde8-86ef-4b0c-a543-a7f816fc859d 401 0.115 ms reqId=5646a6ff-6fe6-4a11-b1ea-c45eb8a8aac0
+POST /api/teams 201 3.840 ms reqId=6cf383c9-5a99-4bff-b9b6-9adfaed42418
+DELETE /api/teams/d206ee96-8cdd-41af-80f3-a8a0607aecc4 200 3.439 ms reqId=b6886365-15e4-4e03-b97b-86c572af2f07
+GET /api/teams/d206ee96-8cdd-41af-80f3-a8a0607aecc4 404 1.250 ms reqId=a6e3d2cc-f322-4fa5-bea5-4d7c2880cc22
+POST /api/teams 201 3.096 ms reqId=97884f67-c4cc-4f36-9042-ac581efb9e8f
+DELETE /api/teams/e8f3f07a-e65c-4fc5-bd6d-c0e4c6eafed2 403 1.019 ms reqId=231a606b-6675-4fbd-8295-8379417d3630
+PASS tests/integration/teams.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.199Z","level":"info","message":"User registered successfully.","userId":"fa362244-ac4e-48e4-aacc-073606eda78b","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.200Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"fa362244-ac4e-48e4-aacc-073606eda78b"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.271Z","level":"info","message":"User registered successfully.","userId":"27227774-fab6-4496-9d04-b10912be879b","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.341Z","level":"info","message":"User registered successfully.","userId":"423bf989-035e-4348-bcda-8506406b9141","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.410Z","level":"info","message":"User registered successfully.","userId":"15fed6a3-6aaa-4889-afd3-0b24d9cead04","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+POST /api/teams 201 3.401 ms reqId=1bd8a8bf-f7e7-41e7-ab35-8da617696321
+DELETE /api/teams/9af520fb-042e-42e0-a19f-7e3f434c670a 403 1.130 ms reqId=ed8b9bca-a87a-4834-80c9-0a0736ae7748
+DELETE /api/teams/00000000-0000-0000-0000-000000000000 404 1.434 ms reqId=86188ae2-b2eb-4298-a9fc-96be57a5e144
+POST /api/teams 201 2.693 ms reqId=dafdf91b-95d8-48d6-a0a6-8f22cc1e35e5
+DELETE /api/teams/33f66673-4421-45fb-9264-d81b7c05b757 401 0.182 ms reqId=2961c13e-c85e-45cc-a539-630dfca14799
+POST /api/teams 201 3.438 ms reqId=694529b1-7cd8-48a7-834a-e59834ef0c7f
+DELETE /api/teams/5da555d2-2ea3-498e-8ac0-83ce52cbf1bd 409 1.621 ms reqId=4707e04e-eabd-4555-b16d-ff0eca5b3f90
+POST /api/teams 201 5.304 ms reqId=58add1fd-d5b1-42b1-b7cf-711d1da4deb8
+POST /api/teams/fa60f8d9-44a2-4203-a05c-715306800fcf 405 0.120 ms reqId=571004ca-3fba-4328-99f7-ef0ec61d33e3
+POST /api/auth/bootstrap 201 75.182 ms reqId=0f3006e0-588a-40e7-8d6b-9c05832f84a7
+POST /api/auth/register 201 68.649 ms reqId=b23c669b-20ba-452f-9740-6a03cb50001c
+(node:78292) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+POST /api/auth/register 201 72.319 ms reqId=474a0c88-8a79-4f4f-9d65-de910bae4687
+PATCH /api/users/ff83765e-6986-4c03-80ea-91576a3d1472 200 3.242 ms reqId=ec277d79-7090-4744-9295-8c30e1f86d16
+POST /api/bookings 201 40.157 ms reqId=3c6f1e7f-0544-48eb-a76e-9ee93b183f40
+POST /api/bookings 201 11.016 ms reqId=2b5e87d7-d892-490a-acac-2f109ca7436a
+POST /api/bookings 201 12.975 ms reqId=f29b8740-db0a-4143-89b7-938337c7a384
+POST /api/bookings 409 6.483 ms reqId=55009571-13ac-423d-a41c-bab16538f438
+POST /api/bookings 409 5.710 ms reqId=b63ca6bb-6235-427a-aa22-b14bc3d29e79
+POST /api/bookings 409 2.060 ms reqId=414236d4-4ec2-494a-ba6f-1f5caee77fc1
+POST /api/bookings 409 8.054 ms reqId=892786aa-ecb6-4aca-9006-459b1126628b
+POST /api/bookings 201 14.663 ms reqId=1a3b0ed1-c6b8-4663-ae23-c4c8bf85a485
+POST /api/bookings 201 18.518 ms reqId=8f863ffd-0808-49c8-bd56-dad728fd4abe
+GET /api/bookings?search=ali 200 15.382 ms reqId=5aebe5a9-9bd7-4e69-9917-687cb8c60988
+GET /api/bookings?search=bob.carter 200 6.477 ms reqId=a786559b-6baa-4532-84c5-4aadef707bc6
+GET /api/bookings?search=3a93e031 200 3.894 ms reqId=2d6a6d43-1e3e-498b-863b-41bb4e59508e
+GET /api/bookings?search=charlie 200 5.768 ms reqId=82744ab2-f334-467c-a6b5-0c0ca9101e2a
+PASS tests/integration/bookings.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.818Z","level":"info","message":"User registered successfully.","userId":"5326e79e-e813-4f9e-bfb8-c5aff46733a0","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.818Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"5326e79e-e813-4f9e-bfb8-c5aff46733a0"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.890Z","level":"info","message":"User registered successfully.","userId":"ff83765e-6986-4c03-80ea-91576a3d1472","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:15.963Z","level":"info","message":"User registered successfully.","userId":"395f3412-608b-4fc0-b5bc-308e2b4a8f54","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.017Z","level":"info","message":"Booking created successfully.","bookingId":"0ada0118-c4b9-4b4e-9ae8-86e173325066","eventId":"b785325e-65cf-4a83-affb-b97ba5ae2d28","teamId":"87fd2bc2-fc29-4c71-86b4-52248864b112","coachUserId":"ff83765e-6986-4c03-80ea-91576a3d1472","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.043Z","level":"info","message":"Booking created successfully.","bookingId":"4dbe0378-1b1d-49ec-a673-4e4fd6dddd18","eventId":"2e74da42-864c-47c0-bdd7-4bea730c94fb","teamId":"87fd2bc2-fc29-4c71-86b4-52248864b112","coachUserId":"ff83765e-6986-4c03-80ea-91576a3d1472","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.057Z","level":"info","message":"Booking created successfully.","bookingId":"b6491ed5-c199-4953-bcc5-7085ebe83b4c","eventId":"2e74da42-864c-47c0-bdd7-4bea730c94fb","teamId":"87fd2bc2-fc29-4c71-86b4-52248864b112","coachUserId":"ff83765e-6986-4c03-80ea-91576a3d1472","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.152Z","level":"info","message":"Booking created successfully.","bookingId":"0bb0223e-8739-4864-b9e1-d427bd9b5347","eventId":"76033472-8a32-41d6-94af-0bb9cfcb71c7","teamId":"87fd2bc2-fc29-4c71-86b4-52248864b112","coachUserId":"ff83765e-6986-4c03-80ea-91576a3d1472","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.185Z","level":"info","message":"Booking created successfully.","bookingId":"9924a520-07da-40a5-89a4-80babdf2d3fb","eventId":"4933cfbf-c9b3-4b81-b61b-aa456854d154","teamId":"87fd2bc2-fc29-4c71-86b4-52248864b112","coachUserId":"395f3412-608b-4fc0-b5bc-308e2b4a8f54","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+GET /api/bookings?startDate=2026-04-01T00%3A00%3A00.000Z&endDate=2026-04-30T23%3A59%3A59.999Z 200 6.291 ms reqId=dfe2af3f-129f-498e-bf93-566292bddf40
+GET /api/bookings?startDate=2026-05-01T00%3A00%3A00.000Z&endDate=2026-06-30T23%3A59%3A59.999Z 200 5.654 ms reqId=e6d2c4b5-7cdb-4054-8312-cc069286fec3
+GET /api/bookings 200 4.190 ms reqId=81b2db0b-c138-49a7-9eb6-1983e1a03eef
+POST /api/auth/bootstrap 201 71.583 ms reqId=3b4665be-1176-481e-bfd8-115b149cad69
+POST /api/auth/register 201 69.194 ms reqId=fc2ae834-34c4-44f2-b0f1-dc501524b95c
+POST /api/auth/register 201 69.905 ms reqId=2448c070-cfb3-4bb8-a8ac-a322d7dfa85b
+POST /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/weekly 403 1.347 ms reqId=3377f07b-fc15-476d-83a6-9f58b5982db0
+POST /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/weekly 200 7.766 ms reqId=13698c43-716e-493b-acdd-868e3e57e4b1
+GET /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/weekly 200 1.773 ms reqId=f7bc0ad0-0bb6-4c8b-a78c-ca716b5e0c1f
+POST /api/users/8826309c-4a87-4748-bfec-e3f0b79d21e0/availability/weekly 403 1.120 ms reqId=2dc92a13-87d5-467f-880c-ba61c6de39c3
+POST /api/users/8826309c-4a87-4748-bfec-e3f0b79d21e0/availability/weekly 200 3.685 ms reqId=1b4c72fc-6b45-402a-a068-589576a1af92
+POST /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/weekly 403 1.058 ms reqId=d3f9b17b-e303-4680-8808-5a37e7f06755
+POST /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/weekly 400 1.119 ms reqId=a4fd46ed-fabe-44c9-8f47-661d9a6ea906
+POST /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/exceptions 201 4.518 ms reqId=8a3293cb-509a-4b21-a0a7-19f5c7a6e32e
+GET /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/exceptions 200 11.482 ms reqId=508dbf0d-ae53-444f-baf8-f94427e81afc
+DELETE /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/exceptions/3983a893-7f22-48a8-81d0-cbe58c3c30c7 200 3.239 ms reqId=15bf6855-6155-496b-a336-060f85126d46
+GET /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/exceptions 200 1.656 ms reqId=14589174-e79f-4dd4-8fab-815d6fa242c9
+DELETE /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/exceptions/00000000-0000-0000-0000-000000000000 404 41.203 ms reqId=68213ceb-2651-48dc-9210-0287c2e7f18d
+GET /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/effective?from=2026-03-01&to=2026-03-31 200 3.204 ms reqId=173b8f31-7b0f-4d84-87e0-74810fd52b38
+GET /api/users/5806908d-7645-4ed5-8b34-88934e618da8/availability/effective 400 1.118 ms reqId=4ec2606e-2364-48bb-849e-8b686e682d13
+PASS tests/integration/availability.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.543Z","level":"info","message":"User registered successfully.","userId":"b41c5810-7a2a-475e-8a5a-1c082b460c6f","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.544Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"b41c5810-7a2a-475e-8a5a-1c082b460c6f"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.613Z","level":"info","message":"User registered successfully.","userId":"5806908d-7645-4ed5-8b34-88934e618da8","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.685Z","level":"info","message":"User registered successfully.","userId":"8826309c-4a87-4748-bfec-e3f0b79d21e0","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+POST /api/auth/bootstrap 201 74.652 ms reqId=9d119b7f-b3fe-44d8-b85c-deb2f1152408
+POST /api/auth/register 201 69.954 ms reqId=59a74963-d9bc-4d95-a95f-8020910e9d59
+POST /api/auth/register 201 67.877 ms reqId=7bf2e9da-2737-4386-9435-c7384ecac9c3
+POST /api/invites 201 6.096 ms reqId=e760f1f0-ebf8-43ce-9b40-0c4e9c86c0c5
+POST /api/invites 201 3.290 ms reqId=74e53ad3-8481-4715-8c32-f7b6c00239ab
+POST /api/invites 403 0.949 ms reqId=e561c9d9-f0d6-4665-83e0-c2aeb4ba6133
+POST /api/invites 201 2.388 ms reqId=33909a34-3d89-4e76-be5d-1483e3aa7ffd
+POST /api/invites 409 2.200 ms reqId=7f94170c-90ad-4a03-a975-53200dd1b895
+POST /api/invites 409 1.266 ms reqId=77d3453f-b848-43bf-b337-73448268af2e
+POST /api/invites 400 0.957 ms reqId=d976281f-0a2f-4179-9db0-65427bd63e6e
+POST /api/invites 401 0.098 ms reqId=19828f0d-f6a5-479c-8271-54cb9342e5b6
+POST /api/invites 201 3.073 ms reqId=22d74930-a3f4-4505-8ad2-74254210901f
+POST /api/invites/accept-invite 201 69.872 ms reqId=383393e6-f6e6-46b1-8b8c-f890056fab61
+PASS tests/integration/invites.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.987Z","level":"info","message":"User registered successfully.","userId":"6203e782-7162-4696-b3cb-3944e2ff6b3f","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:16.987Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"6203e782-7162-4696-b3cb-3944e2ff6b3f"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.058Z","level":"info","message":"User registered successfully.","userId":"b24d12d1-0416-4a7e-8c05-4532d9bc9770","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.128Z","level":"info","message":"User registered successfully.","userId":"94b5b38a-68dc-4579-8fa0-f99dded33b10","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.134Z","level":"info","message":"User invite created successfully.","inviteId":"25b2bf08-873d-4c54-835f-ef2685f672e7","createdByAdminId":"6203e782-7162-4696-b3cb-3944e2ff6b3f","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.140Z","level":"info","message":"User invite created successfully.","inviteId":"7348ed21-e065-443b-a8c6-a700f101a55c","createdByAdminId":"b24d12d1-0416-4a7e-8c05-4532d9bc9770","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.145Z","level":"info","message":"User invite created successfully.","inviteId":"9ace75a8-b8d6-46ae-9570-76cc2cccf4c6","createdByAdminId":"6203e782-7162-4696-b3cb-3944e2ff6b3f","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.156Z","level":"info","message":"User invite created successfully.","inviteId":"93ede095-9197-48a6-8a7b-41a51f13aa41","createdByAdminId":"6203e782-7162-4696-b3cb-3944e2ff6b3f","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.226Z","level":"info","message":"Invite accepted and user account provisioned.","inviteId":"93ede095-9197-48a6-8a7b-41a51f13aa41","userId":"23a5bcf1-a54d-4487-85de-216b9f9ff9b1","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.236Z","level":"info","message":"User invite created successfully.","inviteId":"292499fb-c1e8-4cac-849f-99c278f56761","createdByAdminId":"6203e782-7162-4696-b3cb-3944e2ff6b3f","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+POST /api/invites/accept-invite 409 0.686 ms reqId=0e881bff-5e3f-4f2d-b052-698ee0102784
+POST /api/invites/accept-invite 404 0.715 ms reqId=c881cfd5-7df9-4054-ab3f-54d469b5216a
+POST /api/invites/accept-invite 400 0.168 ms reqId=7da79a50-21fa-40f7-bc75-6029ffb13632
+POST /api/invites 201 3.387 ms reqId=cc34eb14-1139-4b6f-83fb-a54ca6f4da64
+POST /api/invites/accept-invite 400 0.159 ms reqId=0e3ac21a-7b36-42cf-912f-542e5a379dde
+POST /api/auth/bootstrap 201 73.632 ms reqId=d9199aa0-a71c-4ab3-8988-b9cc55532989
+POST /api/auth/register 201 69.147 ms reqId=546a0283-6846-4224-beb6-d19dc0ab755f
+PASS tests/integration/stats.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.435Z","level":"info","message":"User registered successfully.","userId":"ab590ef9-839b-4400-bfda-91163acebb14","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.436Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"ab590ef9-839b-4400-bfda-91163acebb14"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.506Z","level":"info","message":"User registered successfully.","userId":"c5607aaa-f7cc-43a9-b467-ea1cb44a5094","role":"TEAM_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.577Z","level":"info","message":"User registered successfully.","userId":"50a62843-7f7f-4e2b-9c31-9f8fbb4c9131","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+POST /api/auth/register 201 69.908 ms reqId=12e440a2-fa53-4b48-b65b-609a4bc57cd4
+GET /api/v1/stats/dashboard?timeframe=month 200 16.618 ms reqId=958c86d5-3bf1-417d-8e76-80931050bf05
+GET /api/v1/stats/bookings?timeframe=month 200 8.624 ms reqId=43c30490-c9bb-43bc-aed9-7a236da19469
+GET /api/v1/stats/users?timeframe=month 403 1.558 ms reqId=e45affe5-35fc-473f-a165-2c1a72da9460
+GET /api/v1/stats/users?timeframe=month 200 2.999 ms reqId=7c9fb619-d578-4901-a804-f71b6ecc52f2
+POST /api/auth/bootstrap 201 70.294 ms reqId=4f6af37a-2eee-432c-a82a-8fa7c7e73b68
+POST /api/auth/register 201 69.045 ms reqId=b22360d3-4f02-4435-b000-efca8b06d64e
+(node:78292) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+PASS tests/integration/students.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.823Z","level":"info","message":"User registered successfully.","userId":"b62bcdb5-1306-467d-8671-4f7d15134751","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.824Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"b62bcdb5-1306-467d-8671-4f7d15134751"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.894Z","level":"info","message":"User registered successfully.","userId":"65b50992-9702-47b2-897b-4fb9df38d2ec","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.945Z","level":"info","message":"Booking created successfully.","bookingId":"ead99bf4-756c-4714-b099-b0b139fa990e","eventId":"f7305c18-de50-4677-be74-aeb30d0ff092","teamId":"81ac4e1e-a249-43b5-8cb6-9982fc4dccae","coachUserId":"65b50992-9702-47b2-897b-4fb9df38d2ec","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:17.964Z","level":"info","message":"Booking created successfully.","bookingId":"7c82a99d-b1fb-44b4-9335-c7b5f0fd81ee","eventId":"f7305c18-de50-4677-be74-aeb30d0ff092","teamId":"81ac4e1e-a249-43b5-8cb6-9982fc4dccae","coachUserId":"65b50992-9702-47b2-897b-4fb9df38d2ec","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+POST /api/bookings 201 37.575 ms reqId=0f9e5664-ee77-49ad-abcc-32341dbb71be
+POST /api/bookings 201 16.553 ms reqId=1681cbed-0320-4849-89e1-91af6758e47f
+GET /api/students 200 6.171 ms reqId=ca00b532-05d0-466a-86a0-17a133e4ca02
+GET /api/students/98f4d1c3-7d12-4671-8c14-b878801d869f 200 6.122 ms reqId=6efac514-35c5-43ea-8030-9b3485bfe01d
+GET /api/students/98f4d1c3-7d12-4671-8c14-b878801d869f/bookings 200 9.127 ms reqId=5a48728d-095a-435b-ba42-5ef0167d58d2
+POST /api/auth/bootstrap 201 72.500 ms reqId=f17fb87d-bc06-4889-8c25-d3fb2a7ed182
+POST /api/auth/register 201 68.691 ms reqId=b2e0b139-9839-4b23-943e-55f0ee2de420
+(node:78292) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+PASS tests/integration/concurrency.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:18.189Z","level":"info","message":"User registered successfully.","userId":"cd596ffb-5c75-4c0c-93f4-8dddf3c15ca2","role":"SUPER_ADMIN"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:18.189Z","level":"info","message":"Bootstrap super admin provisioned.","userId":"cd596ffb-5c75-4c0c-93f4-8dddf3c15ca2"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:18.261Z","level":"info","message":"User registered successfully.","userId":"3a5a6007-df6b-44a7-b5f8-4b5b4c1b8153","role":"COACH"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      {"timestamp":"2026-04-17T09:06:18.314Z","level":"info","message":"Booking created successfully.","bookingId":"41712bb2-1597-4bfe-bf57-b0a9165e8bc2","eventId":"4ce10e35-4006-418f-b93d-b87a4af8d461","teamId":"8763e1b0-975c-48ed-b956-f104b2a0db84","coachUserId":"3a5a6007-df6b-44a7-b5f8-4b5b4c1b8153","status":"CONFIRMED"}
+
+      at writeLog (src/shared/logging/logger.ts:50:11)
+
+    console.log
+      Successful bookings: 1
+
+      at Object.<anonymous> (tests/integration/concurrency.test.ts:151:13)
+
+    console.log
+      Conflict errors: 9
+
+      at Object.<anonymous> (tests/integration/concurrency.test.ts:152:13)
+
+POST /api/bookings 201 36.518 ms reqId=09c62d50-78a5-418e-94cb-2f0d1eef6313
+POST /api/bookings 409 46.573 ms reqId=164a6b65-562e-4462-902b-62ef01bd63f1
+POST /api/bookings 409 49.544 ms reqId=61904f92-be2b-4477-bd48-fd7d70d8828b
+POST /api/bookings 409 54.067 ms reqId=9e0c5a5e-f9a5-4721-89fd-d53b6ead5c2b
+POST /api/bookings 409 59.955 ms reqId=a5e15450-f571-4f97-a332-45857c83a4df
+POST /api/bookings 409 59.707 ms reqId=407e9011-6674-49d9-bdd1-c563965e8a33
+POST /api/bookings 409 63.195 ms reqId=44ea5870-869d-4666-8c27-e1681ded2fd7
+POST /api/bookings 409 64.737 ms reqId=244dea07-e2f9-4374-a54a-19b7a71a9689
+POST /api/bookings 409 66.809 ms reqId=4943f266-69b2-4870-abac-094838b4f7f5
+POST /api/bookings 409 68.633 ms reqId=f40a6c68-7fcc-4498-bb37-bff0ffcacf92
+PASS tests/integration/health.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (9) from .env.test // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (14) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+    console.log
+      ◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+
+Test Suites: 5 failed, 9 passed, 14 total
+Tests:       16 failed, 172 passed, 188 total
+Snapshots:   0 total
+Time:        7.957 s, estimated 9 s
+Ran all test suites matching /tests\/integration/i.
+GET /health 200 0.204 ms reqId=bb4958d9-965d-49ac-8a46-a9969fcb3df6
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.
