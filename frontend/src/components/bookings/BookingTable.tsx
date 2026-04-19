@@ -22,12 +22,12 @@ interface Props {
   onRowsPerPageChange?: (rowsPerPage: number) => void
 }
 
-type BookingSortKey = 'student' | 'event' | 'host' | 'date' | 'status'
+type BookingSortKey = 'student' | 'event' | 'coach' | 'date' | 'status'
 
 const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
   student: (booking) => booking.studentName,
   event: (booking) => booking.event?.name ?? '',
-  host: (booking) => (booking.host ? `${booking.host.firstName} ${booking.host.lastName}` : ''),
+  coach: (booking) => (booking.coach ? `${booking.coach.firstName} ${booking.coach.lastName}` : ''),
   date: (booking) => new Date(booking.startTime),
   status: (booking) => booking.status,
 }
@@ -35,7 +35,7 @@ const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
 const COLUMNS = [
   { label: 'Student', sortKey: 'student' as const, width: '25%' },
   { label: 'Event', sortKey: 'event' as const, width: '20%' },
-  { label: 'Host', sortKey: 'host' as const, width: '20%' },
+  { label: 'Coach', sortKey: 'coach' as const, width: '20%' },
   { label: 'Date / Time', sortKey: 'date' as const, width: '20%' },
   { label: 'Status', sortKey: 'status' as const, width: '15%' },
 ]

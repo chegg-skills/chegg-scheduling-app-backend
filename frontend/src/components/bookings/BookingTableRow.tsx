@@ -7,7 +7,7 @@ import { BookingStatusBadge } from './BookingStatusBadge'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
 import { BookingStudentCell } from './cells/BookingStudentCell'
 import { BookingTimeCell } from './cells/BookingTimeCell'
-import { BookingHostInfo } from './cells/BookingHostInfo'
+import { BookingCoachInfo } from './cells/BookingCoachInfo'
 
 interface BookingTableRowProps {
   booking: Booking
@@ -41,7 +41,7 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
         </TableCell>
 
         <TableCell>
-          <BookingHostInfo host={booking.host ?? null} />
+          <BookingCoachInfo coach={booking.coach ?? null} />
         </TableCell>
 
         <TableCell>

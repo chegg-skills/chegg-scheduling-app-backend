@@ -53,9 +53,9 @@ export function StudentLastBookingCard({
   lastBookedAt,
 }: StudentLastBookingCardProps) {
   const theme = useTheme()
-  const { startTime, endTime, status, event, team, host } = latestBooking
+  const { startTime, endTime, status, event, team, coach } = latestBooking
 
-  const hostInitials = `${host.firstName[0]}${host.lastName[0]}`.toUpperCase()
+  const coachInitials = `${coach.firstName[0]}${coach.lastName[0]}`.toUpperCase()
 
   return (
     <Card variant="outlined" sx={{ borderRadius: 2 }}>
@@ -122,7 +122,7 @@ export function StudentLastBookingCard({
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} justifyContent="space-between">
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Avatar
-              src={host.avatarUrl ?? undefined}
+              src={coach.avatarUrl ?? undefined}
               sx={{
                 width: 36,
                 height: 36,
@@ -132,7 +132,7 @@ export function StudentLastBookingCard({
                 color: theme.palette.primary.main,
               }}
             >
-              {hostInitials}
+              {coachInitials}
             </Avatar>
             <Box>
               <Typography
@@ -141,10 +141,10 @@ export function StudentLastBookingCard({
                 fontWeight={600}
                 sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}
               >
-                Host
+                Coach
               </Typography>
               <Typography variant="body2" fontWeight={600}>
-                {toTitleCase(`${host.firstName} ${host.lastName}`)}
+                {toTitleCase(`${coach.firstName} ${coach.lastName}`)}
               </Typography>
             </Box>
           </Stack>

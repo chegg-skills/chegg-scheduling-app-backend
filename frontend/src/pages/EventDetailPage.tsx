@@ -28,17 +28,17 @@ import { EventForm } from '@/components/events/form/EventForm'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { EventDetailsTab } from '@/components/events/tabs/EventDetailsTab'
-import { EventHostsTab } from '@/components/events/tabs/EventHostsTab'
+import { EventCoachesTab } from '@/components/events/tabs/EventCoachesTab'
 import { EventBookingsTab } from '@/components/events/tabs/EventBookingsTab'
 import { BookingViewProvider } from '@/context/bookingView'
 import { EventScheduleTab } from '@/components/events/tabs/EventScheduleTab'
-import { getEventHostSetupStatus } from '@/components/events/form/eventCapabilityRules'
+import { getEventCoachSetupStatus } from '@/components/events/form/eventCapabilityRules'
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams<{ eventId: string }>()
   const [showEdit, setShowEdit] = useState(false)
   const [tabValue, setTabValue] = useState(0)
-  const [showAddHostModal, setShowAddHostModal] = useState(false)
+  const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
   const { data: event, isLoading, error } = useEvent(eventId)
@@ -50,15 +50,16 @@ export function EventDetailPage() {
 
   const slots = slotsRes?.slots ?? []
   const teamMembers = teamMembersResponse?.members ?? []
-  const bookingViewValue = useMemo(() => ({ onViewHost: setViewingUserId }), [])
+  const bookings = [] // Placeholder for actual bookings query if needed inside current scope
+  const bookingViewValue = useMemo(() => ({ onViewCoach: setViewingUserId }), [])
 
   if (isLoading) return <PageSpinner />
   if (error || !event) return <ErrorAlert message="Failed to load event." />
 
-  const hostSetupStatus = getEventHostSetupStatus({
-    activeHostCount: event.hosts?.length ?? 0,
+  const coachSetupStatus = getEventCoachSetupStatus({
+    activeCoachCount: event.coaches?.length ?? 0,
     assignmentStrategy: event.assignmentStrategy,
-    interactionType: event.interactionType,
+    minCoachCount: event.minCoachCount,
   })
   const needsScheduleSlots = event.bookingMode === 'FIXED_SLOTS' && slots.length === 0
 
@@ -79,7 +80,7 @@ export function EventDetailPage() {
   const handleDelete = () => {
     handleAction((id) => deleteEventMutation.mutate(id), eventId, {
       title: 'Delete Event',
-      message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated host assignments will be lost.`,
+      message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated coach assignments will be lost.`,
       actionName: 'Deletion',
     })
   }
@@ -97,7 +98,7 @@ export function EventDetailPage() {
               label={event.isActive ? 'Active' : 'Inactive'}
               variant={event.isActive ? 'green' : 'red'}
             />
-            {!hostSetupStatus.isReady && <Badge label="Needs Coaches" variant="yellow" />}
+            {!coachSetupStatus.isReady && <Badge label="Needs Coaches" variant="yellow" />}
             {needsScheduleSlots && <Badge label="Needs Slots" variant="yellow" />}
           </Stack>
         }
@@ -158,7 +159,7 @@ export function EventDetailPage() {
           >
             <Tab label="Details" icon={<Info size={18} />} iconPosition="start" />
             <Tab
-              label={`Coaches (${event.hosts?.length ?? 0})`}
+              label={`Coaches (${event.coaches?.length ?? 0})`}
               icon={<Users size={18} />}
               iconPosition="start"
             />
@@ -170,7 +171,7 @@ export function EventDetailPage() {
 
           {tabValue === 1 && (
             <Box sx={{ mb: 1 }}>
-              <Button size="sm" onClick={() => setShowAddHostModal(true)}>
+              <Button size="sm" onClick={() => setShowAddCoachModal(true)}>
                 <Plus size={16} /> Add coach
               </Button>
             </Box>
@@ -180,17 +181,17 @@ export function EventDetailPage() {
         <TabPanel value={tabValue} index={0} prefix="event">
           <EventDetailsTab
             event={event}
-            hostSetupStatus={hostSetupStatus}
+            coachSetupStatus={coachSetupStatus}
             needsScheduleSlots={needsScheduleSlots}
           />
         </TabPanel>
 
         <TabPanel value={tabValue} index={1} prefix="event">
-          <EventHostsTab
+          <EventCoachesTab
             event={event}
             teamMembers={teamMembers}
-            showAddModal={showAddHostModal}
-            onCloseAddModal={() => setShowAddHostModal(false)}
+            showAddModal={showAddCoachModal}
+            onCloseAddModal={() => setShowAddCoachModal(false)}
             onViewUser={setViewingUserId}
           />
         </TabPanel>
@@ -201,11 +202,9 @@ export function EventDetailPage() {
           </BookingViewProvider>
         </TabPanel>
 
-        {event.bookingMode === 'FIXED_SLOTS' && (
-          <TabPanel value={tabValue} index={3} prefix="event">
-            <EventScheduleTab event={event} slots={slots} isLoading={isLoadingSlots} />
-          </TabPanel>
-        )}
+        <TabPanel value={tabValue} index={3} prefix="event">
+          <EventScheduleTab event={event} slots={slots} isLoading={isLoadingSlots} teamMembers={teamMembers} />
+        </TabPanel>
 
         <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="Edit event" size="lg">
           <EventForm

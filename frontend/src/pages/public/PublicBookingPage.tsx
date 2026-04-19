@@ -55,6 +55,7 @@ export function PublicBookingPage() {
     coachDetails,
     eventDetailsError,
   } = usePublicBookingState()
+
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
   const [bookError, setBookError] = useState<string | null>(null)
@@ -84,10 +85,10 @@ export function PublicBookingPage() {
           newTime={
             selectedSlot
               ? new Intl.DateTimeFormat('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                }).format(new Date(selectedSlot))
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              }).format(new Date(selectedSlot))
               : ''
           }
           mentorName={coachDetails ? `${coachDetails.firstName} ${coachDetails.lastName}` : ''}

@@ -22,8 +22,8 @@ const TOOLTIPS = {
 }
 
 export function EventDetailOverview({ event }: EventDetailOverviewProps) {
-  const fixedLeadHost = event.fixedLeadHostId
-    ? (event.hosts.find((host) => host.hostUserId === event.fixedLeadHostId)?.hostUser ?? null)
+  const fixedLeadCoach = event.fixedLeadCoachId
+    ? (event.coaches.find((coach) => coach.coachUserId === event.fixedLeadCoachId)?.coachUser ?? null)
     : null
 
   const formatEnumLabel = (val: string) => {
@@ -64,6 +64,10 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
 
   const Spacer = () => <Grid size={12} sx={{ height: 8 }} />
 
+  // Note: Backend interaction info details for the selected event's interactionType enum
+  // are often needed here. For now we use the event directly which should have been populated.
+  // If event.interactionTypeInfo is missing, we might need a separate hook.
+
   return (
     <Paper component="section" variant="outlined" sx={{ p: 3, borderRadius: 1.5 }}>
       <Typography
@@ -85,7 +89,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
         <DataField label="Offering" value={toTitleCase(event.offering.name)} />
         <DataField
           label="Interaction type"
-          value={`${toTitleCase(event.interactionType.name)} (${formatEnumLabel(event.interactionType.key)})`}
+          value={formatEnumLabel(event.interactionType)}
           tooltip={TOOLTIPS.INTERACTION_TYPE}
         />
         <DataField
@@ -115,8 +119,8 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           value={
             event.allowedWeekdays.length > 0
               ? event.allowedWeekdays
-                  .map((d) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
-                  .join(', ')
+                .map((d) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
+                .join(', ')
               : 'All days'
           }
         />
@@ -138,23 +142,15 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           <DataField
             label="Fixed lead coach"
             value={
-              fixedLeadHost
-                ? `${toTitleCase(fixedLeadHost.firstName)} ${toTitleCase(fixedLeadHost.lastName)}`
+              fixedLeadCoach
+                ? `${toTitleCase(fixedLeadCoach.firstName)} ${toTitleCase(fixedLeadCoach.lastName)}`
                 : 'Not assigned'
             }
           />
         )}
         <DataField
-          label="Round robin"
-          value={event.interactionType.supportsRoundRobin ? 'Enabled' : 'Disabled'}
-        />
-        <DataField
-          label="Multiple coaches"
-          value={event.interactionType.supportsMultipleHosts ? 'Supported' : 'Not supported'}
-        />
-        <DataField
-          label="Co-hosting support"
-          value={event.interactionType.supportsSimultaneousCoaches ? 'Supported' : 'Not supported'}
+          label="Multi-coach pool"
+          value={event.assignmentStrategy === 'ROUND_ROBIN' ? 'Enabled' : 'Disabled'}
         />
 
         <Spacer />
@@ -162,7 +158,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
         {/* Capacity & Limits */}
         <DataField
           label="Coaches (Min / Max)"
-          value={`${event.interactionType.minHosts} / ${event.interactionType.maxHosts ?? '∞'}`}
+          value={`${event.minCoachCount} / ${event.maxCoachCount ?? '∞'}`}
         />
         <DataField
           label="Participants (Min / Max)"

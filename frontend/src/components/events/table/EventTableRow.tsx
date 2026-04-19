@@ -25,7 +25,7 @@ interface EventTableRowProps {
   onViewUser?: (userId: string) => void
 }
 
-function getHostInitials(firstName: string, lastName: string) {
+function getCoachInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`
 }
 
@@ -47,6 +47,7 @@ export function EventTableRow({
             sx={{
               width: 36,
               height: 36,
+              flexShrink: 0,
               borderRadius: 2,
               bgcolor: alpha(theme.palette.primary.main, 0.08),
               color: 'primary.main',
@@ -90,14 +91,14 @@ export function EventTableRow({
             '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.75rem' },
           }}
         >
-          {event.hosts.map((host) => (
+          {event.coaches.map((coach) => (
             <Tooltip
-              key={host.id}
-              title={`${toTitleCase(host.hostUser.firstName)} ${toTitleCase(host.hostUser.lastName)} (${host.hostUser.email})`}
+              key={coach.id}
+              title={`${toTitleCase(coach.coachUser.firstName)} ${toTitleCase(coach.coachUser.lastName)} (${coach.coachUser.email})`}
               arrow
             >
               <Avatar
-                onClick={() => onViewUser?.(host.hostUser.id)}
+                onClick={() => onViewUser?.(coach.coachUser.id)}
                 sx={{
                   bgcolor: 'secondary.light',
                   color: 'secondary.dark',
@@ -108,7 +109,7 @@ export function EventTableRow({
                   },
                 }}
               >
-                {getHostInitials(host.hostUser.firstName, host.hostUser.lastName)}
+                {getCoachInitials(coach.coachUser.firstName, coach.coachUser.lastName)}
               </Avatar>
             </Tooltip>
           ))}

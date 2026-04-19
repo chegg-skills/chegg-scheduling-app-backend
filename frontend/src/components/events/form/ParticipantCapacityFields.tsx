@@ -1,51 +1,28 @@
 import { Controller, useFormContext } from 'react-hook-form'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
-import { formatCapacityRange } from './eventCapabilityRules'
 import type { EventFormValues } from './eventFormSchema'
-import type { EventInteractionType } from '@/types'
-
-interface ParticipantCapacityFieldsProps {
-  selectedInteractionType?: EventInteractionType | null
-}
 
 /**
- * Handles participant capacity limits.
+ * Handles participant capacity limits for events that support multiple participants.
+ * Only rendered when the selected interaction type has multipleParticipants = true.
  * Consumes the EventForm context.
  */
-export function ParticipantCapacityFields({
-  selectedInteractionType,
-}: ParticipantCapacityFieldsProps) {
+export function ParticipantCapacityFields() {
   const {
     control,
     watch,
     formState: { errors },
   } = useFormContext<EventFormValues>()
-  const currentMinParticipants = watch('minParticipantCount')
-  const participantRange = selectedInteractionType
-    ? formatCapacityRange(
-        selectedInteractionType.minParticipants,
-        selectedInteractionType.maxParticipants
-      )
-    : 'Select an interaction type first'
-  const participantChoicesLocked = Boolean(
-    selectedInteractionType &&
-    selectedInteractionType.maxParticipants === selectedInteractionType.minParticipants
-  )
+  const currentMin = watch('minParticipantCount')
 
   return (
     <FormField
       label="Participant Capacity"
       htmlFor="minParticipantCount"
       error={errors.minParticipantCount?.message || errors.maxParticipantCount?.message}
-      info="The interaction type defines the allowed envelope, and this event can choose the actual participant limits inside that range."
-      hint={
-        selectedInteractionType
-          ? `Allowed range for this event: ${participantRange}. Leave the max blank to use the interaction type cap.`
-          : 'Select an interaction type first to configure participant limits.'
-      }
+      info="Set the minimum and maximum number of students allowed per session. Leave the max blank for no cap."
     >
       <Box
         sx={{
@@ -62,13 +39,11 @@ export function ParticipantCapacityFields({
               id="minParticipantCount"
               type="number"
               label="Minimum participants"
-              min={selectedInteractionType?.minParticipants ?? 1}
-              max={selectedInteractionType?.maxParticipants ?? undefined}
+              min={1}
               value={field.value ?? ''}
-              disabled={!selectedInteractionType || participantChoicesLocked}
               hasError={!!errors.minParticipantCount}
-              onChange={(event) => {
-                const { value } = event.target
+              onChange={(e) => {
+                const { value } = e.target
                 field.onChange(value === '' ? null : Number(value))
               }}
               onBlur={field.onBlur}
@@ -84,18 +59,12 @@ export function ParticipantCapacityFields({
               id="maxParticipantCount"
               type="number"
               label="Maximum participants"
-              min={currentMinParticipants ?? selectedInteractionType?.minParticipants ?? 1}
-              max={selectedInteractionType?.maxParticipants ?? undefined}
-              placeholder={
-                selectedInteractionType?.maxParticipants === null
-                  ? 'No cap'
-                  : 'Use interaction type cap'
-              }
+              min={currentMin ?? 1}
+              placeholder="No cap"
               value={field.value ?? ''}
-              disabled={!selectedInteractionType || participantChoicesLocked}
               hasError={!!errors.maxParticipantCount}
-              onChange={(event) => {
-                const { value } = event.target
+              onChange={(e) => {
+                const { value } = e.target
                 field.onChange(value === '' ? null : Number(value))
               }}
               onBlur={field.onBlur}
@@ -103,13 +72,6 @@ export function ParticipantCapacityFields({
           )}
         />
       </Box>
-
-      {participantChoicesLocked && selectedInteractionType ? (
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          This interaction type uses a fixed participant count of{' '}
-          {selectedInteractionType.minParticipants}, so the event cannot override it.
-        </Typography>
-      ) : null}
     </FormField>
   )
 }

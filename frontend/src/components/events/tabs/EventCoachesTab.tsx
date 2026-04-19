@@ -1,7 +1,7 @@
-import { EventHostManager } from '../EventHostManager'
+import { EventCoachManager } from '../EventCoachManager'
 import type { Event, TeamMember } from '@/types'
 
-interface EventHostsTabProps {
+interface EventCoachesTabProps {
   event: Event
   teamMembers: TeamMember[]
   showAddModal: boolean
@@ -9,20 +9,20 @@ interface EventHostsTabProps {
   onViewUser: (userId: string) => void
 }
 
-export function EventHostsTab({
+export function EventCoachesTab({
   event,
   teamMembers,
   showAddModal,
   onCloseAddModal,
   onViewUser,
-}: EventHostsTabProps) {
+}: EventCoachesTabProps) {
   return (
-    <EventHostManager
+    <EventCoachManager
       eventId={event.id}
-      hosts={event.hosts}
+      coaches={event.coaches}
       teamMembers={teamMembers}
       assignmentStrategy={event.assignmentStrategy}
-      interactionType={event.interactionType}
+      minCoachCount={event.minCoachCount}
       hideHeader
       showAddModalOverride={showAddModal}
       onCloseAddModal={onCloseAddModal}

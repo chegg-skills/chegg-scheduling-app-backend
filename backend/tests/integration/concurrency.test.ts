@@ -27,7 +27,6 @@ describe("Concurrency Integration Tests", () => {
   let adminToken: string;
   let teamId: string;
   let offeringId: string;
-  let interactionTypeId: string;
   let coachId: string;
   let eventId: string;
 
@@ -66,17 +65,6 @@ describe("Concurrency Integration Tests", () => {
     });
     offeringId = offering.id;
 
-    const interactionType = await prisma.eventInteractionType.create({
-      data: {
-        key: "concurrency_interaction",
-        name: "Concurrency Interaction",
-        supportsRoundRobin: true,
-        supportsMultipleHosts: true,
-        createdById: admin.id,
-        updatedById: admin.id,
-      },
-    });
-    interactionTypeId = interactionType.id;
   });
 
   afterAll(async () => {
@@ -90,7 +78,7 @@ describe("Concurrency Integration Tests", () => {
         name: "Concurrency Test Event",
         teamId,
         offeringId,
-        interactionTypeId,
+        interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600,
         locationType: EventLocationType.VIRTUAL,
@@ -98,10 +86,10 @@ describe("Concurrency Integration Tests", () => {
         createdById: coachId,
         updatedById: coachId,
         publicBookingSlug: `concurrency-event-${Date.now()}`,
-        hosts: {
+        coaches: {
           create: {
-            hostUserId: coachId,
-            hostOrder: 1,
+            coachUserId: coachId,
+            coachOrder: 1,
           },
         },
         bookingMode: "FIXED_SLOTS",

@@ -2,14 +2,14 @@ import Typography from '@mui/material/Typography'
 import type { SafeUser } from '@/types'
 import { useBookingView } from '@/context/bookingView'
 
-interface BookingHostInfoProps {
-  host?: SafeUser | null
+interface BookingCoachInfoProps {
+  coach?: SafeUser | null
 }
 
-export function BookingHostInfo({ host }: BookingHostInfoProps) {
-  const { onViewHost } = useBookingView()
+export function BookingCoachInfo({ coach }: BookingCoachInfoProps) {
+  const { onViewCoach } = useBookingView()
 
-  if (!host) {
+  if (!coach) {
     return (
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         N/A
@@ -20,19 +20,19 @@ export function BookingHostInfo({ host }: BookingHostInfoProps) {
   return (
     <Typography
       variant="body2"
-      onClick={() => onViewHost?.(host.id)}
+      onClick={() => onViewCoach?.(coach.id)}
       sx={{
         fontWeight: 600,
         color: 'text.secondary',
         textDecoration: 'none',
-        cursor: onViewHost ? 'pointer' : 'default',
+        cursor: onViewCoach ? 'pointer' : 'default',
         '&:hover': {
-          color: onViewHost ? 'primary.main' : 'inherit',
-          textDecoration: onViewHost ? 'underline' : 'none',
+          color: onViewCoach ? 'primary.main' : 'inherit',
+          textDecoration: onViewCoach ? 'underline' : 'none',
         },
       }}
     >
-      {host.firstName} {host.lastName}
+      {coach.firstName} {coach.lastName}
     </Typography>
   )
 }

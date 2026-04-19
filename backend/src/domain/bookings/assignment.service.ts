@@ -1,15 +1,18 @@
 import { AssignmentStrategy, Prisma, PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { isHostAvailable } from "../availability/availability.service";
+import { isCoachAvailable } from "../availability/availability.service";
 
-export type HostCandidate = {
-  hostUserId: string;
-  hostOrder: number;
-  hostUser: {
+export type CoachCandidate = {
+  coachUserId: string;
+  coachOrder: number;
+  coachUser: {
     zoomIsvLink: string | null;
   };
 };
+
+// Legacy alias — remove once all callers are updated
+export type HostCandidate = CoachCandidate;
 
 export type AssignmentContext = {
   prisma: Prisma.TransactionClient | PrismaClient;
@@ -22,15 +25,15 @@ export type AssignmentContext = {
 };
 
 type AssignmentResult = {
-  assignedHostId: string;
+  assignedCoachId: string;
   meetingJoinUrl: string | null;
 };
 
-const ensureCandidatesExist = (candidates: HostCandidate[]): void => {
+const ensureCandidatesExist = (candidates: CoachCandidate[]): void => {
   if (candidates.length === 0) {
     throw new ErrorHandler(
       StatusCodes.SERVICE_UNAVAILABLE,
-      "No active hosts available for this event.",
+      "No active coaches available for this event.",
     );
   }
 };
@@ -45,92 +48,103 @@ const buildAvailabilityOptions = (context: AssignmentContext) => ({
 });
 
 const isCandidateAvailable = async (
-  candidate: HostCandidate,
+  candidate: CoachCandidate,
   context: AssignmentContext,
 ): Promise<boolean> => {
-  return isHostAvailable(
-    candidate.hostUserId,
+  return isCoachAvailable(
+    candidate.coachUserId,
     context.start,
     context.end,
     buildAvailabilityOptions(context),
   );
 };
 
-const toAssignmentResult = (candidate: HostCandidate): AssignmentResult => ({
-  assignedHostId: candidate.hostUserId,
-  meetingJoinUrl: candidate.hostUser.zoomIsvLink,
+const toAssignmentResult = (candidate: CoachCandidate): AssignmentResult => ({
+  assignedCoachId: candidate.coachUserId,
+  meetingJoinUrl: candidate.coachUser.zoomIsvLink,
 });
 
-const updateRoutingState = async (
+export const getRoutingState = async (
+  prisma: Prisma.TransactionClient | PrismaClient,
+  eventId: string,
+) => {
+  return (
+    (await prisma.eventRoutingState.findUnique({
+      where: { eventId },
+    })) || { nextCoachOrder: 1 }
+  );
+};
+
+export const updateRoutingState = async (
   context: AssignmentContext,
-  currentHostOrder: number,
+  currentCoachOrder: number,
   maxOrder: number,
 ): Promise<void> => {
-  const nextOrder = (currentHostOrder % maxOrder) + 1;
+  const nextOrder = (currentCoachOrder % maxOrder) + 1;
   await context.prisma.eventRoutingState.upsert({
     where: { eventId: context.eventId },
-    update: { nextHostOrder: nextOrder },
-    create: { eventId: context.eventId, nextHostOrder: nextOrder },
+    update: { nextCoachOrder: nextOrder },
+    create: { eventId: context.eventId, nextCoachOrder: nextOrder },
   });
 };
 
 export interface IAssignmentStrategy {
-  resolveHost(candidates: HostCandidate[], context: AssignmentContext): Promise<AssignmentResult>;
+  resolveCoach(candidates: CoachCandidate[], context: AssignmentContext): Promise<AssignmentResult>;
 }
 
 export class DirectAssignmentStrategy implements IAssignmentStrategy {
-  async resolveHost(
-    candidates: HostCandidate[],
+  async resolveCoach(
+    candidates: CoachCandidate[],
     context: AssignmentContext,
   ): Promise<AssignmentResult> {
     ensureCandidatesExist(candidates);
 
-    const primaryHost = candidates[0];
-    const available = await isCandidateAvailable(primaryHost, context);
+    const primaryCoach = candidates[0];
+    const available = await isCandidateAvailable(primaryCoach, context);
 
     if (!available) {
       throw new ErrorHandler(
         StatusCodes.CONFLICT,
-        "The designated host is not available at this time.",
+        "The designated coach is not available at this time.",
       );
     }
 
-    return toAssignmentResult(primaryHost);
+    return toAssignmentResult(primaryCoach);
   }
 }
 
 export class RoundRobinAssignmentStrategy implements IAssignmentStrategy {
-  async resolveHost(
-    candidates: HostCandidate[],
+  async resolveCoach(
+    candidates: CoachCandidate[],
     context: AssignmentContext,
   ): Promise<AssignmentResult> {
     ensureCandidatesExist(candidates);
 
-    const routingState = (await context.prisma.eventRoutingState.findUnique({
-      where: { eventId: context.eventId },
-    })) || { nextHostOrder: 1 };
+    const routingState = await getRoutingState(context.prisma, context.eventId);
 
-    const sortedHosts = [...candidates].sort((a, b) => a.hostOrder - b.hostOrder);
-    const maxOrder = Math.max(...sortedHosts.map((host) => host.hostOrder));
+    const sortedCandidates = [...candidates].sort((a, b) => a.coachOrder - b.coachOrder);
+    const maxOrder = Math.max(...sortedCandidates.map((c) => c.coachOrder));
 
-    let startIndex = sortedHosts.findIndex((host) => host.hostOrder >= routingState.nextHostOrder);
+    let startIndex = sortedCandidates.findIndex(
+      (c) => c.coachOrder >= routingState.nextCoachOrder,
+    );
     if (startIndex === -1) {
       startIndex = 0;
     }
 
-    for (let offset = 0; offset < sortedHosts.length; offset++) {
-      const index = (startIndex + offset) % sortedHosts.length;
-      const candidate = sortedHosts[index];
+    for (let offset = 0; offset < sortedCandidates.length; offset++) {
+      const index = (startIndex + offset) % sortedCandidates.length;
+      const candidate = sortedCandidates[index];
 
       if (await isCandidateAvailable(candidate, context)) {
-        await updateRoutingState(context, candidate.hostOrder, maxOrder);
+        await updateRoutingState(context, candidate.coachOrder, maxOrder);
         return toAssignmentResult(candidate);
       }
     }
 
     throw new ErrorHandler(
       StatusCodes.CONFLICT,
-      "No available hosts found for the requested time slot.",
+      "No available coaches found for the requested time slot.",
     );
   }
 }

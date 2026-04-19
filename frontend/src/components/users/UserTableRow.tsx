@@ -36,6 +36,7 @@ export function UserTableRow({
             sx={{
               width: 36,
               height: 36,
+              flexShrink: 0,
               fontSize: '0.875rem',
               bgcolor: 'primary.light',
               color: 'primary.dark',
@@ -106,13 +107,13 @@ export function UserTableRow({
             },
             ...(canDeactivate
               ? [
-                  {
-                    label: 'Deactivate',
-                    icon: <Trash2 size={16} />,
-                    color: 'error.main',
-                    onClick: () => onDeactivate(user),
-                  },
-                ]
+                {
+                  label: 'Deactivate',
+                  icon: <Trash2 size={16} />,
+                  color: 'error.main',
+                  onClick: () => onDeactivate(user),
+                },
+              ]
               : []),
           ]}
         />

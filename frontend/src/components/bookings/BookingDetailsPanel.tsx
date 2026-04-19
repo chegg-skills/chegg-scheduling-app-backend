@@ -14,7 +14,7 @@ export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
 
   return (
     booking.meetingJoinUrl ??
-    booking.host?.zoomIsvLink ??
+    booking.coach?.zoomIsvLink ??
     (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
       ? fallbackLocation
       : null)

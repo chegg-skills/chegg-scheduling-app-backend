@@ -5,12 +5,12 @@ import {
   resolveFrontendUrl,
 } from "../../shared/notifications/notification.publisher";
 
-type EventHostAddedNotificationInput = {
+type EventCoachAddedNotificationInput = {
   eventId: string;
-  hostUserId: string;
+  coachUserId: string;
 };
 
-const queueEventHostAddedNotification = async (input: EventHostAddedNotificationInput) => {
+const queueEventCoachAddedNotification = async (input: EventCoachAddedNotificationInput) => {
   try {
     const [event, user] = await Promise.all([
       prisma.event.findUnique({
@@ -18,7 +18,7 @@ const queueEventHostAddedNotification = async (input: EventHostAddedNotification
         select: { name: true, isActive: true },
       }),
       prisma.user.findUnique({
-        where: { id: input.hostUserId },
+        where: { id: input.coachUserId },
         select: { email: true, firstName: true, lastName: true },
       }),
     ]);
@@ -30,9 +30,9 @@ const queueEventHostAddedNotification = async (input: EventHostAddedNotification
     const userName = `${user.firstName} ${user.lastName}`.trim();
 
     await publishNotificationSafely({
-      type: "EVENT_HOST_ADDED",
+      type: "EVENT_COACH_ADDED",
       recipients: user.email,
-      userId: input.hostUserId,
+      userId: input.coachUserId,
       variables: {
         eventName: event.name,
         userName,
@@ -40,12 +40,12 @@ const queueEventHostAddedNotification = async (input: EventHostAddedNotification
       },
     });
   } catch (error) {
-    logger.error("Failed to queue event host added notification.", {
+    logger.error("Failed to queue event coach added notification.", {
       eventId: input.eventId,
-      hostUserId: input.hostUserId,
+      coachUserId: input.coachUserId,
       error,
     });
   }
 };
 
-export { queueEventHostAddedNotification };
+export { queueEventCoachAddedNotification };

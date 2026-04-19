@@ -9,17 +9,17 @@ import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/ui/Badge'
 import { toTitleCase } from '@/utils/toTitleCase'
 
-interface UserHostedEventsTabProps {
+interface UserCoachedEventsTabProps {
   user: UserWithDetails
 }
 
-export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
-  if (user.hostedEvents.length === 0) {
+export function UserCoachedEventsTab({ user }: UserCoachedEventsTabProps) {
+  if (user.coachedEvents.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 6 }}>
         <Calendar size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
         <Typography color="text.secondary" fontWeight={500}>
-          This user is not hosting any events.
+          This user is not coaching any events.
         </Typography>
       </Box>
     )
@@ -27,9 +27,9 @@ export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
 
   return (
     <List disablePadding>
-      {user.hostedEvents.map((host) => (
+      {user.coachedEvents.map((coach) => (
         <ListItem
-          key={host.id}
+          key={coach.id}
           divider
           sx={{
             borderRadius: 1,
@@ -41,15 +41,15 @@ export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
             primary={
               <Stack direction="row" spacing={1} alignItems="center">
                 <Typography variant="subtitle2" fontWeight={700}>
-                  {toTitleCase(host.event.name)}
+                  {toTitleCase(coach.event.name)}
                 </Typography>
-                <Badge label={toTitleCase(host.event.offering.name)} variant="blue" />
+                <Badge label={toTitleCase(coach.event.offering.name)} variant="blue" />
               </Stack>
             }
             secondary={
               <Typography variant="caption" color="text.secondary">
-                {toTitleCase(host.event.interactionType.name)} •{' '}
-                {Math.round(host.event.durationSeconds / 60)} mins
+                {formatEnumLabel(coach.event.interactionType)} •{' '}
+                {Math.round(coach.event.durationSeconds / 60)} mins
               </Typography>
             }
           />
@@ -57,4 +57,12 @@ export function UserHostedEventsTab({ user }: UserHostedEventsTabProps) {
       ))}
     </List>
   )
+}
+
+function formatEnumLabel(val: string) {
+  if (!val) return ''
+  return val
+    .split(/[_-]/)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
+    .join(' ')
 }

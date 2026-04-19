@@ -2,11 +2,11 @@ import apiClient from '@/lib/axios'
 import type {
   ApiResponse,
   Event,
-  EventHost,
+  EventCoach,
   EventScheduleSlot,
   CreateEventDto,
   UpdateEventDto,
-  SetEventHostsDto,
+  SetEventCoachesDto,
   Pagination,
 } from '@/types'
 
@@ -34,12 +34,12 @@ export const eventsApi = {
   delete: (eventId: string) => apiClient.delete<ApiResponse<Event>>(`/events/${eventId}`),
   duplicate: (eventId: string) =>
     apiClient.post<ApiResponse<Event>>(`/events/${eventId}/duplicate`),
-  listHosts: (eventId: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`, { signal }),
-  setHosts: (eventId: string, data: SetEventHostsDto) =>
-    apiClient.put<ApiResponse<{ hosts: EventHost[] }>>(`/events/${eventId}/hosts`, data),
-  removeHost: (eventId: string, userId: string) =>
-    apiClient.delete<ApiResponse<EventHost>>(`/events/${eventId}/hosts/${userId}`),
+  listCoaches: (eventId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ coaches: EventCoach[] }>>(`/events/${eventId}/coaches`, { signal }),
+  setCoaches: (eventId: string, data: SetEventCoachesDto) =>
+    apiClient.put<ApiResponse<{ coaches: EventCoach[] }>>(`/events/${eventId}/coaches`, data),
+  removeCoach: (eventId: string, userId: string) =>
+    apiClient.delete<ApiResponse<EventCoach>>(`/events/${eventId}/coaches/${userId}`),
   listScheduleSlots: (eventId: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<{ slots: EventScheduleSlot[] }>>(
       `/events/${eventId}/schedule-slots`,

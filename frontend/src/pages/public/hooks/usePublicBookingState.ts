@@ -180,7 +180,8 @@ export function usePublicBookingState() {
           ? coachDetailsError || coachEventsError
           : directoryEventsError
 
-  const preferredHostId = scope === 'coach' ? coachDetails?.id : undefined
+  // For coach-slug scope the coach is pre-selected via the URL.
+  const preferredCoachId = scope === 'coach' ? coachDetails?.id : undefined
   const startDate = new Date(
     selectedDate.getFullYear(),
     selectedDate.getMonth(),
@@ -200,7 +201,7 @@ export function usePublicBookingState() {
     selectedEvent || '',
     startDate,
     endDate,
-    preferredHostId
+    preferredCoachId
   )
 
   const handleNext = () => setActiveStep((prev) => prev + 1)
@@ -237,7 +238,7 @@ export function usePublicBookingState() {
         triedSolutions: studentInfo.triedSolutions,
         usedResources: studentInfo.usedResources,
         sessionObjectives: studentInfo.sessionObjectives,
-        preferredHostId,
+        preferredCoachId,
       })
       handleNext()
     } catch (error) {

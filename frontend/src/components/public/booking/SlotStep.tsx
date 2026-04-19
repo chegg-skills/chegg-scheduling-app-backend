@@ -19,6 +19,18 @@ interface SlotStepProps {
   onSelect: (slot: string) => void
 }
 
+const timeFormat = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+})
+
+const dateFormat = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+})
+
 export function SlotStep({
   slots,
   loading,
@@ -31,7 +43,6 @@ export function SlotStep({
     const am: AvailableSlot[] = []
     const pm: AvailableSlot[] = []
 
-    // Ensure slots are sorted chronologically
     const sorted = [...slots].sort(
       (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     )
@@ -111,11 +122,7 @@ export function SlotStep({
               Available slots
             </Typography>
             <Typography variant="h6" fontWeight={800} color="text.primary">
-              {new Intl.DateTimeFormat('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              }).format(selectedDate)}
+              {dateFormat.format(selectedDate)}
             </Typography>
           </Box>
           <Divider sx={{ mb: 1 }} />
@@ -164,35 +171,53 @@ export function SlotStep({
                           fullWidth
                           onClick={() => onSelect(s.startTime)}
                           sx={{
-                            py: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.25,
+                            py: 1.5,
                             px: 0,
                             borderRadius: 1,
                             fontWeight: 700,
                             fontSize: '0.75rem',
                             textTransform: 'none',
+                            minHeight: 52,
                             ...(selectedSlot === s.startTime
                               ? {
-                                  bgcolor: 'primary.main',
-                                  color: 'white',
-                                  '&:hover': { bgcolor: 'primary.dark' },
-                                }
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                '&:hover': { bgcolor: 'primary.dark' },
+                              }
                               : {
-                                  borderColor: (theme) => alpha(theme.palette.divider, 0.5),
-                                  color: 'text.primary',
-                                  '&:hover': {
-                                    borderColor: 'primary.main',
-                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                                  },
-                                }),
+                                borderColor: (theme) => alpha(theme.palette.divider, 0.5),
+                                color: 'text.primary',
+                                '&:hover': {
+                                  borderColor: 'primary.main',
+                                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                                },
+                              }),
                           }}
                         >
-                          <Typography variant="caption" fontWeight={800}>
-                            {new Intl.DateTimeFormat('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true,
-                            }).format(new Date(s.startTime))}
+                          <Typography
+                            variant="caption"
+                            fontWeight={800}
+                            sx={{ color: 'inherit', lineHeight: 1.2 }}
+                          >
+                            {timeFormat.format(new Date(s.startTime))}
                           </Typography>
+
+                          {s.maxSeats && s.maxSeats > 1 && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: '0.65rem',
+                                color: selectedSlot === s.startTime ? 'white' : 'text.secondary',
+                                opacity: 0.8,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {s.remainingSeats ?? s.maxSeats} left
+                            </Typography>
+                          )}
                         </Button>
                       ))}
                     </Box>
@@ -222,35 +247,53 @@ export function SlotStep({
                           fullWidth
                           onClick={() => onSelect(s.startTime)}
                           sx={{
-                            py: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.25,
+                            py: 1.5,
                             px: 0,
-                            borderRadius: 0.5,
+                            borderRadius: 1,
                             fontWeight: 700,
                             fontSize: '0.75rem',
                             textTransform: 'none',
+                            minHeight: 52,
                             ...(selectedSlot === s.startTime
                               ? {
-                                  bgcolor: 'primary.main',
-                                  color: 'white',
-                                  '&:hover': { bgcolor: 'primary.dark' },
-                                }
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                '&:hover': { bgcolor: 'primary.dark' },
+                              }
                               : {
-                                  borderColor: (theme) => alpha(theme.palette.divider, 0.5),
-                                  color: 'text.primary',
-                                  '&:hover': {
-                                    borderColor: 'primary.main',
-                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                                  },
-                                }),
+                                borderColor: (theme) => alpha(theme.palette.divider, 0.5),
+                                color: 'text.primary',
+                                '&:hover': {
+                                  borderColor: 'primary.main',
+                                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                                },
+                              }),
                           }}
                         >
-                          <Typography variant="caption" fontWeight={800}>
-                            {new Intl.DateTimeFormat('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true,
-                            }).format(new Date(s.startTime))}
+                          <Typography
+                            variant="caption"
+                            fontWeight={800}
+                            sx={{ color: 'inherit', lineHeight: 1.2 }}
+                          >
+                            {timeFormat.format(new Date(s.startTime))}
                           </Typography>
+
+                          {s.maxSeats && s.maxSeats > 1 && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: '0.65rem',
+                                color: selectedSlot === s.startTime ? 'white' : 'text.secondary',
+                                opacity: 0.8,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {s.remainingSeats ?? s.maxSeats} left
+                            </Typography>
+                          )}
                         </Button>
                       ))}
                     </Box>

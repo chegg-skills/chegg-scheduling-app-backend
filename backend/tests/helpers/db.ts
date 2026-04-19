@@ -9,9 +9,8 @@ export const clearTables = async (): Promise<void> => {
   await prisma.student.deleteMany();
   await prisma.eventRoutingState.deleteMany();
   await prisma.eventScheduleSlot.deleteMany();
-  await prisma.eventHost.deleteMany();
+  await prisma.eventCoach.deleteMany();
   await prisma.event.deleteMany();
-  await prisma.eventInteractionType.deleteMany();
   await prisma.eventOffering.deleteMany();
   await prisma.teamMember.deleteMany();
   await prisma.team.deleteMany();

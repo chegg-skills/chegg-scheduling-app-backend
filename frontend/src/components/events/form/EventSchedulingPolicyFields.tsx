@@ -5,21 +5,19 @@ import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
 import type { EventFormValues } from './eventFormSchema'
-import type { EventInteractionType } from '@/types'
+import type { InteractionTypeCaps } from '@/types'
 import { WeekdaySelector } from './WeekdaySelector'
 import { ParticipantCapacityFields } from './ParticipantCapacityFields'
 
 interface EventSchedulingPolicyFieldsProps {
-  selectedInteractionType?: EventInteractionType | null
+  caps?: InteractionTypeCaps | null
 }
 
 /**
- * Handles booking mode, weekdays, notice, and capacity fields.
+ * Handles booking mode, weekdays, notice, buffer, and capacity fields.
  * Consumes the EventForm context.
  */
-export function EventSchedulingPolicyFields({
-  selectedInteractionType,
-}: EventSchedulingPolicyFieldsProps) {
+export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyFieldsProps) {
   const {
     register,
     watch,
@@ -27,20 +25,29 @@ export function EventSchedulingPolicyFields({
   } = useFormContext<EventFormValues>()
   const bookingMode = watch('bookingMode')
 
+  const isGroupSession = !!caps?.multipleParticipants
+  const interactionLabel = caps?.multipleCoaches ? 'Group Workshop' : 'ONE_TO_MANY'
+
   return (
     <Stack spacing={3}>
       <FormField
         label="Booking mode"
         htmlFor="bookingMode"
         error={errors.bookingMode?.message}
-        info="Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions."
+        info={
+          isGroupSession
+            ? `${interactionLabel} events require predefined session slots.`
+            : 'Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions.'
+        }
       >
         <Select
           id="bookingMode"
-          value={bookingMode || 'HOST_AVAILABILITY'}
+          value={bookingMode || 'COACH_AVAILABILITY'}
           {...register('bookingMode')}
         >
-          <MenuItem value="HOST_AVAILABILITY">Flexible — based on coach availability</MenuItem>
+          <MenuItem value="COACH_AVAILABILITY" disabled={isGroupSession}>
+            Flexible — based on coach availability {isGroupSession ? '(Not supported for this type)' : ''}
+          </MenuItem>
           <MenuItem value="FIXED_SLOTS">Fixed — predefined session slots only</MenuItem>
         </Select>
       </FormField>
@@ -75,7 +82,7 @@ export function EventSchedulingPolicyFields({
         />
       </FormField>
 
-      <ParticipantCapacityFields selectedInteractionType={selectedInteractionType} />
+      {caps?.multipleParticipants && <ParticipantCapacityFields />}
     </Stack>
   )
 }

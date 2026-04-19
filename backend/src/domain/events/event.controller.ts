@@ -104,100 +104,15 @@ const getEventOfferingUsage = async (
   }
 };
 
-const createInteractionType = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const caller = res.locals.authUser as CallerContext;
-    const interactionType = await eventService.createInteractionType(req.body, caller);
-
-    sendSuccessResponse(
-      res,
-      StatusCodes.CREATED,
-      interactionType,
-      "Interaction type created successfully.",
-    );
-  } catch (error) {
-    next(error);
-  }
-};
-
 const listInteractionTypes = async (
   _req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const result = await eventService.listInteractionTypes();
+    const result = eventService.listInteractionTypes();
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Interaction types fetched successfully.");
-  } catch (error) {
-    next(error);
-  }
-};
-
-const updateInteractionType = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const caller = res.locals.authUser as CallerContext;
-    const interactionType = await eventService.updateInteractionType(
-      (req.params as any).interactionTypeId,
-      req.body,
-      caller,
-    );
-
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      interactionType,
-      "Interaction type updated successfully.",
-    );
-  } catch (error) {
-    next(error);
-  }
-};
-
-const deleteInteractionType = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const caller = res.locals.authUser as CallerContext;
-    const interactionType = await eventService.deleteInteractionType(
-      (req.params as any).interactionTypeId,
-      caller,
-    );
-
-    sendSuccessResponse(
-      res,
-      StatusCodes.OK,
-      interactionType,
-      "Interaction type deleted successfully.",
-    );
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getInteractionTypeUsage = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const caller = res.locals.authUser as CallerContext;
-    const usage = await eventService.getInteractionTypeUsage(
-      (req.params as any).interactionTypeId,
-      caller,
-    );
-
-    sendSuccessResponse(res, StatusCodes.OK, usage, "Interaction type usage fetched successfully.");
   } catch (error) {
     next(error);
   }
@@ -206,7 +121,6 @@ const getInteractionTypeUsage = async (
 const listTeamEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const filters = req.query as any;
     const result = await eventService.listTeamEvents((req.params as any).teamId, caller, {
       page: (req.query as any).page,
       pageSize: (req.query as any).pageSize,
@@ -251,46 +165,46 @@ const deleteEvent = async (req: Request, res: Response, next: NextFunction): Pro
   }
 };
 
-const listEventHosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const listEventCoaches = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.listEventHosts((req.params as any).eventId, caller);
+    const result = await eventService.listEventCoaches((req.params as any).eventId, caller);
 
-    sendSuccessResponse(res, StatusCodes.OK, result, "Event hosts fetched successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event coaches fetched successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const replaceEventHosts = async (
+const replaceEventCoaches = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.replaceEventHosts(
+    const result = await eventService.replaceEventCoaches(
       (req.params as any).eventId,
       req.body,
       caller,
     );
 
-    sendSuccessResponse(res, StatusCodes.OK, result, "Event hosts updated successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event coaches updated successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const removeEventHost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const removeEventCoach = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.removeEventHost(
+    const result = await eventService.removeEventCoach(
       (req.params as any).eventId,
       (req.params as any).userId,
       caller,
     );
 
-    sendSuccessResponse(res, StatusCodes.OK, result, "Event host removed successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event coach removed successfully.");
   } catch (error) {
     next(error);
   }
@@ -393,25 +307,21 @@ export {
   createEventOffering,
   listEventOfferings,
   updateEventOffering,
-  createInteractionType,
+  deleteEventOffering,
+  getEventOfferingUsage,
   listInteractionTypes,
-  updateInteractionType,
   createEvent,
   duplicateEvent,
   createEventScheduleSlot,
   deleteEvent,
   deleteEventScheduleSlot,
-  listEventHosts,
+  listEventCoaches,
   listEventScheduleSlots,
   listTeamEvents,
   listAllEvents,
   readEvent,
-  removeEventHost,
-  replaceEventHosts,
+  removeEventCoach,
+  replaceEventCoaches,
   updateEvent,
   updateEventScheduleSlot,
-  deleteInteractionType,
-  getInteractionTypeUsage,
-  deleteEventOffering,
-  getEventOfferingUsage,
 };

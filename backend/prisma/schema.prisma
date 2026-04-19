@@ -7,38 +7,37 @@ datasource db {
 }
 
 model User {
-  id                      String                      @id @default(uuid())
-  email                   String                      @unique
-  password                String
-  role                    UserRole
-  createdAt               DateTime                    @default(now())
-  updatedAt               DateTime                    @updatedAt
-  avatarUrl               String?
-  firstName               String
-  isActive                Boolean                     @default(true)
-  lastLoginAt             DateTime?
-  lastName                String
-  phoneNumber             String?
-  timezone                String                      @default("UTC")
-  failedLoginAttempts     Int                         @default(0)
-  lockedUntil             DateTime?
-  country                 String?
-  preferredLanguage       String                      @default("en")
-  zoomIsvLink             String?
-  publicBookingSlug       String                      @unique
-  bookings                Booking[]
-  eventsCreated           Event[]                     @relation("EventCreatedBy")
-  eventsUpdated           Event[]                     @relation("EventUpdatedBy")
-  hostedEvents            EventHost[]                 @relation("EventHostUser")
-  createdInteractionTypes EventInteractionType[]      @relation("InteractionTypeCreatedBy")
-  updatedInteractionTypes EventInteractionType[]      @relation("InteractionTypeUpdatedBy")
-  createdEventOfferings   EventOffering[]             @relation("EventOfferingCreatedBy")
-  updatedEventOfferings   EventOffering[]             @relation("EventOfferingUpdatedBy")
-  teamsCreated            Team[]                      @relation("TeamCreatedBy")
-  teamsLed                Team[]                      @relation("TeamLead")
-  teamMemberships         TeamMember[]
-  availabilityExceptions  UserAvailabilityException[]
-  weeklyAvailability      UserWeeklyAvailability[]
+  id                     String                      @id @default(uuid())
+  email                  String                      @unique
+  password               String
+  role                   UserRole
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+  avatarUrl              String?
+  firstName              String
+  isActive               Boolean                     @default(true)
+  lastLoginAt            DateTime?
+  lastName               String
+  phoneNumber            String?
+  timezone               String                      @default("UTC")
+  failedLoginAttempts    Int                         @default(0)
+  lockedUntil            DateTime?
+  country                String?
+  preferredLanguage      String                      @default("en")
+  zoomIsvLink            String?
+  publicBookingSlug      String                      @unique
+  bookings               Booking[]
+  eventsCreated          Event[]                     @relation("EventCreatedBy")
+  eventsUpdated          Event[]                     @relation("EventUpdatedBy")
+  coachedEvents          EventCoach[]                @relation("EventCoachUser")
+  createdEventOfferings  EventOffering[]             @relation("EventOfferingCreatedBy")
+  updatedEventOfferings  EventOffering[]             @relation("EventOfferingUpdatedBy")
+  slotAssignments        EventScheduleSlot[]         @relation("SlotCoach")
+  teamsCreated           Team[]                      @relation("TeamCreatedBy")
+  teamsLed               Team[]                      @relation("TeamLead")
+  teamMemberships        TeamMember[]
+  availabilityExceptions UserAvailabilityException[]
+  weeklyAvailability     UserWeeklyAvailability[]
 }
 
 model Team {
@@ -102,112 +101,92 @@ model EventOffering {
   @@index([isActive, sortOrder])
 }
 
-model EventInteractionType {
-  id                    String   @id @default(uuid())
-  key                   String   @unique
-  name                  String
-  description           String?
-  supportsRoundRobin    Boolean  @default(false)
-  supportsMultipleHosts Boolean  @default(false)
-  minHosts              Int      @default(1)
-  maxHosts              Int?
-  supportsSimultaneousCoaches Boolean @default(false)
-  minParticipants       Int      @default(1)
-  maxParticipants       Int?
-  isActive              Boolean  @default(true)
-  sortOrder             Int      @default(0)
-  createdById           String
-  updatedById           String
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  events                Event[]
-  createdBy             User     @relation("InteractionTypeCreatedBy", fields: [createdById], references: [id])
-  updatedBy             User     @relation("InteractionTypeUpdatedBy", fields: [updatedById], references: [id])
-
-  @@index([isActive, sortOrder])
-}
-
 model Event {
-  id                   String               @id @default(uuid())
-  name                 String
-  description          String?
-  offeringId           String
-  interactionTypeId    String
-  assignmentStrategy   AssignmentStrategy   @default(DIRECT)
-  durationSeconds      Int
-  locationType         EventLocationType
-  locationValue        String
-  isActive             Boolean              @default(true)
-  teamId               String
-  createdById          String
-  updatedById          String
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  publicBookingSlug    String               @unique
-  bookingMode          EventBookingMode     @default(HOST_AVAILABILITY)
-  allowedWeekdays      Int[]                @default([])
-  minimumNoticeMinutes Int                  @default(0)
-  sessionLeadershipStrategy SessionLeadershipStrategy @default(SINGLE_HOST)
-  fixedLeadHostId      String?
-  minParticipantCount  Int?
-  maxParticipantCount  Int?
-  bufferAfterMinutes   Int                  @default(0)
-  bookings             Booking[]
-  createdBy            User                 @relation("EventCreatedBy", fields: [createdById], references: [id])
-  interactionType      EventInteractionType @relation(fields: [interactionTypeId], references: [id])
-  offering             EventOffering        @relation(fields: [offeringId], references: [id])
-  team                 Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  updatedBy            User                 @relation("EventUpdatedBy", fields: [updatedById], references: [id])
-  hosts                EventHost[]
-  routingState         EventRoutingState?
-  scheduleSlots        EventScheduleSlot[]
+  id                        String                    @id @default(uuid())
+  name                      String
+  description               String?
+  offeringId                String
+  assignmentStrategy        AssignmentStrategy        @default(DIRECT)
+  durationSeconds           Int
+  locationType              EventLocationType
+  locationValue             String
+  isActive                  Boolean                   @default(true)
+  teamId                    String
+  createdById               String
+  updatedById               String
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+  publicBookingSlug         String                    @unique
+  bookingMode               EventBookingMode          @default(COACH_AVAILABILITY)
+  allowedWeekdays           Int[]                     @default([])
+  minimumNoticeMinutes      Int                       @default(0)
+  minParticipantCount       Int?
+  maxParticipantCount       Int?
+  sessionLeadershipStrategy SessionLeadershipStrategy @default(SINGLE_COACH)
+  bufferAfterMinutes        Int                       @default(0)
+  interactionType           InteractionType
+  fixedLeadCoachId          String?
+  maxCoachCount             Int?
+  minCoachCount             Int                       @default(1)
+  targetCoHostCount         Int?
+  bookings                  Booking[]
+  createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
+  offering                  EventOffering             @relation(fields: [offeringId], references: [id])
+  team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
+  coaches                   EventCoach[]
+  routingState              EventRoutingState?
+  scheduleSlots             EventScheduleSlot[]
 
   @@index([teamId, isActive])
   @@index([offeringId])
-  @@index([interactionTypeId])
+  @@index([interactionType])
   @@index([assignmentStrategy])
   @@index([bookingMode])
 }
 
-model EventHost {
-  id         String   @id @default(uuid())
-  eventId    String
-  hostUserId String
-  hostOrder  Int
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  hostUser   User     @relation("EventHostUser", fields: [hostUserId], references: [id], onDelete: Cascade)
+model EventCoach {
+  id          String   @id @default(uuid())
+  eventId     String
+  coachUserId String
+  coachOrder  Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  coachUser   User     @relation("EventCoachUser", fields: [coachUserId], references: [id], onDelete: Cascade)
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@unique([eventId, hostUserId])
-  @@unique([eventId, hostOrder])
-  @@index([hostUserId])
+  @@unique([eventId, coachUserId])
+  @@unique([eventId, coachOrder])
+  @@index([coachUserId])
   @@index([eventId, isActive])
 }
 
 model EventRoutingState {
-  id            String   @id @default(uuid())
-  eventId       String   @unique
-  nextHostOrder Int      @default(1)
-  updatedAt     DateTime @updatedAt
-  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id             String   @id @default(uuid())
+  eventId        String   @unique
+  nextCoachOrder Int      @default(1)
+  updatedAt      DateTime @updatedAt
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventScheduleSlot {
-  id        String    @id @default(uuid())
-  eventId   String
-  startTime DateTime
-  endTime   DateTime
-  capacity  Int?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  bookings  Booking[]
-  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id              String    @id @default(uuid())
+  eventId         String
+  startTime       DateTime
+  endTime         DateTime
+  capacity        Int?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  assignedCoachId String?
+  bookings        Booking[]
+  assignedCoach   User?     @relation("SlotCoach", fields: [assignedCoachId], references: [id])
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, startTime])
   @@index([eventId, startTime, isActive])
+  @@index([assignedCoachId])
 }
 
 model UserWeeklyAvailability {
@@ -256,8 +235,6 @@ model Booking {
   studentEmail      String
   teamId            String
   eventId           String
-  hostUserId        String
-  coHostUserIds     String[]           @default([])
   startTime         DateTime
   endTime           DateTime
   timezone          String             @default("UTC")
@@ -270,11 +247,13 @@ model Booking {
   triedSolutions    String?
   usedResources     String?
   meetingJoinUrl    String?
-  rescheduleToken   String?            @unique @default(uuid())
   studentId         String?
   scheduleSlotId    String?
+  rescheduleToken   String?            @unique @default(uuid())
+  coCoachUserIds    String[]           @default([])
+  coachUserId       String
+  coach             User               @relation(fields: [coachUserId], references: [id])
   event             Event              @relation(fields: [eventId], references: [id])
-  host              User               @relation(fields: [hostUserId], references: [id])
   scheduleSlot      EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
   student           Student?           @relation(fields: [studentId], references: [id])
   team              Team               @relation(fields: [teamId], references: [id])
@@ -283,7 +262,7 @@ model Booking {
   @@index([scheduleSlotId])
   @@index([teamId])
   @@index([eventId])
-  @@index([hostUserId])
+  @@index([coachUserId])
   @@index([startTime, endTime])
 }
 
@@ -305,7 +284,7 @@ enum EventLocationType {
 }
 
 enum EventBookingMode {
-  HOST_AVAILABILITY
+  COACH_AVAILABILITY
   FIXED_SLOTS
 }
 
@@ -318,7 +297,14 @@ enum BookingStatus {
 }
 
 enum SessionLeadershipStrategy {
-  SINGLE_HOST
+  SINGLE_COACH
   FIXED_LEAD
   ROTATING_LEAD
+}
+
+enum InteractionType {
+  ONE_TO_ONE
+  ONE_TO_MANY
+  MANY_TO_ONE
+  MANY_TO_MANY
 }

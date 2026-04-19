@@ -22,7 +22,7 @@ import {
   removeAvailabilityException,
   getEffectiveAvailabilityData as getEffectiveAvailability,
 } from "./availabilityCalendar.service";
-import { getHostConflicts } from "./availabilityConflict.service";
+import { getCoachConflicts } from "./availabilityConflict.service";
 
 /**
  * Facade service for availability lookups.
@@ -30,25 +30,19 @@ import { getHostConflicts } from "./availabilityConflict.service";
  */
 
 const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
-  interactionType: {
-    select: {
-      minParticipants: true,
-      maxParticipants: true,
-    },
-  },
   scheduleSlots: {
     where: {
       isActive: true,
     },
     orderBy: { startTime: "asc" },
   },
-  hosts: {
+  coaches: {
     where: { isActive: true },
-    orderBy: { hostOrder: "asc" },
+    orderBy: { coachOrder: "asc" },
   },
 });
 
-const isHostAvailable = async (
+const isCoachAvailable = async (
   userId: string,
   startTime: Date,
   endTime: Date,
@@ -62,7 +56,7 @@ const isHostAvailable = async (
 ): Promise<boolean> => {
   const client: AvailabilityClient = options.tx || prisma;
 
-  // 1. Resolve Host and Calendar Data
+  // 1. Resolve Coach and Calendar Data
   const user = await client.user.findUnique({
     where: { id: userId },
     select: { timezone: true },
@@ -79,7 +73,7 @@ const isHostAvailable = async (
       id: userId,
       role: UserRole.COACH,
     }),
-    getHostConflicts(userId, startTime, effectiveEndTime, options),
+    getCoachConflicts(userId, startTime, effectiveEndTime, options),
   ]);
 
   // 2. Conflict Check (Bookings)
@@ -116,13 +110,19 @@ export type AvailableSlot = {
   scheduleSlotId?: string;
   remainingSeats?: number | null;
   maxSeats?: number | null;
+  assignedCoach?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  } | null;
 };
 
 const getAvailableSlots = async (
   eventId: string,
   startDate: Date,
   endDate: Date,
-  preferredHostId?: string,
+  preferredCoachId?: string,
 ): Promise<AvailableSlot[]> => {
   const eventResult = await prisma.event.findUnique({
     where: { id: eventId },
@@ -136,22 +136,33 @@ const getAvailableSlots = async (
             lte: endDate,
           },
         },
+        include: {
+          assignedCoach: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+            },
+          },
+        } as any,
         orderBy: { startTime: "asc" },
       },
     },
   });
 
-  if (!eventResult || eventResult.hosts.length === 0) {
+  if (!eventResult || eventResult.coaches.length === 0) {
     return [];
   }
 
-  const event = eventResult as typeof eventResult & { bufferAfterMinutes: number };
 
-  const eligibleHosts = preferredHostId
-    ? event.hosts.filter((host: { hostUserId: string }) => host.hostUserId === preferredHostId)
-    : event.hosts;
+  const event = eventResult as any;
 
-  if (eligibleHosts.length === 0) return [];
+  const eligibleCoaches = preferredCoachId
+    ? event.coaches.filter((c: { coachUserId: string }) => c.coachUserId === preferredCoachId)
+    : event.coaches;
+
+  if (eligibleCoaches.length === 0) return [];
 
   const slots: AvailableSlot[] = [];
 
@@ -174,22 +185,19 @@ const getAvailableSlots = async (
     }
 
     // Capacity Logic
-    const { maxParticipants } = getEffectiveParticipantPolicy(
-      event,
-      scheduleSlot ?? event.interactionType,
-    );
+    const { maxParticipants } = getEffectiveParticipantPolicy(event, scheduleSlot ?? null);
     const currentBookings = await prisma.booking.count({
       where: (scheduleSlot
         ? {
-            scheduleSlotId: scheduleSlot.id,
-            status: { not: "CANCELLED" },
-          }
+          scheduleSlotId: scheduleSlot.id,
+          status: { not: "CANCELLED" },
+        }
         : {
-            eventId,
-            startTime: slotStart,
-            endTime: slotEnd,
-            status: { not: "CANCELLED" },
-          }) as any,
+          eventId,
+          startTime: slotStart,
+          endTime: slotEnd,
+          status: { not: "CANCELLED" },
+        }) as any,
     });
 
     if (maxParticipants !== null && currentBookings >= maxParticipants) {
@@ -201,11 +209,24 @@ const getAvailableSlots = async (
     let isAvailable = false;
 
     // Assignment specific availability check
-    if (event.assignmentStrategy === "DIRECT" && !preferredHostId) {
-      const primaryHost = eligibleHosts[0];
+    if (scheduleSlot && (scheduleSlot as any).assignedCoachId) {
+      // If a specific coach is assigned to this slot, only check their availability
       if (
-        primaryHost &&
-        (await isHostAvailable(primaryHost.hostUserId, slotStart, slotEnd, {
+        await isCoachAvailable((scheduleSlot as any).assignedCoachId, slotStart, slotEnd, {
+          ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
+          eventId: allowSharedSessionOverlap ? eventId : undefined,
+          scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
+          bufferAfterMinutes: event.bufferAfterMinutes,
+          tx: (event as any).tx, // Pass tx if available in context (though getAvailableSlots doesn't usually have it)
+        })
+      ) {
+        isAvailable = true;
+      }
+    } else if (event.assignmentStrategy === "DIRECT" && !preferredCoachId) {
+      const primaryCoach = eligibleCoaches[0];
+      if (
+        primaryCoach &&
+        (await isCoachAvailable(primaryCoach.coachUserId, slotStart, slotEnd, {
           ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
           eventId: allowSharedSessionOverlap ? eventId : undefined,
           scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
@@ -215,9 +236,9 @@ const getAvailableSlots = async (
         isAvailable = true;
       }
     } else {
-      for (const host of eligibleHosts) {
+      for (const coach of eligibleCoaches) {
         if (
-          await isHostAvailable(host.hostUserId, slotStart, slotEnd, {
+          await isCoachAvailable(coach.coachUserId, slotStart, slotEnd, {
             ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
             eventId: allowSharedSessionOverlap ? eventId : undefined,
             scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
@@ -232,12 +253,15 @@ const getAvailableSlots = async (
 
     if (!isAvailable) return null;
 
+    const assignedCoach = (scheduleSlot as any)?.assignedCoach ?? null;
+
     return {
       startTime: slotStart.toISOString(),
       endTime: slotEnd.toISOString(),
       scheduleSlotId: scheduleSlot?.id,
       remainingSeats: maxParticipants !== null ? maxParticipants - currentBookings : null,
       maxSeats: maxParticipants,
+      assignedCoach,
     };
   };
 
@@ -290,6 +314,6 @@ export {
   addAvailabilityException,
   removeAvailabilityException,
   getEffectiveAvailability,
-  isHostAvailable,
+  isCoachAvailable,
   getAvailableSlots,
 };

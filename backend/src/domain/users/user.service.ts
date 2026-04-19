@@ -146,12 +146,11 @@ const readUser = async (userId: string): Promise<SafeUser> => {
           team: true,
         },
       },
-      hostedEvents: {
+      coachedEvents: {
         include: {
           event: {
             include: {
               offering: true,
-              interactionType: true,
             },
           },
         },

@@ -4,13 +4,13 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Input } from '@/components/shared/form/Input'
-import type { TeamMember, EventHost } from '@/types'
+import type { TeamMember, EventCoach } from '@/types'
 import { Button } from '@/components/shared/ui/Button'
 import { Badge } from '@/components/shared/ui/Badge'
-import { HostSelectionList } from '../HostSelectionList'
+import { CoachSelectionList } from '../CoachSelectionList'
 
-interface AddHostFormProps {
-  activeHosts: EventHost[]
+interface AddCoachFormProps {
+  activeCoaches: EventCoach[]
   teamMembers: TeamMember[]
   assignmentStrategy?: string
   isPending: boolean
@@ -18,20 +18,20 @@ interface AddHostFormProps {
   onCancel: () => void
 }
 
-export function AddHostForm({
-  activeHosts,
+export function AddCoachForm({
+  activeCoaches,
   teamMembers,
   assignmentStrategy,
   isPending,
   onAdd,
   onCancel,
-}: AddHostFormProps) {
+}: AddCoachFormProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [search, setSearch] = useState('')
 
-  const currentHostUserIds = new Set(activeHosts.map((h) => h.hostUserId))
+  const currentCoachUserIds = new Set(activeCoaches.map((c) => c.coachUserId))
   const eligible = teamMembers.filter(
-    (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentHostUserIds.has(m.userId)
+    (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentCoachUserIds.has(m.userId)
   )
 
   const filteredEligible = eligible.filter((m) =>
@@ -53,7 +53,7 @@ export function AddHostForm({
           Select one or more coaches to add to this event.
         </Typography>
         {assignmentStrategy === 'ROUND_ROBIN' &&
-          activeHosts.length + selectedUserIds.length < 2 && (
+          activeCoaches.length + selectedUserIds.length < 2 && (
             <Typography
               variant="caption"
               color="error.main"
@@ -82,8 +82,8 @@ export function AddHostForm({
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
           />
 
-          <HostSelectionList
-            eligibleHosts={filteredEligible}
+          <CoachSelectionList
+            eligibleCoaches={filteredEligible}
             selectedUserIds={selectedUserIds}
             onToggle={handleToggle}
           />

@@ -143,13 +143,13 @@ export function TeamDetailPage() {
             }}
           >
             <Tab
-              label={`Members (${members.length})`}
-              icon={<Users size={18} />}
+              label={`Events (${teamEvents.length})`}
+              icon={<Calendar size={18} />}
               iconPosition="start"
             />
             <Tab
-              label={`Events (${teamEvents.length})`}
-              icon={<Calendar size={18} />}
+              label={`Members (${members.length})`}
+              icon={<Users size={18} />}
               iconPosition="start"
             />
           </Tabs>
@@ -157,14 +157,24 @@ export function TeamDetailPage() {
           <Box sx={{ mb: 1 }}>
             <Button
               size="sm"
-              onClick={() => (tabValue === 0 ? setShowAddMember(true) : setShowCreateEvent(true))}
+              onClick={() => (tabValue === 0 ? setShowCreateEvent(true) : setShowAddMember(true))}
             >
-              <Plus size={16} /> {tabValue === 0 ? 'Add member' : 'New event'}
+              <Plus size={16} /> {tabValue === 0 ? 'New event' : 'Add member'}
             </Button>
           </Box>
         </Box>
 
         <TabPanel value={tabValue} index={0} prefix="team">
+          <TeamEventsTab
+            events={teamEvents}
+            teamId={teamId}
+            isLoading={eventsLoading}
+            showCreateModal={showCreateEvent}
+            onCloseCreateModal={() => setShowCreateEvent(false)}
+          />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1} prefix="team">
           <TeamMembersTab
             members={members}
             teamId={teamId}
@@ -175,16 +185,6 @@ export function TeamDetailPage() {
             showAddModal={showAddMember}
             onCloseAddModal={() => setShowAddMember(false)}
             onViewUser={setViewingUserId}
-          />
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1} prefix="team">
-          <TeamEventsTab
-            events={teamEvents}
-            teamId={teamId}
-            isLoading={eventsLoading}
-            showCreateModal={showCreateEvent}
-            onCloseCreateModal={() => setShowCreateEvent(false)}
           />
         </TabPanel>
       </Box>

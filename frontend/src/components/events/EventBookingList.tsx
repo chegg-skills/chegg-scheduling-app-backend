@@ -51,7 +51,7 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
             Upcoming Sessions
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            View future sessions and co-host assignments for this event.
+            View future sessions and co-coach assignments for this event.
           </Typography>
         </Box>
       </Box>

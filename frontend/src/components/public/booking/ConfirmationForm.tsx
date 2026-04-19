@@ -23,9 +23,9 @@ interface ConfirmationFormProps {
 export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProps) {
   const handleChange =
     (field: keyof StudentInfo) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      onUpdate({ ...studentInfo, [field]: e.target.value })
-    }
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        onUpdate({ ...studentInfo, [field]: e.target.value })
+      }
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 1 }}>

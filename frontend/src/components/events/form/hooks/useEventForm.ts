@@ -1,16 +1,15 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { eventFormSchema, getEventFormDefaults, type EventFormValues } from '../eventFormSchema'
 import {
-  clampEventParticipantConfig,
   getAllowedAssignmentStrategies,
   getDefaultEventAssignmentStrategy,
-  getRequiredEventHostCount,
+  getRequiredEventCoachCount,
 } from '../eventCapabilityRules'
 import { useCreateEvent, useUpdateEvent } from '@/hooks/queries/useEvents'
-import { useInteractionTypes } from '@/hooks/queries/useInteractionTypes'
-import type { Event } from '@/types'
+import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
+import type { Event, InteractionType, InteractionTypeCaps } from '@/types'
 
 interface UseEventFormProps {
   teamId: string
@@ -31,61 +30,86 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
 
   const { watch, setValue, getValues, reset } = form
 
-  const selectedInteractionTypeId = watch('interactionTypeId')
-  const { data: interactionData } = useInteractionTypes()
-  const selectedInteractionType = useMemo(
-    () =>
-      (interactionData?.interactionTypes ?? []).find(
-        (item) => item.id === selectedInteractionTypeId
-      ) ?? null,
-    [interactionData, selectedInteractionTypeId]
-  )
+  const selectedInteractionTypeKey = watch('interactionType') as InteractionType | undefined
+  const caps: InteractionTypeCaps | null = selectedInteractionTypeKey
+    ? INTERACTION_TYPE_CAPS[selectedInteractionTypeKey]
+    : null
 
   const selectedAssignmentStrategy =
-    watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(selectedInteractionType)
+    watch('assignmentStrategy') || getDefaultEventAssignmentStrategy(caps)
   const bookingModeSelection = watch('bookingMode')
-  const requiredHostCount = getRequiredEventHostCount(
-    selectedInteractionType,
-    selectedAssignmentStrategy
-  )
+  const requiredCoachCount = getRequiredEventCoachCount(caps, selectedAssignmentStrategy)
 
   useEffect(() => {
-    if (!selectedInteractionType) return
+    if (!caps) return
 
-    const allowedStrategies = getAllowedAssignmentStrategies(selectedInteractionType)
+    // Guard against stale caps: when react-hook-form's `values` prop sync resets the form
+    // atomically, getValues() reflects the new interaction type before `watch` re-renders and
+    // updates `caps`. Running resets with mismatched caps incorrectly clears fields like
+    // sessionLeadershipStrategy/targetCoHostCount for multi-coach types on initial edit load.
+    const currentInteractionType = getValues('interactionType') as InteractionType | undefined
+    const currentCaps = currentInteractionType ? INTERACTION_TYPE_CAPS[currentInteractionType] : null
+    if (currentCaps !== caps) return
+
+    // Reset assignment strategy if the current one is not allowed for this type
+    const allowedStrategies = getAllowedAssignmentStrategies(caps)
     const currentStrategy = getValues('assignmentStrategy')
-
     if (!currentStrategy || !allowedStrategies.includes(currentStrategy)) {
-      setValue('assignmentStrategy', getDefaultEventAssignmentStrategy(selectedInteractionType), {
+      setValue('assignmentStrategy', getDefaultEventAssignmentStrategy(caps), {
         shouldDirty: false,
       })
     }
 
-    const nextParticipantConfig = clampEventParticipantConfig(selectedInteractionType, {
-      minParticipantCount: getValues('minParticipantCount'),
-      maxParticipantCount: getValues('maxParticipantCount'),
-    })
-
-    if (getValues('minParticipantCount') !== nextParticipantConfig.minParticipantCount) {
-      setValue('minParticipantCount', nextParticipantConfig.minParticipantCount, {
-        shouldDirty: false,
-      })
+    // Reset session-leadership and co-host fields when switching to a single-coach-per-session type.
+    // Pool size (minCoachCount / maxCoachCount) is intentionally kept — single-session types can
+    // still have a pool of coaches for round-robin rotation.
+    if (!caps.multipleCoaches) {
+      setValue('sessionLeadershipStrategy', 'SINGLE_COACH', { shouldDirty: false })
+      // Keep fixedLeadCoachId when DIRECT — it stores the designated coach for the event.
+      // Only clear it when switching away from DIRECT (ROUND_ROBIN doesn't use a fixed coach).
+      if (getValues('assignmentStrategy') !== 'DIRECT') {
+        setValue('fixedLeadCoachId', null, { shouldDirty: false })
+      }
+      setValue('targetCoHostCount', null, { shouldDirty: false })
     }
 
-    if (getValues('maxParticipantCount') !== nextParticipantConfig.maxParticipantCount) {
-      setValue('maxParticipantCount', nextParticipantConfig.maxParticipantCount, {
-        shouldDirty: false,
-      })
+    // Group Workshop logic (ONE_TO_MANY / MANY_TO_MANY): Force FIXED_SLOTS mode.
+    const isGroupSession = caps.multipleParticipants
+    if (isGroupSession) {
+      setValue('bookingMode', 'FIXED_SLOTS', { shouldDirty: false })
     }
-  }, [getValues, selectedInteractionType, setValue])
+
+    // Reset participant capacity when switching to a single-participant type
+    if (!caps.multipleParticipants) {
+      setValue('minParticipantCount', null, { shouldDirty: false })
+      setValue('maxParticipantCount', null, { shouldDirty: false })
+    }
+
+    // Ensure multi-coach interaction types (Panels) do not use 'SINGLE_COACH' strategy.
+    // If switching to a collaborative type, default to 'ROTATING_LEAD'.
+    if (caps.multipleCoaches && getValues('sessionLeadershipStrategy') === 'SINGLE_COACH') {
+      setValue('sessionLeadershipStrategy', 'ROTATING_LEAD', { shouldDirty: false })
+    }
+
+    // Multi-coach Smart Strategy Reform: Derive leadership from assignment strategy for types
+    // where derivesLeadershipFromAssignment is true (currently MANY_TO_ONE / MANY_TO_MANY).
+    if (caps.derivesLeadershipFromAssignment) {
+      const assignment = getValues('assignmentStrategy')
+      const targetLeadership = assignment === 'DIRECT' ? 'FIXED_LEAD' : 'ROTATING_LEAD'
+      if (getValues('sessionLeadershipStrategy') !== targetLeadership) {
+        setValue('sessionLeadershipStrategy', targetLeadership, { shouldDirty: true })
+      }
+    }
+  }, [caps, getValues, setValue, watch('assignmentStrategy')])
 
   function onSubmit(values: EventFormValues) {
     const apiPayload = {
       ...values,
       assignmentStrategy:
-        values.assignmentStrategy ?? getDefaultEventAssignmentStrategy(selectedInteractionType),
+        values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
       durationSeconds: values.durationMinutes * 60,
     }
+
     // @ts-ignore - durationMinutes is not in API but we handled it
     delete apiPayload.durationMinutes
 
@@ -106,10 +130,10 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
     onSubmit,
     isPending: creating || updating,
     error: createError ?? updateError,
-    selectedInteractionType,
+    caps,
     selectedAssignmentStrategy,
     bookingModeSelection,
-    requiredHostCount,
+    requiredCoachCount,
     isEdit,
   }
 }

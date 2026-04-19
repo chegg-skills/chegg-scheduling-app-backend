@@ -38,26 +38,12 @@ beforeAll(async () => {
     });
   teamId = teamRes.body.data.id;
 
-  // 3. Setup Offering & Interaction Type
+  // 3. Setup Offering
   const offeringRes = await request(app)
     .post("/api/event-offerings")
     .set("Authorization", `Bearer ${adminToken}`)
     .send({ name: "Buffer Offering", key: "buffer_offering" });
   offeringId = offeringRes.body.data.id;
-
-  const interactionRes = await request(app)
-    .post("/api/event-interaction-types")
-    .set("Authorization", `Bearer ${adminToken}`)
-    .send({
-      name: "Buffer Interaction",
-      key: "buffer_int",
-      supportsSimultaneousCoaches: false,
-      minHosts: 1,
-      maxHosts: 1,
-      minParticipants: 1,
-      maxParticipants: 1,
-    });
-  interactionTypeId = interactionRes.body.data.id;
 
   // 4. Create Event with 15-minute buffer
   const eventRes = await request(app)
@@ -66,7 +52,7 @@ beforeAll(async () => {
     .send({
       name: "Buffered Event",
       offeringId,
-      interactionTypeId,
+      interactionType: "ONE_TO_ONE", // Use enum directly
       durationSeconds: 3600, // 1 hour
       locationType: "VIRTUAL",
       locationValue: "Zoom",
@@ -76,10 +62,10 @@ beforeAll(async () => {
 
   // 5. Assign Coach to Event
   await request(app)
-    .put(`/api/events/${eventId}/hosts`)
+    .put(`/api/events/${eventId}/coaches`)
     .set("Authorization", `Bearer ${adminToken}`)
     .send({
-      hosts: [{ userId: coachId, hostOrder: 1 }],
+      coaches: [{ userId: coachId, coachOrder: 1 }],
     });
 
   // 6. Set Coach Availability (Monday 9:00 - 12:00)
@@ -104,7 +90,7 @@ describe("Event Buffer Integration Tests", () => {
         studentEmail: "student@example.com",
         teamId,
         eventId,
-        hostUserId: coachId,
+        coachUserId: coachId,
         startTime,
         endTime,
         status: "CONFIRMED",

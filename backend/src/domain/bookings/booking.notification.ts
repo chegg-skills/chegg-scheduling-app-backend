@@ -11,7 +11,7 @@ import type { SafeBooking } from "./booking.service";
 import { formatNotificationDate } from "../../shared/utils/date";
 
 const getCoachName = (booking: SafeBooking): string => {
-  const coachName = [booking.host?.firstName, booking.host?.lastName]
+  const coachName = [booking.coach?.firstName, booking.coach?.lastName]
     .filter((value): value is string => Boolean(value))
     .join(" ")
     .trim();
@@ -37,21 +37,21 @@ const getBookingNotificationVariables = async (booking: SafeBooking) => {
       ? `${resolveFrontendUrl()}/book/${booking.event.publicBookingSlug}`
       : resolveFrontendUrl(),
     rescheduleUrl: `${resolveFrontendUrl()}/reschedule/${booking.id}?token=${(booking as any).rescheduleToken ?? ""}`,
-    coHostDetails: "",
-    coHostNames: "",
+    coCoachDetails: "",
+    coCoachNames: "",
   };
 
-  if (booking.coHostUserIds && booking.coHostUserIds.length > 0) {
+  if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
     const coHosts = await prisma.user.findMany({
-      where: { id: { in: booking.coHostUserIds }, isActive: true },
+      where: { id: { in: booking.coCoachUserIds }, isActive: true },
       select: { firstName: true, lastName: true },
     });
 
     if (coHosts.length > 0) {
       const names = coHosts.map((u) => `${u.firstName} ${u.lastName}`.trim()).join(", ");
-      variables.coHostNames = names;
-      variables.coHostDetails = `\nCo-hosts: ${names}`;
-      variables.coHostDetailsHtml = `<br/><strong>Co-hosts:</strong> ${names}`;
+      variables.coCoachNames = names;
+      variables.coCoachDetails = `\nCo-coaches: ${names}`;
+      variables.coCoachDetailsHtml = `<br/><strong>Co-coaches:</strong> ${names}`;
     }
   }
 
@@ -100,7 +100,7 @@ const queueStudentReminder = async (
   return publishNotificationSafely({
     type,
     recipients: booking.studentEmail,
-    userId: booking.hostUserId,
+    userId: booking.coachUserId,
     variables: await getBookingNotificationVariables(booking),
     sendAt,
     notificationKey: `booking:${booking.id}:${type}`,
@@ -133,7 +133,7 @@ const cancelScheduledBookingReminders = async (booking: SafeBooking): Promise<vo
     await publishNotificationSafely({
       type: "CANCEL_BOOKING_REMINDERS",
       recipients: booking.studentEmail,
-      userId: booking.hostUserId,
+      userId: booking.coachUserId,
       entityType: "BOOKING",
       entityId: booking.id,
       metadata: {
@@ -156,17 +156,17 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
       publishNotificationSafely({
         type: "BOOKING_CONFIRMED",
         recipients: booking.studentEmail,
-        userId: booking.hostUserId,
+        userId: booking.coachUserId,
         variables,
       }),
     ];
 
-    if (booking.host?.email) {
+    if (booking.coach?.email) {
       publishTasks.push(
         publishNotificationSafely({
           type: "COACH_BOOKING_ASSIGNED",
-          recipients: booking.host.email,
-          userId: booking.host.id,
+          recipients: booking.coach.email,
+          userId: booking.coach.id,
           variables,
         }),
       );
@@ -178,15 +178,15 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
         publishNotificationSafely({
           type: "TEAM_BOOKING_CONFIRMED",
           recipients: teamAdminRecipients,
-          userId: booking.hostUserId,
+          userId: booking.coachUserId,
           variables,
         }),
       );
     }
 
-    if (booking.coHostUserIds && booking.coHostUserIds.length > 0) {
+    if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
       const coHosts = await prisma.user.findMany({
-        where: { id: { in: booking.coHostUserIds }, isActive: true },
+        where: { id: { in: booking.coCoachUserIds }, isActive: true },
         select: { id: true, email: true },
       });
 
@@ -194,7 +194,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
         if (coHost.email) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_ASSIGNED",
+              type: "COACH_BOOKING_COCOACH_ASSIGNED",
               recipients: coHost.email,
               userId: coHost.id,
               variables,
@@ -225,12 +225,12 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     }
 
     // Fetch co-hosts if needed
-    const coHostUserIds = (booking as any).coHostUserIds as string[] | undefined;
-    const coHostUsers = coHostUserIds?.length
+    const coCoachUserIds = (booking as any).coCoachUserIds as string[] | undefined;
+    const coHostUsers = coCoachUserIds?.length
       ? await prisma.user.findMany({
-          where: { id: { in: coHostUserIds }, isActive: true },
-          select: { id: true, email: true },
-        })
+        where: { id: { in: coCoachUserIds }, isActive: true },
+        select: { id: true, email: true },
+      })
       : [];
 
     if (booking.status === BookingStatus.CANCELLED) {
@@ -238,17 +238,17 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         publishNotificationSafely({
           type: "BOOKING_CANCELLED",
           recipients: booking.studentEmail,
-          userId: booking.hostUserId,
+          userId: booking.coachUserId,
           variables,
         }),
       ];
 
-      if (booking.host?.email) {
+      if (booking.coach?.email) {
         publishTasks.push(
           publishNotificationSafely({
             type: "COACH_BOOKING_CANCELLED",
-            recipients: booking.host.email,
-            userId: booking.host.id,
+            recipients: booking.coach.email,
+            userId: booking.coach.id,
             variables,
           }),
         );
@@ -258,7 +258,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         if (coHost.email) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_CANCELLED",
+              type: "COACH_BOOKING_COCOACH_CANCELLED",
               recipients: coHost.email,
               userId: coHost.id,
               variables,
@@ -272,7 +272,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
           publishNotificationSafely({
             type: "TEAM_BOOKING_CANCELLED",
             recipients: teamAdminRecipients,
-            userId: booking.hostUserId,
+            userId: booking.coachUserId,
             variables,
           }),
         );
@@ -286,17 +286,17 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         publishNotificationSafely({
           type: "BOOKING_NO_SHOW",
           recipients: booking.studentEmail,
-          userId: booking.hostUserId,
+          userId: booking.coachUserId,
           variables,
         }),
       ];
 
-      if (booking.host?.email) {
+      if (booking.coach?.email) {
         publishTasks.push(
           publishNotificationSafely({
             type: "COACH_BOOKING_NO_SHOW",
-            recipients: booking.host.email,
-            userId: booking.host.id,
+            recipients: booking.coach.email,
+            userId: booking.coach.id,
             variables,
           }),
         );
@@ -306,7 +306,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         if (coHost.email) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_NO_SHOW",
+              type: "COACH_BOOKING_COCOACH_NO_SHOW",
               recipients: coHost.email,
               userId: coHost.id,
               variables,
@@ -320,7 +320,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
           publishNotificationSafely({
             type: "TEAM_BOOKING_NO_SHOW",
             recipients: teamAdminRecipients,
-            userId: booking.hostUserId,
+            userId: booking.coachUserId,
             variables,
           }),
         );
@@ -345,24 +345,24 @@ const queueBookingUpdatedNotifications = async (
     const variables = await getBookingNotificationVariables(newBooking);
     const publishTasks: Array<Promise<boolean>> = [];
 
-    // Notify newly added co-hosts
-    const oldCoHosts = new Set(oldBooking.coHostUserIds || []);
-    const newCoHosts = newBooking.coHostUserIds || [];
-    const addedCoHosts = newCoHosts.filter((id) => !oldCoHosts.has(id));
+    // Notify newly added co-coaches
+    const oldCoCoaches = new Set(oldBooking.coCoachUserIds || []);
+    const newCoCoaches = newBooking.coCoachUserIds || [];
+    const addedCoCoaches = newCoCoaches.filter((id) => !oldCoCoaches.has(id));
 
-    if (addedCoHosts.length > 0) {
-      const coHostUsers = await prisma.user.findMany({
-        where: { id: { in: addedCoHosts }, isActive: true },
+    if (addedCoCoaches.length > 0) {
+      const coCoachUsers = await prisma.user.findMany({
+        where: { id: { in: addedCoCoaches }, isActive: true },
         select: { id: true, email: true },
       });
 
-      for (const coHost of coHostUsers) {
-        if (coHost.email) {
+      for (const coCoach of coCoachUsers) {
+        if (coCoach.email) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_ASSIGNED",
-              recipients: coHost.email,
-              userId: coHost.id,
+              type: "COACH_BOOKING_COCOACH_ASSIGNED",
+              recipients: coCoach.email,
+              userId: coCoach.id,
               variables,
             }),
           );
@@ -390,26 +390,26 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
       publishNotificationSafely({
         type: "BOOKING_RESCHEDULED",
         recipients: booking.studentEmail,
-        userId: booking.hostUserId,
+        userId: booking.coachUserId,
         variables,
       }),
     ];
 
-    if (booking.host?.email) {
+    if (booking.coach?.email) {
       publishTasks.push(
         publishNotificationSafely({
           type: "BOOKING_RESCHEDULED",
-          recipients: booking.host.email,
-          userId: booking.host.id,
+          recipients: booking.coach.email,
+          userId: booking.coach.id,
           variables,
         }),
       );
     }
 
     // Also notify co-hosts
-    if (booking.coHostUserIds && booking.coHostUserIds.length > 0) {
+    if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
       const coHosts = await prisma.user.findMany({
-        where: { id: { in: booking.coHostUserIds }, isActive: true },
+        where: { id: { in: booking.coCoachUserIds }, isActive: true },
         select: { id: true, email: true },
       });
 

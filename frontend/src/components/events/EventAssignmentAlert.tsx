@@ -1,25 +1,25 @@
 import Alert from '@mui/material/Alert'
-import type { EventInteractionType } from '@/types'
+import type { InteractionTypeCaps } from '@/types'
 
 interface EventAssignmentAlertProps {
-  selectedInteractionType: EventInteractionType | null
-  requiredHostCount: number
+  caps: InteractionTypeCaps | null
+  requiredCoachCount: number
   selectedAssignmentStrategy: string
   bookingModeSelection?: string
 }
 
 export function EventAssignmentAlert({
-  selectedInteractionType,
-  requiredHostCount,
+  caps,
+  requiredCoachCount,
   selectedAssignmentStrategy,
   bookingModeSelection,
 }: EventAssignmentAlertProps) {
-  if (!selectedInteractionType) return null
+  if (!caps) return null
 
   return (
     <Alert severity="info" variant="standard" sx={{ mt: 2 }}>
-      <strong>Note:</strong> After saving, assign at least {requiredHostCount} coach
-      {requiredHostCount === 1 ? '' : 'es'}
+      <strong>Note:</strong> After saving, assign at least {requiredCoachCount} coach
+      {requiredCoachCount === 1 ? '' : 'es'}
       {selectedAssignmentStrategy === 'ROUND_ROBIN'
         ? ' so round-robin routing can work.'
         : ' for this event configuration.'}

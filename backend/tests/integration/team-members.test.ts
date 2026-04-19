@@ -28,22 +28,6 @@ const createOffering = async (token: string) => {
     });
 };
 
-const createInteractionType = async (token: string) => {
-  return request(app)
-    .post("/api/event-interaction-types")
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      key: uniqueValue("one-to-one"),
-      name: uniqueValue("One-to-One"),
-      description: "Interaction type for membership tests",
-      supportsRoundRobin: false,
-      supportsMultipleHosts: false,
-      minHosts: 1,
-      maxHosts: 1,
-      minParticipants: 1,
-      maxParticipants: 1,
-    });
-};
 
 beforeAll(async () => {
   await clearTables();
@@ -130,7 +114,6 @@ describe("Team member routes", () => {
       .send({ userId: context.coachId });
 
     const offering = await createOffering(context.superAdminToken);
-    const interactionType = await createInteractionType(context.superAdminToken);
     const event = await request(app)
       .post(`/api/teams/${context.teamId}/events`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
@@ -138,7 +121,7 @@ describe("Team member routes", () => {
         name: "Protected Membership Event",
         description: "Event blocking member removal",
         offeringId: offering.body.data.id,
-        interactionTypeId: interactionType.body.data.id,
+        interactionType: "ONE_TO_ONE",
         assignmentStrategy: "DIRECT",
         durationSeconds: 1800,
         locationType: "VIRTUAL",
@@ -146,10 +129,10 @@ describe("Team member routes", () => {
       });
 
     await request(app)
-      .put(`/api/events/${event.body.data.id}/hosts`)
+      .put(`/api/events/${event.body.data.id}/coaches`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
-        hosts: [{ userId: context.coachId, hostOrder: 1 }],
+        coaches: [{ userId: context.coachId, hostOrder: 1 }],
       });
 
     const res = await request(app)

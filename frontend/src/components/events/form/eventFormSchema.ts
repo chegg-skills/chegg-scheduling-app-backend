@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import type { Event } from '@/types'
 
 export const eventFormSchema = z
@@ -6,20 +7,28 @@ export const eventFormSchema = z
     name: z.string().min(1, 'Name is required'),
     description: z.string().optional(),
     offeringId: z.string().min(1, 'Event Category is required'),
-    interactionTypeId: z.string().min(1, 'Interaction type is required'),
+    interactionType: z.enum(['ONE_TO_ONE', 'ONE_TO_MANY', 'MANY_TO_ONE', 'MANY_TO_MANY'] as const),
     locationType: z.enum(['VIRTUAL', 'IN_PERSON', 'CUSTOM'] as const),
     locationValue: z.string().min(1, 'Location is required'),
     durationMinutes: z
       .number({ invalid_type_error: 'Enter a valid duration' })
       .min(1, 'Minimum 1 minute'),
-    assignmentStrategy: z.enum(['DIRECT', 'ROUND_ROBIN'] as const).optional(),
-    bookingMode: z.enum(['HOST_AVAILABILITY', 'FIXED_SLOTS'] as const).default('HOST_AVAILABILITY'),
+    assignmentStrategy: z.enum(['DIRECT', 'ROUND_ROBIN'] as const).default('DIRECT'),
+    targetCoHostCount: z.number().int().min(1).nullable().optional(),
+    bookingMode: z.enum(['COACH_AVAILABILITY', 'FIXED_SLOTS'] as const).default('COACH_AVAILABILITY'),
     allowedWeekdays: z.array(z.number()).default([]),
     minimumNoticeMinutes: z.number().min(0).default(0),
     sessionLeadershipStrategy: z
-      .enum(['SINGLE_HOST', 'FIXED_LEAD', 'ROTATING_LEAD'] as const)
-      .default('SINGLE_HOST'),
-    fixedLeadHostId: z.string().nullable().optional(),
+      .enum(['SINGLE_COACH', 'FIXED_LEAD', 'ROTATING_LEAD'] as const)
+      .default('SINGLE_COACH'),
+    fixedLeadCoachId: z.string().nullable().optional(),
+    minCoachCount: z.number().int().min(1, 'Minimum coaches must be at least 1').default(1),
+    maxCoachCount: z
+      .number()
+      .int()
+      .min(1, 'Maximum coaches must be at least 1')
+      .nullable()
+      .optional(),
     minParticipantCount: z
       .number()
       .int()
@@ -35,15 +44,69 @@ export const eventFormSchema = z
     bufferAfterMinutes: z.number().min(0).default(0),
     isActive: z.boolean().default(true),
   })
-  .superRefine((values, context) => {
+  .superRefine((values, ctx) => {
+    const caps = values.interactionType ? INTERACTION_TYPE_CAPS[values.interactionType] : null
+
+    // ── Caps-based guards ─────────────────────────────────────────────────────
+
+    if (caps && !caps.multipleCoaches) {
+      // ONE_TO_ONE / ONE_TO_MANY: each session has exactly one coach, but the pool
+      // can still have multiple coaches and round-robin rotates which one is picked.
+      // What these types cannot have is multi-coach session leadership.
+      if (values.sessionLeadershipStrategy && values.sessionLeadershipStrategy !== 'SINGLE_COACH') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['sessionLeadershipStrategy'],
+          message: 'Only single-coach leadership is supported for this interaction type.',
+        })
+      }
+    }
+
+    if (caps && !caps.multipleParticipants) {
+      if (values.maxParticipantCount != null && values.maxParticipantCount > 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['maxParticipantCount'],
+          message: 'This interaction type only supports 1 participant per session.',
+        })
+      }
+    }
+
+    // ── Cross-field rules ─────────────────────────────────────────────────────
+
+    if (values.assignmentStrategy === 'ROUND_ROBIN' && (values.minCoachCount ?? 1) < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['minCoachCount'],
+        message: 'Round-robin assignment requires at least 2 coaches (set Min Coaches ≥ 2).',
+      })
+    }
+
+    if (values.sessionLeadershipStrategy === 'FIXED_LEAD' && !values.fixedLeadCoachId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['fixedLeadCoachId'],
+        message: 'A fixed lead coach must be selected for this leadership strategy.',
+      })
+    }
+
     if (
-      values.minParticipantCount !== null &&
-      values.minParticipantCount !== undefined &&
-      values.maxParticipantCount !== null &&
-      values.maxParticipantCount !== undefined &&
+      values.maxCoachCount != null &&
+      values.maxCoachCount < (values.minCoachCount ?? 1)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['maxCoachCount'],
+        message: 'Maximum coaches cannot be less than minimum coaches.',
+      })
+    }
+
+    if (
+      values.minParticipantCount != null &&
+      values.maxParticipantCount != null &&
       values.maxParticipantCount < values.minParticipantCount
     ) {
-      context.addIssue({
+      ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Maximum participants cannot be less than minimum participants.',
         path: ['maxParticipantCount'],
@@ -59,7 +122,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       name: event.name,
       description: event.description ?? '',
       offeringId: event.offeringId,
-      interactionTypeId: event.interactionTypeId,
+      interactionType: event.interactionType,
       locationType: event.locationType,
       locationValue: event.locationValue ?? '',
       durationMinutes: Math.floor(event.durationSeconds / 60),
@@ -68,7 +131,10 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       allowedWeekdays: event.allowedWeekdays,
       minimumNoticeMinutes: event.minimumNoticeMinutes,
       sessionLeadershipStrategy: event.sessionLeadershipStrategy,
-      fixedLeadHostId: event.fixedLeadHostId,
+      fixedLeadCoachId: event.fixedLeadCoachId,
+      minCoachCount: event.minCoachCount,
+      maxCoachCount: event.maxCoachCount,
+      targetCoHostCount: event.targetCoHostCount,
       minParticipantCount: event.minParticipantCount,
       maxParticipantCount: event.maxParticipantCount,
       bufferAfterMinutes: event.bufferAfterMinutes,
@@ -80,16 +146,19 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     name: '',
     description: '',
     offeringId: '',
-    interactionTypeId: '',
+    interactionType: 'ONE_TO_ONE',
     locationType: 'VIRTUAL',
     locationValue: '',
     durationMinutes: 60,
     assignmentStrategy: 'DIRECT',
-    bookingMode: 'HOST_AVAILABILITY',
+    bookingMode: 'COACH_AVAILABILITY',
     allowedWeekdays: [],
     minimumNoticeMinutes: 0,
-    sessionLeadershipStrategy: 'SINGLE_HOST',
-    fixedLeadHostId: null,
+    sessionLeadershipStrategy: 'SINGLE_COACH',
+    fixedLeadCoachId: null,
+    minCoachCount: 1,
+    maxCoachCount: null,
+    targetCoHostCount: null,
     minParticipantCount: null,
     maxParticipantCount: null,
     bufferAfterMinutes: 15,

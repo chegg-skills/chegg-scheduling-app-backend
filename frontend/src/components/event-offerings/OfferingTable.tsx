@@ -122,6 +122,7 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
                       sx={{
                         width: 32,
                         height: 32,
+                        flexShrink: 0,
                         borderRadius: 1.5,
                         bgcolor: 'warning.light',
                         color: 'warning.dark',

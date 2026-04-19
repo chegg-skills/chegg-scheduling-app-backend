@@ -1,12 +1,11 @@
-import {
-  EventBookingMode,
-  Prisma,
-  type EventInteractionType as EventInteractionTypeModel,
-  type EventScheduleSlot,
-} from "@prisma/client";
+import { EventBookingMode, Prisma, type EventScheduleSlot } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import {
+  INTERACTION_TYPE_CAPS,
+  type InteractionType,
+} from "../../shared/constants/interactionType";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   getManagedEvent,
@@ -19,6 +18,15 @@ import { EventScheduleSlotSchema } from "./event.schema";
 
 type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
   include: {
+    assignedCoach: {
+      select: {
+        id: true;
+        firstName: true;
+        lastName: true;
+        avatarUrl: true;
+        email: true;
+      };
+    };
     _count: {
       select: {
         bookings: true;
@@ -29,26 +37,37 @@ type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
 
 const resolveEventSchedulingConfig = (
   payload: CreateEventInput | UpdateEventInput,
-  interactionType: EventInteractionTypeModel,
   existing?: SafeEvent,
 ) => {
-  return {
+  const interactionType = (payload.interactionType ??
+    existing?.interactionType) as InteractionType | null;
+
+  const caps = interactionType ? INTERACTION_TYPE_CAPS[interactionType] : null;
+
+  const config = {
     bookingMode:
       (payload.bookingMode as EventBookingMode) ??
       existing?.bookingMode ??
-      EventBookingMode.HOST_AVAILABILITY,
+      EventBookingMode.COACH_AVAILABILITY,
     allowedWeekdays: payload.allowedWeekdays ?? existing?.allowedWeekdays ?? [],
     minimumNoticeMinutes: payload.minimumNoticeMinutes ?? existing?.minimumNoticeMinutes ?? 0,
-    minParticipantCount:
-      payload.minParticipantCount ??
-      existing?.minParticipantCount ??
-      interactionType.minParticipants,
-    maxParticipantCount:
-      payload.maxParticipantCount ??
-      existing?.maxParticipantCount ??
-      interactionType.maxParticipants,
+    minParticipantCount: payload.minParticipantCount ?? existing?.minParticipantCount ?? null,
+    maxParticipantCount: payload.maxParticipantCount ?? existing?.maxParticipantCount ?? null,
     bufferAfterMinutes: payload.bufferAfterMinutes ?? existing?.bufferAfterMinutes ?? 0,
   };
+
+  // Enforce single-participant rule for OTO / MTO interaction types
+  if (caps && !caps.multipleParticipants) {
+    config.minParticipantCount = 1;
+    config.maxParticipantCount = 1;
+  }
+
+  // Enforce Fixed-Slot mode for all group session interaction types (ONE_TO_MANY / MANY_TO_MANY)
+  if (caps && caps.multipleParticipants) {
+    config.bookingMode = EventBookingMode.FIXED_SLOTS;
+  }
+
+  return config;
 };
 
 const assertBookingNoticeSatisfied = (minimumNoticeMinutes: number, bookingStartTime: Date) => {
@@ -75,29 +94,31 @@ const assertBookingWeekdayAllowed = (allowedWeekdays: number[], bookingTime: Dat
 
 const getEffectiveParticipantPolicy = (
   event: {
+    interactionType: InteractionType;
     bookingMode: EventBookingMode;
     minParticipantCount: number | null;
     maxParticipantCount: number | null;
   },
-  slotOrInteraction: {
-    minParticipants?: number;
-    maxParticipants?: number | null;
-    capacity?: number | null;
-  },
+  slot?: { capacity?: number | null } | null,
 ) => {
+  const caps = INTERACTION_TYPE_CAPS[event.interactionType];
+
+  if (!caps.multipleParticipants) {
+    return {
+      minParticipants: 1,
+      maxParticipants: 1,
+    };
+  }
+
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
     return {
-      minParticipants: event.minParticipantCount ?? slotOrInteraction.minParticipants ?? 1,
-      maxParticipants:
-        slotOrInteraction.capacity ??
-        event.maxParticipantCount ??
-        slotOrInteraction.maxParticipants ??
-        null,
+      minParticipants: event.minParticipantCount ?? 1,
+      maxParticipants: slot?.capacity ?? event.maxParticipantCount ?? null,
     };
   }
   return {
-    minParticipants: slotOrInteraction.minParticipants ?? 1,
-    maxParticipants: slotOrInteraction.maxParticipants ?? null,
+    minParticipants: event.minParticipantCount ?? 1,
+    maxParticipants: event.maxParticipantCount ?? null,
   };
 };
 
@@ -137,6 +158,15 @@ const listEventScheduleSlots = async (
   const slots = await prisma.eventScheduleSlot.findMany({
     where: { eventId },
     include: {
+      assignedCoach: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          email: true,
+        },
+      },
       _count: {
         select: {
           bookings: {
@@ -165,7 +195,19 @@ const createEventScheduleSlot = async (
       startTime: validated.startTime,
       endTime: validated.endTime,
       capacity: validated.capacity,
+      assignedCoachId: validated.assignedCoachId,
       isActive: validated.isActive,
+    },
+    include: {
+      assignedCoach: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          email: true,
+        },
+      },
     },
   });
 };
@@ -190,6 +232,17 @@ const updateEventScheduleSlot = async (
   return prisma.eventScheduleSlot.update({
     where: { id: slotId },
     data: validated,
+    include: {
+      assignedCoach: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          email: true,
+        },
+      },
+    },
   });
 };
 

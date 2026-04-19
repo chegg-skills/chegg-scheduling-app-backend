@@ -154,11 +154,11 @@ describe("GET /api/users/:userId", () => {
 
     // Verify detailed fields are present (even if empty)
     expect(res.body.data.teamMemberships).toBeDefined();
-    expect(res.body.data.hostedEvents).toBeDefined();
+    expect(res.body.data.coachedEvents).toBeDefined();
     expect(res.body.data.weeklyAvailability).toBeDefined();
     expect(res.body.data.availabilityExceptions).toBeDefined();
     expect(Array.isArray(res.body.data.teamMemberships)).toBe(true);
-    expect(Array.isArray(res.body.data.hostedEvents)).toBe(true);
+    expect(Array.isArray(res.body.data.coachedEvents)).toBe(true);
   });
 
   it("TEAM_ADMIN can read a user", async () => {

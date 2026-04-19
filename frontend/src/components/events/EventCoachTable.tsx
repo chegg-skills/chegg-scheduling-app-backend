@@ -10,16 +10,16 @@ import TableRow from '@mui/material/TableRow'
 import Avatar from '@mui/material/Avatar'
 import Typography from '@mui/material/Typography'
 import { Trash2 } from 'lucide-react'
-import type { EventHost } from '@/types'
+import type { EventCoach } from '@/types'
 import { RowActions } from '@/components/shared/table/RowActions'
 
-interface EventHostTableProps {
-  hosts: EventHost[]
-  onRemove: (hostUserId: string, name: string) => void
+interface EventCoachTableProps {
+  coaches: EventCoach[]
+  onRemove: (coachUserId: string, name: string) => void
   onViewUser?: (userId: string) => void
 }
 
-export function EventHostTable({ hosts, onRemove, onViewUser }: EventHostTableProps) {
+export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTableProps) {
   return (
     <TableContainer component={Paper} variant="outlined">
       <Table>
@@ -43,9 +43,9 @@ export function EventHostTable({ hosts, onRemove, onViewUser }: EventHostTablePr
           </TableRow>
         </TableHead>
         <TableBody>
-          {hosts.length > 0 ? (
-            hosts.map((host) => (
-              <TableRow key={host.id} hover>
+          {coaches.length > 0 ? (
+            coaches.map((coach) => (
+              <TableRow key={coach.id} hover>
                 <TableCell>
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     <Avatar
@@ -58,13 +58,13 @@ export function EventHostTable({ hosts, onRemove, onViewUser }: EventHostTablePr
                         fontWeight: 600,
                       }}
                     >
-                      {host.hostUser.firstName[0]}
-                      {host.hostUser.lastName[0]}
+                      {coach.coachUser.firstName[0]}
+                      {coach.coachUser.lastName[0]}
                     </Avatar>
                     <Box>
                       <Typography
                         variant="body2"
-                        onClick={() => onViewUser?.(host.hostUser.id)}
+                        onClick={() => onViewUser?.(coach.coachUser.id)}
                         sx={{
                           fontWeight: 600,
                           color: 'text.primary',
@@ -76,24 +76,24 @@ export function EventHostTable({ hosts, onRemove, onViewUser }: EventHostTablePr
                           },
                         }}
                       >
-                        {host.hostUser.firstName} {host.hostUser.lastName}
+                        {coach.coachUser.firstName} {coach.coachUser.lastName}
                       </Typography>
                       <Typography
                         variant="caption"
                         color="text.secondary"
                         sx={{ display: 'block' }}
                       >
-                        {host.hostUser.email}
+                        {coach.coachUser.email}
                       </Typography>
                     </Box>
                   </Stack>
                 </TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>{host.hostUser.country ?? '—'}</TableCell>
+                <TableCell sx={{ fontSize: '0.8125rem' }}>{coach.coachUser.country ?? '—'}</TableCell>
                 <TableCell sx={{ fontSize: '0.8125rem' }}>
-                  {host.hostUser.timezone.replace(/_/g, ' ')}
+                  {coach.coachUser.timezone.replace(/_/g, ' ')}
                 </TableCell>
                 <TableCell sx={{ fontSize: '0.8125rem' }}>
-                  {host.hostUser.preferredLanguage ?? '—'}
+                  {coach.coachUser.preferredLanguage ?? '—'}
                 </TableCell>
                 <TableCell align="right">
                   <RowActions
@@ -104,8 +104,8 @@ export function EventHostTable({ hosts, onRemove, onViewUser }: EventHostTablePr
                         color: 'error.main',
                         onClick: () =>
                           onRemove(
-                            host.hostUserId,
-                            `${host.hostUser.firstName} ${host.hostUser.lastName}`
+                            coach.coachUserId,
+                            `${coach.coachUser.firstName} ${coach.coachUser.lastName}`
                           ),
                       },
                     ]}

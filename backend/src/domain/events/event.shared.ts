@@ -1,26 +1,26 @@
 import {
   AssignmentStrategy,
   EventLocationType,
-  type EventInteractionType as EventInteractionTypeModel,
   type EventOffering as EventOfferingModel,
   Prisma,
   UserRole,
   SessionLeadershipStrategy,
+  InteractionType,
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import { safeUserSelect, type CallerContext } from "../../shared/utils/userUtils";
+import { INTERACTION_TYPE_CAPS } from "../../shared/constants/interactionType";
 
 export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
   offering: true,
-  interactionType: true,
-  hosts: {
+  coaches: {
     where: { isActive: true },
-    orderBy: { hostOrder: "asc" },
+    orderBy: { coachOrder: "asc" },
     include: {
-      hostUser: { select: safeUserSelect },
+      coachUser: { select: safeUserSelect },
     },
   },
 });
@@ -30,7 +30,6 @@ export type SafeEvent = Prisma.EventGetPayload<{
 }>;
 
 export type SafeEventOffering = EventOfferingModel;
-export type SafeEventInteractionType = EventInteractionTypeModel;
 
 export type ListEventsOptions = {
   page?: number;
@@ -41,7 +40,7 @@ export type CreateEventInput = {
   name: string;
   description?: string | null;
   offeringId?: string;
-  interactionTypeId?: string;
+  interactionType?: InteractionType;
   assignmentStrategy?: string;
   durationSeconds?: number;
   locationType?: string;
@@ -52,8 +51,11 @@ export type CreateEventInput = {
   minimumNoticeMinutes?: number;
   minParticipantCount?: number | null;
   maxParticipantCount?: number | null;
+  minCoachCount?: number;
+  maxCoachCount?: number | null;
+  targetCoHostCount?: number | null;
   sessionLeadershipStrategy?: string;
-  fixedLeadHostId?: string | null;
+  fixedLeadCoachId?: string | null;
   bufferAfterMinutes?: number;
 };
 
@@ -67,27 +69,14 @@ export type UpsertEventOfferingInput = {
   isActive?: boolean;
 };
 
-export type UpsertInteractionTypeInput = {
-  key?: string;
-  name?: string;
-  description?: string;
-  supportsRoundRobin?: boolean;
-  supportsMultipleHosts?: boolean;
-  minHosts?: number;
-  maxHosts?: number | null;
-  minParticipants?: number;
-  maxParticipants?: number | null;
-  supportsSimultaneousCoaches?: boolean;
-  sortOrder?: number;
-  isActive?: boolean;
-};
-
-export type ReplaceEventHostsInput = {
-  hosts: Array<{
+export type ReplaceEventCoachesInput = {
+  coaches: Array<{
     userId: string;
-    hostOrder?: number;
+    coachOrder?: number;
   }>;
 };
+
+// Input types below are already using Coach nomenclature
 
 export type UpsertEventScheduleSlotInput = {
   startTime?: string | Date;
@@ -157,19 +146,4 @@ export const getActiveOffering = async (offeringId: string) => {
   }
 
   return offering;
-};
-
-export const getActiveInteractionType = async (interactionTypeId: string) => {
-  const interactionType = await prisma.eventInteractionType.findUnique({
-    where: { id: interactionTypeId },
-  });
-
-  if (!interactionType || !interactionType.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Selected interaction type is invalid or inactive.",
-    );
-  }
-
-  return interactionType;
 };

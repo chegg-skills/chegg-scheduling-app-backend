@@ -1,23 +1,26 @@
-import { Prisma, SessionLeadershipStrategy } from "@prisma/client";
+import { AssignmentStrategy, BookingStatus, Prisma, SessionLeadershipStrategy } from "@prisma/client";
+import { INTERACTION_TYPE_CAPS, type InteractionType } from "../../shared/constants/interactionType";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { isHostAvailable } from "../availability/availability.service";
+import { isCoachAvailable } from "../availability/availability.service";
 import {
   type AssignmentContext,
   getAssignmentStrategy,
-  type HostCandidate,
+  type CoachCandidate,
+  getRoutingState,
+  updateRoutingState,
 } from "./assignment.service";
 import type { BookableEvent } from "./booking.shared";
 
-export type ResolvedBookingHostSelection = {
-  assignedHostId: string;
+export type ResolvedBookingCoachSelection = {
+  assignedCoachId: string;
   meetingJoinUrl: string | null;
-  coHostUserIds: string[];
+  coCoachUserIds: string[];
 };
 
-type ResolveBookingHostSelectionInput = {
-  preferredHostId?: string;
-  activeHosts: HostCandidate[];
+type ResolveBookingCoachSelectionInput = {
+  preferredCoachId?: string;
+  activeCoaches: CoachCandidate[];
   event: BookableEvent;
   start: Date;
   end: Date;
@@ -32,7 +35,7 @@ const buildAvailabilityOptions = ({
   matchedScheduleSlotId,
   tx,
 }: Pick<
-  ResolveBookingHostSelectionInput,
+  ResolveBookingCoachSelectionInput,
   "event" | "allowSharedSessionOverlap" | "matchedScheduleSlotId" | "tx"
 >) => ({
   ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
@@ -49,8 +52,8 @@ const buildAssignmentContext = ({
   matchedScheduleSlotId,
   tx,
 }: Omit<
-  ResolveBookingHostSelectionInput,
-  "preferredHostId" | "activeHosts"
+  ResolveBookingCoachSelectionInput,
+  "preferredCoachId" | "activeCoaches"
 >): AssignmentContext => ({
   prisma: tx,
   eventId: event.id,
@@ -62,7 +65,7 @@ const buildAssignmentContext = ({
 });
 
 const assertHostAvailability = async ({
-  hostUserId,
+  coachUserId,
   event,
   start,
   end,
@@ -71,7 +74,7 @@ const assertHostAvailability = async ({
   tx,
   unavailableMessage,
 }: {
-  hostUserId: string;
+  coachUserId: string;
   event: BookableEvent;
   start: Date;
   end: Date;
@@ -80,8 +83,8 @@ const assertHostAvailability = async ({
   tx: Prisma.TransactionClient;
   unavailableMessage: string;
 }): Promise<void> => {
-  const available = await isHostAvailable(
-    hostUserId,
+  const available = await isCoachAvailable(
+    coachUserId,
     start,
     end,
     buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }),
@@ -93,18 +96,18 @@ const assertHostAvailability = async ({
 };
 
 const resolvePreferredSingleHost = async ({
-  preferredHostId,
-  activeHosts,
+  preferredCoachId,
+  activeCoaches,
   event,
   start,
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
   tx,
-}: ResolveBookingHostSelectionInput & {
-  preferredHostId: string;
-}): Promise<ResolvedBookingHostSelection> => {
-  const preferredHost = activeHosts.find((candidate) => candidate.hostUserId === preferredHostId);
+}: ResolveBookingCoachSelectionInput & {
+  preferredCoachId: string;
+}): Promise<ResolvedBookingCoachSelection> => {
+  const preferredHost = activeCoaches.find((candidate) => candidate.coachUserId === preferredCoachId);
 
   if (!preferredHost) {
     throw new ErrorHandler(
@@ -114,7 +117,7 @@ const resolvePreferredSingleHost = async ({
   }
 
   await assertHostAvailability({
-    hostUserId: preferredHostId,
+    coachUserId: preferredCoachId,
     event,
     start,
     end,
@@ -125,27 +128,27 @@ const resolvePreferredSingleHost = async ({
   });
 
   return {
-    assignedHostId: preferredHostId,
-    meetingJoinUrl: preferredHost.hostUser.zoomIsvLink ?? null,
-    coHostUserIds: [],
+    assignedCoachId: preferredCoachId,
+    meetingJoinUrl: preferredHost.coachUser.zoomIsvLink ?? null,
+    coCoachUserIds: [],
   };
 };
 
 const resolveStrategyLead = async ({
-  activeHosts,
+  activeCoaches,
   event,
   start,
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
   tx,
-}: Omit<ResolveBookingHostSelectionInput, "preferredHostId">): Promise<{
-  assignedHostId: string;
+}: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">): Promise<{
+  assignedCoachId: string;
   meetingJoinUrl: string | null;
 }> => {
   const strategy = getAssignmentStrategy(event.assignmentStrategy);
-  const result = await strategy.resolveHost(
-    activeHosts,
+  const result = await strategy.resolveCoach(
+    activeCoaches,
     buildAssignmentContext({
       event,
       start,
@@ -156,7 +159,7 @@ const resolveStrategyLead = async ({
     }),
   );
 
-  if (!result.assignedHostId) {
+  if (!result.assignedCoachId) {
     throw new ErrorHandler(StatusCodes.CONFLICT, "No available coaches found.");
   }
 
@@ -164,34 +167,34 @@ const resolveStrategyLead = async ({
 };
 
 const resolveSingleHostSelection = async (
-  input: ResolveBookingHostSelectionInput,
-): Promise<ResolvedBookingHostSelection> => {
-  if (input.preferredHostId) {
-    return resolvePreferredSingleHost({ ...input, preferredHostId: input.preferredHostId });
+  input: ResolveBookingCoachSelectionInput,
+): Promise<ResolvedBookingCoachSelection> => {
+  if (input.preferredCoachId) {
+    return resolvePreferredSingleHost({ ...input, preferredCoachId: input.preferredCoachId });
   }
 
   const result = await resolveStrategyLead(input);
   return {
-    assignedHostId: result.assignedHostId,
+    assignedCoachId: result.assignedCoachId,
     meetingJoinUrl: result.meetingJoinUrl,
-    coHostUserIds: [],
+    coCoachUserIds: [],
   };
 };
 
 const resolveFixedLeadSelection = async (
-  input: Omit<ResolveBookingHostSelectionInput, "preferredHostId">,
-): Promise<{ assignedHostId: string; meetingJoinUrl: string | null }> => {
-  const fixedLeadHostId = input.event.fixedLeadHostId ?? undefined;
+  input: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">,
+): Promise<{ assignedCoachId: string; meetingJoinUrl: string | null }> => {
+  const fixedLeadCoachId = input.event.fixedLeadCoachId ?? undefined;
 
-  if (!fixedLeadHostId) {
+  if (!fixedLeadCoachId) {
     throw new ErrorHandler(
       StatusCodes.INTERNAL_SERVER_ERROR,
       "Event configured for FIXED_LEAD but no lead coach is set.",
     );
   }
 
-  const fixedLeadHost = input.activeHosts.find(
-    (candidate) => candidate.hostUserId === fixedLeadHostId,
+  const fixedLeadHost = input.activeCoaches.find(
+    (candidate) => candidate.coachUserId === fixedLeadCoachId,
   );
   if (!fixedLeadHost) {
     throw new ErrorHandler(
@@ -201,7 +204,7 @@ const resolveFixedLeadSelection = async (
   }
 
   await assertHostAvailability({
-    hostUserId: fixedLeadHostId,
+    coachUserId: fixedLeadCoachId,
     event: input.event,
     start: input.start,
     end: input.end,
@@ -212,59 +215,162 @@ const resolveFixedLeadSelection = async (
   });
 
   return {
-    assignedHostId: fixedLeadHostId,
-    meetingJoinUrl: fixedLeadHost.hostUser.zoomIsvLink ?? null,
+    assignedCoachId: fixedLeadCoachId,
+    meetingJoinUrl: fixedLeadHost.coachUser.zoomIsvLink ?? null,
   };
 };
 
 const resolveCollaborativeCoHosts = async ({
-  activeHosts,
-  leadHostId,
+  activeCoaches,
+  leadCoachId,
   event,
   start,
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
   tx,
-}: Omit<ResolveBookingHostSelectionInput, "preferredHostId"> & {
-  leadHostId: string;
+}: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId"> & {
+  leadCoachId: string;
 }): Promise<string[]> => {
-  const coHostCandidates = activeHosts.filter((candidate) => candidate.hostUserId !== leadHostId);
+  const candidatesCount = activeCoaches.length;
+  if (candidatesCount <= 1) return [];
 
-  const coHostAvailability = await Promise.all(
-    coHostCandidates.map(async (candidate) => {
-      const isAvailable = await isHostAvailable(
-        candidate.hostUserId,
-        start,
-        end,
-        buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }),
-      );
+  const routingState = await getRoutingState(tx, event.id);
+  const sortedCandidates = [...activeCoaches].sort((a, b) => a.coachOrder - b.coachOrder);
+  const maxOrder = Math.max(...sortedCandidates.map((c) => c.coachOrder));
 
-      return isAvailable ? candidate.hostUserId : null;
-    }),
-  );
+  // Determine where to start searching based on the nextCoachOrder cursor
+  let startIndex = sortedCandidates.findIndex((c) => c.coachOrder >= routingState.nextCoachOrder);
+  if (startIndex === -1) startIndex = 0;
 
-  return coHostAvailability.filter((hostUserId): hostUserId is string => Boolean(hostUserId));
+  const availableCoHosts: string[] = [];
+  const targetCount = event.targetCoHostCount ?? null;
+
+  const context = buildAssignmentContext({
+    event,
+    start,
+    end,
+    allowSharedSessionOverlap,
+    matchedScheduleSlotId,
+    tx,
+  });
+
+  for (let i = 0; i < candidatesCount; i++) {
+    const index = (startIndex + i) % candidatesCount;
+    const candidate = sortedCandidates[index];
+
+    // Skip the lead coach
+    if (candidate.coachUserId === leadCoachId) continue;
+
+    // Check if we already have enough co-hosts
+    if (targetCount !== null && availableCoHosts.length >= targetCount) break;
+
+    const isAvailable = await isCoachAvailable(
+      candidate.coachUserId,
+      start,
+      end,
+      buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }),
+    );
+
+    if (isAvailable) {
+      availableCoHosts.push(candidate.coachUserId);
+      // Advance the core rotation cursor every time a co-host is assigned.
+      // This ensures fair workload distribution even if the Lead is fixed.
+      await updateRoutingState(context, candidate.coachOrder, maxOrder);
+    }
+  }
+
+  // Graceful degradation logic remains unchanged...
+  const coHostPoolSize = candidatesCount - 1;
+  if (coHostPoolSize > 0 && availableCoHosts.length === 0) {
+    console.warn(
+      `[booking] No co-hosts available for event ${event.id} at ${start.toISOString()}. ` +
+      `Candidates checked: ${coHostPoolSize}. ` +
+      `Session will proceed with lead coach ${leadCoachId} only.`,
+    );
+  }
+
+  return availableCoHosts;
 };
 
-export const resolveBookingHostSelection = async (
-  input: ResolveBookingHostSelectionInput,
-): Promise<ResolvedBookingHostSelection> => {
-  if (input.event.sessionLeadershipStrategy === SessionLeadershipStrategy.SINGLE_HOST) {
+export const resolveBookingCoachSelection = async (
+  input: ResolveBookingCoachSelectionInput,
+): Promise<ResolvedBookingCoachSelection> => {
+  const { event, tx, start } = input;
+  const isDirect = event.assignmentStrategy === AssignmentStrategy.DIRECT;
+  const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType];
+
+  // 1. Group Session Consistency: If multiple participants are allowed, check if a session
+  // is already established for this slot. Reuse the existing coaching team if so.
+  if (caps.multipleParticipants) {
+    const existingSession = await tx.booking.findFirst({
+      where: {
+        eventId: event.id,
+        startTime: start,
+        status: { not: BookingStatus.CANCELLED },
+      },
+      select: {
+        coachUserId: true,
+        coCoachUserIds: true,
+        coach: { select: { zoomIsvLink: true } },
+      },
+    });
+
+    if (existingSession) {
+      return {
+        assignedCoachId: existingSession.coachUserId,
+        meetingJoinUrl: existingSession.coach.zoomIsvLink,
+        coCoachUserIds: existingSession.coCoachUserIds,
+      };
+    }
+  }
+
+  if (
+    event.sessionLeadershipStrategy === SessionLeadershipStrategy.SINGLE_COACH ||
+    (event.sessionLeadershipStrategy as string) === "SINGLE_HOST"
+  ) {
+    // 2. If we have a matched schedule slot with an assigned coach, override everything else
+    if (input.matchedScheduleSlotId) {
+      const slot = await tx.eventScheduleSlot.findUnique({
+        where: { id: input.matchedScheduleSlotId },
+        select: { assignedCoachId: true, assignedCoach: { select: { zoomIsvLink: true } } }
+      });
+
+      if (slot?.assignedCoachId) {
+        return {
+          assignedCoachId: slot.assignedCoachId,
+          meetingJoinUrl: slot.assignedCoach?.zoomIsvLink ?? null,
+          coCoachUserIds: [],
+        };
+      }
+    }
+
+    // 2. Fallback to DIRECT events logic...
+    if (isDirect && event.fixedLeadCoachId && !input.preferredCoachId) {
+      return resolveSingleHostSelection({
+        ...input,
+        preferredCoachId: event.fixedLeadCoachId,
+      });
+    }
     return resolveSingleHostSelection(input);
   }
 
-  const leadSelection =
-    input.event.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD
-      ? await resolveFixedLeadSelection(input)
-      : await resolveStrategyLead(input);
+  // Multi-coach session: determine lead coach.
+  // FIXED_LEAD leadership OR DIRECT strategy with a designated coach both pin the lead.
+  const useFixedLead =
+    event.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD ||
+    (isDirect && !!event.fixedLeadCoachId);
+
+  const leadSelection = useFixedLead
+    ? await resolveFixedLeadSelection(input)
+    : await resolveStrategyLead(input);
 
   return {
-    assignedHostId: leadSelection.assignedHostId,
+    assignedCoachId: leadSelection.assignedCoachId,
     meetingJoinUrl: leadSelection.meetingJoinUrl,
-    coHostUserIds: await resolveCollaborativeCoHosts({
+    coCoachUserIds: await resolveCollaborativeCoHosts({
       ...input,
-      leadHostId: leadSelection.assignedHostId,
+      leadCoachId: leadSelection.assignedCoachId,
     }),
   };
 };

@@ -17,19 +17,19 @@ const resolveTopCoachMetric = async (
   bookingWhere: Prisma.BookingWhereInput,
 ): Promise<{ id: string; name: string; count: number } | null> => {
   const coachGroup = await prisma.booking.groupBy({
-    by: ["hostUserId"],
+    by: ["coachUserId"],
     where: bookingWhere,
     _count: { _all: true },
-    orderBy: { _count: { hostUserId: "desc" } },
+    orderBy: { _count: { coachUserId: "desc" } },
     take: 1,
   });
 
-  if (coachGroup.length === 0 || !coachGroup[0].hostUserId) {
+  if (coachGroup.length === 0 || !coachGroup[0].coachUserId) {
     return null;
   }
 
   const topCoach = await prisma.user.findUnique({
-    where: { id: coachGroup[0].hostUserId },
+    where: { id: coachGroup[0].coachUserId },
   });
 
   if (!topCoach) {
@@ -80,7 +80,7 @@ const buildBookingWhere = (
   const dateFilter = buildDateFilter(timeframe);
 
   return {
-    ...(caller.role === UserRole.COACH ? { hostUserId: caller.id } : {}),
+    ...(caller.role === UserRole.COACH ? { coachUserId: caller.id } : {}),
     ...(dateFilter ? { startTime: dateFilter } : {}),
   };
 };
@@ -93,7 +93,7 @@ const buildUpcomingBookingWhere = (
   const dateFilter = buildDateFilter(timeframe);
 
   return {
-    ...(caller.role === UserRole.COACH ? { hostUserId: caller.id } : {}),
+    ...(caller.role === UserRole.COACH ? { coachUserId: caller.id } : {}),
     status: BookingStatus.CONFIRMED,
     startTime: {
       ...(dateFilter ?? {}),
@@ -130,11 +130,11 @@ export const getBookingStats = async (
   const [mostBookedCoach, mostBookedTeam] =
     totalBookings > 0
       ? await Promise.all([
-          resolveTopCoachMetric(bookingWhere),
-          caller.role !== UserRole.COACH
-            ? resolveTopTeamMetric(bookingWhere)
-            : Promise.resolve(null),
-        ])
+        resolveTopCoachMetric(bookingWhere),
+        caller.role !== UserRole.COACH
+          ? resolveTopTeamMetric(bookingWhere)
+          : Promise.resolve(null),
+      ])
       : [null, null];
 
   return buildStatsResponse(timeframe, {
@@ -217,7 +217,7 @@ export const getEventStats = async (
     newEvents: number;
     activeEvents: number;
     roundRobinEvents: number;
-    hostedEvents: number;
+    coachedEvents: number;
   }>
 > => {
   requireAdmin(caller);
@@ -230,20 +230,20 @@ export const getEventStats = async (
   const createdAt = buildDateFilter(timeframe);
   const scopedWhere: Prisma.EventWhereInput = teamId?.trim() ? { teamId } : {};
 
-  const [newEvents, activeEvents, roundRobinEvents, hostedEvents] = await Promise.all([
+  const [newEvents, activeEvents, roundRobinEvents, coachedEvents] = await Promise.all([
     prisma.event.count({ where: { ...scopedWhere, ...(createdAt ? { createdAt } : {}) } }),
     prisma.event.count({ where: { ...scopedWhere, isActive: true } }),
     prisma.event.count({
       where: { ...scopedWhere, assignmentStrategy: AssignmentStrategy.ROUND_ROBIN },
     }),
-    prisma.event.count({ where: { ...scopedWhere, hosts: { some: { isActive: true } } } }),
+    prisma.event.count({ where: { ...scopedWhere, coaches: { some: { isActive: true } } } }),
   ]);
 
   return buildStatsResponse(timeframe, {
     newEvents,
     activeEvents,
     roundRobinEvents,
-    hostedEvents,
+    coachedEvents,
   });
 };
 
@@ -284,27 +284,19 @@ export const getInteractionTypeStats = async (
   StatsResponse<{
     newInteractionTypes: number;
     activeInteractionTypes: number;
-    multiHostEnabled: number;
+    multiCoachEnabled: number;
     roundRobinEnabled: number;
   }>
 > => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
-  const createdAt = buildDateFilter(timeframe);
 
-  const [newInteractionTypes, activeInteractionTypes, multiHostEnabled, roundRobinEnabled] =
-    await Promise.all([
-      prisma.eventInteractionType.count({ where: createdAt ? { createdAt } : undefined }),
-      prisma.eventInteractionType.count({ where: { isActive: true } }),
-      prisma.eventInteractionType.count({ where: { supportsMultipleHosts: true, isActive: true } }),
-      prisma.eventInteractionType.count({ where: { supportsRoundRobin: true, isActive: true } }),
-    ]);
-
+  // Interaction types are now hardcoded constants — no DB query needed.
   return buildStatsResponse(timeframe, {
-    newInteractionTypes,
-    activeInteractionTypes,
-    multiHostEnabled,
-    roundRobinEnabled,
+    newInteractionTypes: 0,
+    activeInteractionTypes: 4,
+    multiCoachEnabled: 2, // MANY_TO_ONE, MANY_TO_MANY
+    roundRobinEnabled: 4, // all interaction types support ROUND_ROBIN
   });
 };
 
@@ -326,18 +318,18 @@ export const getDashboardStats = async (
 
   const activeEventsWhere: Prisma.EventWhereInput =
     caller.role === UserRole.COACH
-      ? { hosts: { some: { hostUserId: caller.id, isActive: true } }, isActive: true }
+      ? { coaches: { some: { coachUserId: caller.id, isActive: true } }, isActive: true }
       : { isActive: true };
 
   const activeTeamsPromise =
     caller.role === UserRole.COACH
       ? prisma.event
-          .findMany({
-            where: { hosts: { some: { hostUserId: caller.id, isActive: true } } },
-            select: { teamId: true },
-            distinct: ["teamId"],
-          })
-          .then((teams) => teams.length)
+        .findMany({
+          where: { coaches: { some: { coachUserId: caller.id, isActive: true } } },
+          select: { teamId: true },
+          distinct: ["teamId"],
+        })
+        .then((teams) => teams.length)
       : prisma.team.count({ where: { isActive: true } });
 
   const [scheduledBookings, upcomingBookings, activeUsers, activeEvents, activeTeams] =

@@ -4,7 +4,7 @@ export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
 export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
 export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
-export type SessionLeadershipStrategy = 'SINGLE_HOST' | 'FIXED_LEAD' | 'ROTATING_LEAD'
+export type SessionLeadershipStrategy = 'SINGLE_COACH' | 'FIXED_LEAD' | 'ROTATING_LEAD'
 export type StatsTimeframe =
   | 'today'
   | 'yesterday'
@@ -47,11 +47,11 @@ export interface UserWithDetails extends SafeUser {
     id: string
     team: Team
   }>
-  hostedEvents: Array<{
+  coachedEvents: Array<{
     id: string
     event: Event & {
       offering: EventOffering
-      interactionType: EventInteractionType
+      interactionType: InteractionType
     }
   }>
   weeklyAvailability: UserWeeklyAvailability[]
@@ -102,38 +102,32 @@ export interface EventOffering {
   updatedAt: string
 }
 
-export interface EventInteractionType {
-  id: string
-  key: string
-  name: string
-  description: string | null
-  supportsRoundRobin: boolean
-  supportsMultipleHosts: boolean
-  minHosts: number
-  maxHosts: number | null
-  supportsSimultaneousCoaches: boolean
-  minParticipants: number
-  maxParticipants: number | null
-  isActive: boolean
-  sortOrder: number
-  createdById: string
-  updatedById: string
-  createdAt: string
-  updatedAt: string
+export type InteractionType = 'ONE_TO_ONE' | 'ONE_TO_MANY' | 'MANY_TO_ONE' | 'MANY_TO_MANY'
+
+export interface InteractionTypeCaps {
+  multipleCoaches: boolean
+  multipleParticipants: boolean
+  derivesLeadershipFromAssignment: boolean
 }
 
-export interface EventHost {
+export interface InteractionTypeInfo {
+  key: InteractionType
+  label: string
+  caps: InteractionTypeCaps
+}
+
+export interface EventCoach {
   id: string
   eventId: string
-  hostUserId: string
-  hostOrder: number
+  coachUserId: string
+  coachOrder: number
   isActive: boolean
   createdAt: string
   updatedAt: string
-  hostUser: SafeUser
+  coachUser: SafeUser
 }
 
-export type EventBookingMode = 'HOST_AVAILABILITY' | 'FIXED_SLOTS'
+export type EventBookingMode = 'COACH_AVAILABILITY' | 'FIXED_SLOTS'
 
 export interface EventScheduleSlot {
   id: string
@@ -144,6 +138,8 @@ export interface EventScheduleSlot {
   isActive: boolean
   createdAt: string
   updatedAt: string
+  assignedCoachId: string | null
+  assignedCoach?: SafeUser | null
   _count?: {
     bookings: number
   }
@@ -156,7 +152,7 @@ export interface Event {
   description: string | null
   isActive: boolean
   offeringId: string
-  interactionTypeId: string
+  interactionType: InteractionType
   assignmentStrategy: AssignmentStrategy
   bookingMode: EventBookingMode
   durationSeconds: number
@@ -165,7 +161,10 @@ export interface Event {
   allowedWeekdays: number[]
   minimumNoticeMinutes: number
   sessionLeadershipStrategy: SessionLeadershipStrategy
-  fixedLeadHostId: string | null
+  fixedLeadCoachId: string | null
+  minCoachCount: number
+  maxCoachCount: number | null
+  targetCoHostCount: number | null
   minParticipantCount: number | null
   maxParticipantCount: number | null
   bufferAfterMinutes: number
@@ -175,20 +174,25 @@ export interface Event {
   createdAt: string
   updatedAt: string
   offering: EventOffering
-  interactionType: EventInteractionType
-  hosts: EventHost[]
+  coaches: EventCoach[]
   scheduleSlots?: EventScheduleSlot[]
 }
 
 export interface PublicTeamSummary extends Pick<
   Team,
   'id' | 'name' | 'description' | 'publicBookingSlug'
-> {}
+> { }
 
 export interface PublicCoachSummary extends Pick<
   SafeUser,
   'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'
-> {}
+> { }
+
+export interface PublicEventCoach {
+  coachUserId: string
+  coachOrder: number
+  coachUser: Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>
+}
 
 export interface PublicEventSummary extends Pick<
   Event,
@@ -199,8 +203,11 @@ export interface PublicEventSummary extends Pick<
   | 'locationType'
   | 'teamId'
   | 'publicBookingSlug'
+  | 'interactionType'
+  | 'assignmentStrategy'
 > {
   team: PublicTeamSummary
+  coaches: PublicEventCoach[]
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
@@ -317,15 +324,7 @@ export interface CreateInviteDto {
   role: UserRole
 }
 
-export interface UpdateUserDto {
-  firstName?: string
-  lastName?: string
-  email?: string
-  password?: string
-  phoneNumber?: string
-  country?: string
-  preferredLanguage?: string
-  avatarUrl?: string
+export interface UpdateUserDto extends Partial<Omit<RegisterDto, 'role'>> {
   role?: UserRole
   timezone?: string
   zoomIsvLink?: string
@@ -349,7 +348,7 @@ export interface UpdateTeamDto {
 export interface CreateEventDto {
   name: string
   offeringId: string
-  interactionTypeId: string
+  interactionType: InteractionType
   locationType: EventLocationType
   locationValue: string
   durationSeconds: number
@@ -357,6 +356,9 @@ export interface CreateEventDto {
   bookingMode?: EventBookingMode
   allowedWeekdays?: number[]
   minimumNoticeMinutes?: number
+  minCoachCount?: number
+  maxCoachCount?: number | null
+  targetCoHostCount?: number | null
   minParticipantCount?: number | null
   maxParticipantCount?: number | null
   bufferAfterMinutes?: number
@@ -364,10 +366,10 @@ export interface CreateEventDto {
   isActive?: boolean
 }
 
-export interface UpdateEventDto extends Partial<CreateEventDto> {}
+export interface UpdateEventDto extends Partial<CreateEventDto> { }
 
-export interface SetEventHostsDto {
-  hosts: Array<{ userId: string; hostOrder?: number }>
+export interface SetEventCoachesDto {
+  coaches: Array<{ userId: string; coachOrder?: number }>
 }
 
 export interface CreateEventOfferingDto {
@@ -378,23 +380,9 @@ export interface CreateEventOfferingDto {
   isActive?: boolean
 }
 
-export interface UpdateEventOfferingDto extends Partial<CreateEventOfferingDto> {}
+export interface UpdateEventOfferingDto extends Partial<CreateEventOfferingDto> { }
 
-export interface CreateInteractionTypeDto {
-  key: string
-  name: string
-  description?: string
-  supportsRoundRobin?: boolean
-  supportsMultipleHosts?: boolean
-  minHosts?: number
-  maxHosts?: number | null
-  minParticipants?: number
-  maxParticipants?: number | null
-  sortOrder?: number
-  isActive?: boolean
-}
-
-export interface UpdateInteractionTypeDto extends Partial<CreateInteractionTypeDto> {}
+// Deleted CreateInteractionTypeDto and UpdateInteractionTypeDto manually elsewhere
 
 export interface UserWeeklyAvailability {
   id: string
@@ -449,15 +437,15 @@ export interface Booking {
   sessionObjectives: string | null
   teamId: string
   eventId: string
-  hostUserId: string
-  coHostUserIds: string[]
+  coachUserId: string
+  coCoachUserIds: string[]
   meetingJoinUrl: string | null
   rescheduleToken: string | null
   createdAt: string
   updatedAt: string
   team?: Team
   event?: Event
-  host?: SafeUser
+  coach?: SafeUser
   scheduleSlot?: EventScheduleSlot
 }
 
@@ -473,13 +461,13 @@ export interface CreateBookingDto {
   triedSolutions?: string
   usedResources?: string
   sessionObjectives?: string
-  preferredHostId?: string
+  preferredCoachId?: string
 }
 
 export interface ListBookingsFilters {
   teamId?: string
   eventId?: string
-  hostUserId?: string
+  coachUserId?: string
   status?: BookingStatus
   search?: string
   startDate?: string | Date
@@ -511,7 +499,7 @@ export interface StudentSummary extends Student {
     status: BookingStatus
     team: { id: string; name: string }
     event: { id: string; name: string; publicBookingSlug: string }
-    host: {
+    coach: {
       id: string
       firstName: string
       lastName: string

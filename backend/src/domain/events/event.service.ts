@@ -14,23 +14,19 @@ import {
   type UpdateEventInput,
 } from "./event.shared";
 import {
-  createInteractionType,
   createEventOffering,
-  deleteInteractionType,
-  getInteractionTypeUsage,
   listEventOfferings,
   listInteractionTypes,
   updateEventOffering,
   deleteEventOffering,
   getEventOfferingUsage,
-  updateInteractionType,
 } from "./eventCatalog.service";
 import {
-  listEventHosts,
-  removeEventHost,
-  replaceEventHosts,
+  listEventCoaches,
+  removeEventCoach,
+  replaceEventCoaches,
   syncRoutingState,
-} from "./eventHost.service";
+} from "./eventCoach.service";
 import {
   assertBookingNoticeSatisfied,
   assertBookingWeekdayAllowed,
@@ -78,11 +74,17 @@ const listEventsByQuery = async (
   };
 };
 
-const assertRoundRobinHostCount = (event: SafeEvent): void => {
-  if (event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && event.hosts.length < 2) {
+const assertRoundRobinCoachCount = (event: SafeEvent): void => {
+  // 0 coaches is allowed during initial event setup (consistent with validateEventConfiguration's
+  // `coachCount > 0` guard). Only the 1-coach intermediate state is invalid for ROUND_ROBIN.
+  if (
+    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+    event.coaches.length > 0 &&
+    event.coaches.length < 2
+  ) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
-      "ROUND_ROBIN events require at least two hosts.",
+      "ROUND_ROBIN events require at least two coaches.",
     );
   }
 };
@@ -154,10 +156,15 @@ const updateEvent = async (
     throw error;
   }
 
-  assertRoundRobinHostCount(updatedEvent);
+  assertRoundRobinCoachCount(updatedEvent);
 
   await prisma.$transaction(async (tx) => {
-    await syncRoutingState(tx, eventId, updatedEvent.assignmentStrategy, updatedEvent.hosts.length);
+    await syncRoutingState(
+      tx,
+      eventId,
+      updatedEvent.assignmentStrategy,
+      updatedEvent.coaches.length,
+    );
   });
 
   return prisma.event.findUniqueOrThrow({
@@ -169,7 +176,6 @@ const updateEvent = async (
 const deleteEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
   const event = await getManagedEvent(eventId, caller);
 
-  // Check for bookings
   const bookingCount = await prisma.booking.count({
     where: { eventId, status: { not: "CANCELLED" } },
   });
@@ -181,10 +187,25 @@ const deleteEvent = async (eventId: string, caller: CallerContext): Promise<Safe
     );
   }
 
-  return prisma.event.delete({
-    where: { id: eventId },
-    include: eventInclude,
+  // Manually cleanup relations that don't have cascade delete in the schema
+  await prisma.$transaction(async (tx) => {
+    // 1. Delete all bookings (including cancelled ones)
+    await tx.booking.deleteMany({
+      where: { eventId },
+    });
+
+    // 2. Delete all schedule slots
+    await tx.eventScheduleSlot.deleteMany({
+      where: { eventId },
+    });
+
+    // 3. Delete the event (this will cascade to EventCoach and EventRoutingState)
+    await tx.event.delete({
+      where: { id: eventId },
+    });
   });
+
+  return event;
 };
 
 const duplicateEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
@@ -199,20 +220,25 @@ const duplicateEvent = async (eventId: string, caller: CallerContext): Promise<S
       include: eventInclude,
     });
 
-    // Duplicate hosts
-    if (sourceEvent.hosts.length > 0) {
-      await tx.eventHost.createMany({
-        data: sourceEvent.hosts.map((host) => ({
+    // Duplicate coaches
+    if (sourceEvent.coaches.length > 0) {
+      await tx.eventCoach.createMany({
+        data: sourceEvent.coaches.map((coach) => ({
           eventId: newEvent.id,
-          hostUserId: host.hostUserId,
-          hostOrder: host.hostOrder,
-          isActive: host.isActive,
+          coachUserId: coach.coachUserId,
+          coachOrder: coach.coachOrder,
+          isActive: coach.isActive,
         })),
       });
     }
 
     // Initialize routing state if needed
-    await syncRoutingState(tx, newEvent.id, newEvent.assignmentStrategy, sourceEvent.hosts.length);
+    await syncRoutingState(
+      tx,
+      newEvent.id,
+      newEvent.assignmentStrategy,
+      sourceEvent.coaches.length,
+    );
 
     return tx.event.findUniqueOrThrow({
       where: { id: newEvent.id },
@@ -242,20 +268,16 @@ export {
   updateEventOffering,
   deleteEventOffering,
   getEventOfferingUsage,
-  createInteractionType,
   listInteractionTypes,
-  updateInteractionType,
-  deleteInteractionType,
-  getInteractionTypeUsage,
   createEvent,
   duplicateEvent,
   deleteEvent,
-  listEventHosts,
+  listEventCoaches,
   listTeamEvents,
   listAllEvents,
   readEvent,
-  removeEventHost,
-  replaceEventHosts,
+  removeEventCoach,
+  replaceEventCoaches,
   updateEvent,
   listEventScheduleSlots,
   createEventScheduleSlot,
