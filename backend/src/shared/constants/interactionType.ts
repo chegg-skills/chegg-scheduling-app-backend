@@ -17,6 +17,3 @@ export const INTERACTION_TYPE_LABELS: Record<InteractionType, string> = {
 
 export const INTERACTION_TYPE_KEYS = Object.keys(INTERACTION_TYPE_CAPS) as InteractionType[];
 
-
-
-

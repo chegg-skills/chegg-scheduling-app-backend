@@ -109,7 +109,7 @@ export const bookableEventInclude = Prisma.validator<Prisma.EventInclude>()({
   },
 });
 
-export type BookableEvent = any;
+export type BookableEvent = Prisma.EventGetPayload<{ include: typeof bookableEventInclude }>;
 
 export type BookingSchedulingContext = Pick<
   BookableEvent,

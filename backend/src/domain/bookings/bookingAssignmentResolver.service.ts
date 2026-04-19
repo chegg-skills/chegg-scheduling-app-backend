@@ -21,7 +21,7 @@ export type ResolvedBookingCoachSelection = {
 type ResolveBookingCoachSelectionInput = {
   preferredCoachId?: string;
   activeCoaches: CoachCandidate[];
-  event: any; // Using any for event to avoid type issues during migration
+  event: BookableEvent;
   start: Date;
   end: Date;
   allowSharedSessionOverlap: boolean;
@@ -244,7 +244,7 @@ const resolveCollaborativeCoHosts = async ({
   if (startIndex === -1) startIndex = 0;
 
   const availableCoHosts: string[] = [];
-  const targetCount = (event as any).targetCoHostCount ?? null;
+  const targetCount = event.targetCoHostCount ?? null;
 
   const context = buildAssignmentContext({
     event,
@@ -284,7 +284,7 @@ const resolveCollaborativeCoHosts = async ({
   const coHostPoolSize = candidatesCount - 1;
   if (coHostPoolSize > 0 && availableCoHosts.length === 0) {
     console.warn(
-      `[booking] No co-hosts available for event ${(event as any).id} at ${start.toISOString()}. ` +
+      `[booking] No co-hosts available for event ${event.id} at ${start.toISOString()}. ` +
       `Candidates checked: ${coHostPoolSize}. ` +
       `Session will proceed with lead coach ${leadCoachId} only.`,
     );
@@ -325,7 +325,10 @@ export const resolveBookingCoachSelection = async (
     }
   }
 
-  if (event.sessionLeadershipStrategy === SessionLeadershipStrategy.SINGLE_COACH || event.sessionLeadershipStrategy === "SINGLE_HOST") {
+  if (
+    event.sessionLeadershipStrategy === SessionLeadershipStrategy.SINGLE_COACH ||
+    (event.sessionLeadershipStrategy as string) === "SINGLE_HOST"
+  ) {
     // 2. If we have a matched schedule slot with an assigned coach, override everything else
     if (input.matchedScheduleSlotId) {
       const slot = await tx.eventScheduleSlot.findUnique({

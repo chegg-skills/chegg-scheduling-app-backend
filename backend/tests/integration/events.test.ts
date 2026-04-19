@@ -269,8 +269,26 @@ describe("Interaction type routes", () => {
       caps: {
         multipleCoaches: expect.any(Boolean),
         multipleParticipants: expect.any(Boolean),
+        derivesLeadershipFromAssignment: expect.any(Boolean),
       },
     });
+  });
+
+  it("returns correct derivesLeadershipFromAssignment values for all four interaction types", async () => {
+    const res = await request(app)
+      .get("/api/event-interaction-types")
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(200);
+
+    const types: Array<{ key: string; caps: { derivesLeadershipFromAssignment: boolean } }> =
+      res.body.data.interactionTypes;
+    const byKey = Object.fromEntries(types.map((t) => [t.key, t.caps]));
+
+    expect(byKey["ONE_TO_ONE"].derivesLeadershipFromAssignment).toBe(false);
+    expect(byKey["ONE_TO_MANY"].derivesLeadershipFromAssignment).toBe(false);
+    expect(byKey["MANY_TO_ONE"].derivesLeadershipFromAssignment).toBe(true);
+    expect(byKey["MANY_TO_MANY"].derivesLeadershipFromAssignment).toBe(true);
   });
 });
 
@@ -832,5 +850,482 @@ describe("Event coach routes", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/ROUND_ROBIN assignment requires at least 2 coaches/i);
+  });
+});
+
+// ─── Leadership Auto-Derivation ───────────────────────────────────────────────
+
+describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", () => {
+  it("MANY_TO_ONE + DIRECT derives sessionLeadershipStrategy to FIXED_LEAD (no explicit leadership in payload)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTO Direct — auto FIXED_LEAD",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+      // sessionLeadershipStrategy intentionally absent — must be auto-derived
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+    expect(res.body.data.fixedLeadCoachId).toBe(context.coachOneId);
+  });
+
+  it("MANY_TO_ONE + ROUND_ROBIN derives sessionLeadershipStrategy to ROTATING_LEAD (no explicit leadership in payload)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTO Round Robin — auto ROTATING_LEAD",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "ROUND_ROBIN",
+      minCoachCount: 2,
+      // sessionLeadershipStrategy intentionally absent — must be auto-derived
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+    expect(res.body.data.fixedLeadCoachId).toBeNull();
+  });
+
+  it("MANY_TO_MANY + DIRECT derives sessionLeadershipStrategy to FIXED_LEAD", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTM Direct — auto FIXED_LEAD",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_MANY",
+      assignmentStrategy: "DIRECT",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
+      minParticipantCount: 1,
+      maxParticipantCount: 10,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+    expect(res.body.data.fixedLeadCoachId).toBe(context.coachOneId);
+    expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
+  });
+
+  it("MANY_TO_MANY + ROUND_ROBIN derives sessionLeadershipStrategy to ROTATING_LEAD", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTM Round Robin — auto ROTATING_LEAD",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+      minCoachCount: 2,
+      minParticipantCount: 1,
+      maxParticipantCount: 10,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+    expect(res.body.data.fixedLeadCoachId).toBeNull();
+    expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
+  });
+
+  it("overrides user-provided sessionLeadershipStrategy for derivesLeadershipFromAssignment types — reform always wins", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    // User explicitly provides ROTATING_LEAD for a DIRECT event.
+    // The reform (step 4) must override it to FIXED_LEAD because assignmentStrategy = DIRECT.
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTO reform override test",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+      sessionLeadershipStrategy: "ROTATING_LEAD", // user forces ROTATING_LEAD
+    });
+
+    expect(res.status).toBe(201);
+    // Reform overrides user input: DIRECT → FIXED_LEAD
+    expect(res.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+  });
+
+  it("rejects MANY_TO_ONE + DIRECT when fixedLeadCoachId is missing (reform derives FIXED_LEAD which requires it)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTO Direct — no lead coach",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      // fixedLeadCoachId intentionally absent: reform derives FIXED_LEAD,
+      // then validateEventConfiguration rejects because fixedLeadCoachId is null.
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/FIXED_LEAD events require a fixedLeadCoachId/i);
+  });
+
+  it("re-derives sessionLeadershipStrategy when assignmentStrategy is updated on a MANY_TO_ONE event", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    // 1. Create with DIRECT → FIXED_LEAD
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTO strategy update",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+    const eventId = created.body.data.id as string;
+
+    // 2. Ensure two coaches are assigned so ROUND_ROBIN validation passes
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        coaches: [
+          { userId: context.coachOneId, coachOrder: 1 },
+          { userId: context.coachTwoId, coachOrder: 2 },
+        ],
+      });
+
+    // 3. Update to ROUND_ROBIN → reform must re-derive ROTATING_LEAD
+    const updated = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ assignmentStrategy: "ROUND_ROBIN", minCoachCount: 2 });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+  });
+
+  it("re-derives sessionLeadershipStrategy when assignmentStrategy is updated on a MANY_TO_MANY event", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    // 1. Create with ROUND_ROBIN → ROTATING_LEAD
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTM strategy update",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+      minCoachCount: 2,
+      minParticipantCount: 1,
+      maxParticipantCount: 5,
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+    const eventId = created.body.data.id as string;
+
+    // 2. Update to DIRECT → reform must re-derive FIXED_LEAD
+    const updated = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ assignmentStrategy: "DIRECT", fixedLeadCoachId: context.coachOneId });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+    expect(updated.body.data.fixedLeadCoachId).toBe(context.coachOneId);
+  });
+});
+
+// ─── targetCoHostCount Validation ─────────────────────────────────────────────
+
+describe("targetCoHostCount validation", () => {
+  it("rejects targetCoHostCount: 0 for multi-coach interaction types", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Invalid cohost count",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+      targetCoHostCount: 0,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/targetCoHostCount must be at least 1/i);
+  });
+
+  it("accepts targetCoHostCount: 1 for multi-coach interaction types", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Valid cohost count 1",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+      targetCoHostCount: 1,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.targetCoHostCount).toBe(1);
+  });
+
+  it("accepts targetCoHostCount: null (all available co-hosts join the session)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Null cohost count",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+      targetCoHostCount: null,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.targetCoHostCount).toBeNull();
+  });
+
+  it("accepts updating targetCoHostCount to a valid positive integer", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Cohost count update",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ targetCoHostCount: 3 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.targetCoHostCount).toBe(3);
+  });
+
+  it("rejects updating targetCoHostCount to 0 on a multi-coach event", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Cohost count zero update",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+      targetCoHostCount: 2,
+    });
+    const eventId = created.body.data.id as string;
+
+    // The partial UpdateEventSchema only runs caps-based superRefine when interactionType
+    // is included in the payload. Include it so the validator has caps context.
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ interactionType: "MANY_TO_ONE", targetCoHostCount: 0 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/targetCoHostCount must be at least 1/i);
+  });
+});
+
+// ─── MANY_TO_MANY Event Creation ──────────────────────────────────────────────
+
+describe("MANY_TO_MANY event creation", () => {
+  it("creates a MANY_TO_MANY event with correct participant fields and auto-derived leadership", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTM Workshop",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+      minCoachCount: 2,
+      minParticipantCount: 2,
+      maxParticipantCount: 20,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.interactionType).toBe("MANY_TO_MANY");
+    expect(res.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD"); // auto-derived from ROUND_ROBIN
+    expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
+    expect(res.body.data.minParticipantCount).toBe(2);
+    expect(res.body.data.maxParticipantCount).toBe(20);
+  });
+
+  it("silently overrides bookingMode to FIXED_SLOTS for MANY_TO_MANY even if COACH_AVAILABILITY is sent", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    // The schema does not block MANY_TO_MANY + COACH_AVAILABILITY (only ONE_TO_MANY has that check).
+    // The service's resolveEventSchedulingConfig hard-locks all multipleParticipants types to FIXED_SLOTS.
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTM Auto Fixed Slots",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "COACH_AVAILABILITY", // service will override this
+      minCoachCount: 2,
+      minParticipantCount: 1,
+      maxParticipantCount: 10,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
+  });
+
+  it("creates a MANY_TO_MANY event with DIRECT strategy and targetCoHostCount", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTM Direct with cohost cap",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_MANY",
+      assignmentStrategy: "DIRECT",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
+      targetCoHostCount: 2,
+      minParticipantCount: 5,
+      maxParticipantCount: 30,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD"); // auto-derived from DIRECT
+    expect(res.body.data.fixedLeadCoachId).toBe(context.coachOneId);
+    expect(res.body.data.targetCoHostCount).toBe(2);
+    expect(res.body.data.minParticipantCount).toBe(5);
+    expect(res.body.data.maxParticipantCount).toBe(30);
+  });
+});
+
+// ─── Event Schema Validation Rejections ──────────────────────────────────────
+
+describe("Event schema validation rejections", () => {
+  it("rejects ONE_TO_MANY with ROUND_ROBIN assignment (single-coach group sessions only allow DIRECT)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Single-coach group sessions only support DIRECT/i);
+  });
+
+  it("rejects ONE_TO_MANY with COACH_AVAILABILITY booking mode (must use FIXED_SLOTS)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "DIRECT",
+      bookingMode: "COACH_AVAILABILITY",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/FIXED_SLOTS/i);
+  });
+
+  it("rejects ONE_TO_ONE with maxParticipantCount greater than 1", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "ONE_TO_ONE",
+      maxParticipantCount: 5,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/only supports 1 participant/i);
+  });
+
+  it("rejects an event where maxCoachCount is less than minCoachCount", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "ROUND_ROBIN",
+      minCoachCount: 3,
+      maxCoachCount: 2,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/maxCoachCount cannot be less than minCoachCount/i);
+  });
+
+  it("rejects ROUND_ROBIN assignment when minCoachCount is less than 2", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "ROUND_ROBIN",
+      minCoachCount: 1,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/ROUND_ROBIN assignment requires at least 2 coaches/i);
+  });
+
+  it("rejects FIXED_LEAD sessionLeadershipStrategy without a fixedLeadCoachId (schema-level)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    // For multi-coach types, the schema checks: FIXED_LEAD + !fixedLeadCoachId → error.
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      sessionLeadershipStrategy: "FIXED_LEAD",
+      // fixedLeadCoachId intentionally absent
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/FIXED_LEAD strategy requires a fixed lead coach/i);
+  });
+
+  it("rejects non-SINGLE_COACH leadership strategy for single-coach interaction types (ONE_TO_ONE)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "ONE_TO_ONE",
+      sessionLeadershipStrategy: "ROTATING_LEAD",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Only SINGLE_COACH leadership is supported/i);
+  });
+
+  it("rejects non-SINGLE_COACH leadership strategy for ONE_TO_MANY", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "DIRECT",
+      bookingMode: "FIXED_SLOTS",
+      sessionLeadershipStrategy: "FIXED_LEAD",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Only SINGLE_COACH leadership is supported/i);
+  });
+
+  it("rejects targetCoHostCount with a negative value (caught by base nonnegative() schema rule)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    // -1 is caught by z.coerce.number().int().nonnegative() before the superRefine runs.
+    // The Zod error message for nonnegative() violation is "Too small: expected number to be >=0".
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+      targetCoHostCount: -1,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Too small/i);
   });
 });
