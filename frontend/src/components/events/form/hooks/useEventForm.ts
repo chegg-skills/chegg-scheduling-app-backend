@@ -99,7 +99,7 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
         setValue('sessionLeadershipStrategy', targetLeadership, { shouldDirty: true })
       }
     }
-  }, [caps, getValues, setValue])
+  }, [caps, getValues, setValue, watch('assignmentStrategy')])
 
   function onSubmit(values: EventFormValues) {
     const apiPayload = {
