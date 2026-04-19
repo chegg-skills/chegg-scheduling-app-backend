@@ -47,6 +47,7 @@ export function EventTableRow({
             sx={{
               width: 36,
               height: 36,
+              flexShrink: 0,
               borderRadius: 2,
               bgcolor: alpha(theme.palette.primary.main, 0.08),
               color: 'primary.main',

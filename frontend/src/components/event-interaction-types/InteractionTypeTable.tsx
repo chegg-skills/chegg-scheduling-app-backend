@@ -92,6 +92,7 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                       sx={{
                         width: 32,
                         height: 32,
+                        flexShrink: 0,
                         borderRadius: 1.5,
                         bgcolor: 'secondary.light',
                         color: 'secondary.dark',

@@ -34,6 +34,7 @@ export function TeamTableRow({
             sx={{
               width: 36,
               height: 36,
+              flexShrink: 0,
               borderRadius: 2,
               bgcolor: 'secondary.light',
               color: 'secondary.dark',

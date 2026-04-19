@@ -404,6 +404,112 @@ describe("Event CRUD routes", () => {
     expect(updateRes.body.data.locationValue).toBe("https://meet.example.com/updated");
   });
 
+  it("updates general details on a ONE_TO_MANY event without breaking fixed-slot enforcement", async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: uniqueValue("otm-general-update"),
+    });
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "OTM General Details Event",
+      offeringId: offering.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "DIRECT",
+      bookingMode: "FIXED_SLOTS",
+      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
+    });
+    expect(created.status).toBe(201);
+    const eventId = created.body.data.id;
+
+    const updateRes = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        name: "OTM Updated Name",
+        description: "OTM updated description",
+        durationSeconds: 3600,
+        locationValue: "https://meet.example.com/otm-updated",
+      });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.data.name).toBe("OTM Updated Name");
+    expect(updateRes.body.data.description).toBe("OTM updated description");
+    expect(updateRes.body.data.durationSeconds).toBe(3600);
+    expect(updateRes.body.data.locationValue).toBe("https://meet.example.com/otm-updated");
+    // Group-type enforcement must survive a general-fields-only patch
+    expect(updateRes.body.data.bookingMode).toBe("FIXED_SLOTS");
+    expect(updateRes.body.data.sessionLeadershipStrategy).toBe("SINGLE_COACH");
+  });
+
+  it("updates general details on a MANY_TO_ONE (ROUND_ROBIN) event without disrupting auto-derived leadership", async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: uniqueValue("mto-general-update"),
+    });
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTO General Details Event",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "ROUND_ROBIN",
+      minCoachCount: 2,
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+    const eventId = created.body.data.id;
+
+    const updateRes = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        name: "MTO Updated Name",
+        description: "MTO updated description",
+        durationSeconds: 2700,
+      });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.data.name).toBe("MTO Updated Name");
+    expect(updateRes.body.data.description).toBe("MTO updated description");
+    expect(updateRes.body.data.durationSeconds).toBe(2700);
+    // Leadership must remain auto-derived; a name-only patch must not reset it
+    expect(updateRes.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+    expect(updateRes.body.data.assignmentStrategy).toBe("ROUND_ROBIN");
+  });
+
+  it("updates general details on a MANY_TO_MANY (ROUND_ROBIN) event without disrupting auto-derived leadership", async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: uniqueValue("mtm-general-update"),
+    });
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTM General Details Event",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      minCoachCount: 2,
+      bookingMode: "FIXED_SLOTS",
+      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
+      minParticipantCount: 1,
+      maxParticipantCount: 10,
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+    expect(created.body.data.bookingMode).toBe("FIXED_SLOTS");
+    const eventId = created.body.data.id;
+
+    const updateRes = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        name: "MTM Updated Name",
+        description: "MTM updated description",
+        locationValue: "https://meet.example.com/mtm-updated",
+      });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.data.name).toBe("MTM Updated Name");
+    expect(updateRes.body.data.description).toBe("MTM updated description");
+    expect(updateRes.body.data.locationValue).toBe("https://meet.example.com/mtm-updated");
+    // Both group-type enforcement and auto-derived leadership must survive
+    expect(updateRes.body.data.bookingMode).toBe("FIXED_SLOTS");
+    expect(updateRes.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
+  });
+
   it("hard deletes an event", async () => {
     const offering = await createOffering(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
@@ -534,6 +640,39 @@ describe("Event CRUD routes", () => {
     expect(res.body.data.publicBookingSlug).not.toBe(originalEvent.body.data.publicBookingSlug);
     expect(res.body.data.coaches).toHaveLength(1);
     expect(res.body.data.coaches[0].coachUserId).toBe(context.coachOneId);
+  });
+
+  it("duplicates a MANY_TO_ONE event and ensures leadership strategy is correctly derived", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    // Create a MANY_TO_ONE event via DIRECT strategy
+    // In our system, MANY_TO_ONE + DIRECT => FIXED_LEAD
+    const originalEvent = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "MTO Direct Event",
+      offeringId: offering.body.data.id,
+      interactionType: "MANY_TO_ONE",
+      assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
+    });
+
+    expect(originalEvent.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+    const eventId = originalEvent.body.data.id;
+
+    // Duplicate the event
+    const res = await request(app)
+      .post(`/api/events/${eventId}/duplicate`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.name).toBe("Copy of MTO Direct Event");
+
+    // Verify common fields
+    expect(res.body.data.interactionType).toBe("MANY_TO_ONE");
+    expect(res.body.data.assignmentStrategy).toBe("DIRECT");
+
+    // Verify derived leadership (Direct + MTO => FIXED_LEAD)
+    expect(res.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD");
+    expect(res.body.data.fixedLeadCoachId).toBe(context.coachOneId);
   });
 
   it("creates an event with FIXED_LEAD and automatically assigns the coach", async () => {
@@ -849,7 +988,9 @@ describe("Event coach routes", () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/ROUND_ROBIN assignment requires at least 2 coaches/i);
+    // Service-level check fires (schema minCoachCount check doesn't fire when
+    // minCoachCount is omitted from the PATCH body, as there is no default).
+    expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two coaches/i);
   });
 });
 

@@ -59,6 +59,7 @@ export function TeamMemberRow({
               color: 'primary.dark',
               width: 36,
               height: 36,
+              flexShrink: 0,
               fontSize: 12,
               fontWeight: 700,
             }}

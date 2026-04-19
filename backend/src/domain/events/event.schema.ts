@@ -21,27 +21,49 @@ const EventOfferingBase = z.object({
   isActive: z.boolean().default(true),
 });
 
-const EventBaseObject = z.object({
+/**
+ * Core event field shapes without defaults. Used directly for the update schema
+ * so that absent fields parse as `undefined` rather than a Zod-supplied default.
+ * This lets `resolveUpdateEventContext` distinguish "user did not send this field"
+ * (→ fall back to existing DB value) from "user explicitly sent a new value".
+ */
+const EventBaseObjectCore = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   offeringId: z.string().uuid("Invalid offering ID"),
   interactionType: z.enum(INTERACTION_TYPE_KEYS),
+  assignmentStrategy: z.nativeEnum(AssignmentStrategy),
+  durationSeconds: z.coerce.number().int().positive(),
+  locationType: z.nativeEnum(EventLocationType),
+  locationValue: z.string(),
+  isActive: z.boolean(),
+  bookingMode: z.nativeEnum(EventBookingMode),
+  allowedWeekdays: z.array(z.number().int().min(0).max(6)).optional(),
+  minimumNoticeMinutes: z.coerce.number().int().nonnegative(),
+  bufferAfterMinutes: z.coerce.number().int().nonnegative(),
+  minParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
+  maxParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
+  minCoachCount: z.coerce.number().int().positive(),
+  maxCoachCount: z.coerce.number().int().positive().optional().nullable(),
+  sessionLeadershipStrategy: z.string().optional(),
+  fixedLeadCoachId: z.string().uuid().optional().nullable(),
+  targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
+});
+
+/**
+ * Create-time schema: same fields but with sensible defaults so callers don't
+ * have to repeat boilerplate values on every POST.
+ */
+const EventBaseObject = EventBaseObjectCore.extend({
   assignmentStrategy: z.nativeEnum(AssignmentStrategy).default(AssignmentStrategy.DIRECT),
   durationSeconds: z.coerce.number().int().positive().default(1800),
   locationType: z.nativeEnum(EventLocationType).default(EventLocationType.VIRTUAL),
   locationValue: z.string().default("Zoom"),
   isActive: z.boolean().default(true),
   bookingMode: z.nativeEnum(EventBookingMode).default(EventBookingMode.COACH_AVAILABILITY),
-  allowedWeekdays: z.array(z.number().int().min(0).max(6)).optional(),
   minimumNoticeMinutes: z.coerce.number().int().nonnegative().default(0),
   bufferAfterMinutes: z.coerce.number().int().nonnegative().default(0),
-  minParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
-  maxParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
   minCoachCount: z.coerce.number().int().positive().default(1),
-  maxCoachCount: z.coerce.number().int().positive().optional().nullable(),
-  sessionLeadershipStrategy: z.string().optional(),
-  fixedLeadCoachId: z.string().uuid().optional().nullable(),
-  targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
 });
 
 /**
@@ -163,7 +185,10 @@ export const UpdateEventSchema = {
   params: z.object({
     eventId: z.string().uuid("Invalid event ID"),
   }),
-  body: EventBaseObject.partial().superRefine(refineEventConstraints).passthrough(),
+  // EventBaseObjectCore has no defaults, so absent fields stay undefined rather than
+  // being silently replaced by a Zod default. This lets resolveUpdateEventContext
+  // correctly fall back to the existing DB value for any field the caller omits.
+  body: EventBaseObjectCore.partial().superRefine(refineEventConstraints).passthrough(),
 };
 
 export const ReplaceEventCoachesSchema = {

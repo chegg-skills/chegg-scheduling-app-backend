@@ -75,7 +75,13 @@ const listEventsByQuery = async (
 };
 
 const assertRoundRobinCoachCount = (event: SafeEvent): void => {
-  if (event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && event.coaches.length < 2) {
+  // 0 coaches is allowed during initial event setup (consistent with validateEventConfiguration's
+  // `coachCount > 0` guard). Only the 1-coach intermediate state is invalid for ROUND_ROBIN.
+  if (
+    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+    event.coaches.length > 0 &&
+    event.coaches.length < 2
+  ) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       "ROUND_ROBIN events require at least two coaches.",

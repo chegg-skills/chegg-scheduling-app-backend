@@ -269,29 +269,38 @@ export const buildDuplicateEventData = ({
 }: {
   sourceEvent: SafeEvent;
   callerId: string;
-}): Prisma.EventCreateInput => ({
-  name: `Copy of ${sourceEvent.name}`,
-  publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
-  description: sourceEvent.description ?? undefined,
-  offering: { connect: { id: sourceEvent.offeringId } },
-  interactionType: sourceEvent.interactionType,
-  assignmentStrategy: sourceEvent.assignmentStrategy,
-  durationSeconds: sourceEvent.durationSeconds,
-  locationType: sourceEvent.locationType,
-  locationValue: sourceEvent.locationValue,
-  isActive: false,
-  team: { connect: { id: sourceEvent.teamId } },
-  createdBy: { connect: { id: callerId } },
-  updatedBy: { connect: { id: callerId } },
-  bookingMode: sourceEvent.bookingMode,
-  allowedWeekdays: sourceEvent.allowedWeekdays,
-  minimumNoticeMinutes: sourceEvent.minimumNoticeMinutes,
-  minParticipantCount: sourceEvent.minParticipantCount ?? undefined,
-  maxParticipantCount: sourceEvent.maxParticipantCount ?? undefined,
-  sessionLeadershipStrategy: sourceEvent.sessionLeadershipStrategy,
-  fixedLeadCoachId: sourceEvent.fixedLeadCoachId ?? undefined,
-  bufferAfterMinutes: sourceEvent.bufferAfterMinutes,
-  minCoachCount: sourceEvent.minCoachCount,
-  maxCoachCount: sourceEvent.maxCoachCount ?? undefined,
-  targetCoHostCount: sourceEvent.targetCoHostCount ?? undefined,
-});
+}): Prisma.EventCreateInput => {
+  const { sessionLeadershipStrategy, fixedLeadCoachId } = resolveSessionLeadershipConfig({
+    interactionType: sourceEvent.interactionType as InteractionType,
+    existingEvent: sourceEvent,
+    payload: {}, // No manual overrides during duplication
+    assignmentStrategy: sourceEvent.assignmentStrategy,
+  });
+
+  return {
+    name: `Copy of ${sourceEvent.name}`,
+    publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
+    description: sourceEvent.description ?? undefined,
+    offering: { connect: { id: sourceEvent.offeringId } },
+    interactionType: sourceEvent.interactionType,
+    assignmentStrategy: sourceEvent.assignmentStrategy,
+    durationSeconds: sourceEvent.durationSeconds,
+    locationType: sourceEvent.locationType,
+    locationValue: sourceEvent.locationValue,
+    isActive: false,
+    team: { connect: { id: sourceEvent.teamId } },
+    createdBy: { connect: { id: callerId } },
+    updatedBy: { connect: { id: callerId } },
+    bookingMode: sourceEvent.bookingMode,
+    allowedWeekdays: sourceEvent.allowedWeekdays,
+    minimumNoticeMinutes: sourceEvent.minimumNoticeMinutes,
+    minParticipantCount: sourceEvent.minParticipantCount ?? undefined,
+    maxParticipantCount: sourceEvent.maxParticipantCount ?? undefined,
+    sessionLeadershipStrategy,
+    fixedLeadCoachId: fixedLeadCoachId ?? undefined,
+    bufferAfterMinutes: sourceEvent.bufferAfterMinutes,
+    minCoachCount: sourceEvent.minCoachCount,
+    maxCoachCount: sourceEvent.maxCoachCount ?? undefined,
+    targetCoHostCount: sourceEvent.targetCoHostCount ?? undefined,
+  };
+};
