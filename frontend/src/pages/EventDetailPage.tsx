@@ -50,7 +50,6 @@ export function EventDetailPage() {
 
   const slots = slotsRes?.slots ?? []
   const teamMembers = teamMembersResponse?.members ?? []
-  const bookings = [] // Placeholder for actual bookings query if needed inside current scope
   const bookingViewValue = useMemo(() => ({ onViewCoach: setViewingUserId }), [])
 
   if (isLoading) return <PageSpinner />
