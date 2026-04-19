@@ -25,7 +25,8 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
   } = useFormContext<EventFormValues>()
   const bookingMode = watch('bookingMode')
 
-  const isOneToMany = caps && !caps.multipleCoaches && caps.multipleParticipants
+  const isGroupSession = !!caps?.multipleParticipants
+  const interactionLabel = caps?.multipleCoaches ? 'Group Workshop' : 'ONE_TO_MANY'
 
   return (
     <Stack spacing={3}>
@@ -34,8 +35,8 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
         htmlFor="bookingMode"
         error={errors.bookingMode?.message}
         info={
-          isOneToMany
-            ? 'ONE_TO_MANY events require predefined session slots.'
+          isGroupSession
+            ? `${interactionLabel} events require predefined session slots.`
             : 'Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions.'
         }
       >
@@ -44,8 +45,8 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
           value={bookingMode || 'COACH_AVAILABILITY'}
           {...register('bookingMode')}
         >
-          <MenuItem value="COACH_AVAILABILITY" disabled={!!isOneToMany}>
-            Flexible — based on coach availability {isOneToMany ? '(Not supported for this type)' : ''}
+          <MenuItem value="COACH_AVAILABILITY" disabled={isGroupSession}>
+            Flexible — based on coach availability {isGroupSession ? '(Not supported for this type)' : ''}
           </MenuItem>
           <MenuItem value="FIXED_SLOTS">Fixed — predefined session slots only</MenuItem>
         </Select>

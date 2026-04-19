@@ -63,6 +63,11 @@ const resolveEventSchedulingConfig = (
     config.maxParticipantCount = 1;
   }
 
+  // Enforce Fixed-Slot mode for all group session interaction types (ONE_TO_MANY / MANY_TO_MANY)
+  if (caps && caps.multipleParticipants) {
+    config.bookingMode = EventBookingMode.FIXED_SLOTS;
+  }
+
   // Enforce Many-to-One Strategy Reform (Simplified UI alignment)
   if (interactionType === 'MANY_TO_ONE') {
     const strategy = payload.assignmentStrategy ?? existing?.assignmentStrategy;

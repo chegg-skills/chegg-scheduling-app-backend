@@ -73,9 +73,9 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
       setValue('targetCoHostCount', null, { shouldDirty: false })
     }
 
-    // ONE_TO_MANY logic: Force FIXED_SLOTS mode.
-    const isOneToMany = !caps.multipleCoaches && caps.multipleParticipants
-    if (isOneToMany) {
+    // Group Workshop logic (ONE_TO_MANY / MANY_TO_MANY): Force FIXED_SLOTS mode.
+    const isGroupSession = caps.multipleParticipants
+    if (isGroupSession) {
       setValue('bookingMode', 'FIXED_SLOTS', { shouldDirty: false })
     }
 
