@@ -97,7 +97,9 @@ export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlo
                 <TableCell sx={{ py: 2 }}>
                   {(() => {
                     const overrideCoach = slot.assignedCoach
-                    const defaultCoach = event.fixedLeadCoachId
+                    const isRotating = event.sessionLeadershipStrategy === 'ROTATING_LEAD'
+
+                    const defaultCoach = (event.fixedLeadCoachId && !isRotating)
                       ? event.coaches.find((c) => c.coachUserId === event.fixedLeadCoachId)
                         ?.coachUser
                       : null
