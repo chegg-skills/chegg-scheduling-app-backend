@@ -109,7 +109,15 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                       </Typography>
                       <Typography
                         variant="caption"
-                        sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+                        sx={{
+                          bgcolor: 'grey.100',
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: 0.5,
+                          color: 'text.secondary',
+                          display: 'inline-block',
+                          mt: 0.5,
+                        }}
                       >
                         {t.key}
                       </Typography>
