@@ -50,9 +50,9 @@ const lockEvent = async (tx: Prisma.TransactionClient, eventId: string): Promise
   await tx.$executeRaw`SELECT id FROM "Event" WHERE id = ${eventId} FOR UPDATE`;
 };
 
-const lockHost = async (tx: Prisma.TransactionClient, hostUserId: string): Promise<void> => {
-  // Acquire a row-level lock on the host user to prevent concurrent double-booking of the same host
-  await tx.$executeRaw`SELECT id FROM "User" WHERE id = ${hostUserId} FOR UPDATE`;
+const lockCoach = async (tx: Prisma.TransactionClient, coachUserId: string): Promise<void> => {
+  // Acquire a row-level lock on the coach user to prevent concurrent double-booking of the same coach
+  await tx.$executeRaw`SELECT id FROM "User" WHERE id = ${coachUserId} FOR UPDATE`;
 };
 
 const countActiveParticipantsForTime = async (
@@ -128,12 +128,13 @@ const updateBookingById = async (
   id: string,
   data: {
     status?: BookingStatus;
-    coHostUserIds?: string[];
+    coCoachUserIds?: string[];
     startTime?: Date;
     endTime?: Date;
     timezone?: string;
-    hostUserId?: string;
+    coachUserId?: string;
     meetingJoinUrl?: string | null;
+    sessionJoinUrl?: string | null;
     scheduleSlotId?: string | null;
   },
 ): Promise<SafeBooking> => {
@@ -162,5 +163,5 @@ export {
   upsertStudentForBooking,
   lockScheduleSlot,
   lockEvent,
-  lockHost,
+  lockCoach,
 };

@@ -1,23 +1,26 @@
 import { AssignmentStrategy, Prisma, SessionLeadershipStrategy } from "@prisma/client";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
-  getActiveInteractionType,
+  INTERACTION_TYPE_CAPS,
+  type InteractionType,
+} from "../../shared/constants/interactionType";
+import {
   getActiveOffering,
   isValidSessionLeadershipStrategy,
   type CreateEventInput,
   type SafeEvent,
   type UpdateEventInput,
 } from "./event.shared";
-import { validateEventConfiguration } from "./eventHost.service";
+import { validateEventConfiguration } from "./eventCoach.service";
 import { resolveEventSchedulingConfig } from "./eventScheduling.service";
 import { CreateEventSchema, UpdateEventSchema } from "./event.schema";
 
 type ResolvedEventMutationContext = {
   offering: Awaited<ReturnType<typeof getActiveOffering>>;
-  interactionType: Awaited<ReturnType<typeof getActiveInteractionType>>;
+  interactionType: InteractionType;
   assignmentStrategy: AssignmentStrategy;
   sessionLeadershipStrategy: SessionLeadershipStrategy;
-  fixedLeadHostId: string | null;
+  fixedLeadCoachId: string | null;
   schedulingConfig: ReturnType<typeof resolveEventSchedulingConfig>;
 };
 
@@ -26,14 +29,16 @@ const resolveSessionLeadershipConfig = ({
   existingEvent,
   payload,
 }: {
-  interactionType: Awaited<ReturnType<typeof getActiveInteractionType>>;
+  interactionType: InteractionType;
   existingEvent?: SafeEvent;
-  payload: Pick<UpdateEventInput, "sessionLeadershipStrategy" | "fixedLeadHostId">;
-}): Pick<ResolvedEventMutationContext, "sessionLeadershipStrategy" | "fixedLeadHostId"> => {
+  payload: Pick<UpdateEventInput, "sessionLeadershipStrategy" | "fixedLeadCoachId">;
+}): Pick<ResolvedEventMutationContext, "sessionLeadershipStrategy" | "fixedLeadCoachId"> => {
+  const caps = INTERACTION_TYPE_CAPS[interactionType];
+
   // 1. Initial Default (The Baseline)
-  let strategy: SessionLeadershipStrategy = interactionType.supportsSimultaneousCoaches
+  let strategy: SessionLeadershipStrategy = caps.multipleCoaches
     ? SessionLeadershipStrategy.ROTATING_LEAD
-    : SessionLeadershipStrategy.SINGLE_HOST;
+    : SessionLeadershipStrategy.SINGLE_COACH;
 
   // 2. Override with DB Value (If we are updating)
   if (existingEvent) {
@@ -47,16 +52,16 @@ const resolveSessionLeadershipConfig = ({
     }
   }
 
-  // --- Same logic for the Lead Host ---
-  let fixedLeadHostId = existingEvent?.fixedLeadHostId ?? null;
+  // --- Same logic for the Lead Coach ---
+  let fixedLeadCoachId = existingEvent?.fixedLeadCoachId ?? null;
 
-  if (payload.fixedLeadHostId !== undefined) {
-    fixedLeadHostId = payload.fixedLeadHostId || null;
+  if (payload.fixedLeadCoachId !== undefined) {
+    fixedLeadCoachId = payload.fixedLeadCoachId || null;
   }
 
   return {
     sessionLeadershipStrategy: strategy,
-    fixedLeadHostId,
+    fixedLeadCoachId,
   };
 };
 
@@ -65,24 +70,24 @@ export const resolveCreateEventContext = async (
 ): Promise<ResolvedEventMutationContext> => {
   const validated = CreateEventSchema.body.parse(payload);
 
-  const [offering, interactionType] = await Promise.all([
-    getActiveOffering(validated.offeringId),
-    getActiveInteractionType(validated.interactionTypeId),
-  ]);
-
+  const offering = await getActiveOffering(validated.offeringId);
+  const interactionType = validated.interactionType as InteractionType;
   const assignmentStrategy = validated.assignmentStrategy;
 
-  const { sessionLeadershipStrategy, fixedLeadHostId } = resolveSessionLeadershipConfig({
+  const { sessionLeadershipStrategy, fixedLeadCoachId } = resolveSessionLeadershipConfig({
     interactionType,
     payload: validated,
   });
 
-  validateEventConfiguration(interactionType, {
+  validateEventConfiguration({
+    interactionType,
     assignmentStrategy,
-    hostCount: 0,
+    minCoachCount: validated.minCoachCount ?? 1,
+    maxCoachCount: validated.maxCoachCount ?? null,
+    coachCount: 0,
     sessionLeadershipStrategy,
-    fixedLeadHostId,
-    hostUserIds: fixedLeadHostId ? [fixedLeadHostId] : [],
+    fixedLeadCoachId,
+    coachUserIds: fixedLeadCoachId ? [fixedLeadCoachId] : [],
   });
 
   return {
@@ -90,8 +95,8 @@ export const resolveCreateEventContext = async (
     interactionType,
     assignmentStrategy,
     sessionLeadershipStrategy,
-    fixedLeadHostId,
-    schedulingConfig: resolveEventSchedulingConfig(validated, interactionType),
+    fixedLeadCoachId,
+    schedulingConfig: resolveEventSchedulingConfig(validated),
   };
 };
 
@@ -105,36 +110,37 @@ export const resolveUpdateEventContext = async ({
   const validated = UpdateEventSchema.body.parse(payload);
 
   const nextOfferingId = validated.offeringId ?? existingEvent.offeringId;
-  const nextInteractionTypeId = validated.interactionTypeId ?? existingEvent.interactionTypeId;
+  const nextInteractionType = (validated.interactionType ??
+    existingEvent.interactionType) as InteractionType;
 
-  const [offering, interactionType] = await Promise.all([
-    getActiveOffering(nextOfferingId),
-    getActiveInteractionType(nextInteractionTypeId),
-  ]);
-
+  const offering = await getActiveOffering(nextOfferingId);
   const assignmentStrategy = validated.assignmentStrategy ?? existingEvent.assignmentStrategy;
 
-  const { sessionLeadershipStrategy, fixedLeadHostId } = resolveSessionLeadershipConfig({
-    interactionType,
+  const { sessionLeadershipStrategy, fixedLeadCoachId } = resolveSessionLeadershipConfig({
+    interactionType: nextInteractionType,
     existingEvent,
     payload: validated,
   });
 
-  validateEventConfiguration(interactionType, {
+  validateEventConfiguration({
+    interactionType: nextInteractionType,
     assignmentStrategy,
-    hostCount: existingEvent.hosts.length,
+    minCoachCount: validated.minCoachCount ?? existingEvent.minCoachCount,
+    maxCoachCount:
+      validated.maxCoachCount !== undefined ? validated.maxCoachCount : existingEvent.maxCoachCount,
+    coachCount: existingEvent.coaches.length,
     sessionLeadershipStrategy,
-    fixedLeadHostId,
-    hostUserIds: existingEvent.hosts.map((host) => host.hostUserId),
+    fixedLeadCoachId,
+    coachUserIds: existingEvent.coaches.map((c) => c.coachUserId),
   });
 
   return {
     offering,
-    interactionType,
+    interactionType: nextInteractionType,
     assignmentStrategy,
     sessionLeadershipStrategy,
-    fixedLeadHostId,
-    schedulingConfig: resolveEventSchedulingConfig(validated, interactionType, existingEvent),
+    fixedLeadCoachId,
+    schedulingConfig: resolveEventSchedulingConfig(validated, existingEvent),
   };
 };
 
@@ -156,25 +162,28 @@ export const buildEventCreateData = ({
     publicBookingSlug: createPublicBookingSlug(validated.name, "event"),
     description: validated.description ?? undefined,
     offering: { connect: { id: context.offering.id } },
-    interactionType: { connect: { id: context.interactionType.id } },
+    interactionType: context.interactionType,
     assignmentStrategy: context.assignmentStrategy,
     durationSeconds: validated.durationSeconds,
     locationType: validated.locationType,
     locationValue: validated.locationValue,
     isActive: validated.isActive,
     sessionLeadershipStrategy: context.sessionLeadershipStrategy,
-    fixedLeadHostId: context.fixedLeadHostId ?? undefined,
+    fixedLeadCoachId: context.fixedLeadCoachId ?? undefined,
+    minCoachCount: validated.minCoachCount ?? 1,
+    maxCoachCount: validated.maxCoachCount ?? undefined,
+    targetCoHostCount: validated.targetCoHostCount ?? undefined,
     team: { connect: { id: teamId } },
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
     ...context.schedulingConfig,
   };
 
-  if (context.fixedLeadHostId) {
-    data.hosts = {
+  if (context.fixedLeadCoachId) {
+    data.coaches = {
       create: {
-        hostUserId: context.fixedLeadHostId,
-        hostOrder: 1,
+        coachUserId: context.fixedLeadCoachId,
+        coachOrder: 1,
         isActive: true,
       },
     };
@@ -199,10 +208,10 @@ export const buildEventUpdateData = ({
   const updateData: Prisma.EventUpdateInput = {
     updatedBy: { connect: { id: callerId } },
     offering: { connect: { id: context.offering.id } },
-    interactionType: { connect: { id: context.interactionType.id } },
+    interactionType: context.interactionType,
     assignmentStrategy: context.assignmentStrategy,
     sessionLeadershipStrategy: context.sessionLeadershipStrategy,
-    fixedLeadHostId: context.fixedLeadHostId ?? undefined,
+    fixedLeadCoachId: context.fixedLeadCoachId ?? undefined,
     ...context.schedulingConfig,
   };
 
@@ -228,6 +237,16 @@ export const buildEventUpdateData = ({
     updateData.isActive = validated.isActive;
   }
 
+  if (validated.minCoachCount !== undefined) {
+    updateData.minCoachCount = validated.minCoachCount;
+  }
+  if (validated.maxCoachCount !== undefined) {
+    updateData.maxCoachCount = validated.maxCoachCount;
+  }
+  if (validated.targetCoHostCount !== undefined) {
+    updateData.targetCoHostCount = validated.targetCoHostCount;
+  }
+
   return updateData;
 };
 
@@ -242,7 +261,7 @@ export const buildDuplicateEventData = ({
   publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
   description: sourceEvent.description ?? undefined,
   offering: { connect: { id: sourceEvent.offeringId } },
-  interactionType: { connect: { id: sourceEvent.interactionTypeId } },
+  interactionType: sourceEvent.interactionType,
   assignmentStrategy: sourceEvent.assignmentStrategy,
   durationSeconds: sourceEvent.durationSeconds,
   locationType: sourceEvent.locationType,
@@ -257,6 +276,9 @@ export const buildDuplicateEventData = ({
   minParticipantCount: sourceEvent.minParticipantCount ?? undefined,
   maxParticipantCount: sourceEvent.maxParticipantCount ?? undefined,
   sessionLeadershipStrategy: sourceEvent.sessionLeadershipStrategy,
-  fixedLeadHostId: sourceEvent.fixedLeadHostId ?? undefined,
+  fixedLeadCoachId: sourceEvent.fixedLeadCoachId ?? undefined,
   bufferAfterMinutes: sourceEvent.bufferAfterMinutes,
+  minCoachCount: sourceEvent.minCoachCount,
+  maxCoachCount: sourceEvent.maxCoachCount ?? undefined,
+  targetCoHostCount: sourceEvent.targetCoHostCount ?? undefined,
 });

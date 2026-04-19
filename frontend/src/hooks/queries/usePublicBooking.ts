@@ -10,8 +10,8 @@ export const publicKeys = {
   event: (slug: string) => [...publicKeys.all, 'event', slug] as const,
   coach: (slug: string) => [...publicKeys.all, 'coach', slug] as const,
   coachEvents: (slug: string) => [...publicKeys.all, 'coach-events', slug] as const,
-  slots: (eventId: string, start: string, end: string, preferredHostId?: string) =>
-    [...publicKeys.all, 'slots', eventId, start, end, preferredHostId ?? 'any'] as const,
+  slots: (eventId: string, start: string, end: string, preferredCoachId?: string) =>
+    [...publicKeys.all, 'slots', eventId, start, end, preferredCoachId ?? 'any'] as const,
 }
 
 export function usePublicTeams() {
@@ -80,13 +80,13 @@ export function usePublicSlots(
   eventId: string,
   startDate: string,
   endDate: string,
-  preferredHostId?: string
+  preferredCoachId?: string
 ) {
   return useQuery({
-    queryKey: publicKeys.slots(eventId, startDate, endDate, preferredHostId),
+    queryKey: publicKeys.slots(eventId, startDate, endDate, preferredCoachId),
     queryFn: ({ signal }) =>
       publicApi
-        .getAvailableSlots(eventId, startDate, endDate, preferredHostId, signal)
+        .getAvailableSlots(eventId, startDate, endDate, preferredCoachId, signal)
         .then((response) => response.data.data?.slots ?? []),
     enabled: !!eventId && !!startDate && !!endDate,
   })

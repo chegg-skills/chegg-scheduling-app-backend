@@ -13,7 +13,7 @@ export type BookingWithEventBuffer = Prisma.BookingGetPayload<{
   };
 }>;
 
-export const getHostConflicts = async (
+export const getCoachConflicts = async (
   userId: string,
   startTime: Date,
   endTime: Date,
@@ -35,7 +35,10 @@ export const getHostConflicts = async (
 
   const bookings = (await client.booking.findMany({
     where: {
-      hostUserId: userId,
+      OR: [
+        { coachUserId: userId },
+        { coCoachUserIds: { has: userId } },
+      ],
       status: { in: ["CONFIRMED", "PENDING"] },
       AND: [
         {

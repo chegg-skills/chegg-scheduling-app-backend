@@ -83,44 +83,13 @@ const offeringDefinitions = [
   },
 ];
 
-const interactionTypeDefinitions = [
-  {
-    key: "one_to_one",
-    name: "1 to 1 Connect",
-    description: "Standard one coach, one student session",
-    supportsRoundRobin: true,
-    supportsMultipleHosts: true,
-    minHosts: 1,
-    maxHosts: null,
-    minParticipants: 1,
-    maxParticipants: 1,
-    sortOrder: 1,
-  },
-  {
-    key: "one_to_many",
-    name: "1 to N Connect",
-    description: "One coach with a small student group",
-    supportsRoundRobin: false,
-    supportsMultipleHosts: false,
-    minHosts: 1,
-    maxHosts: 1,
-    minParticipants: 2,
-    maxParticipants: 20,
-    sortOrder: 2,
-  },
-  {
-    key: "many_to_one",
-    name: "N to 1 Connect",
-    description: "Multiple coaches collaborating with one student",
-    supportsRoundRobin: false,
-    supportsMultipleHosts: true,
-    minHosts: 2,
-    maxHosts: 3,
-    minParticipants: 1,
-    maxParticipants: 1,
-    sortOrder: 3,
-  },
-];
+// Maps demo interactionKey → InteractionType enum value
+const interactionTypeKeyMap: Record<string, string> = {
+  one_to_one: "ONE_TO_ONE",
+  one_to_many: "ONE_TO_MANY",
+  many_to_one: "MANY_TO_ONE",
+  many_to_many: "MANY_TO_MANY",
+};
 
 const demoTeams: DemoTeamDefinition[] = [
   {
@@ -162,7 +131,7 @@ const demoTeams: DemoTeamDefinition[] = [
         name: "API Debugging Lab",
         description: "Hands-on help with backend bugs, integrations, and service failures.",
         offeringKey: "qa",
-        interactionKey: "one_to_one",
+        interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
         durationMinutes: 45,
       },
@@ -297,7 +266,7 @@ const demoTeams: DemoTeamDefinition[] = [
         name: "Threat Modeling Session",
         description: "Map risks and attack surfaces for product or infrastructure changes.",
         offeringKey: "mentorship",
-        interactionKey: "one_to_one",
+        interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
         durationMinutes: 45,
       },
@@ -334,7 +303,7 @@ const demoTeams: DemoTeamDefinition[] = [
         name: "AI Pair Programming",
         description: "Use AI tools effectively for code generation, refactors, and debugging.",
         offeringKey: "live_lessons",
-        interactionKey: "one_to_one",
+        interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
         durationMinutes: 45,
       },
@@ -561,11 +530,10 @@ async function resetDemoDataKeepingAdmin(adminId?: string) {
   await prisma.userAvailabilityException.deleteMany();
   await prisma.userWeeklyAvailability.deleteMany();
   await prisma.eventRoutingState.deleteMany();
-  await prisma.eventHost.deleteMany();
+  await prisma.eventCoach.deleteMany();
   await prisma.event.deleteMany();
   await prisma.teamMember.deleteMany();
   await prisma.team.deleteMany();
-  await prisma.eventInteractionType.deleteMany();
   await prisma.eventOffering.deleteMany();
 
   if (adminId) {
@@ -611,10 +579,6 @@ async function ensureUser(
 
 async function seedCatalog(authToken: string) {
   const createdOfferings = new Map<string, { id: string; name: string }>();
-  const createdInteractionTypes = new Map<
-    string,
-    { id: string; supportsMultipleHosts: boolean; minHosts: number }
-  >();
 
   for (const offering of offeringDefinitions) {
     let existing = await prisma.eventOffering.findUnique({
@@ -637,33 +601,7 @@ async function seedCatalog(authToken: string) {
     });
   }
 
-  for (const interactionType of interactionTypeDefinitions) {
-    let existing = await prisma.eventInteractionType.findUnique({
-      where: { key: interactionType.key },
-    });
-    if (!existing) {
-      existing = (await apiRequest<{
-        id: string;
-        supportsMultipleHosts: boolean;
-        minHosts: number;
-      }>(
-        "POST",
-        "/event-interaction-types",
-        {
-          ...interactionType,
-          isActive: true,
-        },
-        authToken,
-      )) as never;
-    }
-    createdInteractionTypes.set(interactionType.key, {
-      id: existing.id,
-      supportsMultipleHosts: existing.supportsMultipleHosts,
-      minHosts: existing.minHosts,
-    });
-  }
-
-  return { createdOfferings, createdInteractionTypes };
+  return { createdOfferings };
 }
 
 async function ensureCoachAvailability(userIds: string[]) {
@@ -686,7 +624,7 @@ async function main() {
   const { token, userId } = await ensureAuthenticatedAdmin();
   await resetDemoDataKeepingAdmin(userId);
 
-  const { createdOfferings, createdInteractionTypes } = await seedCatalog(token);
+  const { createdOfferings } = await seedCatalog(token);
 
   const seededTeams: Array<{
     key: string;
@@ -738,7 +676,7 @@ async function main() {
     const createdEvents: Array<{ id: string; name: string }> = [];
     for (const eventDefinition of teamDefinition.events) {
       const offering = createdOfferings.get(eventDefinition.offeringKey);
-      const interactionType = createdInteractionTypes.get(eventDefinition.interactionKey);
+      const interactionType = interactionTypeKeyMap[eventDefinition.interactionKey];
 
       if (!offering || !interactionType) {
         throw new Error(`Missing seed catalog dependency for ${eventDefinition.name}`);
@@ -751,30 +689,29 @@ async function main() {
           name: eventDefinition.name,
           description: eventDefinition.description,
           offeringId: offering.id,
-          interactionTypeId: interactionType.id,
+          interactionType,
           assignmentStrategy: eventDefinition.assignmentStrategy,
           durationSeconds: eventDefinition.durationMinutes * 60,
           locationType: EventLocationType.VIRTUAL,
           locationValue: "https://zoom.us/j/demo-session-room",
           isActive: true,
+          minCoachCount: eventDefinition.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN ? 2 : 1,
         },
         token,
       );
 
-      const candidateHosts =
+      const candidateCoaches =
         eventDefinition.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN
           ? coaches
-          : interactionType.supportsMultipleHosts
-            ? coaches.slice(0, Math.max(interactionType.minHosts, 2))
-            : coaches.slice(0, 1);
+          : coaches.slice(0, 1);
 
       await apiRequest(
         "PUT",
-        `/events/${event.id}/hosts`,
+        `/events/${event.id}/coaches`,
         {
-          hosts: candidateHosts.map((coach, index) => ({
+          coaches: candidateCoaches.map((coach, index) => ({
             userId: coach.id,
-            hostOrder: index + 1,
+            coachOrder: index + 1,
           })),
         },
         token,

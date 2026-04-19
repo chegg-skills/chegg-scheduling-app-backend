@@ -10,17 +10,17 @@ import Checkbox from '@mui/material/Checkbox'
 import { Square, CheckSquare } from 'lucide-react'
 import type { TeamMember } from '@/types'
 
-interface HostSelectionListProps {
-  eligibleHosts: TeamMember[]
+interface CoachSelectionListProps {
+  eligibleCoaches: TeamMember[]
   selectedUserIds: string[]
   onToggle: (userId: string) => void
 }
 
-export function HostSelectionList({
-  eligibleHosts,
+export function CoachSelectionList({
+  eligibleCoaches,
   selectedUserIds,
   onToggle,
-}: HostSelectionListProps) {
+}: CoachSelectionListProps) {
   return (
     <Box
       sx={{
@@ -32,7 +32,7 @@ export function HostSelectionList({
       }}
     >
       <List disablePadding>
-        {eligibleHosts.length === 0 ? (
+        {eligibleCoaches.length === 0 ? (
           <ListItem>
             <ListItemText
               primary="No selectable coaches found."
@@ -40,7 +40,7 @@ export function HostSelectionList({
             />
           </ListItem>
         ) : (
-          eligibleHosts.map((option) => (
+          eligibleCoaches.map((option) => (
             <ListItem key={option.userId} disablePadding>
               <ListItemButton onClick={() => onToggle(option.userId)} dense>
                 <ListItemIcon sx={{ minWidth: 36 }}>

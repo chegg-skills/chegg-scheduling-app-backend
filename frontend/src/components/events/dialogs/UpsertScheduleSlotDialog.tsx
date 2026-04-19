@@ -8,16 +8,20 @@ import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
+import MenuItem from '@mui/material/MenuItem'
+import { Select } from '@/components/shared/form/Select'
+import Avatar from '@mui/material/Avatar'
 import { isWeekdayAllowed, formatAllowedWeekdays } from '../form/eventCapabilityRules'
-import type { Event, EventScheduleSlot } from '@/types'
+import type { Event, EventScheduleSlot, TeamMember } from '@/types'
 
 interface UpsertScheduleSlotDialogProps {
   isOpen: boolean
   onClose: () => void
   event: Event
   slot?: EventScheduleSlot | null // If provided, we are editing
-  onSave: (data: { startTime: string; endTime: string; capacity: number | null }) => void
+  onSave: (data: { startTime: string; endTime: string; capacity: number | null; assignedCoachId: string | null }) => void
   isPending: boolean
+  teamMembers: TeamMember[]
 }
 
 export function UpsertScheduleSlotDialog({
@@ -27,6 +31,7 @@ export function UpsertScheduleSlotDialog({
   slot,
   onSave,
   isPending,
+  teamMembers,
 }: UpsertScheduleSlotDialogProps) {
   const allowedDays = useMemo(() => event.allowedWeekdays ?? [], [event.allowedWeekdays])
   const mode = slot ? 'Edit' : 'Add'
@@ -34,6 +39,7 @@ export function UpsertScheduleSlotDialog({
   // Local state for the form
   const [newSlotDate, setNewSlotDate] = useState('')
   const [newSlotCapacity, setNewSlotCapacity] = useState<number | ''>('')
+  const [assignedCoachId, setAssignedCoachId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Sync state when slot changes or modal opens
@@ -42,11 +48,13 @@ export function UpsertScheduleSlotDialog({
       if (slot) {
         setNewSlotDate(format(new Date(slot.startTime), "yyyy-MM-dd'T'HH:mm"))
         setNewSlotCapacity(slot.capacity ?? '')
+        setAssignedCoachId(slot.assignedCoachId ?? null)
         setError(null)
       } else {
         const initialDate = format(new Date(), "yyyy-MM-dd'T'HH:mm")
         setNewSlotDate(initialDate)
         setNewSlotCapacity('')
+        setAssignedCoachId(null)
         if (!isWeekdayAllowed(initialDate, allowedDays)) {
           setError(
             `Selected date must be one of the allowed weekdays: ${formatAllowedWeekdays(allowedDays)}`
@@ -81,6 +89,7 @@ export function UpsertScheduleSlotDialog({
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
       capacity: newSlotCapacity === '' ? null : newSlotCapacity,
+      assignedCoachId,
     })
   }
 
@@ -128,6 +137,39 @@ export function UpsertScheduleSlotDialog({
             configuration.
           </Typography>
         </Box>
+
+        <FormField
+          label="Override Host (Optional)"
+          htmlFor="slot-coach"
+          info="If specified, this coach will host this specific session. Leave as 'Default' to use the event lead."
+        >
+          <Select
+            id="slot-coach"
+            value={assignedCoachId ?? ''}
+            onChange={(e) => setAssignedCoachId((e.target.value as string) || null)}
+            displayEmpty
+          >
+            <MenuItem value="">
+              <em>Team Default (Round Robin / Direct)</em>
+            </MenuItem>
+            {teamMembers.map((member) => (
+              <MenuItem key={member.user.id} value={member.user.id}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Avatar
+                    src={member.user.avatarUrl ?? undefined}
+                    sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
+                  >
+                    {member.user.firstName[0]}
+                    {member.user.lastName[0]}
+                  </Avatar>
+                  <Typography variant="body2">
+                    {member.user.firstName} {member.user.lastName}
+                  </Typography>
+                </Stack>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormField>
 
         <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 2 }}>
           <Button variant="secondary" onClick={onClose}>

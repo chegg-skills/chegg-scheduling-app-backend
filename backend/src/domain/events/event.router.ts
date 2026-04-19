@@ -48,35 +48,11 @@ router
 
 router
   .route("/event-interaction-types")
-  .post(
-    authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.createInteractionType,
-  )
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.listInteractionTypes,
   )
-  .all(methodNotAllowed);
-
-router
-  .route("/event-interaction-types/:interactionTypeId")
-  .patch(
-    authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.updateInteractionType,
-  )
-  .delete(
-    authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.deleteInteractionType,
-  )
-  .all(methodNotAllowed);
-
-router
-  .route("/event-interaction-types/:interactionTypeId/usage")
-  .get(authenticate, authorize(UserRole.SUPER_ADMIN), eventController.getInteractionTypeUsage)
   .all(methodNotAllowed);
 
 router
@@ -130,16 +106,16 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/events/:eventId/hosts")
+  .route("/events/:eventId/coaches")
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.listEventHosts,
+    eventController.listEventCoaches,
   )
   .put(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.replaceEventHosts,
+    eventController.replaceEventCoaches,
   )
   .all(methodNotAllowed);
 
@@ -172,11 +148,11 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/events/:eventId/hosts/:userId")
+  .route("/events/:eventId/coaches/:userId")
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.removeEventHost,
+    eventController.removeEventCoach,
   )
   .all(methodNotAllowed);
 

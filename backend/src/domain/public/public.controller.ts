@@ -51,7 +51,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
   const { eventId } = req.params;
   const startDate = req.query.startDate as string;
   const endDate = req.query.endDate as string;
-  const preferredHostId = req.query.preferredHostId as string | undefined;
+  const preferredCoachId = req.query.preferredCoachId as string | undefined;
 
   const { start, end } = parseBoundedDateRange({
     startDate,
@@ -63,7 +63,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
     eventId as string,
     start,
     end,
-    preferredHostId,
+    preferredCoachId,
   );
 
   return sendSuccessResponse(

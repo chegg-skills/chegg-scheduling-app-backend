@@ -509,21 +509,12 @@ describe("DELETE /api/teams/:teamId", () => {
       },
     });
 
-    const interactionType = await prisma.eventInteractionType.create({
-      data: {
-        key: "protected-interaction-team",
-        name: "Protected Interaction",
-        createdById: teamAdminId,
-        updatedById: teamAdminId,
-      },
-    });
-
     const event = await prisma.event.create({
       data: {
         name: "Protected Event",
         teamId,
         offeringId: offering.id,
-        interactionTypeId: interactionType.id,
+        interactionType: "ONE_TO_ONE",
         durationSeconds: 1800,
         locationType: "VIRTUAL",
         locationValue: "https://meet.example.com",
@@ -539,7 +530,7 @@ describe("DELETE /api/teams/:teamId", () => {
         studentEmail: "student@example.com",
         teamId,
         eventId: event.id,
-        hostUserId: teamAdminId,
+        coachUserId: teamAdminId,
         startTime: new Date(),
         endTime: new Date(Date.now() + 1800000),
       },

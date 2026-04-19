@@ -15,7 +15,7 @@ export type CreateBookingInput = {
   triedSolutions?: string;
   usedResources?: string;
   sessionObjectives?: string;
-  preferredHostId?: string;
+  preferredCoachId?: string;
 };
 
 export type RescheduleBookingInput = {
@@ -31,7 +31,7 @@ export type UpdateBookingStatusInput = {
 export type ListBookingsFilters = {
   teamId?: string;
   eventId?: string;
-  hostUserId?: string;
+  coachUserId?: string;
   status?: BookingStatus;
   search?: string;
   startDate?: string | Date;
@@ -55,10 +55,9 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
   team: true,
   event: {
     include: {
-      interactionType: true,
-      hosts: {
+      coaches: {
         include: {
-          hostUser: {
+          coachUser: {
             select: {
               id: true,
               firstName: true,
@@ -71,7 +70,7 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
       },
     },
   },
-  host: {
+  coach: {
     select: {
       id: true,
       email: true,
@@ -89,41 +88,43 @@ export type SafeBooking = Prisma.BookingGetPayload<{
 }>;
 
 export const bookableEventInclude = Prisma.validator<Prisma.EventInclude>()({
-  interactionType: {
-    select: {
-      minParticipants: true,
-      maxParticipants: true,
-    },
-  },
-  hosts: {
+  routingState: true,
+  coaches: {
     where: { isActive: true },
-    orderBy: { hostOrder: "asc" },
+    orderBy: { coachOrder: "asc" },
     include: {
-      hostUser: {
+      coachUser: {
         select: {
           zoomIsvLink: true,
         },
       },
     },
   },
-  routingState: true,
+  _count: {
+    select: {
+      bookings: {
+        where: { status: { not: "CANCELLED" } },
+      },
+    },
+  },
 });
 
-export type BookableEvent = Prisma.EventGetPayload<{
-  include: typeof bookableEventInclude;
-}>;
+export type BookableEvent = any;
 
 export type BookingSchedulingContext = Pick<
   BookableEvent,
   | "id"
+  | "interactionType"
   | "bookingMode"
   | "allowedWeekdays"
   | "minimumNoticeMinutes"
   | "minParticipantCount"
   | "maxParticipantCount"
-  | "interactionType"
+  | "minCoachCount"
+  | "maxCoachCount"
   | "sessionLeadershipStrategy"
-  | "fixedLeadHostId"
+  | "fixedLeadCoachId"
+  | "targetCoHostCount"
 >;
 
 export const normalizeStudentName = (studentName: string): string => {
@@ -171,14 +172,17 @@ export const parseBookingStartTime = (startTime: string | Date): Date => {
 
 export const buildSchedulingContext = (event: BookableEvent): BookingSchedulingContext => ({
   id: event.id,
+  interactionType: event.interactionType,
   bookingMode: event.bookingMode,
   allowedWeekdays: event.allowedWeekdays,
   minimumNoticeMinutes: event.minimumNoticeMinutes,
   minParticipantCount: event.minParticipantCount,
   maxParticipantCount: event.maxParticipantCount,
-  interactionType: event.interactionType,
+  minCoachCount: event.minCoachCount,
+  maxCoachCount: event.maxCoachCount,
   sessionLeadershipStrategy: event.sessionLeadershipStrategy,
-  fixedLeadHostId: event.fixedLeadHostId,
+  fixedLeadCoachId: event.fixedLeadCoachId,
+  targetCoHostCount: event.targetCoHostCount,
 });
 
 export const buildBookingListWhere = (filters: ListBookingsFilters): Prisma.BookingWhereInput => {
@@ -195,9 +199,9 @@ export const buildBookingListWhere = (filters: ListBookingsFilters): Prisma.Book
   if (filters.eventId) and.push({ eventId: filters.eventId });
   if (filters.status) and.push({ status: filters.status });
 
-  if (filters.hostUserId) {
+  if (filters.coachUserId) {
     and.push({
-      OR: [{ hostUserId: filters.hostUserId }, { coHostUserIds: { has: filters.hostUserId } }],
+      OR: [{ coachUserId: filters.coachUserId }, { coCoachUserIds: { has: filters.coachUserId } }],
     });
   }
 

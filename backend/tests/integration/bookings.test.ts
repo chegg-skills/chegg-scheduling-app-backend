@@ -27,7 +27,6 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
 let adminToken: string;
 let teamId: string;
 let offeringId: string;
-let interactionTypeId: string;
 let coachId: string;
 let coachToken: string;
 let coach2Id: string;
@@ -81,18 +80,6 @@ beforeAll(async () => {
   });
   offeringId = offering.id;
 
-  // Create Interaction Type (with Round-Robin support)
-  const interactionType = await prisma.eventInteractionType.create({
-    data: {
-      key: "test_interaction",
-      name: "Test Interaction",
-      supportsRoundRobin: true,
-      supportsMultipleHosts: true,
-      createdById: admin.id,
-      updatedById: admin.id,
-    },
-  });
-  interactionTypeId = interactionType.id;
 });
 
 afterAll(async () => {
@@ -110,7 +97,7 @@ describe("Booking Domain Integration Tests", () => {
         name: "Test Direct Event",
         teamId,
         offeringId,
-        interactionTypeId,
+        interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600, // 1 hour
         locationType: EventLocationType.VIRTUAL,
@@ -118,10 +105,10 @@ describe("Booking Domain Integration Tests", () => {
         createdById: coachId,
         updatedById: coachId,
         publicBookingSlug: `test-direct-event-${Date.now()}`,
-        hosts: {
+        coaches: {
           create: {
-            hostUserId: coachId,
-            hostOrder: 1,
+            coachUserId: coachId,
+            coachOrder: 1,
           },
         },
       },
@@ -171,7 +158,7 @@ describe("Booking Domain Integration Tests", () => {
       if (res.status !== 201) console.log(JSON.stringify(res.body, null, 2));
       expect(res.status).toBe(201);
       expect(res.body.data.booking.studentName).toBe("John Doe");
-      expect(res.body.data.booking.hostUserId).toBe(coachId);
+      expect(res.body.data.booking.coachUserId).toBe(coachId);
       expect(res.body.data.booking.meetingJoinUrl).toBe(zoomIsvLink);
     });
 
@@ -231,7 +218,7 @@ describe("Booking Domain Integration Tests", () => {
           studentEmail: "first@example.com",
           teamId,
           eventId,
-          hostUserId: coachId,
+          coachUserId: coachId,
           startTime: new Date(startTime),
           endTime: new Date(new Date(startTime).getTime() + 3600 * 1000),
           status: "CONFIRMED",
@@ -315,7 +302,7 @@ describe("Booking Domain Integration Tests", () => {
           studentEmail: "existing@example.com",
           teamId,
           eventId,
-          hostUserId: coachId,
+          coachUserId: coachId,
           scheduleSlotId: scheduleSlot.id,
           startTime: slotStart,
           endTime: slotEnd,
@@ -346,7 +333,7 @@ describe("Booking Domain Integration Tests", () => {
           name: "Test RR Event",
           teamId,
           offeringId,
-          interactionTypeId,
+          interactionType: "MANY_TO_ONE",
           assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
           durationSeconds: 3600,
           locationType: EventLocationType.VIRTUAL,
@@ -354,10 +341,10 @@ describe("Booking Domain Integration Tests", () => {
           createdById: coachId,
           updatedById: coachId,
           publicBookingSlug: `test-rr-event-${Date.now()}`,
-          hosts: {
+          coaches: {
             create: [
-              { hostUserId: coachId, hostOrder: 1 },
-              { hostUserId: coach2Id, hostOrder: 2 },
+              { coachUserId: coachId, coachOrder: 1 },
+              { coachUserId: coach2Id, coachOrder: 2 },
             ],
           },
         },
@@ -386,11 +373,11 @@ describe("Booking Domain Integration Tests", () => {
       });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.booking.hostUserId).toBe(coachId);
+      expect(res.body.data.booking.coachUserId).toBe(coachId);
 
-      // Routing state should now point to hostOrder 2
+      // Routing state should now point to coachOrder 2
       const routing = await prisma.eventRoutingState.findUnique({ where: { eventId: rrEventId } });
-      expect(routing?.nextHostOrder).toBe(2);
+      expect(routing?.nextCoachOrder).toBe(2);
     });
 
     it("skips unavailable host and assigns the next available one", async () => {
@@ -405,7 +392,7 @@ describe("Booking Domain Integration Tests", () => {
       });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.booking.hostUserId).toBe(coach2Id);
+      expect(res.body.data.booking.coachUserId).toBe(coach2Id);
     });
   });
 
@@ -420,7 +407,7 @@ describe("Booking Domain Integration Tests", () => {
             studentEmail: "alice@example.com",
             teamId,
             eventId,
-            hostUserId: coachId,
+            coachUserId: coachId,
             startTime: baseStart,
             endTime: new Date(baseStart.getTime() + 3600 * 1000),
             status: BookingStatus.CONFIRMED,
@@ -430,7 +417,7 @@ describe("Booking Domain Integration Tests", () => {
             studentEmail: "bob.carter@example.com",
             teamId,
             eventId,
-            hostUserId: coachId,
+            coachUserId: coachId,
             startTime: new Date(baseStart.getTime() + 2 * 3600 * 1000),
             endTime: new Date(baseStart.getTime() + 3 * 3600 * 1000),
             status: BookingStatus.CONFIRMED,
@@ -440,7 +427,7 @@ describe("Booking Domain Integration Tests", () => {
             studentEmail: "charlie@example.com",
             teamId,
             eventId,
-            hostUserId: coach2Id,
+            coachUserId: coach2Id,
             startTime: new Date(baseStart.getTime() + 4 * 3600 * 1000),
             endTime: new Date(baseStart.getTime() + 5 * 3600 * 1000),
             status: BookingStatus.CONFIRMED,
@@ -514,7 +501,7 @@ describe("Booking Domain Integration Tests", () => {
             studentEmail: "april@test.com",
             teamId,
             eventId,
-            hostUserId: coachId,
+            coachUserId: coachId,
             startTime: date1,
             endTime: new Date(date1.getTime() + 3600 * 1000),
             status: BookingStatus.CONFIRMED,
@@ -524,7 +511,7 @@ describe("Booking Domain Integration Tests", () => {
             studentEmail: "may@test.com",
             teamId,
             eventId,
-            hostUserId: coachId,
+            coachUserId: coachId,
             startTime: date2,
             endTime: new Date(date2.getTime() + 3600 * 1000),
             status: BookingStatus.CONFIRMED,
@@ -534,7 +521,7 @@ describe("Booking Domain Integration Tests", () => {
             studentEmail: "june@test.com",
             teamId,
             eventId,
-            hostUserId: coachId,
+            coachUserId: coachId,
             startTime: date3,
             endTime: new Date(date3.getTime() + 3600 * 1000),
             status: BookingStatus.CONFIRMED,
@@ -582,6 +569,134 @@ describe("Booking Domain Integration Tests", () => {
       // But clearTables is in afterAll and deleteMany in afterEach.
       // Wait, afterEach deletes all bookings. So it should be Exactly 3.
       expect(res.body.data.bookings.length).toBe(3);
+    });
+  });
+
+  /**
+   * Regression test for the co-coach conflict detection bug.
+   *
+   * Bug: getCoachConflicts only queried coachUserId (lead role). A coach appearing in
+   * coCoachUserIds of an existing booking was invisible to the conflict check, allowing
+   * them to be double-booked as lead or co-coach in an overlapping session.
+   *
+   * Fix: OR condition covers both coachUserId and coCoachUserIds: { has: userId }.
+   */
+  describe("Co-coach conflict detection", () => {
+    let targetEventId: string;
+
+    beforeEach(async () => {
+      // DIRECT event — coach2 is the only candidate so any conflict on coach2 produces a 409.
+      const event = await prisma.event.create({
+        data: {
+          name: "Co-coach Conflict Test Event",
+          teamId,
+          offeringId,
+          interactionType: "ONE_TO_ONE",
+          assignmentStrategy: AssignmentStrategy.DIRECT,
+          durationSeconds: 3600,
+          locationType: EventLocationType.VIRTUAL,
+          locationValue: "Zoom",
+          createdById: coachId,
+          updatedById: coachId,
+          publicBookingSlug: `cocoach-conflict-${Date.now()}`,
+          coaches: {
+            create: { coachUserId: coach2Id, coachOrder: 1 },
+          },
+        },
+      });
+      targetEventId = event.id;
+
+      await prisma.userWeeklyAvailability.createMany({
+        data: [
+          { userId: coachId, dayOfWeek: 1, startTime: "08:00", endTime: "18:00" },
+          { userId: coach2Id, dayOfWeek: 1, startTime: "08:00", endTime: "18:00" },
+        ],
+      });
+    });
+
+    afterEach(async () => {
+      await prisma.booking.deleteMany();
+      await prisma.userWeeklyAvailability.deleteMany();
+      await prisma.userAvailabilityException.deleteMany();
+      await prisma.event.deleteMany();
+    });
+
+    it("returns 409 when the only eligible coach is already a co-coach in an overlapping booking", async () => {
+      const existingStart = getNextUtcWeekdayAt(1, 9, 0);
+      const existingEnd = new Date(existingStart.getTime() + 60 * 60 * 1000); // 9:00–10:00
+
+      // Seed: coachId is the lead, coach2Id is a co-coach for 9:00–10:00.
+      // Before the fix, getCoachConflicts ignored coCoachUserIds, so coach2Id would appear
+      // available and the overlapping booking below would incorrectly succeed.
+      await prisma.booking.create({
+        data: {
+          studentName: "Existing Student",
+          studentEmail: "existing@cocoach.com",
+          teamId,
+          eventId: targetEventId,
+          coachUserId: coachId,
+          coCoachUserIds: [coach2Id],
+          startTime: existingStart,
+          endTime: existingEnd,
+          status: "CONFIRMED",
+        },
+      });
+
+      // Attempt to book targetEventId at 9:15–10:15 (overlaps with existing 9:00–10:00 session).
+      // coach2Id is the only candidate; with the fix they are correctly detected as unavailable.
+      const overlapStart = getNextUtcWeekdayAt(1, 9, 15);
+      const res = await request(app)
+        .post("/api/bookings")
+        .send({
+          studentName: "New Student",
+          studentEmail: "new@cocoach.com",
+          teamId,
+          eventId: targetEventId,
+          startTime: overlapStart.toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(409);
+    });
+
+    it("allows booking when the co-coach overlap is on a different day", async () => {
+      const mondayStart = getNextUtcWeekdayAt(1, 9, 0);
+      const mondayEnd = new Date(mondayStart.getTime() + 60 * 60 * 1000);
+
+      // coach2Id is a co-coach on Monday 9:00–10:00
+      await prisma.booking.create({
+        data: {
+          studentName: "Monday Student",
+          studentEmail: "monday@cocoach.com",
+          teamId,
+          eventId: targetEventId,
+          coachUserId: coachId,
+          coCoachUserIds: [coach2Id],
+          startTime: mondayStart,
+          endTime: mondayEnd,
+          status: "CONFIRMED",
+        },
+      });
+
+      // Book targetEventId on the following Tuesday at 9:00 — no conflict.
+      await prisma.userWeeklyAvailability.create({
+        data: { userId: coach2Id, dayOfWeek: 2, startTime: "08:00", endTime: "18:00" },
+      });
+
+      const tuesdayStart = getNextUtcWeekdayAt(2, 9, 0);
+      const res = await request(app)
+        .post("/api/bookings")
+        .send({
+          studentName: "Tuesday Student",
+          studentEmail: "tuesday@cocoach.com",
+          teamId,
+          eventId: targetEventId,
+          startTime: tuesdayStart.toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.coachUserId).toBe(coach2Id);
     });
   });
 });

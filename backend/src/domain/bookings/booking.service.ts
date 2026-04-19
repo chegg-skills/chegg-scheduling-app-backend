@@ -22,7 +22,7 @@ import {
   upsertStudentForBooking,
   lockScheduleSlot,
   lockEvent,
-  lockHost,
+  lockCoach,
 } from "./booking.repository";
 import {
   buildSchedulingContext,
@@ -34,8 +34,8 @@ import {
   type ListBookingsFilters,
   type SafeBooking,
 } from "./booking.shared";
-import { resolveBookingHostSelection } from "./bookingAssignmentResolver.service";
-import type { HostCandidate } from "./assignment.service";
+import { resolveBookingCoachSelection } from "./bookingAssignmentResolver.service";
+import type { CoachCandidate } from "./assignment.service";
 
 export { bookingInclude, type SafeBooking } from "./booking.shared";
 
@@ -95,7 +95,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     triedSolutions,
     usedResources,
     sessionObjectives,
-    preferredHostId,
+    preferredCoachId,
   } = payload;
 
   const normalizedStudentName = normalizeStudentName(studentName);
@@ -105,16 +105,16 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   const event = await getBookableEvent(teamId, eventId);
   const { end, schedulingContext } = resolveBookingWindow(event, start);
   const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
-  const activeHosts = event.hosts as HostCandidate[];
+  const activeCoaches = event.coaches as CoachCandidate[];
 
-  if (activeHosts.length === 0) {
-    logger.warn("Booking blocked because no active hosts are available for the event.", {
+  if (activeCoaches.length === 0) {
+    logger.warn("Booking blocked because no active coaches are available for the event.", {
       eventId,
       teamId,
     });
     throw new ErrorHandler(
       StatusCodes.SERVICE_UNAVAILABLE,
-      "No active hosts available for this event.",
+      "No active coaches available for this event.",
     );
   }
 
@@ -127,9 +127,9 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       await lockEvent(tx, eventId);
     }
 
-    const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveBookingHostSelection({
-      preferredHostId,
-      activeHosts,
+    const { assignedCoachId, meetingJoinUrl, coCoachUserIds } = await resolveBookingCoachSelection({
+      preferredCoachId,
+      activeCoaches,
       event,
       start,
       end,
@@ -139,15 +139,12 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     });
 
     // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
-    await lockHost(tx, assignedHostId);
+    await lockCoach(tx, assignedCoachId);
 
     const scheduleSlot =
       matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-    const { maxParticipants } = getEffectiveParticipantPolicy(
-      schedulingContext,
-      scheduleSlot ?? schedulingContext.interactionType,
-    );
+    const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
 
     const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
 
@@ -167,8 +164,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       studentEmail: normalizedStudentEmail,
       teamId,
       eventId,
-      hostUserId: assignedHostId,
-      coHostUserIds,
+      coachUserId: assignedCoachId,
+      coCoachUserIds,
       startTime: start,
       endTime: end,
       timezone: timezone || "UTC",
@@ -186,7 +183,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     bookingId: booking.id,
     eventId: booking.eventId,
     teamId: booking.teamId,
-    hostUserId: booking.hostUserId,
+    coachUserId: booking.coachUserId,
     status: booking.status,
   });
 
@@ -203,7 +200,7 @@ const listBookings = async (filters: ListBookingsFilters) => {
 
 const updateBooking = async (
   id: string,
-  data: { status?: BookingStatus; coHostUserIds?: string[] },
+  data: { status?: BookingStatus; coCoachUserIds?: string[] },
 ) => {
   return updateBookingById(id, data);
 };
@@ -223,7 +220,7 @@ const rescheduleBooking = async (
   const { end } = resolveBookingWindow(event, start);
   const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
 
-  const activeHosts = event.hosts as HostCandidate[];
+  const activeCoaches = event.coaches as CoachCandidate[];
 
   // 3. Re-assign host (prefer current host if available)
   const updatedBooking = await prisma.$transaction(async (tx) => {
@@ -234,9 +231,9 @@ const rescheduleBooking = async (
       await lockEvent(tx, event.id);
     }
 
-    const { assignedHostId, meetingJoinUrl, coHostUserIds } = await resolveBookingHostSelection({
-      preferredHostId: booking.hostUserId,
-      activeHosts,
+    const { assignedCoachId, meetingJoinUrl, coCoachUserIds } = await resolveBookingCoachSelection({
+      preferredCoachId: booking.coachUserId,
+      activeCoaches,
       event,
       start,
       end,
@@ -246,17 +243,14 @@ const rescheduleBooking = async (
     });
 
     // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
-    await lockHost(tx, assignedHostId);
+    await lockCoach(tx, assignedCoachId);
 
     const scheduleSlot =
       matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
     // Check capacity for the NEW time
     const schedulingContext = buildSchedulingContext(event);
-    const { maxParticipants } = getEffectiveParticipantPolicy(
-      schedulingContext,
-      scheduleSlot ?? schedulingContext.interactionType,
-    );
+    const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
 
     const currentParticipantCount = await countActiveParticipantsForTime(
       tx,
@@ -272,8 +266,8 @@ const rescheduleBooking = async (
       startTime: start,
       endTime: end,
       timezone: timezone || booking.timezone,
-      hostUserId: assignedHostId,
-      coHostUserIds,
+      coachUserId: assignedCoachId,
+      coCoachUserIds,
       meetingJoinUrl,
       scheduleSlotId: scheduleSlot?.id ?? null,
       status: BookingStatus.CONFIRMED, // Reset to confirmed if it was something else
@@ -284,7 +278,7 @@ const rescheduleBooking = async (
     bookingId: updatedBooking.id,
     eventId: updatedBooking.eventId,
     teamId: updatedBooking.teamId,
-    hostUserId: updatedBooking.hostUserId,
+    coachUserId: updatedBooking.coachUserId,
     startTime: updatedBooking.startTime,
   });
 

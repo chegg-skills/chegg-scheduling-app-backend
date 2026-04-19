@@ -5,19 +5,19 @@ import type { Booking } from '@/types'
 import { SectionLabel } from './Common'
 import { useBookingView } from '@/context/bookingView'
 
-interface HostSectionProps {
+interface CoachSectionProps {
   booking: Booking
 }
 
-export function HostSection({ booking }: HostSectionProps) {
+export function CoachSection({ booking }: CoachSectionProps) {
   const theme = useTheme()
-  const { onViewHost } = useBookingView()
+  const { onViewCoach } = useBookingView()
 
   return (
     <Box>
-      <SectionLabel label={booking.coHostUserIds?.length > 0 ? 'Lead Coach' : 'Meeting Host'} />
+      <SectionLabel label={booking.coCoachUserIds?.length > 0 ? 'Lead Coach' : 'Coach'} />
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {booking.coHostUserIds?.length > 0
+        {booking.coCoachUserIds?.length > 0
           ? 'This coach leads the session'
           : 'Coach will attend this meeting'}
       </Typography>
@@ -25,10 +25,10 @@ export function HostSection({ booking }: HostSectionProps) {
         direction="row"
         spacing={1.5}
         alignItems="center"
-        sx={{ mb: booking.coHostUserIds?.length > 0 ? 3 : 0 }}
+        sx={{ mb: booking.coCoachUserIds?.length > 0 ? 3 : 0 }}
       >
         <Avatar
-          src={booking.host?.avatarUrl ?? undefined}
+          src={booking.coach?.avatarUrl ?? undefined}
           sx={{
             width: 36,
             height: 36,
@@ -38,32 +38,32 @@ export function HostSection({ booking }: HostSectionProps) {
             fontWeight: 600,
           }}
         >
-          {booking.host ? (
-            `${booking.host.firstName[0]}${booking.host.lastName[0]}`
+          {booking.coach ? (
+            `${booking.coach.firstName[0]}${booking.coach.lastName[0]}`
           ) : (
             <User size={18} />
           )}
         </Avatar>
         <Box>
-          {booking.host ? (
+          {booking.coach ? (
             (() => {
-              const host = booking.host
+              const coach = booking.coach
               return (
                 <Typography
                   variant="body2"
-                  onClick={() => onViewHost?.(host.id)}
+                  onClick={() => onViewCoach?.(coach.id)}
                   sx={{
                     fontWeight: 600,
                     color: theme.palette.text.primary,
                     textDecoration: 'none',
-                    cursor: onViewHost ? 'pointer' : 'default',
+                    cursor: onViewCoach ? 'pointer' : 'default',
                     '&:hover': {
-                      color: onViewHost ? 'primary.main' : 'inherit',
-                      textDecoration: onViewHost ? 'underline' : 'none',
+                      color: onViewCoach ? 'primary.main' : 'inherit',
+                      textDecoration: onViewCoach ? 'underline' : 'none',
                     },
                   }}
                 >
-                  {toTitleCase(host.firstName)} {toTitleCase(host.lastName)}
+                  {toTitleCase(coach.firstName)} {toTitleCase(coach.lastName)}
                 </Typography>
               )
             })()
@@ -72,29 +72,29 @@ export function HostSection({ booking }: HostSectionProps) {
               N/A
             </Typography>
           )}
-          {booking.host?.email && (
+          {booking.coach?.email && (
             <Typography variant="caption" color="text.secondary">
-              {booking.host.email}
+              {booking.coach.email}
             </Typography>
           )}
         </Box>
       </Stack>
 
-      {booking.coHostUserIds?.length > 0 && (
+      {booking.coCoachUserIds?.length > 0 && (
         <Box sx={{ mt: 2 }}>
-          <SectionLabel label="Co-hosts" />
+          <SectionLabel label="Co-coaches" />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
             Supporting coaches for this session
           </Typography>
           <Stack spacing={1.5}>
-            {booking.coHostUserIds.map((coHostId) => {
-              const coHost = booking.event?.hosts?.find((h) => h.hostUserId === coHostId)?.hostUser
-              if (!coHost) return null
+            {booking.coCoachUserIds.map((coCoachId) => {
+              const coCoach = booking.event?.coaches?.find((c) => c.coachUserId === coCoachId)?.coachUser
+              if (!coCoach) return null
 
               return (
-                <Stack key={coHostId} direction="row" spacing={1.5} alignItems="center">
+                <Stack key={coCoachId} direction="row" spacing={1.5} alignItems="center">
                   <Avatar
-                    src={coHost.avatarUrl ?? undefined}
+                    src={coCoach.avatarUrl ?? undefined}
                     sx={{
                       width: 28,
                       height: 28,
@@ -103,21 +103,21 @@ export function HostSection({ booking }: HostSectionProps) {
                       color: theme.palette.secondary.main,
                     }}
                   >
-                    {coHost.firstName[0]}
-                    {coHost.lastName[0]}
+                    {coCoach.firstName[0]}
+                    {coCoach.lastName[0]}
                   </Avatar>
                   <Box>
                     <Typography
                       variant="body2"
-                      onClick={() => onViewHost?.(coHost.id)}
+                      onClick={() => onViewCoach?.(coCoach.id)}
                       sx={{
                         fontWeight: 500,
                         fontSize: '0.8125rem',
-                        cursor: onViewHost ? 'pointer' : 'default',
+                        cursor: onViewCoach ? 'pointer' : 'default',
                         '&:hover': { color: 'primary.main' },
                       }}
                     >
-                      {toTitleCase(coHost.firstName)} {toTitleCase(coHost.lastName)}
+                      {toTitleCase(coCoach.firstName)} {toTitleCase(coCoach.lastName)}
                     </Typography>
                   </Box>
                 </Stack>

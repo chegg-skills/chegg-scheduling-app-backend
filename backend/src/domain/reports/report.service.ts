@@ -23,7 +23,7 @@ export const getBookingsReport = async (
     where,
     include: {
       event: true,
-      host: true,
+      coach: true,
       team: true,
       student: true,
     },
@@ -36,7 +36,7 @@ export const getBookingsReport = async (
     Status: b.status,
     Team: b.team.name,
     Event: b.event.name,
-    Coach: `${b.host.firstName} ${b.host.lastName}`,
+    Coach: `${b.coach.firstName} ${b.coach.lastName}`,
     "Student Name": b.studentName,
     "Student Email": b.studentEmail,
     "Duration (Min)": Math.round((b.endTime.getTime() - b.startTime.getTime()) / 60000),
@@ -78,7 +78,7 @@ export const getPerformanceReport = async (
         by: ["status"],
         where: {
           ...bookingWhere,
-          hostUserId: coach.id,
+          coachUserId: coach.id,
         },
         _count: { _all: true },
       });

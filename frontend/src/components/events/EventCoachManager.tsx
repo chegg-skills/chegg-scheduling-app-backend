@@ -2,23 +2,23 @@ import { useState } from 'react'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Plus } from 'lucide-react'
-import type { EventHost, TeamMember } from '@/types'
+import type { EventCoach, TeamMember } from '@/types'
 import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { useEventHosts, useSetEventHosts, useRemoveEventHost } from '@/hooks/queries/useEvents'
+import { useEventCoaches, useSetEventCoaches, useRemoveEventCoach } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { extractApiError } from '@/utils/apiError'
-import { AddHostForm } from './form/AddHostForm'
-import { EventHostTable } from './EventHostTable'
-import { EventHostStatusAlert } from './EventHostStatusAlert'
+import { AddCoachForm } from './form/AddCoachForm'
+import { EventCoachTable } from './EventCoachTable'
+import { EventCoachStatusAlert } from './EventCoachStatusAlert'
 
-interface EventHostManagerProps {
+interface EventCoachManagerProps {
   eventId: string
-  hosts: EventHost[]
+  coaches: EventCoach[]
   teamMembers: TeamMember[]
   assignmentStrategy?: string
-  interactionType?: { minHosts: number } | null
+  minCoachCount?: number
   title?: string
   hideHeader?: boolean
   showAddModalOverride?: boolean
@@ -26,63 +26,63 @@ interface EventHostManagerProps {
   onViewUser?: (userId: string) => void
 }
 
-export function EventHostManager({
+export function EventCoachManager({
   eventId,
-  hosts,
+  coaches,
   teamMembers,
   assignmentStrategy,
-  interactionType,
+  minCoachCount = 1,
   title,
   hideHeader,
   showAddModalOverride,
   onCloseAddModal,
   onViewUser,
-}: EventHostManagerProps) {
+}: EventCoachManagerProps) {
   const [localShowAddModal, setLocalShowAddModal] = useState(false)
-  const [addHostError, setAddHostError] = useState<string | null>(null)
+  const [addCoachError, setAddCoachError] = useState<string | null>(null)
   const showAddModal = showAddModalOverride ?? localShowAddModal
   const setShowAddModal = onCloseAddModal ?? setLocalShowAddModal
   const { handleAction } = useAsyncAction()
 
-  const { data: hostsResponse } = useEventHosts(eventId)
-  const { mutate: setHosts, isPending: setting } = useSetEventHosts(eventId)
-  const { mutate: removeHost } = useRemoveEventHost(eventId)
+  const { data: coachesResponse } = useEventCoaches(eventId)
+  const { mutate: setCoaches, isPending: setting } = useSetEventCoaches(eventId)
+  const { mutate: removeCoach } = useRemoveEventCoach(eventId)
 
-  const activeHosts = hostsResponse?.hosts ?? hosts
+  const activeCoaches = coachesResponse?.coaches ?? coaches
 
-  const currentHostUserIds = new Set(activeHosts.map((h) => h.hostUserId))
+  const currentCoachUserIds = new Set(activeCoaches.map((c) => c.coachUserId))
   const eligibleCount = teamMembers.filter(
-    (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentHostUserIds.has(m.userId)
+    (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentCoachUserIds.has(m.userId)
   ).length
 
   function handleAdd(userIds: string[]) {
-    const newHosts = [
-      ...activeHosts.map((h, i) => ({ userId: h.hostUserId, hostOrder: h.hostOrder ?? i + 1 })),
+    const newCoaches = [
+      ...activeCoaches.map((c, i) => ({ userId: c.coachUserId, coachOrder: c.coachOrder ?? i + 1 })),
       ...userIds.map((userId, i) => ({
         userId,
-        hostOrder: activeHosts.length + i + 1,
+        coachOrder: activeCoaches.length + i + 1,
       })),
     ]
-    setHosts(
-      { hosts: newHosts },
+    setCoaches(
+      { coaches: newCoaches },
       {
         onSuccess: () => {
-          setAddHostError(null)
+          setAddCoachError(null)
           if (onCloseAddModal) {
             onCloseAddModal()
           } else {
             setLocalShowAddModal(false)
           }
         },
-        onError: (error) => {
-          setAddHostError(extractApiError(error))
+        onError: (error: Error) => {
+          setAddCoachError(extractApiError(error))
         },
       }
     )
   }
 
-  const handleRemove = (hostUserId: string, name: string) => {
-    handleAction(removeHost, hostUserId, {
+  const handleRemove = (coachUserId: string, name: string) => {
+    handleAction(removeCoach, coachUserId, {
       title: 'Remove Coach',
       message: `Are you sure you want to remove ${name} as a coach for this event?`,
       actionName: 'Remove',
@@ -91,17 +91,17 @@ export function EventHostManager({
 
   return (
     <Stack spacing={2}>
-      <EventHostStatusAlert
-        activeHostCount={activeHosts.length}
+      <EventCoachStatusAlert
+        activeCoachCount={activeCoaches.length}
         assignmentStrategy={assignmentStrategy || 'DIRECT'}
-        interactionType={interactionType || null}
+        minCoachCount={minCoachCount}
       />
 
       {!hideHeader && (
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
           {title && (
             <Typography variant="h6">
-              {title} - {activeHosts.length}
+              {title} - {activeCoaches.length}
             </Typography>
           )}
           {eligibleCount > 0 && (
@@ -112,27 +112,27 @@ export function EventHostManager({
         </Stack>
       )}
 
-      <EventHostTable hosts={activeHosts} onRemove={handleRemove} onViewUser={onViewUser} />
+      <EventCoachTable coaches={activeCoaches} onRemove={handleRemove} onViewUser={onViewUser} />
 
       <Modal
         isOpen={showAddModal}
         onClose={() => {
-          setAddHostError(null)
+          setAddCoachError(null)
           onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false)
         }}
         title="Add coach to event"
         size="sm"
       >
         <Stack spacing={2}>
-          {addHostError && <ErrorAlert message={addHostError} />}
-          <AddHostForm
-            activeHosts={activeHosts}
+          {addCoachError && <ErrorAlert message={addCoachError} />}
+          <AddCoachForm
+            activeCoaches={activeCoaches}
             teamMembers={teamMembers}
             assignmentStrategy={assignmentStrategy}
             isPending={setting}
             onAdd={handleAdd}
             onCancel={() => {
-              setAddHostError(null)
+              setAddCoachError(null)
               onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false)
             }}
           />

@@ -7,8 +7,10 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
+import { Edit, Trash2, User } from 'lucide-react'
+import Avatar from '@mui/material/Avatar'
+import { Stack, Typography } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
-import { Edit, Trash2 } from 'lucide-react'
 import type { EventScheduleSlot, Event } from '@/types'
 
 interface ScheduleSlotListProps {
@@ -47,6 +49,7 @@ export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlo
             <TableCell>Date</TableCell>
             <TableCell>Time Range</TableCell>
             <TableCell>Occupancy</TableCell>
+            <TableCell>Assigned Coach</TableCell>
             <TableCell align="right" sx={{ pr: 3 }}>
               Actions
             </TableCell>
@@ -86,6 +89,84 @@ export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlo
                     {bookingCount}
                     {effectiveCapacity ? ` / ${effectiveCapacity}` : ' seats'}
                   </Box>
+                </TableCell>
+                <TableCell sx={{ py: 2 }}>
+                  {(() => {
+                    const overrideCoach = slot.assignedCoach
+                    const defaultCoach = event.fixedLeadCoachId
+                      ? event.coaches.find((c) => c.coachUserId === event.fixedLeadCoachId)
+                        ?.coachUser
+                      : null
+
+                    const host = overrideCoach || defaultCoach
+                    const isOverride = !!overrideCoach
+
+                    if (host) {
+                      return (
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Avatar
+                            src={host.avatarUrl ?? undefined}
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              fontSize: '0.875rem',
+                              bgcolor: isOverride ? 'primary.main' : 'grey.200',
+                              color: isOverride ? 'primary.contrastText' : 'text.primary',
+                            }}
+                          >
+                            {host.firstName[0]}
+                            {host.lastName[0]}
+                          </Avatar>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                fontWeight: 600,
+                                lineHeight: 1.2,
+                                color: 'text.primary',
+                              }}
+                            >
+                              {host.firstName} {host.lastName}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: isOverride ? 'primary.main' : 'text.secondary',
+                                fontWeight: isOverride ? 600 : 400,
+                              }}
+                            >
+                              {isOverride ? 'Session Host (Override)' : 'Event Lead (Default)'}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      )
+                    }
+
+                    return (
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: 'action.hover',
+                            color: 'text.secondary',
+                          }}
+                        >
+                          <User size={16} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                            Team Pool
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {event.assignmentStrategy === 'ROUND_ROBIN'
+                              ? 'Round Robin Rotation'
+                              : 'Automatic Assignment'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    )
+                  })()}
                 </TableCell>
                 <TableCell align="right" sx={{ py: 2, pr: 3 }}>
                   <RowActions

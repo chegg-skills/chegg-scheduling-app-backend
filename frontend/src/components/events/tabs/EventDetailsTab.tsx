@@ -5,20 +5,20 @@ import type { Event } from '@/types'
 
 interface EventDetailsTabProps {
   event: Event
-  hostSetupStatus: { isReady: boolean; message: string | null }
+  coachSetupStatus: { isReady: boolean; message: string | null }
   needsScheduleSlots: boolean
 }
 
 export function EventDetailsTab({
   event,
-  hostSetupStatus,
+  coachSetupStatus,
   needsScheduleSlots,
 }: EventDetailsTabProps) {
   return (
     <Stack spacing={2}>
-      {!hostSetupStatus.isReady && (
+      {!coachSetupStatus.isReady && (
         <Alert severity="warning" variant="standard" sx={{ mt: 2 }}>
-          {hostSetupStatus.message}
+          {coachSetupStatus.message}
         </Alert>
       )}
       {needsScheduleSlots && (

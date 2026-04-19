@@ -122,15 +122,15 @@ export function PublicReschedulePage() {
           newTime={
             selectedSlot
               ? new Intl.DateTimeFormat('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                }).format(new Date(selectedSlot))
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              }).format(new Date(selectedSlot))
               : ''
           }
           eventName={bookingData.event?.name || ''}
           mentorName={
-            bookingData.host ? `${bookingData.host.firstName} ${bookingData.host.lastName}` : ''
+            bookingData.coach ? `${bookingData.coach.firstName} ${bookingData.coach.lastName}` : ''
           }
           onReset={() => window.location.reload()}
         />
@@ -141,7 +141,7 @@ export function PublicReschedulePage() {
   const currentBookingInfo = {
     teamDetails: (bookingData.event as any)?.team,
     eventDetails: bookingData.event as any,
-    coachDetails: bookingData.host as any,
+    coachDetails: bookingData.coach as any,
     date: new Date(bookingData.startTime),
     slot: bookingData.startTime,
   }
@@ -156,7 +156,7 @@ export function PublicReschedulePage() {
             customHeading="Reschedule your current session"
             customSubtitle="Select a new time below to update your booking."
             eventDetails={bookingData.event as any}
-            coachDetails={bookingData.host as any}
+            coachDetails={bookingData.coach as any}
           />
 
           <PublicBookingSummary
@@ -182,7 +182,7 @@ export function PublicReschedulePage() {
               scope="event"
               customHeading="Reschedule your current session"
               eventDetails={bookingData.event as any}
-              coachDetails={bookingData.host as any}
+              coachDetails={bookingData.coach as any}
               selectedDate={selectedDate}
               selectedSlot={selectedSlot}
               currentBookingDetails={currentBookingInfo}

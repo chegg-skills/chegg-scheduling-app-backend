@@ -8,7 +8,7 @@ async function main() {
   // Fetch a valid event, team, and host to construct a realistic (or slightly off) payload
   const event = await prisma.event.findFirst({
     where: { isActive: true },
-    include: { hosts: true },
+    include: { coaches: true },
   });
 
   if (!event) {
@@ -16,7 +16,7 @@ async function main() {
     return;
   }
 
-  const hostId = event.hosts[0]?.hostUserId;
+  const hostId = event.coaches[0]?.coachUserId;
   const startTime = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(); // 2 days in future
 
   const payload = {

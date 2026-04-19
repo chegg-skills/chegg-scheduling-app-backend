@@ -95,7 +95,7 @@ export function DashboardPage() {
           : (dashboardStats?.metrics.activeEvents ?? 0),
       helperText:
         user?.role === 'COACH'
-          ? 'Teams connected to your hosted events'
+          ? 'Teams connected to your coached events'
           : 'Bookable events currently enabled',
       icon: user?.role === 'COACH' ? <UsersRound size={18} /> : <Layers size={18} />,
       accent: 'green' as const,

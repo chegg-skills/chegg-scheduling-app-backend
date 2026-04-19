@@ -11,7 +11,7 @@ import {
   useDeleteEventScheduleSlot,
 } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
-import type { Event, EventScheduleSlot } from '@/types'
+import type { Event, EventScheduleSlot, TeamMember } from '@/types'
 import { UpsertScheduleSlotDialog } from './dialogs/UpsertScheduleSlotDialog'
 import { ScheduleSlotList } from './ScheduleSlotList'
 
@@ -19,9 +19,10 @@ interface Props {
   event: Event
   slots: EventScheduleSlot[]
   isLoading: boolean
+  teamMembers: TeamMember[]
 }
 
-export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
+export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers }: Props) {
   const { mutate: create, isPending: creating } = useCreateEventScheduleSlot(event.id)
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
   const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
@@ -40,7 +41,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
     setIsModalOpen(true)
   }
 
-  function handleSave(slotData: { startTime: string; endTime: string; capacity: number | null }) {
+  function handleSave(slotData: { startTime: string; endTime: string; capacity: number | null; assignedCoachId?: string | null }) {
     if (editingSlot) {
       update(
         { slotId: editingSlot.id, data: slotData },
@@ -98,6 +99,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
         slot={editingSlot}
         onSave={handleSave}
         isPending={creating || updating}
+        teamMembers={teamMembers}
       />
     </Box>
   )

@@ -27,6 +27,24 @@ const publicEventSelect = {
   minimumNoticeMinutes: true,
   minParticipantCount: true,
   maxParticipantCount: true,
+  interactionType: true,
+  assignmentStrategy: true,
+  coaches: {
+    where: { isActive: true },
+    orderBy: { coachOrder: "asc" as const },
+    select: {
+      coachUserId: true,
+      coachOrder: true,
+      coachUser: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  },
   team: {
     select: publicTeamSelect,
   },
@@ -141,9 +159,9 @@ export const listCoachEventsBySlug = async (slug: string) => {
     where: {
       isActive: true,
       team: { isActive: true },
-      hosts: {
+      coaches: {
         some: {
-          hostUserId: coach.id,
+          coachUserId: coach.id,
           isActive: true,
         },
       },

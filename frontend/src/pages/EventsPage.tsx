@@ -64,7 +64,7 @@ export function EventsPage() {
       accent: 'purple' as const,
     },
     {
-      label: 'Hosted events',
+      label: 'Coached events',
       value: eventStats?.metrics.hostedEvents ?? 0,
       helperText: 'Events with at least one assigned host',
       icon: <Users size={18} />,

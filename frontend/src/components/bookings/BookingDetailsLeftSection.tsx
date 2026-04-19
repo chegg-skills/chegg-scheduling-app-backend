@@ -5,7 +5,7 @@ import { getBookingMeetingJoinUrl } from './BookingDetailsPanel'
 import { InviteeSection } from './sections/InviteeSection'
 import { MeetingSection } from './sections/MeetingSection'
 import { ScheduleSection } from './sections/ScheduleSection'
-import { HostSection } from './sections/HostSection'
+import { CoachSection } from './sections/CoachSection'
 
 interface BookingDetailsLeftSectionProps {
   booking: Booking
@@ -29,7 +29,7 @@ export function BookingDetailsLeftSection({ booking }: BookingDetailsLeftSection
 
       <Divider flexItem sx={{ borderColor: alpha(theme.palette.secondary.main, 0.08) }} />
 
-      <HostSection booking={booking} />
+      <CoachSection booking={booking} />
     </Stack>
   )
 }

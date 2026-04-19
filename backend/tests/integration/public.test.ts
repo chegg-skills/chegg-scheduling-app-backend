@@ -49,24 +49,7 @@ beforeAll(async () => {
     });
   const offeringId = offeringRes.body.data.id;
 
-  // Create Interaction Type
-  const interactionRes = await request(app)
-    .post("/api/event-interaction-types")
-    .set("Authorization", `Bearer ${superAdminToken}`)
-    .send({
-      key: "one-to-one",
-      name: "One-to-One",
-      description: "Interaction type",
-      supportsRoundRobin: false,
-      supportsMultipleHosts: false,
-      minHosts: 1,
-      maxHosts: 1,
-      minParticipants: 1,
-      maxParticipants: 1,
-      sortOrder: 1,
-      isActive: true,
-    });
-  const interactionTypeId = interactionRes.body.data.id;
+  const interactionTypeId = "ONE_TO_ONE";
 
   const teamAdmin = await registerUser(superAdminToken, {
     firstName: "Team",
@@ -112,17 +95,17 @@ beforeAll(async () => {
       locationValue: "https://meet.example.com/session",
       isActive: true,
       offeringId,
-      interactionTypeId,
-      hostUserIds: [coachId],
+      interactionType: interactionTypeId,
+      coCoachUserIds: [coachId],
     });
 
   eventId = eventRes.body.data.id;
   eventSlug = eventRes.body.data.publicBookingSlug;
 
   await request(app)
-    .put(`/api/events/${eventId}/hosts`)
+    .put(`/api/events/${eventId}/coaches`)
     .set("Authorization", `Bearer ${superAdminToken}`)
-    .send({ hosts: [{ userId: coachId }] });
+    .send({ coaches: [{ userId: coachId }] });
 });
 
 afterAll(clearTables);

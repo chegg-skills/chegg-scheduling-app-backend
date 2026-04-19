@@ -71,25 +71,12 @@ beforeAll(async () => {
     },
   });
 
-  const interactionType = await prisma.eventInteractionType.create({
-    data: {
-      key: "students-interaction",
-      name: "Students Interaction",
-      supportsRoundRobin: false,
-      supportsMultipleHosts: false,
-      minHosts: 1,
-      maxHosts: 1,
-      createdById: admin.id,
-      updatedById: admin.id,
-    },
-  });
-
   const event = await prisma.event.create({
     data: {
       name: "Student History Session",
       teamId,
       offeringId: offering.id,
-      interactionTypeId: interactionType.id,
+      interactionType: "ONE_TO_ONE",
       assignmentStrategy: AssignmentStrategy.DIRECT,
       durationSeconds: 3600,
       locationType: EventLocationType.VIRTUAL,
@@ -97,10 +84,10 @@ beforeAll(async () => {
       createdById: coachId,
       updatedById: coachId,
       publicBookingSlug: "student-history-session-test",
-      hosts: {
+      coaches: {
         create: {
-          hostUserId: coachId,
-          hostOrder: 1,
+          coachUserId: coachId,
+          coachOrder: 1,
         },
       },
     },

@@ -6,13 +6,13 @@ type NotificationType =
   | "BOOKING_CONFIRMED"
   | "BOOKING_RESCHEDULED"
   | "COACH_BOOKING_ASSIGNED"
-  | "COACH_BOOKING_COHOST_ASSIGNED"
+  | "COACH_BOOKING_COCOACH_ASSIGNED"
   | "BOOKING_CANCELLED"
   | "BOOKING_NO_SHOW"
   | "COACH_BOOKING_CANCELLED"
-  | "COACH_BOOKING_COHOST_CANCELLED"
+  | "COACH_BOOKING_COCOACH_CANCELLED"
   | "COACH_BOOKING_NO_SHOW"
-  | "COACH_BOOKING_COHOST_NO_SHOW"
+  | "COACH_BOOKING_COCOACH_NO_SHOW"
   | "TEAM_BOOKING_CONFIRMED"
   | "TEAM_BOOKING_CANCELLED"
   | "TEAM_BOOKING_NO_SHOW"
@@ -20,7 +20,7 @@ type NotificationType =
   | "SESSION_REMINDER_1H"
   | "CANCEL_BOOKING_REMINDERS"
   | "TEAM_MEMBER_ADDED"
-  | "EVENT_HOST_ADDED"
+  | "EVENT_COACH_ADDED"
   | "AVAILABILITY_EXCEPTION_CREATED";
 
 type NotificationPayload = {
@@ -138,7 +138,7 @@ const publishNotificationSafely = async (payload: NotificationPayload): Promise<
 };
 const resolveFrontendUrl = (): string => {
   const rawUrl =
-    process.env.FRONTEND_URL ?? process.env.CLIENT_FRONTEND_URL ?? "http://localhost:5173";
+    process.env.FRONTEND_URL ?? process.env.CLIENT_FRONTEND_URL ?? "http://localcoach:5173";
 
   return rawUrl.replace(/\/$/, "");
 };

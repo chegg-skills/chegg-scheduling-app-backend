@@ -55,6 +55,7 @@ export function PublicBookingPage() {
     coachDetails,
     eventDetailsError,
   } = usePublicBookingState()
+
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
   const [bookError, setBookError] = useState<string | null>(null)

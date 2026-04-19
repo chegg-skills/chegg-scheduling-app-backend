@@ -10,7 +10,7 @@ export type EventSortKey =
   | 'event'
   | 'offering'
   | 'duration'
-  | 'hosts'
+  | 'coaches'
   | 'strategy'
   | 'status'
   | 'bookingLink'
@@ -19,7 +19,7 @@ export const eventSortAccessors: SortAccessorMap<Event, EventSortKey> = {
   event: (event) => event.name,
   offering: (event) => event.offering?.name ?? '',
   duration: (event) => event.durationSeconds,
-  hosts: (event) => event.hosts.length,
+  coaches: (event) => event.coaches.length,
   strategy: (event) => event.assignmentStrategy,
   status: (event) => event.isActive,
   bookingLink: () => '',
@@ -30,19 +30,19 @@ export const eventTableColumns: Array<{
   sortKey: EventSortKey
   tooltip?: string
 }> = [
-  { label: 'Event', sortKey: 'event' },
-  {
-    label: 'Event Category',
-    sortKey: 'offering',
-    tooltip: 'The category this event belongs to (e.g., Tutorial).',
-  },
-  { label: 'Duration', sortKey: 'duration' },
-  { label: 'Hosts', sortKey: 'hosts' },
-  {
-    label: 'Strategy',
-    sortKey: 'strategy',
-    tooltip: 'How hosts are assigned (Direct or Round Robin).',
-  },
-  { label: 'Status', sortKey: 'status' },
-  { label: 'Booking Link', sortKey: 'bookingLink' },
-]
+    { label: 'Event', sortKey: 'event' },
+    {
+      label: 'Event Category',
+      sortKey: 'offering',
+      tooltip: 'The category this event belongs to (e.g., Tutorial).',
+    },
+    { label: 'Duration', sortKey: 'duration' },
+    { label: 'Coaches', sortKey: 'coaches' },
+    {
+      label: 'Strategy',
+      sortKey: 'strategy',
+      tooltip: 'How coaches are assigned (Direct or Round Robin).',
+    },
+    { label: 'Status', sortKey: 'status' },
+    { label: 'Booking Link', sortKey: 'bookingLink' },
+  ]

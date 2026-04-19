@@ -12,7 +12,7 @@ type ListStudentsOptions = {
   search?: string;
   teamId?: string;
   eventId?: string;
-  hostUserId?: string;
+  coachUserId?: string;
 };
 
 type ListStudentBookingsOptions = {
@@ -34,7 +34,7 @@ const latestBookingInclude = Prisma.validator<Prisma.BookingInclude>()({
       publicBookingSlug: true,
     },
   },
-  host: {
+  coach: {
     select: {
       id: true,
       firstName: true,
@@ -99,7 +99,7 @@ const buildBookingAccessWhere = (caller: CallerContext): Prisma.BookingWhereInpu
     case UserRole.TEAM_ADMIN:
       return buildTeamAdminBookingScope(caller.id);
     case UserRole.COACH:
-      return { hostUserId: caller.id };
+      return { coachUserId: caller.id };
     default:
       return { id: "__forbidden__" };
   }
@@ -147,8 +147,8 @@ const buildStudentWhere = (
   if (options.eventId) {
     bookingFilters.eventId = options.eventId;
   }
-  if (options.hostUserId && caller.role !== UserRole.COACH) {
-    bookingFilters.hostUserId = options.hostUserId;
+  if (options.coachUserId && caller.role !== UserRole.COACH) {
+    bookingFilters.coachUserId = options.coachUserId;
   }
 
   if (Object.keys(bookingFilters).length > 0) {
@@ -171,7 +171,7 @@ const mapLatestBookingSummary = (
   status: string;
   team: { id: string; name: string };
   event: { id: string; name: string; publicBookingSlug: string };
-  host: {
+  coach: {
     id: string;
     firstName: string;
     lastName: string;
@@ -190,7 +190,7 @@ const mapLatestBookingSummary = (
     status: booking.status,
     team: booking.team,
     event: booking.event,
-    host: booking.host,
+    coach: booking.coach,
   };
 };
 

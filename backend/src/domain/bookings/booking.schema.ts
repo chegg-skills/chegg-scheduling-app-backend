@@ -18,7 +18,7 @@ export const CreateBookingSchema = {
       triedSolutions: z.string().trim().optional(),
       usedResources: z.string().trim().optional(),
       sessionObjectives: z.string().trim().optional(),
-      preferredHostId: z.string().uuid().optional(),
+      preferredCoachId: z.string().uuid().optional(),
     })
     .strip(),
 };
@@ -43,7 +43,7 @@ export const ListBookingsSchema = {
     .object({
       teamId: z.string().uuid("Invalid team ID").optional(),
       eventId: z.string().uuid("Invalid event ID").optional(),
-      hostUserId: z.string().uuid("Invalid host ID").optional(),
+      coachUserId: z.string().uuid("Invalid host ID").optional(),
       status: z.nativeEnum(BookingStatus).optional(),
       search: z.string().trim().optional(),
       startDate: z.string().datetime().optional(),

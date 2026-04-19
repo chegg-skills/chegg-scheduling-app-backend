@@ -77,25 +77,13 @@ beforeAll(async () => {
     },
   });
 
-  const interactionType = await prisma.eventInteractionType.create({
-    data: {
-      key: "stats_interaction",
-      name: "Stats Interaction",
-      supportsMultipleHosts: true,
-      supportsRoundRobin: true,
-      isActive: true,
-      createdById: superAdminId,
-      updatedById: superAdminId,
-    },
-  });
-
   const event = await prisma.event.create({
     data: {
       name: "Stats Event",
       description: "Event for stats tests",
       teamId: team.id,
       offeringId: offering.id,
-      interactionTypeId: interactionType.id,
+      interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       durationSeconds: 1800,
       locationType: "VIRTUAL",
@@ -107,10 +95,10 @@ beforeAll(async () => {
     },
   });
 
-  await prisma.eventHost.createMany({
+  await prisma.eventCoach.createMany({
     data: [
-      { eventId: event.id, hostUserId: coachId, hostOrder: 1, isActive: true },
-      { eventId: event.id, hostUserId: superAdminId, hostOrder: 2, isActive: true },
+      { eventId: event.id, coachUserId: coachId, coachOrder: 1, isActive: true },
+      { eventId: event.id, coachUserId: superAdminId, coachOrder: 2, isActive: true },
     ],
   });
 
@@ -121,7 +109,7 @@ beforeAll(async () => {
         studentEmail: "upcoming@student.com",
         teamId: team.id,
         eventId: event.id,
-        hostUserId: coachId,
+        coachUserId: coachId,
         startTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
         endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
         timezone: "UTC",
@@ -132,7 +120,7 @@ beforeAll(async () => {
         studentEmail: "completed@student.com",
         teamId: team.id,
         eventId: event.id,
-        hostUserId: superAdminId,
+        coachUserId: superAdminId,
         startTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         endTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
         timezone: "UTC",

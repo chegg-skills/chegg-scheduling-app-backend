@@ -36,8 +36,8 @@ export const getBooking = async (req: Request, res: Response) => {
   const booking = await BookingService.getBooking(bookingId);
 
   if (caller.role === UserRole.COACH) {
-    const isLead = booking.hostUserId === caller.id;
-    const isCoHost = ((booking as any).coHostUserIds || []).includes(caller.id);
+    const isLead = booking.coachUserId === caller.id;
+    const isCoHost = ((booking as any).coCoachUserIds || []).includes(caller.id);
 
     if (!isLead && !isCoHost) {
       throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking.");
@@ -52,7 +52,7 @@ export const listBookings = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
 
   if (caller.role === UserRole.COACH) {
-    filters.hostUserId = caller.id;
+    filters.coachUserId = caller.id;
   }
 
   const { bookings, totalCount } = await BookingService.listBookings(filters);
@@ -76,11 +76,11 @@ export const listBookings = async (req: Request, res: Response) => {
 export const updateBooking = async (req: Request, res: Response) => {
   const { bookingId } = req.params as any;
   const oldBooking = await BookingService.getBooking(bookingId);
-  const { status, coHostUserIds } = req.body;
+  const { status, coCoachUserIds } = req.body;
 
   const booking = await BookingService.updateBooking(bookingId, {
     status,
-    coHostUserIds,
+    coCoachUserIds,
   });
 
   if (status && status !== oldBooking.status) {

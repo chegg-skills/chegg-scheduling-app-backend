@@ -1,3 +1,3 @@
 export interface BookingViewContextValue {
-  onViewHost?: (userId: string) => void
+  onViewCoach?: (userId: string) => void
 }

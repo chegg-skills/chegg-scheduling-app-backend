@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventsApi, type ListEventsParams } from '@/api/events'
-import type { CreateEventDto, UpdateEventDto, SetEventHostsDto } from '@/types'
+import type { CreateEventDto, UpdateEventDto, SetEventCoachesDto } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
@@ -10,7 +10,7 @@ export const eventKeys = {
   byTeam: (teamId: string, params?: ListEventsParams) =>
     [...eventKeys.all, 'team', teamId, params] as const,
   detail: (id: string) => [...eventKeys.all, 'detail', id] as const,
-  hosts: (id: string) => [...eventKeys.all, 'hosts', id] as const,
+  coaches: (id: string) => [...eventKeys.all, 'coaches', id] as const,
   scheduleSlots: (id: string) => [...eventKeys.all, 'schedule-slots', id] as const,
 }
 
@@ -107,28 +107,28 @@ export function useDuplicateEvent() {
   })
 }
 
-export function useEventHosts(eventId: string) {
+export function useEventCoaches(eventId: string) {
   return useQuery({
-    queryKey: eventKeys.hosts(eventId),
-    queryFn: ({ signal }) => eventsApi.listHosts(eventId, signal).then((r) => r.data.data),
+    queryKey: eventKeys.coaches(eventId),
+    queryFn: ({ signal }) => eventsApi.listCoaches(eventId, signal).then((r) => r.data.data),
     enabled: !!eventId,
   })
 }
 
-export function useSetEventHosts(eventId: string) {
+export function useSetEventCoaches(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: SetEventHostsDto) => eventsApi.setHosts(eventId, data),
+    mutationFn: (data: SetEventCoachesDto) => eventsApi.setCoaches(eventId, data),
     onSuccess: () =>
-      invalidateQueryKeys(qc, [eventKeys.hosts(eventId), eventKeys.detail(eventId), statsKeys.all]),
+      invalidateQueryKeys(qc, [eventKeys.coaches(eventId), eventKeys.detail(eventId), statsKeys.all]),
   })
 }
 
-export function useRemoveEventHost(eventId: string) {
+export function useRemoveEventCoach(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (userId: string) => eventsApi.removeHost(eventId, userId),
+    mutationFn: (userId: string) => eventsApi.removeCoach(eventId, userId),
     onSuccess: () =>
-      invalidateQueryKeys(qc, [eventKeys.hosts(eventId), eventKeys.detail(eventId), statsKeys.all]),
+      invalidateQueryKeys(qc, [eventKeys.coaches(eventId), eventKeys.detail(eventId), statsKeys.all]),
   })
 }

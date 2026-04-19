@@ -174,9 +174,9 @@ const removeTeamMember = async (
     );
   }
 
-  const activeHostAssignments = await prisma.eventHost.count({
+  const activeHostAssignments = await prisma.eventCoach.count({
     where: {
-      hostUserId: userId,
+      coachUserId: userId,
       isActive: true,
       event: {
         teamId,

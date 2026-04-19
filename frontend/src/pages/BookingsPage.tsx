@@ -68,7 +68,7 @@ export function BookingsPage() {
   const { data, isLoading, error } = useBookings(serverFilters)
 
   const bookings = useMemo(() => data?.bookings ?? [], [data?.bookings])
-  const bookingViewValue = useMemo(() => ({ onViewHost: setViewingUserId }), [])
+  const bookingViewValue = useMemo(() => ({ onViewCoach: setViewingUserId }), [])
   const pagination = data?.pagination
 
   const filteredBookings = useMemo(() => {
@@ -163,164 +163,164 @@ export function BookingsPage() {
       />
 
       <BookingViewProvider value={bookingViewValue}>
-      <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <StatsOverview
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-          timeframeInfo={bookingStats?.timeframe}
-          items={bookingStatItems}
-          isLoading={statsLoading}
-        />
+        <Box sx={{ px: { xs: 2.5, md: 4 } }}>
+          <StatsOverview
+            timeframe={timeframe}
+            onTimeframeChange={setTimeframe}
+            timeframeInfo={bookingStats?.timeframe}
+            items={bookingStatItems}
+            isLoading={statsLoading}
+          />
 
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            mt: 4,
-            mb: 3,
-          }}
-        >
-          <Tabs
-            value={statusFilter}
-            onChange={handleTabChange}
-            aria-label="booking filters"
+          <Box
             sx={{
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                minHeight: 48,
-              },
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              mt: 4,
+              mb: 3,
             }}
           >
-            <Tab
-              label="Upcoming"
-              value="UPCOMING"
-              icon={<Clock3 size={18} />}
-              iconPosition="start"
-            />
-            <Tab label="All" value="ALL" icon={<CalendarDays size={18} />} iconPosition="start" />
-            <Tab label="Cancelled" value="CANCELLED" icon={<X size={18} />} iconPosition="start" />
-            <Tab
-              label="Completed"
-              value="COMPLETED"
-              icon={<CheckCircle2 size={18} />}
-              iconPosition="start"
-            />
-          </Tabs>
-
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_, next) => next && setViewMode(next)}
-              size="small"
+            <Tabs
+              value={statusFilter}
+              onChange={handleTabChange}
+              aria-label="booking filters"
               sx={{
-                bgcolor: 'background.paper',
-                '& .MuiToggleButton-root': {
-                  px: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
+                '& .MuiTab-root': {
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: '0.8125rem',
-                  '&.Mui-selected': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                    color: 'primary.main',
-                    '&:hover': {
-                      bgcolor: alpha(theme.palette.primary.main, 0.12),
-                    },
-                  },
+                  fontSize: '0.875rem',
+                  minHeight: 48,
                 },
               }}
             >
-              <ToggleButton value="list">
-                <LayoutList size={16} style={{ marginRight: 8 }} />
-                List
-              </ToggleButton>
-              <ToggleButton value="calendar">
-                <CalendarIcon size={16} style={{ marginRight: 8 }} />
-                Calendar
-              </ToggleButton>
-            </ToggleButtonGroup>
+              <Tab
+                label="Upcoming"
+                value="UPCOMING"
+                icon={<Clock3 size={18} />}
+                iconPosition="start"
+              />
+              <Tab label="All" value="ALL" icon={<CalendarDays size={18} />} iconPosition="start" />
+              <Tab label="Cancelled" value="CANCELLED" icon={<X size={18} />} iconPosition="start" />
+              <Tab
+                label="Completed"
+                value="COMPLETED"
+                icon={<CheckCircle2 size={18} />}
+                iconPosition="start"
+              />
+            </Tabs>
 
-            <Badge
-              badgeContent={activeFilterCount}
-              color="primary"
-              variant="dot"
-              invisible={activeFilterCount === 0}
-            >
-              <MuiButton
-                startIcon={<SlidersHorizontal size={18} />}
-                onClick={() => setIsFilterDialogOpen(true)}
-                variant="outlined"
-                color="inherit"
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <ToggleButtonGroup
+                value={viewMode}
+                exclusive
+                onChange={(_, next) => next && setViewMode(next)}
+                size="small"
                 sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  borderColor: 'divider',
-                  fontWeight: 600,
-                  height: 40,
-                  minHeight: 40,
-                  maxHeight: 40,
+                  bgcolor: 'background.paper',
+                  '& .MuiToggleButton-root': {
+                    px: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.8125rem',
+                    '&.Mui-selected': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.12),
+                      },
+                    },
+                  },
                 }}
               >
-                Filter
-              </MuiButton>
-            </Badge>
-          </Box>
-        </Box>
+                <ToggleButton value="list">
+                  <LayoutList size={16} style={{ marginRight: 8 }} />
+                  List
+                </ToggleButton>
+                <ToggleButton value="calendar">
+                  <CalendarIcon size={16} style={{ marginRight: 8 }} />
+                  Calendar
+                </ToggleButton>
+              </ToggleButtonGroup>
 
-        <BookingFilterDialog
-          open={isFilterDialogOpen}
-          onClose={() => setIsFilterDialogOpen(false)}
-          filters={advancedFilters}
-          onFilterChange={handleFilterChange}
-          onRangeChange={(start, end) => {
-            setAdvancedFilters((prev) => ({ ...prev, startDate: start, endDate: end }))
-          }}
-          onReset={handleResetFilters}
-        />
-
-        {isLoading && bookings.length === 0 ? (
-          <PageSpinner />
-        ) : error ? (
-          <ErrorAlert message="Failed to load bookings. Please try again." />
-        ) : (
-          <Box>
-            <Box
-              sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <Typography variant="subtitle2" color="text.secondary">
-                Showing {pagination?.total ?? filteredBookings.length} bookings
-              </Typography>
+              <Badge
+                badgeContent={activeFilterCount}
+                color="primary"
+                variant="dot"
+                invisible={activeFilterCount === 0}
+              >
+                <MuiButton
+                  startIcon={<SlidersHorizontal size={18} />}
+                  onClick={() => setIsFilterDialogOpen(true)}
+                  variant="outlined"
+                  color="inherit"
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    borderColor: 'divider',
+                    fontWeight: 600,
+                    height: 40,
+                    minHeight: 40,
+                    maxHeight: 40,
+                  }}
+                >
+                  Filter
+                </MuiButton>
+              </Badge>
             </Box>
-
-            {viewMode === 'list' ? (
-              <BookingTable
-                bookings={filteredBookings}
-                pagination={pagination}
-                onPageChange={onPageChange}
-                onRowsPerPageChange={onRowsPerPageChange}
-              />
-            ) : (
-              <BookingCalendar bookings={filteredBookings} onViewDetail={setSelectedBooking} />
-            )}
           </Box>
-        )}
 
-        <BookingDetailModal
-          booking={selectedBooking}
-          onClose={() => setSelectedBooking(null)}
-        />
+          <BookingFilterDialog
+            open={isFilterDialogOpen}
+            onClose={() => setIsFilterDialogOpen(false)}
+            filters={advancedFilters}
+            onFilterChange={handleFilterChange}
+            onRangeChange={(start, end) => {
+              setAdvancedFilters((prev) => ({ ...prev, startDate: start, endDate: end }))
+            }}
+            onReset={handleResetFilters}
+          />
 
-        {viewingUserId && (
-          <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
-        )}
-      </Box>
+          {isLoading && bookings.length === 0 ? (
+            <PageSpinner />
+          ) : error ? (
+            <ErrorAlert message="Failed to load bookings. Please try again." />
+          ) : (
+            <Box>
+              <Box
+                sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <Typography variant="subtitle2" color="text.secondary">
+                  Showing {pagination?.total ?? filteredBookings.length} bookings
+                </Typography>
+              </Box>
+
+              {viewMode === 'list' ? (
+                <BookingTable
+                  bookings={filteredBookings}
+                  pagination={pagination}
+                  onPageChange={onPageChange}
+                  onRowsPerPageChange={onRowsPerPageChange}
+                />
+              ) : (
+                <BookingCalendar bookings={filteredBookings} onViewDetail={setSelectedBooking} />
+              )}
+            </Box>
+          )}
+
+          <BookingDetailModal
+            booking={selectedBooking}
+            onClose={() => setSelectedBooking(null)}
+          />
+
+          {viewingUserId && (
+            <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
+          )}
+        </Box>
       </BookingViewProvider>
     </Box>
   )

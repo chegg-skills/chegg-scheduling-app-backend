@@ -40,10 +40,10 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
     onSubmit,
     isPending,
     error,
-    selectedInteractionType,
+    caps,
     selectedAssignmentStrategy,
     bookingModeSelection,
-    requiredHostCount,
+    requiredCoachCount,
     isEdit,
   } = useEventForm({ teamId, event, onSuccess })
 
@@ -82,23 +82,19 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
 
           <Stack spacing={2}>
             <Typography {...sectionLabelStyle}>Schedule & assignment</Typography>
-            <EventScheduleFields
-              selectedInteractionType={selectedInteractionType}
-              event={event}
-              teamMembers={teamMembers}
-            />
+            <EventScheduleFields caps={caps} event={event} teamMembers={teamMembers} />
           </Stack>
 
           <Divider />
 
           <Stack spacing={2}>
             <Typography {...sectionLabelStyle}>Booking rules & policy</Typography>
-            <EventSchedulingPolicyFields selectedInteractionType={selectedInteractionType} />
+            <EventSchedulingPolicyFields caps={caps} />
           </Stack>
 
           <EventAssignmentAlert
-            selectedInteractionType={selectedInteractionType}
-            requiredHostCount={requiredHostCount}
+            caps={caps}
+            requiredCoachCount={requiredCoachCount}
             selectedAssignmentStrategy={selectedAssignmentStrategy}
             bookingModeSelection={bookingModeSelection}
           />
