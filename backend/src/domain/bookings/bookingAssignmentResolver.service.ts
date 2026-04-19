@@ -7,6 +7,8 @@ import {
   type AssignmentContext,
   getAssignmentStrategy,
   type CoachCandidate,
+  getRoutingState,
+  updateRoutingState,
 } from "./assignment.service";
 import type { BookableEvent } from "./booking.shared";
 
@@ -231,17 +233,36 @@ const resolveCollaborativeCoHosts = async ({
   leadCoachId: string;
 }): Promise<string[]> => {
   const candidatesCount = activeCoaches.length;
-  const leadIndex = activeCoaches.findIndex((c) => c.coachUserId === leadCoachId);
+  if (candidatesCount <= 1) return [];
+
+  const routingState = await getRoutingState(tx, event.id);
+  const sortedCandidates = [...activeCoaches].sort((a, b) => a.coachOrder - b.coachOrder);
+  const maxOrder = Math.max(...sortedCandidates.map((c) => c.coachOrder));
+
+  // Determine where to start searching based on the nextCoachOrder cursor
+  let startIndex = sortedCandidates.findIndex((c) => c.coachOrder >= routingState.nextCoachOrder);
+  if (startIndex === -1) startIndex = 0;
 
   const availableCoHosts: string[] = [];
   const targetCount = (event as any).targetCoHostCount ?? null;
 
-  // Search for co-hosts starting from the coach immediately following the lead in the pool.
-  // This ensures fair workload distribution regardless of the leadership strategy.
-  for (let i = 1; i < candidatesCount; i++) {
-    const index = (leadIndex + i) % candidatesCount;
-    const candidate = activeCoaches[index];
+  const context = buildAssignmentContext({
+    event,
+    start,
+    end,
+    allowSharedSessionOverlap,
+    matchedScheduleSlotId,
+    tx,
+  });
 
+  for (let i = 0; i < candidatesCount; i++) {
+    const index = (startIndex + i) % candidatesCount;
+    const candidate = sortedCandidates[index];
+
+    // Skip the lead coach
+    if (candidate.coachUserId === leadCoachId) continue;
+
+    // Check if we already have enough co-hosts
     if (targetCount !== null && availableCoHosts.length >= targetCount) break;
 
     const isAvailable = await isCoachAvailable(
@@ -253,11 +274,12 @@ const resolveCollaborativeCoHosts = async ({
 
     if (isAvailable) {
       availableCoHosts.push(candidate.coachUserId);
+      // Advance the core rotation cursor every time a co-host is assigned
+      await updateRoutingState(context, candidate.coachOrder, maxOrder);
     }
   }
 
-  // Graceful degradation: the session proceeds with just the lead coach when no co-hosts are
-  // free. Log a warning so operations teams can detect recurring degradation patterns.
+  // Graceful degradation logic remains unchanged...
   const coHostPoolSize = candidatesCount - 1;
   if (coHostPoolSize > 0 && availableCoHosts.length === 0) {
     console.warn(

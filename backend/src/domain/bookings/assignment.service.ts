@@ -64,7 +64,18 @@ const toAssignmentResult = (candidate: CoachCandidate): AssignmentResult => ({
   meetingJoinUrl: candidate.coachUser.zoomIsvLink,
 });
 
-const updateRoutingState = async (
+export const getRoutingState = async (
+  prisma: Prisma.TransactionClient | PrismaClient,
+  eventId: string,
+) => {
+  return (
+    (await prisma.eventRoutingState.findUnique({
+      where: { eventId },
+    })) || { nextCoachOrder: 1 }
+  );
+};
+
+export const updateRoutingState = async (
   context: AssignmentContext,
   currentCoachOrder: number,
   maxOrder: number,
@@ -109,9 +120,7 @@ export class RoundRobinAssignmentStrategy implements IAssignmentStrategy {
   ): Promise<AssignmentResult> {
     ensureCandidatesExist(candidates);
 
-    const routingState = (await context.prisma.eventRoutingState.findUnique({
-      where: { eventId: context.eventId },
-    })) || { nextCoachOrder: 1 };
+    const routingState = await getRoutingState(context.prisma, context.eventId);
 
     const sortedCandidates = [...candidates].sort((a, b) => a.coachOrder - b.coachOrder);
     const maxOrder = Math.max(...sortedCandidates.map((c) => c.coachOrder));
