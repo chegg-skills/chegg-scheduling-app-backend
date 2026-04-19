@@ -35,7 +35,7 @@ export function getDefaultEventAssignmentStrategy(
 }
 
 export function getRequiredEventCoachCount(
-  caps: InteractionTypeCaps | null | undefined,
+  _caps: InteractionTypeCaps | null | undefined,
   assignmentStrategy?: AssignmentStrategy | null
 ): number {
   const roundRobinMinimum = assignmentStrategy === 'ROUND_ROBIN' ? 2 : 1
