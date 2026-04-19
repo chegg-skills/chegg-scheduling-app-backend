@@ -12,7 +12,8 @@ import MenuItem from '@mui/material/MenuItem'
 import { Select } from '@/components/shared/form/Select'
 import Avatar from '@mui/material/Avatar'
 import { isWeekdayAllowed, formatAllowedWeekdays } from '../form/eventCapabilityRules'
-import type { Event, EventScheduleSlot, TeamMember } from '@/types'
+import type { Event, EventScheduleSlot, TeamMember, InteractionType } from '@/types'
+import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 
 interface UpsertScheduleSlotDialogProps {
   isOpen: boolean
@@ -35,6 +36,8 @@ export function UpsertScheduleSlotDialog({
 }: UpsertScheduleSlotDialogProps) {
   const allowedDays = useMemo(() => event.allowedWeekdays ?? [], [event.allowedWeekdays])
   const mode = slot ? 'Edit' : 'Add'
+  const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
+  const supportsMultipleParticipants = caps.multipleParticipants
 
   // Local state for the form
   const [newSlotDate, setNewSlotDate] = useState('')
@@ -88,7 +91,7 @@ export function UpsertScheduleSlotDialog({
     onSave({
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
-      capacity: newSlotCapacity === '' ? null : newSlotCapacity,
+      capacity: !supportsMultipleParticipants ? 1 : (newSlotCapacity === '' ? null : newSlotCapacity),
       assignedCoachId,
     })
   }
@@ -110,20 +113,22 @@ export function UpsertScheduleSlotDialog({
           />
         </FormField>
 
-        <FormField
-          label="Capacity Override (Optional)"
-          htmlFor="slot-capacity"
-          info="Leave empty to use the default event capacity."
-        >
-          <Input
-            id="slot-capacity"
-            type="number"
-            min="1"
-            value={newSlotCapacity}
-            onChange={(e) => setNewSlotCapacity(e.target.value ? Number(e.target.value) : '')}
-            placeholder="e.g. 20"
-          />
-        </FormField>
+        {supportsMultipleParticipants && (
+          <FormField
+            label="Capacity Override (Optional)"
+            htmlFor="slot-capacity"
+            info="Leave empty to use the default event capacity."
+          >
+            <Input
+              id="slot-capacity"
+              type="number"
+              min="1"
+              value={newSlotCapacity}
+              onChange={(e) => setNewSlotCapacity(e.target.value ? Number(e.target.value) : '')}
+              placeholder="e.g. 20"
+            />
+          </FormField>
+        )}
 
         {error && (
           <Alert severity="warning" sx={{ mb: 1 }}>

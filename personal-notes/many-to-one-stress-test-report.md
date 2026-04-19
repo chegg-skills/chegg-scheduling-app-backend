@@ -45,26 +45,5 @@ The system successfully blocked 8 bookings scheduled for Saturday, May 16th, cor
 
 ---
 
-## Stress Test Results: Run #2 - ROUND ROBIN (Created: 2026-04-19)
-
-### Configuration
-- **Strategy:** Round-Robin
-- **Booking Mode:** Fixed Slots (Back-to-back)
-- **Success Rate:** 95% (19/20)
-
-### Execution Data (Highlights)
-
-| # | Student | Lead Coach | Co-hosts | Observations |
-|---|---|---|---|---|
-| 1 | Student V2-1 | Noah APIs | Ava, Liam | Success (Full Panel) |
-| 2 | Student V2-2 | Ethan Engineer | [] | Graceful Degradation |
-| 3 | Student V2-3 | Noah APIs | Ava, Liam | Success (Full Panel) |
-
-### Analysis: Graceful Degradation findings
-This run revealed a powerful "Safety Valve" in the Many-to-One logic:
-1. **Conflict Awareness:** Because slots were scheduled back-to-back (10:00, 11:00) and the event has a **15-minute buffer**, coaches assigned to Slot #1 were still "busy" when Slot #2 started.
-2. **The Logic:** Instead of failing requested bookings, the system automatically rotated the Lead to an available coach and allowed the session to proceed with the Lead only if co-hosts were busy.
-3. **Outcome:** 19/20 students booked successfully.
-
 ## ✅ Final Conclusion
-The Many-to-One interaction is production-ready. It balances **Fairness** (Round-Robin) with **Reliability** (Graceful Degradation), ensuring that panel interviews proceed even under tight scheduling constraints.
+The `MANY_TO_ONE` interaction is stable and correctly resolves multiple coaches per session. While co-host rotation is not "fair" (distributed equally) in the current implementation—it is "deterministic" (predictable based on pool order)—it is functionally correct and reliable for production panel interviews.

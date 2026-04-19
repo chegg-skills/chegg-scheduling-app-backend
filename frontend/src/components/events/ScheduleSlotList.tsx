@@ -11,7 +11,8 @@ import { Edit, Trash2, User } from 'lucide-react'
 import Avatar from '@mui/material/Avatar'
 import { Stack, Typography } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
-import type { EventScheduleSlot, Event } from '@/types'
+import type { EventScheduleSlot, Event, InteractionType } from '@/types'
+import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 
 interface ScheduleSlotListProps {
   slots: EventScheduleSlot[]
@@ -64,7 +65,10 @@ export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlo
             )}`
 
             const bookingCount = slot._count?.bookings ?? 0
-            const effectiveCapacity = slot.capacity ?? event.maxParticipantCount
+            const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
+            const effectiveCapacity = caps.multipleParticipants
+              ? slot.capacity ?? event.maxParticipantCount
+              : 1
             const isFull = effectiveCapacity !== null && bookingCount >= effectiveCapacity
             const canDelete = bookingCount === 0
 

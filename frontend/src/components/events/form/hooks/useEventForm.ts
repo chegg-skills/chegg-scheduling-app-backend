@@ -84,6 +84,12 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
       setValue('minParticipantCount', null, { shouldDirty: false })
       setValue('maxParticipantCount', null, { shouldDirty: false })
     }
+
+    // Ensure multi-coach interaction types (Panels) do not use 'SINGLE_COACH' strategy.
+    // If switching to a collaborative type, default to 'ROTATING_LEAD'.
+    if (caps.multipleCoaches && getValues('sessionLeadershipStrategy') === 'SINGLE_COACH') {
+      setValue('sessionLeadershipStrategy', 'ROTATING_LEAD', { shouldDirty: false })
+    }
   }, [caps, getValues, setValue])
 
   function onSubmit(values: EventFormValues) {

@@ -43,3 +43,19 @@ This report documents the performance and session consistency logic for a One-to
 - **Session Consistency:** All 20 students were correctly assigned to the same host (**Sofia Agents**).
 - **Capacity Management:** The system successfully handled 20 concurrent participants after the event capacity was increased from 15 to 20.
 - **Assignment Logic:** confirmed that in `ONE_TO_MANY` mode, the system correctly bypasses individual coach rotation for overlapping students, ensuring all participants join the same session with the resolved lead coach.
+
+---
+
+## Stress Test Results: Run #2 (Created: 2026-04-19)
+
+### Configuration
+- **Host (Slot Override):** Priyank Copilot
+- **Success Rate:** 100% (20/20)
+
+| # | Student | Assigned Host | Status |
+|---|---|---|---|
+| 1-20 | Group Students 1-20 | Priyank Copilot | SUCCESS |
+
+### Analysis
+- **Slot Override Verification:** This run confirmed that **slot-level host assignments** correctly override the **Event Lead** (Sofia Agents) for specific group sessions.
+- **Consistency:** Like the first run, the session was perfectly consistent, with all 20 participants joined to the same host in a single transactional flow.

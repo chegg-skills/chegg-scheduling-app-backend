@@ -39,7 +39,12 @@ const resolveEventSchedulingConfig = (
   payload: CreateEventInput | UpdateEventInput,
   existing?: SafeEvent,
 ) => {
-  return {
+  const interactionType = (payload.interactionType ??
+    existing?.interactionType) as InteractionType | null;
+
+  const caps = interactionType ? INTERACTION_TYPE_CAPS[interactionType] : null;
+
+  const config = {
     bookingMode:
       (payload.bookingMode as EventBookingMode) ??
       existing?.bookingMode ??
@@ -50,6 +55,14 @@ const resolveEventSchedulingConfig = (
     maxParticipantCount: payload.maxParticipantCount ?? existing?.maxParticipantCount ?? null,
     bufferAfterMinutes: payload.bufferAfterMinutes ?? existing?.bufferAfterMinutes ?? 0,
   };
+
+  // Enforce single-participant rule for OTO / MTO interaction types
+  if (caps && !caps.multipleParticipants) {
+    config.minParticipantCount = 1;
+    config.maxParticipantCount = 1;
+  }
+
+  return config;
 };
 
 const assertBookingNoticeSatisfied = (minimumNoticeMinutes: number, bookingStartTime: Date) => {

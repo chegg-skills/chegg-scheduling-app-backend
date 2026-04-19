@@ -218,9 +218,11 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
               hasError={!!errors.sessionLeadershipStrategy}
               {...register('sessionLeadershipStrategy')}
             >
-              <MenuItem value="SINGLE_COACH">
-                Single coach — only one coach joins (traditional)
-              </MenuItem>
+              {!caps?.multipleCoaches && (
+                <MenuItem value="SINGLE_COACH">
+                  Single coach — only one coach joins (traditional)
+                </MenuItem>
+              )}
               <MenuItem value="ROTATING_LEAD">
                 Rotating lead — round-robin lead, others as co-coaches
               </MenuItem>
