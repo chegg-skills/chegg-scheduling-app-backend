@@ -75,20 +75,22 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     }
   }
 
-  // Specific constraints for ONE_TO_MANY
-  if (data.interactionType === "ONE_TO_MANY") {
+  // Single-coach group sessions (!multipleCoaches && multipleParticipants) must use
+  // DIRECT assignment and FIXED_SLOTS booking mode. This applies to ONE_TO_MANY and any
+  // future type with the same capability profile.
+  if (caps && !caps.multipleCoaches && caps.multipleParticipants) {
     if (data.assignmentStrategy && data.assignmentStrategy !== AssignmentStrategy.DIRECT) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["assignmentStrategy"],
-        message: "ONE_TO_MANY interactions only support DIRECT assignment strategy.",
+        message: "Single-coach group sessions only support DIRECT assignment strategy.",
       });
     }
     if (data.bookingMode && data.bookingMode !== EventBookingMode.FIXED_SLOTS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["bookingMode"],
-        message: "ONE_TO_MANY interactions must use FIXED_SLOTS booking mode.",
+        message: "Single-coach group sessions must use FIXED_SLOTS booking mode.",
       });
     }
   }
@@ -121,6 +123,15 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
       code: z.ZodIssueCode.custom,
       path: ["maxCoachCount"],
       message: "maxCoachCount cannot be less than minCoachCount.",
+    });
+  }
+
+  // targetCoHostCount must be at least 1 when specified for multi-coach types
+  if (caps && caps.multipleCoaches && data.targetCoHostCount != null && data.targetCoHostCount < 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["targetCoHostCount"],
+      message: "targetCoHostCount must be at least 1.",
     });
   }
 };

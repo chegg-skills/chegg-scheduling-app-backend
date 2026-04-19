@@ -274,11 +274,9 @@ const resolveCollaborativeCoHosts = async ({
 
     if (isAvailable) {
       availableCoHosts.push(candidate.coachUserId);
-      // Advance the core rotation cursor only for Round-Robin sessions.
-      // Direct sessions keep the co-host panel consistent.
-      if (event.assignmentStrategy === 'ROUND_ROBIN') {
-        await updateRoutingState(context, candidate.coachOrder, maxOrder);
-      }
+      // Advance the core rotation cursor every time a co-host is assigned.
+      // This ensures fair workload distribution even if the Lead is fixed.
+      await updateRoutingState(context, candidate.coachOrder, maxOrder);
     }
   }
 
@@ -327,7 +325,7 @@ export const resolveBookingCoachSelection = async (
     }
   }
 
-  if (event.sessionLeadershipStrategy === ("SINGLE_COACH" as any) || event.sessionLeadershipStrategy === "SINGLE_HOST") {
+  if (event.sessionLeadershipStrategy === SessionLeadershipStrategy.SINGLE_COACH || event.sessionLeadershipStrategy === "SINGLE_HOST") {
     // 2. If we have a matched schedule slot with an assigned coach, override everything else
     if (input.matchedScheduleSlotId) {
       const slot = await tx.eventScheduleSlot.findUnique({

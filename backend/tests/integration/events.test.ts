@@ -303,12 +303,14 @@ describe("Event CRUD routes", () => {
       offeringId: offering.body.data.id,
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: undefined,
+      bookingMode: "FIXED_SLOTS",
       minParticipantCount: 2,
       maxParticipantCount: 8,
     });
 
     expect(res.status).toBe(201);
     expect(res.body.data.assignmentStrategy).toBe("DIRECT");
+    expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
     expect(res.body.data.minParticipantCount).toBe(2);
     expect(res.body.data.maxParticipantCount).toBe(8);
   });
@@ -564,13 +566,13 @@ describe("Event scheduling routes", () => {
       .patch(`/api/events/${created.body.data.id}`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
-        bookingMode: "HOST_AVAILABILITY",
         allowedWeekdays: [],
         minimumNoticeMinutes: 60,
       });
 
+    // ONE_TO_MANY events are permanently locked to FIXED_SLOTS — bookingMode cannot be changed.
     expect(updated.status).toBe(200);
-    expect(updated.body.data.bookingMode).toBe("HOST_AVAILABILITY");
+    expect(updated.body.data.bookingMode).toBe("FIXED_SLOTS");
     expect(updated.body.data.allowedWeekdays).toEqual([]);
     expect(updated.body.data.minimumNoticeMinutes).toBe(60);
   });
@@ -802,14 +804,17 @@ describe("Event coach routes", () => {
 
   it("rejects updating strategy to ROUND_ROBIN if event has fewer than two coaches", async () => {
     const offering = await createOffering(context.superAdminToken);
+    // MANY_TO_ONE + DIRECT → FIXED_LEAD leadership, which requires a fixedLeadCoachId
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       offeringId: offering.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
+      fixedLeadCoachId: context.coachOneId,
     });
     const eventId = event.body.data.id as string;
 
-    // Add only one coach
+    // Replace coaches with only one coach (the fixed lead is auto-added on create;
+    // the PUT replaces the list so the count stays at one)
     await request(app)
       .put(`/api/events/${eventId}/coaches`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
@@ -826,6 +831,6 @@ describe("Event coach routes", () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two coaches/i);
+    expect(res.body.message).toMatch(/ROUND_ROBIN assignment requires at least 2 coaches/i);
   });
 });

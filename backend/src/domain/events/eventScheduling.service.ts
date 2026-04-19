@@ -54,7 +54,6 @@ const resolveEventSchedulingConfig = (
     minParticipantCount: payload.minParticipantCount ?? existing?.minParticipantCount ?? null,
     maxParticipantCount: payload.maxParticipantCount ?? existing?.maxParticipantCount ?? null,
     bufferAfterMinutes: payload.bufferAfterMinutes ?? existing?.bufferAfterMinutes ?? 0,
-    sessionLeadershipStrategy: payload.sessionLeadershipStrategy ?? existing?.sessionLeadershipStrategy ?? null,
   };
 
   // Enforce single-participant rule for OTO / MTO interaction types
@@ -66,15 +65,6 @@ const resolveEventSchedulingConfig = (
   // Enforce Fixed-Slot mode for all group session interaction types (ONE_TO_MANY / MANY_TO_MANY)
   if (caps && caps.multipleParticipants) {
     config.bookingMode = EventBookingMode.FIXED_SLOTS;
-  }
-
-  // Enforce Multi-coach Strategy Reform (MTO / MTM)
-  const isMultiCoachReform =
-    interactionType === 'MANY_TO_ONE' || interactionType === 'MANY_TO_MANY';
-  if (isMultiCoachReform) {
-    const strategy = payload.assignmentStrategy ?? existing?.assignmentStrategy;
-    config.sessionLeadershipStrategy =
-      strategy === 'DIRECT' ? 'FIXED_LEAD' : 'ROTATING_LEAD';
   }
 
   return config;

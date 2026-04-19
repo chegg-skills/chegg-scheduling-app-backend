@@ -28,10 +28,12 @@ const resolveSessionLeadershipConfig = ({
   interactionType,
   existingEvent,
   payload,
+  assignmentStrategy,
 }: {
   interactionType: InteractionType;
   existingEvent?: SafeEvent;
   payload: Pick<UpdateEventInput, "sessionLeadershipStrategy" | "fixedLeadCoachId">;
+  assignmentStrategy: AssignmentStrategy;
 }): Pick<ResolvedEventMutationContext, "sessionLeadershipStrategy" | "fixedLeadCoachId"> => {
   const caps = INTERACTION_TYPE_CAPS[interactionType];
 
@@ -50,6 +52,15 @@ const resolveSessionLeadershipConfig = ({
     if (isValidSessionLeadershipStrategy(payload.sessionLeadershipStrategy)) {
       strategy = payload.sessionLeadershipStrategy;
     }
+  }
+
+  // 4. Leadership Reform — always applied last for types that auto-derive leadership
+  //    from assignment strategy (MANY_TO_ONE / MANY_TO_MANY). Cannot be overridden by
+  //    user input; the assignmentStrategy is the single source of truth for these types.
+  if (caps.derivesLeadershipFromAssignment) {
+    strategy = assignmentStrategy === AssignmentStrategy.DIRECT
+      ? SessionLeadershipStrategy.FIXED_LEAD
+      : SessionLeadershipStrategy.ROTATING_LEAD;
   }
 
   // --- Same logic for the Lead Coach ---
@@ -77,6 +88,7 @@ export const resolveCreateEventContext = async (
   const { sessionLeadershipStrategy, fixedLeadCoachId } = resolveSessionLeadershipConfig({
     interactionType,
     payload: validated,
+    assignmentStrategy,
   });
 
   validateEventConfiguration({
@@ -120,6 +132,7 @@ export const resolveUpdateEventContext = async ({
     interactionType: nextInteractionType,
     existingEvent,
     payload: validated,
+    assignmentStrategy,
   });
 
   validateEventConfiguration({

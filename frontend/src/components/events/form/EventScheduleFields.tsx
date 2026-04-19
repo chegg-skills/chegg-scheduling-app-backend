@@ -206,7 +206,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
       {/* Multi-coach-specific: leadership strategy + co-host count */}
       {caps?.multipleCoaches && (
         <Stack spacing={2}>
-          {!['MANY_TO_ONE', 'MANY_TO_MANY'].includes(watch('interactionType') || '') && (
+          {!caps?.derivesLeadershipFromAssignment && (
             <FormField
               label="Leadership strategy"
               htmlFor="sessionLeadershipStrategy"

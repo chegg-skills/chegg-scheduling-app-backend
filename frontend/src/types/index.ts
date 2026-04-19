@@ -107,6 +107,7 @@ export type InteractionType = 'ONE_TO_ONE' | 'ONE_TO_MANY' | 'MANY_TO_ONE' | 'MA
 export interface InteractionTypeCaps {
   multipleCoaches: boolean
   multipleParticipants: boolean
+  derivesLeadershipFromAssignment: boolean
 }
 
 export interface InteractionTypeInfo {
