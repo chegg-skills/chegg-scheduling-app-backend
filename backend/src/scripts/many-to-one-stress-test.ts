@@ -11,13 +11,28 @@ async function runManyToOneStressTest() {
         return;
     }
 
-    // Cleanup: Delete bookings one more time to be sure
+    // Cleanup: Delete bookings and slots one more time to be sure
     await prisma.booking.deleteMany({ where: { eventId } });
+    await prisma.eventScheduleSlot.deleteMany({ where: { eventId } });
 
-    console.log(`Starting 20-booking Many-To-One stress test (Run #2) for event ${eventId}...`);
+    console.log(`Starting 20-booking Many-To-One stress test (Run #3 - SELF-CONTAINED) for event ${eventId}...`);
 
     const results = [];
-    const baseStart = new Date("2026-05-15T09:00:00Z");
+    const baseStart = new Date("2026-05-18T09:00:00Z"); // Start on a Monday
+
+    console.log("Generating 20 maintenance slots...");
+    for (let i = 0; i < 20; i++) {
+        const start = new Date(baseStart.getTime() + i * 4500000); // 1h15m gap
+        const end = new Date(start.getTime() + 3600000); // 1h duration
+        await prisma.eventScheduleSlot.create({
+            data: {
+                eventId,
+                startTime: start,
+                endTime: end,
+                isActive: true
+            }
+        });
+    }
 
     for (let i = 0; i < 20; i++) {
         const studentName = `Panel Student ${i + 1}`;
