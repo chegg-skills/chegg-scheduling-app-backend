@@ -181,10 +181,25 @@ const deleteEvent = async (eventId: string, caller: CallerContext): Promise<Safe
     );
   }
 
-  return prisma.event.delete({
-    where: { id: eventId },
-    include: eventInclude,
+  // Manually cleanup relations that don't have cascade delete in the schema
+  await prisma.$transaction(async (tx) => {
+    // 1. Delete all bookings (including cancelled ones)
+    await tx.booking.deleteMany({
+      where: { eventId },
+    });
+
+    // 2. Delete all schedule slots
+    await tx.eventScheduleSlot.deleteMany({
+      where: { eventId },
+    });
+
+    // 3. Delete the event (this will cascade to EventCoach and EventRoutingState)
+    await tx.event.delete({
+      where: { id: eventId },
+    });
   });
+
+  return event;
 };
 
 const duplicateEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
