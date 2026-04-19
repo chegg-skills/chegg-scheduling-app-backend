@@ -90,6 +90,15 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
     if (caps.multipleCoaches && getValues('sessionLeadershipStrategy') === 'SINGLE_COACH') {
       setValue('sessionLeadershipStrategy', 'ROTATING_LEAD', { shouldDirty: false })
     }
+
+    // Many-to-One Unified Reform: Derive leadership from assignment strategy
+    if (getValues('interactionType') === 'MANY_TO_ONE') {
+      const assignment = getValues('assignmentStrategy')
+      const targetLeadership = assignment === 'DIRECT' ? 'FIXED_LEAD' : 'ROTATING_LEAD'
+      if (getValues('sessionLeadershipStrategy') !== targetLeadership) {
+        setValue('sessionLeadershipStrategy', targetLeadership, { shouldDirty: true })
+      }
+    }
   }, [caps, getValues, setValue])
 
   function onSubmit(values: EventFormValues) {

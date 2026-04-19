@@ -206,29 +206,31 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
       {/* Multi-coach-specific: leadership strategy + co-host count */}
       {caps?.multipleCoaches && (
         <Stack spacing={2}>
-          <FormField
-            label="Leadership strategy"
-            htmlFor="sessionLeadershipStrategy"
-            error={errors.sessionLeadershipStrategy?.message}
-            info="Define how the 'Lead' coach is chosen for each session. Co-coaches will also be added to the session."
-          >
-            <Select
-              id="sessionLeadershipStrategy"
-              value={leadershipStrategy ?? 'SINGLE_COACH'}
-              hasError={!!errors.sessionLeadershipStrategy}
-              {...register('sessionLeadershipStrategy')}
+          {watch('interactionType') !== 'MANY_TO_ONE' && (
+            <FormField
+              label="Leadership strategy"
+              htmlFor="sessionLeadershipStrategy"
+              error={errors.sessionLeadershipStrategy?.message}
+              info="Define how the 'Lead' coach is chosen for each session. Co-coaches will also be added to the session."
             >
-              {!caps?.multipleCoaches && (
-                <MenuItem value="SINGLE_COACH">
-                  Single coach — only one coach joins (traditional)
+              <Select
+                id="sessionLeadershipStrategy"
+                value={leadershipStrategy ?? 'SINGLE_COACH'}
+                hasError={!!errors.sessionLeadershipStrategy}
+                {...register('sessionLeadershipStrategy')}
+              >
+                {!caps?.multipleCoaches && (
+                  <MenuItem value="SINGLE_COACH">
+                    Single coach — only one coach joins (traditional)
+                  </MenuItem>
+                )}
+                <MenuItem value="ROTATING_LEAD">
+                  Rotating lead — round-robin lead, others as co-coaches
                 </MenuItem>
-              )}
-              <MenuItem value="ROTATING_LEAD">
-                Rotating lead — round-robin lead, others as co-coaches
-              </MenuItem>
-              <MenuItem value="FIXED_LEAD">Fixed lead — one specific coach always leads</MenuItem>
-            </Select>
-          </FormField>
+                <MenuItem value="FIXED_LEAD">Fixed lead — one specific coach always leads</MenuItem>
+              </Select>
+            </FormField>
+          )}
 
           {leadershipStrategy === 'FIXED_LEAD' && (
             <FormField

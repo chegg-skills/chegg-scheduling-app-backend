@@ -54,12 +54,19 @@ const resolveEventSchedulingConfig = (
     minParticipantCount: payload.minParticipantCount ?? existing?.minParticipantCount ?? null,
     maxParticipantCount: payload.maxParticipantCount ?? existing?.maxParticipantCount ?? null,
     bufferAfterMinutes: payload.bufferAfterMinutes ?? existing?.bufferAfterMinutes ?? 0,
+    sessionLeadershipStrategy: payload.sessionLeadershipStrategy ?? existing?.sessionLeadershipStrategy ?? null,
   };
 
   // Enforce single-participant rule for OTO / MTO interaction types
   if (caps && !caps.multipleParticipants) {
     config.minParticipantCount = 1;
     config.maxParticipantCount = 1;
+  }
+
+  // Enforce Many-to-One Strategy Reform (Simplified UI alignment)
+  if (interactionType === 'MANY_TO_ONE') {
+    const strategy = payload.assignmentStrategy ?? existing?.assignmentStrategy;
+    config.sessionLeadershipStrategy = strategy === 'DIRECT' ? 'FIXED_LEAD' : 'ROTATING_LEAD';
   }
 
   return config;

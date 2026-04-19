@@ -274,8 +274,11 @@ const resolveCollaborativeCoHosts = async ({
 
     if (isAvailable) {
       availableCoHosts.push(candidate.coachUserId);
-      // Advance the core rotation cursor every time a co-host is assigned
-      await updateRoutingState(context, candidate.coachOrder, maxOrder);
+      // Advance the core rotation cursor only for Round-Robin sessions.
+      // Direct sessions keep the co-host panel consistent.
+      if (event.assignmentStrategy === 'ROUND_ROBIN') {
+        await updateRoutingState(context, candidate.coachOrder, maxOrder);
+      }
     }
   }
 
