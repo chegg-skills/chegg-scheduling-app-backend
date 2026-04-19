@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Email Template Showcase | Chegg Scheduling</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #F8F9FA;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 40px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      display: flex;
+      gap: 15px;
+      z-index: 100;
+      overflow-x: auto;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: #525252;
+      font-size: 14px;
+      white-space: nowrap;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+
+    .nav a:hover {
+      background: #F9FAFB;
+      color: #E87100;
+    }
+
+    .section {
+      margin-bottom: 80px;
+      scroll-margin-top: 100px;
+    }
+
+    .section-header {
+      border-bottom: 2px solid #E5E7EB;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #3A2C41;
+      margin: 0;
+    }
+
+    .template-card {
+      margin-bottom: 40px;
+    }
+
+    .template-label {
+      display: inline-block;
+      background: #3A2C41;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .template-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #3A2C41;
+      margin: 0 0 5px;
+    }
+
+    .template-desc {
+      font-size: 14px;
+      color: #525252;
+      margin: 0 0 15px;
+    }
+
+    .iframe-preview {
+      width: 100%;
+      height: 550px;
+      border: 1px solid #DEE3ED;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .category-tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #E87100;
+      font-weight: 700;
+      margin-bottom: 5px;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header style="margin-bottom: 50px; text-align: center;">
+      <img src="https://img.logokit.com/chegg.com" alt="Chegg Logo" width="100" style="margin-bottom: 15px;">
+      <h1 style="color: #3A2C41; margin: 0; font-size: 36px;">Email Template Library</h1>
+      <p style="color: #525252; font-size: 18px;">All system-wide notifications for the Chegg Scheduling App</p>
+    </header>
+
+    <nav class="nav">
+      <a href="#admin">Admin & Invites</a>
+      <a href="#booking-student">Student Booking</a>
+      <a href="#booking-coach">Coach Booking</a>
+      <a href="#cancellations">Cancellations</a>
+      <a href="#reminders">Reminders</a>
+      <a href="#team">Team</a>
+      <a href="#availability">Availability</a>
+      <a href="#live-embed" style="background: #FFE9D5; color: #E87100; font-weight: 700;">Live Embedding Demo</a>
+    </nav>
+
+    <!-- LIVE EMBEDDING SHOWCASE -->
+    <section id="live-embed" class="section">
+      <div class="section-header" style="border-bottom-color: #E87100;">
+        <h2 class="section-title">Live Curriculum Rendering</h2>
+        <p style="color: #525252;">Simulating how the booking flow integrates into a Learning Management System (LMS) or
+          Course Curriculum.</p>
+      </div>
+
+      <div class="template-card">
+        <div
+          style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+          <div style="background: #3A2C41; padding: 20px; color: white;">
+            <p style="margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">Module
+              4: Career Readiness</p>
+            <h3 style="margin: 5px 0 0; font-size: 20px;">Section 4.2: Schedule Your Mentor Mock Interview</h3>
+          </div>
+          <div style="padding: 30px;">
+            <p style="margin: 0 0 20px; line-height: 1.6; color: #4B5563;">
+              Congratulations on completing the theory portion! To finalize this module, you must schedule a 1-on-1
+              session with a mentor to practice your system design skills.
+              <strong>Please select a time that works for you from the live calendar below:</strong>
+            </p>
+
+            <div
+              style="position: relative; width: 100%; height: 700px; border: 2px dashed #E5E7EB; border-radius: 8px;">
+              <iframe src="http://localhost:3000/book" style="width: 100%; height: 100%; border: none;"
+                title="Live Booking Flow"></iframe>
+            </div>
+
+            <div
+              style="margin-top: 20px; padding: 15px; background: #F9FAFB; border-radius: 8px; border-left: 4px solid #E87100;">
+              <p style="margin: 0; font-size: 13px; color: #374151;">
+                <strong>Pro Tip:</strong> These bookings are synced directly with your mentor's Google Calendar. You
+                will receive a confirmation email immediately after booking.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN & INVITES -->
+    <section id="admin" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Administrative & Onboarding</h2>
+        <p style="color: #525252;">User invitations and role assignments.</p>
+      </div>
+
+      <!-- USER_INVITED -->
+      <div class="template-card">
+        <span class="category-tag">Onboarding</span>
+        <h3 class="template-name">USER_INVITED</h3>
+        <p class="template-desc">Sent when a new user is invited to the platform.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Invitation to join the team</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi there,</p>
+                            <p style='font-size:14px;color:#3A2C41'>You've been invited to join the <strong>Chegg Scheduling App</strong> as a <strong>COACH</strong>.</p>
+                            <p style='font-size:14px;color:#3A2C41'>This invitation will expire on <strong>Tuesday, April 14, 2026</strong>.</p>
+                            <p style='font-size:14px;color:#3A2C41'>Please accept your invitation to finalize your account setup.</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Accept Invitation &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- INVITE_ACCEPTED -->
+      <div class="template-card">
+        <span class="category-tag">Onboarding</span>
+        <h3 class="template-name">INVITE_ACCEPTED</h3>
+        <p class="template-desc">Sent to the admin when an invited user accepts their invitation.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Invitation Accepted</h1>
+                            <p style='font-size:14px;color:#3A2C41'><strong>Alex Smith</strong> (alex@example.com) has successfully joined the application.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Assigned Role:</strong> COACH</p>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- TEAM_MEMBER_ADDED -->
+      <div class="template-card">
+        <span class="category-tag">Teams</span>
+        <h3 class="template-name">TEAM_MEMBER_ADDED</h3>
+        <p class="template-desc">Sent when an existing user is added to a specific team.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Team Assignment</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>Alex Smith</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>You have been officially added to the <strong>Engineering Team</strong> on the Chegg Scheduling App.</p>
+                            <p style='font-size:14px;color:#3A2C41'>You can now manage events and view availability for this team.</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Go to Dashboard &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+    </section>
+
+    <!-- STUDENT BOOKING -->
+    <section id="booking-student" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Student Booking Flow</h2>
+        <p style="color: #525252;">Notifications sent to students during the session lifecycle.</p>
+      </div>
+
+      <!-- BOOKING_CONFIRMED -->
+      <div class="template-card">
+        <span class="category-tag">Engagement</span>
+        <h3 class="template-name">BOOKING_CONFIRMED</h3>
+        <p class="template-desc">Final confirmation sent after a student chooses a slot.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Booking Confirmation</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>John Doe</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>Your session for <strong>Mock Interview Practice</strong> with <strong>Coach Sarah</strong> is confirmed.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Time:</strong> Mon, April 13 at 2:00 PM<br><strong>Timezone:</strong> PDT<br><strong>Team:</strong> Interview Ready</p>
+                            <p style='font-size:12px;color:#525252;margin-top:16px'>Need to change? <a href='#' style='color:#E87100;text-decoration:none'>Reschedule session</a></p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Join Meeting &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- BOOKING_RESCHEDULED -->
+      <div class="template-card">
+        <span class="category-tag">Retention</span>
+        <h3 class="template-name">BOOKING_RESCHEDULED</h3>
+        <p class="template-desc">Sent when a student or admin moves a session.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Session Rescheduled</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>John Doe</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>Your session for <strong>Mock Interview Practice</strong> has been successfully rescheduled.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>New Time:</strong> Wed, April 15 at 10:00 AM<br><strong>Coach:</strong> Coach Sarah</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Join Meeting &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+    </section>
+
+    <!-- COACH NOTIFICATIONS -->
+    <section id="booking-coach" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Coach & Team Alerts</h2>
+        <p style="color: #525252;">Notifications for hosts and team administrators.</p>
+      </div>
+
+      <!-- COACH_BOOKING_ASSIGNED -->
+      <div class="template-card">
+        <span class="category-tag">Operations</span>
+        <h3 class="template-name">COACH_BOOKING_ASSIGNED</h3>
+        <p class="template-desc">Sent to the primary coach when a new session is booked.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>New Session Assigned</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>Coach Sarah</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>A new session has been scheduled for you.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Student:</strong> John Doe (john@example.com)<br><strong>Event:</strong> Mock Interview Practice<br><strong>Time:</strong> Mon, April 13 at 2:00 PM</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>View Details &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- COACH_BOOKING_COHOST_ASSIGNED -->
+      <div class="template-card">
+        <span class="category-tag">Collaboration</span>
+        <h3 class="template-name">COACH_BOOKING_COHOST_ASSIGNED</h3>
+        <p class="template-desc">Sent to co-hosts added to an existing session.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Co-host Assignment</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi there,</p>
+                            <p style='font-size:14px;color:#3A2C41'>You have been added as a <strong>co-host</strong> for an upcoming session.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Lead Coach:</strong> Coach Sarah<br><strong>Student:</strong> John Doe<br><strong>Time:</strong> Mon, April 13 at 2:00 PM</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Join Session &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+    </section>
+
+    <!-- TEAM -->
+    <section id="team" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Team Notifications</h2>
+        <p style="color: #525252;">Alerts for team administrators and event hosts.</p>
+      </div>
+
+      <!-- EVENT_HOST_ADDED -->
+      <div class="template-card">
+        <span class="category-tag">Operations</span>
+        <h3 class="template-name">EVENT_HOST_ADDED</h3>
+        <p class="template-desc">Sent when a user is assigned as host for an event.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Event Host Assignment</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>Alex Smith</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>You have been assigned as a host for: <strong>Mock Interview Practice</strong>.</p>
+                            <p style='font-size:14px;color:#3A2C41'>Please ensure your availability is up to date in the dashboard.</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>View Event Details &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- TEAM_BOOKING_CONFIRMED -->
+      <div class="template-card">
+        <span class="category-tag">Operations</span>
+        <h3 class="template-name">TEAM_BOOKING_CONFIRMED</h3>
+        <p class="template-desc">Sent to team admins when a new booking is created for their team.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>New Team Booking</h1>
+                            <p style='font-size:14px;color:#3A2C41'>A new session has been added to your team's schedule.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'>
+                                <strong>Event:</strong> Mock Interview Practice<br>
+                                <strong>Student:</strong> John Doe<br>
+                                <strong>Coach:</strong> Coach Sarah<br>
+                                <strong>Time:</strong> Mon, April 13 at 2:00 PM (PDT)
+                            </p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>View Team Schedule &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+    </section>
+
+    <!-- CANCELLATIONS -->
+    <section id="cancellations" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Cancellations & No-Shows</h2>
+        <p style="color: #525252;">Handling edge cases and cancelled sessions.</p>
+      </div>
+
+      <!-- BOOKING_CANCELLED -->
+      <div class="template-card">
+        <span class="category-tag">Support</span>
+        <h3 class="template-name">BOOKING_CANCELLED</h3>
+        <p class="template-desc">Student notification for any cancelled session.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Session Cancelled</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>John Doe</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>This is to inform you that your upcoming booking has been cancelled.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Event:</strong> System Design Review<br><strong>Time:</strong> Today at 5:00 PM</p>
+                            <p style='font-size:14px;color:#3A2C41'>You can reschedule your session by visiting our booking page.</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Reschedule Now &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- BOOKING_NO_SHOW -->
+      <div class="template-card">
+        <span class="category-tag">Discipline</span>
+        <h3 class="template-name">BOOKING_NO_SHOW</h3>
+        <p class="template-desc">Sent when a coach marks a student as a no-show.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Session Update: No-Show</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>John Doe</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>The following session has been marked as a <strong>no-show</strong>.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Event:</strong> Career Coaching<br><strong>Time:</strong> Yesterday at 3:00 PM</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Book New Session &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- COACH_BOOKING_CANCELLED -->
+      <div class="template-card">
+        <span class="category-tag">Support</span>
+        <h3 class="template-name">COACH_BOOKING_CANCELLED</h3>
+        <p class="template-desc">Sent to the primary coach when a student or admin cancels the session.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Student Session Cancelled</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>Coach Sarah</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>The following session has been cancelled by the student or an administrator:</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Event:</strong> System Design Review<br><strong>Time:</strong> Today at 5:00 PM<br><strong>Student:</strong> John Doe</p>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- COACH_BOOKING_COHOST_CANCELLED -->
+      <div class="template-card">
+        <span class="category-tag">Support</span>
+        <h3 class="template-name">COACH_BOOKING_COHOST_CANCELLED</h3>
+        <p class="template-desc">Sent to co-hosts when a session they were assigned to is cancelled.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Co-host Session Cancelled</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi there,</p>
+                            <p style='font-size:14px;color:#3A2C41'>The following session where you were assigned as a <strong>co-host</strong> has been cancelled:</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Event:</strong> System Design Review<br><strong>Time:</strong> Today at 5:00 PM<br><strong>Student:</strong> John Doe</p>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- COACH_BOOKING_COHOST_NO_SHOW -->
+      <div class="template-card">
+        <span class="category-tag">Discipline</span>
+        <h3 class="template-name">COACH_BOOKING_COHOST_NO_SHOW</h3>
+        <p class="template-desc">Sent to co-hosts when the student does not show up.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Co-host Update: No-Show</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi there,</p>
+                            <p style='font-size:14px;color:#3A2C41'>The following session has been marked as a <strong>no-show</strong>.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Event:</strong> Career Coaching<br><strong>Time:</strong> Yesterday at 3:00 PM<br><strong>Student:</strong> John Doe</p>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+    </section>
+
+    <!-- REMINDERS -->
+    <section id="reminders" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Automated Reminders</h2>
+        <p style="color: #525252;">Nudges to ensure high attendance rates.</p>
+      </div>
+
+      <!-- SESSION_REMINDER_24H -->
+      <div class="template-card">
+        <span class="category-tag">Reliability</span>
+        <h3 class="template-name">SESSION_REMINDER_24H</h3>
+        <p class="template-desc">Sent 24 hours before the session.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Upcoming Session Reminder</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>John Doe</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>This is a reminder that your session for <strong>System Design Review</strong> is scheduled for tomorrow.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Coach:</strong> Liam Systems<br><strong>Time:</strong> Tomorrow at 7:30 PM</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Join Meeting &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+
+      <!-- SESSION_REMINDER_1H -->
+      <div class="template-card">
+        <span class="category-tag">Urgency</span>
+        <h3 class="template-name">SESSION_REMINDER_1H</h3>
+        <p class="template-desc">Sent 1 hour before the session.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Session Starting Soon</h1>
+                            <p style='font-size:14px;color:#3A2C41'>Hi <strong>John Doe</strong>,</p>
+                            <p style='font-size:14px;color:#3A2C41'>Your session for <strong>System Design Review</strong> starts in 1 hour.</p>
+                            <p style='margin:24px 0;font-size:18px;font-weight:700;color:#3A2C41'>Today at 7:30 PM (UTC)</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Join Now &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+    </section>
+
+    <!-- AVAILABILITY -->
+    <section id="availability" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Availability Updates</h2>
+        <p style="color: #525252;">Notifications for schedule and exception changes.</p>
+      </div>
+
+      <!-- AVAILABILITY_EXCEPTION_CREATED -->
+      <div class="template-card">
+        <span class="category-tag">Logistics</span>
+        <h3 class="template-name">AVAILABILITY_EXCEPTION_CREATED</h3>
+        <p class="template-desc">Sent when a coach updates their manual overrides.</p>
+        <iframe class="iframe-preview" srcdoc="
+                    <body style='margin:0;padding:20px;background:#F8F9FA;font-family:sans-serif'>
+                        <div style='max-width:500px;margin:0 auto;background:white;padding:40px;border-radius:8px'>
+                            <h1 style='font-size:18px;color:#3A2C41'>Availability Update</h1>
+                            <p style='font-size:14px;color:#3A2C41'>An update has been made to the availability for <strong>Coach Liam</strong>.</p>
+                            <p style='font-size:14px;color:#3A2C41;margin-top:16px'><strong>Date:</strong> April 15, 2026<br><strong>Time Range:</strong> 09:00 AM - 12:00 PM</p>
+                            <div style='margin-top:24px'><a href='#' style='color:#E87100;font-weight:600;text-decoration:none;border-bottom:2px solid #E87100'>Manage Availability &rarr;</a></div>
+                            <div style='margin-top:40px;padding-top:20px;border-top:1px solid #E5E7EB'>
+                                <img src='https://img.logokit.com/chegg.com' alt='Chegg Logo' width='60' style='margin-bottom:12px'>
+                                <p style='font-size:12px;color:#525252;margin:0'>Automated priority message from Chegg Scheduling.</p>
+                                <p style='font-size:11px;color:#9CA3AF;margin:8px 0 0'>&copy; 2026 Chegg Inc.</p>
+                            </div>
+                        </div>
+                    </body>
+                "></iframe>
+      </div>
+    </section>
+
+    <footer style="margin-top:100px;text-align:center;color:#525252;font-size:12px;padding-bottom:100px;">
+      <p>&copy; 2026 Chegg Inc. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+
+</html>

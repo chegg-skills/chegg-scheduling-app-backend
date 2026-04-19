@@ -67,8 +67,8 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
           <Divider />
 
           <Stack spacing={2}>
-            <Typography {...sectionLabelStyle}>Resources</Typography>
-            <EventResourceFields />
+            <Typography {...sectionLabelStyle}>Booking rules & policy</Typography>
+            <EventSchedulingPolicyFields caps={caps} />
           </Stack>
 
           <Divider />
@@ -81,15 +81,15 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
           <Divider />
 
           <Stack spacing={2}>
-            <Typography {...sectionLabelStyle}>Schedule & assignment</Typography>
-            <EventScheduleFields caps={caps} event={event} teamMembers={teamMembers} />
+            <Typography {...sectionLabelStyle}>Resources</Typography>
+            <EventResourceFields />
           </Stack>
 
           <Divider />
 
           <Stack spacing={2}>
-            <Typography {...sectionLabelStyle}>Booking rules & policy</Typography>
-            <EventSchedulingPolicyFields caps={caps} />
+            <Typography {...sectionLabelStyle}>Schedule & assignment</Typography>
+            <EventScheduleFields caps={caps} event={event} teamMembers={teamMembers} />
           </Stack>
 
           <EventAssignmentAlert
