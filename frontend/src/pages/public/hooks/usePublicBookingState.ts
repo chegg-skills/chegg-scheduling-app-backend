@@ -233,6 +233,7 @@ export function usePublicBookingState() {
         teamId: selectedTeam,
         eventId: selectedEvent,
         startTime: selectedSlot,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         notes: studentInfo.notes,
         specificQuestion: studentInfo.specificQuestion,
         triedSolutions: studentInfo.triedSolutions,
