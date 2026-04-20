@@ -8,6 +8,7 @@ import { AvailabilityView } from '@/components/availability/AvailabilityView'
 import { UserCoachedEventsTab } from './UserCoachedEventsTab'
 import { UserProfileHeader } from './UserProfileHeader'
 import { UserTeamsTab } from './UserTeamsTab'
+import { UserCalendarTab } from './UserCalendarTab'
 
 interface UserDetailViewProps {
   user: UserWithDetails
@@ -69,6 +70,7 @@ export function UserDetailView({ user }: UserDetailViewProps) {
         <Tab label="Teams" icon={<Users size={18} />} iconPosition="start" />
         <Tab label="Events" icon={<Calendar size={18} />} iconPosition="start" />
         <Tab label="Availability" icon={<Clock size={18} />} iconPosition="start" />
+        <Tab label="Calendar" icon={<Calendar size={18} />} iconPosition="start" />
       </Tabs>
 
       <TabPanel value={tabValue} index={0}>
@@ -81,6 +83,10 @@ export function UserDetailView({ user }: UserDetailViewProps) {
 
       <TabPanel value={tabValue} index={2}>
         <AvailabilityView userId={user.id} />
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={3}>
+        <UserCalendarTab user={user} />
       </TabPanel>
     </Box>
   )

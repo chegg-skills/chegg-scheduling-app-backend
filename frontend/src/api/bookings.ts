@@ -14,20 +14,20 @@ export interface ListBookingsResponse {
 }
 
 export const bookingsApi = {
-  create: (data: CreateBookingDto) => apiClient.post<ApiResponse<Booking>>('/bookings', data),
+  create: (data: CreateBookingDto) => apiClient.post<ApiResponse<{ booking: Booking }>>('/bookings', data),
 
   list: (filters: ListBookingsFilters = {}, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<ListBookingsResponse>>('/bookings', { params: filters, signal }),
 
   getById: (id: string, token?: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`, { params: { token }, signal }),
+    apiClient.get<ApiResponse<{ booking: Booking }>>(`/bookings/${id}`, { params: { token }, signal }),
 
   reschedule: (
     id: string,
     data: { startTime: Date | string; timezone?: string; token?: string },
     signal?: AbortSignal
-  ) => apiClient.post<ApiResponse<Booking>>(`/bookings/${id}/reschedule`, data, { signal }),
+  ) => apiClient.post<ApiResponse<{ booking: Booking }>>(`/bookings/${id}/reschedule`, data, { signal }),
 
   updateStatus: (id: string, data: UpdateBookingStatusDto) =>
-    apiClient.patch<ApiResponse<Booking>>(`/bookings/${id}`, data),
+    apiClient.patch<ApiResponse<{ booking: Booking }>>(`/bookings/${id}`, data),
 }
