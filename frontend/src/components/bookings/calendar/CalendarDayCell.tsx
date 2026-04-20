@@ -34,6 +34,8 @@ export function CalendarDayCell({
         p: 1.5,
         display: 'flex',
         flexDirection: 'column',
+        minWidth: 0,
+        overflow: 'hidden',
         '&:hover': {
           bgcolor: isCurrentMonth
             ? alpha(theme.palette.primary.main, 0.02)

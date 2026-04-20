@@ -1,25 +1,10 @@
-import { useState, useMemo, useCallback } from 'react'
-import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
+import { useMemo, useCallback } from 'react'
+import { isSameMonth, format, parseISO } from 'date-fns'
 import { useTheme } from '@mui/material/styles'
-import {
-  format,
-  addMonths,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  isSameMonth,
-  eachDayOfInterval,
-  isToday,
-  parseISO,
-} from 'date-fns'
 import type { Booking } from '@/types'
 
-// Sub-components
-import { CalendarHeader } from './calendar/CalendarHeader'
-import { CalendarGridHeader } from './calendar/CalendarGridHeader'
+// Shared Calendar Components
+import { CalendarLayout, useCalendar } from '@/components/shared/calendar/CalendarLayout'
 import { CalendarDayCell } from './calendar/CalendarDayCell'
 
 interface BookingCalendarProps {
@@ -29,7 +14,14 @@ interface BookingCalendarProps {
 
 export function BookingCalendar({ bookings, onViewDetail }: BookingCalendarProps) {
   const theme = useTheme()
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const {
+    currentMonth,
+    monthStart,
+    calendarDays,
+    nextMonth,
+    prevMonth,
+    goToToday,
+  } = useCalendar()
 
   const bookingsByDate = useMemo(() => {
     const map: Record<string, Booking[]> = {}
@@ -40,20 +32,6 @@ export function BookingCalendar({ bookings, onViewDetail }: BookingCalendarProps
     })
     return map
   }, [bookings])
-
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
-  const goToToday = () => setCurrentMonth(new Date())
-
-  const monthStart = startOfMonth(currentMonth)
-  const monthEnd = endOfMonth(monthStart)
-  const startDate = startOfWeek(monthStart)
-  const endDate = endOfWeek(monthEnd)
-
-  const calendarDays = eachDayOfInterval({
-    start: startDate,
-    end: endDate,
-  })
 
   const getStatusColor = useCallback(
     (status: string) => {
@@ -73,51 +51,37 @@ export function BookingCalendar({ bookings, onViewDetail }: BookingCalendarProps
     [theme]
   )
 
+  const legends = useMemo(() => [
+    { label: 'Confirmed', color: theme.palette.success.main },
+    { label: 'Cancelled', color: theme.palette.error.main },
+    { label: 'Pending', color: theme.palette.warning.main },
+  ], [theme])
+
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        overflow: 'hidden',
-        bgcolor: 'background.paper',
-      }}
+    <CalendarLayout
+      currentMonth={currentMonth}
+      onPrevMonth={prevMonth}
+      onNextMonth={nextMonth}
+      onToday={goToToday}
+      legends={legends}
     >
-      <CalendarHeader
-        currentMonth={currentMonth}
-        onPrevMonth={prevMonth}
-        onNextMonth={nextMonth}
-        onToday={goToToday}
-        getStatusColor={getStatusColor}
-      />
+      {calendarDays.map((day) => {
+        const dateKey = format(day, 'yyyy-MM-dd')
+        const dayBookings = bookingsByDate[dateKey] || []
+        const isCurrentMonth = isSameMonth(day, monthStart)
 
-      <CalendarGridHeader />
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          bgcolor: 'divider',
-          gap: '1px',
-        }}
-      >
-        {calendarDays.map((day) => {
-          const dateKey = format(day, 'yyyy-MM-dd')
-          const dayBookings = bookingsByDate[dateKey] || []
-          const isCurrentMonth = isSameMonth(day, monthStart)
-          const isTodayDate = isToday(day)
-
-          return (
-            <CalendarDayCell
-              key={dateKey}
-              day={day}
-              isCurrentMonth={isCurrentMonth}
-              isToday={isTodayDate}
-              bookings={dayBookings}
-              onViewDetail={onViewDetail}
-              getStatusColor={getStatusColor}
-            />
-          )
-        })}
-      </Box>
-    </Paper>
+        return (
+          <CalendarDayCell
+            key={dateKey}
+            day={day}
+            isCurrentMonth={isCurrentMonth}
+            isToday={format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')}
+            bookings={dayBookings}
+            onViewDetail={onViewDetail}
+            getStatusColor={getStatusColor}
+          />
+        )
+      })}
+    </CalendarLayout>
   )
 }
