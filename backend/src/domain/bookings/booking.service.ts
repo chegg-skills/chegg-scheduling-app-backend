@@ -177,7 +177,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       meetingJoinUrl,
       status: BookingStatus.CONFIRMED,
     });
-  });
+  }, { timeout: 15000 });
 
   logger.info("Booking created successfully.", {
     bookingId: booking.id,
@@ -272,7 +272,7 @@ const rescheduleBooking = async (
       scheduleSlotId: scheduleSlot?.id ?? null,
       status: BookingStatus.CONFIRMED, // Reset to confirmed if it was something else
     });
-  });
+  }, { timeout: 15000 });
 
   logger.info("Booking rescheduled successfully.", {
     bookingId: updatedBooking.id,

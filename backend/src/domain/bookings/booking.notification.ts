@@ -19,7 +19,12 @@ const getCoachName = (booking: SafeBooking): string => {
   return coachName || "your coach";
 };
 
-const getBookingNotificationVariables = async (booking: SafeBooking) => {
+const getBookingNotificationVariables = async (
+  booking: SafeBooking,
+  timezoneOverride?: string | null,
+) => {
+  const displayTimezone = timezoneOverride || booking.timezone || "UTC";
+
   const variables: any = {
     bookingId: booking.id,
     studentName: booking.studentName,
@@ -27,9 +32,9 @@ const getBookingNotificationVariables = async (booking: SafeBooking) => {
     eventName: booking.event?.name ?? "your session",
     teamName: booking.team?.name ?? "your team",
     coachName: getCoachName(booking),
-    startTime: formatNotificationDate(new Date(booking.startTime), booking.timezone),
-    endTime: formatNotificationDate(new Date(booking.endTime), booking.timezone),
-    timezone: booking.timezone,
+    startTime: formatNotificationDate(new Date(booking.startTime), displayTimezone),
+    endTime: formatNotificationDate(new Date(booking.endTime), displayTimezone),
+    timezone: displayTimezone,
     meetingJoinUrl: booking.meetingJoinUrl ?? "",
     bookingStatus: booking.status,
     frontendUrl: resolveFrontendUrl(),
@@ -58,7 +63,9 @@ const getBookingNotificationVariables = async (booking: SafeBooking) => {
   return variables;
 };
 
-const getTeamAdminRecipients = async (teamId: string): Promise<string[]> => {
+const getTeamAdminRecipients = async (
+  teamId: string,
+): Promise<{ email: string; timezone: string }[]> => {
   const members = await prisma.teamMember.findMany({
     where: {
       teamId,
@@ -72,12 +79,20 @@ const getTeamAdminRecipients = async (teamId: string): Promise<string[]> => {
       user: {
         select: {
           email: true,
+          timezone: true,
         },
       },
     },
   });
 
-  return Array.from(new Set(members.map((member: any) => member.user.email).filter(Boolean)));
+  const uniqueAdmins = new Map<string, string>();
+  members.forEach((member: any) => {
+    if (member.user.email) {
+      uniqueAdmins.set(member.user.email, member.user.timezone);
+    }
+  });
+
+  return Array.from(uniqueAdmins.entries()).map(([email, timezone]) => ({ email, timezone }));
 };
 
 const buildReminderSendAt = (startTime: Date, hoursBefore: number): string | null => {
@@ -101,7 +116,7 @@ const queueStudentReminder = async (
     type,
     recipients: booking.studentEmail,
     userId: booking.coachUserId,
-    variables: await getBookingNotificationVariables(booking),
+    variables: await getBookingNotificationVariables(booking, booking.timezone),
     sendAt,
     notificationKey: `booking:${booking.id}:${type}`,
     entityType: "BOOKING",
@@ -151,13 +166,18 @@ const cancelScheduledBookingReminders = async (booking: SafeBooking): Promise<vo
 
 const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
   try {
-    const variables = await getBookingNotificationVariables(booking);
+    const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
+    const coachVariables = await getBookingNotificationVariables(
+      booking,
+      booking.coach?.timezone || "UTC",
+    );
+
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
         type: "BOOKING_CONFIRMED",
         recipients: booking.studentEmail,
         userId: booking.coachUserId,
-        variables,
+        variables: studentVariables,
       }),
     ];
 
@@ -167,19 +187,19 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
           type: "COACH_BOOKING_ASSIGNED",
           recipients: booking.coach.email,
           userId: booking.coach.id,
-          variables,
+          variables: coachVariables,
         }),
       );
     }
 
-    const teamAdminRecipients = await getTeamAdminRecipients(booking.teamId);
-    if (teamAdminRecipients.length > 0) {
+    const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+    for (const admin of teamAdmins) {
       publishTasks.push(
         publishNotificationSafely({
           type: "TEAM_BOOKING_CONFIRMED",
-          recipients: teamAdminRecipients,
+          recipients: admin.email,
           userId: booking.coachUserId,
-          variables,
+          variables: await getBookingNotificationVariables(booking, admin.timezone),
         }),
       );
     }
@@ -187,7 +207,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
     if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
       const coHosts = await prisma.user.findMany({
         where: { id: { in: booking.coCoachUserIds }, isActive: true },
-        select: { id: true, email: true },
+        select: { id: true, email: true, timezone: true },
       });
 
       for (const coHost of coHosts) {
@@ -197,7 +217,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
               type: "COACH_BOOKING_COCOACH_ASSIGNED",
               recipients: coHost.email,
               userId: coHost.id,
-              variables,
+              variables: await getBookingNotificationVariables(booking, coHost.timezone),
             }),
           );
         }
@@ -217,8 +237,12 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
 
 const queueBookingStatusNotifications = async (booking: SafeBooking) => {
   try {
-    const variables = await getBookingNotificationVariables(booking);
-    const teamAdminRecipients = await getTeamAdminRecipients(booking.teamId);
+    const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
+    const coachVariables = await getBookingNotificationVariables(
+      booking,
+      booking.coach?.timezone || "UTC",
+    );
+    const teamAdmins = await getTeamAdminRecipients(booking.teamId);
 
     if (booking.status === BookingStatus.CANCELLED || booking.status === BookingStatus.NO_SHOW) {
       await cancelScheduledBookingReminders(booking);
@@ -229,7 +253,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     const coHostUsers = coCoachUserIds?.length
       ? await prisma.user.findMany({
         where: { id: { in: coCoachUserIds }, isActive: true },
-        select: { id: true, email: true },
+        select: { id: true, email: true, timezone: true },
       })
       : [];
 
@@ -239,7 +263,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
           type: "BOOKING_CANCELLED",
           recipients: booking.studentEmail,
           userId: booking.coachUserId,
-          variables,
+          variables: studentVariables,
         }),
       ];
 
@@ -249,7 +273,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
             type: "COACH_BOOKING_CANCELLED",
             recipients: booking.coach.email,
             userId: booking.coach.id,
-            variables,
+            variables: coachVariables,
           }),
         );
       }
@@ -261,19 +285,19 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
               type: "COACH_BOOKING_COCOACH_CANCELLED",
               recipients: coHost.email,
               userId: coHost.id,
-              variables,
+              variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
             }),
           );
         }
       }
 
-      if (teamAdminRecipients.length > 0) {
+      for (const admin of teamAdmins) {
         publishTasks.push(
           publishNotificationSafely({
             type: "TEAM_BOOKING_CANCELLED",
-            recipients: teamAdminRecipients,
+            recipients: admin.email,
             userId: booking.coachUserId,
-            variables,
+            variables: await getBookingNotificationVariables(booking, admin.timezone),
           }),
         );
       }
@@ -287,7 +311,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
           type: "BOOKING_NO_SHOW",
           recipients: booking.studentEmail,
           userId: booking.coachUserId,
-          variables,
+          variables: studentVariables,
         }),
       ];
 
@@ -297,7 +321,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
             type: "COACH_BOOKING_NO_SHOW",
             recipients: booking.coach.email,
             userId: booking.coach.id,
-            variables,
+            variables: coachVariables,
           }),
         );
       }
@@ -309,19 +333,19 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
               type: "COACH_BOOKING_COCOACH_NO_SHOW",
               recipients: coHost.email,
               userId: coHost.id,
-              variables,
+              variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
             }),
           );
         }
       }
 
-      if (teamAdminRecipients.length > 0) {
+      for (const admin of teamAdmins) {
         publishTasks.push(
           publishNotificationSafely({
             type: "TEAM_BOOKING_NO_SHOW",
-            recipients: teamAdminRecipients,
+            recipients: admin.email,
             userId: booking.coachUserId,
-            variables,
+            variables: await getBookingNotificationVariables(booking, admin.timezone),
           }),
         );
       }
@@ -342,7 +366,6 @@ const queueBookingUpdatedNotifications = async (
   newBooking: SafeBooking,
 ) => {
   try {
-    const variables = await getBookingNotificationVariables(newBooking);
     const publishTasks: Array<Promise<boolean>> = [];
 
     // Notify newly added co-coaches
@@ -353,7 +376,7 @@ const queueBookingUpdatedNotifications = async (
     if (addedCoCoaches.length > 0) {
       const coCoachUsers = await prisma.user.findMany({
         where: { id: { in: addedCoCoaches }, isActive: true },
-        select: { id: true, email: true },
+        select: { id: true, email: true, timezone: true },
       });
 
       for (const coCoach of coCoachUsers) {
@@ -363,7 +386,7 @@ const queueBookingUpdatedNotifications = async (
               type: "COACH_BOOKING_COCOACH_ASSIGNED",
               recipients: coCoach.email,
               userId: coCoach.id,
-              variables,
+              variables: await getBookingNotificationVariables(newBooking, coCoach.timezone),
             }),
           );
         }
@@ -385,13 +408,18 @@ const queueBookingUpdatedNotifications = async (
 
 const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
   try {
-    const variables = await getBookingNotificationVariables(booking);
+    const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
+    const coachVariables = await getBookingNotificationVariables(
+      booking,
+      booking.coach?.timezone || "UTC",
+    );
+
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
         type: "BOOKING_RESCHEDULED",
         recipients: booking.studentEmail,
         userId: booking.coachUserId,
-        variables,
+        variables: studentVariables,
       }),
     ];
 
@@ -401,7 +429,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
           type: "BOOKING_RESCHEDULED",
           recipients: booking.coach.email,
           userId: booking.coach.id,
-          variables,
+          variables: coachVariables,
         }),
       );
     }
@@ -410,7 +438,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
     if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
       const coHosts = await prisma.user.findMany({
         where: { id: { in: booking.coCoachUserIds }, isActive: true },
-        select: { id: true, email: true },
+        select: { id: true, email: true, timezone: true },
       });
 
       for (const coHost of coHosts) {
@@ -420,7 +448,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
               type: "BOOKING_RESCHEDULED",
               recipients: coHost.email,
               userId: coHost.id,
-              variables,
+              variables: await getBookingNotificationVariables(booking, coHost.timezone),
             }),
           );
         }
