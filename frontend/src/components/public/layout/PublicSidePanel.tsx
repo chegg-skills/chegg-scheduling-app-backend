@@ -20,9 +20,10 @@ export function PublicSidePanel({ children }: PublicSidePanelProps) {
         borderColor: (theme) => alpha(theme.palette.secondary.main, 0.08),
         p: 3,
         height: '100%',
-        overflowY: 'auto',
+        overflow: 'hidden',
         bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.02),
-        display: { xs: 'none', lg: 'block' },
+        display: { xs: 'none', lg: 'flex' },
+        flexDirection: 'column',
       }}
     >
       {children}

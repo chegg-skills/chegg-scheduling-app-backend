@@ -186,6 +186,7 @@ export const buildEventCreateData = ({
     minCoachCount: validated.minCoachCount ?? 1,
     maxCoachCount: validated.maxCoachCount ?? undefined,
     targetCoHostCount: validated.targetCoHostCount ?? undefined,
+    showDescription: validated.showDescription ?? false,
     team: { connect: { id: teamId } },
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
@@ -259,6 +260,9 @@ export const buildEventUpdateData = ({
   if (validated.targetCoHostCount !== undefined) {
     updateData.targetCoHostCount = validated.targetCoHostCount;
   }
+  if (validated.showDescription !== undefined) {
+    updateData.showDescription = validated.showDescription;
+  }
 
   return updateData;
 };
@@ -302,5 +306,6 @@ export const buildDuplicateEventData = ({
     minCoachCount: sourceEvent.minCoachCount,
     maxCoachCount: sourceEvent.maxCoachCount ?? undefined,
     targetCoHostCount: sourceEvent.targetCoHostCount ?? undefined,
+    showDescription: sourceEvent.showDescription,
   };
 };

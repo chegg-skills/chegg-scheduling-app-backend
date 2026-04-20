@@ -1,8 +1,9 @@
-import { useFormContext } from 'react-hook-form'
+import { useFormContext, Controller } from 'react-hook-form'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
+import { Switch } from '@/components/shared/form/Switch'
 import type { EventFormValues } from './eventFormSchema'
 
 /**
@@ -12,6 +13,7 @@ import type { EventFormValues } from './eventFormSchema'
 export function EventBasicFields() {
   const {
     register,
+    control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
 
@@ -24,6 +26,18 @@ export function EventBasicFields() {
       <FormField label="Description" htmlFor="description" error={errors.description?.message}>
         <Textarea id="description" {...register('description')} />
       </FormField>
+
+      <Controller
+        name="showDescription"
+        control={control}
+        render={({ field }) => (
+          <Switch
+            label="Show description on booking page"
+            checked={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
     </Stack>
   )
 }

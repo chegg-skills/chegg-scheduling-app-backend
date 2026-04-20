@@ -1267,6 +1267,65 @@ describe("targetCoHostCount validation", () => {
   });
 });
 
+// ─── showDescription Field ─────────────────────────────────────────────────────
+
+describe("showDescription field", () => {
+  it("defaults to false when not specified on creation", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.showDescription).toBe(false);
+  });
+
+  it("can be set to true on creation", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      showDescription: true,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.showDescription).toBe(true);
+  });
+
+  it("can be toggled via PATCH", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ showDescription: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.showDescription).toBe(true);
+  });
+
+  it("is preserved when duplicating an event", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      showDescription: true,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/duplicate`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.showDescription).toBe(true);
+  });
+});
+
 // ─── MANY_TO_MANY Event Creation ──────────────────────────────────────────────
 
 describe("MANY_TO_MANY event creation", () => {

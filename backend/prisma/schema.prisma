@@ -129,6 +129,7 @@ model Event {
   maxCoachCount             Int?
   minCoachCount             Int                       @default(1)
   targetCoHostCount         Int?
+  showDescription           Boolean                   @default(false)
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
   offering                  EventOffering             @relation(fields: [offeringId], references: [id])

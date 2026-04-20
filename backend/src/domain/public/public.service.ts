@@ -22,6 +22,7 @@ const publicEventSelect = {
   bookingMode: true,
   locationType: true,
   publicBookingSlug: true,
+  showDescription: true,
   teamId: true,
   allowedWeekdays: true,
   minimumNoticeMinutes: true,
