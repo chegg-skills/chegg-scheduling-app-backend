@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box'
-import { alpha } from '@mui/material/styles'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { useEffect, useState } from 'react'
@@ -12,7 +11,6 @@ import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHe
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { PublicBookingFlow } from '@/components/public/booking/PublicBookingFlow'
 import { SessionIntroduction } from '@/components/public/booking/SessionIntroduction'
-import Divider from '@mui/material/Divider'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
 import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel'
