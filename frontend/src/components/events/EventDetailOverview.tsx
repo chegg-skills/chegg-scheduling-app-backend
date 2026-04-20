@@ -1,7 +1,12 @@
+import { useState } from 'react'
 import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
+import { alpha } from '@mui/material/styles'
+import { Link as LinkIcon, Copy, Check } from 'lucide-react'
 import type { Event } from '@/types'
 import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 import { toTitleCase } from '@/utils/toTitleCase'
@@ -22,6 +27,17 @@ const TOOLTIPS = {
 }
 
 export function EventDetailOverview({ event }: EventDetailOverviewProps) {
+  const [copied, setCopied] = useState(false)
+  const bookingUrl = `${window.location.origin}/book/event/${event.publicBookingSlug}`
+
+  const handleCopy = () => {
+    if (event.publicBookingSlug) {
+      navigator.clipboard.writeText(bookingUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   const fixedLeadCoach = event.fixedLeadCoachId
     ? (event.coaches.find((coach) => coach.coachUserId === event.fixedLeadCoachId)?.coachUser ?? null)
     : null
@@ -164,6 +180,70 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           label="Participants (Min / Max)"
           value={`${event.minParticipantCount ?? 1} / ${event.maxParticipantCount ?? '∞'}`}
         />
+
+        {/* Public Booking Link Section */}
+        <Grid size={12}>
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
+              bgcolor: 'action.hover',
+              borderRadius: 1.5,
+              border: '1px dashed',
+              borderColor: 'divider',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
+              <LinkIcon size={20} style={{ color: 'var(--mui-palette-primary-main)' }} />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                  Public Booking Link
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'primary.main',
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {event.publicBookingSlug
+                    ? bookingUrl
+                    : 'No slug configured. Please check event settings.'}
+                </Typography>
+              </Box>
+            </Box>
+            <Tooltip title={copied ? 'Copied!' : 'Copy Link'} arrow>
+              <IconButton
+                onClick={handleCopy}
+                disabled={!event.publicBookingSlug}
+                color={copied ? 'success' : 'primary'}
+                sx={{
+                  bgcolor: (theme) =>
+                    alpha(
+                      copied ? theme.palette.success.main : theme.palette.primary.main,
+                      0.1
+                    ),
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      alpha(
+                        copied ? theme.palette.success.main : theme.palette.primary.main,
+                        0.2
+                      ),
+                  },
+                }}
+              >
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Grid>
       </Grid>
     </Paper>
   )

@@ -158,6 +158,7 @@ describe("Public API", () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.event.publicBookingSlug).toBe(eventSlug);
       expect(res.body.data.event.teamId).toBe(teamId);
+      expect(res.body.data.event).toHaveProperty("showDescription");
     });
 
     it("should resolve a coach by public slug and list their public events", async () => {

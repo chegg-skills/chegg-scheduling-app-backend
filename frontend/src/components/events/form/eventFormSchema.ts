@@ -42,6 +42,7 @@ export const eventFormSchema = z
       .nullable()
       .optional(),
     bufferAfterMinutes: z.number().min(0).default(0),
+    showDescription: z.boolean().default(false),
     isActive: z.boolean().default(true),
   })
   .superRefine((values, ctx) => {
@@ -138,6 +139,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       minParticipantCount: event.minParticipantCount,
       maxParticipantCount: event.maxParticipantCount,
       bufferAfterMinutes: event.bufferAfterMinutes,
+      showDescription: event.showDescription,
       isActive: event.isActive,
     }
   }
@@ -162,6 +164,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     minParticipantCount: null,
     maxParticipantCount: null,
     bufferAfterMinutes: 15,
+    showDescription: false,
     isActive: true,
   }
 }

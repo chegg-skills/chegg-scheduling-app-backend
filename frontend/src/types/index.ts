@@ -168,6 +168,7 @@ export interface Event {
   minParticipantCount: number | null
   maxParticipantCount: number | null
   bufferAfterMinutes: number
+  showDescription: boolean
   teamId: string
   createdById: string
   updatedById: string
@@ -205,6 +206,7 @@ export interface PublicEventSummary extends Pick<
   | 'publicBookingSlug'
   | 'interactionType'
   | 'assignmentStrategy'
+  | 'showDescription'
 > {
   team: PublicTeamSummary
   coaches: PublicEventCoach[]

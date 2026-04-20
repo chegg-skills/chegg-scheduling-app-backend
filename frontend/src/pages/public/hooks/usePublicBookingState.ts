@@ -158,7 +158,7 @@ export function usePublicBookingState() {
     scope === 'team'
       ? loadingTeamDetails || loadingTeamEvents
       : scope === 'event'
-        ? loadingEventDetails
+        ? loadingEventDetails || (!selectedEvent && !eventDetailsError)
         : scope === 'coach'
           ? loadingCoachDetails || loadingCoachEvents
           : loadingDirectoryEvents

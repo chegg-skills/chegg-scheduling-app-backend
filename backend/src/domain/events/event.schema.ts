@@ -48,6 +48,7 @@ const EventBaseObjectCore = z.object({
   sessionLeadershipStrategy: z.string().optional(),
   fixedLeadCoachId: z.string().uuid().optional().nullable(),
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
+  showDescription: z.boolean().optional(),
 });
 
 /**

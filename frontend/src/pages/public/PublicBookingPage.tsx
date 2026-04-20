@@ -10,6 +10,7 @@ import { SuccessStep } from '@/components/public/booking/SuccessStep'
 import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHeader'
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { PublicBookingFlow } from '@/components/public/booking/PublicBookingFlow'
+import { SessionIntroduction } from '@/components/public/booking/SessionIntroduction'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
 import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel'
@@ -117,6 +118,12 @@ export function PublicBookingPage() {
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
           />
+
+          {eventDetails?.description && eventDetails?.showDescription && (
+            <>
+              <SessionIntroduction description={eventDetails.description} />
+            </>
+          )}
         </PublicSidePanel>
 
         {/* Column 2: Dynamic Content & Navigation */}
