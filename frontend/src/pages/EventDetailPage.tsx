@@ -53,7 +53,16 @@ export function EventDetailPage() {
   const bookingViewValue = useMemo(() => ({ onViewCoach: setViewingUserId }), [])
 
   if (isLoading) return <PageSpinner />
-  if (error || !event) return <ErrorAlert message="Failed to load event." />
+  if (error || !event) {
+    return (
+      <Stack spacing={4}>
+        <PageHeader title="Event" backTo="/teams" backLabel="Teams" />
+        <Box sx={{ px: { xs: 2.5, md: 4 }, py: 4 }}>
+          <ErrorAlert message="Failed to load event. Please go back and try again." />
+        </Box>
+      </Stack>
+    )
+  }
 
   const coachSetupStatus = getEventCoachSetupStatus({
     activeCoachCount: event.coaches?.length ?? 0,

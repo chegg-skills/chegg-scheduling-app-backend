@@ -38,9 +38,6 @@ export function EventsPage() {
     selectedTeamId || undefined
   )
 
-  if (teamsLoading) return <PageSpinner />
-  if (teamsError) return <ErrorAlert message="Failed to load teams." />
-
   const eventStatItems = [
     {
       label: 'Events created',
@@ -184,30 +181,42 @@ export function EventsPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <StatsOverview
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-          timeframeInfo={eventStats?.timeframe}
-          items={eventStatItems}
-          isLoading={statsLoading}
-        />
-
-        {selectedTeamId === '' ? (
-          <Typography variant="body2" color="text.secondary">
-            Please select a team to view its events.
-          </Typography>
-        ) : eventsLoading ? (
+        {teamsLoading ? (
           <PageSpinner />
-        ) : eventsError ? (
-          <ErrorAlert message="Failed to load events." />
-        ) : (
-          <Box sx={{ mt: 3 }}>
-            <EventTable
-              events={eventsData?.events ?? []}
-              teamId={selectedTeamId}
-              onViewUser={setViewingUserId}
-            />
+        ) : teamsError ? (
+          <Box sx={{ py: 4 }}>
+            <ErrorAlert message="Failed to load teams. Please refresh the page." />
           </Box>
+        ) : (
+          <>
+            <StatsOverview
+              timeframe={timeframe}
+              onTimeframeChange={setTimeframe}
+              timeframeInfo={eventStats?.timeframe}
+              items={eventStatItems}
+              isLoading={statsLoading}
+            />
+
+            {selectedTeamId === '' ? (
+              <Typography variant="body2" color="text.secondary">
+                Please select a team to view its events.
+              </Typography>
+            ) : eventsLoading ? (
+              <PageSpinner />
+            ) : eventsError ? (
+              <Box sx={{ py: 4 }}>
+                <ErrorAlert message="Failed to load events. Please refresh the page." />
+              </Box>
+            ) : (
+              <Box sx={{ mt: 3 }}>
+                <EventTable
+                  events={eventsData?.events ?? []}
+                  teamId={selectedTeamId}
+                  onViewUser={setViewingUserId}
+                />
+              </Box>
+            )}
+          </>
         )}
 
         {canManageTeam && (

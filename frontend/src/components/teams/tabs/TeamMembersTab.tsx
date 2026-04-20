@@ -1,5 +1,6 @@
 import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { TeamMemberList } from '@/components/team-members/TeamMemberList'
 import { AddMemberForm } from '@/components/team-members/AddMemberForm'
 import type { TeamMember, UserRole } from '@/types'
@@ -10,6 +11,7 @@ interface TeamMembersTabProps {
   currentUserRole: UserRole
   teamLeadId: string
   isLoading: boolean
+  error?: unknown
   existingMemberIds: string[]
   showAddModal: boolean
   onCloseAddModal: () => void
@@ -22,6 +24,7 @@ export function TeamMembersTab({
   currentUserRole,
   teamLeadId,
   isLoading,
+  error,
   existingMemberIds,
   showAddModal,
   onCloseAddModal,
@@ -29,7 +32,9 @@ export function TeamMembersTab({
 }: TeamMembersTabProps) {
   return (
     <>
-      {isLoading ? (
+      {error ? (
+        <ErrorAlert message="Failed to load members. Please refresh the page." />
+      ) : isLoading ? (
         <PageSpinner />
       ) : (
         <TeamMemberList

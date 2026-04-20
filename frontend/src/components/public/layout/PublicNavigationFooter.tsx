@@ -1,6 +1,5 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
 import { ChevronLeft } from 'lucide-react'
 
@@ -64,11 +63,6 @@ export function PublicNavigationFooter({
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mr: 2 }}>
-        {isSubmitting && (
-          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-            {submittingLabel}
-          </Typography>
-        )}
         <Button
           variant="contained"
           size="large"
