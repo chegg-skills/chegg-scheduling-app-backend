@@ -49,9 +49,16 @@ export function TeamDetailPage() {
   const existingMemberIds = members.map((m) => m.userId)
 
   if (teamLoading) return <PageSpinner />
-  if (teamError || !team) return <ErrorAlert message="Failed to load team details." />
-  if (membersError) return <ErrorAlert message="Failed to load team members." />
-  if (eventsError) return <ErrorAlert message="Failed to load team events." />
+  if (teamError || !team) {
+    return (
+      <Stack spacing={4}>
+        <PageHeader title="Team" backTo="/teams" backLabel="Teams" />
+        <Box sx={{ px: { xs: 2.5, md: 4 }, py: 4 }}>
+          <ErrorAlert message="Failed to load team details. Please go back and try again." />
+        </Box>
+      </Stack>
+    )
+  }
 
   return (
     <Stack spacing={4}>
@@ -169,6 +176,7 @@ export function TeamDetailPage() {
             events={teamEvents}
             teamId={teamId}
             isLoading={eventsLoading}
+            error={eventsError}
             showCreateModal={showCreateEvent}
             onCloseCreateModal={() => setShowCreateEvent(false)}
           />
@@ -181,6 +189,7 @@ export function TeamDetailPage() {
             currentUserRole={user?.role ?? 'TEAM_ADMIN'}
             teamLeadId={team.teamLeadId}
             isLoading={membersLoading}
+            error={membersError}
             existingMemberIds={existingMemberIds}
             showAddModal={showAddMember}
             onCloseAddModal={() => setShowAddMember(false)}

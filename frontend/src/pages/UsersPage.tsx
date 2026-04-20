@@ -43,9 +43,6 @@ export function UsersPage() {
   const users = data?.users ?? []
   const pagination = data?.pagination
 
-  if (isLoading && !data) return <PageSpinner />
-  if (error) return <ErrorAlert message="Failed to load users." />
-
   const userStatItems = [
     {
       label: 'New users',
@@ -135,24 +132,34 @@ export function UsersPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <StatsOverview
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-          timeframeInfo={userStats?.timeframe}
-          items={userStatItems}
-          isLoading={statsLoading}
-        />
+        {isLoading && !data ? (
+          <PageSpinner />
+        ) : error ? (
+          <Box sx={{ py: 4 }}>
+            <ErrorAlert message="Failed to load users. Please refresh the page." />
+          </Box>
+        ) : (
+          <>
+            <StatsOverview
+              timeframe={timeframe}
+              onTimeframeChange={setTimeframe}
+              timeframeInfo={userStats?.timeframe}
+              items={userStatItems}
+              isLoading={statsLoading}
+            />
 
-        <Box sx={{ mt: 3 }}>
-          <UserTable
-            users={users}
-            pagination={pagination}
-            onPageChange={onPageChange}
-            onRowsPerPageChange={onRowsPerPageChange}
-            currentUserRole={(currentUser?.role ?? 'TEAM_ADMIN') as UserRole}
-            currentUserId={currentUser?.id ?? ''}
-          />
-        </Box>
+            <Box sx={{ mt: 3 }}>
+              <UserTable
+                users={users}
+                pagination={pagination}
+                onPageChange={onPageChange}
+                onRowsPerPageChange={onRowsPerPageChange}
+                currentUserRole={(currentUser?.role ?? 'TEAM_ADMIN') as UserRole}
+                currentUserId={currentUser?.id ?? ''}
+              />
+            </Box>
+          </>
+        )}
 
         <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite user">
           <InviteForm

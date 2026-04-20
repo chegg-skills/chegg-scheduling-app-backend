@@ -19,7 +19,16 @@ export function StudentDetailPage() {
   } = useStudentBookings(studentId!)
 
   if (studentLoading) return <PageSpinner />
-  if (studentError || !student) return <ErrorAlert message="Student not found." />
+  if (studentError || !student) {
+    return (
+      <Box>
+        <PageHeader title="Student" backTo="/students" backLabel="Students" />
+        <Box sx={{ px: { xs: 2.5, md: 4 }, py: 4 }}>
+          <ErrorAlert message="Student not found or failed to load. Please go back and try again." />
+        </Box>
+      </Box>
+    )
+  }
 
   return (
     <Box>

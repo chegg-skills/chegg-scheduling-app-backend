@@ -29,9 +29,6 @@ export function TeamsPage() {
   })
   const { data: teamStats, isLoading: statsLoading } = useTeamStats(timeframe)
 
-  if (isLoading && !data) return <PageSpinner />
-  if (error) return <ErrorAlert message="Failed to load teams." />
-
   const teams = data?.teams ?? []
   const pagination = data?.pagination
 
@@ -82,23 +79,33 @@ export function TeamsPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <StatsOverview
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-          timeframeInfo={teamStats?.timeframe}
-          items={teamStatItems}
-          isLoading={statsLoading}
-        />
+        {isLoading && !data ? (
+          <PageSpinner />
+        ) : error ? (
+          <Box sx={{ py: 4 }}>
+            <ErrorAlert message="Failed to load teams. Please refresh the page." />
+          </Box>
+        ) : (
+          <>
+            <StatsOverview
+              timeframe={timeframe}
+              onTimeframeChange={setTimeframe}
+              timeframeInfo={teamStats?.timeframe}
+              items={teamStatItems}
+              isLoading={statsLoading}
+            />
 
-        <Box sx={{ mt: 3 }}>
-          <TeamTable
-            teams={teams}
-            pagination={pagination}
-            onPageChange={onPageChange}
-            onRowsPerPageChange={onRowsPerPageChange}
-            canManageTeam={canManageTeam}
-          />
-        </Box>
+            <Box sx={{ mt: 3 }}>
+              <TeamTable
+                teams={teams}
+                pagination={pagination}
+                onPageChange={onPageChange}
+                onRowsPerPageChange={onRowsPerPageChange}
+                canManageTeam={canManageTeam}
+              />
+            </Box>
+          </>
+        )}
 
         {canManageTeam && (
           <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create team">
