@@ -184,10 +184,17 @@ export interface PublicTeamSummary extends Pick<
   'id' | 'name' | 'description' | 'publicBookingSlug'
 > { }
 
-export interface PublicCoachSummary extends Pick<
-  SafeUser,
-  'id' | 'firstName' | 'lastName' | 'avatarUrl' | 'timezone' | 'publicBookingSlug'
-> { }
+export interface PublicHostInfo {
+  id: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+}
+
+export interface PublicCoachSummary extends PublicHostInfo {
+  timezone: string
+  publicBookingSlug: string | null
+}
 
 export interface PublicEventCoach {
   coachUserId: string
@@ -207,6 +214,7 @@ export interface PublicEventSummary extends Pick<
   | 'interactionType'
   | 'assignmentStrategy'
   | 'showDescription'
+  | 'bookingMode'
 > {
   team: PublicTeamSummary
   coaches: PublicEventCoach[]

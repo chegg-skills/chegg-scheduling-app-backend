@@ -3,14 +3,14 @@ import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
 import { alpha } from '@mui/material/styles'
-import { Calendar, Clock } from 'lucide-react'
-import type { PublicEventSummary, PublicTeamSummary, PublicCoachSummary } from '@/types'
+import { Calendar, Clock, User } from 'lucide-react'
+import type { PublicEventSummary, PublicTeamSummary, PublicCoachSummary, PublicHostInfo } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 
 interface PublicBookingSummaryProps {
   teamDetails?: PublicTeamSummary | null
   eventDetails?: PublicEventSummary | null
-  coachDetails?: PublicCoachSummary | null
+  coachDetails?: PublicHostInfo | PublicCoachSummary | null
   selectedDate: Date | null
   selectedSlot: string | null
   title?: string
@@ -197,6 +197,30 @@ export function PublicBookingSummary({
                 <Clock size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />
               )}
               {formatSlot(selectedSlot)}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Host Information */}
+        {coachDetails && (
+          <Box>
+            {!compact && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={700}
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}
+              >
+                <User size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Host
+              </Typography>
+            )}
+            <Typography
+              variant="body2"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ fontSize: compact ? '0.75rem' : '0.875rem' }}
+            >
+              {coachDetails.firstName} {coachDetails.lastName}
             </Typography>
           </Box>
         )}
