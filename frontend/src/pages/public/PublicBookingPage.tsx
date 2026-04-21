@@ -118,6 +118,7 @@ export function PublicBookingPage() {
             coachDetails={selectedSlotCoach || coachDetails}
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
+            compact
           />
 
           {eventDetails?.description && eventDetails?.showDescription && (

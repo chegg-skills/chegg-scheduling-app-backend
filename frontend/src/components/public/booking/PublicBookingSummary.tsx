@@ -1,11 +1,11 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
-import { alpha } from '@mui/material/styles'
-import { Calendar, Clock, User } from 'lucide-react'
+import { alpha, Theme } from '@mui/material/styles'
+import { Award, Calendar, Clock, User, Users } from 'lucide-react'
 import type { PublicEventSummary, PublicTeamSummary, PublicCoachSummary, PublicHostInfo } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { SummaryDetail } from './SummaryDetail'
 
 interface PublicBookingSummaryProps {
   teamDetails?: PublicTeamSummary | null
@@ -16,8 +16,13 @@ interface PublicBookingSummaryProps {
   title?: string
   variant?: 'default' | 'current'
   compact?: boolean
+  condensed?: boolean
 }
 
+/**
+ * PublicBookingSummary serves as the sidebar orchestrator for session details.
+ * It supports standard, compact, and condensed layouts.
+ */
 export function PublicBookingSummary({
   teamDetails,
   eventDetails,
@@ -27,8 +32,9 @@ export function PublicBookingSummary({
   title = 'Your selection',
   variant = 'default',
   compact = false,
+  condensed = false,
 }: PublicBookingSummaryProps) {
-  const hasSelection = teamDetails || eventDetails || selectedDate || selectedSlot || coachDetails
+  const hasSelection = !!(teamDetails || eventDetails || selectedDate || selectedSlot || coachDetails)
 
   if (!hasSelection) return null
 
@@ -49,184 +55,92 @@ export function PublicBookingSummary({
   }
 
   const displayTeam = teamDetails || eventDetails?.team
+  const iconColor = variant === 'current' ? '#3A2C41' : '#E87100'
+
+  // Determine container styles based on layout mode
+  const containerStyles = {
+    mt: condensed ? 1 : compact ? 1 : 2,
+    ...(variant === 'current' && {
+      p: condensed ? 0 : compact ? 1.5 : 2, // Condensed doesn't need extra padding if in side panel
+      borderRadius: 1,
+      bgcolor: (theme: Theme) => alpha(theme.palette.secondary.main, 0.04),
+      border: '1px solid',
+      borderColor: (theme: Theme) => alpha(theme.palette.secondary.main, 0.1),
+    }),
+  }
 
   return (
-    <Box
-      sx={{
-        mt: compact ? 0.5 : 2,
-        ...(variant === 'current' && {
-          p: compact ? 1.5 : 2,
-          borderRadius: 1,
-          bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.04),
-          border: '1px solid',
-          borderColor: (theme) => alpha(theme.palette.secondary.main, 0.1),
-        }),
-      }}
-    >
+    <Box sx={containerStyles}>
       <Typography
         variant="overline"
         color={variant === 'current' ? 'secondary.main' : 'text.secondary'}
         fontWeight={800}
         sx={{
           display: 'block',
-          mb: compact ? 0.5 : 1,
+          mb: condensed || compact ? 1 : 1,
           letterSpacing: 1.2,
-          fontSize: compact ? '0.6rem' : '0.7rem',
+          fontSize: condensed || compact ? '0.65rem' : '0.7rem',
         }}
       >
         {title}
       </Typography>
 
-      <Stack
-        direction={compact ? 'row' : 'column'}
-        spacing={compact ? 2 : 1.5}
-        sx={{ flexWrap: 'wrap' }}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'auto auto 1fr',
+          columnGap: 0.5,
+          rowGap: condensed ? 1 : 1.5,
+          alignItems: 'center',
+        }}
       >
         {displayTeam && (
-          <Box sx={{ minWidth: 0 }}>
-            {!compact && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={700}
-                sx={{ display: 'block', mb: 0.5 }}
-              >
-                Team
-              </Typography>
-            )}
-            <Typography
-              variant="body2"
-              fontWeight={800}
-              color="text.primary"
-              sx={{
-                fontSize: compact ? '0.75rem' : '0.875rem',
-              }}
-            >
-              {toTitleCase(displayTeam.name)}
-            </Typography>
-          </Box>
+          <SummaryDetail
+            icon={Users}
+            label="Team"
+            value={toTitleCase(displayTeam.name)}
+            color={iconColor}
+          />
         )}
 
         {eventDetails && (
-          <Box sx={{ minWidth: 0 }}>
-            {!compact && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={700}
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}
-              >
-                <Calendar size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Session
-              </Typography>
-            )}
-            <Typography
-              variant="body2"
-              fontWeight={800}
-              color="text.primary"
-              sx={{
-                fontSize: compact ? '0.75rem' : '0.875rem',
-                whiteSpace: compact ? 'nowrap' : 'normal',
-                overflow: compact ? 'hidden' : 'visible',
-                textOverflow: compact ? 'ellipsis' : 'clip',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-              }}
-            >
-              {compact && (
-                <Calendar size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />
-              )}
-              {toTitleCase(eventDetails.name)}
-            </Typography>
-          </Box>
+          <SummaryDetail
+            icon={Award}
+            label="Session"
+            value={toTitleCase(eventDetails.name)}
+            color={iconColor}
+          />
         )}
 
         {selectedDate && (
-          <Box>
-            {!compact && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={700}
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}
-              >
-                <Calendar size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Date
-              </Typography>
-            )}
-            <Typography
-              variant="body2"
-              fontWeight={700}
-              color="text.primary"
-              sx={{
-                fontSize: compact ? '0.75rem' : '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-              }}
-            >
-              {compact && <Clock size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />}
-              {formatDate(selectedDate)}
-            </Typography>
-          </Box>
+          <SummaryDetail
+            icon={Calendar}
+            label="Date"
+            value={formatDate(selectedDate)}
+            color={iconColor}
+          />
         )}
 
         {selectedSlot && (
-          <Box>
-            {!compact && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={700}
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}
-              >
-                <Clock size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Time
-              </Typography>
-            )}
-            <Typography
-              variant="body2"
-              fontWeight={700}
-              color="text.primary"
-              sx={{
-                fontSize: compact ? '0.75rem' : '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-              }}
-            >
-              {compact && !selectedDate && (
-                <Clock size={12} color={variant === 'current' ? '#3A2C41' : '#E87100'} />
-              )}
-              {formatSlot(selectedSlot)}
-            </Typography>
-          </Box>
+          <SummaryDetail
+            icon={Clock}
+            label="Time"
+            value={formatSlot(selectedSlot)}
+            color={iconColor}
+          />
         )}
 
-        {/* Host Information */}
         {coachDetails && (
-          <Box>
-            {!compact && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight={700}
-                sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}
-              >
-                <User size={14} color={variant === 'current' ? '#3A2C41' : '#E87100'} /> Host
-              </Typography>
-            )}
-            <Typography
-              variant="body2"
-              fontWeight={700}
-              color="text.primary"
-              sx={{ fontSize: compact ? '0.75rem' : '0.875rem' }}
-            >
-              {coachDetails.firstName} {coachDetails.lastName}
-            </Typography>
-          </Box>
+          <SummaryDetail
+            icon={User}
+            label="Host"
+            value={`${coachDetails.firstName} ${coachDetails.lastName}`}
+            color={iconColor}
+          />
         )}
-      </Stack>
+      </Box>
 
-      {variant !== 'current' && !compact && <Divider sx={{ mt: 2, opacity: 0.6 }} />}
+      {variant !== 'current' && <Divider sx={{ mt: 1.5, opacity: 0.6 }} />}
     </Box>
   )
 }

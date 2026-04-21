@@ -1,14 +1,13 @@
 import * as React from 'react'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
-import { alpha } from '@mui/material/styles'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import type { AvailableSlot } from '@/api/public'
+import { SlotGroup } from './SlotGroup'
 
 interface SlotStepProps {
   slots: AvailableSlot[]
@@ -127,7 +126,7 @@ export function SlotStep({
           </Box>
           <Divider sx={{ mb: 1 }} />
 
-          {/* Scrollable grid area for slots */}
+          {/* Scrollable area for slots */}
           <Box
             sx={{
               overflowY: 'auto',
@@ -148,157 +147,20 @@ export function SlotStep({
               </Box>
             ) : (
               <Box sx={{ pb: 2 }}>
-                {amSlots.length > 0 && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mb: 1.5, display: 'block', fontWeight: 700 }}
-                    >
-                      Morning
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-                        gap: 0.5,
-                      }}
-                    >
-                      {amSlots.map((s) => (
-                        <Button
-                          key={s.startTime}
-                          variant={selectedSlot === s.startTime ? 'contained' : 'outlined'}
-                          fullWidth
-                          onClick={() => onSelect(s.startTime)}
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 0.25,
-                            py: 1.5,
-                            px: 0,
-                            borderRadius: 1,
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            textTransform: 'none',
-                            minHeight: 52,
-                            ...(selectedSlot === s.startTime
-                              ? {
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': { bgcolor: 'primary.dark' },
-                              }
-                              : {
-                                borderColor: (theme) => alpha(theme.palette.divider, 0.5),
-                                color: 'text.primary',
-                                '&:hover': {
-                                  borderColor: 'primary.main',
-                                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                                },
-                              }),
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            fontWeight={800}
-                            sx={{ color: 'inherit', lineHeight: 1.2 }}
-                          >
-                            {timeFormat.format(new Date(s.startTime))}
-                          </Typography>
-
-                          {s.maxSeats && s.maxSeats > 1 && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontSize: '0.65rem',
-                                color: selectedSlot === s.startTime ? 'white' : 'text.secondary',
-                                opacity: 0.8,
-                                fontWeight: 600,
-                              }}
-                            >
-                              {s.remainingSeats ?? s.maxSeats} left
-                            </Typography>
-                          )}
-                        </Button>
-                      ))}
-                    </Box>
-                  </Box>
-                )}
-
-                {pmSlots.length > 0 && (
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mb: 1.5, display: 'block', fontWeight: 700 }}
-                    >
-                      Afternoon & Evening
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-                        gap: 0.5,
-                      }}
-                    >
-                      {pmSlots.map((s) => (
-                        <Button
-                          key={s.startTime}
-                          variant={selectedSlot === s.startTime ? 'contained' : 'outlined'}
-                          fullWidth
-                          onClick={() => onSelect(s.startTime)}
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 0.25,
-                            py: 1.5,
-                            px: 0,
-                            borderRadius: 1,
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            textTransform: 'none',
-                            minHeight: 52,
-                            ...(selectedSlot === s.startTime
-                              ? {
-                                bgcolor: 'primary.main',
-                                color: 'white',
-                                '&:hover': { bgcolor: 'primary.dark' },
-                              }
-                              : {
-                                borderColor: (theme) => alpha(theme.palette.divider, 0.5),
-                                color: 'text.primary',
-                                '&:hover': {
-                                  borderColor: 'primary.main',
-                                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                                },
-                              }),
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            fontWeight={800}
-                            sx={{ color: 'inherit', lineHeight: 1.2 }}
-                          >
-                            {timeFormat.format(new Date(s.startTime))}
-                          </Typography>
-
-                          {s.maxSeats && s.maxSeats > 1 && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontSize: '0.65rem',
-                                color: selectedSlot === s.startTime ? 'white' : 'text.secondary',
-                                opacity: 0.8,
-                                fontWeight: 600,
-                              }}
-                            >
-                              {s.remainingSeats ?? s.maxSeats} left
-                            </Typography>
-                          )}
-                        </Button>
-                      ))}
-                    </Box>
-                  </Box>
-                )}
+                <SlotGroup
+                  title="Morning"
+                  slots={amSlots}
+                  selectedSlot={selectedSlot}
+                  onSelect={onSelect}
+                  timeFormat={timeFormat}
+                />
+                <SlotGroup
+                  title="Afternoon & Evening"
+                  slots={pmSlots}
+                  selectedSlot={selectedSlot}
+                  onSelect={onSelect}
+                  timeFormat={timeFormat}
+                />
               </Box>
             )}
           </Box>
