@@ -11,6 +11,7 @@ import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHe
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { PublicBookingFlow } from '@/components/public/booking/PublicBookingFlow'
 import { SessionIntroduction } from '@/components/public/booking/SessionIntroduction'
+import { TroubleshootDialog } from '@/components/public/booking/TroubleshootDialog'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
 import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel'
@@ -61,6 +62,7 @@ export function PublicBookingPage() {
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
   const [bookError, setBookError] = useState<string | null>(null)
+  const [troubleshootOpen, setTroubleshootOpen] = useState(false)
 
   const handleBookWithError = async () => {
     setBookError(null)
@@ -191,9 +193,15 @@ export function PublicBookingPage() {
             isSubmitting={isSubmitting}
             nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
+            onTroubleshoot={() => setTroubleshootOpen(true)}
           />
         </PublicMainContent>
       </PublicBaseLayout>
+
+      <TroubleshootDialog
+        open={troubleshootOpen}
+        onClose={() => setTroubleshootOpen(false)}
+      />
     </LocalizationProvider>
   )
 }
