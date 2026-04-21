@@ -57,6 +57,8 @@ export type CreateEventInput = {
   sessionLeadershipStrategy?: string;
   fixedLeadCoachId?: string | null;
   bufferAfterMinutes?: number;
+  maxBookingWindowDays?: number | null;
+  showDescription?: boolean;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput>;

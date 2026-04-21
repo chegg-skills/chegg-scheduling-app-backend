@@ -75,6 +75,7 @@ interface PublicBookingFlowProps {
   setSelectedSlot: (slot: string | null) => void
   studentInfo: any
   setStudentInfo: (info: any) => void
+  maxBookingWindowDays?: number | null
 }
 
 /**
@@ -102,6 +103,7 @@ export function PublicBookingFlow({
   setSelectedSlot,
   studentInfo,
   setStudentInfo,
+  maxBookingWindowDays,
 }: PublicBookingFlowProps) {
   switch (currentStepKey) {
     case 'team':
@@ -150,6 +152,7 @@ export function PublicBookingFlow({
           onDateSelect={setSelectedDate}
           selectedSlot={selectedSlot}
           onSelect={setSelectedSlot}
+          maxBookingWindowDays={maxBookingWindowDays}
         />
       )
     case 'confirm':
