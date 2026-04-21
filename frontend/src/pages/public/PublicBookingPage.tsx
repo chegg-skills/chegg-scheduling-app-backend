@@ -54,6 +54,7 @@ export function PublicBookingPage() {
     teamDetails,
     eventDetails,
     coachDetails,
+    selectedSlotCoach,
     eventDetailsError,
   } = usePublicBookingState()
 
@@ -114,9 +115,10 @@ export function PublicBookingPage() {
           <PublicBookingSummary
             teamDetails={teamDetails}
             eventDetails={eventDetails}
-            coachDetails={coachDetails}
+            coachDetails={selectedSlotCoach || coachDetails}
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
+            compact
           />
 
           {eventDetails?.description && eventDetails?.showDescription && (

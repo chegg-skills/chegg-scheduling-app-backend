@@ -43,6 +43,12 @@ export interface AvailableSlot {
   scheduleSlotId?: string
   remainingSeats?: number | null
   maxSeats?: number | null
+  assignedCoach?: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+  } | null
 }
 
 export interface ListSlotsResponse {

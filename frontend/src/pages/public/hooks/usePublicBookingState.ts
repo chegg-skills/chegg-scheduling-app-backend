@@ -204,6 +204,12 @@ export function usePublicBookingState() {
     preferredCoachId
   )
 
+  const selectedSlotCoach = React.useMemo(() => {
+    if (!selectedSlot || !slots.length) return null
+    const slot = slots.find((s) => s.startTime === selectedSlot)
+    return slot?.assignedCoach || null
+  }, [selectedSlot, slots])
+
   const handleNext = () => setActiveStep((prev) => prev + 1)
   const handleBack = () => setActiveStep((prev) => Math.max(prev - 1, 0))
 
@@ -280,6 +286,7 @@ export function usePublicBookingState() {
     teamDetails,
     eventDetails,
     coachDetails,
+    selectedSlotCoach,
     eventDetailsError,
   }
 }
