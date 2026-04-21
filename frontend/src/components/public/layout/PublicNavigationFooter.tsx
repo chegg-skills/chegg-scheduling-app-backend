@@ -13,6 +13,7 @@ interface PublicNavigationFooterProps {
   nextLabel?: string
   submittingLabel?: string
   showBack?: boolean
+  onTroubleshoot?: () => void
 }
 
 /**
@@ -29,6 +30,7 @@ export function PublicNavigationFooter({
   nextLabel = 'Next',
   submittingLabel = 'Confirming...',
   showBack = true,
+  onTroubleshoot,
 }: PublicNavigationFooterProps) {
   return (
     <Box
@@ -44,7 +46,7 @@ export function PublicNavigationFooter({
         flexShrink: 0,
       }}
     >
-      <Box sx={{ minWidth: 100 }}>
+      <Box sx={{ minWidth: 100, display: 'flex', alignItems: 'center', gap: 2 }}>
         {showBack && (
           <Button
             disabled={backDisabled || isSubmitting}
@@ -60,9 +62,24 @@ export function PublicNavigationFooter({
             {backLabel}
           </Button>
         )}
+
+        {onTroubleshoot && (
+          <Button
+            onClick={onTroubleshoot}
+            sx={{
+              fontWeight: 600,
+              textTransform: 'none',
+              color: 'text.secondary',
+              fontSize: '0.75rem',
+              '&:hover': { color: 'primary.main', bgcolor: 'transparent', textDecoration: 'underline' }
+            }}
+          >
+            Having trouble?
+          </Button>
+        )}
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mr: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
           variant="contained"
           size="large"
