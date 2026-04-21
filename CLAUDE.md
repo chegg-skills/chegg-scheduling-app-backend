@@ -90,6 +90,7 @@ The three-tier hierarchy:
 - `targetCoHostCount` — per-session co-host cap for `MANY_TO_ONE` / `MANY_TO_MANY` events (`null` = all available coaches join as co-hosts)
 - `fixedLeadCoachId` — used when `sessionLeadershipStrategy = FIXED_LEAD`
 - `showDescription` — boolean (`@default(false)`). When `true`, the event's `description` is rendered in a `SessionIntroduction` component on the public booking page.
+- `maxBookingWindowDays` — optional positive integer (`null` = no limit, max 365). Prevents students from booking sessions further in the future than this many days from today. Enforced on two layers: the availability service clips `effectiveMaxDate` before generating slots, and `SlotStep` disables dates beyond the window in the date picker. Both sides compute the boundary using UTC arithmetic (`setUTCDate` / `setUTCHours(23, 59, 59, 999)`) so the cutoff is consistent regardless of server or browser timezone.
 
 The backend service file is `eventCoach.service.ts`. Routes are under `/events/:eventId/coaches`.
 
@@ -173,6 +174,7 @@ The Vite dev server proxies `/api` to `http://localhost:4000`, so `VITE_API_BASE
 - **Event form `superRefine`** — `eventFormSchema.ts` mirrors all backend cross-field validation rules (FIXED_LEAD without a lead coach, maxCoachCount < minCoachCount, ROUND_ROBIN requires minCoachCount ≥ 2, etc.) for immediate inline errors. `ROUND_ROBIN` is valid for all four interaction types — do not add a block for `!multipleCoaches`.
 - **`targetCoHostCount`** — optional integer on `Event`. Limits how many co-hosts `resolveCollaborativeCoHosts` assigns per session for MANY_TO_ONE / MANY_TO_MANY events. `null` means all available coaches (minus lead) join. Must be ≥ 1 when set (validated in `event.schema.ts`). Exposed in the event form under "Co-hosts per session". Reset to `null` when switching to a `!multipleCoaches` type.
 - **`showDescription`** — boolean toggle on `Event` (`@default(false)`). Exposed in the event form via `EventBasicFields` using the shared `Switch` component. When `true`, `PublicBookingPage` renders `SessionIntroduction` in the side panel showing the event description. The field is included in `publicEventSelect` so it is returned by the public event API.
+- **`maxBookingWindowDays`** — optional integer (1–365, `null` = no limit) on `Event`. Exposed in `EventSchedulingPolicyFields` with a numeric input (`min="1" max="365"`). Both the backend (`event.schema.ts`: `.min(1).max(365)`) and frontend (`eventFormSchema.ts`: `.min(1).max(365)`) validate the range. In `availability.service.ts`, `getAvailableSlots` caps `effectiveMaxDate` to `today + maxBookingWindowDays` at UTC end-of-day before generating slots. `SlotStep` mirrors this using the same UTC calculation to disable out-of-window dates in the calendar picker. **Always use `setUTCDate`/`setUTCHours` on both sides** — never local time — to keep the boundary consistent across timezones.
 - **Interaction type selector** — `EventResourceFields` uses a 2×2 card-based `RadioGroup` driven by `INTERACTION_TYPE_OPTIONS` constants, not an API-fetched dropdown.
 - **Public booking coach selection** — `usePublicBookingState` exposes `selectedCoachId` / `setSelectedCoachId`. For `DIRECT`-assignment events the hook derives `preferredCoachId` from `selectedCoachId` (not from the coach-slug URL). The public event API now returns `assignmentStrategy`, `interactionType`, and the active `coaches` list (`PublicEventCoach[]` in `types/index.ts`) so the booking UI can render a coach-picker step for DIRECT events.
   - `SlotStep` accepts optional `coaches`, `selectedCoachId`, `onCoachSelect` props. When `coaches` is non-empty (DIRECT events only) a card grid of coaches renders above the calendar; the slot grid shows a placeholder until a coach is selected (slots are fetched filtered by `preferredCoachId`).
@@ -206,6 +208,8 @@ All datetimes are stored as UTC in the database. Timezone handling is split acro
   - Co-coach emails → each co-coach's `user.timezone`
 - All formatting is done by `formatNotificationDate()` in `shared/utils/date.ts`, which uses `Intl.DateTimeFormat` with `timeZone`. Email templates include a `{{timezone}}` label so recipients know which timezone the displayed time is in.
 - Do **not** use a single `booking.timezone` for all recipients — the per-recipient override pattern in `getBookingNotificationVariables` must be preserved.
+
+**`parseBoundedDateRange` in `shared/utils/date.ts`:** When `endDate` is a date-only string (e.g. `"2026-12-07"`), the function extends it to `23:59:59.999 UTC` so that a same-day query (`?startDate=2026-12-07&endDate=2026-12-07`) covers the full 24-hour window. Without this, `new Date("2026-12-07")` parses as midnight UTC, making the slot-generation while loop a no-op (`currentStart < midnight == false`). Full ISO strings with an explicit time component are left unchanged.
 
 **Remaining known limitations:**
 - `availability.service.ts` builds its own Prisma query shape with `as any` casts — separate from the typed `bookableEventInclude` used in the booking domain.
@@ -294,6 +298,7 @@ npx jest tests/integration/events.test.ts --runInBand
 - **`targetCoHostCount` validation** — rejects 0 and negative values, accepts 1 and null; update path requires `interactionType` in PATCH body for cap checks
 - **MANY_TO_MANY creation** — happy-path with participant capacity; silent `COACH_AVAILABILITY → FIXED_SLOTS` service override; DIRECT + `targetCoHostCount`
 - **`showDescription` field** — defaults false on creation, can be set true, toggled via PATCH, preserved on duplicate; public slug endpoint returns the field
+- **`maxBookingWindowDays` field** — defaults null, can be set on creation, updated via PATCH, cleared to null, preserved on duplicate; rejects 0, negative values, and values > 365
 - **Schema rejections** — ONE_TO_MANY + ROUND_ROBIN, ONE_TO_MANY + COACH_AVAILABILITY, ONE_TO_ONE + maxParticipantCount > 1, maxCoachCount < minCoachCount, ROUND_ROBIN + minCoachCount < 2, FIXED_LEAD without coach (schema and service level), non-SINGLE_COACH for single-coach types
 
 Ad-hoc scripts for data backfill and seeding live in `backend/src/scripts/`. Run them directly with `npx tsx`:

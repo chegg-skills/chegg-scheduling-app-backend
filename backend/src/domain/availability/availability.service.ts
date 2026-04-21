@@ -155,8 +155,21 @@ const getAvailableSlots = async (
     return [];
   }
 
-
+  // Enforce booking window if set.
+  // Use UTC arithmetic throughout so the boundary is consistent regardless of
+  // the server's local timezone. The frontend mirrors this with setUTCDate /
+  // setUTCHours so both sides agree on the last bookable moment.
+  let effectiveMaxDate = endDate;
   const event = eventResult as any;
+  if (event.maxBookingWindowDays != null) {
+    const windowEnd = new Date();
+    windowEnd.setUTCDate(windowEnd.getUTCDate() + event.maxBookingWindowDays);
+    windowEnd.setUTCHours(23, 59, 59, 999);
+
+    if (windowEnd < effectiveMaxDate) {
+      effectiveMaxDate = windowEnd;
+    }
+  }
 
   const eligibleCoaches = preferredCoachId
     ? event.coaches.filter((c: { coachUserId: string }) => c.coachUserId === preferredCoachId)
@@ -265,12 +278,14 @@ const getAvailableSlots = async (
     };
   };
 
-  const finalEnd = new Date(endDate);
-  finalEnd.setUTCHours(23, 59, 59, 999);
+  const finalEnd = effectiveMaxDate;
 
   // Mode based resolution
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
     for (const scheduleSlot of event.scheduleSlots) {
+      // Also filter fixed slots by window
+      if (scheduleSlot.startTime >= finalEnd) continue;
+
       const availableSlot = await getSlotAvailability(
         scheduleSlot.startTime,
         scheduleSlot.endTime,

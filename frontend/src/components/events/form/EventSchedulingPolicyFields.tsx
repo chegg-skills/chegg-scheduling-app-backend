@@ -82,6 +82,25 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
         />
       </FormField>
 
+      <FormField
+        label="Maximum Booking Window (days)"
+        htmlFor="maxBookingWindowDays"
+        error={errors.maxBookingWindowDays?.message}
+        info="Limit how far in advance a student can book this session. Leave empty for no limit."
+      >
+        <Input
+          id="maxBookingWindowDays"
+          type="number"
+          min="1"
+          max="365"
+          placeholder="e.g. 30"
+          {...register('maxBookingWindowDays', {
+            valueAsNumber: true,
+            setValueAs: (v: string) => v === '' ? null : Number(v)
+          })}
+        />
+      </FormField>
+
       {caps?.multipleParticipants && <ParticipantCapacityFields />}
     </Stack>
   )

@@ -1326,6 +1326,115 @@ describe("showDescription field", () => {
   });
 });
 
+// ─── maxBookingWindowDays Field ───────────────────────────────────────────────
+
+describe("maxBookingWindowDays field", () => {
+  it("defaults to null when not specified on creation", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.maxBookingWindowDays).toBeNull();
+  });
+
+  it("can be set to a positive integer on creation", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      maxBookingWindowDays: 30,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.maxBookingWindowDays).toBe(30);
+  });
+
+  it("can be updated via PATCH", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ maxBookingWindowDays: 60 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.maxBookingWindowDays).toBe(60);
+  });
+
+  it("can be cleared back to null via PATCH", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      maxBookingWindowDays: 14,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ maxBookingWindowDays: null });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.maxBookingWindowDays).toBeNull();
+  });
+
+  it("is preserved when duplicating an event", async () => {
+    const offering = await createOffering(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      maxBookingWindowDays: 90,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/duplicate`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.maxBookingWindowDays).toBe(90);
+  });
+
+  it("rejects 0 (must be at least 1)", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      maxBookingWindowDays: 0,
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects negative values", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      maxBookingWindowDays: -5,
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects values greater than 365", async () => {
+    const offering = await createOffering(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      offeringId: offering.body.data.id,
+      maxBookingWindowDays: 366,
+    });
+
+    expect(res.status).toBe(400);
+  });
+});
+
 // ─── MANY_TO_MANY Event Creation ──────────────────────────────────────────────
 
 describe("MANY_TO_MANY event creation", () => {

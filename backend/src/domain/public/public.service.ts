@@ -28,6 +28,7 @@ const publicEventSelect = {
   minimumNoticeMinutes: true,
   minParticipantCount: true,
   maxParticipantCount: true,
+  maxBookingWindowDays: true,
   interactionType: true,
   assignmentStrategy: true,
   coaches: {

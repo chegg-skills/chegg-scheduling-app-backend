@@ -169,6 +169,7 @@ export function PublicBookingPage() {
               setSelectedSlot={setSelectedSlot}
               studentInfo={studentInfo}
               setStudentInfo={setStudentInfo}
+              maxBookingWindowDays={eventDetails?.maxBookingWindowDays}
             />
           </Box>
 

@@ -169,6 +169,7 @@ export interface Event {
   maxParticipantCount: number | null
   bufferAfterMinutes: number
   showDescription: boolean
+  maxBookingWindowDays: number | null
   teamId: string
   createdById: string
   updatedById: string
@@ -215,6 +216,7 @@ export interface PublicEventSummary extends Pick<
   | 'assignmentStrategy'
   | 'showDescription'
   | 'bookingMode'
+  | 'maxBookingWindowDays'
 > {
   team: PublicTeamSummary
   coaches: PublicEventCoach[]

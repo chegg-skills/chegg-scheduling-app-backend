@@ -16,6 +16,7 @@ interface SlotStepProps {
   onDateSelect: (date: Date) => void
   selectedSlot: string | null
   onSelect: (slot: string) => void
+  maxBookingWindowDays?: number | null
 }
 
 const timeFormat = new Intl.DateTimeFormat('en-US', {
@@ -37,7 +38,19 @@ export function SlotStep({
   onDateSelect,
   selectedSlot,
   onSelect,
+  maxBookingWindowDays,
 }: SlotStepProps) {
+  // Use UTC arithmetic to match the backend's window calculation in
+  // availability.service.ts. Both sides pin to UTC end-of-day so the boundary
+  // is the same regardless of the server's or client's local timezone.
+  const maxDate = React.useMemo(() => {
+    if (maxBookingWindowDays == null) return undefined
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() + maxBookingWindowDays)
+    d.setUTCHours(23, 59, 59, 999)
+    return d
+  }, [maxBookingWindowDays])
+
   const { amSlots, pmSlots } = React.useMemo(() => {
     const am: AvailableSlot[] = []
     const pm: AvailableSlot[] = []
@@ -87,6 +100,8 @@ export function SlotStep({
               value={selectedDate}
               onChange={(newValue) => newValue && onDateSelect(newValue)}
               minDate={new Date()}
+              maxDate={maxDate}
+              shouldDisableDate={(day) => (maxDate ? day > maxDate : false)}
               slotProps={{
                 actionBar: { actions: [] },
               }}

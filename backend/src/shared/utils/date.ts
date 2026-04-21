@@ -38,6 +38,15 @@ export const parseDateInput = (value: Date | string, fieldName = "date"): Date =
   return date;
 };
 
+/**
+ * Returns true if the value is a date-only string (e.g. "2026-12-07").
+ * These are treated as end-of-day for the `endDate` parameter so that a
+ * same-day query like ?startDate=2026-12-07&endDate=2026-12-07 covers the
+ * full 24-hour window rather than the zero-length interval [midnight, midnight].
+ */
+const isDateOnlyString = (value: string | Date): boolean =>
+  typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+
 export const parseBoundedDateRange = ({
   startDate,
   endDate,
@@ -49,6 +58,12 @@ export const parseBoundedDateRange = ({
 }): { start: Date; end: Date } => {
   const start = parseDateInput(startDate, "startDate");
   const end = parseDateInput(endDate, "endDate");
+
+  // When endDate is a date-only string (no time component), extend to UTC
+  // end-of-day so the range is inclusive of the entire requested day.
+  if (isDateOnlyString(endDate)) {
+    end.setUTCHours(23, 59, 59, 999);
+  }
 
   if (start.getTime() > end.getTime()) {
     throw new ErrorHandler(

@@ -186,6 +186,7 @@ export const buildEventCreateData = ({
     minCoachCount: validated.minCoachCount ?? 1,
     maxCoachCount: validated.maxCoachCount ?? undefined,
     targetCoHostCount: validated.targetCoHostCount ?? undefined,
+    maxBookingWindowDays: validated.maxBookingWindowDays ?? undefined,
     showDescription: validated.showDescription ?? false,
     team: { connect: { id: teamId } },
     createdBy: { connect: { id: callerId } },
@@ -203,7 +204,7 @@ export const buildEventCreateData = ({
     };
   }
 
-  return data;
+  return data as any;
 };
 
 export const buildEventUpdateData = ({
@@ -264,7 +265,11 @@ export const buildEventUpdateData = ({
     updateData.showDescription = validated.showDescription;
   }
 
-  return updateData;
+  if (validated.maxBookingWindowDays !== undefined) {
+    updateData.maxBookingWindowDays = validated.maxBookingWindowDays;
+  }
+
+  return updateData as any;
 };
 
 export const buildDuplicateEventData = ({
@@ -305,7 +310,8 @@ export const buildDuplicateEventData = ({
     bufferAfterMinutes: sourceEvent.bufferAfterMinutes,
     minCoachCount: sourceEvent.minCoachCount,
     maxCoachCount: sourceEvent.maxCoachCount ?? undefined,
-    targetCoHostCount: sourceEvent.targetCoHostCount ?? undefined,
-    showDescription: sourceEvent.showDescription,
-  };
+    targetCoHostCount: (sourceEvent as any).targetCoHostCount ?? undefined,
+    maxBookingWindowDays: (sourceEvent as any).maxBookingWindowDays ?? undefined,
+    showDescription: (sourceEvent as any).showDescription,
+  } as any;
 };

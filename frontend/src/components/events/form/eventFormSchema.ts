@@ -42,6 +42,7 @@ export const eventFormSchema = z
       .nullable()
       .optional(),
     bufferAfterMinutes: z.number().min(0).default(0),
+    maxBookingWindowDays: z.number().int().min(1).max(365).nullable().optional(),
     showDescription: z.boolean().default(false),
     isActive: z.boolean().default(true),
   })
@@ -139,6 +140,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       minParticipantCount: event.minParticipantCount,
       maxParticipantCount: event.maxParticipantCount,
       bufferAfterMinutes: event.bufferAfterMinutes,
+      maxBookingWindowDays: event.maxBookingWindowDays,
       showDescription: event.showDescription,
       isActive: event.isActive,
     }
@@ -164,6 +166,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     minParticipantCount: null,
     maxParticipantCount: null,
     bufferAfterMinutes: 15,
+    maxBookingWindowDays: null,
     showDescription: false,
     isActive: true,
   }
