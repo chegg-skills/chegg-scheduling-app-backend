@@ -1,4 +1,5 @@
 import { EventBookingMode, Prisma, type EventScheduleSlot } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -15,6 +16,7 @@ import {
   type UpsertEventScheduleSlotInput,
 } from "./event.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
+import { generateRecurrenceDates } from "./recurrence.service";
 
 type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
   include: {
@@ -249,6 +251,53 @@ const createEventScheduleSlot = async (
 
   const validated = EventScheduleSlotSchema.body.parse(payload);
 
+  const recurrenceGroupId = validated.recurrence ? uuidv4() : null;
+
+  if (validated.recurrence) {
+    const startDates = generateRecurrenceDates(validated.startTime, validated.recurrence);
+    const durationMs = validated.endTime.getTime() - validated.startTime.getTime();
+
+    // Validate all slots before performing any inserts (All or Nothing)
+    for (const startTime of startDates) {
+      const endTime = new Date(startTime.getTime() + durationMs);
+      await assertSlotWithinAvailability(eventId, startTime, endTime, caller);
+    }
+
+    const slotsData = startDates.map((startTime) => ({
+      eventId,
+      startTime,
+      endTime: new Date(startTime.getTime() + durationMs),
+      capacity: validated.capacity,
+      assignedCoachId: validated.assignedCoachId,
+      isActive: validated.isActive,
+      recurrenceGroupId,
+    }));
+
+    // Perform the creation
+    // Note: We use a loop or transaction instead of createMany if we want to return the full objects
+    // or if we need to trigger individual hooks. For simplicity and grouping, we'll use createMany.
+    await prisma.eventScheduleSlot.createMany({
+      data: slotsData,
+      skipDuplicates: true, // Safety against overlap with existing slots
+    });
+
+    // Return the first instance created
+    return prisma.eventScheduleSlot.findFirstOrThrow({
+      where: { eventId, startTime: validated.startTime },
+      include: {
+        assignedCoach: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
   await assertSlotWithinAvailability(eventId, validated.startTime, validated.endTime, caller);
 
   return prisma.eventScheduleSlot.create({
@@ -259,6 +308,7 @@ const createEventScheduleSlot = async (
       capacity: validated.capacity,
       assignedCoachId: validated.assignedCoachId,
       isActive: validated.isActive,
+      recurrenceGroupId,
     },
     include: {
       assignedCoach: {
@@ -346,6 +396,28 @@ const deleteEventScheduleSlot = async (
   });
 };
 
+const listSlotBookings = async (
+  eventId: string,
+  slotId: string,
+  caller: CallerContext,
+) => {
+  await getManagedEvent(eventId, caller);
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId },
+  });
+  if (!slot || slot.eventId !== eventId) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found for this event.");
+  }
+
+  return prisma.booking.findMany({
+    where: { scheduleSlotId: slotId },
+    include: {
+      student: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 export {
   resolveEventSchedulingConfig,
   assertBookingNoticeSatisfied,
@@ -357,4 +429,5 @@ export {
   createEventScheduleSlot,
   updateEventScheduleSlot,
   deleteEventScheduleSlot,
+  listSlotBookings,
 };

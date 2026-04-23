@@ -148,6 +148,7 @@ export interface EventScheduleSlot {
   createdAt: string
   updatedAt: string
   assignedCoachId: string | null
+  recurrenceGroupId: string | null
   assignedCoach?: SafeUser | null
   _count?: {
     bookings: number

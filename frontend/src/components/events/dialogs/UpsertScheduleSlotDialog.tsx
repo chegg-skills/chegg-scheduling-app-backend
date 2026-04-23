@@ -13,13 +13,20 @@ import Avatar from '@mui/material/Avatar'
 import type { Event, EventScheduleSlot, TeamMember, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { useScheduleSlotForm } from './useScheduleSlotForm'
+import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
 
 interface UpsertScheduleSlotDialogProps {
   isOpen: boolean
   onClose: () => void
   event: Event
-  slot?: EventScheduleSlot | null // If provided, we are editing
-  onSave: (data: { startTime: string; endTime: string; capacity: number | null; assignedCoachId: string | null }) => void
+  slot?: EventScheduleSlot | null
+  onSave: (data: {
+    startTime: string
+    endTime: string
+    capacity: number | null
+    assignedCoachId: string | null
+    recurrence?: RecurrenceConfig | null
+  }) => void
   isPending: boolean
   teamMembers: TeamMember[]
 }
@@ -41,9 +48,11 @@ export function UpsertScheduleSlotDialog({
     newSlotDate,
     newSlotCapacity,
     assignedCoachId,
+    recurrence,
     error,
     setNewSlotCapacity,
     setAssignedCoachId,
+    setRecurrence,
     handleDateChange,
     isValid,
   } = useScheduleSlotForm({ event, slot, isOpen })
@@ -63,6 +72,7 @@ export function UpsertScheduleSlotDialog({
           ? null
           : newSlotCapacity,
       assignedCoachId,
+      recurrence,
     })
   }
 
@@ -145,6 +155,10 @@ export function UpsertScheduleSlotDialog({
             ))}
           </Select>
         </FormField>
+
+        {mode === 'Add' && (
+          <RecurrenceSelector value={recurrence} onChange={setRecurrence} disabled={isPending} />
+        )}
 
         <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 2 }}>
           <Button variant="secondary" onClick={onClose}>

@@ -36,6 +36,7 @@ import {
   deleteEventScheduleSlot,
   getEffectiveParticipantPolicy,
   listEventScheduleSlots,
+  listSlotBookings,
   resolveMatchingScheduleSlot,
   updateEventScheduleSlot,
 } from "./eventScheduling.service";
@@ -294,6 +295,7 @@ export {
   createEventScheduleSlot,
   updateEventScheduleSlot,
   deleteEventScheduleSlot,
+  listSlotBookings,
   assertBookingNoticeSatisfied,
   assertBookingAvailabilityAllowed,
   getEffectiveParticipantPolicy,

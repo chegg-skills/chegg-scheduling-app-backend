@@ -303,6 +303,25 @@ const listAllEvents = async (req: Request, res: Response, next: NextFunction): P
   }
 };
 
+const listSlotBookings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.listSlotBookings(
+      (req.params as any).eventId,
+      (req.params as any).slotId,
+      caller,
+    );
+
+    sendSuccessResponse(res, StatusCodes.OK, result, "Slot bookings fetched successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createEventOffering,
   listEventOfferings,
@@ -324,4 +343,5 @@ export {
   replaceEventCoaches,
   updateEvent,
   updateEventScheduleSlot,
+  listSlotBookings,
 };

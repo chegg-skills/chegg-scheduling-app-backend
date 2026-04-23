@@ -189,22 +189,24 @@ model EventRoutingState {
 }
 
 model EventScheduleSlot {
-  id              String    @id @default(uuid())
-  eventId         String
-  startTime       DateTime
-  endTime         DateTime
-  capacity        Int?
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  assignedCoachId String?
-  bookings        Booking[]
-  assignedCoach   User?     @relation("SlotCoach", fields: [assignedCoachId], references: [id])
-  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id                String    @id @default(uuid())
+  eventId           String
+  startTime         DateTime
+  endTime           DateTime
+  capacity          Int?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  assignedCoachId   String?
+  recurrenceGroupId String?
+  bookings          Booking[]
+  assignedCoach     User?     @relation("SlotCoach", fields: [assignedCoachId], references: [id])
+  event             Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, startTime])
   @@index([eventId, startTime, isActive])
   @@index([assignedCoachId])
+  @@index([recurrenceGroupId])
 }
 
 model EventWeeklyAvailability {

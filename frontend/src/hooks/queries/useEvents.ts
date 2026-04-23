@@ -12,6 +12,8 @@ export const eventKeys = {
   detail: (id: string) => [...eventKeys.all, 'detail', id] as const,
   coaches: (id: string) => [...eventKeys.all, 'coaches', id] as const,
   scheduleSlots: (id: string) => [...eventKeys.all, 'schedule-slots', id] as const,
+  slotBookings: (eventId: string, slotId: string) =>
+    [...eventKeys.scheduleSlots(eventId), 'bookings', slotId] as const,
 }
 
 export function useEvents(params?: ListEventsParams) {
@@ -26,6 +28,15 @@ export function useEventScheduleSlots(eventId: string) {
     queryKey: eventKeys.scheduleSlots(eventId),
     queryFn: ({ signal }) => eventsApi.listScheduleSlots(eventId, signal).then((r) => r.data.data),
     enabled: !!eventId,
+  })
+}
+
+export function useSlotBookings(eventId: string, slotId: string) {
+  return useQuery({
+    queryKey: eventKeys.slotBookings(eventId, slotId),
+    queryFn: ({ signal }) =>
+      eventsApi.listSlotBookings(eventId, slotId, signal).then((r) => r.data.data),
+    enabled: !!eventId && !!slotId,
   })
 }
 

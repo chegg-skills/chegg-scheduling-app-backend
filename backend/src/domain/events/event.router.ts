@@ -148,6 +148,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/events/:eventId/schedule-slots/:slotId/bookings")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.listSlotBookings,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId/coaches/:userId")
   .delete(
     authenticate,

@@ -54,4 +54,8 @@ export const eventsApi = {
     ),
   deleteScheduleSlot: (eventId: string, slotId: string) =>
     apiClient.delete<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}`),
+  listSlotBookings: (eventId: string, slotId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<any>>(`/events/${eventId}/schedule-slots/${slotId}/bookings`, {
+      signal,
+    }),
 }

@@ -13,6 +13,7 @@ import {
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import type { Event, EventScheduleSlot, TeamMember } from '@/types'
 import { UpsertScheduleSlotDialog } from './dialogs/UpsertScheduleSlotDialog'
+import { SlotAttendeesDialog } from './dialogs/SlotAttendeesDialog'
 import { ScheduleSlotList } from './ScheduleSlotList'
 
 interface Props {
@@ -30,6 +31,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSlot, setEditingSlot] = useState<EventScheduleSlot | null>(null)
+  const [viewingAttendeesSlot, setViewingAttendeesSlot] = useState<EventScheduleSlot | null>(null)
 
   function handleOpenAdd() {
     setEditingSlot(null)
@@ -41,7 +43,17 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
     setIsModalOpen(true)
   }
 
-  function handleSave(slotData: { startTime: string; endTime: string; capacity: number | null; assignedCoachId?: string | null }) {
+  function handleOpenAttendees(slot: EventScheduleSlot) {
+    setViewingAttendeesSlot(slot)
+  }
+
+  function handleSave(slotData: {
+    startTime: string
+    endTime: string
+    capacity: number | null
+    assignedCoachId?: string | null
+    recurrence?: any
+  }) {
     if (editingSlot) {
       update(
         { slotId: editingSlot.id, data: slotData },
@@ -87,6 +99,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
         event={event}
         onRemove={handleRemove}
         onEdit={handleOpenEdit}
+        onViewAttendees={handleOpenAttendees}
       />
 
       <UpsertScheduleSlotDialog
@@ -100,6 +113,13 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
         onSave={handleSave}
         isPending={creating || updating}
         teamMembers={teamMembers}
+      />
+
+      <SlotAttendeesDialog
+        isOpen={!!viewingAttendeesSlot}
+        onClose={() => setViewingAttendeesSlot(null)}
+        eventId={event.id}
+        slot={viewingAttendeesSlot}
       />
     </Box>
   )

@@ -7,6 +7,7 @@ import {
   formatAvailabilityRanges,
 } from '../form/eventCapabilityRules'
 import type { Event, EventScheduleSlot } from '@/types'
+import type { RecurrenceConfig } from './RecurrenceSelector'
 
 interface UseScheduleSlotFormProps {
   event: Event
@@ -20,6 +21,7 @@ export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotForm
   const [newSlotDate, setNewSlotDate] = useState('')
   const [newSlotCapacity, setNewSlotCapacity] = useState<number | ''>('')
   const [assignedCoachId, setAssignedCoachId] = useState<string | null>(null)
+  const [recurrence, setRecurrence] = useState<RecurrenceConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const validate = (dateValue: string) => {
@@ -54,12 +56,14 @@ export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotForm
         setNewSlotDate(dateStr)
         setNewSlotCapacity(slot.capacity ?? '')
         setAssignedCoachId(slot.assignedCoachId ?? null)
+        setRecurrence(null)
         validate(dateStr)
       } else {
         const initialDate = format(new Date(), "yyyy-MM-dd'T'HH:mm")
         setNewSlotDate(initialDate)
         setNewSlotCapacity('')
         setAssignedCoachId(null)
+        setRecurrence(null)
         validate(initialDate)
       }
     }
@@ -74,9 +78,11 @@ export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotForm
     newSlotDate,
     newSlotCapacity,
     assignedCoachId,
+    recurrence,
     error,
     setNewSlotCapacity,
     setAssignedCoachId,
+    setRecurrence,
     handleDateChange,
     isValid: !error && !!newSlotDate,
   }

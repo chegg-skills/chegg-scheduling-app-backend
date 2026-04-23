@@ -91,6 +91,11 @@ export type UpsertEventScheduleSlotInput = {
   endTime?: string | Date;
   isActive?: boolean;
   capacity?: number | null;
+  assignedCoachId?: string | null;
+  recurrence?: {
+    frequency: "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "TWICE_A_MONTH" | "THRICE_A_WEEK";
+    occurrences: number;
+  } | null;
 };
 
 export const isValidAssignmentStrategy = (value: string): value is AssignmentStrategy =>
