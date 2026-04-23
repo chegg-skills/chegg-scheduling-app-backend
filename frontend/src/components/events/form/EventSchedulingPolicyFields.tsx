@@ -1,4 +1,4 @@
-import { useFormContext } from 'react-hook-form'
+import { useFormContext, Controller } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/form/FormField'
@@ -6,8 +6,8 @@ import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionTypeCaps } from '@/types'
-import { WeekdaySelector } from './WeekdaySelector'
 import { ParticipantCapacityFields } from './ParticipantCapacityFields'
+import { EventAvailabilityPicker } from './EventAvailabilityPicker'
 
 interface EventSchedulingPolicyFieldsProps {
   caps?: InteractionTypeCaps | null
@@ -21,6 +21,7 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
   const {
     register,
     watch,
+    control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
   const bookingMode = watch('bookingMode')
@@ -52,7 +53,7 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
         </Select>
       </FormField>
 
-      <WeekdaySelector />
+      <EventAvailabilityPicker />
 
       <FormField
         label="Minimum Notice (minutes)"

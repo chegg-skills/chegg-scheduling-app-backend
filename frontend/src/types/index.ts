@@ -38,8 +38,17 @@ export interface SafeUser {
   failedLoginAttempts: number
   lockedUntil: string | null
   lastLoginAt: string | null
+  ssoLinkedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface InviteValidation {
+  valid: boolean
+  email?: string
+  role?: UserRole
+  requiresSso?: boolean
+  reason?: 'not_found' | 'already_accepted' | 'expired'
 }
 
 export interface UserWithDetails extends SafeUser {
@@ -145,6 +154,16 @@ export interface EventScheduleSlot {
   }
 }
 
+export interface EventWeeklyAvailability {
+  id: string
+  eventId: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Event {
   id: string
   publicBookingSlug: string | null
@@ -177,6 +196,7 @@ export interface Event {
   updatedAt: string
   offering: EventOffering
   coaches: EventCoach[]
+  weeklyAvailability: EventWeeklyAvailability[]
   scheduleSlots?: EventScheduleSlot[]
 }
 
@@ -376,6 +396,11 @@ export interface CreateEventDto {
   bufferAfterMinutes?: number
   description?: string
   isActive?: boolean
+  weeklyAvailability?: Array<{
+    dayOfWeek: number
+    startTime: string
+    endTime: string
+  }>
 }
 
 export interface UpdateEventDto extends Partial<CreateEventDto> { }

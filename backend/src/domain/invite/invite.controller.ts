@@ -19,6 +19,7 @@ const createInvite = async (req: Request, res: Response, next: NextFunction): Pr
     const result = await inviteService.createInvite({
       email: req.body.email,
       role: req.body.role,
+      requiresSso: req.body.requiresSso,
       createdByAdminId: adminId,
     });
 
@@ -28,6 +29,7 @@ const createInvite = async (req: Request, res: Response, next: NextFunction): Pr
       token: result.token,
       expiresAt: result.expiresAt,
       createdByAdminId: adminId,
+      requiresSso: result.requiresSso,
     });
 
     sendSuccessResponse(
@@ -72,4 +74,13 @@ const acceptInvite = async (req: Request, res: Response, next: NextFunction): Pr
   }
 };
 
-export { createInvite, acceptInvite };
+const validateInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await inviteService.validateInvite(req.query.token as string);
+    sendSuccessResponse(res, StatusCodes.OK, result, "Invite validation result.");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { createInvite, acceptInvite, validateInvite };

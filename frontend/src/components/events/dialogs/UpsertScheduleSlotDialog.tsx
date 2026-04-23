@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
-import { format, addSeconds } from 'date-fns'
+import { addSeconds } from 'date-fns'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Alert from '@mui/material/Alert'
@@ -11,9 +10,9 @@ import { Input } from '@/components/shared/form/Input'
 import MenuItem from '@mui/material/MenuItem'
 import { Select } from '@/components/shared/form/Select'
 import Avatar from '@mui/material/Avatar'
-import { isWeekdayAllowed, formatAllowedWeekdays } from '../form/eventCapabilityRules'
 import type { Event, EventScheduleSlot, TeamMember, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
+import { useScheduleSlotForm } from './useScheduleSlotForm'
 
 interface UpsertScheduleSlotDialogProps {
   isOpen: boolean
@@ -34,56 +33,23 @@ export function UpsertScheduleSlotDialog({
   isPending,
   teamMembers,
 }: UpsertScheduleSlotDialogProps) {
-  const allowedDays = useMemo(() => event.allowedWeekdays ?? [], [event.allowedWeekdays])
   const mode = slot ? 'Edit' : 'Add'
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
   const supportsMultipleParticipants = caps.multipleParticipants
 
-  // Local state for the form
-  const [newSlotDate, setNewSlotDate] = useState('')
-  const [newSlotCapacity, setNewSlotCapacity] = useState<number | ''>('')
-  const [assignedCoachId, setAssignedCoachId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  // Sync state when slot changes or modal opens
-  useEffect(() => {
-    if (isOpen) {
-      if (slot) {
-        setNewSlotDate(format(new Date(slot.startTime), "yyyy-MM-dd'T'HH:mm"))
-        setNewSlotCapacity(slot.capacity ?? '')
-        setAssignedCoachId(slot.assignedCoachId ?? null)
-        setError(null)
-      } else {
-        const initialDate = format(new Date(), "yyyy-MM-dd'T'HH:mm")
-        setNewSlotDate(initialDate)
-        setNewSlotCapacity('')
-        setAssignedCoachId(null)
-        if (!isWeekdayAllowed(initialDate, allowedDays)) {
-          setError(
-            `Selected date must be one of the allowed weekdays: ${formatAllowedWeekdays(allowedDays)}`
-          )
-        } else {
-          setError(null)
-        }
-      }
-    }
-  }, [isOpen, slot, allowedDays])
-
-  function handleDateChange(value: string) {
-    setNewSlotDate(value)
-    if (value && !isWeekdayAllowed(value, allowedDays)) {
-      setError(
-        `Selected date must be one of the allowed weekdays: ${formatAllowedWeekdays(allowedDays)}`
-      )
-    } else {
-      setError(null)
-    }
-  }
+  const {
+    newSlotDate,
+    newSlotCapacity,
+    assignedCoachId,
+    error,
+    setNewSlotCapacity,
+    setAssignedCoachId,
+    handleDateChange,
+    isValid,
+  } = useScheduleSlotForm({ event, slot, isOpen })
 
   function handleAdd() {
-    if (!newSlotDate || !isWeekdayAllowed(newSlotDate, allowedDays)) {
-      return
-    }
+    if (!isValid) return
 
     const startTime = new Date(newSlotDate)
     const endTime = addSeconds(startTime, event.durationSeconds)
@@ -91,7 +57,11 @@ export function UpsertScheduleSlotDialog({
     onSave({
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
-      capacity: !supportsMultipleParticipants ? 1 : (newSlotCapacity === '' ? null : newSlotCapacity),
+      capacity: !supportsMultipleParticipants
+        ? 1
+        : newSlotCapacity === ''
+          ? null
+          : newSlotCapacity,
       assignedCoachId,
     })
   }

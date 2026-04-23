@@ -50,6 +50,19 @@ const EventBaseObjectCore = z.object({
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
   showDescription: z.boolean().optional(),
+  weeklyAvailability: z
+    .array(
+      z.object({
+        dayOfWeek: z.number().int().min(0).max(6),
+        startTime: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
+        endTime: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
+      }),
+    )
+    .optional(),
 });
 
 /**

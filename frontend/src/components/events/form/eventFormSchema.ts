@@ -45,6 +45,15 @@ export const eventFormSchema = z
     maxBookingWindowDays: z.number().int().min(1).max(365).nullable().optional(),
     showDescription: z.boolean().default(false),
     isActive: z.boolean().default(true),
+    weeklyAvailability: z
+      .array(
+        z.object({
+          dayOfWeek: z.number(),
+          startTime: z.string(),
+          endTime: z.string(),
+        })
+      )
+      .default([]),
   })
   .superRefine((values, ctx) => {
     const caps = values.interactionType ? INTERACTION_TYPE_CAPS[values.interactionType] : null
@@ -143,6 +152,11 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       maxBookingWindowDays: event.maxBookingWindowDays,
       showDescription: event.showDescription,
       isActive: event.isActive,
+      weeklyAvailability: (event.weeklyAvailability || []).map((a) => ({
+        dayOfWeek: a.dayOfWeek,
+        startTime: a.startTime,
+        endTime: a.endTime,
+      })),
     }
   }
 
@@ -169,5 +183,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     maxBookingWindowDays: null,
     showDescription: false,
     isActive: true,
+    weeklyAvailability: [],
   }
 }

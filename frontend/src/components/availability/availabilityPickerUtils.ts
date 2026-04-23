@@ -22,8 +22,9 @@ export const cloneSlot = (slot: TimeSlot): TimeSlot => ({ ...slot })
 export const getDefaultSlot = (): TimeSlot => ({ ...DEFAULT_SLOT })
 
 export const buildDaysFromValue = (value: SetWeeklyAvailabilityDto): DayAvailability[] => {
+  const safeValue = value || []
   return Array.from({ length: 7 }, (_, dayOfWeek) => {
-    const daySlots = value.filter((slot) => slot.dayOfWeek === dayOfWeek)
+    const daySlots = safeValue.filter((slot) => slot.dayOfWeek === dayOfWeek)
 
     return {
       enabled: daySlots.length > 0,

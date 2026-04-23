@@ -1,105 +1,35 @@
-import { useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import { Button } from '@/components/shared/ui/Button'
 import type { SetWeeklyAvailabilityDto } from '@/types'
 import { AvailabilityDayRow } from './AvailabilityDayRow'
-import {
-  DAYS,
-  buildDaysFromValue,
-  cloneSlot,
-  createNextSlot,
-  getDefaultSlot,
-  serializeDaysToValue,
-  type DayAvailability,
-} from './availabilityPickerUtils'
+import { DAYS } from './availabilityPickerUtils'
+import { useWeeklyAvailability } from './useWeeklyAvailability'
 
 interface WeeklyAvailabilityPickerProps {
   value: SetWeeklyAvailabilityDto
   onChange: (value: SetWeeklyAvailabilityDto) => void
   disabled?: boolean
+  showFooter?: boolean
 }
 
 export function WeeklyAvailabilityPicker({
   value,
   onChange,
   disabled,
+  showFooter,
 }: WeeklyAvailabilityPickerProps) {
-  const [days, setDays] = useState<DayAvailability[]>(() => buildDaysFromValue(value))
-
-  useEffect(() => {
-    setDays(buildDaysFromValue(value))
-  }, [value])
-
-  const handleToggleDay = (dayIndex: number) => {
-    setDays((prev) =>
-      prev.map((day, index) => (index === dayIndex ? { ...day, enabled: !day.enabled } : day))
-    )
-  }
-
-  const handleAddSlot = (dayIndex: number) => {
-    setDays((prev) =>
-      prev.map((day, index) =>
-        index === dayIndex ? { ...day, slots: [...day.slots, createNextSlot(day.slots)] } : day
-      )
-    )
-  }
-
-  const handleRemoveSlot = (dayIndex: number, slotIndex: number) => {
-    setDays((prev) =>
-      prev.map((day, index) => {
-        if (index !== dayIndex) return day
-
-        const nextSlots = day.slots.filter((_, currentIndex) => currentIndex !== slotIndex)
-        return nextSlots.length === 0
-          ? { ...day, enabled: false, slots: [getDefaultSlot()] }
-          : { ...day, slots: nextSlots }
-      })
-    )
-  }
-
-  const handleTimeChange = (
-    dayIndex: number,
-    slotIndex: number,
-    field: 'startTime' | 'endTime',
-    nextValue: string
-  ) => {
-    setDays((prev) =>
-      prev.map((day, index) => {
-        if (index !== dayIndex) return day
-
-        return {
-          ...day,
-          slots: day.slots.map((slot, currentIndex) =>
-            currentIndex === slotIndex ? { ...slot, [field]: nextValue } : slot
-          ),
-        }
-      })
-    )
-  }
-
-  const handleCopyDay = (fromIndex: number) => {
-    const slotsToCopy = days[fromIndex].slots.map(cloneSlot)
-
-    setDays((prev) =>
-      prev.map((day, index) => {
-        if (index !== fromIndex && day.enabled) {
-          return { ...day, slots: slotsToCopy.map(cloneSlot) }
-        }
-
-        return day
-      })
-    )
-  }
-
-  const handleReset = () => {
-    setDays(buildDaysFromValue(value))
-  }
-
-  const handleSave = () => {
-    onChange(serializeDaysToValue(days))
-  }
+  const {
+    days,
+    handleToggleDay,
+    handleAddSlot,
+    handleRemoveSlot,
+    handleTimeChange,
+    handleCopyDay,
+    handleReset,
+    handleSave,
+  } = useWeeklyAvailability({ value, onChange, showFooter })
 
   return (
     <Box>
@@ -120,7 +50,7 @@ export function WeeklyAvailabilityPicker({
         ))}
       </Stack>
 
-      {!disabled && (
+      {showFooter !== false && !disabled && (
         <Box
           sx={{
             mt: 4,

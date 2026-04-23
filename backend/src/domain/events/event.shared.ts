@@ -23,6 +23,7 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
       coachUser: { select: safeUserSelect },
     },
   },
+  weeklyAvailability: true,
 });
 
 export type SafeEvent = Prisma.EventGetPayload<{
@@ -59,6 +60,11 @@ export type CreateEventInput = {
   bufferAfterMinutes?: number;
   maxBookingWindowDays?: number | null;
   showDescription?: boolean;
+  weeklyAvailability?: Array<{
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+  }>;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput>;

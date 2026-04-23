@@ -12,6 +12,7 @@ type InviteCreatedNotificationInput = {
   token: string;
   expiresAt: Date;
   createdByAdminId: string;
+  requiresSso?: boolean;
 };
 
 type InviteAcceptedNotificationInput = {
@@ -27,6 +28,10 @@ const queueInviteCreatedNotification = async (input: InviteCreatedNotificationIn
       input.token,
     )}`;
 
+    const authNote = input.requiresSso
+      ? "This invite requires signing in with your organization's SSO provider (e.g. Okta). No password setup is needed — just click the link and sign in."
+      : "You will be asked to set a password when you accept the invite.";
+
     await publishNotificationSafely({
       type: "USER_INVITED",
       recipients: input.email,
@@ -35,6 +40,7 @@ const queueInviteCreatedNotification = async (input: InviteCreatedNotificationIn
         role: input.role,
         inviteUrl,
         expiresAt: input.expiresAt.toISOString(),
+        authNote,
       },
     });
   } catch (error) {

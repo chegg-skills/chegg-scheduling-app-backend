@@ -11,7 +11,7 @@ import {
 import { type SafeEvent } from "../events/event.shared";
 import {
   assertBookingNoticeSatisfied,
-  assertBookingWeekdayAllowed,
+  assertBookingAvailabilityAllowed,
   getEffectiveParticipantPolicy,
 } from "../events/eventScheduling.service";
 import {
@@ -40,6 +40,7 @@ const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
     where: { isActive: true },
     orderBy: { coachOrder: "asc" },
   },
+  weeklyAvailability: true,
 });
 
 const isCoachAvailable = async (
@@ -191,7 +192,12 @@ const getAvailableSlots = async (
     }
 
     try {
-      assertBookingWeekdayAllowed(event.allowedWeekdays, slotStart);
+      assertBookingAvailabilityAllowed(
+        event.allowedWeekdays,
+        event.weeklyAvailability,
+        slotStart,
+        slotEnd,
+      );
       assertBookingNoticeSatisfied(event.minimumNoticeMinutes, slotStart);
     } catch {
       return null;
