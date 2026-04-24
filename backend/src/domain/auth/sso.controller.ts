@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from "express";
-import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import { logger } from "../../shared/logging/logger";
