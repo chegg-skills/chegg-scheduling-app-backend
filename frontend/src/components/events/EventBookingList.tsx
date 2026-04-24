@@ -39,7 +39,7 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
   }, [data?.bookings])
 
   if (isLoading) return <PageSpinner />
-  if (error) return <ErrorAlert message="Failed to load session bookings." />
+  if (error) return <ErrorAlert message="Failed to load event bookings." />
 
   const pagination = data?.pagination
 
@@ -48,10 +48,10 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Upcoming Sessions
+            Upcoming Bookings
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            View future sessions and co-coach assignments for this event.
+            View future bookings and co-coach assignments for this event.
           </Typography>
         </Box>
       </Box>
