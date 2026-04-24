@@ -22,7 +22,7 @@ export function StudentDetailPage() {
   if (studentError || !student) {
     return (
       <Box>
-        <PageHeader title="Student" backTo="/students" backLabel="Students" />
+        <PageHeader title="Student" breadcrumbs={[{ label: 'Students', to: '/students' }]} />
         <Box sx={{ px: { xs: 2.5, md: 4 }, py: 4 }}>
           <ErrorAlert message="Student not found or failed to load. Please go back and try again." />
         </Box>
@@ -35,8 +35,7 @@ export function StudentDetailPage() {
       <PageHeader
         title={toTitleCase(student.fullName)}
         subtitle={student.email}
-        backTo="/students"
-        backLabel="Students"
+        breadcrumbs={[{ label: 'Students', to: '/students' }]}
       />
 
       <Stack spacing={4} sx={{ px: { xs: 2.5, md: 4 }, pb: 6 }}>

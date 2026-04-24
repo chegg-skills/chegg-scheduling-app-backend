@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../../src/app";
+import { prisma } from "../../src/shared/db/prisma";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
@@ -319,5 +320,181 @@ describe("Error handling", () => {
 
     expect(res.status).toBe(404);
     expect(res.body.success).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// SSO error paths
+// ─────────────────────────────────────────────────────────────
+
+describe("SSO error paths", () => {
+  let superAdminToken: string;
+
+  beforeAll(async () => {
+    await clearTables();
+    const admin = await bootstrapAdmin("super@sso-errors.com", "Admin1234");
+    superAdminToken = admin.token;
+  });
+
+  // ── GET /api/auth/sso/login ──────────────────────────────
+  describe("GET /api/auth/sso/login", () => {
+    it("returns 500 when OIDC_ISSUER_URL is not configured in the test environment", async () => {
+      // In the test env OIDC_ISSUER_URL is unset, so getOidcClient() throws a plain Error
+      // which propagates through next(error) to the Express error handler → 500.
+      const res = await request(app).get("/api/auth/sso/login").redirects(0);
+      expect(res.status).toBe(500);
+    });
+  });
+
+  // ── GET /api/auth/sso/callback ───────────────────────────
+  describe("GET /api/auth/sso/callback — state validation", () => {
+    it("redirects to error when state query param is missing", async () => {
+      const res = await request(app).get("/api/auth/sso/callback").redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=invalid_state");
+    });
+
+    it("redirects to error when state does not match any DB row", async () => {
+      const res = await request(app)
+        .get("/api/auth/sso/callback?state=totally-nonexistent-state-xyz")
+        .redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=invalid_state");
+    });
+
+    it("redirects to error and cleans up an expired OidcState row", async () => {
+      const expiredState = `expired-state-${Date.now()}`;
+      await prisma.oidcState.create({
+        data: {
+          state: expiredState,
+          nonce: "some-nonce",
+          inviteToken: null,
+          expiresAt: new Date(Date.now() - 1000), // already expired
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/auth/sso/callback?state=${expiredState}`)
+        .redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=invalid_state");
+
+      // The expired row must have been cleaned up by the controller
+      const row = await prisma.oidcState.findUnique({ where: { state: expiredState } });
+      expect(row).toBeNull();
+    });
+  });
+
+  // ── GET /api/auth/sso/accept-invite ─────────────────────
+  describe("GET /api/auth/sso/accept-invite — invite validation", () => {
+    it("redirects to error when token query param is missing", async () => {
+      const res = await request(app).get("/api/auth/sso/accept-invite").redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=missing_invite_token");
+    });
+
+    it("redirects to error when invite token does not exist", async () => {
+      const res = await request(app)
+        .get("/api/auth/sso/accept-invite?token=nonexistent-token-000")
+        .redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=invite_not_found");
+    });
+
+    it("redirects to error when invite has requiresSso: false (password invite)", async () => {
+      // Create a normal (non-SSO) invite
+      const inviteRes = await request(app)
+        .post("/api/invites")
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({ email: "non-sso-invite@sso-errors.com", role: "COACH" });
+
+      const token = inviteRes.body.data.token as string;
+
+      const res = await request(app)
+        .get(`/api/auth/sso/accept-invite?token=${token}`)
+        .redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=invite_not_sso");
+    });
+
+    it("redirects to error when invite has already been accepted", async () => {
+      // Create and accept a password invite
+      const inviteRes = await request(app)
+        .post("/api/invites")
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({ email: "accepted-sso@sso-errors.com", role: "COACH" });
+
+      const token = inviteRes.body.data.token as string;
+
+      await request(app).post("/api/invites/accept-invite").send({
+        token,
+        firstName: "Already",
+        lastName: "Accepted",
+        password: "Accepted1234",
+      });
+
+      const res = await request(app)
+        .get(`/api/auth/sso/accept-invite?token=${token}`)
+        .redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=invite_already_accepted");
+    });
+
+    it("redirects to error when invite is expired", async () => {
+      // Insert an expired SSO invite directly into the DB
+      const expiredToken = `expired-sso-invite-${Date.now()}`;
+      await prisma.userInvite.create({
+        data: {
+          token: expiredToken,
+          email: "expired-sso@sso-errors.com",
+          role: "COACH",
+          requiresSso: true,
+          expiresAt: new Date(Date.now() - 1000), // already expired
+          createdBy: (await prisma.user.findFirst({ where: { role: "SUPER_ADMIN" } }))!.id,
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/auth/sso/accept-invite?token=${expiredToken}`)
+        .redirects(0);
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("reason=invite_expired");
+    });
+  });
+
+  // ── POST /api/auth/login — SSO-only account ──────────────
+  describe("POST /api/auth/login — SSO-only account", () => {
+    it("returns 400 with an SSO-specific message when the account has no password", async () => {
+      // Create an SSO-only user directly in DB (password: null)
+      await prisma.user.create({
+        data: {
+          email: "sso-only@sso-errors.com",
+          password: null,
+          firstName: "SSO",
+          lastName: "Only",
+          role: "COACH",
+          timezone: "UTC",
+          publicBookingSlug: "sso-only-user-slug",
+          ssoProvider: "okta",
+          ssoSub: "sub-sso-only-test-123",
+          ssoLinkedAt: new Date(),
+        },
+      });
+
+      const res = await request(app)
+        .post("/api/auth/login")
+        .send({ email: "sso-only@sso-errors.com", password: "anypassword" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(/identity provider/i);
+    });
   });
 });

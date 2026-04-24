@@ -4,7 +4,7 @@ import { ErrorHandler } from "../error/errorhandler";
 
 export const SALT_ROUNDS = 10;
 
-export type SafeUser = Omit<User, "password">;
+export type SafeUser = Omit<User, "password" | "ssoSub" | "ssoProvider">;
 
 export type CallerContext = {
   id: string;
@@ -30,13 +30,14 @@ export const safeUserSelect = Prisma.validator<Prisma.UserSelect>()({
   lastLoginAt: true,
   createdAt: true,
   updatedAt: true,
+  ssoLinkedAt: true,
+  // ssoProvider and ssoSub are internal identity tokens — never sent to clients
 });
 
 export const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
 export const validateTimezone = (timezone: string): string => {
   try {
-    // This will throw an error if the timezone is invalid
     Intl.DateTimeFormat(undefined, { timeZone: timezone });
     return timezone;
   } catch {
@@ -69,6 +70,6 @@ export const validateZoomIsvLink = (zoomIsvLink: string): string => {
 };
 
 export const toSafeUser = (user: User): SafeUser => {
-  const { password: _password, ...safeUser } = user;
+  const { password: _password, ssoSub: _ssoSub, ssoProvider: _ssoProvider, ...safeUser } = user;
   return safeUser;
 };

@@ -27,6 +27,11 @@ const AcceptInvitePage = lazy(() =>
     default: module.AcceptInvitePage,
   }))
 )
+const SsoErrorPage = lazy(() =>
+  import('@/pages/auth/SsoErrorPage').then((module) => ({
+    default: module.SsoErrorPage,
+  }))
+)
 const DashboardPage = lazy(() =>
   import('@/pages/DashboardPage').then((module) => ({
     default: module.DashboardPage,
@@ -143,6 +148,11 @@ export const router = createBrowserRouter([
   {
     path: '/accept-invite',
     element: renderLazyPage(AcceptInvitePage),
+    errorElement: <RouteErrorPage />,
+  },
+  {
+    path: '/sso/error',
+    element: renderLazyPage(SsoErrorPage),
     errorElement: <RouteErrorPage />,
   },
   {

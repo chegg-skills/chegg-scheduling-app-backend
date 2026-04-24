@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as eventService from "./event.service";
+import * as sessionLogService from "./sessionLog.service";
 
 const createEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -303,6 +304,25 @@ const listAllEvents = async (req: Request, res: Response, next: NextFunction): P
   }
 };
 
+const listSlotBookings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.listSlotBookings(
+      (req.params as any).eventId,
+      (req.params as any).slotId,
+      caller,
+    );
+
+    sendSuccessResponse(res, StatusCodes.OK, result, "Slot bookings fetched successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
   createEventOffering,
   listEventOfferings,
@@ -324,4 +344,36 @@ export {
   replaceEventCoaches,
   updateEvent,
   updateEventScheduleSlot,
+  listSlotBookings,
+  getSessionLog,
+  upsertSessionLog,
 };
+
+async function getSessionLog(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await sessionLogService.getSessionLog(
+      (req.params as any).eventId,
+      (req.params as any).slotId,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Session log fetched successfully.");
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function upsertSessionLog(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await sessionLogService.upsertSessionLog(
+      (req.params as any).eventId,
+      (req.params as any).slotId,
+      req.body,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Session log saved successfully.");
+  } catch (error) {
+    next(error);
+  }
+}

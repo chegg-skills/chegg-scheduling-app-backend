@@ -7,6 +7,7 @@ export const CreateInviteSchema = {
       email: z.string().email("Invalid email address"),
       role: z.nativeEnum(UserRole).default(UserRole.COACH),
       teamId: z.string().uuid().optional().nullable(),
+      requiresSso: z.boolean().optional().default(false),
     })
     .passthrough(),
 };
@@ -21,4 +22,10 @@ export const AcceptInviteSchema = {
       timezone: z.string().optional(),
     })
     .passthrough(),
+};
+
+export const ValidateInviteSchema = {
+  query: z.object({
+    token: z.string().min(1, "Token is required"),
+  }),
 };

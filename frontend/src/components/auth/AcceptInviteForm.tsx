@@ -3,8 +3,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import MenuItem from '@mui/material/MenuItem'
+import Typography from '@mui/material/Typography'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
@@ -13,6 +15,7 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useAcceptInvite } from '@/hooks/queries/useAuthMutations'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { extractApiError } from '@/utils/apiError'
+import { invitesApi } from '@/api/invites'
 
 const schema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -31,6 +34,12 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
   const navigate = useNavigate()
   const { mutate, isPending, error } = useAcceptInvite()
 
+  const { data: validationData, isLoading: isValidating } = useQuery({
+    queryKey: ['invite-validate', token],
+    queryFn: () => invitesApi.validate(token).then((r) => r.data.data),
+    retry: false,
+  })
+
   const {
     register,
     handleSubmit,
@@ -48,6 +57,50 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
     mutate({ ...values, token }, { onSuccess: () => navigate('/dashboard') })
   }
 
+  if (isValidating) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          Verifying invite...
+        </Typography>
+      </Box>
+    )
+  }
+
+  if (validationData && !validationData.valid) {
+    const messages: Record<string, string> = {
+      expired: 'This invite has expired. Please request a new one.',
+      already_accepted: 'This invite has already been used.',
+      not_found: 'This invite link is invalid or does not exist.',
+    }
+    return (
+      <Stack spacing={1.5} sx={{ textAlign: 'center' }}>
+        <Typography variant="body1" color="error">
+          {messages[validationData.reason ?? 'not_found'] ?? 'Invalid invite.'}
+        </Typography>
+      </Stack>
+    )
+  }
+
+  // SSO invite — show SSO sign-in button instead of password form
+  if (validationData?.requiresSso) {
+    return (
+      <Stack spacing={2.5} alignItems="center">
+        <Typography variant="body2" color="text.secondary" textAlign="center">
+          This invite requires signing in with your organization's SSO provider.
+        </Typography>
+        <Button
+          component="a"
+          href={`/api/auth/sso/accept-invite?token=${encodeURIComponent(token)}`}
+          fullWidth
+        >
+          Continue with SSO
+        </Button>
+      </Stack>
+    )
+  }
+
+  // Standard password-based invite
   return (
     <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={2.5}>
       {error && <ErrorAlert message={extractApiError(error)} />}

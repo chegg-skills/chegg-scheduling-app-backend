@@ -4,6 +4,25 @@ import { prisma } from "../../src/shared/db/prisma";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
+// Returns the next UTC occurrence of targetDay (0=Sun..6=Sat) at the given hour/minute.
+// Always returns a date at least 1 day in the future.
+const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date => {
+  const now = new Date();
+  const currentDay = now.getUTCDay();
+  const daysAhead = (targetDay - currentDay + 7) % 7 || 7;
+  return new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + daysAhead,
+      hour,
+      minute,
+      0,
+      0,
+    ),
+  );
+};
+
 type TestContext = {
   superAdminToken: string;
   superAdminId: string;
@@ -1636,5 +1655,183 @@ describe("Event schema validation rejections", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/Too small/i);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Recurrence — slot creation
+// ─────────────────────────────────────────────────────────────
+
+describe("Recurrence — slot creation", () => {
+  let eventId: string;
+  let offeringId: string;
+
+  beforeAll(async () => {
+    const offering = await createOffering(context.superAdminToken, {
+      key: `recurrence-offering-${Date.now()}`,
+      name: "Recurrence Offering",
+    });
+    offeringId = offering.body.data.id;
+
+    // Unrestricted event so all day/time slots are valid
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Recurrence Test Event",
+      offeringId,
+      bookingMode: "FIXED_SLOTS",
+      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
+    });
+    eventId = event.body.data.id;
+  });
+
+  afterEach(async () => {
+    // Clean up slots between tests so startTime uniqueness constraint doesn't collide
+    await prisma.eventScheduleSlot.deleteMany({ where: { eventId } });
+  });
+
+  it("WEEKLY recurrence with occurrences: 3 creates exactly 3 slots sharing the same recurrenceGroupId", async () => {
+    const start = getNextUtcWeekdayAt(1, 10, 0); // next Monday 10:00
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        capacity: 5,
+        recurrence: { frequency: "WEEKLY", occurrences: 3 },
+      });
+
+    expect(res.status).toBe(201);
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(listRes.status).toBe(200);
+    const slots = listRes.body.data.slots;
+    expect(slots).toHaveLength(3);
+
+    const groupId = slots[0].recurrenceGroupId;
+    expect(typeof groupId).toBe("string");
+    expect(slots.every((s: any) => s.recurrenceGroupId === groupId)).toBe(true);
+  });
+
+  it("BI_WEEKLY recurrence: second slot is exactly 14 days after the first", async () => {
+    const start = getNextUtcWeekdayAt(2, 11, 0); // next Tuesday 11:00
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        capacity: 5,
+        recurrence: { frequency: "BI_WEEKLY", occurrences: 2 },
+      });
+
+    expect(res.status).toBe(201);
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    const slots = listRes.body.data.slots.sort(
+      (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
+    expect(slots).toHaveLength(2);
+
+    const diffMs =
+      new Date(slots[1].startTime).getTime() - new Date(slots[0].startTime).getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    expect(diffDays).toBe(14);
+  });
+
+  it("rejects occurrences: 51 (exceeds schema max of 50)", async () => {
+    const start = getNextUtcWeekdayAt(3, 9, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        recurrence: { frequency: "WEEKLY", occurrences: 51 },
+      });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("occurrences: 1 creates exactly 1 slot with a non-null recurrenceGroupId", async () => {
+    const start = getNextUtcWeekdayAt(4, 14, 0); // Thursday 14:00
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        recurrence: { frequency: "WEEKLY", occurrences: 1 },
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.recurrenceGroupId).not.toBeNull();
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(listRes.body.data.slots).toHaveLength(1);
+  });
+
+  it("all-or-nothing: a slot outside weeklyAvailability causes zero slots to be inserted", async () => {
+    // Create a restricted event: Monday 09:00–09:45 only
+    const restrictedEvent = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Restricted Recurrence Event",
+      offeringId,
+      bookingMode: "FIXED_SLOTS",
+      weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "09:45" }],
+    });
+    const restrictedEventId = restrictedEvent.body.data.id;
+
+    // This slot runs 09:00–10:00 — endTime overflows the 09:45 range
+    const start = getNextUtcWeekdayAt(1, 9, 0); // Monday 09:00
+    const end = new Date(start.getTime() + 60 * 60 * 1000); // +60 min = 10:00
+
+    const res = await request(app)
+      .post(`/api/events/${restrictedEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        recurrence: { frequency: "WEEKLY", occurrences: 1 },
+      });
+
+    expect(res.status).toBe(400);
+
+    // Verify atomicity: no slots were inserted
+    const count = await prisma.eventScheduleSlot.count({
+      where: { eventId: restrictedEventId },
+    });
+    expect(count).toBe(0);
+  });
+
+  it("rejects an invalid frequency value (schema validation)", async () => {
+    const start = getNextUtcWeekdayAt(5, 9, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        recurrence: { frequency: "DAILY", occurrences: 3 },
+      });
+
+    expect(res.status).toBe(400);
   });
 });

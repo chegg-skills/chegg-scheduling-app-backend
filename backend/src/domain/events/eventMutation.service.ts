@@ -192,6 +192,16 @@ export const buildEventCreateData = ({
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
     ...context.schedulingConfig,
+    allowedWeekdays: validated.weeklyAvailability
+      ? Array.from(new Set(validated.weeklyAvailability.map((a) => a.dayOfWeek))).sort()
+      : validated.allowedWeekdays,
+    weeklyAvailability: validated.weeklyAvailability
+      ? {
+        createMany: {
+          data: validated.weeklyAvailability,
+        },
+      }
+      : undefined,
   };
 
   if (context.fixedLeadCoachId) {
@@ -220,6 +230,14 @@ export const buildEventUpdateData = ({
 }): Prisma.EventUpdateInput => {
   const validated = UpdateEventSchema.body.parse(payload);
 
+  const { weeklyAvailability, ...schedulingConfig } = context.schedulingConfig;
+
+  // Derive allowedWeekdays from weeklyAvailability if provided, otherwise use payload's
+  const weeklyAvailabilityData = validated.weeklyAvailability;
+  const derivedAllowedWeekdays = weeklyAvailabilityData
+    ? Array.from(new Set(weeklyAvailabilityData.map((a) => a.dayOfWeek))).sort()
+    : validated.allowedWeekdays;
+
   const updateData: Prisma.EventUpdateInput = {
     updatedBy: { connect: { id: callerId } },
     offering: { connect: { id: context.offering.id } },
@@ -227,8 +245,12 @@ export const buildEventUpdateData = ({
     assignmentStrategy: context.assignmentStrategy,
     sessionLeadershipStrategy: context.sessionLeadershipStrategy,
     fixedLeadCoachId: context.fixedLeadCoachId ?? undefined,
-    ...context.schedulingConfig,
+    ...schedulingConfig,
+    allowedWeekdays: derivedAllowedWeekdays,
   };
+
+  // weeklyAvailability is handled separately in the service to allow for delete/create sync
+  delete (updateData as any).weeklyAvailability;
 
   if (validated.name !== undefined) {
     updateData.name = validated.name;
@@ -301,7 +323,6 @@ export const buildDuplicateEventData = ({
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
     bookingMode: sourceEvent.bookingMode,
-    allowedWeekdays: sourceEvent.allowedWeekdays,
     minimumNoticeMinutes: sourceEvent.minimumNoticeMinutes,
     minParticipantCount: sourceEvent.minParticipantCount ?? undefined,
     maxParticipantCount: sourceEvent.maxParticipantCount ?? undefined,
@@ -313,5 +334,21 @@ export const buildDuplicateEventData = ({
     targetCoHostCount: (sourceEvent as any).targetCoHostCount ?? undefined,
     maxBookingWindowDays: (sourceEvent as any).maxBookingWindowDays ?? undefined,
     showDescription: (sourceEvent as any).showDescription,
+    allowedWeekdays:
+      sourceEvent.weeklyAvailability.length > 0
+        ? Array.from(new Set(sourceEvent.weeklyAvailability.map((a) => a.dayOfWeek))).sort()
+        : sourceEvent.allowedWeekdays,
+    weeklyAvailability:
+      sourceEvent.weeklyAvailability.length > 0
+        ? {
+          createMany: {
+            data: sourceEvent.weeklyAvailability.map((a) => ({
+              dayOfWeek: a.dayOfWeek,
+              startTime: a.startTime,
+              endTime: a.endTime,
+            })),
+          },
+        }
+        : undefined,
   } as any;
 };

@@ -6,7 +6,7 @@ import { authenticate, authorize } from "../../shared/middleware/auth";
 import { sensitiveLimiter } from "../../shared/middleware/rateLimit";
 
 import { validate } from "../../shared/middleware/validate";
-import { CreateInviteSchema, AcceptInviteSchema } from "./invite.schema";
+import { CreateInviteSchema, AcceptInviteSchema, ValidateInviteSchema } from "./invite.schema";
 
 const router = express.Router();
 
@@ -25,6 +25,12 @@ router
 router
   .route("/accept-invite")
   .post(sensitiveLimiter, validate(AcceptInviteSchema), inviteController.acceptInvite)
+  .all(methodNotAllowed);
+
+// Public: validate an invite token and return its metadata (used by frontend to detect SSO invites)
+router
+  .route("/validate")
+  .get(sensitiveLimiter, validate(ValidateInviteSchema), inviteController.validateInvite)
   .all(methodNotAllowed);
 
 export default router;

@@ -3,21 +3,37 @@ import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import Breadcrumbs from '@mui/material/Breadcrumbs'
+import Link from '@mui/material/Link'
 import { APP_HEADER_MIN_HEIGHT } from './layoutConstants'
 
 import { Link as RouterLink } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+export interface BreadcrumbItem {
+  label: string
+  to?: string
+}
 
 interface PageHeaderProps {
   title: string
   subtitle?: string
   actions?: ReactNode
+  breadcrumbs?: BreadcrumbItem[]
   backTo?: string
   backLabel?: string
   tags?: ReactNode
 }
 
-export function PageHeader({ title, subtitle, actions, backTo, backLabel, tags }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+  breadcrumbs,
+  backTo,
+  backLabel,
+  tags
+}: PageHeaderProps) {
   return (
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
@@ -41,7 +57,7 @@ export function PageHeader({ title, subtitle, actions, backTo, backLabel, tags }
       }}
     >
       <Stack direction="row" spacing={2} alignItems="center">
-        {backTo && (
+        {backTo && !breadcrumbs && (
           <Tooltip title={backLabel ? `Back to ${backLabel}` : 'Back'} placement="bottom">
             <IconButton
               component={RouterLink}
@@ -66,8 +82,39 @@ export function PageHeader({ title, subtitle, actions, backTo, backLabel, tags }
           </Tooltip>
         )}
         <Stack spacing={0.5}>
+          {breadcrumbs && (
+            <Breadcrumbs
+              separator={<ChevronRight size={14} />}
+              sx={{ mb: 0.5, '& .MuiBreadcrumbs-li': { display: 'flex', alignItems: 'center' } }}
+            >
+              {breadcrumbs.map((item, index) => (
+                item.to ? (
+                  <Link
+                    key={index}
+                    component={RouterLink}
+                    to={item.to}
+                    underline="hover"
+                    color="inherit"
+                    sx={{ 
+                        fontSize: '0.875rem', 
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <Typography key={index} color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 700 }}>
+                    {item.label}
+                  </Typography>
+                )
+              ))}
+            </Breadcrumbs>
+          )}
           <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>
               {title}
             </Typography>
             {tags && (

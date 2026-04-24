@@ -23,6 +23,13 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
       coachUser: { select: safeUserSelect },
     },
   },
+  weeklyAvailability: true,
+  team: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
 });
 
 export type SafeEvent = Prisma.EventGetPayload<{
@@ -59,6 +66,11 @@ export type CreateEventInput = {
   bufferAfterMinutes?: number;
   maxBookingWindowDays?: number | null;
   showDescription?: boolean;
+  weeklyAvailability?: Array<{
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+  }>;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput>;
@@ -85,6 +97,11 @@ export type UpsertEventScheduleSlotInput = {
   endTime?: string | Date;
   isActive?: boolean;
   capacity?: number | null;
+  assignedCoachId?: string | null;
+  recurrence?: {
+    frequency: "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "TWICE_A_MONTH" | "THRICE_A_WEEK";
+    occurrences: number;
+  } | null;
 };
 
 export const isValidAssignmentStrategy = (value: string): value is AssignmentStrategy =>

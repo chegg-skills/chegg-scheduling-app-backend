@@ -98,8 +98,10 @@ export function EventDetailPage() {
       <PageHeader
         title={event.name}
         subtitle={event.description ?? undefined}
-        backTo={`/teams/${event.teamId}`}
-        backLabel="Team"
+        breadcrumbs={[
+          { label: 'Teams', to: '/teams' },
+          { label: event.team?.name || 'Team', to: `/teams/${event.teamId}` },
+        ]}
         tags={
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Badge

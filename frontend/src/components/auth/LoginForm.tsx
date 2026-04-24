@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { FormField } from '@/components/shared/form/FormField'
@@ -34,32 +36,50 @@ export function LoginForm() {
   }
 
   return (
-    <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={2.5}>
-      {error && <ErrorAlert message={extractApiError(error)} />}
+    <Stack spacing={2.5}>
+      <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={2.5}>
+        {error && <ErrorAlert message={extractApiError(error)} />}
 
-      <FormField label="Email" htmlFor="email" error={errors.email?.message} required>
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          hasError={!!errors.email}
-          {...register('email')}
-        />
-      </FormField>
+        <FormField label="Email" htmlFor="email" error={errors.email?.message} required>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            hasError={!!errors.email}
+            {...register('email')}
+          />
+        </FormField>
 
-      <FormField label="Password" htmlFor="password" error={errors.password?.message} required>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          hasError={!!errors.password}
-          {...register('password')}
-        />
-      </FormField>
+        <FormField label="Password" htmlFor="password" error={errors.password?.message} required>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            hasError={!!errors.password}
+            {...register('password')}
+          />
+        </FormField>
 
-      <Button type="submit" isLoading={isPending} fullWidth>
-        Sign in
-      </Button>
+        <Button type="submit" isLoading={isPending} fullWidth>
+          Sign in
+        </Button>
+      </Stack>
+
+      <Divider>
+        <Typography variant="caption" color="text.secondary">
+          OR
+        </Typography>
+      </Divider>
+
+      {import.meta.env.VITE_SSO_ENABLED === 'true' ? (
+        <Button component="a" href="/api/auth/sso/login" variant="secondary" fullWidth>
+          Sign in with SSO
+        </Button>
+      ) : (
+        <Button variant="secondary" fullWidth disabled>
+          SSO — Coming Soon
+        </Button>
+      )}
     </Stack>
   )
 }

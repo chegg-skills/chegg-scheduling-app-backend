@@ -7,9 +7,9 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import { Edit, Trash2, User } from 'lucide-react'
+import { Edit, Trash2, User, RefreshCw, ClipboardList, Users } from 'lucide-react'
 import Avatar from '@mui/material/Avatar'
-import { Stack, Typography } from '@mui/material'
+import { Stack, Typography, Tooltip } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
 import type { EventScheduleSlot, Event, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
@@ -19,9 +19,18 @@ interface ScheduleSlotListProps {
   event: Event
   onRemove: (slotId: string, info: string) => void
   onEdit: (slot: EventScheduleSlot) => void
+  onViewAttendees: (slot: EventScheduleSlot) => void
+  onLogSession: (slot: EventScheduleSlot) => void
 }
 
-export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlotListProps) {
+export function ScheduleSlotList({
+  slots,
+  event,
+  onRemove,
+  onEdit,
+  onViewAttendees,
+  onLogSession,
+}: ScheduleSlotListProps) {
   if (slots.length === 0) {
     return (
       <Paper
@@ -71,10 +80,22 @@ export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlo
               : 1
             const isFull = effectiveCapacity !== null && bookingCount >= effectiveCapacity
             const canDelete = bookingCount === 0
+            const isRecurring = !!slot.recurrenceGroupId
 
             return (
               <TableRow key={slot.id} hover>
-                <TableCell sx={{ fontWeight: 500, py: 2 }}>{dateStr}</TableCell>
+                <TableCell sx={{ py: 2 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {dateStr}
+                    </Typography>
+                    {isRecurring && (
+                      <Tooltip title="Part of a recurring series">
+                        <RefreshCw size={14} style={{ color: '#6366f1' }} />
+                      </Tooltip>
+                    )}
+                  </Stack>
+                </TableCell>
                 <TableCell sx={{ py: 2 }}>{timeRange}</TableCell>
                 <TableCell sx={{ py: 2 }}>
                   <Box
@@ -99,10 +120,11 @@ export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlo
                     const overrideCoach = slot.assignedCoach
                     const isRotating = event.sessionLeadershipStrategy === 'ROTATING_LEAD'
 
-                    const defaultCoach = (event.fixedLeadCoachId && !isRotating)
-                      ? event.coaches.find((c) => c.coachUserId === event.fixedLeadCoachId)
-                        ?.coachUser
-                      : null
+                    const defaultCoach =
+                      event.fixedLeadCoachId && !isRotating
+                        ? event.coaches.find((c) => c.coachUserId === event.fixedLeadCoachId)
+                            ?.coachUser
+                        : null
 
                     const host = overrideCoach || defaultCoach
                     const isOverride = !!overrideCoach
@@ -177,6 +199,16 @@ export function ScheduleSlotList({ slots, event, onRemove, onEdit }: ScheduleSlo
                 <TableCell align="right" sx={{ py: 2, pr: 3 }}>
                   <RowActions
                     actions={[
+                      {
+                        label: 'View Attendees',
+                        icon: <Users size={16} />,
+                        onClick: () => onViewAttendees(slot),
+                      },
+                      {
+                        label: 'Log Session',
+                        icon: <ClipboardList size={16} />,
+                        onClick: () => onLogSession(slot),
+                      },
                       {
                         label: 'Edit Session',
                         icon: <Edit size={16} />,

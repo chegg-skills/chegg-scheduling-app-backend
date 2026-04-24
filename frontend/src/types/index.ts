@@ -38,8 +38,17 @@ export interface SafeUser {
   failedLoginAttempts: number
   lockedUntil: string | null
   lastLoginAt: string | null
+  ssoLinkedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface InviteValidation {
+  valid: boolean
+  email?: string
+  role?: UserRole
+  requiresSso?: boolean
+  reason?: 'not_found' | 'already_accepted' | 'expired'
 }
 
 export interface UserWithDetails extends SafeUser {
@@ -139,10 +148,21 @@ export interface EventScheduleSlot {
   createdAt: string
   updatedAt: string
   assignedCoachId: string | null
+  recurrenceGroupId: string | null
   assignedCoach?: SafeUser | null
   _count?: {
     bookings: number
   }
+}
+
+export interface EventWeeklyAvailability {
+  id: string
+  eventId: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Event {
@@ -177,6 +197,11 @@ export interface Event {
   updatedAt: string
   offering: EventOffering
   coaches: EventCoach[]
+  weeklyAvailability: EventWeeklyAvailability[]
+  team?: {
+    id: string
+    name: string
+  }
   scheduleSlots?: EventScheduleSlot[]
 }
 
@@ -376,6 +401,11 @@ export interface CreateEventDto {
   bufferAfterMinutes?: number
   description?: string
   isActive?: boolean
+  weeklyAvailability?: Array<{
+    dayOfWeek: number
+    startTime: string
+    endTime: string
+  }>
 }
 
 export interface UpdateEventDto extends Partial<CreateEventDto> { }
@@ -428,6 +458,38 @@ export interface CreateAvailabilityExceptionDto {
   isUnavailable: boolean
   startTime?: string | null
   endTime?: string | null
+}
+
+// ─── Session Log Models ───────────────────────────────────────────────────────
+
+export interface SessionAttendance {
+  id: string
+  sessionLogId: string
+  bookingId: string
+  attended: boolean
+  createdAt: string
+  updatedAt: string
+  booking?: Booking
+}
+
+export interface SessionLog {
+  id: string
+  scheduleSlotId: string
+  loggedByUserId: string
+  topicsDiscussed: string | null
+  summary: string | null
+  coachNotes: string | null
+  createdAt: string
+  updatedAt: string
+  attendance: SessionAttendance[]
+  loggedBy?: Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'email' | 'avatarUrl'>
+}
+
+export interface UpsertSessionLogDto {
+  topicsDiscussed?: string | null
+  summary?: string | null
+  coachNotes?: string | null
+  attendance: Array<{ bookingId: string; attended: boolean }>
 }
 
 // ─── Booking Models ───────────────────────────────────────────────────────────

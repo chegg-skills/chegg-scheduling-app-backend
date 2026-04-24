@@ -13,6 +13,7 @@ import {
   type SafeEvent,
   type UpdateEventInput,
 } from "./event.shared";
+import { UpdateEventSchema } from "./event.schema";
 import {
   createEventOffering,
   listEventOfferings,
@@ -29,12 +30,13 @@ import {
 } from "./eventCoach.service";
 import {
   assertBookingNoticeSatisfied,
-  assertBookingWeekdayAllowed,
+  assertBookingAvailabilityAllowed,
   assertParticipantCapacityAvailable,
   createEventScheduleSlot,
   deleteEventScheduleSlot,
   getEffectiveParticipantPolicy,
   listEventScheduleSlots,
+  listSlotBookings,
   resolveMatchingScheduleSlot,
   updateEventScheduleSlot,
 } from "./eventScheduling.service";
@@ -141,15 +143,25 @@ const updateEvent = async (
 
   let updatedEvent: SafeEvent;
   try {
-    updatedEvent = await prisma.event.update({
-      where: { id: eventId },
-      data: buildEventUpdateData({
-        payload,
-        existingEvent,
-        callerId: caller.id,
-        context,
-      }),
-      include: eventInclude,
+    const validated = UpdateEventSchema.body.parse(payload);
+    updatedEvent = await prisma.$transaction(async (tx) => {
+      if (validated.weeklyAvailability) {
+        await tx.eventWeeklyAvailability.deleteMany({ where: { eventId } });
+        await tx.eventWeeklyAvailability.createMany({
+          data: validated.weeklyAvailability.map((a) => ({ ...a, eventId })),
+        });
+      }
+
+      return tx.event.update({
+        where: { id: eventId },
+        data: buildEventUpdateData({
+          payload,
+          existingEvent,
+          callerId: caller.id,
+          context,
+        }),
+        include: eventInclude,
+      });
     });
   } catch (error) {
     console.error("Failed to update event:", error);
@@ -283,8 +295,9 @@ export {
   createEventScheduleSlot,
   updateEventScheduleSlot,
   deleteEventScheduleSlot,
+  listSlotBookings,
   assertBookingNoticeSatisfied,
-  assertBookingWeekdayAllowed,
+  assertBookingAvailabilityAllowed,
   getEffectiveParticipantPolicy,
   assertParticipantCapacityAvailable,
   resolveMatchingScheduleSlot,

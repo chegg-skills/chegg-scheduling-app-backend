@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventsApi, type ListEventsParams } from '@/api/events'
-import type { CreateEventDto, UpdateEventDto, SetEventCoachesDto } from '@/types'
+import type { CreateEventDto, UpdateEventDto, SetEventCoachesDto, UpsertSessionLogDto } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
@@ -12,6 +12,10 @@ export const eventKeys = {
   detail: (id: string) => [...eventKeys.all, 'detail', id] as const,
   coaches: (id: string) => [...eventKeys.all, 'coaches', id] as const,
   scheduleSlots: (id: string) => [...eventKeys.all, 'schedule-slots', id] as const,
+  slotBookings: (eventId: string, slotId: string) =>
+    [...eventKeys.scheduleSlots(eventId), 'bookings', slotId] as const,
+  slotLog: (eventId: string, slotId: string) =>
+    [...eventKeys.scheduleSlots(eventId), 'log', slotId] as const,
 }
 
 export function useEvents(params?: ListEventsParams) {
@@ -26,6 +30,15 @@ export function useEventScheduleSlots(eventId: string) {
     queryKey: eventKeys.scheduleSlots(eventId),
     queryFn: ({ signal }) => eventsApi.listScheduleSlots(eventId, signal).then((r) => r.data.data),
     enabled: !!eventId,
+  })
+}
+
+export function useSlotBookings(eventId: string, slotId: string) {
+  return useQuery({
+    queryKey: eventKeys.slotBookings(eventId, slotId),
+    queryFn: ({ signal }) =>
+      eventsApi.listSlotBookings(eventId, slotId, signal).then((r) => r.data.data),
+    enabled: !!eventId && !!slotId,
   })
 }
 
@@ -130,5 +143,26 @@ export function useRemoveEventCoach(eventId: string) {
     mutationFn: (userId: string) => eventsApi.removeCoach(eventId, userId),
     onSuccess: () =>
       invalidateQueryKeys(qc, [eventKeys.coaches(eventId), eventKeys.detail(eventId), statsKeys.all]),
+  })
+}
+
+export function useSlotSessionLog(eventId: string, slotId: string) {
+  return useQuery({
+    queryKey: eventKeys.slotLog(eventId, slotId),
+    queryFn: ({ signal }) =>
+      eventsApi.getSessionLog(eventId, slotId, signal).then((r) => r.data.data ?? null),
+    enabled: !!eventId && !!slotId,
+  })
+}
+
+export function useUpsertSessionLog(eventId: string, slotId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: UpsertSessionLogDto) => eventsApi.upsertSessionLog(eventId, slotId, data),
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [
+        eventKeys.slotLog(eventId, slotId),
+        eventKeys.slotBookings(eventId, slotId),
+      ]),
   })
 }

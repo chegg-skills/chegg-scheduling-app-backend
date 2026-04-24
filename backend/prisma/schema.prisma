@@ -9,7 +9,7 @@ datasource db {
 model User {
   id                     String                      @id @default(uuid())
   email                  String                      @unique
-  password               String
+  password               String?
   role                   UserRole
   createdAt              DateTime                    @default(now())
   updatedAt              DateTime                    @updatedAt
@@ -26,6 +26,9 @@ model User {
   preferredLanguage      String                      @default("en")
   zoomIsvLink            String?
   publicBookingSlug      String                      @unique
+  ssoProvider            String?
+  ssoSub                 String?
+  ssoLinkedAt            DateTime?
   bookings               Booking[]
   eventsCreated          Event[]                     @relation("EventCreatedBy")
   eventsUpdated          Event[]                     @relation("EventUpdatedBy")
@@ -33,11 +36,14 @@ model User {
   createdEventOfferings  EventOffering[]             @relation("EventOfferingCreatedBy")
   updatedEventOfferings  EventOffering[]             @relation("EventOfferingUpdatedBy")
   slotAssignments        EventScheduleSlot[]         @relation("SlotCoach")
+  sessionLogs            SessionLog[]                @relation("SessionLogLoggedBy")
   teamsCreated           Team[]                      @relation("TeamCreatedBy")
   teamsLed               Team[]                      @relation("TeamLead")
   teamMemberships        TeamMember[]
   availabilityExceptions UserAvailabilityException[]
   weeklyAvailability     UserWeeklyAvailability[]
+
+  @@unique([ssoProvider, ssoSub])
 }
 
 model Team {
@@ -58,14 +64,24 @@ model Team {
 }
 
 model UserInvite {
-  id         String    @id @default(uuid())
-  email      String
-  role       UserRole
-  token      String    @unique
-  expiresAt  DateTime
-  acceptedAt DateTime?
-  createdBy  String
-  createdAt  DateTime  @default(now())
+  id          String    @id @default(uuid())
+  email       String
+  role        UserRole
+  token       String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  requiresSso Boolean   @default(false)
+}
+
+model OidcState {
+  id          String   @id @default(uuid())
+  state       String   @unique
+  nonce       String
+  inviteToken String?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
 }
 
 model TeamMember {
@@ -136,6 +152,7 @@ model Event {
   offering                  EventOffering             @relation(fields: [offeringId], references: [id])
   team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
+  weeklyAvailability        EventWeeklyAvailability[]
   coaches                   EventCoach[]
   routingState              EventRoutingState?
   scheduleSlots             EventScheduleSlot[]
@@ -173,22 +190,68 @@ model EventRoutingState {
 }
 
 model EventScheduleSlot {
-  id              String    @id @default(uuid())
-  eventId         String
-  startTime       DateTime
-  endTime         DateTime
-  capacity        Int?
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  assignedCoachId String?
-  bookings        Booking[]
-  assignedCoach   User?     @relation("SlotCoach", fields: [assignedCoachId], references: [id])
-  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id                String      @id @default(uuid())
+  eventId           String
+  startTime         DateTime
+  endTime           DateTime
+  capacity          Int?
+  isActive          Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  assignedCoachId   String?
+  recurrenceGroupId String?
+  bookings          Booking[]
+  sessionLog        SessionLog?
+  assignedCoach     User?       @relation("SlotCoach", fields: [assignedCoachId], references: [id])
+  event             Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, startTime])
   @@index([eventId, startTime, isActive])
   @@index([assignedCoachId])
+  @@index([recurrenceGroupId])
+}
+
+model SessionLog {
+  id              String              @id @default(uuid())
+  scheduleSlotId  String              @unique
+  loggedByUserId  String
+  topicsDiscussed String?
+  summary         String?
+  coachNotes      String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  scheduleSlot    EventScheduleSlot   @relation(fields: [scheduleSlotId], references: [id], onDelete: Cascade)
+  loggedBy        User                @relation("SessionLogLoggedBy", fields: [loggedByUserId], references: [id])
+  attendance      SessionAttendance[]
+
+  @@index([scheduleSlotId])
+  @@index([loggedByUserId])
+}
+
+model SessionAttendance {
+  id           String     @id @default(uuid())
+  sessionLogId String
+  bookingId    String     @unique
+  attended     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  sessionLog   SessionLog @relation(fields: [sessionLogId], references: [id], onDelete: Cascade)
+  booking      Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([sessionLogId])
+}
+
+model EventWeeklyAvailability {
+  id        String   @id @default(uuid())
+  eventId   String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, dayOfWeek])
 }
 
 model UserWeeklyAvailability {
@@ -254,11 +317,12 @@ model Booking {
   rescheduleToken   String?            @unique @default(uuid())
   coCoachUserIds    String[]           @default([])
   coachUserId       String
-  coach             User               @relation(fields: [coachUserId], references: [id])
-  event             Event              @relation(fields: [eventId], references: [id])
-  scheduleSlot      EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
-  student           Student?           @relation(fields: [studentId], references: [id])
-  team              Team               @relation(fields: [teamId], references: [id])
+  coach                User               @relation(fields: [coachUserId], references: [id])
+  event                Event              @relation(fields: [eventId], references: [id])
+  scheduleSlot         EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
+  student              Student?           @relation(fields: [studentId], references: [id])
+  team                 Team               @relation(fields: [teamId], references: [id])
+  sessionAttendance    SessionAttendance?
 
   @@index([studentId])
   @@index([scheduleSlotId])

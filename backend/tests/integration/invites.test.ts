@@ -195,3 +195,50 @@ describe("POST /api/invites/accept-invite", () => {
     expect(res.status).toBe(400);
   });
 });
+
+// ─────────────────────────────────────────────────────────────
+// requiresSso flag
+// ─────────────────────────────────────────────────────────────
+
+describe("requiresSso — invite creation and acceptance", () => {
+  let ssoInviteToken: string;
+
+  beforeAll(async () => {
+    // Create a fresh SSO invite for use in tests below
+    const res = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ email: "sso-invitee@invites.com", role: "COACH", requiresSso: true });
+
+    ssoInviteToken = res.body.data.token as string;
+  });
+
+  it("creating an invite with requiresSso: true succeeds (201)", async () => {
+    const res = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ email: "sso-invitee2@invites.com", role: "COACH", requiresSso: true });
+
+    expect(res.status).toBe(201);
+    expect(typeof res.body.data.token).toBe("string");
+  });
+
+  it("POST /invites/accept-invite returns 400 when the invite requires SSO", async () => {
+    const res = await request(app).post("/api/invites/accept-invite").send({
+      token: ssoInviteToken,
+      firstName: "SSO",
+      lastName: "User",
+      password: "SsoUser1234",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/SSO authentication/i);
+  });
+
+  it("GET /invites/validate returns requiresSso: true for an SSO-required invite", async () => {
+    const res = await request(app).get(`/api/invites/validate?token=${ssoInviteToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.requiresSso).toBe(true);
+  });
+});

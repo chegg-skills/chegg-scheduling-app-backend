@@ -50,6 +50,19 @@ const EventBaseObjectCore = z.object({
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
   showDescription: z.boolean().optional(),
+  weeklyAvailability: z
+    .array(
+      z.object({
+        dayOfWeek: z.number().int().min(0).max(6),
+        startTime: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
+        endTime: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
+      }),
+    )
+    .optional(),
 });
 
 /**
@@ -168,6 +181,13 @@ const EventScheduleSlotBase = z.object({
   capacity: z.coerce.number().int().nonnegative().optional().nullable(),
   assignedCoachId: z.string().uuid().optional().nullable(),
   isActive: z.boolean().default(true),
+  recurrence: z
+    .object({
+      frequency: z.enum(["WEEKLY", "BI_WEEKLY", "MONTHLY", "TWICE_A_MONTH", "THRICE_A_WEEK"]),
+      occurrences: z.coerce.number().int().min(1).max(50),
+    })
+    .optional()
+    .nullable(),
 });
 
 // --- Exported Schemas with Refinements ---
@@ -238,4 +258,22 @@ export const ListAllEventsSchema = {
       teamId: z.string().uuid().optional(),
     })
     .passthrough(),
+};
+
+export const UpsertSessionLogSchema = {
+  params: z.object({
+    eventId: z.string().uuid("Invalid event ID"),
+    slotId: z.string().uuid("Invalid slot ID"),
+  }),
+  body: z.object({
+    topicsDiscussed: z.string().trim().optional().nullable(),
+    summary: z.string().trim().optional().nullable(),
+    coachNotes: z.string().trim().optional().nullable(),
+    attendance: z.array(
+      z.object({
+        bookingId: z.string().uuid("Invalid booking ID"),
+        attended: z.boolean(),
+      }),
+    ),
+  }),
 };

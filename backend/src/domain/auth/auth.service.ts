@@ -130,6 +130,13 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
     );
   }
 
+  if (!user.password) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "This account uses SSO. Please sign in with your identity provider.",
+    );
+  }
+
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {

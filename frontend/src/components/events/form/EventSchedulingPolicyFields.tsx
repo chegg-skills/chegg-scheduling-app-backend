@@ -6,8 +6,8 @@ import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionTypeCaps } from '@/types'
-import { WeekdaySelector } from './WeekdaySelector'
 import { ParticipantCapacityFields } from './ParticipantCapacityFields'
+import { EventAvailabilityPicker } from './EventAvailabilityPicker'
 
 interface EventSchedulingPolicyFieldsProps {
   caps?: InteractionTypeCaps | null
@@ -52,7 +52,7 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
         </Select>
       </FormField>
 
-      <WeekdaySelector />
+      <EventAvailabilityPicker />
 
       <FormField
         label="Minimum Notice (minutes)"

@@ -23,6 +23,7 @@ type CreateInviteInput = {
   email: string;
   role: UserRole;
   createdByAdminId: string;
+  requiresSso?: boolean;
 };
 
 type AcceptInviteInput = {
@@ -49,6 +50,7 @@ const createInvite = async (
   id: string;
   email: string;
   role: UserRole;
+  requiresSso: boolean;
   token: string;
   expiresAt: Date;
   createdAt: Date;
@@ -89,6 +91,7 @@ const createInvite = async (
       token,
       expiresAt,
       createdBy: payload.createdByAdminId,
+      requiresSso: validated.requiresSso ?? false,
     },
   });
 
@@ -96,12 +99,14 @@ const createInvite = async (
     inviteId: invite.id,
     createdByAdminId: payload.createdByAdminId,
     role: invite.role,
+    requiresSso: invite.requiresSso,
   });
 
   return {
     id: invite.id,
     email: invite.email,
     role: invite.role,
+    requiresSso: invite.requiresSso,
     token: invite.token,
     expiresAt: invite.expiresAt,
     createdAt: invite.createdAt,
@@ -127,6 +132,13 @@ const acceptInvite = async (
 
   if (new Date() > invite.expiresAt) {
     throw new ErrorHandler(StatusCodes.GONE, "This invite has expired. Please request a new one.");
+  }
+
+  if (invite.requiresSso) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "This invite requires SSO authentication. Use the SSO sign-in link sent in your invite email.",
+    );
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -187,4 +199,23 @@ const acceptInvite = async (
   };
 };
 
-export { createInvite, acceptInvite };
+type InviteValidationResult =
+  | { valid: true; email: string; role: UserRole; requiresSso: boolean }
+  | { valid: false; reason: "not_found" | "already_accepted" | "expired" };
+
+const validateInvite = async (token: string): Promise<InviteValidationResult> => {
+  const invite = await prisma.userInvite.findUnique({ where: { token } });
+
+  if (!invite) return { valid: false, reason: "not_found" };
+  if (invite.acceptedAt) return { valid: false, reason: "already_accepted" };
+  if (new Date() > invite.expiresAt) return { valid: false, reason: "expired" };
+
+  return {
+    valid: true,
+    email: invite.email,
+    role: invite.role,
+    requiresSso: invite.requiresSso,
+  };
+};
+
+export { createInvite, acceptInvite, validateInvite };

@@ -5,7 +5,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { logger } from "../../shared/logging/logger";
 import {
   assertBookingNoticeSatisfied,
-  assertBookingWeekdayAllowed,
+  assertBookingAvailabilityAllowed,
   assertParticipantCapacityAvailable,
   getEffectiveParticipantPolicy,
   resolveMatchingScheduleSlot,
@@ -59,7 +59,12 @@ const resolveBookingWindow = (event: BookableEvent, start: Date) => {
   const end = new Date(start.getTime() + event.durationSeconds * 1000);
   const schedulingContext = buildSchedulingContext(event);
 
-  assertBookingWeekdayAllowed(schedulingContext.allowedWeekdays, start);
+  assertBookingAvailabilityAllowed(
+    schedulingContext.allowedWeekdays,
+    schedulingContext.weeklyAvailability as any,
+    start,
+    end,
+  );
   assertBookingNoticeSatisfied(schedulingContext.minimumNoticeMinutes, start);
 
   return { end, schedulingContext };

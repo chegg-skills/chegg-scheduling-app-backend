@@ -8,6 +8,8 @@ import type {
   UpdateEventDto,
   SetEventCoachesDto,
   Pagination,
+  SessionLog,
+  UpsertSessionLogDto,
 } from '@/types'
 
 export interface ListEventsParams {
@@ -54,4 +56,18 @@ export const eventsApi = {
     ),
   deleteScheduleSlot: (eventId: string, slotId: string) =>
     apiClient.delete<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}`),
+  listSlotBookings: (eventId: string, slotId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<any>>(`/events/${eventId}/schedule-slots/${slotId}/bookings`, {
+      signal,
+    }),
+  getSessionLog: (eventId: string, slotId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<SessionLog | null>>(
+      `/events/${eventId}/schedule-slots/${slotId}/log`,
+      { signal },
+    ),
+  upsertSessionLog: (eventId: string, slotId: string, data: UpsertSessionLogDto) =>
+    apiClient.post<ApiResponse<SessionLog>>(
+      `/events/${eventId}/schedule-slots/${slotId}/log`,
+      data,
+    ),
 }
