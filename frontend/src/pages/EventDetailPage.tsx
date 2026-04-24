@@ -13,6 +13,7 @@ import {
   Users,
   Info,
   Calendar as CalendarIcon,
+  ClipboardList,
 } from 'lucide-react'
 import { useEvent, useDeleteEvent, useUpdateEvent, useEventScheduleSlots } from '@/hooks/queries/useEvents'
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
@@ -173,7 +174,7 @@ export function EventDetailPage() {
               icon={<Users size={18} />}
               iconPosition="start"
             />
-            <Tab label="Sessions" icon={<Plus size={18} />} iconPosition="start" />
+            <Tab label="Bookings" icon={<ClipboardList size={18} />} iconPosition="start" />
             {event.bookingMode === 'FIXED_SLOTS' && (
               <Tab label="Schedule" icon={<CalendarIcon size={18} />} iconPosition="start" />
             )}
