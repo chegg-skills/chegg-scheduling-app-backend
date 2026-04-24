@@ -8,6 +8,7 @@ export function EventAvailabilityPicker() {
 
   return (
     <FormField
+      htmlFor="weekly-availability"
       label="Weekly availability"
       info="Define specific time ranges for each weekday when this event can be booked. If empty, all times are available for the enabled days."
     >

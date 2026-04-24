@@ -1,5 +1,5 @@
-import React from 'react'
 import Stack from '@mui/material/Stack'
+import Box from '@mui/material/Box'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
@@ -57,34 +57,38 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
 
       {isEnabled && (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <FormField label="Frequency" sx={{ flex: 1 }}>
-            <Select
-              value={value.frequency}
-              onChange={(e) =>
-                onChange({ ...value, frequency: e.target.value as RecurrenceFrequency })
-              }
-              disabled={disabled}
-            >
-              <MenuItem value="WEEKLY">Every week</MenuItem>
-              <MenuItem value="BI_WEEKLY">Every 2 weeks</MenuItem>
-              <MenuItem value="MONTHLY">Every month</MenuItem>
-              <MenuItem value="TWICE_A_MONTH">Twice a month (every 14 days)</MenuItem>
-              <MenuItem value="THRICE_A_WEEK">3 times a week</MenuItem>
-            </Select>
-          </FormField>
+          <Box sx={{ flex: 1 }}>
+            <FormField label="Frequency" htmlFor="recurrence-frequency">
+              <Select
+                value={value.frequency}
+                onChange={(e) =>
+                  onChange({ ...value, frequency: e.target.value as RecurrenceFrequency })
+                }
+                disabled={disabled}
+              >
+                <MenuItem value="WEEKLY">Every week</MenuItem>
+                <MenuItem value="BI_WEEKLY">Every 2 weeks</MenuItem>
+                <MenuItem value="MONTHLY">Every month</MenuItem>
+                <MenuItem value="TWICE_A_MONTH">Twice a month (every 14 days)</MenuItem>
+                <MenuItem value="THRICE_A_WEEK">3 times a week</MenuItem>
+              </Select>
+            </FormField>
+          </Box>
 
-          <FormField label="Occurrences" sx={{ width: { sm: 120 } }}>
-            <Input
-              type="number"
-              value={value.occurrences}
-              onChange={(e) =>
-                onChange({ ...value, occurrences: parseInt(e.target.value) || 1 })
-              }
-              min={1}
-              max={50}
-              disabled={disabled}
-            />
-          </FormField>
+          <Box sx={{ width: { sm: 120 } }}>
+            <FormField label="Occurrences" htmlFor="recurrence-occurrences">
+              <Input
+                type="number"
+                value={value.occurrences}
+                onChange={(e) =>
+                  onChange({ ...value, occurrences: parseInt(e.target.value) || 1 })
+                }
+                min={1}
+                max={50}
+                disabled={disabled}
+              />
+            </FormField>
+          </Box>
         </Stack>
       )}
     </Stack>

@@ -1,4 +1,4 @@
-import { useFormContext, Controller } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import { FormField } from '@/components/shared/form/FormField'
@@ -21,7 +21,6 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
   const {
     register,
     watch,
-    control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
   const bookingMode = watch('bookingMode')
