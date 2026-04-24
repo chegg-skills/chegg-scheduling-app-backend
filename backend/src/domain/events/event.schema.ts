@@ -259,3 +259,21 @@ export const ListAllEventsSchema = {
     })
     .passthrough(),
 };
+
+export const UpsertSessionLogSchema = {
+  params: z.object({
+    eventId: z.string().uuid("Invalid event ID"),
+    slotId: z.string().uuid("Invalid slot ID"),
+  }),
+  body: z.object({
+    topicsDiscussed: z.string().trim().optional().nullable(),
+    summary: z.string().trim().optional().nullable(),
+    coachNotes: z.string().trim().optional().nullable(),
+    attendance: z.array(
+      z.object({
+        bookingId: z.string().uuid("Invalid booking ID"),
+        attended: z.boolean(),
+      }),
+    ),
+  }),
+};

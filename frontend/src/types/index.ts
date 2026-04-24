@@ -198,6 +198,10 @@ export interface Event {
   offering: EventOffering
   coaches: EventCoach[]
   weeklyAvailability: EventWeeklyAvailability[]
+  team?: {
+    id: string
+    name: string
+  }
   scheduleSlots?: EventScheduleSlot[]
 }
 
@@ -454,6 +458,38 @@ export interface CreateAvailabilityExceptionDto {
   isUnavailable: boolean
   startTime?: string | null
   endTime?: string | null
+}
+
+// ─── Session Log Models ───────────────────────────────────────────────────────
+
+export interface SessionAttendance {
+  id: string
+  sessionLogId: string
+  bookingId: string
+  attended: boolean
+  createdAt: string
+  updatedAt: string
+  booking?: Booking
+}
+
+export interface SessionLog {
+  id: string
+  scheduleSlotId: string
+  loggedByUserId: string
+  topicsDiscussed: string | null
+  summary: string | null
+  coachNotes: string | null
+  createdAt: string
+  updatedAt: string
+  attendance: SessionAttendance[]
+  loggedBy?: Pick<SafeUser, 'id' | 'firstName' | 'lastName' | 'email' | 'avatarUrl'>
+}
+
+export interface UpsertSessionLogDto {
+  topicsDiscussed?: string | null
+  summary?: string | null
+  coachNotes?: string | null
+  attendance: Array<{ bookingId: string; attended: boolean }>
 }
 
 // ─── Booking Models ───────────────────────────────────────────────────────────

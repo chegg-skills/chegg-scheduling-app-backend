@@ -9,6 +9,7 @@ import {
   ListTeamEventsSchema,
   ListAllEventsSchema,
   UpdateEventSchema,
+  UpsertSessionLogSchema,
 } from "./event.schema";
 
 const router = express.Router();
@@ -153,6 +154,21 @@ router
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.listSlotBookings,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/events/:eventId/schedule-slots/:slotId/log")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    eventController.getSessionLog,
+  )
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(UpsertSessionLogSchema),
+    eventController.upsertSessionLog,
   )
   .all(methodNotAllowed);
 

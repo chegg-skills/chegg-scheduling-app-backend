@@ -20,6 +20,7 @@ interface ScheduleSlotListProps {
   onRemove: (slotId: string, info: string) => void
   onEdit: (slot: EventScheduleSlot) => void
   onViewAttendees: (slot: EventScheduleSlot) => void
+  onLogSession: (slot: EventScheduleSlot) => void
 }
 
 export function ScheduleSlotList({
@@ -28,6 +29,7 @@ export function ScheduleSlotList({
   onRemove,
   onEdit,
   onViewAttendees,
+  onLogSession,
 }: ScheduleSlotListProps) {
   if (slots.length === 0) {
     return (
@@ -205,7 +207,7 @@ export function ScheduleSlotList({
                       {
                         label: 'Log Session',
                         icon: <ClipboardList size={16} />,
-                        onClick: () => alert('Session logging coming soon!'),
+                        onClick: () => onLogSession(slot),
                       },
                       {
                         label: 'Edit Session',

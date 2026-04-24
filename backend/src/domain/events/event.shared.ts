@@ -24,6 +24,12 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
     },
   },
   weeklyAvailability: true,
+  team: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
 });
 
 export type SafeEvent = Prisma.EventGetPayload<{

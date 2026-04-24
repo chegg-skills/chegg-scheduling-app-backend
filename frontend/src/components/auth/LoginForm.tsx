@@ -71,9 +71,15 @@ export function LoginForm() {
         </Typography>
       </Divider>
 
-      <Button component="a" href="/api/auth/sso/login" variant="secondary" fullWidth>
-        Sign in with SSO
-      </Button>
+      {import.meta.env.VITE_SSO_ENABLED === 'true' ? (
+        <Button component="a" href="/api/auth/sso/login" variant="secondary" fullWidth>
+          Sign in with SSO
+        </Button>
+      ) : (
+        <Button variant="secondary" fullWidth disabled>
+          SSO — Coming Soon
+        </Button>
+      )}
     </Stack>
   )
 }

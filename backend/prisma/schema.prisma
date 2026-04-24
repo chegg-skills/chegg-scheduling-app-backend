@@ -36,6 +36,7 @@ model User {
   createdEventOfferings  EventOffering[]             @relation("EventOfferingCreatedBy")
   updatedEventOfferings  EventOffering[]             @relation("EventOfferingUpdatedBy")
   slotAssignments        EventScheduleSlot[]         @relation("SlotCoach")
+  sessionLogs            SessionLog[]                @relation("SessionLogLoggedBy")
   teamsCreated           Team[]                      @relation("TeamCreatedBy")
   teamsLed               Team[]                      @relation("TeamLead")
   teamMemberships        TeamMember[]
@@ -189,24 +190,55 @@ model EventRoutingState {
 }
 
 model EventScheduleSlot {
-  id                String    @id @default(uuid())
+  id                String      @id @default(uuid())
   eventId           String
   startTime         DateTime
   endTime           DateTime
   capacity          Int?
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isActive          Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
   assignedCoachId   String?
   recurrenceGroupId String?
   bookings          Booking[]
-  assignedCoach     User?     @relation("SlotCoach", fields: [assignedCoachId], references: [id])
-  event             Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sessionLog        SessionLog?
+  assignedCoach     User?       @relation("SlotCoach", fields: [assignedCoachId], references: [id])
+  event             Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, startTime])
   @@index([eventId, startTime, isActive])
   @@index([assignedCoachId])
   @@index([recurrenceGroupId])
+}
+
+model SessionLog {
+  id              String              @id @default(uuid())
+  scheduleSlotId  String              @unique
+  loggedByUserId  String
+  topicsDiscussed String?
+  summary         String?
+  coachNotes      String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  scheduleSlot    EventScheduleSlot   @relation(fields: [scheduleSlotId], references: [id], onDelete: Cascade)
+  loggedBy        User                @relation("SessionLogLoggedBy", fields: [loggedByUserId], references: [id])
+  attendance      SessionAttendance[]
+
+  @@index([scheduleSlotId])
+  @@index([loggedByUserId])
+}
+
+model SessionAttendance {
+  id           String     @id @default(uuid())
+  sessionLogId String
+  bookingId    String     @unique
+  attended     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  sessionLog   SessionLog @relation(fields: [sessionLogId], references: [id], onDelete: Cascade)
+  booking      Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([sessionLogId])
 }
 
 model EventWeeklyAvailability {
@@ -285,11 +317,12 @@ model Booking {
   rescheduleToken   String?            @unique @default(uuid())
   coCoachUserIds    String[]           @default([])
   coachUserId       String
-  coach             User               @relation(fields: [coachUserId], references: [id])
-  event             Event              @relation(fields: [eventId], references: [id])
-  scheduleSlot      EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
-  student           Student?           @relation(fields: [studentId], references: [id])
-  team              Team               @relation(fields: [teamId], references: [id])
+  coach                User               @relation(fields: [coachUserId], references: [id])
+  event                Event              @relation(fields: [eventId], references: [id])
+  scheduleSlot         EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
+  student              Student?           @relation(fields: [studentId], references: [id])
+  team                 Team               @relation(fields: [teamId], references: [id])
+  sessionAttendance    SessionAttendance?
 
   @@index([studentId])
   @@index([scheduleSlotId])

@@ -65,8 +65,7 @@ export function TeamDetailPage() {
       <PageHeader
         title={team.name}
         subtitle={team.description ?? undefined}
-        backTo="/teams"
-        backLabel="Teams"
+        breadcrumbs={[{ label: 'Teams', to: '/teams' }]}
         tags={
           <Badge
             label={team.isActive ? 'Active' : 'Inactive'}

@@ -1,5 +1,4 @@
 import { EventBookingMode, Prisma, type EventScheduleSlot } from "@prisma/client";
-import { v4 as uuidv4 } from "uuid";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -251,7 +250,7 @@ const createEventScheduleSlot = async (
 
   const validated = EventScheduleSlotSchema.body.parse(payload);
 
-  const recurrenceGroupId = validated.recurrence ? uuidv4() : null;
+  const recurrenceGroupId = validated.recurrence ? crypto.randomUUID() : null;
 
   if (validated.recurrence) {
     const startDates = generateRecurrenceDates(validated.startTime, validated.recurrence);
