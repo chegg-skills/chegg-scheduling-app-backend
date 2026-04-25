@@ -7,14 +7,14 @@ import * as teamMemberService from "./teamMember.service";
 const addTeamMember = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const { teamId } = req.params;
+    const teamId = req.params.teamId as string;
     const { userId, userIds } = req.body;
 
     let result;
     if (userIds && Array.isArray(userIds)) {
-      result = await teamMemberService.addTeamMembers(teamId as any, { userIds }, caller);
+      result = await teamMemberService.addTeamMembers(teamId, { userIds }, caller);
     } else {
-      result = await teamMemberService.addTeamMember(teamId as any, { userId }, caller);
+      result = await teamMemberService.addTeamMember(teamId, { userId }, caller);
     }
 
     sendSuccessResponse(
@@ -31,8 +31,8 @@ const addTeamMember = async (req: Request, res: Response, next: NextFunction): P
 const listTeamMembers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const { teamId } = req.params;
-    const result = await teamMemberService.listTeamMembers(teamId as any, caller);
+    const teamId = req.params.teamId as string;
+    const result = await teamMemberService.listTeamMembers(teamId, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Team members fetched successfully.");
   } catch (error) {
@@ -43,8 +43,9 @@ const listTeamMembers = async (req: Request, res: Response, next: NextFunction):
 const removeTeamMember = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const { teamId, userId } = req.params;
-    const member = await teamMemberService.removeTeamMember(teamId as any, userId as any, caller);
+    const teamId = req.params.teamId as string;
+    const userId = req.params.userId as string;
+    const member = await teamMemberService.removeTeamMember(teamId, userId, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, member, "Team member removed successfully.");
   } catch (error) {

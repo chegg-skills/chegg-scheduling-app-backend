@@ -8,7 +8,7 @@ import * as sessionLogService from "./sessionLog.service";
 const createEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.createEvent((req.params as any).teamId, req.body, caller);
+    const event = await eventService.createEvent(req.params.teamId as string, req.body, caller);
 
     sendSuccessResponse(res, StatusCodes.CREATED, event, "Event created successfully.");
   } catch (error) {
@@ -19,7 +19,7 @@ const createEvent = async (req: Request, res: Response, next: NextFunction): Pro
 const duplicateEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.duplicateEvent((req.params as any).eventId, caller);
+    const event = await eventService.duplicateEvent(req.params.eventId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.CREATED, event, "Event duplicated successfully.");
   } catch (error) {
@@ -64,7 +64,7 @@ const updateEventOffering = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const offering = await eventService.updateEventOffering(
-      (req.params as any).offeringId,
+      req.params.offeringId as string,
       req.body,
       caller,
     );
@@ -82,7 +82,7 @@ const deleteEventOffering = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.deleteEventOffering((req.params as any).offeringId, caller);
+    const offering = await eventService.deleteEventOffering(req.params.offeringId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, offering, "Event offering deleted successfully.");
   } catch (error) {
@@ -97,7 +97,7 @@ const getEventOfferingUsage = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const usage = await eventService.getEventOfferingUsage((req.params as any).offeringId, caller);
+    const usage = await eventService.getEventOfferingUsage(req.params.offeringId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, usage, "Event offering usage fetched successfully.");
   } catch (error) {
@@ -122,9 +122,9 @@ const listInteractionTypes = async (
 const listTeamEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.listTeamEvents((req.params as any).teamId, caller, {
-      page: (req.query as any).page,
-      pageSize: (req.query as any).pageSize,
+    const result = await eventService.listTeamEvents(req.params.teamId as string, caller, {
+      page: req.query.page ? Number(req.query.page) : undefined,
+      pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
     });
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Events fetched successfully.");
@@ -136,7 +136,7 @@ const listTeamEvents = async (req: Request, res: Response, next: NextFunction): 
 const readEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.readEvent((req.params as any).eventId, caller);
+    const event = await eventService.readEvent(req.params.eventId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, event, "Event fetched successfully.");
   } catch (error) {
@@ -147,7 +147,7 @@ const readEvent = async (req: Request, res: Response, next: NextFunction): Promi
 const updateEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.updateEvent((req.params as any).eventId, req.body, caller);
+    const event = await eventService.updateEvent(req.params.eventId as string, req.body, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, event, "Event updated successfully.");
   } catch (error) {
@@ -158,7 +158,7 @@ const updateEvent = async (req: Request, res: Response, next: NextFunction): Pro
 const deleteEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const event = await eventService.deleteEvent((req.params as any).eventId, caller);
+    const event = await eventService.deleteEvent(req.params.eventId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, event, "Event deleted successfully.");
   } catch (error) {
@@ -169,7 +169,7 @@ const deleteEvent = async (req: Request, res: Response, next: NextFunction): Pro
 const listEventCoaches = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.listEventCoaches((req.params as any).eventId, caller);
+    const result = await eventService.listEventCoaches(req.params.eventId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Event coaches fetched successfully.");
   } catch (error) {
@@ -185,7 +185,7 @@ const replaceEventCoaches = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.replaceEventCoaches(
-      (req.params as any).eventId,
+      req.params.eventId as string,
       req.body,
       caller,
     );
@@ -200,8 +200,8 @@ const removeEventCoach = async (req: Request, res: Response, next: NextFunction)
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.removeEventCoach(
-      (req.params as any).eventId,
-      (req.params as any).userId,
+      req.params.eventId as string,
+      req.params.userId as string,
       caller,
     );
 
@@ -218,7 +218,7 @@ const listEventScheduleSlots = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const result = await eventService.listEventScheduleSlots((req.params as any).eventId, caller);
+    const result = await eventService.listEventScheduleSlots(req.params.eventId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Event schedule slots fetched successfully.");
   } catch (error) {
@@ -234,7 +234,7 @@ const createEventScheduleSlot = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const slot = await eventService.createEventScheduleSlot(
-      (req.params as any).eventId,
+      req.params.eventId as string,
       req.body,
       caller,
     );
@@ -258,8 +258,8 @@ const updateEventScheduleSlot = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const slot = await eventService.updateEventScheduleSlot(
-      (req.params as any).eventId,
-      (req.params as any).slotId,
+      req.params.eventId as string,
+      req.params.slotId as string,
       req.body,
       caller,
     );
@@ -278,8 +278,8 @@ const deleteEventScheduleSlot = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const slot = await eventService.deleteEventScheduleSlot(
-      (req.params as any).eventId,
-      (req.params as any).slotId,
+      req.params.eventId as string,
+      req.params.slotId as string,
       caller,
     );
 
@@ -292,10 +292,9 @@ const deleteEventScheduleSlot = async (
 const listAllEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const filters = req.query as any;
     const result = await eventService.listAllEvents(caller, {
-      page: filters.page,
-      pageSize: filters.pageSize,
+      page: req.query.page ? Number(req.query.page) : undefined,
+      pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
     });
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Events fetched successfully.");
@@ -312,8 +311,8 @@ const listSlotBookings = async (
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.listSlotBookings(
-      (req.params as any).eventId,
-      (req.params as any).slotId,
+      req.params.eventId as string,
+      req.params.slotId as string,
       caller,
     );
 
@@ -353,8 +352,8 @@ async function getSessionLog(req: Request, res: Response, next: NextFunction): P
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await sessionLogService.getSessionLog(
-      (req.params as any).eventId,
-      (req.params as any).slotId,
+      req.params.eventId as string,
+      req.params.slotId as string,
       caller,
     );
     sendSuccessResponse(res, StatusCodes.OK, result, "Session log fetched successfully.");
@@ -367,8 +366,8 @@ async function upsertSessionLog(req: Request, res: Response, next: NextFunction)
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await sessionLogService.upsertSessionLog(
-      (req.params as any).eventId,
-      (req.params as any).slotId,
+      req.params.eventId as string,
+      req.params.slotId as string,
       req.body,
       caller,
     );

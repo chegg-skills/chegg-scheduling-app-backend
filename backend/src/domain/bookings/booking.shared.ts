@@ -40,6 +40,14 @@ export type ListBookingsFilters = {
   limit?: number;
 };
 
+const bookingTeamSelect = Prisma.validator<Prisma.TeamSelect>()({
+  id: true,
+  name: true,
+  publicBookingSlug: true,
+  description: true,
+  isActive: true,
+});
+
 export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
   student: {
     select: {
@@ -52,7 +60,7 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
       updatedAt: true,
     },
   },
-  team: true,
+  team: { select: bookingTeamSelect },
   event: {
     include: {
       coaches: {

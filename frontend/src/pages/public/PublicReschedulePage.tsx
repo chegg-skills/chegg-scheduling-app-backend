@@ -23,6 +23,7 @@ import { PublicMainContent } from '@/components/public/layout/PublicMainContent'
 import { PublicNavigationFooter } from '@/components/public/layout/PublicNavigationFooter'
 import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeader'
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
+import { TroubleshootDialog } from '@/components/public/booking/TroubleshootDialog'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
 
 export function PublicReschedulePage() {
@@ -36,6 +37,7 @@ export function PublicReschedulePage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isSuccess, setIsSuccess] = React.useState(false)
   const [rescheduleError, setRescheduleError] = React.useState<string | null>(null)
+  const [troubleshootOpen, setTroubleshootOpen] = React.useState(false)
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
 
   React.useEffect(() => {
@@ -217,9 +219,14 @@ export function PublicReschedulePage() {
             submittingLabel="Updating..."
             nextDisabled={!selectedSlot}
             isSubmitting={isSubmitting}
+            onTroubleshoot={() => setTroubleshootOpen(true)}
           />
         </PublicMainContent>
       </PublicBaseLayout>
+      <TroubleshootDialog
+        open={troubleshootOpen}
+        onClose={() => setTroubleshootOpen(false)}
+      />
     </LocalizationProvider>
   )
 }

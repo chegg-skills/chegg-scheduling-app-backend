@@ -36,6 +36,11 @@ import {
 } from "./booking.shared";
 import { resolveBookingCoachSelection } from "./bookingAssignmentResolver.service";
 import type { CoachCandidate } from "./assignment.service";
+import {
+  queueBookingCreatedNotifications,
+  queueBookingStatusNotifications,
+  queueBookingUpdatedNotifications,
+} from "./booking.notification";
 
 export { bookingInclude, type SafeBooking } from "./booking.shared";
 
@@ -192,6 +197,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     status: booking.status,
   });
 
+  void queueBookingCreatedNotifications(booking);
+
   return booking;
 };
 const getBooking = async (id: string) => {
@@ -206,8 +213,16 @@ const listBookings = async (filters: ListBookingsFilters) => {
 const updateBooking = async (
   id: string,
   data: { status?: BookingStatus; coCoachUserIds?: string[] },
-) => {
-  return updateBookingById(id, data);
+): Promise<SafeBooking> => {
+  const oldBooking = await findBookingById(id);
+  const booking = await updateBookingById(id, data);
+
+  if (data.status && data.status !== oldBooking.status) {
+    void queueBookingStatusNotifications(booking);
+  }
+  void queueBookingUpdatedNotifications(oldBooking, booking);
+
+  return booking;
 };
 
 const rescheduleBooking = async (
@@ -286,6 +301,8 @@ const rescheduleBooking = async (
     coachUserId: updatedBooking.coachUserId,
     startTime: updatedBooking.startTime,
   });
+
+  void queueBookingUpdatedNotifications(updatedBooking, updatedBooking);
 
   return updatedBooking;
 };

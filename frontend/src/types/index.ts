@@ -35,8 +35,8 @@ export interface SafeUser {
   timezone: string
   zoomIsvLink: string | null
   isActive: boolean
-  failedLoginAttempts: number
-  lockedUntil: string | null
+  failedLoginAttempts?: number
+  lockedUntil?: string | null
   lastLoginAt: string | null
   ssoLinkedAt: string | null
   createdAt: string
@@ -517,7 +517,7 @@ export interface Booking {
   rescheduleToken: string | null
   createdAt: string
   updatedAt: string
-  team?: Team
+  team?: Pick<Team, 'id' | 'name' | 'publicBookingSlug' | 'description' | 'isActive'>
   event?: Event
   coach?: SafeUser
   scheduleSlot?: EventScheduleSlot

@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -9,6 +9,7 @@ import Divider from '@mui/material/Divider'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useTheme } from '@mui/material/styles'
 import { AlertCircle, CheckCircle2, Globe, HelpCircle, RefreshCw, Wifi, WifiOff, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -63,12 +64,15 @@ function DiagnosisItem({ icon: Icon, label, status, color }: DiagnosisItemProps)
 }
 
 export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
+  const theme = useTheme()
   const queryClient = useQueryClient()
-  const [online, setOnline] = React.useState(navigator.onLine)
-  const browserCompatible = React.useMemo(() => checkBrowserCompatibility(), [])
-  const storageAccessible = React.useMemo(() => checkStorageAccess(), [])
+  const [online, setOnline] = useState(navigator.onLine)
+  const browserCompatible = useMemo(() => checkBrowserCompatibility(), [])
+  const storageAccessible = useMemo(() => checkStorageAccess(), [])
 
-  React.useEffect(() => {
+  const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  useEffect(() => {
     const handleOnline = () => setOnline(true)
     const handleOffline = () => setOnline(false)
     window.addEventListener('online', handleOnline)
@@ -95,7 +99,7 @@ export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
-        <HelpCircle size={24} color="#0066FF" />
+        <HelpCircle size={24} color={theme.palette.primary.main} />
         <Typography variant="h6" fontWeight={800}>Troubleshooting</Typography>
       </DialogTitle>
 
@@ -111,21 +115,21 @@ export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
                 icon={online ? Wifi : WifiOff}
                 label="Internet connection"
                 status={online ? 'Online' : 'Offline'}
-                color={online ? '#2e7d32' : '#d32f2f'}
+                color={online ? theme.palette.success.main : theme.palette.error.main}
               />
               <Divider sx={{ my: 0.5, borderStyle: 'dashed' }} />
               <DiagnosisItem
                 icon={browserCompatible ? Globe : XCircle}
                 label="Browser compatibility"
                 status={browserCompatible ? 'Compatible' : 'Unsupported'}
-                color={browserCompatible ? '#2e7d32' : '#d32f2f'}
+                color={browserCompatible ? theme.palette.success.main : theme.palette.error.main}
               />
               <Divider sx={{ my: 0.5, borderStyle: 'dashed' }} />
               <DiagnosisItem
                 icon={storageAccessible ? CheckCircle2 : XCircle}
                 label="Session integrity"
                 status={storageAccessible ? 'Healthy' : 'Blocked'}
-                color={storageAccessible ? '#2e7d32' : '#d32f2f'}
+                color={storageAccessible ? theme.palette.success.main : theme.palette.error.main}
               />
             </Paper>
           </Box>
@@ -137,15 +141,27 @@ export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
             </Typography>
             <Stack spacing={1.5}>
               <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <AlertCircle size={18} color="#666" style={{ marginTop: 2, flexShrink: 0 }} />
+                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
                 <Typography variant="body2" color="text.secondary">
                   <strong>No slots available?</strong> Coaches may be fully booked or you might be outside the allowed booking window.
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <AlertCircle size={18} color="#666" style={{ marginTop: 2, flexShrink: 0 }} />
+                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
                 <Typography variant="body2" color="text.secondary">
-                  <strong>Page unresponsive?</strong> Use the "Refresh Connection" button below to reload session data.
+                  <strong>Page unresponsive?</strong> Use the "Reload Booking Data" button below to refresh session data.
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Wrong time shown?</strong> Slots are displayed in your browser's local timezone ({localTimezone}).
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Already booked?</strong> Check your email for a confirmation — you may have already secured a slot.
                 </Typography>
               </Box>
             </Stack>
@@ -170,11 +186,11 @@ export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
             textTransform: 'none',
             borderRadius: 2,
             px: 3,
-            bgcolor: '#0066FF',
-            '&:hover': { bgcolor: '#0052cc' }
+            bgcolor: 'primary.main',
+            '&:hover': { bgcolor: 'primary.dark' }
           }}
         >
-          Refresh Connection
+          Reload Booking Data
         </Button>
       </DialogActions>
     </Dialog>

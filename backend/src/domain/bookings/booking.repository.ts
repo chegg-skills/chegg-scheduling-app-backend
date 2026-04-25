@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
+import { resolvePagination } from "../../shared/utils/pagination";
 import {
   bookableEventInclude,
   bookingInclude,
@@ -94,7 +95,7 @@ const findBookingById = async (id: string): Promise<SafeBooking> => {
 
 const findBookingByToken = async (id: string, token: string): Promise<SafeBooking> => {
   const booking = await prisma.booking.findFirst({
-    where: { id, rescheduleToken: token } as any,
+    where: { id, rescheduleToken: token },
     include: bookingInclude,
   });
 
@@ -106,15 +107,17 @@ const findBookingByToken = async (id: string, token: string): Promise<SafeBookin
 };
 
 const findBookings = async (filters: ListBookingsFilters): Promise<SafeBooking[]> => {
-  const { page = 1, limit = 10 } = filters;
-  const skip = (page - 1) * limit;
+  const { skip, pageSize } = resolvePagination(
+    { page: filters.page, pageSize: filters.limit },
+    { defaultPageSize: 10, maxPageSize: 200 },
+  );
 
   return prisma.booking.findMany({
     where: buildBookingListWhere(filters),
     include: bookingInclude,
     orderBy: { startTime: "desc" },
     skip,
-    take: limit,
+    take: pageSize,
   });
 };
 

@@ -25,13 +25,18 @@ export const safeUserSelect = Prisma.validator<Prisma.UserSelect>()({
   timezone: true,
   zoomIsvLink: true,
   isActive: true,
-  failedLoginAttempts: true,
-  lockedUntil: true,
   lastLoginAt: true,
   createdAt: true,
   updatedAt: true,
   ssoLinkedAt: true,
-  // ssoProvider and ssoSub are internal identity tokens — never sent to clients
+  // failedLoginAttempts, lockedUntil, ssoProvider and ssoSub are internal — never sent to clients
+});
+
+// Use this select only on admin-facing user management endpoints (SUPER_ADMIN / TEAM_ADMIN).
+export const adminUserSelect = Prisma.validator<Prisma.UserSelect>()({
+  ...safeUserSelect,
+  failedLoginAttempts: true,
+  lockedUntil: true,
 });
 
 export const normalizeEmail = (email: string): string => email.trim().toLowerCase();

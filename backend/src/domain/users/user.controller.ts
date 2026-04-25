@@ -6,7 +6,11 @@ import * as userService from "./user.service";
 
 const listUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await userService.listUsers(req.query as any);
+    const result = await userService.listUsers({
+      page: req.query.page ? Number(req.query.page) : undefined,
+      pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
+      search: typeof req.query.search === "string" ? req.query.search : undefined,
+    });
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Users fetched successfully.");
   } catch (error) {
@@ -16,7 +20,7 @@ const listUsers = async (req: Request, res: Response, next: NextFunction): Promi
 
 const readUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const user = await userService.readUser((req.params as any).userId);
+    const user = await userService.readUser(req.params.userId as string);
     sendSuccessResponse(res, StatusCodes.OK, user, "User fetched successfully.");
   } catch (error) {
     next(error);
@@ -36,7 +40,7 @@ const readMyProfile = async (_req: Request, res: Response, next: NextFunction): 
 const updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const user = await userService.updateUser((req.params as any).userId, req.body, caller);
+    const user = await userService.updateUser(req.params.userId as string, req.body, caller);
     sendSuccessResponse(res, StatusCodes.OK, user, "User updated successfully.");
   } catch (error) {
     next(error);
@@ -46,7 +50,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction): Prom
 const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const user = await userService.deleteUser((req.params as any).userId, caller);
+    const user = await userService.deleteUser(req.params.userId as string, caller);
     sendSuccessResponse(res, StatusCodes.OK, user, "User deactivated successfully.");
   } catch (error) {
     next(error);
