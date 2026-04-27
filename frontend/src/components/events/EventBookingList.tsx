@@ -4,6 +4,7 @@ import { useBookings } from '@/hooks/queries/useBookings'
 import { BookingTable } from '@/components/bookings/BookingTable'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import type { BookingStatus } from '@/types'
 
 interface EventBookingListProps {
@@ -45,16 +46,10 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
 
   return (
     <Stack spacing={3}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Upcoming Bookings
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            View future bookings and co-coach assignments for this event.
-          </Typography>
-        </Box>
-      </Box>
+      <SectionHeader 
+        title="Upcoming Bookings" 
+        description="View future bookings and co-coach assignments for this event."
+      />
 
       <BookingTable
         bookings={upcomingBookings}

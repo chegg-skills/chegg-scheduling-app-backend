@@ -2,6 +2,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Alert from '@mui/material/Alert'
 import Stack from '@mui/material/Stack'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { EventDetailOverview } from '../EventDetailOverview'
 import type { Event } from '@/types'
 
@@ -18,14 +19,10 @@ export function EventDetailsTab({
 }: EventDetailsTabProps) {
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Event Configuration
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Core configuration and participation policies for this event.
-        </Typography>
-      </Box>
+      <SectionHeader 
+        title="Event Configuration"
+        description="Core configuration and participation policies for this event."
+      />
       {!coachSetupStatus.isReady && (
         <Alert severity="warning" variant="standard" sx={{ mt: 2 }}>
           {coachSetupStatus.message}

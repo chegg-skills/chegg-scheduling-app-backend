@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Plus } from 'lucide-react'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { Spinner } from '@/components/shared/ui/Spinner'
 import {
@@ -169,19 +170,15 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
     <Box>
       {!activeSeries ? (
         <>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
-            <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    Scheduled Sessions
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Recurring series are grouped for better visibility.
-                </Typography>
-            </Box>
-            <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
-              Add Session
-            </Button>
-          </Stack>
+          <SectionHeader 
+            title="Scheduled Sessions"
+            description="Recurring series are grouped for better visibility."
+            action={
+              <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
+                Add Session
+              </Button>
+            }
+          />
 
           <ScheduleSeriesTable
             groups={seriesGroups}
