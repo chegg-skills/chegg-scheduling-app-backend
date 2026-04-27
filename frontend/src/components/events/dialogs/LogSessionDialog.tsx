@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useConfirm } from '@/context/confirm'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Paper from '@mui/material/Paper'
@@ -60,7 +61,8 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         map[a.bookingId] = a.attended
       })
       setAttendanceMap(map)
-    } else {
+    } else if (activeBookings.length > 0) {
+      // For a new log, default everyone to present
       setTopicsDiscussed('')
       setSummary('')
       setCoachNotes('')
@@ -71,10 +73,12 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
       setAttendanceMap(map)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, existingLog])
+  }, [isOpen, existingLog, activeBookings.length])
 
   const attendedCount = activeBookings.filter((b) => attendanceMap[b.id] === true).length
   const absentCount = activeBookings.filter((b) => attendanceMap[b.id] === false).length
+
+  const { alert } = useConfirm()
 
   const handleSave = () => {
     const attendance = activeBookings.map((b) => ({
@@ -89,7 +93,17 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         coachNotes: coachNotes.trim() || null,
         attendance,
       },
-      { onSuccess: onClose },
+      {
+        onSuccess: () => {
+          onClose()
+        },
+        onError: (err) => {
+          alert({
+            title: 'Save Failed',
+            message: 'Failed to save session log. Please try again.',
+          })
+        }
+      },
     )
   }
 

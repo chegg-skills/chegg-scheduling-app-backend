@@ -47,7 +47,7 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
     <Stack spacing={3}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             Upcoming Bookings
           </Typography>
           <Typography variant="body2" color="text.secondary">

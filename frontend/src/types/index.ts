@@ -145,6 +145,7 @@ export interface EventScheduleSlot {
   endTime: string
   capacity: number | null
   isActive: boolean
+  isCancelled: boolean
   createdAt: string
   updatedAt: string
   assignedCoachId: string | null
@@ -153,6 +154,7 @@ export interface EventScheduleSlot {
   _count?: {
     bookings: number
   }
+  sessionLog?: { id: string } | null
 }
 
 export interface EventWeeklyAvailability {
@@ -203,6 +205,10 @@ export interface Event {
     name: string
   }
   scheduleSlots?: EventScheduleSlot[]
+  _count?: {
+    bookings: number
+    scheduleSlots: number
+  }
 }
 
 export interface PublicTeamSummary extends Pick<

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Plus } from 'lucide-react'
@@ -98,15 +99,18 @@ export function EventCoachManager({
       />
 
       {!hideHeader && (
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          {title && (
-            <Typography variant="h6">
-              {title} - {activeCoaches.length}
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {title || 'Assigned Coaches'}
             </Typography>
-          )}
+            <Typography variant="body2" color="text.secondary">
+              Manage coaches assigned to this event and their participation status.
+            </Typography>
+          </Box>
           {eligibleCount > 0 && (
-            <Button size="sm" onClick={() => setShowAddModal(true)}>
-              <Plus size={16} /> Add coach
+            <Button size="sm" startIcon={<Plus size={16} />} onClick={() => setShowAddModal(true)}>
+              Add coach
             </Button>
           )}
         </Stack>

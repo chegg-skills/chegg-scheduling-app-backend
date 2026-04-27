@@ -23,7 +23,6 @@ export function EventCoachesTab({
       teamMembers={teamMembers}
       assignmentStrategy={event.assignmentStrategy}
       minCoachCount={event.minCoachCount}
-      hideHeader
       showAddModalOverride={showAddModal}
       onCloseAddModal={onCloseAddModal}
       onViewUser={onViewUser}

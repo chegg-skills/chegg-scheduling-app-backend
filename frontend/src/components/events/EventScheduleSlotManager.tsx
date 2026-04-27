@@ -9,6 +9,7 @@ import {
   useCreateEventScheduleSlot,
   useUpdateEventScheduleSlot,
   useDeleteEventScheduleSlot,
+  useCancelEventScheduleSlot,
 } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import type { Event, EventScheduleSlot, TeamMember } from '@/types'
@@ -29,6 +30,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
   const { mutate: create, isPending: creating } = useCreateEventScheduleSlot(event.id)
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
   const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
+  const { mutate: cancel } = useCancelEventScheduleSlot(event.id)
   const { handleAction } = useAsyncAction()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -144,15 +146,32 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
     )
   }
 
+  function handleCancelSlot(slot: EventScheduleSlot, info: string) {
+    const bookingCount = slot._count?.bookings ?? 0
+    const message = bookingCount > 0
+        ? `Are you sure you want to cancel the session on ${info}? \n\nThis will cancel all ${bookingCount} active bookings and notify all participants. This action cannot be undone.`
+        : `Are you sure you want to cancel the session on ${info}? \n\nThis will mark the session as cancelled and prevent new bookings.`
+
+    handleAction(
+        cancel,
+        slot.id,
+        {
+            title: 'Cancel Session',
+            message,
+            actionName: 'Cancel Session',
+        }
+    )
+  }
+
   if (isLoading) return <Spinner />
 
   return (
     <Box>
       {!activeSeries ? (
         <>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
             <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                     Scheduled Sessions
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -179,6 +198,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
           onRemoveSlot={handleRemoveSlot}
           onViewAttendees={handleOpenAttendees}
           onLogSession={handleOpenLogSession}
+          onCancelSlot={handleCancelSlot}
         />
       )}
 

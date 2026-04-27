@@ -86,19 +86,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
 
   return (
     <Paper component="section" variant="outlined" sx={{ p: 3, borderRadius: 1.5 }}>
-      <Typography
-        variant="subtitle2"
-        color="text.primary"
-        sx={{
-          textTransform: 'uppercase',
-          letterSpacing: 1,
-          mb: 2,
-          fontSize: '0.75rem',
-          fontWeight: 800,
-        }}
-      >
-        General Details
-      </Typography>
+
 
       <Grid container spacing={2}>
         {/* Core Configuration */}

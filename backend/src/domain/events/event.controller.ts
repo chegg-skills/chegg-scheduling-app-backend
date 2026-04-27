@@ -289,6 +289,25 @@ const deleteEventScheduleSlot = async (
   }
 };
 
+const cancelEventScheduleSlot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const slot = await eventService.cancelEventScheduleSlot(
+      req.params.eventId as string,
+      req.params.slotId as string,
+      caller,
+    );
+
+    sendSuccessResponse(res, StatusCodes.OK, slot, "Event schedule slot cancelled successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 const listAllEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
@@ -334,6 +353,7 @@ export {
   createEventScheduleSlot,
   deleteEvent,
   deleteEventScheduleSlot,
+  cancelEventScheduleSlot,
   listEventCoaches,
   listEventScheduleSlots,
   listTeamEvents,

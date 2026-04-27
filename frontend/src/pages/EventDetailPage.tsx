@@ -42,8 +42,8 @@ export function EventDetailPage() {
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
-  const { data: event, isLoading, error } = useEvent(eventId)
-  const { data: slotsRes, isLoading: isLoadingSlots } = useEventScheduleSlots(eventId)
+  const { data: event, isLoading, isFetching, error } = useEvent(eventId)
+  const { data: slotsRes, isLoading: isLoadingSlots, isFetching: isFetchingSlots } = useEventScheduleSlots(eventId)
   const { data: teamMembersResponse } = useTeamMembers(event?.teamId ?? '')
   const updateEventMutation = useUpdateEvent()
   const deleteEventMutation = useDeleteEvent()
@@ -174,19 +174,21 @@ export function EventDetailPage() {
               icon={<Users size={18} />}
               iconPosition="start"
             />
-            <Tab label="Bookings" icon={<ClipboardList size={18} />} iconPosition="start" />
+            <Tab 
+              label={`Bookings (${event._count?.bookings ?? 0})`} 
+              icon={<ClipboardList size={18} />} 
+              iconPosition="start" 
+            />
             {event.bookingMode === 'FIXED_SLOTS' && (
-              <Tab label="Schedule" icon={<CalendarIcon size={18} />} iconPosition="start" />
+              <Tab 
+                label={`Schedule (${event._count?.scheduleSlots ?? 0})`} 
+                icon={<CalendarIcon size={18} />} 
+                iconPosition="start" 
+              />
             )}
           </Tabs>
 
-          {tabValue === 1 && (
-            <Box sx={{ mb: 1 }}>
-              <Button size="sm" onClick={() => setShowAddCoachModal(true)}>
-                <Plus size={16} /> Add coach
-              </Button>
-            </Box>
-          )}
+
         </Box>
 
         <TabPanel value={tabValue} index={0} prefix="event">
@@ -214,7 +216,7 @@ export function EventDetailPage() {
         </TabPanel>
 
         <TabPanel value={tabValue} index={3} prefix="event">
-          <EventScheduleTab event={event} slots={slots} isLoading={isLoadingSlots} teamMembers={teamMembers} />
+          <EventScheduleTab event={event} slots={slots} isLoading={isLoadingSlots || isFetchingSlots} teamMembers={teamMembers} />
         </TabPanel>
 
         <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="Edit event" size="lg">

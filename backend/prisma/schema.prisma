@@ -196,6 +196,7 @@ model EventScheduleSlot {
   endTime           DateTime
   capacity          Int?
   isActive          Boolean     @default(true)
+  isCancelled       Boolean     @default(false)
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   assignedCoachId   String?

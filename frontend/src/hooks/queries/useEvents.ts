@@ -70,6 +70,17 @@ export function useDeleteEventScheduleSlot(eventId: string) {
   })
 }
 
+export function useCancelEventScheduleSlot(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (slotId: string) => eventsApi.cancelScheduleSlot(eventId, slotId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+    },
+  })
+}
+
 export function useTeamEvents(teamId: string, params?: ListEventsParams) {
   return useQuery({
     queryKey: eventKeys.byTeam(teamId, params),
@@ -159,10 +170,11 @@ export function useUpsertSessionLog(eventId: string, slotId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: UpsertSessionLogDto) => eventsApi.upsertSessionLog(eventId, slotId, data),
-    onSuccess: () =>
-      invalidateQueryKeys(qc, [
-        eventKeys.slotLog(eventId, slotId),
-        eventKeys.slotBookings(eventId, slotId),
-      ]),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.slotLog(eventId, slotId) })
+      qc.invalidateQueries({ queryKey: eventKeys.slotBookings(eventId, slotId) })
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+    },
   })
 }

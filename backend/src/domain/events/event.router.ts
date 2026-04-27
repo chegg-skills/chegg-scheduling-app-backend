@@ -149,6 +149,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/events/:eventId/schedule-slots/:slotId/cancel")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.cancelEventScheduleSlot,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId/schedule-slots/:slotId/bookings")
   .get(
     authenticate,

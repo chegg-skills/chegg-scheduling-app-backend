@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { format } from 'date-fns'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -7,10 +8,11 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import { Edit, Trash2, User, RefreshCw, ClipboardList, Users } from 'lucide-react'
+import { Edit, Trash2, User, RefreshCw, ClipboardList, Users, Ban } from 'lucide-react'
 import Avatar from '@mui/material/Avatar'
 import { Stack, Typography, Tooltip } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
+import { TablePagination } from '@/components/shared/table/TablePagination'
 import type { EventScheduleSlot, Event, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 
@@ -21,6 +23,7 @@ interface ScheduleSlotListProps {
   onEdit: (slot: EventScheduleSlot) => void
   onViewAttendees: (slot: EventScheduleSlot) => void
   onLogSession: (slot: EventScheduleSlot) => void
+  onCancel: (slot: EventScheduleSlot, info: string) => void
 }
 
 export function ScheduleSlotList({
@@ -30,7 +33,11 @@ export function ScheduleSlotList({
   onEdit,
   onViewAttendees,
   onLogSession,
+  onCancel,
 }: ScheduleSlotListProps) {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
   if (slots.length === 0) {
     return (
       <Paper
@@ -47,6 +54,8 @@ export function ScheduleSlotList({
     )
   }
 
+  const paginatedSlots = slots.slice((page - 1) * pageSize, page * pageSize)
+
   return (
     <TableContainer
       component={Paper}
@@ -60,13 +69,15 @@ export function ScheduleSlotList({
             <TableCell>Time Range</TableCell>
             <TableCell>Occupancy</TableCell>
             <TableCell>Assigned Coach</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Logged</TableCell>
             <TableCell align="right" sx={{ pr: 3 }}>
               Actions
             </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {slots.map((slot) => {
+          {paginatedSlots.map((slot) => {
             const dateStr = format(new Date(slot.startTime), 'EEE, MMM d, yyyy')
             const timeRange = `${format(new Date(slot.startTime), 'h:mm a')} – ${format(
               new Date(slot.endTime),
@@ -196,6 +207,87 @@ export function ScheduleSlotList({
                     )
                   })()}
                 </TableCell>
+                <TableCell sx={{ py: 2 }}>
+                  {(() => {
+                    const now = new Date()
+                    const isPast = new Date(slot.endTime) < now
+                    
+                    if (slot.isCancelled) {
+                      return (
+                        <Box
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            bgcolor: 'error.lighter',
+                            color: 'error.main',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Session Cancelled
+                        </Box>
+                      )
+                    }
+
+                    if (isPast) {
+                      return (
+                        <Box
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                            color: 'text.secondary',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          Session Ended
+                        </Box>
+                      )
+                    }
+
+                    return (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: 1,
+                          bgcolor: 'success.lighter',
+                          color: 'success.main',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Accepting Bookings
+                      </Box>
+                    )
+                  })()}
+                </TableCell>
+                <TableCell sx={{ py: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: slot.sessionLog ? 'info.lighter' : 'grey.100',
+                      color: slot.sessionLog ? 'info.main' : 'text.secondary',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {slot.sessionLog ? 'Logged' : 'Not Logged'}
+                  </Box>
+                </TableCell>
                 <TableCell align="right" sx={{ py: 2, pr: 3 }}>
                   <RowActions
                     actions={[
@@ -215,6 +307,14 @@ export function ScheduleSlotList({
                         onClick: () => onEdit(slot),
                       },
                       {
+                        label: 'Cancel Session',
+                        icon: <Ban size={16} />,
+                        color: 'error.main',
+                        onClick: () => onCancel(slot, `${dateStr} at ${timeRange}`),
+                        disabled: slot.isCancelled,
+                        tooltip: slot.isCancelled ? 'Session is already cancelled' : 'Cancel this session and notify all participants',
+                      },
+                      {
                         label: 'Delete Session',
                         icon: <Trash2 size={16} />,
                         color: 'error.main',
@@ -232,6 +332,19 @@ export function ScheduleSlotList({
           })}
         </TableBody>
       </Table>
+      <TablePagination
+        pagination={{
+          page,
+          pageSize,
+          total: slots.length,
+          totalPages: Math.ceil(slots.length / pageSize),
+        }}
+        onPageChange={setPage}
+        onRowsPerPageChange={(newSize) => {
+          setPageSize(newSize)
+          setPage(1)
+        }}
+      />
     </TableContainer>
   )
 }
