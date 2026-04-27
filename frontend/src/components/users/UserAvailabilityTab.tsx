@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box'
-import { Badge } from '@/components/shared/ui/Badge'
+import { Badge, BadgeColor } from '@/components/shared/ui/Badge'
 import Grid from '@mui/material/Grid'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
@@ -43,7 +43,7 @@ export function UserAvailabilityTab({ user }: UserAvailabilityTabProps) {
                         <Badge
                           key={slotIndex}
                           label={`${slot.startTime} - ${slot.endTime}`}
-                          color="gray" as const
+                          color={"gray" as BadgeColor}
                           sx={{ mr: 0.5, fontSize: '0.7rem' }}
                         />
                       ))
@@ -97,7 +97,7 @@ export function UserAvailabilityTab({ user }: UserAvailabilityTabProps) {
                   </Box>
                   <Badge
                     label={exception.isUnavailable ? 'Off' : 'Override'}
-                    color={(exception.isUnavailable ? 'gray' : 'blue') as const}
+                    color={(exception.isUnavailable ? 'gray' : 'blue') as BadgeColor}
                     variant="soft"
                     sx={{
                       fontWeight: 700,
