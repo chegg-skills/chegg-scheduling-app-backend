@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react'
 import Box from '@mui/material/Box'
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
 import { Plus } from 'lucide-react'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { Button } from '@/components/shared/ui/Button'

@@ -9,7 +9,6 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  Plus,
   Users,
   Info,
   Calendar as CalendarIcon,
@@ -20,7 +19,6 @@ import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TabPanel } from '@/components/shared/ui/TabPanel'
-import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
@@ -42,7 +40,7 @@ export function EventDetailPage() {
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
-  const { data: event, isLoading, isFetching, error } = useEvent(eventId)
+  const { data: event, isLoading, error } = useEvent(eventId)
   const { data: slotsRes, isLoading: isLoadingSlots, isFetching: isFetchingSlots } = useEventScheduleSlots(eventId)
   const { data: teamMembersResponse } = useTeamMembers(event?.teamId ?? '')
   const updateEventMutation = useUpdateEvent()

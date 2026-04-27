@@ -3,17 +3,14 @@ import { useConfirm } from '@/context/confirm'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { format } from 'date-fns'
 import { Modal } from '@/components/shared/ui/Modal'
 import { Button } from '@/components/shared/ui/Button'
-import { Spinner } from '@/components/shared/ui/Spinner'
 import { LogSessionParticipantList } from './LogSessionParticipantList'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
-import { Switch } from '@/components/shared/form/Switch'
 import { useSlotBookings, useSlotSessionLog, useUpsertSessionLog } from '@/hooks/queries/useEvents'
 import type { EventScheduleSlot, Booking } from '@/types'
 
@@ -97,7 +94,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         onSuccess: () => {
           onClose()
         },
-        onError: (err) => {
+        onError: (_err) => {
           alert({
             title: 'Save Failed',
             message: 'Failed to save session log. Please try again.',

@@ -1,5 +1,3 @@
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import Alert from '@mui/material/Alert'
 import Stack from '@mui/material/Stack'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'

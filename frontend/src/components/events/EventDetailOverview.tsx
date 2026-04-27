@@ -8,7 +8,6 @@ import Tooltip from '@mui/material/Tooltip'
 import { alpha } from '@mui/material/styles'
 import { Link as LinkIcon, Copy, Check } from 'lucide-react'
 import type { Event } from '@/types'
-import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { DataField } from '@/components/shared/ui/DataField'
 

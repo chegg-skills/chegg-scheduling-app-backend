@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Stack } from '@mui/material'
 import { useBookings } from '@/hooks/queries/useBookings'
 import { BookingTable } from '@/components/bookings/BookingTable'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
