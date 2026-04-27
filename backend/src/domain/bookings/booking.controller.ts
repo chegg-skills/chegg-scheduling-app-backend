@@ -5,12 +5,7 @@ import * as BookingService from "./booking.service";
 import { BookingStatus, UserRole } from "@prisma/client";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { CallerContext } from "../../shared/utils/userUtils";
-import {
-  queueBookingCreatedNotifications,
-  queueBookingStatusNotifications,
-  queueBookingUpdatedNotifications,
-  queueBookingRescheduledNotifications,
-} from "./booking.notification";
+import type { ListBookingsFilters } from "./booking.shared";
 
 const getStringParam = (value: unknown): string | undefined => {
   if (typeof value === "string") return value;
@@ -20,7 +15,6 @@ const getStringParam = (value: unknown): string | undefined => {
 
 export const createBooking = async (req: Request, res: Response) => {
   const booking = await BookingService.createBooking(req.body);
-  void queueBookingCreatedNotifications(booking);
 
   return sendSuccessResponse(
     res,
@@ -31,13 +25,13 @@ export const createBooking = async (req: Request, res: Response) => {
 };
 
 export const getBooking = async (req: Request, res: Response) => {
-  const { bookingId } = req.params as any;
+  const bookingId = req.params.bookingId as string;
   const caller = res.locals.authUser as CallerContext;
   const booking = await BookingService.getBooking(bookingId);
 
   if (caller.role === UserRole.COACH) {
     const isLead = booking.coachUserId === caller.id;
-    const isCoHost = ((booking as any).coCoachUserIds || []).includes(caller.id);
+    const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
 
     if (!isLead && !isCoHost) {
       throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking.");
@@ -48,14 +42,24 @@ export const getBooking = async (req: Request, res: Response) => {
 };
 
 export const listBookings = async (req: Request, res: Response) => {
-  const filters = req.query as any;
   const caller = res.locals.authUser as CallerContext;
+  const page = req.query.page ? Number(req.query.page) : undefined;
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
-  if (caller.role === UserRole.COACH) {
-    filters.coachUserId = caller.id;
-  }
+  const filters: ListBookingsFilters = {
+    teamId: getStringParam(req.query.teamId),
+    eventId: getStringParam(req.query.eventId),
+    coachUserId: caller.role === UserRole.COACH ? caller.id : getStringParam(req.query.coachUserId),
+    status: getStringParam(req.query.status) as BookingStatus | undefined,
+    search: getStringParam(req.query.search),
+    startDate: getStringParam(req.query.startDate),
+    endDate: getStringParam(req.query.endDate),
+    page,
+    limit,
+  };
 
   const { bookings, totalCount } = await BookingService.listBookings(filters);
+  const resolvedLimit = limit ?? 10;
 
   return sendSuccessResponse(
     res,
@@ -64,9 +68,9 @@ export const listBookings = async (req: Request, res: Response) => {
       bookings,
       pagination: {
         total: totalCount,
-        page: filters.page,
-        pageSize: filters.pageSize || filters.limit,
-        totalPages: Math.ceil(totalCount / (filters.pageSize || filters.limit)),
+        page: page ?? 1,
+        pageSize: resolvedLimit,
+        totalPages: Math.ceil(totalCount / resolvedLimit) || 1,
       },
     },
     "Bookings fetched successfully.",
@@ -74,26 +78,15 @@ export const listBookings = async (req: Request, res: Response) => {
 };
 
 export const updateBooking = async (req: Request, res: Response) => {
-  const { bookingId } = req.params as any;
-  const oldBooking = await BookingService.getBooking(bookingId);
+  const bookingId = req.params.bookingId as string;
   const { status, coCoachUserIds } = req.body;
-
-  const booking = await BookingService.updateBooking(bookingId, {
-    status,
-    coCoachUserIds,
-  });
-
-  if (status && status !== oldBooking.status) {
-    void queueBookingStatusNotifications(booking);
-  }
-
-  void queueBookingUpdatedNotifications(oldBooking, booking);
+  const booking = await BookingService.updateBooking(bookingId, { status, coCoachUserIds });
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking updated successfully.");
 };
 
 export const rescheduleBooking = async (req: Request, res: Response) => {
-  const { bookingId } = req.params as any;
+  const bookingId = req.params.bookingId as string;
   const { startTime, timezone, token } = req.body;
   const caller = res.locals.authUser as CallerContext | undefined;
 
@@ -109,8 +102,6 @@ export const rescheduleBooking = async (req: Request, res: Response) => {
     timezone,
     token,
   });
-
-  void queueBookingUpdatedNotifications(booking, booking);
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking rescheduled successfully.");
 };

@@ -1,5 +1,6 @@
 import Alert from '@mui/material/Alert'
 import Stack from '@mui/material/Stack'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { EventDetailOverview } from '../EventDetailOverview'
 import type { Event } from '@/types'
 
@@ -15,7 +16,11 @@ export function EventDetailsTab({
   needsScheduleSlots,
 }: EventDetailsTabProps) {
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
+      <SectionHeader 
+        title="Event Configuration"
+        description="Core configuration and participation policies for this event."
+      />
       {!coachSetupStatus.isReady && (
         <Alert severity="warning" variant="standard" sx={{ mt: 2 }}>
           {coachSetupStatus.message}

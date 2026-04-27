@@ -23,12 +23,12 @@ export const userTableColumns: Array<{ label: string; sortKey: UserSortKey }> = 
 export function getUserStatusBadgeProps(isActive: boolean) {
   return {
     label: isActive ? 'Active' : 'Inactive',
-    variant: isActive ? 'green' : 'red',
-  } as const
+    color: isActive ? ('green' as const) : ('red' as const),
+  }
 }
 
 export function getUserRoleBadgeProps(role: UserRole) {
-  const variants: Record<UserRole, 'blue' | 'yellow' | 'gray'> = {
+  const colors: Record<UserRole, 'blue' | 'yellow' | 'gray'> = {
     SUPER_ADMIN: 'blue',
     TEAM_ADMIN: 'yellow',
     COACH: 'gray',
@@ -36,6 +36,6 @@ export function getUserRoleBadgeProps(role: UserRole) {
 
   return {
     label: toTitleCase(role.replace('_', ' ')),
-    variant: variants[role],
-  } as const
+    color: colors[role],
+  }
 }

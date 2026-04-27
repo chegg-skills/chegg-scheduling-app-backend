@@ -35,8 +35,8 @@ export interface SafeUser {
   timezone: string
   zoomIsvLink: string | null
   isActive: boolean
-  failedLoginAttempts: number
-  lockedUntil: string | null
+  failedLoginAttempts?: number
+  lockedUntil?: string | null
   lastLoginAt: string | null
   ssoLinkedAt: string | null
   createdAt: string
@@ -145,6 +145,7 @@ export interface EventScheduleSlot {
   endTime: string
   capacity: number | null
   isActive: boolean
+  isCancelled: boolean
   createdAt: string
   updatedAt: string
   assignedCoachId: string | null
@@ -153,6 +154,7 @@ export interface EventScheduleSlot {
   _count?: {
     bookings: number
   }
+  sessionLog?: { id: string } | null
 }
 
 export interface EventWeeklyAvailability {
@@ -203,6 +205,10 @@ export interface Event {
     name: string
   }
   scheduleSlots?: EventScheduleSlot[]
+  _count?: {
+    bookings: number
+    scheduleSlots: number
+  }
 }
 
 export interface PublicTeamSummary extends Pick<
@@ -517,7 +523,7 @@ export interface Booking {
   rescheduleToken: string | null
   createdAt: string
   updatedAt: string
-  team?: Team
+  team?: Pick<Team, 'id' | 'name' | 'publicBookingSlug' | 'description' | 'isActive'>
   event?: Event
   coach?: SafeUser
   scheduleSlot?: EventScheduleSlot

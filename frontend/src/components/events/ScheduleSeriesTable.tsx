@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { format } from 'date-fns'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -10,6 +11,7 @@ import TableRow from '@mui/material/TableRow'
 import { RefreshCw, Calendar, MoreVertical, ListFilter } from 'lucide-react'
 import { Stack, Typography } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
+import { TablePagination } from '@/components/shared/table/TablePagination'
 import type { EventScheduleSlot } from '@/types'
 
 export interface ScheduleSeriesGroup {
@@ -28,6 +30,9 @@ interface Props {
 }
 
 export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: Props) {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
   if (groups.length === 0) {
     return (
       <Paper variant="outlined" sx={{ p: 8, textAlign: 'center', borderRadius: 1, borderStyle: 'dashed' }}>
@@ -35,6 +40,8 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
       </Paper>
     )
   }
+
+  const paginatedGroups = groups.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1 }}>
@@ -49,7 +56,7 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
           </TableRow>
         </TableHead>
         <TableBody>
-          {groups.map((group) => {
+          {paginatedGroups.map((group) => {
             const dateStr = format(new Date(group.startTime), 'EEE, MMM d')
             const timeRange = `${format(new Date(group.startTime), 'h:mm a')} - ${format(new Date(group.endTime), 'h:mm a')}`
 
@@ -116,6 +123,19 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
           })}
         </TableBody>
       </Table>
+      <TablePagination
+        pagination={{
+          page,
+          pageSize,
+          total: groups.length,
+          totalPages: Math.ceil(groups.length / pageSize),
+        }}
+        onPageChange={setPage}
+        onRowsPerPageChange={(newSize) => {
+          setPageSize(newSize)
+          setPage(1)
+        }}
+      />
     </TableContainer>
   )
 }

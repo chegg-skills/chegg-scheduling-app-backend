@@ -181,6 +181,7 @@ const EventScheduleSlotBase = z.object({
   capacity: z.coerce.number().int().nonnegative().optional().nullable(),
   assignedCoachId: z.string().uuid().optional().nullable(),
   isActive: z.boolean().default(true),
+  isCancelled: z.boolean().default(false),
   recurrence: z
     .object({
       frequency: z.enum(["WEEKLY", "BI_WEEKLY", "MONTHLY", "TWICE_A_MONTH", "THRICE_A_WEEK"]),

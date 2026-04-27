@@ -1,4 +1,4 @@
-import Chip from '@mui/material/Chip'
+import { Badge, BadgeColor } from '@/components/shared/ui/Badge'
 import type { BookingStatus } from '@/types'
 
 interface Props {
@@ -6,22 +6,22 @@ interface Props {
 }
 
 export function BookingStatusBadge({ status }: Props) {
-  const getStatusConfig = (s: BookingStatus) => {
+  const getStatusConfig = (s: BookingStatus): { label: string; color: BadgeColor } => {
     switch (s) {
       case 'CONFIRMED':
-        return { label: 'Confirmed', color: 'success' as const }
+        return { label: 'Confirmed', color: 'green' }
       case 'CANCELLED':
-        return { label: 'Cancelled', color: 'error' as const }
+        return { label: 'Cancelled', color: 'red' }
       case 'COMPLETED':
-        return { label: 'Completed', color: 'info' as const }
+        return { label: 'Completed', color: 'blue' }
       case 'NO_SHOW':
-        return { label: 'No Show', color: 'warning' as const }
+        return { label: 'No Show', color: 'yellow' }
       default:
-        return { label: s, color: 'default' as const }
+        return { label: s, color: 'gray' }
     }
   }
 
   const { label, color } = getStatusConfig(status)
 
-  return <Chip label={label} color={color} size="small" sx={{ fontWeight: 600, minWidth: 80 }} />
+  return <Badge label={label} color={color} sx={{ fontWeight: 600, minWidth: 90 }} />
 }

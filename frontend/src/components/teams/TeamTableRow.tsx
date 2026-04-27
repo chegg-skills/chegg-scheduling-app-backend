@@ -68,7 +68,7 @@ export function TeamTableRow({
       <TableCell>
         <Badge
           label={team.isActive ? 'Active' : 'Inactive'}
-          variant={team.isActive ? 'green' : 'red'}
+          color={team.isActive ? 'green' : 'red'}
         />
       </TableCell>
       <TableCell>

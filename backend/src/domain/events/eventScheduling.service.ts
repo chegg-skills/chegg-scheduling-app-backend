@@ -14,8 +14,11 @@ import {
   type UpdateEventInput,
   type UpsertEventScheduleSlotInput,
 } from "./event.shared";
+import { bookingInclude } from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
 import { generateRecurrenceDates } from "./recurrence.service";
+import { queueBookingStatusNotifications } from "../bookings/booking.notification";
+import { logger } from "../../shared/logging/logger";
 
 type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
   include: {
@@ -31,6 +34,11 @@ type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
     _count: {
       select: {
         bookings: true;
+      };
+    };
+    sessionLog: {
+      select: {
+        id: true;
       };
     };
   };
@@ -210,6 +218,11 @@ const listEventScheduleSlots = async (
           bookings: {
             where: { status: { not: "CANCELLED" } },
           },
+        },
+      },
+      sessionLog: {
+        select: {
+          id: true,
         },
       },
     },
@@ -417,6 +430,66 @@ const listSlotBookings = async (
   });
 };
 
+const cancelEventScheduleSlot = async (
+  eventId: string,
+  slotId: string,
+  caller: CallerContext,
+): Promise<EventScheduleSlot> => {
+  await getManagedEvent(eventId, caller);
+
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId },
+  });
+
+  if (!slot || slot.eventId !== eventId) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found for this event.");
+  }
+
+  if (slot.isCancelled) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Schedule slot is already cancelled.");
+  }
+
+  // Use a transaction to update slot and bookings
+  const updatedSlot = await prisma.$transaction(async (tx) => {
+    // 1. Mark slot as cancelled and inactive
+    const s = await tx.eventScheduleSlot.update({
+      where: { id: slotId },
+      data: { isCancelled: true, isActive: false },
+    });
+
+    // 2. Cancel all active bookings
+    await tx.booking.updateMany({
+      where: {
+        scheduleSlotId: slotId,
+        status: { in: ["CONFIRMED", "PENDING"] },
+      },
+      data: { status: "CANCELLED" },
+    });
+
+    return s;
+  });
+
+  // 3. Trigger notifications (outside transaction for reliability)
+  try {
+    const cancelledBookings = await prisma.booking.findMany({
+      where: {
+        scheduleSlotId: slotId,
+        status: "CANCELLED",
+      },
+      include: bookingInclude,
+    });
+
+    for (const booking of cancelledBookings) {
+      await queueBookingStatusNotifications(booking);
+    }
+  } catch (error) {
+    // Log but don't fail the cancellation if notifications fail
+    logger.error("Failed to queue notifications for cancelled slot", { slotId, error });
+  }
+
+  return updatedSlot;
+};
+
 export {
   resolveEventSchedulingConfig,
   assertBookingNoticeSatisfied,
@@ -428,5 +501,6 @@ export {
   createEventScheduleSlot,
   updateEventScheduleSlot,
   deleteEventScheduleSlot,
+  cancelEventScheduleSlot,
   listSlotBookings,
 };

@@ -90,8 +90,8 @@ export function TeamMemberRow({
           </Box>
         </Stack>
         <Stack direction="row" spacing={1.5} alignItems="center">
-          {isLead && <Badge label="Lead" variant="blue" />}
-          <Badge label={user.role.replace('_', ' ')} variant="gray" />
+          {isLead && <Badge label="Lead" color="blue" />}
+          <Badge label={user.role.replace('_', ' ')} color="gray" />
         </Stack>
       </Stack>
     </ListItem>

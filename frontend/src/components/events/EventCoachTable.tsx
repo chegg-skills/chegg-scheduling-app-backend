@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -12,6 +13,7 @@ import Typography from '@mui/material/Typography'
 import { Trash2 } from 'lucide-react'
 import type { EventCoach } from '@/types'
 import { RowActions } from '@/components/shared/table/RowActions'
+import { TablePagination } from '@/components/shared/table/TablePagination'
 
 interface EventCoachTableProps {
   coaches: EventCoach[]
@@ -20,6 +22,11 @@ interface EventCoachTableProps {
 }
 
 export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTableProps) {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  const paginatedCoaches = coaches.slice((page - 1) * pageSize, page * pageSize)
+
   return (
     <TableContainer component={Paper} variant="outlined">
       <Table>
@@ -43,8 +50,8 @@ export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTab
           </TableRow>
         </TableHead>
         <TableBody>
-          {coaches.length > 0 ? (
-            coaches.map((coach) => (
+          {paginatedCoaches.length > 0 ? (
+            paginatedCoaches.map((coach) => (
               <TableRow key={coach.id} hover>
                 <TableCell>
                   <Stack direction="row" spacing={1.5} alignItems="center">
@@ -122,6 +129,19 @@ export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTab
           )}
         </TableBody>
       </Table>
+      <TablePagination
+        pagination={{
+          page,
+          pageSize,
+          total: coaches.length,
+          totalPages: Math.ceil(coaches.length / pageSize),
+        }}
+        onPageChange={setPage}
+        onRowsPerPageChange={(newSize) => {
+          setPageSize(newSize)
+          setPage(1)
+        }}
+      />
     </TableContainer>
   )
 }

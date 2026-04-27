@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { alpha } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
@@ -39,7 +40,8 @@ export function ReportsPage() {
       description:
         'Full lifecycle data for all sessions including coach, student, status, and custom session details.',
       icon: <ClipboardList size={24} />,
-      color: '#E87100',
+      color: 'primary.main',
+      bg: (theme: any) => alpha(theme.palette.primary.main, 0.08),
     },
     {
       id: 'performance',
@@ -47,7 +49,8 @@ export function ReportsPage() {
       description:
         'Aggregated analytics per coach showing total bookings, completion rates, and no-show frequency.',
       icon: <Users size={24} />,
-      color: '#3A2C41',
+      color: 'secondary.main',
+      bg: (theme: any) => alpha(theme.palette.secondary.main, 0.08),
     },
     {
       id: 'students',
@@ -55,7 +58,8 @@ export function ReportsPage() {
       description:
         'Analysis of student activity including first/last booking dates and total session volume.',
       icon: <GraduationCap size={24} />,
-      color: '#2E8AEE',
+      color: 'info.main',
+      bg: (theme: any) => alpha(theme.palette.info.main, 0.08),
     },
   ]
 
@@ -83,7 +87,7 @@ export function ReportsPage() {
             p: 3,
             mb: 4,
             borderRadius: 2,
-            bgcolor: 'grey.50',
+            bgcolor: 'action.hover',
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
@@ -94,10 +98,10 @@ export function ReportsPage() {
           <Stack direction="row" spacing={2} alignItems="center">
             <Box
               sx={{
-                p: 1,
+                p: 1.25,
                 bgcolor: 'primary.light',
-                borderRadius: 1.5,
-                color: 'primary.main',
+                borderRadius: 2,
+                color: 'primary.dark',
                 display: 'flex',
               }}
             >
@@ -116,7 +120,7 @@ export function ReportsPage() {
             variant="outlined"
             onClick={() => setModalOpen(true)}
             startIcon={<CalendarRange size={16} />}
-            sx={{ borderRadius: 2, height: 38 }}
+            sx={{ borderRadius: 2, height: 38, fontWeight: 600 }}
           >
             Change Range
           </Button>
@@ -142,12 +146,12 @@ export function ReportsPage() {
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: 2,
-                transition: 'all 0.2s ease',
+                borderRadius: 2.5,
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   borderColor: report.color,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                  transform: 'translateY(-2px)',
+                  boxShadow: (theme) => `0 12px 24px -8px ${alpha(theme.palette.divider, 0.4)}`,
+                  transform: 'translateY(-4px)',
                 },
               }}
             >
@@ -157,23 +161,23 @@ export function ReportsPage() {
                     sx={{
                       p: 1.5,
                       borderRadius: 2,
-                      bgcolor: `${report.color}15`,
+                      bgcolor: report.bg,
                       color: report.color,
                       display: 'flex',
                     }}
                   >
                     {report.icon}
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2, mt: 0.5 }}>
                     {report.title}
                   </Typography>
                 </Stack>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
                   {report.description}
                 </Typography>
               </Box>
               <Box
-                sx={{ p: 2, bgcolor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}
+                sx={{ p: 2, bgcolor: 'action.hover', borderTop: '1px solid', borderColor: 'divider' }}
               >
                 <Button
                   fullWidth
@@ -183,6 +187,7 @@ export function ReportsPage() {
                   sx={{
                     borderRadius: 2,
                     bgcolor: report.color,
+                    fontWeight: 700,
                     '&:hover': { bgcolor: report.color, filter: 'brightness(0.9)' },
                   }}
                 >

@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
+import { Badge, BadgeColor } from '@/components/shared/ui/Badge'
 import Grid from '@mui/material/Grid'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
@@ -40,12 +40,11 @@ export function UserAvailabilityTab({ user }: UserAvailabilityTabProps) {
                   <Box>
                     {slots.length > 0 ? (
                       slots.map((slot, slotIndex) => (
-                        <Chip
+                        <Badge
                           key={slotIndex}
                           label={`${slot.startTime} - ${slot.endTime}`}
-                          size="small"
-                          variant="outlined"
-                          sx={{ mr: 0.5 }}
+                          color={"gray" as BadgeColor}
+                          sx={{ mr: 0.5, fontSize: '0.7rem' }}
                         />
                       ))
                     ) : (
@@ -96,16 +95,14 @@ export function UserAvailabilityTab({ user }: UserAvailabilityTabProps) {
                         : `${exception.startTime} - ${exception.endTime}`}
                     </Typography>
                   </Box>
-                  <Chip
+                  <Badge
                     label={exception.isUnavailable ? 'Off' : 'Override'}
-                    size="small"
-                    variant="outlined"
+                    color={(exception.isUnavailable ? 'gray' : 'blue') as BadgeColor}
+                    variant="soft"
                     sx={{
                       fontWeight: 700,
                       fontSize: '0.625rem',
                       textTransform: 'uppercase',
-                      color: exception.isUnavailable ? 'text.secondary' : 'primary.main',
-                      borderColor: 'divider',
                     }}
                   />
                 </Stack>

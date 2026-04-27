@@ -43,7 +43,7 @@ export function UserCoachedEventsTab({ user }: UserCoachedEventsTabProps) {
                 <Typography variant="subtitle2" fontWeight={700}>
                   {toTitleCase(coach.event.name)}
                 </Typography>
-                <Badge label={toTitleCase(coach.event.offering.name)} variant="blue" />
+                <Badge label={toTitleCase(coach.event.offering.name)} color="blue" />
               </Stack>
             }
             secondary={

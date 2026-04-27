@@ -156,7 +156,7 @@ export function OfferingTable({ offerings }: OfferingTableProps) {
                 <TableCell>
                   <Badge
                     label={o.isActive ? 'Active' : 'Inactive'}
-                    variant={o.isActive ? 'green' : 'red'}
+                    color={o.isActive ? 'green' : 'red'}
                   />
                 </TableCell>
                 <TableCell>

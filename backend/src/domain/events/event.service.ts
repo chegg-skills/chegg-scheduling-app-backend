@@ -39,6 +39,7 @@ import {
   listSlotBookings,
   resolveMatchingScheduleSlot,
   updateEventScheduleSlot,
+  cancelEventScheduleSlot,
 } from "./eventScheduling.service";
 import {
   buildDuplicateEventData,
@@ -301,5 +302,6 @@ export {
   getEffectiveParticipantPolicy,
   assertParticipantCapacityAvailable,
   resolveMatchingScheduleSlot,
+  cancelEventScheduleSlot,
   type SafeEvent,
 };

@@ -1,16 +1,17 @@
 import { useState, useMemo } from 'react'
 import Box from '@mui/material/Box'
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
 import { Plus } from 'lucide-react'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { Spinner } from '@/components/shared/ui/Spinner'
 import {
   useCreateEventScheduleSlot,
   useUpdateEventScheduleSlot,
   useDeleteEventScheduleSlot,
+  useCancelEventScheduleSlot,
 } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { useScheduleSeriesGroups } from '@/hooks/useScheduleSeriesGroups'
 import type { Event, EventScheduleSlot, TeamMember } from '@/types'
 import { UpsertScheduleSlotDialog } from './dialogs/UpsertScheduleSlotDialog'
 import { SlotAttendeesDialog } from './dialogs/SlotAttendeesDialog'
@@ -29,6 +30,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
   const { mutate: create, isPending: creating } = useCreateEventScheduleSlot(event.id)
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
   const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
+  const { mutate: cancel } = useCancelEventScheduleSlot(event.id)
   const { handleAction } = useAsyncAction()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -38,34 +40,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
   const [activeSeriesId, setActiveSeriesId] = useState<string | null>(null)
 
   // Grouping logic
-  const seriesGroups = useMemo(() => {
-    const groups: Record<string, ScheduleSeriesGroup> = {}
-
-    slots.forEach((slot) => {
-      const groupId = slot.recurrenceGroupId || `single-${slot.id}`
-      if (!groups[groupId]) {
-        groups[groupId] = {
-          id: groupId,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          isRecurring: !!slot.recurrenceGroupId,
-          occurrenceCount: 0,
-          slots: [],
-        }
-      }
-      groups[groupId].occurrenceCount++
-      groups[groupId].slots.push(slot)
-
-      if (new Date(slot.startTime) < new Date(groups[groupId].startTime)) {
-        groups[groupId].startTime = slot.startTime
-        groups[groupId].endTime = slot.endTime
-      }
-    })
-
-    return Object.values(groups).sort(
-      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    )
-  }, [slots])
+  const seriesGroups = useScheduleSeriesGroups(slots)
 
   const activeSeries = useMemo(() => 
     seriesGroups.find(g => g.id === activeSeriesId),
@@ -144,25 +119,38 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
     )
   }
 
+  function handleCancelSlot(slot: EventScheduleSlot, info: string) {
+    const bookingCount = slot._count?.bookings ?? 0
+    const message = bookingCount > 0
+        ? `Are you sure you want to cancel the session on ${info}? \n\nThis will cancel all ${bookingCount} active bookings and notify all participants. This action cannot be undone.`
+        : `Are you sure you want to cancel the session on ${info}? \n\nThis will mark the session as cancelled and prevent new bookings.`
+
+    handleAction(
+        cancel,
+        slot.id,
+        {
+            title: 'Cancel Session',
+            message,
+            actionName: 'Cancel Session',
+        }
+    )
+  }
+
   if (isLoading) return <Spinner />
 
   return (
     <Box>
       {!activeSeries ? (
         <>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-            <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    Scheduled Sessions
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Recurring series are grouped for better visibility.
-                </Typography>
-            </Box>
-            <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
-              Add Session
-            </Button>
-          </Stack>
+          <SectionHeader 
+            title="Scheduled Sessions"
+            description="Recurring series are grouped for better visibility."
+            action={
+              <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
+                Add Session
+              </Button>
+            }
+          />
 
           <ScheduleSeriesTable
             groups={seriesGroups}
@@ -179,6 +167,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
           onRemoveSlot={handleRemoveSlot}
           onViewAttendees={handleOpenAttendees}
           onLogSession={handleOpenLogSession}
+          onCancelSlot={handleCancelSlot}
         />
       )}
 

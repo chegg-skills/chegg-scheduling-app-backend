@@ -30,6 +30,12 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
       name: true,
     },
   },
+  _count: {
+    select: {
+      bookings: true,
+      scheduleSlots: true,
+    },
+  },
 });
 
 export type SafeEvent = Prisma.EventGetPayload<{
@@ -96,6 +102,7 @@ export type UpsertEventScheduleSlotInput = {
   startTime?: string | Date;
   endTime?: string | Date;
   isActive?: boolean;
+  isCancelled?: boolean;
   capacity?: number | null;
   assignedCoachId?: string | null;
   recurrence?: {

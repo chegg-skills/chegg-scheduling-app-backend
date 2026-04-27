@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
 import { Plus } from 'lucide-react'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import type { EventCoach, TeamMember } from '@/types'
 import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
@@ -98,18 +98,17 @@ export function EventCoachManager({
       />
 
       {!hideHeader && (
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-          {title && (
-            <Typography variant="h6">
-              {title} - {activeCoaches.length}
-            </Typography>
-          )}
-          {eligibleCount > 0 && (
-            <Button size="sm" onClick={() => setShowAddModal(true)}>
-              <Plus size={16} /> Add coach
-            </Button>
-          )}
-        </Stack>
+        <SectionHeader 
+          title={title || 'Assigned Coaches'}
+          description="Manage coaches assigned to this event and their participation status."
+          action={
+            eligibleCount > 0 && (
+              <Button size="sm" startIcon={<Plus size={16} />} onClick={() => setShowAddModal(true)}>
+                Add coach
+              </Button>
+            )
+          }
+        />
       )}
 
       <EventCoachTable coaches={activeCoaches} onRemove={handleRemove} onViewUser={onViewUser} />
