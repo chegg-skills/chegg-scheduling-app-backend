@@ -1,6 +1,5 @@
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
@@ -15,9 +14,9 @@ interface UserProfileHeaderProps {
 }
 
 const roleColor = {
-  SUPER_ADMIN: 'error' as const,
-  TEAM_ADMIN: 'warning' as const,
-  COACH: 'info' as const,
+  SUPER_ADMIN: 'red' as const,
+  TEAM_ADMIN: 'yellow' as const,
+  COACH: 'blue' as const,
 }
 
 export function UserProfileHeader({ user }: UserProfileHeaderProps) {
@@ -42,18 +41,17 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
           <Typography variant="h5" fontWeight={800}>
             {toTitleCase(user.firstName)} {toTitleCase(user.lastName)}
           </Typography>
-          <Chip
+          <Badge
             label={user.role.replace(/_/g, ' ')}
-            size="small"
             color={roleColor[user.role]}
-            variant="outlined"
+            variant="soft"
             sx={{
-              fontWeight: 600,
+              fontWeight: 700,
               textTransform: 'uppercase',
               fontSize: '0.625rem',
             }}
           />
-          {!user.isActive && <Badge label="Inactive" variant="red" />}
+          {!user.isActive && <Badge label="Inactive" color="red" />}
         </Stack>
 
         <Grid container spacing={2}>

@@ -119,14 +119,14 @@ export function EventTableRow({
       <TableCell>
         <Badge
           label={event.assignmentStrategy === 'ROUND_ROBIN' ? 'Round robin' : 'Direct'}
-          variant={event.assignmentStrategy === 'ROUND_ROBIN' ? 'blue' : 'gray'}
+          color={event.assignmentStrategy === 'ROUND_ROBIN' ? 'blue' : 'gray'}
         />
       </TableCell>
 
       <TableCell>
         <Badge
           label={event.isActive ? 'Active' : 'Inactive'}
-          variant={event.isActive ? 'green' : 'red'}
+          color={event.isActive ? 'green' : 'red'}
         />
       </TableCell>
       <TableCell>

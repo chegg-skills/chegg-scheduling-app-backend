@@ -63,19 +63,19 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
                 <TableCell>
                   <Badge
                     label={t.caps.multipleCoaches ? 'Yes' : 'No'}
-                    variant={t.caps.multipleCoaches ? 'green' : 'gray'}
+                    color={t.caps.multipleCoaches ? 'green' : 'gray'}
                   />
                 </TableCell>
                 <TableCell>
                   <Badge
                     label={t.caps.multipleParticipants ? 'Yes' : 'No'}
-                    variant={t.caps.multipleParticipants ? 'green' : 'gray'}
+                    color={t.caps.multipleParticipants ? 'green' : 'gray'}
                   />
                 </TableCell>
                 <TableCell>
                   <Badge
                     label={t.caps.derivesLeadershipFromAssignment ? 'Yes' : 'No'}
-                    variant={t.caps.derivesLeadershipFromAssignment ? 'green' : 'gray'}
+                    color={t.caps.derivesLeadershipFromAssignment ? 'green' : 'gray'}
                   />
                 </TableCell>
               </TableRow>

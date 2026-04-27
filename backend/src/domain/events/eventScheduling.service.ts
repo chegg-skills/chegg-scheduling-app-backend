@@ -18,6 +18,7 @@ import { bookingInclude } from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
 import { generateRecurrenceDates } from "./recurrence.service";
 import { queueBookingStatusNotifications } from "../bookings/booking.notification";
+import { logger } from "../../shared/logging/logger";
 
 type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
   include: {

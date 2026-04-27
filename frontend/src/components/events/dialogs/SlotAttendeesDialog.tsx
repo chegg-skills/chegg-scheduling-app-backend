@@ -8,8 +8,8 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
-import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
+import { Badge } from '@/components/shared/ui/Badge'
 import { format } from 'date-fns'
 import { ClipboardCheck, Users } from 'lucide-react'
 import { Modal } from '@/components/shared/ui/Modal'
@@ -24,11 +24,11 @@ interface SlotAttendeesDialogProps {
   slot: EventScheduleSlot | null
 }
 
-const STATUS_STYLES: Record<string, { bgcolor: string; color: string; label: string }> = {
-  CONFIRMED:  { bgcolor: '#ECFEFA', color: '#1DA275', label: 'Confirmed' },
-  COMPLETED:  { bgcolor: '#ECF5FF', color: '#2E8AEE', label: 'Completed' },
-  NO_SHOW:    { bgcolor: '#FFFBE9', color: '#AC8B14', label: 'No Show' },
-  CANCELLED:  { bgcolor: '#FFEAEB', color: '#E5222F', label: 'Cancelled' },
+const STATUS_STYLES: Record<string, { color: 'green' | 'blue' | 'yellow' | 'red'; label: string }> = {
+  CONFIRMED:  { color: 'green', label: 'Confirmed' },
+  COMPLETED:  { color: 'blue', label: 'Completed' },
+  NO_SHOW:    { color: 'yellow', label: 'No Show' },
+  CANCELLED:  { color: 'red', label: 'Cancelled' },
 }
 
 export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAttendeesDialogProps) {
@@ -89,10 +89,11 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
                           <TableCell>{displayEmail}</TableCell>
                           <TableCell>{format(new Date(booking.createdAt), 'MMM d, p')}</TableCell>
                           <TableCell>
-                            <Chip
+                            <Badge
                               label={style.label}
-                              size="small"
-                              sx={{ bgcolor: style.bgcolor, color: style.color, fontWeight: 600, border: 'none' }}
+                              color={style.color as any}
+                              variant="soft"
+                              sx={{ fontWeight: 600, minWidth: 80 }}
                             />
                           </TableCell>
                         </TableRow>
@@ -143,15 +144,13 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
                       {sessionLog.attendance.map((a) => {
                         const name = a.booking?.studentName || 'Student'
                         return (
-                          <Chip
+                          <Badge
                             key={a.bookingId}
                             label={name}
-                            size="small"
+                            color={a.attended ? 'green' : 'red'}
+                            variant="soft"
                             sx={{
-                              bgcolor: a.attended ? '#ECFEFA' : '#FFEAEB',
-                              color: a.attended ? '#1DA275' : '#E5222F',
                               fontWeight: 600,
-                              border: 'none',
                             }}
                           />
                         )

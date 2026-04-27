@@ -107,10 +107,10 @@ export function EventDetailPage() {
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Badge
               label={event.isActive ? 'Active' : 'Inactive'}
-              variant={event.isActive ? 'green' : 'red'}
+              color={event.isActive ? 'green' : 'red'}
             />
-            {!coachSetupStatus.isReady && <Badge label="Needs Coaches" variant="yellow" />}
-            {needsScheduleSlots && <Badge label="Needs Slots" variant="yellow" />}
+            {!coachSetupStatus.isReady && <Badge label="Needs Coaches" color="yellow" />}
+            {needsScheduleSlots && <Badge label="Needs Slots" color="yellow" />}
           </Stack>
         }
         actions={

@@ -10,6 +10,7 @@ import { Link as LinkIcon, Copy, Check } from 'lucide-react'
 import type { Event } from '@/types'
 import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { DataField } from '@/components/shared/ui/DataField'
 
 interface EventDetailOverviewProps {
   event: Event
@@ -50,35 +51,8 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
       .join(' ')
   }
 
-  const DataField = ({
-    label,
-    value,
-    tooltip,
-    sm = 4,
-  }: {
-    label: string
-    value: string | number
-    tooltip?: string
-    sm?: number
-  }) => (
-    <Grid size={{ xs: 12, sm: sm }}>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Typography
-          variant="caption"
-          color="text.primary"
-          sx={{ fontWeight: 600, fontSize: '0.85rem' }}
-        >
-          {label}
-        </Typography>
-        {tooltip && <InfoTooltip title={tooltip} size={12} />}
-      </Box>
-      <Typography variant="body2" color="text.secondary">
-        {value}
-      </Typography>
-    </Grid>
-  )
-
   const Spacer = () => <Grid size={12} sx={{ height: 8 }} />
+
 
   // Note: Backend interaction info details for the selected event's interactionType enum
   // are often needed here. For now we use the event directly which should have been populated.

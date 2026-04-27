@@ -13,6 +13,7 @@ import {
   useCancelEventScheduleSlot,
 } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { useScheduleSeriesGroups } from '@/hooks/useScheduleSeriesGroups'
 import type { Event, EventScheduleSlot, TeamMember } from '@/types'
 import { UpsertScheduleSlotDialog } from './dialogs/UpsertScheduleSlotDialog'
 import { SlotAttendeesDialog } from './dialogs/SlotAttendeesDialog'
@@ -41,34 +42,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
   const [activeSeriesId, setActiveSeriesId] = useState<string | null>(null)
 
   // Grouping logic
-  const seriesGroups = useMemo(() => {
-    const groups: Record<string, ScheduleSeriesGroup> = {}
-
-    slots.forEach((slot) => {
-      const groupId = slot.recurrenceGroupId || `single-${slot.id}`
-      if (!groups[groupId]) {
-        groups[groupId] = {
-          id: groupId,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          isRecurring: !!slot.recurrenceGroupId,
-          occurrenceCount: 0,
-          slots: [],
-        }
-      }
-      groups[groupId].occurrenceCount++
-      groups[groupId].slots.push(slot)
-
-      if (new Date(slot.startTime) < new Date(groups[groupId].startTime)) {
-        groups[groupId].startTime = slot.startTime
-        groups[groupId].endTime = slot.endTime
-      }
-    })
-
-    return Object.values(groups).sort(
-      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    )
-  }, [slots])
+  const seriesGroups = useScheduleSeriesGroups(slots)
 
   const activeSeries = useMemo(() => 
     seriesGroups.find(g => g.id === activeSeriesId),

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useConfirm } from '@/context/confirm'
+import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
-import Avatar from '@mui/material/Avatar'
-import Chip from '@mui/material/Chip'
 import { format } from 'date-fns'
 import { Modal } from '@/components/shared/ui/Modal'
 import { Button } from '@/components/shared/ui/Button'
 import { Spinner } from '@/components/shared/ui/Spinner'
+import { LogSessionParticipantList } from './LogSessionParticipantList'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
@@ -190,75 +190,12 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
             Who Attended?
           </Typography>
 
-          {isLoading ? (
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <Spinner />
-            </Box>
-          ) : activeBookings.length === 0 ? (
-            <Box
-              sx={{
-                py: 4,
-                textAlign: 'center',
-                border: '1px dashed',
-                borderColor: 'divider',
-                borderRadius: 2,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                No confirmed bookings for this slot.
-              </Typography>
-            </Box>
-          ) : (
-            <Stack spacing={1}>
-              {activeBookings.map((booking) => {
-                const attended = attendanceMap[booking.id] ?? false
-                const displayName = booking.studentName || 'Anonymous Student'
-                const displayEmail = booking.studentEmail || ''
-
-                return (
-                  <Paper
-                    key={booking.id}
-                    variant="outlined"
-                    sx={{ p: 1.5, borderRadius: 1.5 }}
-                  >
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Avatar sx={{ width: 36, height: 36, fontSize: '0.8rem', bgcolor: 'secondary.main' }}>
-                          {getInitials(displayName)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={600}>
-                            {displayName}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {displayEmail}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Chip
-                          label={attended ? 'Attended' : 'Absent'}
-                          size="small"
-                          sx={{
-                            bgcolor: attended ? '#ECFEFA' : '#FFEAEB',
-                            color: attended ? '#1DA275' : '#E5222F',
-                            fontWeight: 600,
-                            border: 'none',
-                          }}
-                        />
-                        <Switch
-                          checked={attended}
-                          onChange={(val) =>
-                            setAttendanceMap((prev) => ({ ...prev, [booking.id]: val }))
-                          }
-                        />
-                      </Stack>
-                    </Stack>
-                  </Paper>
-                )
-              })}
-            </Stack>
-          )}
+          <LogSessionParticipantList
+            participants={activeBookings}
+            attendanceMap={attendanceMap}
+            onToggle={(id) => setAttendanceMap(prev => ({ ...prev, [id]: !prev[id] }))}
+            isLoading={isLoading}
+          />
         </Box>
 
         {/* Topics Discussed */}

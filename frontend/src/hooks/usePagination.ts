@@ -18,7 +18,7 @@ export function usePagination(initialPageSize = 25): UsePaginationReturn {
   const [pageSize, setPageSize] = useState(initialPageSize)
 
   const onPageChange = useCallback((newPage: number) => {
-    setPage(newPage)
+    setPage(newPage - 1)
   }, [])
 
   const onRowsPerPageChange = useCallback((newSize: number) => {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import {
   Paper,
   Table,
@@ -60,6 +60,21 @@ export function BookingTable({
     requestSort,
   } = useTableSort(bookings, bookingSortAccessors)
 
+  const groupedBookings = useMemo(() => {
+    const groups: { date: string; bookings: Booking[] }[] = []
+    let currentGroup: { date: string; bookings: Booking[] } | null = null
+
+    sortedBookings.forEach((booking) => {
+      const dateStr = dateHeaderFormatter.format(new Date(booking.startTime))
+      if (!currentGroup || currentGroup.date !== dateStr) {
+        currentGroup = { date: dateStr, bookings: [] }
+        groups.push(currentGroup)
+      }
+      currentGroup.bookings.push(booking)
+    })
+    return groups
+  }, [sortedBookings])
+
   const handleToggle = useCallback((id: string) => {
     setExpandedId((prev) => (prev === id ? null : id))
   }, [])
@@ -116,44 +131,36 @@ export function BookingTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {(() => {
-            let lastDateHeader = ''
-            return sortedBookings.map((booking) => {
-              const dateHeader = dateHeaderFormatter.format(new Date(booking.startTime))
-              const showHeader = dateHeader !== lastDateHeader
-              lastDateHeader = dateHeader
-
-              return (
-                <React.Fragment key={booking.id}>
-                  {showHeader && (
-                    <TableRow sx={{ bgcolor: 'rgba(0, 0, 0, 0.04)' }}>
-                      <TableCell
-                        colSpan={6}
-                        sx={{
-                          py: 1,
-                          px: 3,
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          textTransform: 'uppercase',
-                          color: 'text.secondary',
-                          letterSpacing: '0.08em',
-                          borderBottom: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        {dateHeader}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  <BookingTableRow
-                    booking={booking}
-                    isExpanded={expandedId === booking.id}
-                    onToggle={() => handleToggle(booking.id)}
-                  />
-                </React.Fragment>
-              )
-            })
-          })()}
+          {groupedBookings.map((group) => (
+            <React.Fragment key={group.date}>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell
+                  colSpan={6}
+                  sx={{
+                    py: 1.25,
+                    px: 3,
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: 'text.secondary',
+                    letterSpacing: '0.08em',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  {group.date}
+                </TableCell>
+              </TableRow>
+              {group.bookings.map((booking) => (
+                <BookingTableRow
+                  key={booking.id}
+                  booking={booking}
+                  isExpanded={expandedId === booking.id}
+                  onToggle={() => handleToggle(booking.id)}
+                />
+              ))}
+            </React.Fragment>
+          ))}
         </TableBody>
       </Table>
       {pagination && onPageChange && onRowsPerPageChange && (

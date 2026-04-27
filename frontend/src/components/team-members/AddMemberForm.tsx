@@ -98,7 +98,7 @@ export function AddMemberForm({
                           <Badge
                             key={id}
                             label={`${user.firstName} ${user.lastName}`}
-                            variant="blue"
+                            color="blue"
                           />
                         )
                       })}

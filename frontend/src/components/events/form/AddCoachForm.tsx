@@ -69,7 +69,7 @@ export function AddCoachForm({
                 const user = teamMembers.find((m) => m.userId === id)?.user
                 if (!user) return null
                 return (
-                  <Badge key={id} label={`${user.firstName} ${user.lastName}`} variant="blue" />
+                  <Badge key={id} label={`${user.firstName} ${user.lastName}`} color="blue" />
                 )
               })}
             </Box>

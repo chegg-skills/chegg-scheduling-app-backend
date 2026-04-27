@@ -6,6 +6,7 @@ import { Edit, Trash2, User, RefreshCw, ClipboardList, Users, Ban } from 'lucide
 import Avatar from '@mui/material/Avatar'
 import { Stack, Typography, Tooltip } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
+import { Badge } from '@/components/shared/ui/Badge'
 import type { EventScheduleSlot, Event, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 
@@ -52,62 +53,14 @@ export function ScheduleSlotRow({
     const isPast = new Date(slot.endTime) < now
 
     if (slot.isCancelled) {
-      return (
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1,
-            bgcolor: 'error.lighter',
-            color: 'error.main',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-          }}
-        >
-          Session Cancelled
-        </Box>
-      )
+      return <Badge label="Session Cancelled" color="error" />
     }
 
     if (isPast) {
-      return (
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1,
-            bgcolor: 'action.hover',
-            color: 'text.secondary',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-          }}
-        >
-          Session Ended
-        </Box>
-      )
+      return <Badge label="Session Ended" color="gray" />
     }
 
-    return (
-      <Box
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          px: 1.5,
-          py: 0.5,
-          borderRadius: 1,
-          bgcolor: 'success.lighter',
-          color: 'success.main',
-          fontSize: '0.75rem',
-          fontWeight: 700,
-        }}
-      >
-        Accepting Bookings
-      </Box>
-    )
+    return <Badge label="Accepting Bookings" color="success" />
   }
 
   const renderCoach = () => {
@@ -221,21 +174,10 @@ export function ScheduleSlotRow({
       <TableCell sx={{ py: 2 }}>{renderCoach()}</TableCell>
       <TableCell sx={{ py: 2 }}>{renderStatus()}</TableCell>
       <TableCell sx={{ py: 2 }}>
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1,
-            bgcolor: slot.sessionLog ? 'info.lighter' : 'grey.100',
-            color: slot.sessionLog ? 'info.main' : 'text.secondary',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-          }}
-        >
-          {slot.sessionLog ? 'Logged' : 'Not Logged'}
-        </Box>
+        <Badge
+          label={slot.sessionLog ? 'Logged' : 'Not Logged'}
+          color={slot.sessionLog ? 'info' : 'gray'}
+        />
       </TableCell>
       <TableCell align="right" sx={{ py: 2, pr: 3 }}>
         <RowActions
