@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { publicApi } from '@/api/public'
 
 export const publicKeys = {
@@ -12,6 +14,8 @@ export const publicKeys = {
   coachEvents: (slug: string) => [...publicKeys.all, 'coach-events', slug] as const,
   slots: (eventId: string, start: string, end: string, preferredCoachId?: string) =>
     [...publicKeys.all, 'slots', eventId, start, end, preferredCoachId ?? 'any'] as const,
+  slotDates: (eventId: string, start: string, end: string, preferredCoachId?: string) =>
+    [...publicKeys.all, 'slot-dates', eventId, start, end, preferredCoachId ?? 'any'] as const,
 }
 
 export function usePublicTeams() {
@@ -74,6 +78,41 @@ export function usePublicCoachEventsBySlug(slug: string) {
       publicApi.listCoachEventsBySlug(slug, signal).then((response) => response.data.data ?? null),
     enabled: !!slug,
   })
+}
+
+/**
+ * Fetches all available slots for a calendar month and returns the set of local
+ * dates (YYYY-MM-DD) that have at least one available slot. Only active for
+ * FIXED_SLOTS events — COACH_AVAILABILITY slots are dynamic per-day.
+ */
+export function usePublicSlotDates(
+  eventId: string,
+  calendarMonth: Date,
+  isFixedSlots: boolean,
+  preferredCoachId?: string
+): { availableDates: Set<string>; isLoading: boolean } {
+  const startDate = startOfMonth(calendarMonth).toISOString()
+  const endDate = endOfMonth(calendarMonth).toISOString()
+
+  const { data: slots = [], isLoading } = useQuery({
+    queryKey: publicKeys.slotDates(eventId, startDate, endDate, preferredCoachId),
+    queryFn: ({ signal }) =>
+      publicApi
+        .getAvailableSlots(eventId, startDate, endDate, preferredCoachId, signal)
+        .then((r) => r.data.data?.slots ?? []),
+    enabled: isFixedSlots && !!eventId,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const availableDates = useMemo(() => {
+    const dates = new Set<string>()
+    for (const slot of slots) {
+      dates.add(format(new Date(slot.startTime), 'yyyy-MM-dd'))
+    }
+    return dates
+  }, [slots])
+
+  return { availableDates, isLoading }
 }
 
 export function usePublicSlots(

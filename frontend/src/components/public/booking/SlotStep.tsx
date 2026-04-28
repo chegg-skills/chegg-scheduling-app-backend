@@ -5,6 +5,9 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
+import { PickersDay } from '@mui/x-date-pickers/PickersDay'
+import type { PickersDayProps } from '@mui/x-date-pickers/PickersDay'
+import { format } from 'date-fns'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import type { AvailableSlot } from '@/api/public'
 import { SlotGroup } from './SlotGroup'
@@ -17,6 +20,34 @@ interface SlotStepProps {
   selectedSlot: string | null
   onSelect: (slot: string) => void
   maxBookingWindowDays?: number | null
+  isFixedSlots?: boolean
+  availableDates?: Set<string>
+  isLoadingDates?: boolean
+  onMonthChange?: (date: Date) => void
+}
+
+function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
+  return function SlotDayIndicator({ day, outsideCurrentMonth, ...props }: PickersDayProps<Date>) {
+    const hasSlots = !outsideCurrentMonth && !!availableDates?.has(format(day, 'yyyy-MM-dd'))
+    return (
+      <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+        <PickersDay day={day} outsideCurrentMonth={outsideCurrentMonth} {...props} />
+        {hasSlots && !props.disabled && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 3,
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              bgcolor: props.selected ? 'primary.contrastText' : 'primary.main',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+      </Box>
+    )
+  }
 }
 
 const timeFormat = new Intl.DateTimeFormat('en-US', {
@@ -39,6 +70,10 @@ export function SlotStep({
   selectedSlot,
   onSelect,
   maxBookingWindowDays,
+  isFixedSlots,
+  availableDates,
+  isLoadingDates,
+  onMonthChange,
 }: SlotStepProps) {
   // Use UTC arithmetic to match the backend's window calculation in
   // availability.service.ts. Both sides pin to UTC end-of-day so the boundary
@@ -50,6 +85,8 @@ export function SlotStep({
     d.setUTCHours(23, 59, 59, 999)
     return d
   }, [maxBookingWindowDays])
+
+  const DaySlot = React.useMemo(() => makeSlotDayIndicator(availableDates), [availableDates])
 
   const { amSlots, pmSlots } = React.useMemo(() => {
     const am: AvailableSlot[] = []
@@ -99,9 +136,17 @@ export function SlotStep({
               displayStaticWrapperAs="desktop"
               value={selectedDate}
               onChange={(newValue) => newValue && onDateSelect(newValue)}
+              onMonthChange={onMonthChange}
               minDate={new Date()}
               maxDate={maxDate}
-              shouldDisableDate={(day) => (maxDate ? day > maxDate : false)}
+              shouldDisableDate={(day) => {
+                if (maxDate && day > maxDate) return true
+                if (isFixedSlots && !isLoadingDates && availableDates) {
+                  return !availableDates.has(format(day, 'yyyy-MM-dd'))
+                }
+                return false
+              }}
+              slots={{ day: DaySlot }}
               slotProps={{
                 actionBar: { actions: [] },
               }}
