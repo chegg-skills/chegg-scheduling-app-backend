@@ -42,9 +42,9 @@ let context: TestContext;
 const uniqueValue = (prefix: string): string =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-const createOffering = async (token: string, payload?: Record<string, unknown>) => {
+const createEventType = async (token: string, payload?: Record<string, unknown>) => {
   const res = await request(app)
-    .post("/api/event-offerings")
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${token}`)
     .send({
       key: uniqueValue("resume-review"),
@@ -153,9 +153,9 @@ beforeAll(async () => {
 
 afterAll(clearTables);
 
-describe("Event offerings routes", () => {
-  it("creates an event offering and normalizes the key", async () => {
-    const res = await createOffering(context.superAdminToken, {
+describe("Event types routes", () => {
+  it("creates an event type and normalizes the key", async () => {
+    const res = await createEventType(context.superAdminToken, {
       key: "  Resume Review Offering  ",
       name: "Resume Review Offering",
     });
@@ -166,30 +166,30 @@ describe("Event offerings routes", () => {
     expect(res.body.data.name).toBe("Resume Review Offering");
   });
 
-  it("lists event offerings", async () => {
-    const created = await createOffering(context.superAdminToken);
+  it("lists event types", async () => {
+    const created = await createEventType(context.superAdminToken);
 
     const res = await request(app)
-      .get("/api/event-offerings")
+      .get("/api/event-types")
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data.offerings)).toBe(true);
+    expect(Array.isArray(res.body.data.eventTypes)).toBe(true);
     expect(
-      res.body.data.offerings.some(
-        (offering: { id: string }) => offering.id === created.body.data.id,
+      res.body.data.eventTypes.some(
+        (et: { id: string }) => et.id === created.body.data.id,
       ),
     ).toBe(true);
   });
 
-  it("updates an event offering", async () => {
-    const created = await createOffering(context.superAdminToken, {
+  it("updates an event type", async () => {
+    const created = await createEventType(context.superAdminToken, {
       key: uniqueValue("offering"),
       name: "Original Offering",
     });
 
     const res = await request(app)
-      .patch(`/api/event-offerings/${created.body.data.id}`)
+      .patch(`/api/event-types/${created.body.data.id}`)
       .set("Authorization", `Bearer ${context.superAdminToken}`)
       .send({
         name: "Updated Offering",
@@ -203,19 +203,19 @@ describe("Event offerings routes", () => {
     expect(res.body.data.sortOrder).toBe(5);
   });
 
-  it("rejects event offering creation for a COACH", async () => {
-    const res = await createOffering(context.coachToken);
+  it("rejects event type creation for a COACH", async () => {
+    const res = await createEventType(context.coachToken);
 
     expect(res.status).toBe(403);
     expect(res.body.success).toBe(false);
   });
 
-  it("deletes an unused event offering", async () => {
-    const created = await createOffering(context.superAdminToken);
+  it("deletes an unused event type", async () => {
+    const created = await createEventType(context.superAdminToken);
     const id = created.body.data.id;
 
     const res = await request(app)
-      .delete(`/api/event-offerings/${id}`)
+      .delete(`/api/event-types/${id}`)
       .set("Authorization", `Bearer ${context.superAdminToken}`);
 
     expect(res.status).toBe(200);
@@ -223,22 +223,22 @@ describe("Event offerings routes", () => {
 
     // Verify it's gone
     const listRes = await request(app)
-      .get("/api/event-offerings")
+      .get("/api/event-types")
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
-    expect(listRes.body.data.offerings.some((o: { id: string }) => o.id === id)).toBe(false);
+    expect(listRes.body.data.eventTypes.some((o: { id: string }) => o.id === id)).toBe(false);
   });
 
-  it("lists events using an event offering", async () => {
-    const offering = await createOffering(context.superAdminToken);
-    const offId = offering.body.data.id;
+  it("lists events using an event type", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const etId = eventType.body.data.id;
 
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Offering Usage Event",
-      offeringId: offId,
+      eventTypeId: etId,
     });
 
     const res = await request(app)
-      .get(`/api/event-offerings/${offId}/usage`)
+      .get(`/api/event-types/${etId}/usage`)
       .set("Authorization", `Bearer ${context.superAdminToken}`);
 
     expect(res.status).toBe(200);
@@ -253,16 +253,16 @@ describe("Event offerings routes", () => {
     });
   });
 
-  it("blocks deletion of an event offering used by events", async () => {
-    const offering = await createOffering(context.superAdminToken);
-    const offId = offering.body.data.id;
+  it("blocks deletion of an event type used by events", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const etId = eventType.body.data.id;
 
     await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offId,
+      eventTypeId: etId,
     });
 
     const res = await request(app)
-      .delete(`/api/event-offerings/${offId}`)
+      .delete(`/api/event-types/${etId}`)
       .set("Authorization", `Bearer ${context.superAdminToken}`);
 
     expect(res.status).toBe(409);
@@ -313,31 +313,31 @@ describe("Interaction type routes", () => {
 
 describe("Event CRUD routes", () => {
   it("creates a team event", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("career-coaching"),
       name: "Career Coaching",
     });
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Career Coaching Session",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
 
     expect(res.status).toBe(201);
     expect(res.body.data.name).toBe("Career Coaching Session");
-    expect(res.body.data.offering.id).toBe(offering.body.data.id);
+    expect(res.body.data.eventType.id).toBe(eventType.body.data.id);
     expect(res.body.data.interactionType).toBe("ONE_TO_ONE");
   });
 
   it("defaults to DIRECT assignment when the event does not choose a strategy", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("round-robin-offering"),
       name: "Round Robin Offering",
     });
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Configured Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: undefined,
       bookingMode: "FIXED_SLOTS",
@@ -353,24 +353,24 @@ describe("Event CRUD routes", () => {
   });
 
   it("forbids a TEAM_ADMIN from managing another team", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.otherTeamAdminToken, {
       name: "Unauthorized Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
 
     expect(res.status).toBe(403);
   });
 
   it("lists team events with pagination", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("list-offering"),
       name: "List Offering",
     });
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Listable Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
 
     const res = await request(app)
@@ -391,13 +391,13 @@ describe("Event CRUD routes", () => {
   });
 
   it("reads and updates a specific event", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("read-offering"),
       name: "Read Offering",
     });
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Readable Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
     const eventId = created.body.data.id as string;
 
@@ -424,12 +424,12 @@ describe("Event CRUD routes", () => {
   });
 
   it("updates general details on a ONE_TO_MANY event without breaking fixed-slot enforcement", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("otm-general-update"),
     });
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "OTM General Details Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
@@ -459,12 +459,12 @@ describe("Event CRUD routes", () => {
   });
 
   it("updates general details on a MANY_TO_ONE (ROUND_ROBIN) event without disrupting auto-derived leadership", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("mto-general-update"),
     });
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTO General Details Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 2,
@@ -492,12 +492,12 @@ describe("Event CRUD routes", () => {
   });
 
   it("updates general details on a MANY_TO_MANY (ROUND_ROBIN) event without disrupting auto-derived leadership", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("mtm-general-update"),
     });
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTM General Details Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 2,
@@ -530,10 +530,10 @@ describe("Event CRUD routes", () => {
   });
 
   it("hard deletes an event", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Deletable Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
     const eventId = created.body.data.id;
 
@@ -552,13 +552,13 @@ describe("Event CRUD routes", () => {
   });
 
   it("blocks hard deletion of an event with bookings", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("delete-booking-offering"),
       name: "Delete Booking Offering",
     });
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Event with Booking",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       bookingMode: "FIXED_SLOTS",
       allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
     });
@@ -614,10 +614,10 @@ describe("Event CRUD routes", () => {
   });
 
   it("deactivates an event via PATCH", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Deactivatable Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
     const eventId = created.body.data.id;
 
@@ -631,10 +631,10 @@ describe("Event CRUD routes", () => {
   });
 
   it("duplicates an event with coaches", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const originalEvent = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Original Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       description: "Original description",
     });
     const eventId = originalEvent.body.data.id;
@@ -662,13 +662,13 @@ describe("Event CRUD routes", () => {
   });
 
   it("duplicates a MANY_TO_ONE event and ensures leadership strategy is correctly derived", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     // Create a MANY_TO_ONE event via DIRECT strategy
     // In our system, MANY_TO_ONE + DIRECT => FIXED_LEAD
     const originalEvent = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTO Direct Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -695,11 +695,11 @@ describe("Event CRUD routes", () => {
   });
 
   it("creates an event with FIXED_LEAD and automatically assigns the coach", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Fixed Lead Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       sessionLeadershipStrategy: "FIXED_LEAD",
       fixedLeadCoachId: context.coachOneId,
@@ -715,14 +715,14 @@ describe("Event CRUD routes", () => {
 
 describe("Event scheduling routes", () => {
   it("creates and updates an event with advanced scheduling settings", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("fixed-slot-offering"),
       name: "Fixed Slot Offering",
     });
 
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Advanced Scheduling Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
       allowedWeekdays: [1, 4],
@@ -754,13 +754,13 @@ describe("Event scheduling routes", () => {
   });
 
   it("creates, updates, lists, and deletes predefined schedule slots", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("slot-offering"),
       name: "Slot Offering",
     });
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Slot Managed Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       bookingMode: "FIXED_SLOTS",
     });
     const eventId = event.body.data.id as string;
@@ -811,9 +811,9 @@ describe("Event scheduling routes", () => {
   });
 
   it("blocks deletion of a schedule slot with active bookings", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const event = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       bookingMode: "FIXED_SLOTS",
     });
     const eventId = event.body.data.id as string;
@@ -869,13 +869,13 @@ describe("Event scheduling routes", () => {
 
 describe("Event coach routes", () => {
   it("assigns and lists a single coach for a one-to-one event", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("coach-offering"),
       name: "Coach Offering",
     });
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Coached Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
     const eventId = event.body.data.id as string;
 
@@ -899,13 +899,13 @@ describe("Event coach routes", () => {
   });
 
   it("rejects assigning too few coaches for a round-robin event", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("rr-offering"),
       name: "Round Robin Offering",
     });
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Round Robin Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 2,
@@ -923,13 +923,13 @@ describe("Event coach routes", () => {
   });
 
   it("removes an assigned coach", async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("remove-coach-offering"),
       name: "Remove Coach Offering",
     });
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Coach Removal Event",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
     const eventId = event.body.data.id as string;
 
@@ -949,9 +949,9 @@ describe("Event coach routes", () => {
   });
 
   it("rejects removing a coach from a round-robin event if it leaves fewer than two coaches", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const event = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 2,
@@ -979,10 +979,10 @@ describe("Event coach routes", () => {
   });
 
   it("rejects updating strategy to ROUND_ROBIN if event has fewer than two coaches", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     // MANY_TO_ONE + DIRECT → FIXED_LEAD leadership, which requires a fixedLeadCoachId
     const event = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1017,11 +1017,11 @@ describe("Event coach routes", () => {
 
 describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", () => {
   it("MANY_TO_ONE + DIRECT derives sessionLeadershipStrategy to FIXED_LEAD (no explicit leadership in payload)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTO Direct — auto FIXED_LEAD",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1034,11 +1034,11 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
   });
 
   it("MANY_TO_ONE + ROUND_ROBIN derives sessionLeadershipStrategy to ROTATING_LEAD (no explicit leadership in payload)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTO Round Robin — auto ROTATING_LEAD",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 2,
@@ -1051,11 +1051,11 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
   });
 
   it("MANY_TO_MANY + DIRECT derives sessionLeadershipStrategy to FIXED_LEAD", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTM Direct — auto FIXED_LEAD",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
@@ -1071,11 +1071,11 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
   });
 
   it("MANY_TO_MANY + ROUND_ROBIN derives sessionLeadershipStrategy to ROTATING_LEAD", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTM Round Robin — auto ROTATING_LEAD",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
@@ -1091,13 +1091,13 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
   });
 
   it("overrides user-provided sessionLeadershipStrategy for derivesLeadershipFromAssignment types — reform always wins", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     // User explicitly provides ROTATING_LEAD for a DIRECT event.
     // The reform (step 4) must override it to FIXED_LEAD because assignmentStrategy = DIRECT.
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTO reform override test",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1110,11 +1110,11 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
   });
 
   it("rejects MANY_TO_ONE + DIRECT when fixedLeadCoachId is missing (reform derives FIXED_LEAD which requires it)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTO Direct — no lead coach",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       // fixedLeadCoachId intentionally absent: reform derives FIXED_LEAD,
@@ -1126,12 +1126,12 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
   });
 
   it("re-derives sessionLeadershipStrategy when assignmentStrategy is updated on a MANY_TO_ONE event", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     // 1. Create with DIRECT → FIXED_LEAD
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTO strategy update",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1162,12 +1162,12 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
   });
 
   it("re-derives sessionLeadershipStrategy when assignmentStrategy is updated on a MANY_TO_MANY event", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     // 1. Create with ROUND_ROBIN → ROTATING_LEAD
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTM strategy update",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
@@ -1195,11 +1195,11 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
 
 describe("targetCoHostCount validation", () => {
   it("rejects targetCoHostCount: 0 for multi-coach interaction types", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Invalid cohost count",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1211,11 +1211,11 @@ describe("targetCoHostCount validation", () => {
   });
 
   it("accepts targetCoHostCount: 1 for multi-coach interaction types", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Valid cohost count 1",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1227,11 +1227,11 @@ describe("targetCoHostCount validation", () => {
   });
 
   it("accepts targetCoHostCount: null (all available co-hosts join the session)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Null cohost count",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1243,10 +1243,10 @@ describe("targetCoHostCount validation", () => {
   });
 
   it("accepts updating targetCoHostCount to a valid positive integer", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Cohost count update",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1263,10 +1263,10 @@ describe("targetCoHostCount validation", () => {
   });
 
   it("rejects updating targetCoHostCount to 0 on a multi-coach event", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Cohost count zero update",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1290,10 +1290,10 @@ describe("targetCoHostCount validation", () => {
 
 describe("showDescription field", () => {
   it("defaults to false when not specified on creation", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
 
     expect(res.status).toBe(201);
@@ -1301,10 +1301,10 @@ describe("showDescription field", () => {
   });
 
   it("can be set to true on creation", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       showDescription: true,
     });
 
@@ -1313,9 +1313,9 @@ describe("showDescription field", () => {
   });
 
   it("can be toggled via PATCH", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
     const eventId = created.body.data.id as string;
 
@@ -1329,9 +1329,9 @@ describe("showDescription field", () => {
   });
 
   it("is preserved when duplicating an event", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       showDescription: true,
     });
     const eventId = created.body.data.id as string;
@@ -1349,10 +1349,10 @@ describe("showDescription field", () => {
 
 describe("maxBookingWindowDays field", () => {
   it("defaults to null when not specified on creation", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
 
     expect(res.status).toBe(201);
@@ -1360,10 +1360,10 @@ describe("maxBookingWindowDays field", () => {
   });
 
   it("can be set to a positive integer on creation", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       maxBookingWindowDays: 30,
     });
 
@@ -1372,9 +1372,9 @@ describe("maxBookingWindowDays field", () => {
   });
 
   it("can be updated via PATCH", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
     });
     const eventId = created.body.data.id as string;
 
@@ -1388,9 +1388,9 @@ describe("maxBookingWindowDays field", () => {
   });
 
   it("can be cleared back to null via PATCH", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       maxBookingWindowDays: 14,
     });
     const eventId = created.body.data.id as string;
@@ -1405,9 +1405,9 @@ describe("maxBookingWindowDays field", () => {
   });
 
   it("is preserved when duplicating an event", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       maxBookingWindowDays: 90,
     });
     const eventId = created.body.data.id as string;
@@ -1421,10 +1421,10 @@ describe("maxBookingWindowDays field", () => {
   });
 
   it("rejects 0 (must be at least 1)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       maxBookingWindowDays: 0,
     });
 
@@ -1432,10 +1432,10 @@ describe("maxBookingWindowDays field", () => {
   });
 
   it("rejects negative values", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       maxBookingWindowDays: -5,
     });
 
@@ -1443,10 +1443,10 @@ describe("maxBookingWindowDays field", () => {
   });
 
   it("rejects values greater than 365", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       maxBookingWindowDays: 366,
     });
 
@@ -1458,11 +1458,11 @@ describe("maxBookingWindowDays field", () => {
 
 describe("MANY_TO_MANY event creation", () => {
   it("creates a MANY_TO_MANY event with correct participant fields and auto-derived leadership", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTM Workshop",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
@@ -1480,13 +1480,13 @@ describe("MANY_TO_MANY event creation", () => {
   });
 
   it("silently overrides bookingMode to FIXED_SLOTS for MANY_TO_MANY even if COACH_AVAILABILITY is sent", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     // The schema does not block MANY_TO_MANY + COACH_AVAILABILITY (only ONE_TO_MANY has that check).
     // The service's resolveEventSchedulingConfig hard-locks all multipleParticipants types to FIXED_SLOTS.
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTM Auto Fixed Slots",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "COACH_AVAILABILITY", // service will override this
@@ -1500,11 +1500,11 @@ describe("MANY_TO_MANY event creation", () => {
   });
 
   it("creates a MANY_TO_MANY event with DIRECT strategy and targetCoHostCount", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
       name: "MTM Direct with cohost cap",
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
@@ -1527,10 +1527,10 @@ describe("MANY_TO_MANY event creation", () => {
 
 describe("Event schema validation rejections", () => {
   it("rejects ONE_TO_MANY with ROUND_ROBIN assignment (single-coach group sessions only allow DIRECT)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
@@ -1541,10 +1541,10 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects ONE_TO_MANY with COACH_AVAILABILITY booking mode (must use FIXED_SLOTS)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "COACH_AVAILABILITY",
@@ -1555,10 +1555,10 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects ONE_TO_ONE with maxParticipantCount greater than 1", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_ONE",
       maxParticipantCount: 5,
     });
@@ -1568,10 +1568,10 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects an event where maxCoachCount is less than minCoachCount", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 3,
@@ -1583,10 +1583,10 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects ROUND_ROBIN assignment when minCoachCount is less than 2", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 1,
@@ -1597,11 +1597,11 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects FIXED_LEAD sessionLeadershipStrategy without a fixedLeadCoachId (schema-level)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     // For multi-coach types, the schema checks: FIXED_LEAD + !fixedLeadCoachId → error.
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       sessionLeadershipStrategy: "FIXED_LEAD",
@@ -1613,10 +1613,10 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects non-SINGLE_COACH leadership strategy for single-coach interaction types (ONE_TO_ONE)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_ONE",
       sessionLeadershipStrategy: "ROTATING_LEAD",
     });
@@ -1626,10 +1626,10 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects non-SINGLE_COACH leadership strategy for ONE_TO_MANY", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
@@ -1641,12 +1641,12 @@ describe("Event schema validation rejections", () => {
   });
 
   it("rejects targetCoHostCount with a negative value (caught by base nonnegative() schema rule)", async () => {
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
 
     // -1 is caught by z.coerce.number().int().nonnegative() before the superRefine runs.
     // The Zod error message for nonnegative() violation is "Too small: expected number to be >=0".
     const res = await createEvent(context.teamId, context.teamAdminToken, {
-      offeringId: offering.body.data.id,
+      eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "DIRECT",
       fixedLeadCoachId: context.coachOneId,
@@ -1664,19 +1664,19 @@ describe("Event schema validation rejections", () => {
 
 describe("Recurrence — slot creation", () => {
   let eventId: string;
-  let offeringId: string;
+  let eventTypeId: string;
 
   beforeAll(async () => {
-    const offering = await createOffering(context.superAdminToken, {
+    const eventType = await createEventType(context.superAdminToken, {
       key: `recurrence-offering-${Date.now()}`,
       name: "Recurrence Offering",
     });
-    offeringId = offering.body.data.id;
+    eventTypeId = eventType.body.data.id;
 
     // Unrestricted event so all day/time slots are valid
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Recurrence Test Event",
-      offeringId,
+      eventTypeId,
       bookingMode: "FIXED_SLOTS",
       allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
     });
@@ -1791,7 +1791,7 @@ describe("Recurrence — slot creation", () => {
     // Create a restricted event: Monday 09:00–09:45 only
     const restrictedEvent = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Restricted Recurrence Event",
-      offeringId,
+      eventTypeId,
       bookingMode: "FIXED_SLOTS",
       weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "09:45" }],
     });

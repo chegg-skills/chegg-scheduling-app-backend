@@ -26,7 +26,7 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
 
 let adminToken: string;
 let teamId: string;
-let offeringId: string;
+let eventTypeId: string;
 let coachId: string;
 let coachToken: string;
 let coach2Id: string;
@@ -70,7 +70,7 @@ beforeAll(async () => {
   coach2Id = coach2.id;
 
   // Create Offering
-  const offering = await prisma.eventOffering.create({
+  const eventType = await prisma.eventType.create({
     data: {
       key: "test_offering",
       name: "Test Offering",
@@ -78,7 +78,7 @@ beforeAll(async () => {
       updatedById: admin.id,
     },
   });
-  offeringId = offering.id;
+  eventTypeId = eventType.id;
 
 });
 
@@ -96,7 +96,7 @@ describe("Booking Domain Integration Tests", () => {
       data: {
         name: "Test Direct Event",
         teamId,
-        offeringId,
+        eventTypeId,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600, // 1 hour
@@ -332,7 +332,7 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           name: "Test RR Event",
           teamId,
-          offeringId,
+          eventTypeId,
           interactionType: "MANY_TO_ONE",
           assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
           durationSeconds: 3600,
@@ -590,7 +590,7 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           name: "Co-coach Conflict Test Event",
           teamId,
-          offeringId,
+          eventTypeId,
           interactionType: "ONE_TO_ONE",
           assignmentStrategy: AssignmentStrategy.DIRECT,
           durationSeconds: 3600,

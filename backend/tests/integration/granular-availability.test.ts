@@ -8,7 +8,7 @@ type TestContext = {
   superAdmin: TestUser;
   teamAdmin: TestUser;
   teamId: string;
-  offeringId: string;
+  eventTypeId: string;
 };
 
 let context: TestContext;
@@ -30,7 +30,7 @@ const getNextLocalWeekdayAt = (targetDay: number, hour: number, minute = 0): Dat
 const createEvent = async (
   teamId: string,
   token: string,
-  offeringId: string,
+  eventTypeId: string,
   extra: Record<string, unknown> = {},
 ) => {
   return request(app)
@@ -44,7 +44,7 @@ const createEvent = async (
       durationSeconds: 1800,
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com",
-      offeringId,
+      eventTypeId,
       isActive: true,
       ...extra,
     });
@@ -88,7 +88,7 @@ beforeAll(async () => {
     },
   });
 
-  const offering = await prisma.eventOffering.create({
+  const eventType = await prisma.eventType.create({
     data: {
       key: "granular_avail_offering",
       name: "Granular Avail Offering",
@@ -101,7 +101,7 @@ beforeAll(async () => {
     superAdmin,
     teamAdmin,
     teamId: team.id,
-    offeringId: offering.id,
+    eventTypeId: eventType.id,
   };
 });
 
@@ -113,7 +113,7 @@ afterAll(clearTables);
 
 describe("weeklyAvailability — persistence on events", () => {
   it("creates an event with weeklyAvailability and reads it back", async () => {
-    const res = await createEvent(context.teamId, context.teamAdmin.token, context.offeringId, {
+    const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "17:00" }],
     });
 
@@ -130,7 +130,7 @@ describe("weeklyAvailability — persistence on events", () => {
     const created = await createEvent(
       context.teamId,
       context.teamAdmin.token,
-      context.offeringId,
+      context.eventTypeId,
       {
         weeklyAvailability: [{ dayOfWeek: 2, startTime: "08:00", endTime: "12:00" }],
       },
@@ -168,7 +168,7 @@ describe("Slot creation — strict mode (weeklyAvailability range defined for th
     const res = await createEvent(
       context.teamId,
       context.teamAdmin.token,
-      context.offeringId,
+      context.eventTypeId,
       {
         weeklyAvailability: [{ dayOfWeek: MONDAY, startTime: "09:00", endTime: "17:00" }],
       },
@@ -219,7 +219,7 @@ describe("Slot creation — strict mode (weeklyAvailability range defined for th
     // by ensuring this start time hasn't been used yet (getNextLocalWeekdayAt always
     // returns the next occurrence, so it's always the same Monday).
     // Create a fresh event for boundary test to avoid 409 unique constraint.
-    const fresh = await createEvent(context.teamId, context.teamAdmin.token, context.offeringId, {
+    const fresh = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       weeklyAvailability: [{ dayOfWeek: MONDAY, startTime: "09:00", endTime: "17:00" }],
     });
 
@@ -240,7 +240,7 @@ describe("Slot creation — allowedWeekdays fallback (no range for that day)", (
     const res = await createEvent(
       context.teamId,
       context.teamAdmin.token,
-      context.offeringId,
+      context.eventTypeId,
       { allowedWeekdays: [1] }, // Monday only
     );
     eventId = res.body.data.id;
@@ -275,7 +275,7 @@ describe("Slot creation — weeklyAvailability takes strict precedence over allo
     const res = await createEvent(
       context.teamId,
       context.teamAdmin.token,
-      context.offeringId,
+      context.eventTypeId,
       {
         allowedWeekdays: [1],
         weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "12:00" }],
@@ -297,7 +297,7 @@ describe("Slot creation — weeklyAvailability takes strict precedence over allo
     const res = await createEvent(
       context.teamId,
       context.teamAdmin.token,
-      context.offeringId,
+      context.eventTypeId,
       {
         allowedWeekdays: [1],
         weeklyAvailability: [{ dayOfWeek: 3, startTime: "09:00", endTime: "17:00" }],
@@ -322,7 +322,7 @@ describe("Slot update — weeklyAvailability enforced on PATCH", () => {
     const res = await createEvent(
       context.teamId,
       context.teamAdmin.token,
-      context.offeringId,
+      context.eventTypeId,
       {
         weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "11:00" }],
       },

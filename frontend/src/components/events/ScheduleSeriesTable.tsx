@@ -8,7 +8,9 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import { RefreshCw, Calendar, MoreVertical, ListFilter } from 'lucide-react'
+import { MoreVertical, ListFilter } from 'lucide-react'
+import EventRepeatIcon from '@mui/icons-material/EventRepeat'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import { Stack, Typography } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TablePagination } from '@/components/shared/table/TablePagination'
@@ -61,16 +63,25 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
             const timeRange = `${format(new Date(group.startTime), 'h:mm a')} - ${format(new Date(group.endTime), 'h:mm a')}`
 
             return (
-              <TableRow key={group.id} hover>
+              <TableRow 
+                key={group.id} 
+                hover 
+                onClick={() => onViewTracker(group)}
+                sx={{ cursor: 'pointer' }}
+              >
                 <TableCell>
                   <Stack direction="row" spacing={2} alignItems="center">
                     <Box sx={{ 
                       p: 1, 
                       borderRadius: 1, 
-                      bgcolor: group.isRecurring ? 'primary.lighter' : 'grey.100',
+                      bgcolor: group.isRecurring ? 'primary.lighter' : 'transparent',
                       color: group.isRecurring ? 'primary.main' : 'text.secondary'
                     }}>
-                      {group.isRecurring ? <RefreshCw size={18} /> : <Calendar size={18} />}
+                      {group.isRecurring ? (
+                        <EventRepeatIcon sx={{ fontSize: 20 }} />
+                      ) : (
+                        <CalendarTodayIcon sx={{ fontSize: 20 }} />
+                      )}
                     </Box>
                     <Box>
                         <Typography variant="body2" fontWeight={600}>

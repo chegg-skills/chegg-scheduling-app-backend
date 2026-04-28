@@ -500,7 +500,7 @@ describe("DELETE /api/teams/:teamId", () => {
     const teamId = teamRes.body.data.id;
 
     // Create a booking for this team (must exist before deletion)
-    const offering = await prisma.eventOffering.create({
+    const eventType = await prisma.eventType.create({
       data: {
         key: "protected-offering-team",
         name: "Protected Offering",
@@ -513,7 +513,7 @@ describe("DELETE /api/teams/:teamId", () => {
       data: {
         name: "Protected Event",
         teamId,
-        offeringId: offering.id,
+        eventTypeId: eventType.id,
         interactionType: "ONE_TO_ONE",
         durationSeconds: 1800,
         locationType: "VIRTUAL",

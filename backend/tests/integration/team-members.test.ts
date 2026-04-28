@@ -17,9 +17,9 @@ let context: TestContext;
 const uniqueValue = (prefix: string): string =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-const createOffering = async (token: string) => {
+const createEventType = async (token: string) => {
   return request(app)
-    .post("/api/event-offerings")
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${token}`)
     .send({
       key: uniqueValue("mentoring"),
@@ -113,14 +113,14 @@ describe("Team member routes", () => {
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({ userId: context.coachId });
 
-    const offering = await createOffering(context.superAdminToken);
+    const eventType = await createEventType(context.superAdminToken);
     const event = await request(app)
       .post(`/api/teams/${context.teamId}/events`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
         name: "Protected Membership Event",
         description: "Event blocking member removal",
-        offeringId: offering.body.data.id,
+        eventTypeId: eventType.body.data.id,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: "DIRECT",
         durationSeconds: 1800,

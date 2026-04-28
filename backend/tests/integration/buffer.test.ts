@@ -7,7 +7,7 @@ import { prisma } from "../../src/shared/db/prisma";
 let adminToken: string;
 let coachId: string;
 let teamId: string;
-let offeringId: string;
+let eventTypeId: string;
 let interactionTypeId: string;
 let eventId: string;
 
@@ -39,11 +39,11 @@ beforeAll(async () => {
   teamId = teamRes.body.data.id;
 
   // 3. Setup Offering
-  const offeringRes = await request(app)
-    .post("/api/event-offerings")
+  const eventTypeRes = await request(app)
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${adminToken}`)
     .send({ name: "Buffer Offering", key: "buffer_offering" });
-  offeringId = offeringRes.body.data.id;
+  eventTypeId = eventTypeRes.body.data.id;
 
   // 4. Create Event with 15-minute buffer
   const eventRes = await request(app)
@@ -51,7 +51,7 @@ beforeAll(async () => {
     .set("Authorization", `Bearer ${adminToken}`)
     .send({
       name: "Buffered Event",
-      offeringId,
+      eventTypeId,
       interactionType: "ONE_TO_ONE", // Use enum directly
       durationSeconds: 3600, // 1 hour
       locationType: "VIRTUAL",

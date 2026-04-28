@@ -26,7 +26,7 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
 describe("Concurrency Integration Tests", () => {
   let adminToken: string;
   let teamId: string;
-  let offeringId: string;
+  let eventTypeId: string;
   let coachId: string;
   let eventId: string;
 
@@ -55,7 +55,7 @@ describe("Concurrency Integration Tests", () => {
     });
     coachId = coach.id;
 
-    const offering = await prisma.eventOffering.create({
+    const eventType = await prisma.eventType.create({
       data: {
         key: "concurrency_offering",
         name: "Concurrency Offering",
@@ -63,7 +63,7 @@ describe("Concurrency Integration Tests", () => {
         updatedById: admin.id,
       },
     });
-    offeringId = offering.id;
+    eventTypeId = eventType.id;
 
   });
 
@@ -77,7 +77,7 @@ describe("Concurrency Integration Tests", () => {
       data: {
         name: "Concurrency Test Event",
         teamId,
-        offeringId,
+        eventTypeId,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600,

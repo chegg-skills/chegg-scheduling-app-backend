@@ -6,7 +6,9 @@ import Breadcrumbs from '@mui/material/Breadcrumbs'
 import Link from '@mui/material/Link'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
-import { ChevronRight, RefreshCw, Calendar } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import EventRepeatIcon from '@mui/icons-material/EventRepeat'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import { format } from 'date-fns'
 import type { Event, EventScheduleSlot } from '@/types'
 import { ScheduleSlotList } from './ScheduleSlotList'
@@ -89,15 +91,19 @@ export function ScheduleSeriesTrackerView({
         </Breadcrumbs>
         
         <Stack direction="row" spacing={2} alignItems="center">
-           <Box sx={{ 
-              p: 1.5, 
-              borderRadius: 1, 
-              bgcolor: 'background.paper', 
-              border: '1px solid', 
-              borderColor: 'divider',
-              color: 'primary.main'
-           }}>
-              {group.isRecurring ? <RefreshCw size={24} /> : <Calendar size={24} />}
+            <Box sx={{ 
+               p: group.isRecurring ? 1.5 : 0.5, 
+               borderRadius: 1, 
+               bgcolor: group.isRecurring ? 'background.paper' : 'transparent', 
+               border: group.isRecurring ? '1px solid' : 'none', 
+               borderColor: 'divider',
+               color: group.isRecurring ? 'primary.main' : 'text.secondary'
+            }}>
+              {group.isRecurring ? (
+                <EventRepeatIcon sx={{ fontSize: 28 }} />
+              ) : (
+                <CalendarTodayIcon sx={{ fontSize: 28 }} />
+              )}
            </Box>
            <Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>

@@ -8,7 +8,7 @@ export function formatEventDuration(seconds: number) {
 
 export type EventSortKey =
   | 'event'
-  | 'offering'
+  | 'eventType'
   | 'duration'
   | 'coaches'
   | 'strategy'
@@ -17,7 +17,7 @@ export type EventSortKey =
 
 export const eventSortAccessors: SortAccessorMap<Event, EventSortKey> = {
   event: (event) => event.name,
-  offering: (event) => event.offering?.name ?? '',
+  eventType: (event) => event.eventType?.name ?? '',
   duration: (event) => event.durationSeconds,
   coaches: (event) => event.coaches.length,
   strategy: (event) => event.assignmentStrategy,
@@ -32,9 +32,9 @@ export const eventTableColumns: Array<{
 }> = [
     { label: 'Event', sortKey: 'event' },
     {
-      label: 'Event Category',
-      sortKey: 'offering',
-      tooltip: 'The category this event belongs to (e.g., Tutorial).',
+      label: 'Event Type',
+      sortKey: 'eventType',
+      tooltip: 'The event type this event belongs to (e.g., Tutorial).',
     },
     { label: 'Duration', sortKey: 'duration' },
     { label: 'Coaches', sortKey: 'coaches' },

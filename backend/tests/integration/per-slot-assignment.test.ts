@@ -26,7 +26,7 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
 describe("Per-Slot Coach Assignment Integration Tests", () => {
     let adminToken: string;
     let teamId: string;
-    let offeringId: string;
+    let eventTypeId: string;
     let coach1Id: string;
     let coach2Id: string;
 
@@ -53,7 +53,7 @@ describe("Per-Slot Coach Assignment Integration Tests", () => {
             firstName: "Coach", lastName: "Two", email: "coach2@test.com", password: "Password123", role: "COACH"
         })).id;
 
-        offeringId = (await prisma.eventOffering.create({
+        eventTypeId = (await prisma.eventType.create({
             data: { key: "slot_test", name: "Slot Test", createdById: admin.id, updatedById: admin.id }
         })).id;
     });
@@ -75,7 +75,7 @@ describe("Per-Slot Coach Assignment Integration Tests", () => {
             data: {
                 name: "Direct Event",
                 teamId,
-                offeringId,
+                eventTypeId,
                 interactionType: "ONE_TO_ONE",
                 assignmentStrategy: AssignmentStrategy.DIRECT,
                 durationSeconds: 3600,
@@ -125,7 +125,7 @@ describe("Per-Slot Coach Assignment Integration Tests", () => {
             data: {
                 name: "RR Event",
                 teamId,
-                offeringId,
+                eventTypeId,
                 interactionType: "ONE_TO_ONE",
                 assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
                 durationSeconds: 3600,

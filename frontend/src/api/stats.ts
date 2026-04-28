@@ -29,8 +29,8 @@ export const statsApi = {
   getEvents: (params?: StatsParams, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/events', { params, signal }),
 
-  getOfferings: (params?: StatsParams, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/offerings', { params, signal }),
+  getEventTypes: (params?: StatsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/event-types', { params, signal }),
 
   getInteractionTypes: (params?: StatsParams, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<StatsSummary>>('/v1/stats/interaction-types', { params, signal }),

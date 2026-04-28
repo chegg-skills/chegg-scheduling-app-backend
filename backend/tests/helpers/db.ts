@@ -12,7 +12,7 @@ export const clearTables = async (): Promise<void> => {
   await prisma.eventScheduleSlot.deleteMany();
   await prisma.eventCoach.deleteMany();
   await prisma.event.deleteMany();
-  await prisma.eventOffering.deleteMany();
+  await prisma.eventType.deleteMany();
   await prisma.teamMember.deleteMany();
   await prisma.team.deleteMany();
   await prisma.oidcState.deleteMany();    // no FK; was not cleaned before

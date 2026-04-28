@@ -64,15 +64,15 @@ export const getEventStats = async (
   }
 };
 
-export const getOfferingStats = async (
+export const getEventTypeStats = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const data = await statsService.getOfferingStats(caller, req.query.timeframe as string);
-    sendSuccessResponse(res, StatusCodes.OK, data, "Offering stats fetched successfully.");
+    const data = await statsService.getEventTypeStats(caller, req.query.timeframe as string);
+    sendSuccessResponse(res, StatusCodes.OK, data, "Event type stats fetched successfully.");
   } catch (error) {
     next(error);
   }

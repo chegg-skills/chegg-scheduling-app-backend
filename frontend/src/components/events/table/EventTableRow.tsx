@@ -76,7 +76,7 @@ export function EventTableRow({
       </TableCell>
 
       <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-        {event.offering?.name ? toTitleCase(event.offering.name) : '—'}
+        {event.eventType?.name ? toTitleCase(event.eventType.name) : '—'}
       </TableCell>
 
       <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>

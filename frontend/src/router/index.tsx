@@ -63,9 +63,9 @@ const EventsPage = lazy(() =>
     default: module.EventsPage,
   }))
 )
-const OfferingsPage = lazy(() =>
-  import('@/pages/OfferingsPage').then((module) => ({
-    default: module.OfferingsPage,
+const EventTypesPage = lazy(() =>
+  import('@/pages/EventTypesPage').then((module) => ({
+    default: module.EventTypesPage,
   }))
 )
 const InteractionTypesPage = lazy(() =>
@@ -191,7 +191,7 @@ export const router = createBrowserRouter([
             path: '/events/:eventId',
             element: renderLazyPage(EventDetailPage),
           },
-          { path: '/event-offerings', element: renderLazyPage(OfferingsPage) },
+          { path: '/event-types', element: renderLazyPage(EventTypesPage) },
           {
             path: '/interaction-types',
             element: renderLazyPage(InteractionTypesPage),

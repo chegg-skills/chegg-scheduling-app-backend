@@ -15,12 +15,12 @@ import {
 } from "./event.shared";
 import { UpdateEventSchema } from "./event.schema";
 import {
-  createEventOffering,
-  listEventOfferings,
+  createEventType,
+  listEventTypes,
   listInteractionTypes,
-  updateEventOffering,
-  deleteEventOffering,
-  getEventOfferingUsage,
+  updateEventType,
+  deleteEventType,
+  getEventTypeUsage,
 } from "./eventCatalog.service";
 import {
   listEventCoaches,
@@ -276,11 +276,11 @@ const listAllEvents = async (
 };
 
 export {
-  createEventOffering,
-  listEventOfferings,
-  updateEventOffering,
-  deleteEventOffering,
-  getEventOfferingUsage,
+  createEventType,
+  listEventTypes,
+  updateEventType,
+  deleteEventType,
+  getEventTypeUsage,
   listInteractionTypes,
   createEvent,
   duplicateEvent,

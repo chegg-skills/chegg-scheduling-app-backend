@@ -37,8 +37,8 @@ beforeAll(async () => {
   superAdminToken = admin.token;
 
   // Create Offering
-  const offeringRes = await request(app)
-    .post("/api/event-offerings")
+  const eventTypeRes = await request(app)
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${superAdminToken}`)
     .send({
       key: "public-offering",
@@ -47,7 +47,7 @@ beforeAll(async () => {
       sortOrder: 1,
       isActive: true,
     });
-  const offeringId = offeringRes.body.data.id;
+  const eventTypeId = eventTypeRes.body.data.id;
 
   const interactionTypeId = "ONE_TO_ONE";
 
@@ -94,7 +94,7 @@ beforeAll(async () => {
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com/session",
       isActive: true,
-      offeringId,
+      eventTypeId,
       interactionType: interactionTypeId,
       coCoachUserIds: [coachId],
     });
