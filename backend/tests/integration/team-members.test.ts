@@ -19,7 +19,7 @@ const uniqueValue = (prefix: string): string =>
 
 const createOffering = async (token: string) => {
   return request(app)
-    .post("/api/event-offerings")
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${token}`)
     .send({
       key: uniqueValue("mentoring"),

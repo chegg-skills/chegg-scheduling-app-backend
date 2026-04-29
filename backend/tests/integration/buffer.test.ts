@@ -40,7 +40,7 @@ beforeAll(async () => {
 
   // 3. Setup Offering
   const offeringRes = await request(app)
-    .post("/api/event-offerings")
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${adminToken}`)
     .send({ name: "Buffer Offering", key: "buffer_offering" });
   offeringId = offeringRes.body.data.id;

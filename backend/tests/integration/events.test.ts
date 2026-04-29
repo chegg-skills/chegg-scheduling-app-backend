@@ -44,7 +44,7 @@ const uniqueValue = (prefix: string): string =>
 
 const createOffering = async (token: string, payload?: Record<string, unknown>) => {
   const res = await request(app)
-    .post("/api/event-offerings")
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${token}`)
     .send({
       key: uniqueValue("resume-review"),
@@ -170,7 +170,7 @@ describe("Event offerings routes", () => {
     const created = await createOffering(context.superAdminToken);
 
     const res = await request(app)
-      .get("/api/event-offerings")
+      .get("/api/event-types")
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
 
     expect(res.status).toBe(200);
@@ -189,7 +189,7 @@ describe("Event offerings routes", () => {
     });
 
     const res = await request(app)
-      .patch(`/api/event-offerings/${created.body.data.id}`)
+      .patch(`/api/event-types/${created.body.data.id}`)
       .set("Authorization", `Bearer ${context.superAdminToken}`)
       .send({
         name: "Updated Offering",
@@ -215,7 +215,7 @@ describe("Event offerings routes", () => {
     const id = created.body.data.id;
 
     const res = await request(app)
-      .delete(`/api/event-offerings/${id}`)
+      .delete(`/api/event-types/${id}`)
       .set("Authorization", `Bearer ${context.superAdminToken}`);
 
     expect(res.status).toBe(200);
@@ -223,7 +223,7 @@ describe("Event offerings routes", () => {
 
     // Verify it's gone
     const listRes = await request(app)
-      .get("/api/event-offerings")
+      .get("/api/event-types")
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
     expect(listRes.body.data.offerings.some((o: { id: string }) => o.id === id)).toBe(false);
   });
@@ -238,7 +238,7 @@ describe("Event offerings routes", () => {
     });
 
     const res = await request(app)
-      .get(`/api/event-offerings/${offId}/usage`)
+      .get(`/api/event-types/${offId}/usage`)
       .set("Authorization", `Bearer ${context.superAdminToken}`);
 
     expect(res.status).toBe(200);
@@ -262,7 +262,7 @@ describe("Event offerings routes", () => {
     });
 
     const res = await request(app)
-      .delete(`/api/event-offerings/${offId}`)
+      .delete(`/api/event-types/${offId}`)
       .set("Authorization", `Bearer ${context.superAdminToken}`);
 
     expect(res.status).toBe(409);

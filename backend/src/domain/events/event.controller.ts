@@ -27,14 +27,14 @@ const duplicateEvent = async (req: Request, res: Response, next: NextFunction): 
   }
 };
 
-const createEventOffering = async (
+const createEventType = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.createEventOffering(req.body, caller);
+    const offering = await eventService.createEventType(req.body, caller);
 
     sendSuccessResponse(res, StatusCodes.CREATED, offering, "Event offering created successfully.");
   } catch (error) {
@@ -42,13 +42,13 @@ const createEventOffering = async (
   }
 };
 
-const listEventOfferings = async (
+const listEventTypes = async (
   _req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const result = await eventService.listEventOfferings();
+    const result = await eventService.listEventTypes();
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Event offerings fetched successfully.");
   } catch (error) {
@@ -56,15 +56,15 @@ const listEventOfferings = async (
   }
 };
 
-const updateEventOffering = async (
+const updateEventType = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.updateEventOffering(
-      req.params.offeringId as string,
+    const offering = await eventService.updateEventType(
+      req.params.eventTypeId as string,
       req.body,
       caller,
     );
@@ -75,14 +75,14 @@ const updateEventOffering = async (
   }
 };
 
-const deleteEventOffering = async (
+const deleteEventType = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.deleteEventOffering(req.params.offeringId as string, caller);
+    const offering = await eventService.deleteEventType(req.params.eventTypeId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, offering, "Event offering deleted successfully.");
   } catch (error) {
@@ -90,14 +90,14 @@ const deleteEventOffering = async (
   }
 };
 
-const getEventOfferingUsage = async (
+const getEventTypeUsage = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const usage = await eventService.getEventOfferingUsage(req.params.offeringId as string, caller);
+    const usage = await eventService.getEventTypeUsage(req.params.eventTypeId as string, caller);
 
     sendSuccessResponse(res, StatusCodes.OK, usage, "Event offering usage fetched successfully.");
   } catch (error) {
@@ -342,11 +342,11 @@ const listSlotBookings = async (
 };
 
 export {
-  createEventOffering,
-  listEventOfferings,
-  updateEventOffering,
-  deleteEventOffering,
-  getEventOfferingUsage,
+  createEventType,
+  listEventTypes,
+  updateEventType,
+  deleteEventType,
+  getEventTypeUsage,
   listInteractionTypes,
   createEvent,
   duplicateEvent,

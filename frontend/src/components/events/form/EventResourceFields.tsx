@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Select } from '@/components/shared/form/Select'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { useEventOfferings } from '@/hooks/queries/useEventOfferings'
+import { useEventTypes } from '@/hooks/queries/useEventTypes'
 import { INTERACTION_TYPE_OPTIONS } from '@/constants/interactionTypes'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionType } from '@/types'
@@ -26,9 +26,9 @@ export function EventResourceFields() {
     control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
-  const { data: offeringsData } = useEventOfferings()
+  const { data: eventTypesData } = useEventTypes()
 
-  const offerings = (offeringsData?.offerings ?? []).filter((o) => o.isActive)
+  const offerings = (eventTypesData?.offerings ?? []).filter((o) => o.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
 
   return (

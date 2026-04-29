@@ -12,10 +12,10 @@ import {
 } from "../../shared/constants/interactionType";
 import {
   assertCatalogManagementAllowed,
-  type SafeEventOffering,
-  type UpsertEventOfferingInput,
+  type SafeEventType,
+  type UpsertEventTypeInput,
 } from "./event.shared";
-import { EventOfferingSchema } from "./event.schema";
+import { EventTypeSchema } from "./event.schema";
 
 export type InteractionTypeInfo = {
   key: InteractionType;
@@ -23,13 +23,13 @@ export type InteractionTypeInfo = {
   caps: { multipleCoaches: boolean; multipleParticipants: boolean };
 };
 
-const createEventOffering = async (
-  payload: UpsertEventOfferingInput,
+const createEventType = async (
+  payload: UpsertEventTypeInput,
   caller: CallerContext,
-): Promise<SafeEventOffering> => {
+): Promise<SafeEventType> => {
   assertCatalogManagementAllowed(caller);
 
-  const validated = EventOfferingSchema.body.parse(payload);
+  const validated = EventTypeSchema.body.parse(payload);
 
   try {
     return await prisma.eventType.create({
@@ -53,7 +53,7 @@ const createEventOffering = async (
   }
 };
 
-const listEventOfferings = async (): Promise<{ offerings: SafeEventOffering[] }> => {
+const listEventTypes = async (): Promise<{ offerings: SafeEventType[] }> => {
   const offerings = await prisma.eventType.findMany({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
@@ -61,18 +61,18 @@ const listEventOfferings = async (): Promise<{ offerings: SafeEventOffering[] }>
   return { offerings };
 };
 
-const updateEventOffering = async (
+const updateEventType = async (
   offeringId: string,
-  payload: UpsertEventOfferingInput,
+  payload: UpsertEventTypeInput,
   caller: CallerContext,
-): Promise<SafeEventOffering> => {
+): Promise<SafeEventType> => {
   assertCatalogManagementAllowed(caller);
 
   if (!offeringId?.trim()) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "offeringId is required.");
   }
 
-  const validated = EventOfferingSchema.body.parse(payload);
+  const validated = EventTypeSchema.body.parse(payload);
 
   const data: Prisma.EventTypeUpdateInput = {
     key: validated.key,
@@ -102,7 +102,7 @@ const updateEventOffering = async (
   }
 };
 
-const getEventOfferingUsage = async (
+const getEventTypeUsage = async (
   offeringId: string,
   _caller: CallerContext,
 ): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
@@ -123,17 +123,17 @@ const getEventOfferingUsage = async (
   return events;
 };
 
-const deleteEventOffering = async (
+const deleteEventType = async (
   offeringId: string,
   caller: CallerContext,
-): Promise<SafeEventOffering> => {
+): Promise<SafeEventType> => {
   assertCatalogManagementAllowed(caller);
 
   if (!offeringId?.trim()) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "offeringId is required.");
   }
 
-  const usage = await getEventOfferingUsage(offeringId, caller);
+  const usage = await getEventTypeUsage(offeringId, caller);
 
   if (usage.length > 0) {
     throw new ErrorHandler(
@@ -171,10 +171,10 @@ const listInteractionTypes = (): { interactionTypes: InteractionTypeInfo[] } => 
 };
 
 export {
-  createEventOffering,
-  listEventOfferings,
-  updateEventOffering,
-  deleteEventOffering,
-  getEventOfferingUsage,
+  createEventType,
+  listEventTypes,
+  updateEventType,
+  deleteEventType,
+  getEventTypeUsage,
   listInteractionTypes,
 };

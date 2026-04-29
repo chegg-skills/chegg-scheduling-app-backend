@@ -9,9 +9,9 @@ import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { Button } from '@/components/shared/ui/Button'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { useCreateEventOffering, useUpdateEventOffering } from '@/hooks/queries/useEventOfferings'
+import { useCreateEventType, useUpdateEventType } from '@/hooks/queries/useEventTypes'
 import { extractApiError } from '@/utils/apiError'
-import type { EventOffering } from '@/types'
+import type { EventType } from '@/types'
 
 const schema = z.object({
   key: z.string().min(1, 'Key is required'),
@@ -22,15 +22,15 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-interface OfferingFormProps {
-  offering?: EventOffering
+interface EventTypeFormProps {
+  eventType?: EventType
   onSuccess?: () => void
 }
 
-export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
-  const isEdit = !!offering
-  const { mutate: create, isPending: creating, error: createError } = useCreateEventOffering()
-  const { mutate: update, isPending: updating, error: updateError } = useUpdateEventOffering()
+export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
+  const isEdit = !!eventType
+  const { mutate: create, isPending: creating, error: createError } = useCreateEventType()
+  const { mutate: update, isPending: updating, error: updateError } = useUpdateEventType()
 
   const {
     register,
@@ -40,26 +40,26 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      key: offering?.key ?? '',
-      name: offering?.name ?? '',
-      description: offering?.description ?? '',
-      sortOrder: offering?.sortOrder ?? 0,
+      key: eventType?.key ?? '',
+      name: eventType?.name ?? '',
+      description: eventType?.description ?? '',
+      sortOrder: eventType?.sortOrder ?? 0,
     },
   })
 
   useEffect(() => {
-    if (offering)
+    if (eventType)
       reset({
-        key: offering.key,
-        name: offering.name,
-        description: offering.description ?? '',
-        sortOrder: offering.sortOrder,
+        key: eventType.key,
+        name: eventType.name,
+        description: eventType.description ?? '',
+        sortOrder: eventType.sortOrder,
       })
-  }, [offering, reset])
+  }, [eventType, reset])
 
   function onSubmit(values: FormValues) {
-    if (isEdit && offering) {
-      update({ offeringId: offering.id, data: values }, { onSuccess })
+    if (isEdit && eventType) {
+      update({ eventTypeId: eventType.id, data: values }, { onSuccess })
     } else {
       create(values, {
         onSuccess: () => {
@@ -101,7 +101,7 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
           label="Sort order"
           htmlFor="sortOrder"
           error={errors.sortOrder?.message}
-          info="The order in which this offering appears in lists (lower numbers come first)."
+          info="The order in which this event type appears in lists (lower numbers come first)."
         >
           <Input
             id="sortOrder"
@@ -114,7 +114,7 @@ export function OfferingForm({ offering, onSuccess }: OfferingFormProps) {
 
         <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
-            {isEdit ? 'Save changes' : 'Create offering'}
+            {isEdit ? 'Save changes' : 'Create event type'}
           </Button>
         </Stack>
       </Stack>

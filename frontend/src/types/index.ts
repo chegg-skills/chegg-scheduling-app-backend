@@ -59,7 +59,7 @@ export interface UserWithDetails extends SafeUser {
   coachedEvents: Array<{
     id: string
     event: Event & {
-      eventType: EventOffering
+      eventType: EventType
       interactionType: InteractionType
     }
   }>
@@ -98,7 +98,7 @@ export interface UserInvite {
   createdAt: string
 }
 
-export interface EventOffering {
+export interface EventType {
   id: string
   key: string
   name: string
@@ -197,7 +197,7 @@ export interface Event {
   updatedById: string
   createdAt: string
   updatedAt: string
-  eventType: EventOffering
+  eventType: EventType
   coaches: EventCoach[]
   weeklyAvailability: EventWeeklyAvailability[]
   team?: {
@@ -420,7 +420,7 @@ export interface SetEventCoachesDto {
   coaches: Array<{ userId: string; coachOrder?: number }>
 }
 
-export interface CreateEventOfferingDto {
+export interface CreateEventTypeDto {
   key: string
   name: string
   description?: string
@@ -428,7 +428,7 @@ export interface CreateEventOfferingDto {
   isActive?: boolean
 }
 
-export interface UpdateEventOfferingDto extends Partial<CreateEventOfferingDto> { }
+export interface UpdateEventTypeDto extends Partial<CreateEventTypeDto> { }
 
 // Deleted CreateInteractionTypeDto and UpdateInteractionTypeDto manually elsewhere
 

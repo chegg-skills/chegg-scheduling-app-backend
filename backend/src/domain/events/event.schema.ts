@@ -8,7 +8,7 @@ import {
 
 // --- Base Schemas ---
 
-const EventOfferingBase = z.object({
+const EventTypeBase = z.object({
   key: z
     .string()
     .trim()
@@ -193,8 +193,8 @@ const EventScheduleSlotBase = z.object({
 
 // --- Exported Schemas with Refinements ---
 
-export const EventOfferingSchema = {
-  body: EventOfferingBase.passthrough(),
+export const EventTypeSchema = {
+  body: EventTypeBase.passthrough(),
 };
 
 export const CreateEventSchema = {

@@ -42,7 +42,7 @@ export type SafeEvent = Prisma.EventGetPayload<{
   include: typeof eventInclude;
 }>;
 
-export type SafeEventOffering = EventTypeModel;
+export type SafeEventType = EventTypeModel;
 
 export type ListEventsOptions = {
   page?: number;
@@ -81,7 +81,7 @@ export type CreateEventInput = {
 
 export type UpdateEventInput = Partial<CreateEventInput>;
 
-export type UpsertEventOfferingInput = {
+export type UpsertEventTypeInput = {
   key?: string;
   name?: string;
   description?: string;
