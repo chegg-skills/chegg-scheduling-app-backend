@@ -27,7 +27,7 @@ interface SlotStepProps {
 }
 
 function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
-  return function SlotDayIndicator({ day, outsideCurrentMonth, ...props }: PickersDayProps<Date>) {
+  return function SlotDayIndicator({ day, outsideCurrentMonth, ...props }: PickersDayProps) {
     const hasSlots = !outsideCurrentMonth && !!availableDates?.has(format(day, 'yyyy-MM-dd'))
     return (
       <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
