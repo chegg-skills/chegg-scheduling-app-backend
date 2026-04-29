@@ -55,7 +55,7 @@ describe("Concurrency Integration Tests", () => {
     });
     coachId = coach.id;
 
-    const offering = await prisma.eventOffering.create({
+    const offering = await prisma.eventType.create({
       data: {
         key: "concurrency_offering",
         name: "Concurrency Offering",
@@ -77,7 +77,7 @@ describe("Concurrency Integration Tests", () => {
       data: {
         name: "Concurrency Test Event",
         teamId,
-        offeringId,
+        eventTypeId: offeringId,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600,

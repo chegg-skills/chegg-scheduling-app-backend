@@ -120,7 +120,7 @@ describe("Team member routes", () => {
       .send({
         name: "Protected Membership Event",
         description: "Event blocking member removal",
-        offeringId: offering.body.data.id,
+        eventTypeId: offering.body.data.id,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: "DIRECT",
         durationSeconds: 1800,

@@ -51,7 +51,7 @@ beforeAll(async () => {
     .set("Authorization", `Bearer ${adminToken}`)
     .send({
       name: "Buffered Event",
-      offeringId,
+      eventTypeId: offeringId,
       interactionType: "ONE_TO_ONE", // Use enum directly
       durationSeconds: 3600, // 1 hour
       locationType: "VIRTUAL",

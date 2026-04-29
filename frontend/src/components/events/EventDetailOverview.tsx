@@ -63,7 +63,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
 
       <Grid container spacing={2}>
         {/* Core Configuration */}
-        <DataField label="Offering" value={toTitleCase(event.offering.name)} />
+        <DataField label="Offering" value={toTitleCase(event.eventType.name)} />
         <DataField
           label="Interaction type"
           value={formatEnumLabel(event.interactionType)}

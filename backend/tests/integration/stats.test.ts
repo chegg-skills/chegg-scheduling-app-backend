@@ -67,7 +67,7 @@ beforeAll(async () => {
     },
   });
 
-  const offering = await prisma.eventOffering.create({
+  const offering = await prisma.eventType.create({
     data: {
       key: "stats_offering",
       name: "Stats Offering",
@@ -82,7 +82,7 @@ beforeAll(async () => {
       name: "Stats Event",
       description: "Event for stats tests",
       teamId: team.id,
-      offeringId: offering.id,
+      eventTypeId: offering.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       durationSeconds: 1800,

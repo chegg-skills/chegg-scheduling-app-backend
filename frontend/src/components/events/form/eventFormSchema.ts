@@ -6,7 +6,7 @@ export const eventFormSchema = z
   .object({
     name: z.string().min(1, 'Name is required'),
     description: z.string().optional(),
-    offeringId: z.string().min(1, 'Event Category is required'),
+    eventTypeId: z.string().min(1, 'Event Category is required'),
     interactionType: z.enum(['ONE_TO_ONE', 'ONE_TO_MANY', 'MANY_TO_ONE', 'MANY_TO_MANY'] as const),
     locationType: z.enum(['VIRTUAL', 'IN_PERSON', 'CUSTOM'] as const),
     locationValue: z.string().min(1, 'Location is required'),
@@ -132,7 +132,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     return {
       name: event.name,
       description: event.description ?? '',
-      offeringId: event.offeringId,
+      eventTypeId: event.eventTypeId,
       interactionType: event.interactionType,
       locationType: event.locationType,
       locationValue: event.locationValue ?? '',
@@ -163,7 +163,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
   return {
     name: '',
     description: '',
-    offeringId: '',
+    eventTypeId: '',
     interactionType: 'ONE_TO_ONE',
     locationType: 'VIRTUAL',
     locationValue: '',

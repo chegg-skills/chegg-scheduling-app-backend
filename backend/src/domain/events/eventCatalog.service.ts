@@ -32,7 +32,7 @@ const createEventOffering = async (
   const validated = EventOfferingSchema.body.parse(payload);
 
   try {
-    return await prisma.eventOffering.create({
+    return await prisma.eventType.create({
       data: {
         key: validated.key!,
         name: validated.name!,
@@ -54,7 +54,7 @@ const createEventOffering = async (
 };
 
 const listEventOfferings = async (): Promise<{ offerings: SafeEventOffering[] }> => {
-  const offerings = await prisma.eventOffering.findMany({
+  const offerings = await prisma.eventType.findMany({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
 
@@ -74,7 +74,7 @@ const updateEventOffering = async (
 
   const validated = EventOfferingSchema.body.parse(payload);
 
-  const data: Prisma.EventOfferingUpdateInput = {
+  const data: Prisma.EventTypeUpdateInput = {
     key: validated.key,
     name: validated.name,
     description: validated.description,
@@ -84,7 +84,7 @@ const updateEventOffering = async (
   };
 
   try {
-    return await prisma.eventOffering.update({
+    return await prisma.eventType.update({
       where: { id: offeringId },
       data,
     });
@@ -107,7 +107,7 @@ const getEventOfferingUsage = async (
   _caller: CallerContext,
 ): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
   const events = await prisma.event.findMany({
-    where: { offeringId },
+    where: { eventTypeId: offeringId },
     select: {
       id: true,
       name: true,
@@ -143,7 +143,7 @@ const deleteEventOffering = async (
   }
 
   try {
-    return await prisma.eventOffering.delete({
+    return await prisma.eventType.delete({
       where: { id: offeringId },
     });
   } catch (error) {

@@ -59,7 +59,7 @@ export interface UserWithDetails extends SafeUser {
   coachedEvents: Array<{
     id: string
     event: Event & {
-      offering: EventOffering
+      eventType: EventOffering
       interactionType: InteractionType
     }
   }>
@@ -173,7 +173,7 @@ export interface Event {
   name: string
   description: string | null
   isActive: boolean
-  offeringId: string
+  eventTypeId: string
   interactionType: InteractionType
   assignmentStrategy: AssignmentStrategy
   bookingMode: EventBookingMode
@@ -197,7 +197,7 @@ export interface Event {
   updatedById: string
   createdAt: string
   updatedAt: string
-  offering: EventOffering
+  eventType: EventOffering
   coaches: EventCoach[]
   weeklyAvailability: EventWeeklyAvailability[]
   team?: {
@@ -390,7 +390,7 @@ export interface UpdateTeamDto {
 
 export interface CreateEventDto {
   name: string
-  offeringId: string
+  eventTypeId: string
   interactionType: InteractionType
   locationType: EventLocationType
   locationValue: string

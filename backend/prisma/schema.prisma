@@ -33,8 +33,8 @@ model User {
   eventsCreated          Event[]                     @relation("EventCreatedBy")
   eventsUpdated          Event[]                     @relation("EventUpdatedBy")
   coachedEvents          EventCoach[]                @relation("EventCoachUser")
-  createdEventOfferings  EventOffering[]             @relation("EventOfferingCreatedBy")
-  updatedEventOfferings  EventOffering[]             @relation("EventOfferingUpdatedBy")
+  createdEventTypes      EventType[]                 @relation("EventTypeCreatedBy")
+  updatedEventTypes      EventType[]                 @relation("EventTypeUpdatedBy")
   slotAssignments        EventScheduleSlot[]         @relation("SlotCoach")
   sessionLogs            SessionLog[]                @relation("SessionLogLoggedBy")
   teamsCreated           Team[]                      @relation("TeamCreatedBy")
@@ -99,7 +99,7 @@ model TeamMember {
   @@index([teamId, isActive])
 }
 
-model EventOffering {
+model EventType {
   id          String   @id @default(uuid())
   key         String   @unique
   name        String
@@ -111,8 +111,8 @@ model EventOffering {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   events      Event[]
-  createdBy   User     @relation("EventOfferingCreatedBy", fields: [createdById], references: [id])
-  updatedBy   User     @relation("EventOfferingUpdatedBy", fields: [updatedById], references: [id])
+  createdBy   User     @relation("EventTypeCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User     @relation("EventTypeUpdatedBy", fields: [updatedById], references: [id])
 
   @@index([isActive, sortOrder])
 }
@@ -121,7 +121,7 @@ model Event {
   id                        String                    @id @default(uuid())
   name                      String
   description               String?
-  offeringId                String
+  eventTypeId               String
   assignmentStrategy        AssignmentStrategy        @default(DIRECT)
   durationSeconds           Int
   locationType              EventLocationType
@@ -149,7 +149,7 @@ model Event {
   maxBookingWindowDays      Int?
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
-  offering                  EventOffering             @relation(fields: [offeringId], references: [id])
+  eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
   team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
   weeklyAvailability        EventWeeklyAvailability[]
@@ -158,7 +158,7 @@ model Event {
   scheduleSlots             EventScheduleSlot[]
 
   @@index([teamId, isActive])
-  @@index([offeringId])
+  @@index([eventTypeId])
   @@index([interactionType])
   @@index([assignmentStrategy])
   @@index([bookingMode])

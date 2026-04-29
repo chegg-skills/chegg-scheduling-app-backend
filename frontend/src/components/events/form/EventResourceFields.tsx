@@ -16,7 +16,7 @@ import type { EventFormValues } from './eventFormSchema'
 import type { InteractionType } from '@/types'
 
 /**
- * Handles offeringId and interactionType fields.
+ * Handles eventTypeId and interactionType fields.
  * Consumes the EventForm context.
  */
 export function EventResourceFields() {
@@ -35,16 +35,16 @@ export function EventResourceFields() {
     <Stack spacing={2}>
       <FormField
         label="Event category"
-        htmlFor="offeringId"
-        error={errors.offeringId?.message}
+        htmlFor="eventTypeId"
+        error={errors.eventTypeId?.message}
         info="The category or type of service for this event (e.g., Tutorial)."
         required
       >
         <Select
-          id="offeringId"
-          hasError={!!errors.offeringId}
-          value={watch('offeringId') || ''}
-          {...register('offeringId')}
+          id="eventTypeId"
+          hasError={!!errors.eventTypeId}
+          value={watch('eventTypeId') || ''}
+          {...register('eventTypeId')}
         >
           <MenuItem value="">Select a category…</MenuItem>
           {offerings.map((o) => (

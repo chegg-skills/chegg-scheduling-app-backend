@@ -17,7 +17,7 @@ export type EventSortKey =
 
 export const eventSortAccessors: SortAccessorMap<Event, EventSortKey> = {
   event: (event) => event.name,
-  offering: (event) => event.offering?.name ?? '',
+  offering: (event) => event.eventType?.name ?? '',
   duration: (event) => event.durationSeconds,
   coaches: (event) => event.coaches.length,
   strategy: (event) => event.assignmentStrategy,

@@ -263,10 +263,10 @@ export const getOfferingStats = async (
   const createdAt = buildDateFilter(timeframe);
 
   const [newOfferings, activeOfferings, offeringsInUse, unusedOfferings] = await Promise.all([
-    prisma.eventOffering.count({ where: createdAt ? { createdAt } : undefined }),
-    prisma.eventOffering.count({ where: { isActive: true } }),
-    prisma.eventOffering.count({ where: { events: { some: {} } } }),
-    prisma.eventOffering.count({ where: { events: { none: {} } } }),
+    prisma.eventType.count({ where: createdAt ? { createdAt } : undefined }),
+    prisma.eventType.count({ where: { isActive: true } }),
+    prisma.eventType.count({ where: { events: { some: {} } } }),
+    prisma.eventType.count({ where: { events: { none: {} } } }),
   ]);
 
   return buildStatsResponse(timeframe, {

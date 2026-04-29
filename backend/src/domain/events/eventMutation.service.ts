@@ -81,7 +81,7 @@ export const resolveCreateEventContext = async (
 ): Promise<ResolvedEventMutationContext> => {
   const validated = CreateEventSchema.body.parse(payload);
 
-  const offering = await getActiveOffering(validated.offeringId);
+  const offering = await getActiveOffering(validated.eventTypeId);
   const interactionType = validated.interactionType as InteractionType;
   const assignmentStrategy = validated.assignmentStrategy;
 
@@ -121,7 +121,7 @@ export const resolveUpdateEventContext = async ({
 }): Promise<ResolvedEventMutationContext> => {
   const validated = UpdateEventSchema.body.parse(payload);
 
-  const nextOfferingId = validated.offeringId ?? existingEvent.offeringId;
+  const nextOfferingId = validated.eventTypeId ?? existingEvent.eventTypeId;
   const nextInteractionType = (validated.interactionType ??
     existingEvent.interactionType) as InteractionType;
 
@@ -174,7 +174,7 @@ export const buildEventCreateData = ({
     name: validated.name,
     publicBookingSlug: createPublicBookingSlug(validated.name, "event"),
     description: validated.description ?? undefined,
-    offering: { connect: { id: context.offering.id } },
+    eventType: { connect: { id: context.offering.id } },
     interactionType: context.interactionType,
     assignmentStrategy: context.assignmentStrategy,
     durationSeconds: validated.durationSeconds,
@@ -240,7 +240,7 @@ export const buildEventUpdateData = ({
 
   const updateData: Prisma.EventUpdateInput = {
     updatedBy: { connect: { id: callerId } },
-    offering: { connect: { id: context.offering.id } },
+    eventType: { connect: { id: context.offering.id } },
     interactionType: context.interactionType,
     assignmentStrategy: context.assignmentStrategy,
     sessionLeadershipStrategy: context.sessionLeadershipStrategy,
@@ -312,7 +312,7 @@ export const buildDuplicateEventData = ({
     name: `Copy of ${sourceEvent.name}`,
     publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
     description: sourceEvent.description ?? undefined,
-    offering: { connect: { id: sourceEvent.offeringId } },
+    eventType: { connect: { id: sourceEvent.eventTypeId } },
     interactionType: sourceEvent.interactionType,
     assignmentStrategy: sourceEvent.assignmentStrategy,
     durationSeconds: sourceEvent.durationSeconds,

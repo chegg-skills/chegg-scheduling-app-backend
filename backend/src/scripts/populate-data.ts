@@ -534,7 +534,7 @@ async function resetDemoDataKeepingAdmin(adminId?: string) {
   await prisma.event.deleteMany();
   await prisma.teamMember.deleteMany();
   await prisma.team.deleteMany();
-  await prisma.eventOffering.deleteMany();
+  await prisma.eventType.deleteMany();
 
   if (adminId) {
     await prisma.user.deleteMany({ where: { id: { not: adminId } } });
@@ -581,7 +581,7 @@ async function seedCatalog(authToken: string) {
   const createdOfferings = new Map<string, { id: string; name: string }>();
 
   for (const offering of offeringDefinitions) {
-    let existing = await prisma.eventOffering.findUnique({
+    let existing = await prisma.eventType.findUnique({
       where: { key: offering.key },
     });
     if (!existing) {
@@ -691,7 +691,7 @@ async function main() {
         {
           name: eventDefinition.name,
           description: eventDefinition.description,
-          offeringId: offering.id,
+          eventTypeId: offering.id,
           interactionType,
           assignmentStrategy: eventDefinition.assignmentStrategy,
           durationSeconds: eventDefinition.durationMinutes * 60,

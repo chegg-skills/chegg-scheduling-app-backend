@@ -94,7 +94,7 @@ beforeAll(async () => {
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com/session",
       isActive: true,
-      offeringId,
+      eventTypeId: offeringId,
       interactionType: interactionTypeId,
       coCoachUserIds: [coachId],
     });
