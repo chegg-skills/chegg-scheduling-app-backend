@@ -70,7 +70,7 @@ beforeAll(async () => {
   coach2Id = coach2.id;
 
   // Create Offering
-  const eventType = await prisma.eventType.create({
+  const offering = await prisma.eventType.create({
     data: {
       key: "test_offering",
       name: "Test Offering",
@@ -96,7 +96,7 @@ describe("Booking Domain Integration Tests", () => {
       data: {
         name: "Test Direct Event",
         teamId,
-        eventTypeId,
+        eventTypeId: offeringId,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600, // 1 hour
@@ -332,7 +332,7 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           name: "Test RR Event",
           teamId,
-          eventTypeId,
+          eventTypeId: offeringId,
           interactionType: "MANY_TO_ONE",
           assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
           durationSeconds: 3600,
@@ -590,7 +590,7 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           name: "Co-coach Conflict Test Event",
           teamId,
-          eventTypeId,
+          eventTypeId: offeringId,
           interactionType: "ONE_TO_ONE",
           assignmentStrategy: AssignmentStrategy.DIRECT,
           durationSeconds: 3600,

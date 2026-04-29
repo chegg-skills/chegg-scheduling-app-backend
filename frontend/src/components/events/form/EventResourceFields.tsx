@@ -22,9 +22,9 @@ export function EventResourceFields() {
     control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
-  const { data: eventTypesData } = useEventTypes()
+  const { data: allEventTypes = [] } = useEventTypes()
 
-  const eventTypes = (eventTypesData?.eventTypes ?? []).filter((et) => et.isActive)
+  const eventTypes = allEventTypes.filter((et) => et.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
 
   return (

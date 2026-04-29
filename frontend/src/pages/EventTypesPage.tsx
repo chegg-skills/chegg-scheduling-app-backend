@@ -16,10 +16,8 @@ import type { StatsTimeframe } from '@/types'
 export function EventTypesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
-  const { data, isLoading, error } = useEventTypes()
+  const { data: eventTypes = [], isLoading, error } = useEventTypes()
   const { data: eventTypeStats, isLoading: statsLoading } = useEventTypeStats(timeframe)
-
-  const eventTypes = data?.eventTypes ?? []
 
   if (isLoading) return <PageSpinner />
   if (error) return <ErrorAlert message="Failed to load event types." />

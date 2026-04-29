@@ -67,7 +67,7 @@ beforeAll(async () => {
     },
   });
 
-  const eventType = await prisma.eventType.create({
+  const offering = await prisma.eventType.create({
     data: {
       key: "stats_offering",
       name: "Stats Offering",
@@ -82,7 +82,7 @@ beforeAll(async () => {
       name: "Stats Event",
       description: "Event for stats tests",
       teamId: team.id,
-      eventTypeId: eventType.id,
+      eventTypeId: offering.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
       durationSeconds: 1800,
@@ -158,7 +158,7 @@ describe("GET /api/v1/stats/dashboard", () => {
 describe("GET /api/v1/stats/bookings", () => {
   it("scopes booking stats to the signed-in coach", async () => {
     const res = await request(app)
-      .get("/api/v1/stats/bookings?timeframe=month")
+      .get("/api/v1/stats/bookings?timeframe=all")
       .set("Authorization", `Bearer ${coachToken}`);
 
     expect(res.status).toBe(200);

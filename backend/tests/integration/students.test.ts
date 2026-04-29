@@ -62,7 +62,7 @@ beforeAll(async () => {
   });
   teamId = team.id;
 
-  const eventType = await prisma.eventType.create({
+  const offering = await prisma.eventType.create({
     data: {
       key: "students-offering",
       name: "Students Offering",
@@ -75,7 +75,7 @@ beforeAll(async () => {
     data: {
       name: "Student History Session",
       teamId,
-      eventTypeId: eventType.id,
+      eventTypeId: offering.id,
       interactionType: "ONE_TO_ONE",
       assignmentStrategy: AssignmentStrategy.DIRECT,
       durationSeconds: 3600,

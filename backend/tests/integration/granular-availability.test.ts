@@ -44,7 +44,7 @@ const createEvent = async (
       durationSeconds: 1800,
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com",
-      eventTypeId,
+      eventTypeId: offeringId,
       isActive: true,
       ...extra,
     });
@@ -88,7 +88,7 @@ beforeAll(async () => {
     },
   });
 
-  const eventType = await prisma.eventType.create({
+  const offering = await prisma.eventType.create({
     data: {
       key: "granular_avail_offering",
       name: "Granular Avail Offering",
@@ -101,7 +101,7 @@ beforeAll(async () => {
     superAdmin,
     teamAdmin,
     teamId: team.id,
-    eventTypeId: eventType.id,
+    eventTypeId: offering.id,
   };
 });
 

@@ -580,9 +580,9 @@ async function ensureUser(
 async function seedCatalog(authToken: string) {
   const createdEventTypes = new Map<string, { id: string; name: string }>();
 
-  for (const eventTypeDef of eventTypeDefinitions) {
+  for (const offering of eventTypeDefinitions) {
     let existing = await prisma.eventType.findUnique({
-      where: { key: eventTypeDef.key },
+      where: { key: offering.key },
     });
     if (!existing) {
       existing = (await apiRequest<{ id: string; name: string }>(
@@ -595,7 +595,7 @@ async function seedCatalog(authToken: string) {
         authToken,
       )) as never;
     }
-    createdEventTypes.set(eventTypeDef.key, {
+    createdEventTypes.set(offering.key, {
       id: existing.id,
       name: existing.name,
     });
@@ -675,7 +675,7 @@ async function main() {
 
     const createdEvents: Array<{ id: string; name: string }> = [];
     for (const eventDefinition of teamDefinition.events) {
-      const eventType = createdEventTypes.get(eventDefinition.eventTypeKey);
+      const offering = createdEventTypes.get(eventDefinition.eventTypeKey);
       const interactionType = interactionTypeKeyMap[eventDefinition.interactionKey];
 
       if (!eventType || !interactionType) {
@@ -691,7 +691,7 @@ async function main() {
         {
           name: eventDefinition.name,
           description: eventDefinition.description,
-          eventTypeId: eventType.id,
+          eventTypeId: offering.id,
           interactionType,
           assignmentStrategy: eventDefinition.assignmentStrategy,
           durationSeconds: eventDefinition.durationMinutes * 60,

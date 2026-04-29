@@ -93,7 +93,7 @@ beforeAll(async () => {
     ],
   });
 
-  const eventType = await prisma.eventType.create({
+  const offering = await prisma.eventType.create({
     data: {
       key: "session_log_offering",
       name: "Session Log Offering",
@@ -106,7 +106,7 @@ beforeAll(async () => {
     data: {
       name: "Session Log Test Event",
       teamId: team.id,
-      eventTypeId: eventType.id,
+      eventTypeId: offering.id,
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
@@ -432,7 +432,7 @@ describe("POST /api/events/:eventId/schedule-slots/:slotId/log — business logi
 
   it("returns 404 when slotId belongs to a different event", async () => {
     // Create a second event and slot
-    const eventType = await prisma.eventType.create({
+    const offering = await prisma.eventType.create({
       data: {
         key: "other_log_offering",
         name: "Other Log Offering",
@@ -444,7 +444,7 @@ describe("POST /api/events/:eventId/schedule-slots/:slotId/log — business logi
       data: {
         name: "Other Log Event",
         teamId: context.teamId,
-        eventTypeId: eventType.id,
+        eventTypeId: offering.id,
         interactionType: "ONE_TO_MANY",
         assignmentStrategy: "DIRECT",
         bookingMode: "FIXED_SLOTS",

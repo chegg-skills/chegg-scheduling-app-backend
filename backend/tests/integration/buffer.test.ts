@@ -39,7 +39,7 @@ beforeAll(async () => {
   teamId = teamRes.body.data.id;
 
   // 3. Setup Offering
-  const eventTypeRes = await request(app)
+  const offeringRes = await request(app)
     .post("/api/event-types")
     .set("Authorization", `Bearer ${adminToken}`)
     .send({ name: "Buffer Offering", key: "buffer_offering" });
@@ -51,7 +51,7 @@ beforeAll(async () => {
     .set("Authorization", `Bearer ${adminToken}`)
     .send({
       name: "Buffered Event",
-      eventTypeId,
+      eventTypeId: offeringId,
       interactionType: "ONE_TO_ONE", // Use enum directly
       durationSeconds: 3600, // 1 hour
       locationType: "VIRTUAL",
