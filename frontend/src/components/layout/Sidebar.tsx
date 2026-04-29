@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
@@ -59,7 +59,16 @@ export function Sidebar() {
         }}
       >
         {!isCollapsed && (
-          <Box sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+          <Box
+            component={Link}
+            to="/dashboard"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              overflow: 'hidden',
+              textDecoration: 'none',
+            }}
+          >
             <img
               src={LogoOrange}
               alt="Chegg Skills"

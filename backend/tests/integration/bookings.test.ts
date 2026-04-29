@@ -26,7 +26,7 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
 
 let adminToken: string;
 let teamId: string;
-let offeringId: string;
+let eventTypeId: string;
 let coachId: string;
 let coachToken: string;
 let coach2Id: string;
@@ -78,7 +78,7 @@ beforeAll(async () => {
       updatedById: admin.id,
     },
   });
-  offeringId = offering.id;
+  eventTypeId = eventType.id;
 
 });
 

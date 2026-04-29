@@ -32,9 +32,9 @@ export const eventTableColumns: Array<{
 }> = [
     { label: 'Event', sortKey: 'event' },
     {
-      label: 'Event Category',
+      label: 'Event Type',
       sortKey: 'eventType',
-      tooltip: 'The category this event belongs to (e.g., Tutorial).',
+      tooltip: 'The event type this event belongs to (e.g., Tutorial).',
     },
     { label: 'Duration', sortKey: 'duration' },
     { label: 'Coaches', sortKey: 'coaches' },

@@ -26,7 +26,7 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
 describe("Concurrency Integration Tests", () => {
   let adminToken: string;
   let teamId: string;
-  let offeringId: string;
+  let eventTypeId: string;
   let coachId: string;
   let eventId: string;
 
@@ -63,7 +63,7 @@ describe("Concurrency Integration Tests", () => {
         updatedById: admin.id,
       },
     });
-    offeringId = offering.id;
+    eventTypeId = eventType.id;
 
   });
 

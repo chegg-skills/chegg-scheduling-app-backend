@@ -22,7 +22,11 @@ export const getBookingsReport = async (
   const bookings = await prisma.booking.findMany({
     where,
     include: {
-      event: true,
+      event: {
+        include: {
+          eventType: true,
+        },
+      },
       coach: true,
       team: true,
       student: true,
@@ -36,6 +40,7 @@ export const getBookingsReport = async (
     Status: b.status,
     Team: b.team.name,
     Event: b.event.name,
+    "Event Type": b.event.eventType.name,
     Coach: `${b.coach.firstName} ${b.coach.lastName}`,
     "Student Name": b.studentName,
     "Student Email": b.studentEmail,

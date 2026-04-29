@@ -6,7 +6,7 @@ export const eventFormSchema = z
   .object({
     name: z.string().min(1, 'Name is required'),
     description: z.string().optional(),
-    eventTypeId: z.string().min(1, 'Event Category is required'),
+    eventTypeId: z.string().min(1, 'Event Type is required'),
     interactionType: z.enum(['ONE_TO_ONE', 'ONE_TO_MANY', 'MANY_TO_ONE', 'MANY_TO_MANY'] as const),
     locationType: z.enum(['VIRTUAL', 'IN_PERSON', 'CUSTOM'] as const),
     locationValue: z.string().min(1, 'Location is required'),

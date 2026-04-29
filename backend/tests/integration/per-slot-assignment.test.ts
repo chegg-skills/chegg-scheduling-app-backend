@@ -26,7 +26,7 @@ const getNextUtcWeekdayAt = (targetDay: number, hour: number, minute = 0): Date 
 describe("Per-Slot Coach Assignment Integration Tests", () => {
     let adminToken: string;
     let teamId: string;
-    let offeringId: string;
+    let eventTypeId: string;
     let coach1Id: string;
     let coach2Id: string;
 

@@ -7,13 +7,13 @@ import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { EventTypeTable } from '@/components/event-offerings/EventTypeTable'
-import { EventTypeForm } from '@/components/event-offerings/EventTypeForm'
+import { EventTypeTable } from '@/components/event-types/EventTypeTable'
+import { EventTypeForm } from '@/components/event-types/EventTypeForm'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useEventTypeStats } from '@/hooks/queries/useStats'
 import type { StatsTimeframe } from '@/types'
 
-export function OfferingsPage() {
+export function EventTypesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const { data: eventTypes = [], isLoading, error } = useEventTypes()
@@ -57,7 +57,7 @@ export function OfferingsPage() {
     <Box>
       <PageHeader
         title="Event Types"
-        subtitle="Manage available event type categories."
+        subtitle="Manage available event types."
         actions={
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus size={16} /> New event type

@@ -15,10 +15,6 @@ import { INTERACTION_TYPE_OPTIONS } from '@/constants/interactionTypes'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionType } from '@/types'
 
-/**
- * Handles eventTypeId and interactionType fields.
- * Consumes the EventForm context.
- */
 export function EventResourceFields() {
   const {
     register,
@@ -28,16 +24,16 @@ export function EventResourceFields() {
   } = useFormContext<EventFormValues>()
   const { data: allEventTypes = [] } = useEventTypes()
 
-  const offerings = allEventTypes.filter((o) => o.isActive)
+  const eventTypes = allEventTypes.filter((et) => et.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
 
   return (
     <Stack spacing={2}>
       <FormField
-        label="Event category"
+        label="Event type"
         htmlFor="eventTypeId"
         error={errors.eventTypeId?.message}
-        info="The category or type of service for this event (e.g., Tutorial)."
+        info="The type of service for this event (e.g., Tutorial)."
         required
       >
         <Select
@@ -46,10 +42,10 @@ export function EventResourceFields() {
           value={watch('eventTypeId') || ''}
           {...register('eventTypeId')}
         >
-          <MenuItem value="">Select a category…</MenuItem>
-          {offerings.map((o) => (
-            <MenuItem key={o.id} value={o.id}>
-              {toTitleCase(o.name)}
+          <MenuItem value="">Select an event type…</MenuItem>
+          {eventTypes.map((et) => (
+            <MenuItem key={et.id} value={et.id}>
+              {toTitleCase(et.name)}
             </MenuItem>
           ))}
         </Select>

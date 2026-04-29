@@ -57,6 +57,10 @@ export function PublicBookingPage() {
     coachDetails,
     selectedSlotCoach,
     eventDetailsError,
+    isFixedSlots,
+    availableDates,
+    isLoadingDates,
+    handleMonthChange,
   } = usePublicBookingState()
 
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
@@ -172,6 +176,10 @@ export function PublicBookingPage() {
               studentInfo={studentInfo}
               setStudentInfo={setStudentInfo}
               maxBookingWindowDays={eventDetails?.maxBookingWindowDays}
+              isFixedSlots={isFixedSlots}
+              availableDates={availableDates}
+              isLoadingDates={isLoadingDates}
+              onMonthChange={handleMonthChange}
             />
           </Box>
 

@@ -9,6 +9,7 @@ import {
   usePublicCoachBySlug,
   usePublicCoachEventsBySlug,
   usePublicSlots,
+  usePublicSlotDates,
 } from '@/hooks/queries/usePublicBooking'
 import { bookingsApi } from '@/api/bookings'
 import type { PublicEventSummary } from '@/types'
@@ -49,6 +50,7 @@ export function usePublicBookingState() {
   const [selectedEvent, setSelectedEvent] = React.useState<string | null>(null)
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date())
   const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null)
+  const [calendarMonth, setCalendarMonth] = React.useState<Date>(new Date())
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [studentInfo, setStudentInfo] = React.useState({
     name: '',
@@ -204,6 +206,18 @@ export function usePublicBookingState() {
     preferredCoachId
   )
 
+  const isFixedSlots = eventDetails?.bookingMode === 'FIXED_SLOTS'
+  const { availableDates, isLoading: isLoadingDates } = usePublicSlotDates(
+    selectedEvent || '',
+    calendarMonth,
+    isFixedSlots,
+    preferredCoachId
+  )
+
+  const handleMonthChange = React.useCallback((date: Date) => {
+    setCalendarMonth(date)
+  }, [])
+
   const selectedSlotCoach = React.useMemo(() => {
     if (!selectedSlot || !slots.length) return null
     const slot = slots.find((s) => s.startTime === selectedSlot)
@@ -288,5 +302,9 @@ export function usePublicBookingState() {
     coachDetails,
     selectedSlotCoach,
     eventDetailsError,
+    isFixedSlots,
+    availableDates,
+    isLoadingDates,
+    handleMonthChange,
   }
 }

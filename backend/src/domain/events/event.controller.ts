@@ -34,9 +34,9 @@ const createEventType = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.createEventType(req.body, caller);
+    const eventType = await eventService.createEventType(req.body, caller);
 
-    sendSuccessResponse(res, StatusCodes.CREATED, offering, "Event type created successfully.");
+    sendSuccessResponse(res, StatusCodes.CREATED, eventType, "Event type created successfully.");
   } catch (error) {
     next(error);
   }
@@ -63,13 +63,13 @@ const updateEventType = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.updateEventType(
+    const eventType = await eventService.updateEventType(
       req.params.eventTypeId as string,
       req.body,
       caller,
     );
 
-    sendSuccessResponse(res, StatusCodes.OK, offering, "Event type updated successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, eventType, "Event type updated successfully.");
   } catch (error) {
     next(error);
   }
@@ -82,9 +82,9 @@ const deleteEventType = async (
 ): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const offering = await eventService.deleteEventType(req.params.eventTypeId as string, caller);
+    const eventType = await eventService.deleteEventType(req.params.eventTypeId as string, caller);
 
-    sendSuccessResponse(res, StatusCodes.OK, offering, "Event type deleted successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, eventType, "Event type deleted successfully.");
   } catch (error) {
     next(error);
   }

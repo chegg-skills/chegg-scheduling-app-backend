@@ -59,8 +59,8 @@ export function EventTypeTable({ eventTypes }: EventTypeTableProps) {
       {
         title: newStatus ? 'Mark as active' : 'Mark as inactive',
         message: newStatus
-          ? `Are you sure you want to mark "${toTitleCase(eventType.name)}" as active? This will make it available for new events.`
-          : `Are you sure you want to mark "${toTitleCase(eventType.name)}" as inactive? This will hide it from new selections but keep existing events linked.`,
+          ? `Are you sure you want to mark event type "${toTitleCase(eventType.name)}" as active? This will make it available for new events.`
+          : `Are you sure you want to mark event type "${toTitleCase(eventType.name)}" as inactive? This will hide it from new selections but keep existing events linked.`,
         actionName: 'Update',
       }
     )
@@ -69,7 +69,7 @@ export function EventTypeTable({ eventTypes }: EventTypeTableProps) {
   const handleDelete = (eventType: EventType) => {
     handleAction(deleteEventType, eventType.id, {
       title: 'Delete event type',
-      message: `Are you sure you want to PERMANENTLY delete "${toTitleCase(eventType.name)}"?\n\nThis action will only succeed if no events are currently using this event type.`,
+      message: `Are you sure you want to PERMANENTLY delete event type "${toTitleCase(eventType.name)}"?\n\nThis action will only succeed if no events are currently using this event type.`,
       actionName: 'Delete',
     })
   }

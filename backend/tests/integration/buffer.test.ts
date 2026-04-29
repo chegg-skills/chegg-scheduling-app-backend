@@ -7,7 +7,7 @@ import { prisma } from "../../src/shared/db/prisma";
 let adminToken: string;
 let coachId: string;
 let teamId: string;
-let offeringId: string;
+let eventTypeId: string;
 let interactionTypeId: string;
 let eventId: string;
 
@@ -43,7 +43,7 @@ beforeAll(async () => {
     .post("/api/event-types")
     .set("Authorization", `Bearer ${adminToken}`)
     .send({ name: "Buffer Offering", key: "buffer_offering" });
-  offeringId = offeringRes.body.data.id;
+  eventTypeId = eventTypeRes.body.data.id;
 
   // 4. Create Event with 15-minute buffer
   const eventRes = await request(app)

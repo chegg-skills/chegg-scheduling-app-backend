@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react'
 import Box from '@mui/material/Box'
-import { Plus } from 'lucide-react'
+import { Plus, LayoutList, Calendar as CalendarIcon } from 'lucide-react'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { alpha, useTheme } from '@mui/material/styles'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { Spinner } from '@/components/shared/ui/Spinner'
@@ -18,6 +21,8 @@ import { SlotAttendeesDialog } from './dialogs/SlotAttendeesDialog'
 import { LogSessionDialog } from './dialogs/LogSessionDialog'
 import { ScheduleSeriesTable, type ScheduleSeriesGroup } from './ScheduleSeriesTable'
 import { ScheduleSeriesTrackerView } from './ScheduleSeriesTrackerView'
+import { ScheduleCalendar } from './ScheduleCalendar'
+import { ScheduleSlotDetailModal } from './dialogs/ScheduleSlotDetailModal'
 
 interface Props {
   event: Event
@@ -27,6 +32,7 @@ interface Props {
 }
 
 export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers }: Props) {
+  const theme = useTheme()
   const { mutate: create, isPending: creating } = useCreateEventScheduleSlot(event.id)
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
   const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
@@ -38,6 +44,8 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
   const [viewingAttendeesSlot, setViewingAttendeesSlot] = useState<EventScheduleSlot | null>(null)
   const [loggingSlot, setLoggingSlot] = useState<EventScheduleSlot | null>(null)
   const [activeSeriesId, setActiveSeriesId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+  const [viewingSlot, setViewingSlot] = useState<EventScheduleSlot | null>(null)
 
   // Grouping logic
   const seriesGroups = useScheduleSeriesGroups(slots)
@@ -146,17 +154,61 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
             title="Scheduled Sessions"
             description="Recurring series are grouped for better visibility."
             action={
-              <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
-                Add Session
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(_, next) => next && setViewMode(next)}
+                  size="small"
+                  sx={{
+                    bgcolor: 'background.paper',
+                    '& .MuiToggleButton-root': {
+                      px: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      height: 32,
+                      '&.Mui-selected': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        color: 'primary.main',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.12),
+                        },
+                      },
+                    },
+                  }}
+                >
+                  <ToggleButton value="list">
+                    <LayoutList size={14} style={{ marginRight: 8 }} />
+                    List
+                  </ToggleButton>
+                  <ToggleButton value="calendar">
+                    <CalendarIcon size={14} style={{ marginRight: 8 }} />
+                    Calendar
+                  </ToggleButton>
+                </ToggleButtonGroup>
+
+                <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
+                  Add Session
+                </Button>
+              </Box>
             }
           />
 
-          <ScheduleSeriesTable
-            groups={seriesGroups}
-            onViewTracker={(group) => setActiveSeriesId(group.id)}
-            onRemoveSeries={handleRemoveSeries}
-          />
+          {viewMode === 'list' ? (
+            <ScheduleSeriesTable
+              groups={seriesGroups}
+              onViewTracker={(group) => setActiveSeriesId(group.id)}
+              onRemoveSeries={handleRemoveSeries}
+            />
+          ) : (
+            <ScheduleCalendar
+              slots={slots}
+              onViewDetail={setViewingSlot}
+            />
+          )}
         </>
       ) : (
         <ScheduleSeriesTrackerView
@@ -170,6 +222,17 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
           onCancelSlot={handleCancelSlot}
         />
       )}
+
+      <ScheduleSlotDetailModal
+        slot={viewingSlot}
+        event={event}
+        onClose={() => setViewingSlot(null)}
+        onEdit={handleOpenEdit}
+        onRemove={handleRemoveSlot}
+        onViewAttendees={handleOpenAttendees}
+        onLogSession={handleOpenLogSession}
+        onCancel={handleCancelSlot}
+      />
 
       <UpsertScheduleSlotDialog
         isOpen={isModalOpen}

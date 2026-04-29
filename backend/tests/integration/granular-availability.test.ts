@@ -30,7 +30,7 @@ const getNextLocalWeekdayAt = (targetDay: number, hour: number, minute = 0): Dat
 const createEvent = async (
   teamId: string,
   token: string,
-  offeringId: string,
+  eventTypeId: string,
   extra: Record<string, unknown> = {},
 ) => {
   return request(app)

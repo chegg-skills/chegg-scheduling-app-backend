@@ -159,17 +159,17 @@ export const getManagedEvent = async (
   return event;
 };
 
-export const getActiveEventType = async (offeringId: string) => {
-  const offering = await prisma.eventType.findUnique({
-    where: { id: offeringId },
+export const getActiveEventType = async (eventTypeId: string) => {
+  const eventType = await prisma.eventType.findUnique({
+    where: { id: eventTypeId },
   });
 
-  if (!offering || !offering.isActive) {
+  if (!eventType || !eventType.isActive) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       "Selected event type is invalid or inactive.",
     );
   }
 
-  return offering;
+  return eventType;
 };

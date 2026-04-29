@@ -47,7 +47,7 @@ beforeAll(async () => {
       sortOrder: 1,
       isActive: true,
     });
-  const offeringId = offeringRes.body.data.id;
+  const eventTypeId = eventTypeRes.body.data.id;
 
   const interactionTypeId = "ONE_TO_ONE";
 

@@ -691,7 +691,7 @@ async function main() {
         {
           name: eventDefinition.name,
           description: eventDefinition.description,
-          eventTypeId: offering.id,
+          eventTypeId: offering!.id,
           interactionType,
           assignmentStrategy: eventDefinition.assignmentStrategy,
           durationSeconds: eventDefinition.durationMinutes * 60,
