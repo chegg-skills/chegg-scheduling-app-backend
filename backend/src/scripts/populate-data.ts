@@ -589,7 +589,7 @@ async function seedCatalog(authToken: string) {
         "POST",
         "/event-types",
         {
-          ...eventTypeDef,
+          ...offering,
           isActive: true,
         },
         authToken,
@@ -678,7 +678,7 @@ async function main() {
       const offering = createdEventTypes.get(eventDefinition.eventTypeKey);
       const interactionType = interactionTypeKeyMap[eventDefinition.interactionKey];
 
-      if (!eventType || !interactionType) {
+      if (!offering || !interactionType) {
         throw new Error(`Missing seed catalog dependency for ${eventDefinition.name}`);
       }
 
@@ -691,7 +691,7 @@ async function main() {
         {
           name: eventDefinition.name,
           description: eventDefinition.description,
-          eventTypeId: offering.id,
+          eventTypeId: offering!.id,
           interactionType,
           assignmentStrategy: eventDefinition.assignmentStrategy,
           durationSeconds: eventDefinition.durationMinutes * 60,
