@@ -63,7 +63,7 @@ describe("Concurrency Integration Tests", () => {
         updatedById: admin.id,
       },
     });
-    eventTypeId = eventType.id;
+    eventTypeId = offering.id;
 
   });
 
@@ -77,7 +77,7 @@ describe("Concurrency Integration Tests", () => {
       data: {
         name: "Concurrency Test Event",
         teamId,
-        eventTypeId: offeringId,
+        eventTypeId: eventTypeId,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600,

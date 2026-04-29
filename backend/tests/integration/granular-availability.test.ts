@@ -44,7 +44,7 @@ const createEvent = async (
       durationSeconds: 1800,
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com",
-      eventTypeId: offeringId,
+      eventTypeId: eventTypeId,
       isActive: true,
       ...extra,
     });
