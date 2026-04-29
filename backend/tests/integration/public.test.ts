@@ -37,7 +37,7 @@ beforeAll(async () => {
   superAdminToken = admin.token;
 
   // Create Offering
-  const offeringRes = await request(app)
+  const eventTypeRes = await request(app)
     .post("/api/event-types")
     .set("Authorization", `Bearer ${superAdminToken}`)
     .send({

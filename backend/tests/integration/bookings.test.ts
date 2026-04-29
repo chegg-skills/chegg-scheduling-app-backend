@@ -78,7 +78,7 @@ beforeAll(async () => {
       updatedById: admin.id,
     },
   });
-  eventTypeId = eventType.id;
+  eventTypeId = offering.id;
 
 });
 
