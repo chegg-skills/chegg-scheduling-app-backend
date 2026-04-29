@@ -202,6 +202,7 @@ export function EventDetailPage() {
             event={event}
             teamMembers={teamMembers}
             showAddModal={showAddCoachModal}
+            onOpenAddModal={() => setShowAddCoachModal(true)}
             onCloseAddModal={() => setShowAddCoachModal(false)}
             onViewUser={setViewingUserId}
           />

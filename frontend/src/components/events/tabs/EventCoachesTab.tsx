@@ -5,6 +5,7 @@ interface EventCoachesTabProps {
   event: Event
   teamMembers: TeamMember[]
   showAddModal: boolean
+  onOpenAddModal: () => void
   onCloseAddModal: () => void
   onViewUser: (userId: string) => void
 }
@@ -13,6 +14,7 @@ export function EventCoachesTab({
   event,
   teamMembers,
   showAddModal,
+  onOpenAddModal,
   onCloseAddModal,
   onViewUser,
 }: EventCoachesTabProps) {
@@ -24,6 +26,7 @@ export function EventCoachesTab({
       assignmentStrategy={event.assignmentStrategy}
       minCoachCount={event.minCoachCount}
       showAddModalOverride={showAddModal}
+      onOpenAddModal={onOpenAddModal}
       onCloseAddModal={onCloseAddModal}
       onViewUser={onViewUser}
     />
