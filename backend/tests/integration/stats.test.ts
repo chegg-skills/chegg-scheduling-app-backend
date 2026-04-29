@@ -158,7 +158,7 @@ describe("GET /api/v1/stats/dashboard", () => {
 describe("GET /api/v1/stats/bookings", () => {
   it("scopes booking stats to the signed-in coach", async () => {
     const res = await request(app)
-      .get("/api/v1/stats/bookings?timeframe=month")
+      .get("/api/v1/stats/bookings?timeframe=all")
       .set("Authorization", `Bearer ${coachToken}`);
 
     expect(res.status).toBe(200);
