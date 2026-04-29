@@ -1,7 +1,7 @@
 import {
   AssignmentStrategy,
   EventLocationType,
-  type EventOffering as EventOfferingModel,
+  type EventType as EventTypeModel,
   Prisma,
   UserRole,
   SessionLeadershipStrategy,
@@ -15,7 +15,7 @@ import { safeUserSelect, type CallerContext } from "../../shared/utils/userUtils
 import { INTERACTION_TYPE_CAPS } from "../../shared/constants/interactionType";
 
 export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
-  offering: true,
+  eventType: true,
   coaches: {
     where: { isActive: true },
     orderBy: { coachOrder: "asc" },
@@ -42,7 +42,7 @@ export type SafeEvent = Prisma.EventGetPayload<{
   include: typeof eventInclude;
 }>;
 
-export type SafeEventOffering = EventOfferingModel;
+export type SafeEventType = EventTypeModel;
 
 export type ListEventsOptions = {
   page?: number;
@@ -52,7 +52,7 @@ export type ListEventsOptions = {
 export type CreateEventInput = {
   name: string;
   description?: string | null;
-  offeringId?: string;
+  eventTypeId?: string;
   interactionType?: InteractionType;
   assignmentStrategy?: string;
   durationSeconds?: number;
@@ -81,7 +81,7 @@ export type CreateEventInput = {
 
 export type UpdateEventInput = Partial<CreateEventInput>;
 
-export type UpsertEventOfferingInput = {
+export type UpsertEventTypeInput = {
   key?: string;
   name?: string;
   description?: string;
@@ -159,15 +159,15 @@ export const getManagedEvent = async (
   return event;
 };
 
-export const getActiveOffering = async (offeringId: string) => {
-  const offering = await prisma.eventOffering.findUnique({
+export const getActiveEventType = async (offeringId: string) => {
+  const offering = await prisma.eventType.findUnique({
     where: { id: offeringId },
   });
 
   if (!offering || !offering.isActive) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
-      "Selected event offering is invalid or inactive.",
+      "Selected event type is invalid or inactive.",
     );
   }
 

@@ -5,7 +5,7 @@ import {
   type InteractionType,
 } from "../../shared/constants/interactionType";
 import {
-  getActiveOffering,
+  getActiveEventType,
   isValidSessionLeadershipStrategy,
   type CreateEventInput,
   type SafeEvent,
@@ -16,7 +16,7 @@ import { resolveEventSchedulingConfig } from "./eventScheduling.service";
 import { CreateEventSchema, UpdateEventSchema } from "./event.schema";
 
 type ResolvedEventMutationContext = {
-  offering: Awaited<ReturnType<typeof getActiveOffering>>;
+  eventType: Awaited<ReturnType<typeof getActiveEventType>>;
   interactionType: InteractionType;
   assignmentStrategy: AssignmentStrategy;
   sessionLeadershipStrategy: SessionLeadershipStrategy;
@@ -81,7 +81,7 @@ export const resolveCreateEventContext = async (
 ): Promise<ResolvedEventMutationContext> => {
   const validated = CreateEventSchema.body.parse(payload);
 
-  const offering = await getActiveOffering(validated.offeringId);
+  const eventType = await getActiveEventType(validated.eventTypeId);
   const interactionType = validated.interactionType as InteractionType;
   const assignmentStrategy = validated.assignmentStrategy;
 
@@ -103,7 +103,7 @@ export const resolveCreateEventContext = async (
   });
 
   return {
-    offering,
+    eventType,
     interactionType,
     assignmentStrategy,
     sessionLeadershipStrategy,
@@ -121,11 +121,11 @@ export const resolveUpdateEventContext = async ({
 }): Promise<ResolvedEventMutationContext> => {
   const validated = UpdateEventSchema.body.parse(payload);
 
-  const nextOfferingId = validated.offeringId ?? existingEvent.offeringId;
+  const nextEventTypeId = validated.eventTypeId ?? existingEvent.eventTypeId;
   const nextInteractionType = (validated.interactionType ??
     existingEvent.interactionType) as InteractionType;
 
-  const offering = await getActiveOffering(nextOfferingId);
+  const eventType = await getActiveEventType(nextEventTypeId);
   const assignmentStrategy = validated.assignmentStrategy ?? existingEvent.assignmentStrategy;
 
   const { sessionLeadershipStrategy, fixedLeadCoachId } = resolveSessionLeadershipConfig({
@@ -148,7 +148,7 @@ export const resolveUpdateEventContext = async ({
   });
 
   return {
-    offering,
+    eventType,
     interactionType: nextInteractionType,
     assignmentStrategy,
     sessionLeadershipStrategy,
@@ -174,7 +174,7 @@ export const buildEventCreateData = ({
     name: validated.name,
     publicBookingSlug: createPublicBookingSlug(validated.name, "event"),
     description: validated.description ?? undefined,
-    offering: { connect: { id: context.offering.id } },
+    eventType: { connect: { id: context.eventType.id } },
     interactionType: context.interactionType,
     assignmentStrategy: context.assignmentStrategy,
     durationSeconds: validated.durationSeconds,
@@ -240,7 +240,7 @@ export const buildEventUpdateData = ({
 
   const updateData: Prisma.EventUpdateInput = {
     updatedBy: { connect: { id: callerId } },
-    offering: { connect: { id: context.offering.id } },
+    eventType: { connect: { id: context.eventType.id } },
     interactionType: context.interactionType,
     assignmentStrategy: context.assignmentStrategy,
     sessionLeadershipStrategy: context.sessionLeadershipStrategy,
@@ -312,7 +312,7 @@ export const buildDuplicateEventData = ({
     name: `Copy of ${sourceEvent.name}`,
     publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
     description: sourceEvent.description ?? undefined,
-    offering: { connect: { id: sourceEvent.offeringId } },
+    eventType: { connect: { id: sourceEvent.eventTypeId } },
     interactionType: sourceEvent.interactionType,
     assignmentStrategy: sourceEvent.assignmentStrategy,
     durationSeconds: sourceEvent.durationSeconds,

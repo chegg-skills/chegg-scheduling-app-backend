@@ -10,13 +10,13 @@ import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Select } from '@/components/shared/form/Select'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { useEventOfferings } from '@/hooks/queries/useEventOfferings'
+import { useEventTypes } from '@/hooks/queries/useEventTypes'
 import { INTERACTION_TYPE_OPTIONS } from '@/constants/interactionTypes'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionType } from '@/types'
 
 /**
- * Handles offeringId and interactionType fields.
+ * Handles eventTypeId and interactionType fields.
  * Consumes the EventForm context.
  */
 export function EventResourceFields() {
@@ -26,25 +26,25 @@ export function EventResourceFields() {
     control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
-  const { data: offeringsData } = useEventOfferings()
+  const { data: allEventTypes = [] } = useEventTypes()
 
-  const offerings = (offeringsData?.offerings ?? []).filter((o) => o.isActive)
+  const offerings = allEventTypes.filter((o) => o.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
 
   return (
     <Stack spacing={2}>
       <FormField
         label="Event category"
-        htmlFor="offeringId"
-        error={errors.offeringId?.message}
+        htmlFor="eventTypeId"
+        error={errors.eventTypeId?.message}
         info="The category or type of service for this event (e.g., Tutorial)."
         required
       >
         <Select
-          id="offeringId"
-          hasError={!!errors.offeringId}
-          value={watch('offeringId') || ''}
-          {...register('offeringId')}
+          id="eventTypeId"
+          hasError={!!errors.eventTypeId}
+          value={watch('eventTypeId') || ''}
+          {...register('eventTypeId')}
         >
           <MenuItem value="">Select a category…</MenuItem>
           {offerings.map((o) => (

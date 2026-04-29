@@ -8,7 +8,7 @@ export const statsKeys = {
   users: (params?: StatsParams) => [...statsKeys.all, 'users', params] as const,
   teams: (params?: StatsParams) => [...statsKeys.all, 'teams', params] as const,
   events: (params?: StatsParams) => [...statsKeys.all, 'events', params] as const,
-  offerings: (params?: StatsParams) => [...statsKeys.all, 'offerings', params] as const,
+  eventTypes: (params?: StatsParams) => [...statsKeys.all, 'event-types', params] as const,
   interactionTypes: (params?: StatsParams) =>
     [...statsKeys.all, 'interaction-types', params] as const,
   trends: (params?: StatsParams) => [...statsKeys.all, 'trends', params] as const,
@@ -63,10 +63,10 @@ export function useEventStats(timeframe: StatsParams['timeframe'], teamId?: stri
   )
 }
 
-export function useOfferingStats(timeframe: StatsParams['timeframe']) {
+export function useEventTypeStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.offerings(params), ({ signal }) =>
-    statsApi.getOfferings(params, signal).then((r) => r.data.data)
+  return useStatsQuery(statsKeys.eventTypes(params), ({ signal }) =>
+    statsApi.getEventTypes(params, signal).then((r) => r.data.data)
   )
 }
 

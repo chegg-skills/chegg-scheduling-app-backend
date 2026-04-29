@@ -28,8 +28,8 @@ router
   .get(validate(StatsQuerySchema), statsController.getEventStats)
   .all(methodNotAllowed);
 router
-  .route("/offerings")
-  .get(validate(StatsQuerySchema), statsController.getOfferingStats)
+  .route("/event-types")
+  .get(validate(StatsQuerySchema), statsController.getEventTypeStats)
   .all(methodNotAllowed);
 router
   .route("/interaction-types")

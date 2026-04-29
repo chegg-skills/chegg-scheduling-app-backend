@@ -19,7 +19,7 @@ const uniqueValue = (prefix: string): string =>
 
 const createOffering = async (token: string) => {
   return request(app)
-    .post("/api/event-offerings")
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${token}`)
     .send({
       key: uniqueValue("mentoring"),
@@ -120,7 +120,7 @@ describe("Team member routes", () => {
       .send({
         name: "Protected Membership Event",
         description: "Event blocking member removal",
-        offeringId: offering.body.data.id,
+        eventTypeId: offering.body.data.id,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: "DIRECT",
         durationSeconds: 1800,

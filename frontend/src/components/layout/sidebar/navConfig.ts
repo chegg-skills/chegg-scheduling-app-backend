@@ -63,8 +63,8 @@ export const navItems: NavItem[] = [
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
   },
   {
-    to: '/event-offerings',
-    label: 'Offerings',
+    to: '/event-types',
+    label: 'Event Types',
     Icon: BookOpen,
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
   },

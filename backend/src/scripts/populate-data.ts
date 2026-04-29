@@ -22,7 +22,7 @@ type DemoMemberDefinition = {
 type DemoEventDefinition = {
   name: string;
   description: string;
-  offeringKey: string;
+  eventTypeKey: string;
   interactionKey: string;
   assignmentStrategy: AssignmentStrategy;
   durationMinutes: number;
@@ -44,7 +44,7 @@ type SeedUser = {
   email: string;
 };
 
-const offeringDefinitions = [
+const eventTypeDefinitions = [
   {
     key: "mentorship",
     name: "Mentorship Sessions",
@@ -122,7 +122,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "System Design Review",
         description: "Architecture reviews for scalable applications and platform design.",
-        offeringKey: "project_review",
+        eventTypeKey: "project_review",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 60,
@@ -130,7 +130,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "API Debugging Lab",
         description: "Hands-on help with backend bugs, integrations, and service failures.",
-        offeringKey: "qa",
+        eventTypeKey: "qa",
         interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
         durationMinutes: 45,
@@ -167,7 +167,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "ML Model Review",
         description: "Discuss model quality, validation strategy, and practical improvements.",
-        offeringKey: "mentorship",
+        eventTypeKey: "mentorship",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 60,
@@ -175,7 +175,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "Experiment Design Office Hours",
         description: "Support for A/B testing, feature evaluation, and experiment setup.",
-        offeringKey: "live_lessons",
+        eventTypeKey: "live_lessons",
         interactionKey: "one_to_many",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 45,
@@ -212,7 +212,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "Portfolio Critique",
         description: "Detailed feedback for case studies, resumes, and design storytelling.",
-        offeringKey: "portfolio_review",
+        eventTypeKey: "portfolio_review",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 45,
@@ -220,7 +220,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "Figma Design Review",
         description: "Collaborative design reviews for interfaces, prototypes, and usability.",
-        offeringKey: "project_review",
+        eventTypeKey: "project_review",
         interactionKey: "one_to_many",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 60,
@@ -257,7 +257,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "Security Audit Clinic",
         description: "Walk through vulnerabilities, checklists, and remediation strategies.",
-        offeringKey: "project_review",
+        eventTypeKey: "project_review",
         interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 60,
@@ -265,7 +265,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "Threat Modeling Session",
         description: "Map risks and attack surfaces for product or infrastructure changes.",
-        offeringKey: "mentorship",
+        eventTypeKey: "mentorship",
         interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
         durationMinutes: 45,
@@ -302,7 +302,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "AI Pair Programming",
         description: "Use AI tools effectively for code generation, refactors, and debugging.",
-        offeringKey: "live_lessons",
+        eventTypeKey: "live_lessons",
         interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
         durationMinutes: 45,
@@ -310,7 +310,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "LLM App Architecture Review",
         description: "Design scalable and secure AI-powered application workflows.",
-        offeringKey: "project_review",
+        eventTypeKey: "project_review",
         interactionKey: "many_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 60,
@@ -347,7 +347,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "Dashboard Review Session",
         description: "Improve visual storytelling and executive reporting dashboards.",
-        offeringKey: "analytics_consulting",
+        eventTypeKey: "analytics_consulting",
         interactionKey: "one_to_one",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 45,
@@ -355,7 +355,7 @@ const demoTeams: DemoTeamDefinition[] = [
       {
         name: "SQL Optimization Workshop",
         description: "Tune heavy queries and improve reporting workflows with experts.",
-        offeringKey: "qa",
+        eventTypeKey: "qa",
         interactionKey: "one_to_many",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationMinutes: 60,
@@ -534,7 +534,7 @@ async function resetDemoDataKeepingAdmin(adminId?: string) {
   await prisma.event.deleteMany();
   await prisma.teamMember.deleteMany();
   await prisma.team.deleteMany();
-  await prisma.eventOffering.deleteMany();
+  await prisma.eventType.deleteMany();
 
   if (adminId) {
     await prisma.user.deleteMany({ where: { id: { not: adminId } } });
@@ -578,16 +578,16 @@ async function ensureUser(
 }
 
 async function seedCatalog(authToken: string) {
-  const createdOfferings = new Map<string, { id: string; name: string }>();
+  const createdEventTypes = new Map<string, { id: string; name: string }>();
 
-  for (const offering of offeringDefinitions) {
-    let existing = await prisma.eventOffering.findUnique({
+  for (const offering of eventTypeDefinitions) {
+    let existing = await prisma.eventType.findUnique({
       where: { key: offering.key },
     });
     if (!existing) {
       existing = (await apiRequest<{ id: string; name: string }>(
         "POST",
-        "/event-offerings",
+        "/event-types",
         {
           ...offering,
           isActive: true,
@@ -595,13 +595,13 @@ async function seedCatalog(authToken: string) {
         authToken,
       )) as never;
     }
-    createdOfferings.set(offering.key, {
+    createdEventTypes.set(offering.key, {
       id: existing.id,
       name: existing.name,
     });
   }
 
-  return { createdOfferings };
+  return { createdEventTypes };
 }
 
 async function ensureCoachAvailability(userIds: string[]) {
@@ -624,7 +624,7 @@ async function main() {
   const { token, userId } = await ensureAuthenticatedAdmin();
   await resetDemoDataKeepingAdmin(userId);
 
-  const { createdOfferings } = await seedCatalog(token);
+  const { createdEventTypes } = await seedCatalog(token);
 
   const seededTeams: Array<{
     key: string;
@@ -675,7 +675,7 @@ async function main() {
 
     const createdEvents: Array<{ id: string; name: string }> = [];
     for (const eventDefinition of teamDefinition.events) {
-      const offering = createdOfferings.get(eventDefinition.offeringKey);
+      const offering = createdEventTypes.get(eventDefinition.eventTypeKey);
       const interactionType = interactionTypeKeyMap[eventDefinition.interactionKey];
 
       if (!offering || !interactionType) {
@@ -691,7 +691,7 @@ async function main() {
         {
           name: eventDefinition.name,
           description: eventDefinition.description,
-          offeringId: offering.id,
+          eventTypeId: offering.id,
           interactionType,
           assignmentStrategy: eventDefinition.assignmentStrategy,
           durationSeconds: eventDefinition.durationMinutes * 60,

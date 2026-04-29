@@ -41,8 +41,8 @@ const QUICK_LINKS: QuickLink[] = [
     roles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
   },
   {
-    label: 'Offerings',
-    to: '/event-offerings',
+    label: 'Event Types',
+    to: '/event-types',
     icon: <Layers size={24} />,
     roles: ['SUPER_ADMIN'],
   },

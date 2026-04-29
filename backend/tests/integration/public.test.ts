@@ -38,7 +38,7 @@ beforeAll(async () => {
 
   // Create Offering
   const offeringRes = await request(app)
-    .post("/api/event-offerings")
+    .post("/api/event-types")
     .set("Authorization", `Bearer ${superAdminToken}`)
     .send({
       key: "public-offering",
@@ -94,7 +94,7 @@ beforeAll(async () => {
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com/session",
       isActive: true,
-      offeringId,
+      eventTypeId: offeringId,
       interactionType: interactionTypeId,
       coCoachUserIds: [coachId],
     });

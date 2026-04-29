@@ -15,36 +15,36 @@ import {
 const router = express.Router();
 
 router
-  .route("/event-offerings")
+  .route("/event-types")
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.createEventOffering,
+    eventController.createEventType,
   )
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.listEventOfferings,
+    eventController.listEventTypes,
   )
   .all(methodNotAllowed);
 
 router
-  .route("/event-offerings/:offeringId")
+  .route("/event-types/:eventTypeId")
   .patch(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.updateEventOffering,
+    eventController.updateEventType,
   )
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
-    eventController.deleteEventOffering,
+    eventController.deleteEventType,
   )
   .all(methodNotAllowed);
 
 router
-  .route("/event-offerings/:offeringId/usage")
-  .get(authenticate, authorize(UserRole.SUPER_ADMIN), eventController.getEventOfferingUsage)
+  .route("/event-types/:eventTypeId/usage")
+  .get(authenticate, authorize(UserRole.SUPER_ADMIN), eventController.getEventTypeUsage)
   .all(methodNotAllowed);
 
 router
