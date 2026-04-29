@@ -41,7 +41,6 @@ export function EventCoachManager({
   const [localShowAddModal, setLocalShowAddModal] = useState(false)
   const [addCoachError, setAddCoachError] = useState<string | null>(null)
   const showAddModal = showAddModalOverride ?? localShowAddModal
-  const setShowAddModal = onCloseAddModal ?? setLocalShowAddModal
   const { handleAction } = useAsyncAction()
 
   const { data: coachesResponse } = useEventCoaches(eventId)
@@ -103,7 +102,7 @@ export function EventCoachManager({
           description="Manage coaches assigned to this event and their participation status."
           action={
             eligibleCount > 0 && (
-              <Button size="sm" startIcon={<Plus size={16} />} onClick={() => setShowAddModal(true)}>
+              <Button size="sm" startIcon={<Plus size={16} />} onClick={() => setLocalShowAddModal(true)}>
                 Add coach
               </Button>
             )

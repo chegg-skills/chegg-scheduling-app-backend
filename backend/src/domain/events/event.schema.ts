@@ -46,7 +46,10 @@ const EventBaseObjectCore = z.object({
   minCoachCount: z.coerce.number().int().positive(),
   maxCoachCount: z.coerce.number().int().positive().optional().nullable(),
   sessionLeadershipStrategy: z.string().optional(),
-  fixedLeadCoachId: z.string().uuid().optional().nullable(),
+  fixedLeadCoachId: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().uuid().optional().nullable(),
+  ),
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
   showDescription: z.boolean().optional(),
