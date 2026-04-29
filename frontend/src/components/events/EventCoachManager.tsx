@@ -22,6 +22,7 @@ interface EventCoachManagerProps {
   title?: string
   hideHeader?: boolean
   showAddModalOverride?: boolean
+  onOpenAddModal?: () => void
   onCloseAddModal?: () => void
   onViewUser?: (userId: string) => void
 }
@@ -35,12 +36,13 @@ export function EventCoachManager({
   title,
   hideHeader,
   showAddModalOverride,
+  onOpenAddModal,
   onCloseAddModal,
   onViewUser,
 }: EventCoachManagerProps) {
   const [localShowAddModal, setLocalShowAddModal] = useState(false)
   const [addCoachError, setAddCoachError] = useState<string | null>(null)
-  const showAddModal = showAddModalOverride ?? localShowAddModal
+  const showAddModal = showAddModalOverride || localShowAddModal
   const { handleAction } = useAsyncAction()
 
   const { data: coachesResponse } = useEventCoaches(eventId)
@@ -102,7 +104,17 @@ export function EventCoachManager({
           description="Manage coaches assigned to this event and their participation status."
           action={
             eligibleCount > 0 && (
-              <Button size="sm" startIcon={<Plus size={16} />} onClick={() => setLocalShowAddModal(true)}>
+              <Button 
+                size="sm" 
+                startIcon={<Plus size={16} />} 
+                onClick={() => {
+                  if (onOpenAddModal) {
+                    onOpenAddModal()
+                  } else {
+                    setLocalShowAddModal(true)
+                  }
+                }}
+              >
                 Add coach
               </Button>
             )
@@ -116,7 +128,8 @@ export function EventCoachManager({
         isOpen={showAddModal}
         onClose={() => {
           setAddCoachError(null)
-          onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false)
+          if (onCloseAddModal) onCloseAddModal()
+          setLocalShowAddModal(false)
         }}
         title="Add coach to event"
         size="sm"
@@ -131,7 +144,8 @@ export function EventCoachManager({
             onAdd={handleAdd}
             onCancel={() => {
               setAddCoachError(null)
-              onCloseAddModal ? onCloseAddModal() : setLocalShowAddModal(false)
+              if (onCloseAddModal) onCloseAddModal()
+              setLocalShowAddModal(false)
             }}
           />
         </Stack>
