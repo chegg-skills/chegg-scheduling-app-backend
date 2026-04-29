@@ -96,7 +96,7 @@ describe("Booking Domain Integration Tests", () => {
       data: {
         name: "Test Direct Event",
         teamId,
-        eventTypeId: offeringId,
+        eventTypeId: eventTypeId,
         interactionType: "ONE_TO_ONE",
         assignmentStrategy: AssignmentStrategy.DIRECT,
         durationSeconds: 3600, // 1 hour
@@ -332,7 +332,7 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           name: "Test RR Event",
           teamId,
-          eventTypeId: offeringId,
+          eventTypeId: eventTypeId,
           interactionType: "MANY_TO_ONE",
           assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
           durationSeconds: 3600,
@@ -590,7 +590,7 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           name: "Co-coach Conflict Test Event",
           teamId,
-          eventTypeId: offeringId,
+          eventTypeId: eventTypeId,
           interactionType: "ONE_TO_ONE",
           assignmentStrategy: AssignmentStrategy.DIRECT,
           durationSeconds: 3600,

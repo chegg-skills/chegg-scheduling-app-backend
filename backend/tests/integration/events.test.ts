@@ -1676,7 +1676,7 @@ describe("Recurrence — slot creation", () => {
     // Unrestricted event so all day/time slots are valid
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Recurrence Test Event",
-      eventTypeId: offeringId,
+      eventTypeId: eventTypeId,
       bookingMode: "FIXED_SLOTS",
       allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
     });
@@ -1791,7 +1791,7 @@ describe("Recurrence — slot creation", () => {
     // Create a restricted event: Monday 09:00–09:45 only
     const restrictedEvent = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Restricted Recurrence Event",
-      eventTypeId: offeringId,
+      eventTypeId: eventTypeId,
       bookingMode: "FIXED_SLOTS",
       weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "09:45" }],
     });
