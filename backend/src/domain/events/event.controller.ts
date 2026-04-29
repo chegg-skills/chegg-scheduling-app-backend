@@ -36,7 +36,7 @@ const createEventType = async (
     const caller = res.locals.authUser as CallerContext;
     const offering = await eventService.createEventType(req.body, caller);
 
-    sendSuccessResponse(res, StatusCodes.CREATED, offering, "Event offering created successfully.");
+    sendSuccessResponse(res, StatusCodes.CREATED, offering, "Event type created successfully.");
   } catch (error) {
     next(error);
   }
@@ -50,7 +50,7 @@ const listEventTypes = async (
   try {
     const result = await eventService.listEventTypes();
 
-    sendSuccessResponse(res, StatusCodes.OK, result, "Event offerings fetched successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event types fetched successfully.");
   } catch (error) {
     next(error);
   }
@@ -69,7 +69,7 @@ const updateEventType = async (
       caller,
     );
 
-    sendSuccessResponse(res, StatusCodes.OK, offering, "Event offering updated successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, offering, "Event type updated successfully.");
   } catch (error) {
     next(error);
   }
@@ -84,7 +84,7 @@ const deleteEventType = async (
     const caller = res.locals.authUser as CallerContext;
     const offering = await eventService.deleteEventType(req.params.eventTypeId as string, caller);
 
-    sendSuccessResponse(res, StatusCodes.OK, offering, "Event offering deleted successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, offering, "Event type deleted successfully.");
   } catch (error) {
     next(error);
   }
@@ -99,7 +99,7 @@ const getEventTypeUsage = async (
     const caller = res.locals.authUser as CallerContext;
     const usage = await eventService.getEventTypeUsage(req.params.eventTypeId as string, caller);
 
-    sendSuccessResponse(res, StatusCodes.OK, usage, "Event offering usage fetched successfully.");
+    sendSuccessResponse(res, StatusCodes.OK, usage, "Event type usage fetched successfully.");
   } catch (error) {
     next(error);
   }

@@ -174,9 +174,9 @@ describe("Event offerings routes", () => {
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data.offerings)).toBe(true);
+    expect(Array.isArray(res.body.data.eventTypes)).toBe(true);
     expect(
-      res.body.data.offerings.some(
+      res.body.data.eventTypes.some(
         (offering: { id: string }) => offering.id === created.body.data.id,
       ),
     ).toBe(true);
@@ -225,7 +225,7 @@ describe("Event offerings routes", () => {
     const listRes = await request(app)
       .get("/api/event-types")
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
-    expect(listRes.body.data.offerings.some((o: { id: string }) => o.id === id)).toBe(false);
+    expect(listRes.body.data.eventTypes.some((o: { id: string }) => o.id === id)).toBe(false);
   });
 
   it("lists events using an event offering", async () => {

@@ -7,7 +7,7 @@ import type {
 } from '@/types'
 
 export interface ListEventTypesResponse {
-  offerings: EventType[]
+  eventTypes: EventType[]
 }
 
 export const eventTypesApi = {

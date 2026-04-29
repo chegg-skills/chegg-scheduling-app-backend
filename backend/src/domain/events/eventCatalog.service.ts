@@ -47,29 +47,29 @@ const createEventType = async (
     return rethrowPrismaError(error, {
       P2002: {
         status: StatusCodes.CONFLICT,
-        message: "An event offering with this key already exists.",
+        message: "An event type with this key already exists.",
       },
     });
   }
 };
 
-const listEventTypes = async (): Promise<{ offerings: SafeEventType[] }> => {
-  const offerings = await prisma.eventType.findMany({
+const listEventTypes = async (): Promise<{ eventTypes: SafeEventType[] }> => {
+  const eventTypes = await prisma.eventType.findMany({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
 
-  return { offerings };
+  return { eventTypes };
 };
 
 const updateEventType = async (
-  offeringId: string,
+  eventTypeId: string,
   payload: UpsertEventTypeInput,
   caller: CallerContext,
 ): Promise<SafeEventType> => {
   assertCatalogManagementAllowed(caller);
 
-  if (!offeringId?.trim()) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "offeringId is required.");
+  if (!eventTypeId?.trim()) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "eventTypeId is required.");
   }
 
   const validated = EventTypeSchema.body.parse(payload);
@@ -85,29 +85,29 @@ const updateEventType = async (
 
   try {
     return await prisma.eventType.update({
-      where: { id: offeringId },
+      where: { id: eventTypeId },
       data,
     });
   } catch (error) {
     return rethrowPrismaError(error, {
       P2025: {
         status: StatusCodes.NOT_FOUND,
-        message: "Event offering not found.",
+        message: "Event type not found.",
       },
       P2002: {
         status: StatusCodes.CONFLICT,
-        message: "An event offering with this key already exists.",
+        message: "An event type with this key already exists.",
       },
     });
   }
 };
 
 const getEventTypeUsage = async (
-  offeringId: string,
+  eventTypeId: string,
   _caller: CallerContext,
 ): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
   const events = await prisma.event.findMany({
-    where: { eventTypeId: offeringId },
+    where: { eventTypeId },
     select: {
       id: true,
       name: true,
@@ -124,33 +124,33 @@ const getEventTypeUsage = async (
 };
 
 const deleteEventType = async (
-  offeringId: string,
+  eventTypeId: string,
   caller: CallerContext,
 ): Promise<SafeEventType> => {
   assertCatalogManagementAllowed(caller);
 
-  if (!offeringId?.trim()) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "offeringId is required.");
+  if (!eventTypeId?.trim()) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "eventTypeId is required.");
   }
 
-  const usage = await getEventTypeUsage(offeringId, caller);
+  const usage = await getEventTypeUsage(eventTypeId, caller);
 
   if (usage.length > 0) {
     throw new ErrorHandler(
       StatusCodes.CONFLICT,
-      `Cannot delete event offering as it is currently used by ${usage.length} event(s). Please deactivate it instead.`,
+      `Cannot delete event type as it is currently used by ${usage.length} event(s). Please deactivate it instead.`,
     );
   }
 
   try {
     return await prisma.eventType.delete({
-      where: { id: offeringId },
+      where: { id: eventTypeId },
     });
   } catch (error) {
     return rethrowPrismaError(error, {
       P2025: {
         status: StatusCodes.NOT_FOUND,
-        message: "Event offering not found.",
+        message: "Event type not found.",
       },
     });
   }

@@ -191,7 +191,7 @@ export const router = createBrowserRouter([
             path: '/events/:eventId',
             element: renderLazyPage(EventDetailPage),
           },
-          { path: '/event-offerings', element: renderLazyPage(OfferingsPage) },
+          { path: '/event-types', element: renderLazyPage(OfferingsPage) },
           {
             path: '/interaction-types',
             element: renderLazyPage(InteractionTypesPage),

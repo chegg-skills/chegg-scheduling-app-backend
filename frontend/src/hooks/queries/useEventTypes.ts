@@ -12,7 +12,7 @@ export const eventTypeKeys = {
 export function useEventTypes() {
   return useQuery({
     queryKey: eventTypeKeys.list(),
-    queryFn: ({ signal }) => eventTypesApi.list(signal).then((r) => r.data.data),
+    queryFn: ({ signal }) => eventTypesApi.list(signal).then((r) => r.data.data?.eventTypes ?? []),
   })
 }
 

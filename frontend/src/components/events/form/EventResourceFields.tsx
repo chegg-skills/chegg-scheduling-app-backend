@@ -26,9 +26,9 @@ export function EventResourceFields() {
     control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
-  const { data: eventTypesData } = useEventTypes()
+  const { data: allEventTypes = [] } = useEventTypes()
 
-  const offerings = (eventTypesData?.offerings ?? []).filter((o) => o.isActive)
+  const offerings = allEventTypes.filter((o) => o.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
 
   return (

@@ -10,45 +10,43 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { EventTypeTable } from '@/components/event-offerings/EventTypeTable'
 import { EventTypeForm } from '@/components/event-offerings/EventTypeForm'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { useOfferingStats } from '@/hooks/queries/useStats'
+import { useEventTypeStats } from '@/hooks/queries/useStats'
 import type { StatsTimeframe } from '@/types'
 
 export function OfferingsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
-  const { data, isLoading, error } = useEventTypes()
-  const { data: offeringStats, isLoading: statsLoading } = useOfferingStats(timeframe)
-
-  const eventTypes = data?.offerings ?? []
+  const { data: eventTypes = [], isLoading, error } = useEventTypes()
+  const { data: eventTypeStats, isLoading: statsLoading } = useEventTypeStats(timeframe)
 
   if (isLoading) return <PageSpinner />
   if (error) return <ErrorAlert message="Failed to load event types." />
 
-  const offeringStatItems = [
+  const eventTypeStatItems = [
     {
       label: 'New event types',
-      value: offeringStats?.metrics.newOfferings ?? 0,
+      value: eventTypeStats?.metrics.newEventTypes ?? 0,
       helperText: 'Event types added in the selected time frame',
       icon: <Layers size={18} />,
       accent: 'orange' as const,
     },
     {
       label: 'Active event types',
-      value: offeringStats?.metrics.activeOfferings ?? 0,
+      value: eventTypeStats?.metrics.activeEventTypes ?? 0,
       helperText: 'Event types currently available to teams',
       icon: <CheckCircle2 size={18} />,
       accent: 'green' as const,
     },
     {
       label: 'In use',
-      value: offeringStats?.metrics.offeringsInUse ?? 0,
+      value: eventTypeStats?.metrics.eventTypesInUse ?? 0,
       helperText: 'Event types already connected to events',
       icon: <Link2 size={18} />,
       accent: 'teal' as const,
     },
     {
       label: 'Unused',
-      value: offeringStats?.metrics.unusedOfferings ?? 0,
+      value: eventTypeStats?.metrics.unusedEventTypes ?? 0,
       helperText: 'Event types with no event usage yet',
       icon: <XCircle size={18} />,
       accent: 'purple' as const,
@@ -71,8 +69,8 @@ export function OfferingsPage() {
         <StatsOverview
           timeframe={timeframe}
           onTimeframeChange={setTimeframe}
-          timeframeInfo={offeringStats?.timeframe}
-          items={offeringStatItems}
+          timeframeInfo={eventTypeStats?.timeframe}
+          items={eventTypeStatItems}
           isLoading={statsLoading}
         />
 

@@ -247,22 +247,22 @@ export const getEventStats = async (
   });
 };
 
-export const getOfferingStats = async (
+export const getEventTypeStats = async (
   caller: CallerContext,
   timeframeRaw?: string,
 ): Promise<
   StatsResponse<{
-    newOfferings: number;
-    activeOfferings: number;
-    offeringsInUse: number;
-    unusedOfferings: number;
+    newEventTypes: number;
+    activeEventTypes: number;
+    eventTypesInUse: number;
+    unusedEventTypes: number;
   }>
 > => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
   const createdAt = buildDateFilter(timeframe);
 
-  const [newOfferings, activeOfferings, offeringsInUse, unusedOfferings] = await Promise.all([
+  const [newEventTypes, activeEventTypes, eventTypesInUse, unusedEventTypes] = await Promise.all([
     prisma.eventType.count({ where: createdAt ? { createdAt } : undefined }),
     prisma.eventType.count({ where: { isActive: true } }),
     prisma.eventType.count({ where: { events: { some: {} } } }),
@@ -270,10 +270,10 @@ export const getOfferingStats = async (
   ]);
 
   return buildStatsResponse(timeframe, {
-    newOfferings,
-    activeOfferings,
-    offeringsInUse,
-    unusedOfferings,
+    newEventTypes,
+    activeEventTypes,
+    eventTypesInUse,
+    unusedEventTypes,
   });
 };
 
