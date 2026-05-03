@@ -33,9 +33,9 @@ model User {
   eventsCreated          Event[]                     @relation("EventCreatedBy")
   eventsUpdated          Event[]                     @relation("EventUpdatedBy")
   coachedEvents          EventCoach[]                @relation("EventCoachUser")
+  slotAssignments        EventScheduleSlot[]         @relation("SlotCoach")
   createdEventTypes      EventType[]                 @relation("EventTypeCreatedBy")
   updatedEventTypes      EventType[]                 @relation("EventTypeUpdatedBy")
-  slotAssignments        EventScheduleSlot[]         @relation("SlotCoach")
   sessionLogs            SessionLog[]                @relation("SessionLogLoggedBy")
   teamsCreated           Team[]                      @relation("TeamCreatedBy")
   teamsLed               Team[]                      @relation("TeamLead")
@@ -47,20 +47,21 @@ model User {
 }
 
 model Team {
-  id                String       @id @default(uuid())
-  name              String       @unique
-  description       String?
-  isActive          Boolean      @default(true)
-  teamLeadId        String
-  createdById       String
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  publicBookingSlug String       @unique
-  bookings          Booking[]
-  events            Event[]
-  createdByUser     User         @relation("TeamCreatedBy", fields: [createdById], references: [id])
-  teamLead          User         @relation("TeamLead", fields: [teamLeadId], references: [id])
-  members           TeamMember[]
+  id                 String                  @id @default(uuid())
+  name               String                  @unique
+  description        String?
+  isActive           Boolean                 @default(true)
+  teamLeadId         String
+  createdById        String
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  publicBookingSlug  String                  @unique
+  bookings           Booking[]
+  events             Event[]
+  createdByUser      User                    @relation("TeamCreatedBy", fields: [createdById], references: [id])
+  teamLead           User                    @relation("TeamLead", fields: [teamLeadId], references: [id])
+  members            TeamMember[]
+  notificationConfig TeamNotificationConfig?
 }
 
 model UserInvite {
@@ -152,10 +153,10 @@ model Event {
   eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
   team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
-  weeklyAvailability        EventWeeklyAvailability[]
   coaches                   EventCoach[]
   routingState              EventRoutingState?
   scheduleSlots             EventScheduleSlot[]
+  weeklyAvailability        EventWeeklyAvailability[]
 
   @@index([teamId, isActive])
   @@index([eventTypeId])
@@ -196,15 +197,15 @@ model EventScheduleSlot {
   endTime           DateTime
   capacity          Int?
   isActive          Boolean     @default(true)
-  isCancelled       Boolean     @default(false)
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   assignedCoachId   String?
   recurrenceGroupId String?
+  isCancelled       Boolean     @default(false)
   bookings          Booking[]
-  sessionLog        SessionLog?
   assignedCoach     User?       @relation("SlotCoach", fields: [assignedCoachId], references: [id])
   event             Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sessionLog        SessionLog?
 
   @@unique([eventId, startTime])
   @@index([eventId, startTime, isActive])
@@ -221,9 +222,9 @@ model SessionLog {
   coachNotes      String?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  scheduleSlot    EventScheduleSlot   @relation(fields: [scheduleSlotId], references: [id], onDelete: Cascade)
-  loggedBy        User                @relation("SessionLogLoggedBy", fields: [loggedByUserId], references: [id])
   attendance      SessionAttendance[]
+  loggedBy        User                @relation("SessionLogLoggedBy", fields: [loggedByUserId], references: [id])
+  scheduleSlot    EventScheduleSlot   @relation(fields: [scheduleSlotId], references: [id], onDelete: Cascade)
 
   @@index([scheduleSlotId])
   @@index([loggedByUserId])
@@ -236,8 +237,8 @@ model SessionAttendance {
   attended     Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  sessionLog   SessionLog @relation(fields: [sessionLogId], references: [id], onDelete: Cascade)
   booking      Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  sessionLog   SessionLog @relation(fields: [sessionLogId], references: [id], onDelete: Cascade)
 
   @@index([sessionLogId])
 }
@@ -318,12 +319,12 @@ model Booking {
   rescheduleToken   String?            @unique @default(uuid())
   coCoachUserIds    String[]           @default([])
   coachUserId       String
-  coach                User               @relation(fields: [coachUserId], references: [id])
-  event                Event              @relation(fields: [eventId], references: [id])
-  scheduleSlot         EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
-  student              Student?           @relation(fields: [studentId], references: [id])
-  team                 Team               @relation(fields: [teamId], references: [id])
-  sessionAttendance    SessionAttendance?
+  coach             User               @relation(fields: [coachUserId], references: [id])
+  event             Event              @relation(fields: [eventId], references: [id])
+  scheduleSlot      EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
+  student           Student?           @relation(fields: [studentId], references: [id])
+  team              Team               @relation(fields: [teamId], references: [id])
+  sessionAttendance SessionAttendance?
 
   @@index([studentId])
   @@index([scheduleSlotId])
@@ -331,6 +332,22 @@ model Booking {
   @@index([eventId])
   @@index([coachUserId])
   @@index([startTime, endTime])
+}
+
+model TeamNotificationConfig {
+  id                        String   @id @default(uuid())
+  teamId                    String   @unique
+  team                      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  reminderOffsets           Int[]    @default([1440, 60]) // minutes before session
+  adminNotifyOnBooking      Boolean  @default(true)
+  adminNotifyOnCancellation Boolean  @default(true)
+  adminNotifyOnNoShow       Boolean  @default(true)
+  coachNotifyOnBooking      Boolean  @default(true)
+  coachNotifyOnCancellation Boolean  @default(true)
+  coachNotifyOnNoShow       Boolean  @default(true)
+  notifyLeadOnAvailability  Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 }
 
 enum UserRole {

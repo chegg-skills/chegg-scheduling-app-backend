@@ -4,6 +4,7 @@ import {
   publishNotificationSafely,
   resolveFrontendUrl,
 } from "../../shared/notifications/notification.publisher";
+import { getTeamNotificationConfig } from "../../shared/notifications/notificationConfig";
 
 import { formatNotificationDate } from "../../shared/utils/date";
 
@@ -48,26 +49,27 @@ const queueAvailabilityExceptionNotification = async (
     });
 
     // 2. Notify Team Leads
-    const teamLeads = await prisma.team.findMany({
+    const teams = await prisma.team.findMany({
       where: {
         members: { some: { userId: input.userId, isActive: true } },
         isActive: true,
       },
       select: {
+        id: true,
         teamLead: {
           select: { email: true, id: true },
         },
       },
     });
 
-    const leadEmails = Array.from(
-      new Set(teamLeads.map((t) => t.teamLead?.email).filter((e): e is string => Boolean(e))),
-    );
+    for (const team of teams) {
+      const config = await getTeamNotificationConfig(team.id);
+      if (!config.notifyLeadOnAvailability) continue;
+      if (!team.teamLead?.email) continue;
 
-    if (leadEmails.length > 0) {
       await publishNotificationSafely({
         type: "AVAILABILITY_EXCEPTION_CREATED",
-        recipients: leadEmails,
+        recipients: team.teamLead.email,
         userId: input.userId, // Action performed by user
         variables: {
           userName,

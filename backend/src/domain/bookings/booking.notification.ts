@@ -9,6 +9,7 @@ import {
 import type { SafeBooking } from "./booking.service";
 
 import { formatNotificationDate } from "../../shared/utils/date";
+import { getTeamNotificationConfig, type ResolvedNotificationConfig } from "../../shared/notifications/notificationConfig";
 
 const getCoachName = (booking: SafeBooking): string => {
   const coachName = [booking.coach?.firstName, booking.coach?.lastName]
@@ -95,18 +96,27 @@ const getTeamAdminRecipients = async (
   return Array.from(uniqueAdmins.entries()).map(([email, timezone]) => ({ email, timezone }));
 };
 
-const buildReminderSendAt = (startTime: Date, hoursBefore: number): string | null => {
-  const sendAt = new Date(startTime.getTime() - hoursBefore * 60 * 60 * 1000);
+const buildReminderSendAt = (startTime: Date, offsetMinutes: number): string | null => {
+  const sendAt = new Date(startTime.getTime() - offsetMinutes * 60 * 1000);
 
   return sendAt.getTime() > Date.now() ? sendAt.toISOString() : null;
 };
 
-const queueStudentReminder = async (
+const OFFSET_TO_TYPE: Record<number, Extract<NotificationType, "SESSION_REMINDER_24H" | "SESSION_REMINDER_12H" | "SESSION_REMINDER_6H" | "SESSION_REMINDER_1H">> = {
+  1440: "SESSION_REMINDER_24H",
+  720: "SESSION_REMINDER_12H",
+  360: "SESSION_REMINDER_6H",
+  60: "SESSION_REMINDER_1H",
+};
+
+const queueStudentReminderByOffset = async (
   booking: SafeBooking,
-  type: Extract<NotificationType, "SESSION_REMINDER_24H" | "SESSION_REMINDER_1H">,
-  hoursBefore: 24 | 1,
+  offsetMinutes: number,
 ): Promise<boolean> => {
-  const sendAt = buildReminderSendAt(new Date(booking.startTime), hoursBefore);
+  const type = OFFSET_TO_TYPE[offsetMinutes];
+  if (!type) return false;
+
+  const sendAt = buildReminderSendAt(new Date(booking.startTime), offsetMinutes);
 
   if (!sendAt) {
     return false;
@@ -124,17 +134,21 @@ const queueStudentReminder = async (
     recipientRole: "STUDENT",
     metadata: {
       bookingId: booking.id,
-      reminderOffsetHours: hoursBefore,
+      reminderOffsetMinutes: offsetMinutes,
     },
   });
 };
 
-const queueBookingReminderNotifications = async (booking: SafeBooking): Promise<void> => {
+const queueBookingReminderNotifications = async (
+  booking: SafeBooking,
+  config: ResolvedNotificationConfig,
+): Promise<void> => {
+  if (config.reminderOffsets.length === 0) return;
+
   try {
-    await Promise.all([
-      queueStudentReminder(booking, "SESSION_REMINDER_24H", 24),
-      queueStudentReminder(booking, "SESSION_REMINDER_1H", 1),
-    ]);
+    await Promise.all(
+      config.reminderOffsets.map((offset) => queueStudentReminderByOffset(booking, offset)),
+    );
   } catch (error) {
     logger.error("Failed to queue booking reminders.", {
       bookingId: booking.id,
@@ -172,6 +186,8 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
       booking.coach?.timezone || "UTC",
     );
 
+    const config = await getTeamNotificationConfig(booking.teamId);
+
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
         type: "BOOKING_CONFIRMED",
@@ -181,7 +197,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
       }),
     ];
 
-    if (booking.coach?.email) {
+    if (booking.coach?.email && config.coachNotifyOnBooking) {
       publishTasks.push(
         publishNotificationSafely({
           type: "COACH_BOOKING_ASSIGNED",
@@ -192,16 +208,18 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
       );
     }
 
-    const teamAdmins = await getTeamAdminRecipients(booking.teamId);
-    for (const admin of teamAdmins) {
-      publishTasks.push(
-        publishNotificationSafely({
-          type: "TEAM_BOOKING_CONFIRMED",
-          recipients: admin.email,
-          userId: booking.coachUserId,
-          variables: await getBookingNotificationVariables(booking, admin.timezone),
-        }),
-      );
+    if (config.adminNotifyOnBooking) {
+      const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+      for (const admin of teamAdmins) {
+        publishTasks.push(
+          publishNotificationSafely({
+            type: "TEAM_BOOKING_CONFIRMED",
+            recipients: admin.email,
+            userId: booking.coachUserId,
+            variables: await getBookingNotificationVariables(booking, admin.timezone),
+          }),
+        );
+      }
     }
 
     if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
@@ -225,7 +243,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
     }
 
     await Promise.all(publishTasks);
-    await queueBookingReminderNotifications(booking);
+    await queueBookingReminderNotifications(booking, config);
   } catch (error) {
     logger.error("Failed to queue booking creation notifications.", {
       bookingId: booking.id,
@@ -242,7 +260,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
       booking,
       booking.coach?.timezone || "UTC",
     );
-    const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+    const config = await getTeamNotificationConfig(booking.teamId);
 
     if (booking.status === BookingStatus.CANCELLED || booking.status === BookingStatus.NO_SHOW) {
       await cancelScheduledBookingReminders(booking);
@@ -267,7 +285,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         }),
       ];
 
-      if (booking.coach?.email) {
+      if (booking.coach?.email && config.coachNotifyOnCancellation) {
         publishTasks.push(
           publishNotificationSafely({
             type: "COACH_BOOKING_CANCELLED",
@@ -291,15 +309,18 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         }
       }
 
-      for (const admin of teamAdmins) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "TEAM_BOOKING_CANCELLED",
-            recipients: admin.email,
-            userId: booking.coachUserId,
-            variables: await getBookingNotificationVariables(booking, admin.timezone),
-          }),
-        );
+      if (config.adminNotifyOnCancellation) {
+        const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+        for (const admin of teamAdmins) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "TEAM_BOOKING_CANCELLED",
+              recipients: admin.email,
+              userId: booking.coachUserId,
+              variables: await getBookingNotificationVariables(booking, admin.timezone),
+            }),
+          );
+        }
       }
 
       await Promise.all(publishTasks);
@@ -315,7 +336,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         }),
       ];
 
-      if (booking.coach?.email) {
+      if (booking.coach?.email && config.coachNotifyOnNoShow) {
         publishTasks.push(
           publishNotificationSafely({
             type: "COACH_BOOKING_NO_SHOW",
@@ -339,15 +360,18 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
         }
       }
 
-      for (const admin of teamAdmins) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "TEAM_BOOKING_NO_SHOW",
-            recipients: admin.email,
-            userId: booking.coachUserId,
-            variables: await getBookingNotificationVariables(booking, admin.timezone),
-          }),
-        );
+      if (config.adminNotifyOnNoShow) {
+        const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+        for (const admin of teamAdmins) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "TEAM_BOOKING_NO_SHOW",
+              recipients: admin.email,
+              userId: booking.coachUserId,
+              variables: await getBookingNotificationVariables(booking, admin.timezone),
+            }),
+          );
+        }
       }
 
       await Promise.all(publishTasks);
@@ -414,6 +438,8 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
       booking.coach?.timezone || "UTC",
     );
 
+    const config = await getTeamNotificationConfig(booking.teamId);
+
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
         type: "BOOKING_RESCHEDULED",
@@ -423,7 +449,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
       }),
     ];
 
-    if (booking.coach?.email) {
+    if (booking.coach?.email && (config.coachNotifyOnBooking || config.coachNotifyOnCancellation)) {
       publishTasks.push(
         publishNotificationSafely({
           type: "BOOKING_RESCHEDULED",
@@ -459,7 +485,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
 
     // Rescheduling should also refresh the reminders!
     await cancelScheduledBookingReminders(booking);
-    await queueBookingReminderNotifications(booking);
+    await queueBookingReminderNotifications(booking, config);
   } catch (error) {
     logger.error("Failed to queue booking rescheduled notifications.", {
       bookingId: booking.id,

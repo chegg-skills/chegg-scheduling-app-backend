@@ -67,6 +67,20 @@ export interface UserWithDetails extends SafeUser {
   availabilityExceptions: UserAvailabilityException[]
 }
 
+export interface TeamNotificationConfig {
+  teamId: string
+  reminderOffsets: number[]
+  adminNotifyOnBooking: boolean
+  adminNotifyOnCancellation: boolean
+  adminNotifyOnNoShow: boolean
+  coachNotifyOnBooking: boolean
+  coachNotifyOnCancellation: boolean
+  coachNotifyOnNoShow: boolean
+  notifyLeadOnAvailability: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface Team {
   id: string
   publicBookingSlug: string | null
