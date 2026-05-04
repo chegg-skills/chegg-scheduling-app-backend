@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { authApi } from '@/api/auth'
-import { useAuth } from '@/context/auth'
+import { useAuth } from '@/context/auth/useAuth'
 import type { LoginDto, RegisterDto, BootstrapDto, AcceptInviteDto } from '@/types'
 
 export function useLogin() {

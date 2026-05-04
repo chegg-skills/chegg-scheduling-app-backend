@@ -6,7 +6,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Checkbox from '@mui/material/Checkbox'
 import Alert from '@mui/material/Alert'
 import Divider from '@mui/material/Divider'
-import { Bell, Mail, Clock, ShieldCheck, UserCog, GraduationCap } from 'lucide-react'
+import { Bell, Clock, ShieldCheck, UserCog, GraduationCap } from 'lucide-react'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
@@ -23,17 +23,17 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
   const mutation = useUpsertTeamNotificationConfig(teamId)
 
   const [reminderOffsets, setReminderOffsets] = useState<number[]>([])
-  
+
   const [adminNotifyOnBooking, setAdminNotifyOnBooking] = useState(true)
   const [adminNotifyOnCancellation, setAdminNotifyOnCancellation] = useState(true)
   const [adminNotifyOnNoShow, setAdminNotifyOnNoShow] = useState(true)
-  
+
   const [coachNotifyOnBooking, setCoachNotifyOnBooking] = useState(true)
   const [coachNotifyOnCancellation, setCoachNotifyOnCancellation] = useState(true)
   const [coachNotifyOnNoShow, setCoachNotifyOnNoShow] = useState(true)
-  
+
   const [notifyLeadOnAvailability, setNotifyLeadOnAvailability] = useState(true)
-  
+
   const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
@@ -115,12 +115,12 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
               Students receive these automated email reminders before their session starts.
             </Typography>
           </Box>
-          
+
           <Stack spacing={1}>
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={reminderOffsets.includes(1440)}
+                  checked={reminderOffsets?.includes(1440) || false}
                   onChange={() => handleToggleReminder(1440)}
                   disabled={!canEdit || mutation.isPending}
                 />
@@ -130,7 +130,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={reminderOffsets.includes(720)}
+                  checked={reminderOffsets?.includes(720) || false}
                   onChange={() => handleToggleReminder(720)}
                   disabled={!canEdit || mutation.isPending}
                 />
@@ -140,7 +140,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={reminderOffsets.includes(360)}
+                  checked={reminderOffsets?.includes(360) || false}
                   onChange={() => handleToggleReminder(360)}
                   disabled={!canEdit || mutation.isPending}
                 />
@@ -150,7 +150,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={reminderOffsets.includes(60)}
+                  checked={reminderOffsets?.includes(60) || false}
                   onChange={() => handleToggleReminder(60)}
                   disabled={!canEdit || mutation.isPending}
                 />

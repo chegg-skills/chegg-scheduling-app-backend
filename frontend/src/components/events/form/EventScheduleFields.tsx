@@ -184,6 +184,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
               id="fixedLeadCoachId"
               value={watch('fixedLeadCoachId') || ''}
               hasError={!!errors.fixedLeadCoachId}
+              inputProps={{ 'aria-label': 'Default Event Host' }}
               {...register('fixedLeadCoachId')}
             >
               <MenuItem value="" disabled>

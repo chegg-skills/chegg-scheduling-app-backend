@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 import path from 'path'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [react()],
@@ -8,6 +8,21 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  test: {
+    name: 'frontend',
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
+    clearMocks: true,
+    restoreMocks: true,
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost/',
+      },
+    },
+    include: ['tests/**/*.test.{ts,tsx}'],
+    exclude: ['node_modules', 'dist'],
+    pool: 'forks',
   },
   build: {
     rollupOptions: {

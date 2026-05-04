@@ -44,6 +44,7 @@ export function EventLocationFields() {
           id="locationType"
           hasError={!!errors.locationType}
           value={locationType || ''}
+          inputProps={{ 'aria-label': 'Location type' }}
           {...register('locationType')}
         >
           {LOCATION_TYPES.map(({ value, label }) => (

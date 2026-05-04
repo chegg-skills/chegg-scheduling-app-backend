@@ -47,7 +47,7 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
         )}
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-        Timezone: {booking.timezone.replace(/_/g, ' ')}
+        Timezone: {booking.timezone?.replace(/_/g, ' ') || 'N/A'}
       </Typography>
     </Box>
   )
