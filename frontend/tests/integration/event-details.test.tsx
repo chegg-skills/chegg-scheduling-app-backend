@@ -51,6 +51,12 @@ const handlers = [
       data: mockEvent
     })
   }),
+  http.get('*/api/events/event-1/coaches', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { coaches: mockEvent.coaches }
+    })
+  }),
   http.get('*/api/events/event-1/schedule-slots', () => {
     return HttpResponse.json({
       success: true,

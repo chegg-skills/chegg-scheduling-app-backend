@@ -14,7 +14,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         variant="outlined"
         fullWidth
         multiline
-        minRows={3}
+        minRows={props.rows ? undefined : 3}
         error={hasError}
         {...props}
       />

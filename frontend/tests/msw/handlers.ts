@@ -46,6 +46,9 @@ function pathIs(pathname: string) {
  */
 export const defaultHandlers = [
   http.get(pathIs('/api/config/timezones'), () => HttpResponse.json(timezonesPayload)),
-
   http.get(pathIs('/api/v1/stats/dashboard'), () => HttpResponse.json(dashboardPayload)),
+  http.get(pathIs('/api/users/me'), () => HttpResponse.json({
+    success: true,
+    data: { id: 'default-user', role: 'SUPER_ADMIN', firstName: 'Default', lastName: 'User' }
+  })),
 ]

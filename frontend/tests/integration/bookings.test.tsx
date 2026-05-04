@@ -13,6 +13,13 @@ const handlers = [
       data: { id: 'admin-1', role: 'TEAM_ADMIN', firstName: 'Admin', lastName: 'User' }
     })
   }),
+  http.patch('*/api/bookings/:id', async ({ request, params }) => {
+    const body = await request.json()
+    return HttpResponse.json({
+      success: true,
+      data: { id: params.id, ...body as any }
+    })
+  }),
 
   http.get('*/api/v1/stats/bookings', () => {
     return HttpResponse.json({

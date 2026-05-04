@@ -190,8 +190,8 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
               <MenuItem value="" disabled>
                 Select a coach
               </MenuItem>
-              {leadSelectionOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
+              {leadSelectionOptions.map((option, index) => (
+                <MenuItem key={`${option.value}-${index}`} value={option.value}>
                   {option.label}
                 </MenuItem>
               ))}
@@ -250,8 +250,8 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
                 <MenuItem value="" disabled>
                   Select a lead coach
                 </MenuItem>
-                {leadSelectionOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
+                {leadSelectionOptions.map((option, index) => (
+                  <MenuItem key={`${option.value}-${index}`} value={option.value}>
                     {option.label}
                   </MenuItem>
                 ))}

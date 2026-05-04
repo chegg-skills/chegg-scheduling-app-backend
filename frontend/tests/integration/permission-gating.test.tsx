@@ -14,29 +14,28 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-const API_URL = 'http://localhost:4000/api'
 const teamId = 'team-1'
 
 const baseHandlers = [
-  http.get(`${API_URL}/teams/:id`, () => {
+  http.get('*/api/teams/:id', () => {
     return HttpResponse.json({
       success: true,
       data: { id: teamId, name: 'Test Team', isActive: true }
     })
   }),
-  http.get(`${API_URL}/teams/:id/members`, () => {
+  http.get('*/api/teams/:id/members', () => {
     return HttpResponse.json({
       success: true,
       data: { members: [] }
     })
   }),
-  http.get(`${API_URL}/teams/:id/events`, () => {
+  http.get('*/api/teams/:id/events', () => {
     return HttpResponse.json({
       success: true,
       data: { events: [] }
     })
   }),
-  http.get(`${API_URL}/teams/:id/notification-config`, () => {
+  http.get('*/api/teams/:id/notification-config', () => {
     return HttpResponse.json({
       success: true,
       data: {
@@ -63,7 +62,7 @@ describe('Permission Gating: Team Notifications', () => {
 
   it('should enable checkboxes for TEAM_ADMIN', async () => {
     server.use(
-      http.get(`${API_URL}/users/me`, () => {
+      http.get('*/api/users/me', () => {
         return HttpResponse.json({
           success: true,
           data: { id: 'admin-1', role: 'TEAM_ADMIN', firstName: 'Admin', lastName: 'User' }
@@ -87,7 +86,7 @@ describe('Permission Gating: Team Notifications', () => {
 
   it('should disable checkboxes for COACH', async () => {
     server.use(
-      http.get(`${API_URL}/users/me`, () => {
+      http.get('*/api/users/me', () => {
         return HttpResponse.json({
           success: true,
           data: { id: 'coach-1', role: 'COACH', firstName: 'Coach', lastName: 'User' }
