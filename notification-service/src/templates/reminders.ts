@@ -23,6 +23,41 @@ export const reminderTemplates: EmailTemplateMap = {
     ),
   },
 
+  SESSION_REMINDER_12H: {
+    subject: "Reminder: {{eventName}} is in 12 hours",
+    preheader: "Your session starts in 12 hours — see you soon!",
+    text: "Hi {{studentName}}, your session for {{eventName}} is scheduled for today in 12 hours ({{startTime}}).",
+    html: wrapLayout(
+      "Session Reminder (12h)",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Just a quick reminder that your session for <strong>{{eventName}}</strong> with <strong>{{coachName}}</strong> is scheduled for today.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         {{startTime}} ({{timezone}})
+       </p>
+       <p style="margin-top: 16px; font-size: 13px;">
+         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")}
+       </p>`,
+      "Your session starts in 12 hours — see you soon!",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
+  SESSION_REMINDER_6H: {
+    subject: "Reminder: {{eventName}} is in 6 hours",
+    preheader: "Your session starts in 6 hours — be ready!",
+    text: "Hi {{studentName}}, your session for {{eventName}} starts in 6 hours ({{startTime}}).",
+    html: wrapLayout(
+      "Session Reminder (6h)",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>This is a reminder that your session for <strong>{{eventName}}</strong> starts in 6 hours.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         {{startTime}} ({{timezone}})
+       </p>`,
+      "Your session starts in 6 hours — be ready!",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
   SESSION_REMINDER_1H: {
     subject: "Starting Soon: {{eventName}} begins in 1 hour",
     preheader: "Your session starts in 1 hour — get ready!",

@@ -40,6 +40,7 @@ export function EventResourceFields() {
           id="eventTypeId"
           hasError={!!errors.eventTypeId}
           value={watch('eventTypeId') || ''}
+          inputProps={{ 'aria-label': 'Event type' }}
           {...register('eventTypeId')}
         >
           <MenuItem value="">Select an event type…</MenuItem>

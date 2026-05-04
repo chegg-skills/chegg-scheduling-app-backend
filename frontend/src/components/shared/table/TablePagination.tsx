@@ -22,9 +22,9 @@ export function TablePagination({
     <MuiTablePagination
       component="div"
       count={pagination.total}
-      page={pagination.page - 1} // MUI is 0-indexed, Backend is 1-indexed
+      page={Math.max(0, (pagination.page || 1) - 1)} // MUI is 0-indexed, Backend is 1-indexed
       onPageChange={(_, nextPage) => onPageChange(nextPage + 1)}
-      rowsPerPage={pagination.pageSize}
+      rowsPerPage={pagination.pageSize || 10}
       rowsPerPageOptions={[10, 20, 25, 50, 100]}
       onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
       sx={{

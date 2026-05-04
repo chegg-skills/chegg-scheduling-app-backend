@@ -138,7 +138,7 @@ export function UpsertScheduleSlotDialog({
               <em>Team Default (Round Robin / Direct)</em>
             </MenuItem>
             {teamMembers.map((member) => (
-              <MenuItem key={member.user.id} value={member.user.id}>
+              <MenuItem key={member.id} value={member.user.id}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Avatar
                     src={member.user.avatarUrl ?? undefined}

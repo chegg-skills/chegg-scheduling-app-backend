@@ -75,6 +75,23 @@ export const coachTemplates: EmailTemplateMap = {
     ),
   },
 
+  COACH_BOOKING_NO_SHOW: {
+    subject: "Update: Student No-Show ({{eventName}})",
+    preheader: "A student did not show up for your session.",
+    text: "The student {{studentName}} did not show up for {{eventName}} at {{startTime}}.",
+    html: wrapLayout(
+      "Session Update: No-Show",
+      `<p>Hi <strong>{{coachName}}</strong>,</p>
+       <p>The following session has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Student", "{{studentName}}")}
+       </p>`,
+      "A student did not show up for your session.",
+    ),
+  },
+
   COACH_BOOKING_COHOST_NO_SHOW: {
     subject: "Co-host Update: Student No-Show ({{eventName}})",
     preheader: "A student did not show up for a co-hosted session.",

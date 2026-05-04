@@ -9,6 +9,7 @@ export const teamKeys = {
   all: ['teams'] as const,
   list: (params?: ListTeamsParams) => [...teamKeys.all, 'list', params] as const,
   detail: (id: string) => [...teamKeys.all, 'detail', id] as const,
+  config: (id: string) => [...teamKeys.all, 'detail', id, 'notification-config'] as const,
 }
 
 export function useTeams(params?: ListTeamsParams) {
@@ -54,5 +55,21 @@ export function useDeleteTeam() {
   return useMutation({
     mutationFn: (teamId: string) => teamsApi.delete(teamId),
     onSuccess: () => invalidateQueryKeys(qc, [teamKeys.all, statsKeys.all]),
+  })
+}
+
+export function useTeamNotificationConfig(teamId: string) {
+  return useQuery({
+    queryKey: teamKeys.config(teamId),
+    queryFn: ({ signal }) => teamsApi.getNotificationConfig(teamId, signal).then((r) => r.data.data!),
+    enabled: !!teamId,
+  })
+}
+
+export function useUpsertTeamNotificationConfig(teamId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: any) => teamsApi.upsertNotificationConfig(teamId, data),
+    onSuccess: () => invalidateQueryKeys(qc, [teamKeys.config(teamId)]),
   })
 }

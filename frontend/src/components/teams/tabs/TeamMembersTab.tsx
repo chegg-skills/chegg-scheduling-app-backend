@@ -3,6 +3,8 @@ import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { TeamMemberList } from '@/components/team-members/TeamMemberList'
 import { AddMemberForm } from '@/components/team-members/AddMemberForm'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
+import Stack from '@mui/material/Stack'
 import type { TeamMember, UserRole } from '@/types'
 
 interface TeamMembersTabProps {
@@ -31,7 +33,11 @@ export function TeamMembersTab({
   onViewUser,
 }: TeamMembersTabProps) {
   return (
-    <>
+    <Stack spacing={4}>
+      <SectionHeader
+        title="Team Members"
+        description="Manage team administrators and coaches assigned to this team."
+      />
       {error ? (
         <ErrorAlert message="Failed to load members. Please refresh the page." />
       ) : isLoading ? (
@@ -54,6 +60,6 @@ export function TeamMembersTab({
           onCancel={onCloseAddModal}
         />
       </Modal>
-    </>
+    </Stack>
   )
 }

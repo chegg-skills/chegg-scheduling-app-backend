@@ -10,3 +10,8 @@ coverage
 
 # Personal local-only notes
 /personal-notes/
+
+# Debug / scratch output files
+*.log
+*_output*.txt
+*_results*.log

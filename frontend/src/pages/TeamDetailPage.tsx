@@ -4,8 +4,8 @@ import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { useParams } from 'react-router-dom'
-import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar } from 'lucide-react'
-import { useAuth } from '@/context/auth'
+import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar, Bell } from 'lucide-react'
+import { useAuth } from '@/context/auth/useAuth'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
@@ -22,6 +22,7 @@ import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TeamMembersTab } from '@/components/teams/tabs/TeamMembersTab'
 import { TeamEventsTab } from '@/components/teams/tabs/TeamEventsTab'
+import { TeamNotificationsTab } from '@/components/teams/tabs/TeamNotificationsTab'
 
 export function TeamDetailPage() {
   const { teamId = '' } = useParams<{ teamId: string }>()
@@ -158,15 +159,22 @@ export function TeamDetailPage() {
               icon={<Users size={18} />}
               iconPosition="start"
             />
+            <Tab
+              label="Notifications"
+              icon={<Bell size={18} />}
+              iconPosition="start"
+            />
           </Tabs>
 
           <Box sx={{ mb: 1 }}>
-            <Button
-              size="sm"
-              onClick={() => (tabValue === 0 ? setShowCreateEvent(true) : setShowAddMember(true))}
-            >
-              <Plus size={16} /> {tabValue === 0 ? 'New event' : 'Add member'}
-            </Button>
+            {tabValue < 2 && (
+              <Button
+                size="sm"
+                onClick={() => (tabValue === 0 ? setShowCreateEvent(true) : setShowAddMember(true))}
+              >
+                <Plus size={16} /> {tabValue === 0 ? 'New event' : 'Add member'}
+              </Button>
+            )}
           </Box>
         </Box>
 
@@ -193,6 +201,13 @@ export function TeamDetailPage() {
             showAddModal={showAddMember}
             onCloseAddModal={() => setShowAddMember(false)}
             onViewUser={setViewingUserId}
+          />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2} prefix="team">
+          <TeamNotificationsTab
+            teamId={teamId}
+            canEdit={user?.role === 'SUPER_ADMIN' || user?.role === 'TEAM_ADMIN'}
           />
         </TabPanel>
       </Box>

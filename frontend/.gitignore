@@ -3,3 +3,9 @@ dist/
 .env*
 *.tsbuildinfo
 personal-notes/
+
+# Debug / scratch output files
+*.log
+*_fail.txt
+*_output*.txt
+*_results*.log

@@ -10,7 +10,7 @@ import {
   useAddAvailabilityException,
   useRemoveAvailabilityException,
 } from '@/hooks/queries/useAvailability'
-import { useAuth } from '@/context/auth'
+import { useAuth } from '@/context/auth/useAuth'
 import { WeeklyAvailabilityPicker } from './WeeklyAvailabilityPicker'
 import { AvailabilityExceptionsManager } from './AvailabilityExceptionsManager'
 import { PageSpinner } from '@/components/shared/ui/Spinner'

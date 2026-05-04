@@ -65,4 +65,39 @@ export const teamTemplates: EmailTemplateMap = {
       { text: "View Team Schedule", url: "{{frontendUrl}}" },
     ),
   },
+
+  TEAM_BOOKING_CANCELLED: {
+    subject: "Team Update: Booking Cancelled ({{eventName}})",
+    preheader: "A session in your team has been cancelled.",
+    text: "A booking for {{teamName}} ({{eventName}}) has been cancelled. Student: {{studentName}}. Time: {{startTime}}.",
+    html: wrapLayout(
+      "Team Booking Cancelled",
+      `<p>A session in your team schedule has been <strong>cancelled</strong>.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Student", "{{studentName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+       </p>`,
+      "A session in your team has been cancelled.",
+      { text: "View Team Dashboard", url: "{{frontendUrl}}" },
+    ),
+  },
+
+  TEAM_BOOKING_NO_SHOW: {
+    subject: "Team Update: Student No-Show ({{eventName}})",
+    preheader: "A student did not show up for a session in your team.",
+    text: "The student {{studentName}} did not show up for {{eventName}} at {{startTime}}.",
+    html: wrapLayout(
+      "Team Booking: No-Show",
+      `<p>A session in your team has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Student", "{{studentName}}")}
+         ${detailRow("Coach", "{{coachName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+       </p>`,
+      "A student did not show up for a session in your team.",
+      { text: "View Team Dashboard", url: "{{frontendUrl}}" },
+    ),
+  },
 };

@@ -3,8 +3,10 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import * as teamController from "./team.controller";
+import * as teamNotifConfigController from "./team.notificationConfig.controller";
 import { validate } from "../../shared/middleware/validate";
 import { CreateTeamSchema, ListTeamsSchema, UpdateTeamSchema } from "./team.schema";
+import { GetNotificationConfigSchema, UpsertNotificationConfigSchema } from "./team.notificationConfig.schema";
 
 const router = express.Router();
 
@@ -34,6 +36,22 @@ router
     teamController.updateTeam,
   )
   .delete(authenticate, authorize(UserRole.SUPER_ADMIN), teamController.deleteTeam)
+  .all(methodNotAllowed);
+
+router
+  .route("/:teamId/notification-config")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(GetNotificationConfigSchema),
+    teamNotifConfigController.getNotificationConfig,
+  )
+  .put(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(UpsertNotificationConfigSchema),
+    teamNotifConfigController.upsertNotificationConfig,
+  )
   .all(methodNotAllowed);
 
 export default router;
