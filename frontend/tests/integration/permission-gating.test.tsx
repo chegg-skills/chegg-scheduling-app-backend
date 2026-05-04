@@ -1,5 +1,5 @@
 import { screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
-import { describe, expect, it, vi, beforeAll, afterEach, beforeEach } from 'vitest'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import { TeamDetailPage } from '@/pages/TeamDetailPage'
 import { renderWithProviders } from '../utils/renderWithProviders'
 import { http, HttpResponse } from 'msw'
