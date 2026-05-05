@@ -139,6 +139,7 @@ const updateBookingById = async (
     meetingJoinUrl?: string | null;
     sessionJoinUrl?: string | null;
     scheduleSlotId?: string | null;
+    rescheduleToken?: string;
   },
 ): Promise<SafeBooking> => {
   try {

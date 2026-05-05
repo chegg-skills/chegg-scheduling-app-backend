@@ -660,6 +660,7 @@ describe("Booking Domain Integration Tests", () => {
     });
 
     it("allows booking when the co-coach overlap is on a different day", async () => {
+
       const mondayStart = getNextUtcWeekdayAt(1, 9, 0);
       const mondayEnd = new Date(mondayStart.getTime() + 60 * 60 * 1000);
 
@@ -697,6 +698,132 @@ describe("Booking Domain Integration Tests", () => {
 
       expect(res.status).toBe(201);
       expect(res.body.data.booking.coachUserId).toBe(coach2Id);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // POST /api/bookings/:bookingId/reschedule
+  // ─────────────────────────────────────────────────────────────
+  describe("POST /api/bookings/:bookingId/reschedule", () => {
+    let bookingId: string;
+    let rescheduleToken: string;
+
+    beforeEach(async () => {
+      await prisma.userWeeklyAvailability.create({
+        data: { userId: coachId, dayOfWeek: 1, startTime: "09:00", endTime: "17:00" },
+      });
+
+      const startTime = getNextUtcWeekdayAt(1, 10, 0);
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Reschedule Student",
+          studentEmail: "reschedule@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 3600 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+      bookingId = booking.id;
+      rescheduleToken = booking.rescheduleToken!;
+    });
+
+    it("reschedules a booking using a valid token (200, new startTime saved)", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 11, 0);
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: newStartTime.toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(200);
+      expect(new Date(res.body.data.booking.startTime).getTime()).toBe(newStartTime.getTime());
+    });
+
+    it("rotates the rescheduleToken after a successful reschedule (old token rejected with 404)", async () => {
+      const firstNewStart = getNextUtcWeekdayAt(1, 11, 0);
+
+      await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: firstNewStart.toISOString(), token: rescheduleToken });
+
+      // Same old token is now invalid
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: getNextUtcWeekdayAt(1, 12, 0).toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("rejects reschedule when booking status is COMPLETED (403)", async () => {
+      await prisma.booking.update({ where: { id: bookingId }, data: { status: "COMPLETED" } });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("rejects reschedule when booking status is NO_SHOW (403)", async () => {
+      await prisma.booking.update({ where: { id: bookingId }, data: { status: "NO_SHOW" } });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("rejects reschedule when booking status is CANCELLED (403)", async () => {
+      await prisma.booking.update({ where: { id: bookingId }, data: { status: "CANCELLED" } });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("rejects reschedule when session ended more than 2 hours ago (403)", async () => {
+      // Set startTime to 4 hours ago — session end (1h) + 2h grace = 3h ago, so 4h is well past
+      const pastStart = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      await prisma.booking.update({ where: { id: bookingId }, data: { startTime: pastStart } });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("rejects an invalid/unknown token (404)", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(), token: "nonexistent-token-xyz" });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("allows reschedule via session auth (no token) for an authenticated admin", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 11, 0);
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ startTime: newStartTime.toISOString() });
+
+      expect(res.status).toBe(200);
+      expect(new Date(res.body.data.booking.startTime).getTime()).toBe(newStartTime.getTime());
+    });
+
+    it("returns 401 when neither session auth nor token is provided", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString() });
+
+      expect(res.status).toBe(401);
     });
   });
 });

@@ -76,7 +76,10 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
 
 export const getPublicBooking = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const token = req.query.token as string;
+  const authHeader = req.headers.authorization;
+  const token = (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null)
+    ?? (req.query.token as string | undefined)
+    ?? "";
 
   const booking = await PublicService.getPublicBooking(id as string, token);
 

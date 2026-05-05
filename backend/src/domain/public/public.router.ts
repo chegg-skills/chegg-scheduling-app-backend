@@ -1,7 +1,7 @@
 import express from "express";
 import * as PublicController from "./public.controller";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-
+import { publicLimiter } from "../../shared/middleware/rateLimit";
 import { validate } from "../../shared/middleware/validate";
 import {
   PublicSlugSchema,
@@ -11,6 +11,8 @@ import {
 } from "./public.schema";
 
 const router = express.Router();
+
+router.use(publicLimiter);
 
 router.route("/teams").get(PublicController.listTeams).all(methodNotAllowed);
 

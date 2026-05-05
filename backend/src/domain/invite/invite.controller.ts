@@ -76,7 +76,7 @@ const acceptInvite = async (req: Request, res: Response, next: NextFunction): Pr
 
 const validateInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await inviteService.validateInvite(req.query.token as string);
+    const result = await inviteService.validateInvite(req.body.token as string);
     sendSuccessResponse(res, StatusCodes.OK, result, "Invite validation result.");
   } catch (error) {
     next(error);

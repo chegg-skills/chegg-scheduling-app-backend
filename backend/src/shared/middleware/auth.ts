@@ -68,7 +68,7 @@ const authenticate = (req: Request, res: Response, next: NextFunction): Promise<
     }
 
     try {
-      const payload = jwt.verify(token, getJwtSecret());
+      const payload = jwt.verify(token, getJwtSecret(), { algorithms: ["HS256"] });
       const parsed = parseJwtPayload(payload);
 
       // Re-check the user in DB on every request so that deactivated accounts
@@ -91,6 +91,33 @@ const authenticate = (req: Request, res: Response, next: NextFunction): Promise<
     } catch {
       next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
     }
+  })();
+};
+
+// Like authenticate, but does not block if no token is present or the token is invalid.
+// Sets res.locals.authUser only when a valid, active session exists.
+// Used on routes that accept both session auth and alternative auth (e.g. reschedule tokens).
+const optionalAuthenticate = (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return (async () => {
+    const token = getTokenFromRequest(req);
+    if (!token) {
+      next();
+      return;
+    }
+    try {
+      const payload = jwt.verify(token, getJwtSecret(), { algorithms: ["HS256"] });
+      const parsed = parseJwtPayload(payload);
+      const user = await prisma.user.findUnique({
+        where: { id: parsed.id },
+        select: { id: true, email: true, role: true, isActive: true },
+      });
+      if (user?.isActive) {
+        res.locals.authUser = { id: user.id, email: user.email, role: user.role };
+      }
+    } catch {
+      // Token present but invalid — continue without blocking
+    }
+    next();
   })();
 };
 
@@ -117,4 +144,4 @@ const authorize = (...allowedRoles: UserRole[]) => {
   };
 };
 
-export { authenticate, authorize, type AuthUser };
+export { authenticate, optionalAuthenticate, authorize, type AuthUser };

@@ -1,5 +1,6 @@
 import { BookingStatus } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import { randomUUID } from "crypto";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { logger } from "../../shared/logging/logger";
@@ -25,6 +26,7 @@ import {
   lockCoach,
 } from "./booking.repository";
 import {
+  assertRescheduleTokenValid,
   buildSchedulingContext,
   normalizeStudentEmailAddress,
   normalizeStudentName,
@@ -235,6 +237,8 @@ const rescheduleBooking = async (
   // 1. Find booking (verify token if provided)
   const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
 
+  if (token) assertRescheduleTokenValid(booking);
+
   // 2. Resolve booking window and slot context
   const event = await getBookableEvent(booking.teamId, booking.eventId);
   const { end } = resolveBookingWindow(event, start);
@@ -290,7 +294,8 @@ const rescheduleBooking = async (
       coCoachUserIds,
       meetingJoinUrl,
       scheduleSlotId: scheduleSlot?.id ?? null,
-      status: BookingStatus.CONFIRMED, // Reset to confirmed if it was something else
+      status: BookingStatus.CONFIRMED,
+      ...(token && { rescheduleToken: randomUUID() }), // rotate token to invalidate the old link
     });
   }, { timeout: 15000 });
 

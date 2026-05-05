@@ -67,3 +67,37 @@ export const strictLimiter = rateLimit({
     },
   }),
 });
+
+/**
+ * Public tier — unauthenticated discovery routes (/public/*).
+ * Prevents bulk scraping of team/event/coach data.
+ */
+export const publicLimiter = rateLimit({
+  ...withTestBypass({
+    windowMs: Number(process.env.PUBLIC_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
+    max: Number(process.env.PUBLIC_RATE_LIMIT_MAX ?? 120),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message: "Too many requests. Please slow down.",
+    },
+  }),
+});
+
+/**
+ * Booking creation tier — POST /bookings (public, unauthenticated).
+ * Prevents flooding with fake bookings from a single IP.
+ */
+export const bookingCreationLimiter = rateLimit({
+  ...withTestBypass({
+    windowMs: Number(process.env.BOOKING_CREATION_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
+    max: Number(process.env.BOOKING_CREATION_RATE_LIMIT_MAX ?? 10),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message: "Too many booking attempts. Please try again later.",
+    },
+  }),
+});

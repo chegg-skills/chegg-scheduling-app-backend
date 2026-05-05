@@ -30,7 +30,7 @@ router
 // Public: validate an invite token and return its metadata (used by frontend to detect SSO invites)
 router
   .route("/validate")
-  .get(sensitiveLimiter, validate(ValidateInviteSchema), inviteController.validateInvite)
+  .post(sensitiveLimiter, validate(ValidateInviteSchema), inviteController.validateInvite)
   .all(methodNotAllowed);
 
 export default router;

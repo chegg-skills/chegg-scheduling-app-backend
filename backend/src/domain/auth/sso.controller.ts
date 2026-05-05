@@ -267,21 +267,6 @@ async function handleExistingUserLogin(
     where: { ssoProvider_ssoSub: { ssoProvider: provider, ssoSub } },
   });
 
-  // Auto-link: existing password user logs in via SSO for the first time
-  if (!user) {
-    const userByEmail = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    if (userByEmail) {
-      user = await prisma.user.update({
-        where: { id: userByEmail.id },
-        data: { ssoProvider: provider, ssoSub, ssoLinkedAt: new Date() },
-      });
-      logger.info("SSO identity linked to existing user.", {
-        userId: user.id,
-        provider,
-      });
-    }
-  }
-
   if (!user) {
     logger.warn("SSO login rejected: no account found for identity.", {
       email: normalizedEmail,

@@ -1,6 +1,7 @@
 import request from "supertest";
 import app from "../../src/app";
 import { prisma } from "../../src/shared/db/prisma";
+import jwt from "jsonwebtoken";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
@@ -496,5 +497,33 @@ describe("SSO error paths", () => {
       expect(res.status).toBe(400);
       expect(res.body.message).toMatch(/identity provider/i);
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// JWT security
+// ─────────────────────────────────────────────────────────────
+describe("JWT security", () => {
+  it("returns 401 when a JWT signed with a different secret is sent", async () => {
+    const fakeToken = jwt.sign({ sub: "fake-user-id" }, "wrong-secret");
+
+    const res = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${fakeToken}`);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 when a JWT with alg: none is sent", async () => {
+    // Craft a token manually: header with alg:none + any payload, no signature
+    const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url");
+    const payload = Buffer.from(JSON.stringify({ sub: "any-user-id" })).toString("base64url");
+    const noneToken = `${header}.${payload}.`;
+
+    const res = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${noneToken}`);
+
+    expect(res.status).toBe(401);
   });
 });
