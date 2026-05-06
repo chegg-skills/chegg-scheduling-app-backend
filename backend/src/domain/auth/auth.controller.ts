@@ -12,9 +12,9 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
     const data = isSelfRegister ? { ...req.body, role: undefined } : req.body;
 
     const result = await authService.register(data);
-    setAuthCookie(res, result.token);
+    const csrfToken = setAuthCookie(res, result.token);
 
-    sendSuccessResponse(res, StatusCodes.CREATED, result, "User registered successfully.");
+    sendSuccessResponse(res, StatusCodes.CREATED, { ...result, csrfToken }, "User registered successfully.");
   } catch (error) {
     next(error);
   }
@@ -23,9 +23,9 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
 const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await authService.login(req.body);
-    setAuthCookie(res, result.token);
+    const csrfToken = setAuthCookie(res, result.token);
 
-    sendSuccessResponse(res, StatusCodes.OK, result, "Login successful.");
+    sendSuccessResponse(res, StatusCodes.OK, { ...result, csrfToken }, "Login successful.");
   } catch (error) {
     next(error);
   }
@@ -45,11 +45,11 @@ const logout = async (_req: Request, res: Response, next: NextFunction): Promise
 const bootstrap = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await authService.bootstrap(req.body);
-    setAuthCookie(res, result.token);
+    const csrfToken = setAuthCookie(res, result.token);
     sendSuccessResponse(
       res,
       StatusCodes.CREATED,
-      result,
+      { ...result, csrfToken },
       "Super admin created successfully. Bootstrap complete.",
     );
   } catch (error) {

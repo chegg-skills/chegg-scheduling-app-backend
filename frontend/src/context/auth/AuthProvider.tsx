@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { SafeUser } from '@/types'
 import { usersApi } from '@/api/users'
 import { authApi } from '@/api/auth'
+import { clearCsrfToken } from '@/lib/axios'
 import { AuthContext } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authApi.logout()
     } finally {
       setUser(null)
+      clearCsrfToken()
     }
   }, [])
 

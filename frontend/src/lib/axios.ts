@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-const CSRF_COOKIE_NAME = 'csrf_token'
 const CSRF_HEADER_NAME = 'x-csrf-token'
+const CSRF_STORAGE_KEY = 'csrf_token'
 
 export const getBaseURL = () => {
   const envUrl = import.meta.env.VITE_API_BASE_URL
@@ -9,18 +9,31 @@ export const getBaseURL = () => {
   return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`
 }
 
-const getCookieValue = (name: string): string | undefined => {
-  if (typeof document === 'undefined') {
-    return undefined
+// In-memory primary; localStorage backs it across page reloads
+let csrfMemory: string | null = (() => {
+  try {
+    return localStorage.getItem(CSRF_STORAGE_KEY)
+  } catch {
+    return null
   }
+})()
 
-  const cookie = document.cookie.split('; ').find((entry) => entry.startsWith(`${name}=`))
-
-  if (!cookie) {
-    return undefined
+export const storeCsrfToken = (token: string): void => {
+  csrfMemory = token
+  try {
+    localStorage.setItem(CSRF_STORAGE_KEY, token)
+  } catch {
+    // localStorage unavailable (private browsing restrictions) — memory-only is fine
   }
+}
 
-  return decodeURIComponent(cookie.slice(name.length + 1))
+export const clearCsrfToken = (): void => {
+  csrfMemory = null
+  try {
+    localStorage.removeItem(CSRF_STORAGE_KEY)
+  } catch {
+    // ignore
+  }
 }
 
 const apiClient = axios.create({
@@ -33,20 +46,21 @@ apiClient.interceptors.request.use((req) => {
   const method = req.method?.toLowerCase()
   const isSafeMethod = method === undefined || ['get', 'head', 'options'].includes(method)
 
-  if (!isSafeMethod) {
-    const csrfToken = getCookieValue(CSRF_COOKIE_NAME)
-    if (csrfToken) {
-      req.headers = req.headers ?? {}
-      req.headers[CSRF_HEADER_NAME] = csrfToken
-    }
+  if (!isSafeMethod && csrfMemory) {
+    req.headers = req.headers ?? {}
+    req.headers[CSRF_HEADER_NAME] = csrfMemory
   }
 
   return req
 })
 
-// Redirect to login on 401 without creating a circular dependency on AuthContext
+// Auto-store csrfToken from any response body; redirect to login on 401
 apiClient.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    const token = res.data?.data?.csrfToken
+    if (token && typeof token === 'string') storeCsrfToken(token)
+    return res
+  },
   (error) => {
     if (error.response?.status === 401) {
       const pathname = window.location.pathname

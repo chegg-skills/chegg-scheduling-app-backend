@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
+import { CSRF_COOKIE_NAME } from "../../shared/utils/cookie";
 import * as userService from "./user.service";
 
 const listUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -27,11 +28,12 @@ const readUser = async (req: Request, res: Response, next: NextFunction): Promis
   }
 };
 
-const readMyProfile = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+const readMyProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const user = await userService.readUser(caller.id);
-    sendSuccessResponse(res, StatusCodes.OK, user, "User fetched successfully.");
+    const csrfToken: string | undefined = req.cookies[CSRF_COOKIE_NAME];
+    sendSuccessResponse(res, StatusCodes.OK, { ...user, csrfToken }, "User fetched successfully.");
   } catch (error) {
     next(error);
   }

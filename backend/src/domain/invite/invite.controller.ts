@@ -54,7 +54,7 @@ const acceptInvite = async (req: Request, res: Response, next: NextFunction): Pr
   try {
     const result = await inviteService.acceptInvite(req.body);
 
-    setAuthCookie(res, result.token);
+    const csrfToken = setAuthCookie(res, result.token);
 
     void queueInviteAcceptedNotification({
       invitedById: result.invitedById,
@@ -66,7 +66,7 @@ const acceptInvite = async (req: Request, res: Response, next: NextFunction): Pr
     sendSuccessResponse(
       res,
       StatusCodes.CREATED,
-      { user: result.user, token: result.token },
+      { user: result.user, token: result.token, csrfToken },
       "Invite accepted. Account created and logged in.",
     );
   } catch (error) {
