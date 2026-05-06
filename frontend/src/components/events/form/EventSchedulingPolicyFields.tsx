@@ -27,7 +27,6 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
   const bookingMode = watch('bookingMode')
 
   const isGroupSession = !!caps?.multipleParticipants
-  const interactionLabel = caps?.multipleCoaches ? 'Group Workshop' : 'ONE_TO_MANY'
 
   return (
     <Stack spacing={3}>
