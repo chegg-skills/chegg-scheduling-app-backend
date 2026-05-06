@@ -1,5 +1,11 @@
 import * as React from 'react'
-import { useParams, useSearchParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom'
+import {
+  useParams,
+  useSearchParams,
+  useNavigate,
+  useLocation,
+  useOutletContext,
+} from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { startOfDay, endOfDay } from 'date-fns'
 import Box from '@mui/material/Box'
@@ -52,7 +58,7 @@ export function PublicReschedulePage() {
     if (searchParams.get('token')) {
       navigate(location.pathname, { replace: true })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 1. Fetch Booking Details
@@ -134,10 +140,10 @@ export function PublicReschedulePage() {
           newTime={
             selectedSlot
               ? new Intl.DateTimeFormat('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-              }).format(new Date(selectedSlot))
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                }).format(new Date(selectedSlot))
               : ''
           }
           eventName={bookingData.event?.name || ''}
@@ -233,10 +239,7 @@ export function PublicReschedulePage() {
           />
         </PublicMainContent>
       </PublicBaseLayout>
-      <TroubleshootDialog
-        open={troubleshootOpen}
-        onClose={() => setTroubleshootOpen(false)}
-      />
+      <TroubleshootDialog open={troubleshootOpen} onClose={() => setTroubleshootOpen(false)} />
     </LocalizationProvider>
   )
 }

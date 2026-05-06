@@ -27,11 +27,7 @@ const duplicateEvent = async (req: Request, res: Response, next: NextFunction): 
   }
 };
 
-const createEventType = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const createEventType = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const eventType = await eventService.createEventType(req.body, caller);
@@ -42,11 +38,7 @@ const createEventType = async (
   }
 };
 
-const listEventTypes = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const listEventTypes = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await eventService.listEventTypes();
 
@@ -56,11 +48,7 @@ const listEventTypes = async (
   }
 };
 
-const updateEventType = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const updateEventType = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const eventType = await eventService.updateEventType(
@@ -75,11 +63,7 @@ const updateEventType = async (
   }
 };
 
-const deleteEventType = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const deleteEventType = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const eventType = await eventService.deleteEventType(req.params.eventTypeId as string, caller);
@@ -322,11 +306,7 @@ const listAllEvents = async (req: Request, res: Response, next: NextFunction): P
   }
 };
 
-const listSlotBookings = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const listSlotBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const result = await eventService.listSlotBookings(

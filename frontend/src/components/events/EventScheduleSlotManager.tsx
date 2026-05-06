@@ -15,7 +15,7 @@ import {
 } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { useScheduleSeriesGroups } from '@/hooks/useScheduleSeriesGroups'
-import type { Event, EventScheduleSlot, TeamMember } from '@/types'
+import type { Event, EventScheduleSlot } from '@/types'
 import { UpsertScheduleSlotDialog } from './dialogs/UpsertScheduleSlotDialog'
 import { SlotAttendeesDialog } from './dialogs/SlotAttendeesDialog'
 import { LogSessionDialog } from './dialogs/LogSessionDialog'
@@ -28,10 +28,9 @@ interface Props {
   event: Event
   slots: EventScheduleSlot[]
   isLoading: boolean
-  teamMembers: TeamMember[]
 }
 
-export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers }: Props) {
+export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
   const theme = useTheme()
   const { mutate: create, isPending: creating } = useCreateEventScheduleSlot(event.id)
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
@@ -50,8 +49,8 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
   // Grouping logic
   const seriesGroups = useScheduleSeriesGroups(slots)
 
-  const activeSeries = useMemo(() => 
-    seriesGroups.find(g => g.id === activeSeriesId),
+  const activeSeries = useMemo(
+    () => seriesGroups.find((g) => g.id === activeSeriesId),
     [seriesGroups, activeSeriesId]
   )
 
@@ -108,40 +107,37 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
   }
 
   function handleRemoveSeries(group: ScheduleSeriesGroup) {
-    const message = group.isRecurring 
-        ? `Are you sure you want to delete this entire series (${group.occurrenceCount} sessions)?\n\nThis will remove all occurrences in this group.`
-        : `Are you sure you want to delete this session?`
+    const message = group.isRecurring
+      ? `Are you sure you want to delete this entire series (${group.occurrenceCount} sessions)?\n\nThis will remove all occurrences in this group.`
+      : `Are you sure you want to delete this session?`
 
     handleAction(
-        async () => {
-            for (const s of group.slots) {
-                await remove(s.id)
-            }
-        }, 
-        group.id, 
-        {
-            title: 'Delete Series',
-            message,
-            actionName: 'Delete All',
+      async () => {
+        for (const s of group.slots) {
+          await remove(s.id)
         }
+      },
+      group.id,
+      {
+        title: 'Delete Series',
+        message,
+        actionName: 'Delete All',
+      }
     )
   }
 
   function handleCancelSlot(slot: EventScheduleSlot, info: string) {
     const bookingCount = slot._count?.bookings ?? 0
-    const message = bookingCount > 0
+    const message =
+      bookingCount > 0
         ? `Are you sure you want to cancel the session on ${info}? \n\nThis will cancel all ${bookingCount} active bookings and notify all participants. This action cannot be undone.`
         : `Are you sure you want to cancel the session on ${info}? \n\nThis will mark the session as cancelled and prevent new bookings.`
 
-    handleAction(
-        cancel,
-        slot.id,
-        {
-            title: 'Cancel Session',
-            message,
-            actionName: 'Cancel Session',
-        }
-    )
+    handleAction(cancel, slot.id, {
+      title: 'Cancel Session',
+      message,
+      actionName: 'Cancel Session',
+    })
   }
 
   if (isLoading) return <Spinner />
@@ -150,7 +146,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
     <Box>
       {!activeSeries ? (
         <>
-          <SectionHeader 
+          <SectionHeader
             title="Scheduled Sessions"
             description="Recurring series are grouped for better visibility."
             action={
@@ -204,10 +200,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
               onRemoveSeries={handleRemoveSeries}
             />
           ) : (
-            <ScheduleCalendar
-              slots={slots}
-              onViewDetail={setViewingSlot}
-            />
+            <ScheduleCalendar slots={slots} onViewDetail={setViewingSlot} />
           )}
         </>
       ) : (
@@ -244,7 +237,6 @@ export function EventScheduleSlotManager({ event, slots, isLoading, teamMembers 
         slot={editingSlot}
         onSave={handleSave}
         isPending={creating || updating}
-        teamMembers={teamMembers}
       />
 
       <SlotAttendeesDialog

@@ -57,7 +57,9 @@ export const eventsApi = {
   deleteScheduleSlot: (eventId: string, slotId: string) =>
     apiClient.delete<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}`),
   cancelScheduleSlot: (eventId: string, slotId: string) =>
-    apiClient.post<ApiResponse<EventScheduleSlot>>(`/events/${eventId}/schedule-slots/${slotId}/cancel`),
+    apiClient.post<ApiResponse<EventScheduleSlot>>(
+      `/events/${eventId}/schedule-slots/${slotId}/cancel`
+    ),
   listSlotBookings: (eventId: string, slotId: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<any>>(`/events/${eventId}/schedule-slots/${slotId}/bookings`, {
       signal,
@@ -65,11 +67,11 @@ export const eventsApi = {
   getSessionLog: (eventId: string, slotId: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<SessionLog | null>>(
       `/events/${eventId}/schedule-slots/${slotId}/log`,
-      { signal },
+      { signal }
     ),
   upsertSessionLog: (eventId: string, slotId: string, data: UpsertSessionLogDto) =>
     apiClient.post<ApiResponse<SessionLog>>(
       `/events/${eventId}/schedule-slots/${slotId}/log`,
-      data,
+      data
     ),
 }

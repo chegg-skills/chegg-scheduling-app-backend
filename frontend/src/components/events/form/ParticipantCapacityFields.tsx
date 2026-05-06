@@ -1,5 +1,6 @@
 import { Controller, useFormContext } from 'react-hook-form'
 import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import type { EventFormValues } from './eventFormSchema'
@@ -22,7 +23,7 @@ export function ParticipantCapacityFields() {
       label="Participant Capacity"
       htmlFor="minParticipantCount"
       error={errors.minParticipantCount?.message || errors.maxParticipantCount?.message}
-      info="Set the minimum and maximum number of students allowed per session. Leave the max blank for no cap."
+      info="Maximum is enforced — the slot disappears when full. Minimum is informational only and does not prevent bookings."
     >
       <Box
         sx={{
@@ -50,6 +51,9 @@ export function ParticipantCapacityFields() {
             />
           )}
         />
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+          Informational only — does not block bookings if fewer students sign up.
+        </Typography>
 
         <Controller
           name="maxParticipantCount"

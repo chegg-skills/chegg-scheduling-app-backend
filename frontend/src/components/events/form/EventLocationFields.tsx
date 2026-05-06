@@ -14,9 +14,10 @@ const LOCATION_TYPES: { value: EventLocationType; label: string }[] = [
 ]
 
 const locationHint: Record<EventLocationType, string> = {
-  VIRTUAL: 'Paste a meeting link (e.g. Zoom, Teams).',
-  IN_PERSON: 'Enter the physical address.',
-  CUSTOM: 'Any custom location string.',
+  VIRTUAL:
+    "Optional fallback URL (e.g. Zoom, Teams). The assigned coach's personal Zoom link takes priority — this is only used if the coach has no link set on their profile.",
+  IN_PERSON: 'Enter the physical address where the session will take place.',
+  CUSTOM: 'Any custom location details or instructions for the meeting.',
 }
 
 /**
@@ -59,9 +60,8 @@ export function EventLocationFields() {
         label="Location"
         htmlFor="locationValue"
         error={errors.locationValue?.message}
-        info="The actual link, address, or custom instructions for the meeting."
+        info="Optional. Used as a fallback when the assigned coach has no personal Zoom link set on their profile."
         hint={locationType ? locationHint[locationType] : undefined}
-        required
       >
         <Input
           id="locationValue"

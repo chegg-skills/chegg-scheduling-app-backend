@@ -57,12 +57,8 @@ const EventBaseObjectCore = z.object({
     .array(
       z.object({
         dayOfWeek: z.number().int().min(0).max(6),
-        startTime: z
-          .string()
-          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
-        endTime: z
-          .string()
-          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
+        startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
+        endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
       }),
     )
     .optional(),
@@ -76,7 +72,7 @@ const EventBaseObject = EventBaseObjectCore.extend({
   assignmentStrategy: z.nativeEnum(AssignmentStrategy).default(AssignmentStrategy.DIRECT),
   durationSeconds: z.coerce.number().int().positive().default(1800),
   locationType: z.nativeEnum(EventLocationType).default(EventLocationType.VIRTUAL),
-  locationValue: z.string().default("Zoom"),
+  locationValue: z.string().optional().default(""),
   isActive: z.boolean().default(true),
   bookingMode: z.nativeEnum(EventBookingMode).default(EventBookingMode.COACH_AVAILABILITY),
   minimumNoticeMinutes: z.coerce.number().int().nonnegative().default(0),
@@ -90,13 +86,12 @@ const EventBaseObject = EventBaseObjectCore.extend({
  */
 const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   // In partial updates, interactionType may be absent — skip caps-based checks
-  const caps = data.interactionType ? INTERACTION_TYPE_CAPS[data.interactionType as InteractionType] : null;
+  const caps = data.interactionType
+    ? INTERACTION_TYPE_CAPS[data.interactionType as InteractionType]
+    : null;
 
   if (caps && !caps.multipleCoaches) {
-    if (
-      data.sessionLeadershipStrategy &&
-      data.sessionLeadershipStrategy !== "SINGLE_COACH"
-    ) {
+    if (data.sessionLeadershipStrategy && data.sessionLeadershipStrategy !== "SINGLE_COACH") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["sessionLeadershipStrategy"],
@@ -167,7 +162,12 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   }
 
   // targetCoHostCount must be at least 1 when specified for multi-coach types
-  if (caps && caps.multipleCoaches && data.targetCoHostCount != null && data.targetCoHostCount < 1) {
+  if (
+    caps &&
+    caps.multipleCoaches &&
+    data.targetCoHostCount != null &&
+    data.targetCoHostCount < 1
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["targetCoHostCount"],

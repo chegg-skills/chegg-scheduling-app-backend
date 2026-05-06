@@ -41,7 +41,12 @@ router
 
 router
   .route("/:bookingId/reschedule")
-  .post(standardLimiter, optionalAuthenticate, validate(RescheduleBookingSchema), BookingController.rescheduleBooking) // Token auth or session auth handled in controller
+  .post(
+    standardLimiter,
+    optionalAuthenticate,
+    validate(RescheduleBookingSchema),
+    BookingController.rescheduleBooking,
+  ) // Token auth or session auth handled in controller
   .all(methodNotAllowed);
 
 export default router;

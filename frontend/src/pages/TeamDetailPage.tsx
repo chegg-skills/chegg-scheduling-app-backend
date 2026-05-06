@@ -159,11 +159,7 @@ export function TeamDetailPage() {
               icon={<Users size={18} />}
               iconPosition="start"
             />
-            <Tab
-              label="Notifications"
-              icon={<Bell size={18} />}
-              iconPosition="start"
-            />
+            <Tab label="Notifications" icon={<Bell size={18} />} iconPosition="start" />
           </Tabs>
 
           <Box sx={{ mb: 1 }}>

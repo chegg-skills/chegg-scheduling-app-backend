@@ -26,7 +26,9 @@ export const DEFAULT_NOTIFICATION_CONFIG: ResolvedNotificationConfig = {
  * Fetches the notification configuration for a team.
  * Falls back to DEFAULT_NOTIFICATION_CONFIG if no custom configuration exists.
  */
-export async function getTeamNotificationConfig(teamId: string): Promise<ResolvedNotificationConfig> {
+export async function getTeamNotificationConfig(
+  teamId: string,
+): Promise<ResolvedNotificationConfig> {
   const row = await prisma.teamNotificationConfig.findUnique({
     where: { teamId },
     select: {

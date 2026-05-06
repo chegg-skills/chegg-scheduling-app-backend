@@ -408,11 +408,7 @@ const deleteEventScheduleSlot = async (
   });
 };
 
-const listSlotBookings = async (
-  eventId: string,
-  slotId: string,
-  caller: CallerContext,
-) => {
+const listSlotBookings = async (eventId: string, slotId: string, caller: CallerContext) => {
   await getManagedEvent(eventId, caller);
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },

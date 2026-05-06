@@ -25,7 +25,7 @@ const ensureTeamAccess = async (teamId: string, caller: CallerContext) => {
   if (!membership || !membership.isActive) {
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
-      "You do not have administrative access to this team's configuration."
+      "You do not have administrative access to this team's configuration.",
     );
   }
 };
@@ -52,7 +52,7 @@ export const upsertNotificationConfig = async (
     coachNotifyOnNoShow: boolean;
     notifyLeadOnAvailability: boolean;
   },
-  caller: CallerContext
+  caller: CallerContext,
 ) => {
   await ensureTeamAccess(teamId, caller);
 

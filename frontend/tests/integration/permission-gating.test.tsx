@@ -9,7 +9,7 @@ import { server } from '../msw/server'
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
   return {
-    ...actual as any,
+    ...(actual as any),
     useParams: () => ({ teamId: 'team-1' }),
   }
 })
@@ -20,19 +20,19 @@ const baseHandlers = [
   http.get('*/api/teams/:id', () => {
     return HttpResponse.json({
       success: true,
-      data: { id: teamId, name: 'Test Team', isActive: true }
+      data: { id: teamId, name: 'Test Team', isActive: true },
     })
   }),
   http.get('*/api/teams/:id/members', () => {
     return HttpResponse.json({
       success: true,
-      data: { members: [] }
+      data: { members: [] },
     })
   }),
   http.get('*/api/teams/:id/events', () => {
     return HttpResponse.json({
       success: true,
-      data: { events: [] }
+      data: { events: [] },
     })
   }),
   http.get('*/api/teams/:id/notification-config', () => {
@@ -43,10 +43,10 @@ const baseHandlers = [
         bookingConfirmations: false,
         noShowNotifications: false,
         reminder24h: false,
-        reminder1h: false
-      }
+        reminder1h: false,
+      },
     })
-  })
+  }),
 ]
 
 describe('Permission Gating: Team Notifications', () => {
@@ -65,7 +65,7 @@ describe('Permission Gating: Team Notifications', () => {
       http.get('*/api/users/me', () => {
         return HttpResponse.json({
           success: true,
-          data: { id: 'admin-1', role: 'TEAM_ADMIN', firstName: 'Admin', lastName: 'User' }
+          data: { id: 'admin-1', role: 'TEAM_ADMIN', firstName: 'Admin', lastName: 'User' },
         })
       })
     )
@@ -89,7 +89,7 @@ describe('Permission Gating: Team Notifications', () => {
       http.get('*/api/users/me', () => {
         return HttpResponse.json({
           success: true,
-          data: { id: 'coach-1', role: 'COACH', firstName: 'Coach', lastName: 'User' }
+          data: { id: 'coach-1', role: 'COACH', firstName: 'Coach', lastName: 'User' },
         })
       })
     )

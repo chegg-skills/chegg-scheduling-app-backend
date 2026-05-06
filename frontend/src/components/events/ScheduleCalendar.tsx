@@ -14,14 +14,7 @@ interface ScheduleCalendarProps {
 
 export function ScheduleCalendar({ slots, onViewDetail }: ScheduleCalendarProps) {
   const theme = useTheme()
-  const {
-    currentMonth,
-    monthStart,
-    calendarDays,
-    nextMonth,
-    prevMonth,
-    goToToday,
-  } = useCalendar()
+  const { currentMonth, monthStart, calendarDays, nextMonth, prevMonth, goToToday } = useCalendar()
 
   const slotsByDate = useMemo(() => {
     const map: Record<string, EventScheduleSlot[]> = {}
@@ -33,11 +26,14 @@ export function ScheduleCalendar({ slots, onViewDetail }: ScheduleCalendarProps)
     return map
   }, [slots])
 
-  const legends = useMemo(() => [
-    { label: 'Unique Series', color: theme.palette.primary.main },
-    { label: 'Individual Session', color: theme.palette.success.main },
-    { label: 'Strikethrough = Cancelled', color: theme.palette.text.secondary },
-  ], [theme])
+  const legends = useMemo(
+    () => [
+      { label: 'Unique Series', color: theme.palette.primary.main },
+      { label: 'Individual Session', color: theme.palette.success.main },
+      { label: 'Strikethrough = Cancelled', color: theme.palette.text.secondary },
+    ],
+    [theme]
+  )
 
   return (
     <CalendarLayout

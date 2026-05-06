@@ -15,20 +15,20 @@ interface DataFieldProps {
  * Standardized data display field with label, value, and optional tooltip.
  * Ensures consistent alignment and typography across detail views.
  */
-export function DataField({ 
-  label, 
-  value, 
-  tooltip, 
-  sm = 4, 
-  xs = 12 
-}: DataFieldProps) {
+export function DataField({ label, value, tooltip, sm = 4, xs = 12 }: DataFieldProps) {
   return (
     <Grid size={{ xs, sm }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.25 }}>
         <Typography
           variant="caption"
           color="text.primary"
-          sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.8 }}
+          sx={{
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            opacity: 0.8,
+          }}
         >
           {label}
         </Typography>

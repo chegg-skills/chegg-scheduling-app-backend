@@ -46,8 +46,8 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
 
   return (
     <Stack spacing={3}>
-      <SectionHeader 
-        title="Upcoming Bookings" 
+      <SectionHeader
+        title="Upcoming Bookings"
         description="View future bookings and co-coach assignments for this event."
       />
 

@@ -39,7 +39,8 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
   }
 
   const fixedLeadCoach = event.fixedLeadCoachId
-    ? (event.coaches.find((coach) => coach.coachUserId === event.fixedLeadCoachId)?.coachUser ?? null)
+    ? (event.coaches.find((coach) => coach.coachUserId === event.fixedLeadCoachId)?.coachUser ??
+      null)
     : null
 
   const formatEnumLabel = (val: string) => {
@@ -52,15 +53,12 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
 
   const Spacer = () => <Grid size={12} sx={{ height: 8 }} />
 
-
   // Note: Backend interaction info details for the selected event's interactionType enum
   // are often needed here. For now we use the event directly which should have been populated.
   // If event.interactionTypeInfo is missing, we might need a separate hook.
 
   return (
     <Paper component="section" variant="outlined" sx={{ p: 3, borderRadius: 1.5 }}>
-
-
       <Grid container spacing={2}>
         {/* Core Configuration */}
         <DataField label="Event Type" value={toTitleCase(event.eventType.name)} />
@@ -96,13 +94,13 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           value={
             event.weeklyAvailability && event.weeklyAvailability.length > 0
               ? Array.from(new Set(event.weeklyAvailability.map((a) => a.dayOfWeek)))
-                .sort()
-                .map((d) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
-                .join(', ')
-              : event.allowedWeekdays.length > 0
-                ? event.allowedWeekdays
+                  .sort()
                   .map((d) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
                   .join(', ')
+              : event.allowedWeekdays.length > 0
+                ? event.allowedWeekdays
+                    .map((d) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
+                    .join(', ')
                 : 'All days'
           }
         />
@@ -220,16 +218,10 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
                 color={copied ? 'success' : 'primary'}
                 sx={{
                   bgcolor: (theme) =>
-                    alpha(
-                      copied ? theme.palette.success.main : theme.palette.primary.main,
-                      0.1
-                    ),
+                    alpha(copied ? theme.palette.success.main : theme.palette.primary.main, 0.1),
                   '&:hover': {
                     bgcolor: (theme) =>
-                      alpha(
-                        copied ? theme.palette.success.main : theme.palette.primary.main,
-                        0.2
-                      ),
+                      alpha(copied ? theme.palette.success.main : theme.palette.primary.main, 0.2),
                   },
                 }}
               >

@@ -30,19 +30,19 @@ export const eventTableColumns: Array<{
   sortKey: EventSortKey
   tooltip?: string
 }> = [
-    { label: 'Event', sortKey: 'event' },
-    {
-      label: 'Event Type',
-      sortKey: 'eventType',
-      tooltip: 'The event type this event belongs to (e.g., Tutorial).',
-    },
-    { label: 'Duration', sortKey: 'duration' },
-    { label: 'Coaches', sortKey: 'coaches' },
-    {
-      label: 'Strategy',
-      sortKey: 'strategy',
-      tooltip: 'How coaches are assigned (Direct or Round Robin).',
-    },
-    { label: 'Status', sortKey: 'status' },
-    { label: 'Booking Link', sortKey: 'bookingLink' },
-  ]
+  { label: 'Event', sortKey: 'event' },
+  {
+    label: 'Event Type',
+    sortKey: 'eventType',
+    tooltip: 'The event type this event belongs to (e.g., Tutorial).',
+  },
+  { label: 'Duration', sortKey: 'duration' },
+  { label: 'Coaches', sortKey: 'coaches' },
+  {
+    label: 'Strategy',
+    sortKey: 'strategy',
+    tooltip: 'How coaches are assigned (Direct or Round Robin).',
+  },
+  { label: 'Status', sortKey: 'status' },
+  { label: 'Booking Link', sortKey: 'bookingLink' },
+]

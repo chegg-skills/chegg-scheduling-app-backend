@@ -28,7 +28,6 @@ const createEventType = async (token: string) => {
     });
 };
 
-
 beforeAll(async () => {
   await clearTables();
 

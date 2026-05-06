@@ -51,12 +51,7 @@ const createEvent = async (
 };
 
 // Create a slot via HTTP
-const createSlot = async (
-  eventId: string,
-  token: string,
-  startTime: Date,
-  endTime: Date,
-) => {
+const createSlot = async (eventId: string, token: string, startTime: Date, endTime: Date) => {
   return request(app)
     .post(`/api/events/${eventId}/schedule-slots`)
     .set("Authorization", `Bearer ${token}`)
@@ -165,14 +160,9 @@ describe("Slot creation — strict mode (weeklyAvailability range defined for th
   const rangeEnd = 17;
 
   beforeAll(async () => {
-    const res = await createEvent(
-      context.teamId,
-      context.teamAdmin.token,
-      context.eventTypeId,
-      {
-        weeklyAvailability: [{ dayOfWeek: MONDAY, startTime: "09:00", endTime: "17:00" }],
-      },
-    );
+    const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
+      weeklyAvailability: [{ dayOfWeek: MONDAY, startTime: "09:00", endTime: "17:00" }],
+    });
     eventId = res.body.data.id;
   });
 
@@ -213,7 +203,7 @@ describe("Slot creation — strict mode (weeklyAvailability range defined for th
 
   it("allows a slot that exactly matches the range boundaries", async () => {
     const start = getNextLocalWeekdayAt(MONDAY, rangeStart, 0); // Mon 09:00
-    const end = getNextLocalWeekdayAt(MONDAY, rangeEnd, 0);    // Mon 17:00
+    const end = getNextLocalWeekdayAt(MONDAY, rangeEnd, 0); // Mon 17:00
 
     // Avoid @@unique([eventId, startTime]) collision with previous tests
     // by ensuring this start time hasn't been used yet (getNextLocalWeekdayAt always
@@ -272,15 +262,10 @@ describe("Slot creation — weeklyAvailability takes strict precedence over allo
   it("rejects a slot on an allowedWeekday when that day has a range and the slot is outside it", async () => {
     // Monday is in allowedWeekdays AND has a strict 09:00–12:00 range
     // A slot at Mon 15:00 should be rejected by the range (not allowed by fallback)
-    const res = await createEvent(
-      context.teamId,
-      context.teamAdmin.token,
-      context.eventTypeId,
-      {
-        allowedWeekdays: [1],
-        weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "12:00" }],
-      },
-    );
+    const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
+      allowedWeekdays: [1],
+      weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "12:00" }],
+    });
     const eventId = res.body.data.id;
 
     const start = getNextLocalWeekdayAt(1, 15, 0); // Monday 15:00 — outside 09–12
@@ -294,15 +279,10 @@ describe("Slot creation — weeklyAvailability takes strict precedence over allo
   it("allows a slot on a day NOT in allowedWeekdays when that day has a matching range", async () => {
     // Monday (1) in allowedWeekdays only, BUT Wednesday (3) has a range 09–17
     // A slot on Wednesday inside the range should succeed (range wins over weekday list)
-    const res = await createEvent(
-      context.teamId,
-      context.teamAdmin.token,
-      context.eventTypeId,
-      {
-        allowedWeekdays: [1],
-        weeklyAvailability: [{ dayOfWeek: 3, startTime: "09:00", endTime: "17:00" }],
-      },
-    );
+    const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
+      allowedWeekdays: [1],
+      weeklyAvailability: [{ dayOfWeek: 3, startTime: "09:00", endTime: "17:00" }],
+    });
     const eventId = res.body.data.id;
 
     const start = getNextLocalWeekdayAt(3, 10, 0); // Wednesday 10:00 — inside range
@@ -319,14 +299,9 @@ describe("Slot creation — weeklyAvailability takes strict precedence over allo
 
 describe("Slot update — weeklyAvailability enforced on PATCH", () => {
   it("rejects a PATCH that moves the slot outside the event range", async () => {
-    const res = await createEvent(
-      context.teamId,
-      context.teamAdmin.token,
-      context.eventTypeId,
-      {
-        weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "11:00" }],
-      },
-    );
+    const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
+      weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "11:00" }],
+    });
     const eventId = res.body.data.id;
 
     // Create a valid slot (Mon 09:00–09:30)

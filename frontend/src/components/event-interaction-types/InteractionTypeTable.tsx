@@ -19,22 +19,25 @@ export function InteractionTypeTable({ interactionTypes }: InteractionTypeTableP
       <Table>
         <TableHead>
           <TableRow>
-            {['Interaction Type', 'Multiple Coaches', 'Multiple Participants', 'Leadership Derived'].map(
-              (label) => (
-                <TableCell
-                  key={label}
-                  sx={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {label}
-                </TableCell>
-              )
-            )}
+            {[
+              'Interaction Type',
+              'Multiple Coaches',
+              'Multiple Participants',
+              'Leadership Derived',
+            ].map((label) => (
+              <TableCell
+                key={label}
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {label}
+              </TableCell>
+            ))}
           </TableRow>
         </TableHead>
         <TableBody>

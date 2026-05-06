@@ -11,7 +11,10 @@ import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { useTeamNotificationConfig, useUpsertTeamNotificationConfig } from '@/hooks/queries/useTeams'
+import {
+  useTeamNotificationConfig,
+  useUpsertTeamNotificationConfig,
+} from '@/hooks/queries/useTeams'
 
 interface TeamNotificationsTabProps {
   teamId: string
@@ -51,7 +54,8 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
 
   if (isLoading) return <PageSpinner />
   if (error) {
-    const message = (error as any)?.response?.data?.message || "Failed to load notification settings."
+    const message =
+      (error as any)?.response?.data?.message || 'Failed to load notification settings.'
     return <ErrorAlert message={message} />
   }
 
@@ -307,7 +311,15 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
       </Box>
 
       {canEdit && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 4, borderTop: '1px solid', borderColor: 'divider' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            pt: 4,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <Button
             onClick={handleSave}
             isLoading={mutation.isPending}

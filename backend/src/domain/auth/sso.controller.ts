@@ -12,9 +12,7 @@ import {
   generateState,
   generateNonce,
 } from "../../shared/utils/oidcClient";
-import {
-  queueInviteAcceptedNotification,
-} from "../invite/invite.notification";
+import { queueInviteAcceptedNotification } from "../invite/invite.notification";
 
 const SSO_STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -148,7 +146,14 @@ export const handleCallback = async (
     const provider = getProvider();
 
     if (oidcState.inviteToken) {
-      await handleInviteAcceptance(res, oidcState.inviteToken, normalizedEmail, userInfo.sub, provider, userInfo);
+      await handleInviteAcceptance(
+        res,
+        oidcState.inviteToken,
+        normalizedEmail,
+        userInfo.sub,
+        provider,
+        userInfo,
+      );
     } else {
       await handleExistingUserLogin(res, normalizedEmail, userInfo.sub, provider);
     }

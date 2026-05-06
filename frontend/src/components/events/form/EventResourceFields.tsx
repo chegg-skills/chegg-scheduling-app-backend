@@ -92,10 +92,7 @@ export function EventResourceFields() {
                       control={<Radio size="small" sx={{ p: 0.75 }} />}
                       label={
                         <Box sx={{ py: 0.5 }}>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ fontWeight: 600, lineHeight: 1.3 }}
-                          >
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
                             {option.label}
                           </Typography>
                           <Typography

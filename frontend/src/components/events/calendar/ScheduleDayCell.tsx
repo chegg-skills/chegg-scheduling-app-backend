@@ -85,11 +85,7 @@ export function ScheduleDayCell({
 
       <Stack spacing={0.8} sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: { xs: 60, md: 120 } }}>
         {slots.slice(0, 4).map((slot) => (
-          <CalendarSlotItem
-            key={slot.id}
-            slot={slot}
-            onViewDetail={onViewDetail}
-          />
+          <CalendarSlotItem key={slot.id} slot={slot} onViewDetail={onViewDetail} />
         ))}
         {slots.length > 4 && (
           <Typography

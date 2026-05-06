@@ -11,10 +11,7 @@ export type UpsertSessionLogInput = {
   attendance: Array<{ bookingId: string; attended: boolean }>;
 };
 
-const assertSlotLogAccess = async (
-  slotId: string,
-  caller: CallerContext,
-): Promise<void> => {
+const assertSlotLogAccess = async (slotId: string, caller: CallerContext): Promise<void> => {
   if (caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN) return;
 
   const slot = await prisma.eventScheduleSlot.findUnique({
@@ -38,16 +35,10 @@ const assertSlotLogAccess = async (
 
   if (coCoachBooking) return;
 
-  throw new ErrorHandler(
-    StatusCodes.FORBIDDEN,
-    "You do not have permission to log this session.",
-  );
+  throw new ErrorHandler(StatusCodes.FORBIDDEN, "You do not have permission to log this session.");
 };
 
-const verifySlotBelongsToEvent = async (
-  eventId: string,
-  slotId: string,
-): Promise<void> => {
+const verifySlotBelongsToEvent = async (eventId: string, slotId: string): Promise<void> => {
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
     select: { eventId: true },
@@ -62,11 +53,7 @@ const verifySlotBelongsToEvent = async (
   }
 };
 
-export const getSessionLog = async (
-  eventId: string,
-  slotId: string,
-  caller: CallerContext,
-) => {
+export const getSessionLog = async (eventId: string, slotId: string, caller: CallerContext) => {
   await assertSlotLogAccess(slotId, caller);
   await verifySlotBelongsToEvent(eventId, slotId);
 
@@ -141,10 +128,7 @@ export const upsertSessionLog = async (
       });
 
       const booking = bookingMap[entry.bookingId];
-      if (
-        booking.status !== BookingStatus.CANCELLED &&
-        booking.status !== BookingStatus.PENDING
-      ) {
+      if (booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.PENDING) {
         await tx.booking.update({
           where: { id: entry.bookingId },
           data: {

@@ -3,7 +3,12 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import { alpha, Theme } from '@mui/material/styles'
 import { Award, Calendar, Clock, User, Users } from 'lucide-react'
-import type { PublicEventSummary, PublicTeamSummary, PublicCoachSummary, PublicHostInfo } from '@/types'
+import type {
+  PublicEventSummary,
+  PublicTeamSummary,
+  PublicCoachSummary,
+  PublicHostInfo,
+} from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { SummaryDetail } from './SummaryDetail'
 
@@ -34,7 +39,13 @@ export function PublicBookingSummary({
   compact = false,
   condensed = false,
 }: PublicBookingSummaryProps) {
-  const hasSelection = !!(teamDetails || eventDetails || selectedDate || selectedSlot || coachDetails)
+  const hasSelection = !!(
+    teamDetails ||
+    eventDetails ||
+    selectedDate ||
+    selectedSlot ||
+    coachDetails
+  )
 
   if (!hasSelection) return null
 

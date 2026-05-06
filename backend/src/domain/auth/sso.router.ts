@@ -6,10 +6,7 @@ import { sensitiveLimiter } from "../../shared/middleware/rateLimit";
 const router = express.Router();
 
 // Initiates SSO login flow — browser redirect to IdP
-router
-  .route("/login")
-  .get(sensitiveLimiter, ssoController.initiateLogin)
-  .all(methodNotAllowed);
+router.route("/login").get(sensitiveLimiter, ssoController.initiateLogin).all(methodNotAllowed);
 
 // Initiates SSO invite-acceptance flow (requires ?token=<inviteToken>)
 router
@@ -18,9 +15,6 @@ router
   .all(methodNotAllowed);
 
 // OIDC callback — no rate limiter (IdP redirects here; limiting breaks legit users)
-router
-  .route("/callback")
-  .get(ssoController.handleCallback)
-  .all(methodNotAllowed);
+router.route("/callback").get(ssoController.handleCallback).all(methodNotAllowed);
 
 export default router;

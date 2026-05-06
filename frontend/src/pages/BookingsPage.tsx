@@ -203,7 +203,12 @@ export function BookingsPage() {
                 iconPosition="start"
               />
               <Tab label="All" value="ALL" icon={<CalendarDays size={18} />} iconPosition="start" />
-              <Tab label="Cancelled" value="CANCELLED" icon={<X size={18} />} iconPosition="start" />
+              <Tab
+                label="Cancelled"
+                value="CANCELLED"
+                icon={<X size={18} />}
+                iconPosition="start"
+              />
               <Tab
                 label="Completed"
                 value="COMPLETED"
@@ -292,7 +297,12 @@ export function BookingsPage() {
           ) : (
             <Box>
               <Box
-                sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                sx={{
+                  mb: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
               >
                 <Typography variant="subtitle2" color="text.secondary">
                   Showing {pagination?.total ?? filteredBookings.length} bookings
@@ -312,10 +322,7 @@ export function BookingsPage() {
             </Box>
           )}
 
-          <BookingDetailModal
-            booking={selectedBooking}
-            onClose={() => setSelectedBooking(null)}
-          />
+          <BookingDetailModal booking={selectedBooking} onClose={() => setSelectedBooking(null)} />
 
           {viewingUserId && (
             <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />

@@ -17,7 +17,7 @@ export function EventDetailsTab({
 }: EventDetailsTabProps) {
   return (
     <Stack spacing={3}>
-      <SectionHeader 
+      <SectionHeader
         title="Event Configuration"
         description="Core configuration and participation policies for this event."
       />

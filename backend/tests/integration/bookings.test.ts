@@ -79,7 +79,6 @@ beforeAll(async () => {
     },
   });
   eventTypeId = offering.id;
-
 });
 
 afterAll(async () => {
@@ -645,22 +644,19 @@ describe("Booking Domain Integration Tests", () => {
       // Attempt to book targetEventId at 9:15–10:15 (overlaps with existing 9:00–10:00 session).
       // coach2Id is the only candidate; with the fix they are correctly detected as unavailable.
       const overlapStart = getNextUtcWeekdayAt(1, 9, 15);
-      const res = await request(app)
-        .post("/api/bookings")
-        .send({
-          studentName: "New Student",
-          studentEmail: "new@cocoach.com",
-          teamId,
-          eventId: targetEventId,
-          startTime: overlapStart.toISOString(),
-          timezone: "UTC",
-        });
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "New Student",
+        studentEmail: "new@cocoach.com",
+        teamId,
+        eventId: targetEventId,
+        startTime: overlapStart.toISOString(),
+        timezone: "UTC",
+      });
 
       expect(res.status).toBe(409);
     });
 
     it("allows booking when the co-coach overlap is on a different day", async () => {
-
       const mondayStart = getNextUtcWeekdayAt(1, 9, 0);
       const mondayEnd = new Date(mondayStart.getTime() + 60 * 60 * 1000);
 
@@ -685,16 +681,14 @@ describe("Booking Domain Integration Tests", () => {
       });
 
       const tuesdayStart = getNextUtcWeekdayAt(2, 9, 0);
-      const res = await request(app)
-        .post("/api/bookings")
-        .send({
-          studentName: "Tuesday Student",
-          studentEmail: "tuesday@cocoach.com",
-          teamId,
-          eventId: targetEventId,
-          startTime: tuesdayStart.toISOString(),
-          timezone: "UTC",
-        });
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Tuesday Student",
+        studentEmail: "tuesday@cocoach.com",
+        teamId,
+        eventId: targetEventId,
+        startTime: tuesdayStart.toISOString(),
+        timezone: "UTC",
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.data.booking.coachUserId).toBe(coach2Id);
@@ -801,7 +795,10 @@ describe("Booking Domain Integration Tests", () => {
     it("rejects an invalid/unknown token (404)", async () => {
       const res = await request(app)
         .post(`/api/bookings/${bookingId}/reschedule`)
-        .send({ startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(), token: "nonexistent-token-xyz" });
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(),
+          token: "nonexistent-token-xyz",
+        });
 
       expect(res.status).toBe(404);
     });

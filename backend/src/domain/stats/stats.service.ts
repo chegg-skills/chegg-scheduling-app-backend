@@ -130,11 +130,11 @@ export const getBookingStats = async (
   const [mostBookedCoach, mostBookedTeam] =
     totalBookings > 0
       ? await Promise.all([
-        resolveTopCoachMetric(bookingWhere),
-        caller.role !== UserRole.COACH
-          ? resolveTopTeamMetric(bookingWhere)
-          : Promise.resolve(null),
-      ])
+          resolveTopCoachMetric(bookingWhere),
+          caller.role !== UserRole.COACH
+            ? resolveTopTeamMetric(bookingWhere)
+            : Promise.resolve(null),
+        ])
       : [null, null];
 
   return buildStatsResponse(timeframe, {
@@ -324,12 +324,12 @@ export const getDashboardStats = async (
   const activeTeamsPromise =
     caller.role === UserRole.COACH
       ? prisma.event
-        .findMany({
-          where: { coaches: { some: { coachUserId: caller.id, isActive: true } } },
-          select: { teamId: true },
-          distinct: ["teamId"],
-        })
-        .then((teams) => teams.length)
+          .findMany({
+            where: { coaches: { some: { coachUserId: caller.id, isActive: true } } },
+            select: { teamId: true },
+            distinct: ["teamId"],
+          })
+          .then((teams) => teams.length)
       : prisma.team.count({ where: { isActive: true } });
 
   const [scheduledBookings, upcomingBookings, activeUsers, activeEvents, activeTeams] =

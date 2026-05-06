@@ -42,7 +42,7 @@ export function ScheduleSlotRow({
   const bookingCount = slot._count?.bookings ?? 0
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
   const effectiveCapacity = caps.multipleParticipants
-    ? slot.capacity ?? event.maxParticipantCount
+    ? (slot.capacity ?? event.maxParticipantCount)
     : 1
   const isFull = effectiveCapacity !== null && bookingCount >= effectiveCapacity
   const canDelete = bookingCount === 0

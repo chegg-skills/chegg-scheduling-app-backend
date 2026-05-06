@@ -1,5 +1,12 @@
 import apiClient from '@/lib/axios'
-import type { ApiResponse, Team, CreateTeamDto, UpdateTeamDto, Pagination, TeamNotificationConfig } from '@/types'
+import type {
+  ApiResponse,
+  Team,
+  CreateTeamDto,
+  UpdateTeamDto,
+  Pagination,
+  TeamNotificationConfig,
+} from '@/types'
 
 export interface ListTeamsParams {
   page?: number
@@ -26,8 +33,13 @@ export const teamsApi = {
   delete: (teamId: string) => apiClient.delete<ApiResponse<Team>>(`/teams/${teamId}`),
 
   getNotificationConfig: (teamId: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<TeamNotificationConfig>>(`/teams/${teamId}/notification-config`, { signal }),
+    apiClient.get<ApiResponse<TeamNotificationConfig>>(`/teams/${teamId}/notification-config`, {
+      signal,
+    }),
 
   upsertNotificationConfig: (teamId: string, data: Omit<TeamNotificationConfig, 'teamId'>) =>
-    apiClient.put<ApiResponse<TeamNotificationConfig>>(`/teams/${teamId}/notification-config`, data),
+    apiClient.put<ApiResponse<TeamNotificationConfig>>(
+      `/teams/${teamId}/notification-config`,
+      data
+    ),
 }

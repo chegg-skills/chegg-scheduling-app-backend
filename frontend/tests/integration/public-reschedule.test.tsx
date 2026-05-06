@@ -85,18 +85,14 @@ describe('PublicReschedulePage', () => {
   it('shows an error state (back-to-homepage button) when the booking API returns 404', async () => {
     server.use(
       http.get('*/api/public/bookings/:id', () =>
-        HttpResponse.json(
-          { success: false, message: 'Booking not found.' },
-          { status: 404 }
-        )
+        HttpResponse.json({ success: false, message: 'Booking not found.' }, { status: 404 })
       )
     )
     renderReschedulePage()
     // The error branch always renders a "Back to homepage" button
-    await waitFor(
-      () => expect(screen.getByText(/back to homepage/i)).toBeTruthy(),
-      { timeout: 3000 }
-    )
+    await waitFor(() => expect(screen.getByText(/back to homepage/i)).toBeTruthy(), {
+      timeout: 3000,
+    })
   })
 
   it('shows a missing-token error when no token is in the URL', () => {

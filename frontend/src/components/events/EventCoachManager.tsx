@@ -58,7 +58,10 @@ export function EventCoachManager({
 
   function handleAdd(userIds: string[]) {
     const newCoaches = [
-      ...activeCoaches.map((c, i) => ({ userId: c.coachUserId, coachOrder: c.coachOrder ?? i + 1 })),
+      ...activeCoaches.map((c, i) => ({
+        userId: c.coachUserId,
+        coachOrder: c.coachOrder ?? i + 1,
+      })),
       ...userIds.map((userId, i) => ({
         userId,
         coachOrder: activeCoaches.length + i + 1,
@@ -99,14 +102,14 @@ export function EventCoachManager({
       />
 
       {!hideHeader && (
-        <SectionHeader 
+        <SectionHeader
           title={title || 'Assigned Coaches'}
           description="Manage coaches assigned to this event and their participation status."
           action={
             eligibleCount > 0 && (
-              <Button 
-                size="sm" 
-                startIcon={<Plus size={16} />} 
+              <Button
+                size="sm"
+                startIcon={<Plus size={16} />}
                 onClick={() => {
                   if (onOpenAddModal) {
                     onOpenAddModal()

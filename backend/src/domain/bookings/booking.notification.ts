@@ -9,7 +9,10 @@ import {
 import type { SafeBooking } from "./booking.service";
 
 import { formatNotificationDate } from "../../shared/utils/date";
-import { getTeamNotificationConfig, type ResolvedNotificationConfig } from "../../shared/notifications/notificationConfig";
+import {
+  getTeamNotificationConfig,
+  type ResolvedNotificationConfig,
+} from "../../shared/notifications/notificationConfig";
 
 const getCoachName = (booking: SafeBooking): string => {
   const coachName = [booking.coach?.firstName, booking.coach?.lastName]
@@ -102,7 +105,13 @@ const buildReminderSendAt = (startTime: Date, offsetMinutes: number): string | n
   return sendAt.getTime() > Date.now() ? sendAt.toISOString() : null;
 };
 
-const OFFSET_TO_TYPE: Record<number, Extract<NotificationType, "SESSION_REMINDER_24H" | "SESSION_REMINDER_12H" | "SESSION_REMINDER_6H" | "SESSION_REMINDER_1H">> = {
+const OFFSET_TO_TYPE: Record<
+  number,
+  Extract<
+    NotificationType,
+    "SESSION_REMINDER_24H" | "SESSION_REMINDER_12H" | "SESSION_REMINDER_6H" | "SESSION_REMINDER_1H"
+  >
+> = {
   1440: "SESSION_REMINDER_24H",
   720: "SESSION_REMINDER_12H",
   360: "SESSION_REMINDER_6H",
@@ -270,9 +279,9 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     const coCoachUserIds = (booking as any).coCoachUserIds as string[] | undefined;
     const coHostUsers = coCoachUserIds?.length
       ? await prisma.user.findMany({
-        where: { id: { in: coCoachUserIds }, isActive: true },
-        select: { id: true, email: true, timezone: true },
-      })
+          where: { id: { in: coCoachUserIds }, isActive: true },
+          select: { id: true, email: true, timezone: true },
+        })
       : [];
 
     if (booking.status === BookingStatus.CANCELLED) {

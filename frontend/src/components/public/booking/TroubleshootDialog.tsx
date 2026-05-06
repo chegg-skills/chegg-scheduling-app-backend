@@ -10,7 +10,16 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useTheme } from '@mui/material/styles'
-import { AlertCircle, CheckCircle2, Globe, HelpCircle, RefreshCw, Wifi, WifiOff, XCircle } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  Globe,
+  HelpCircle,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  XCircle,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -54,9 +63,15 @@ function DiagnosisItem({ icon: Icon, label, status, color }: DiagnosisItemProps)
     <Stack direction="row" spacing={2} alignItems="center" sx={{ py: 1 }}>
       <Icon size={20} color={color} />
       <Box sx={{ flexGrow: 1 }}>
-        <Typography variant="body2" fontWeight={600}>{label}</Typography>
+        <Typography variant="body2" fontWeight={600}>
+          {label}
+        </Typography>
       </Box>
-      <Typography variant="caption" color={color} sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+      <Typography
+        variant="caption"
+        color={color}
+        sx={{ fontWeight: 700, textTransform: 'uppercase' }}
+      >
         {status}
       </Typography>
     </Stack>
@@ -95,19 +110,26 @@ export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
       maxWidth="xs"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 3, p: 1 }
+        sx: { borderRadius: 3, p: 1 },
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
         <HelpCircle size={24} color={theme.palette.primary.main} />
-        <Typography variant="h6" fontWeight={800}>Troubleshooting</Typography>
+        <Typography variant="h6" fontWeight={800}>
+          Troubleshooting
+        </Typography>
       </DialogTitle>
 
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           {/* Section 1: System Health */}
           <Box>
-            <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ mb: 1, display: 'block' }}>
+            <Typography
+              variant="overline"
+              color="text.secondary"
+              fontWeight={800}
+              sx={{ mb: 1, display: 'block' }}
+            >
               System Diagnosis
             </Typography>
             <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
@@ -136,32 +158,57 @@ export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
 
           {/* Section 2: Quick Fixes */}
           <Box>
-            <Typography variant="overline" color="text.secondary" fontWeight={800} sx={{ mb: 1, display: 'block' }}>
+            <Typography
+              variant="overline"
+              color="text.secondary"
+              fontWeight={800}
+              sx={{ mb: 1, display: 'block' }}
+            >
               Quick Fixes
             </Typography>
             <Stack spacing={1.5}>
               <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
+                <AlertCircle
+                  size={18}
+                  color={theme.palette.text.secondary}
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
                 <Typography variant="body2" color="text.secondary">
-                  <strong>No slots available?</strong> Coaches may be fully booked or you might be outside the allowed booking window.
+                  <strong>No slots available?</strong> Coaches may be fully booked or you might be
+                  outside the allowed booking window.
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
+                <AlertCircle
+                  size={18}
+                  color={theme.palette.text.secondary}
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
                 <Typography variant="body2" color="text.secondary">
-                  <strong>Page unresponsive?</strong> Use the "Reload Booking Data" button below to refresh session data.
+                  <strong>Page unresponsive?</strong> Use the "Reload Booking Data" button below to
+                  refresh session data.
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
+                <AlertCircle
+                  size={18}
+                  color={theme.palette.text.secondary}
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
                 <Typography variant="body2" color="text.secondary">
-                  <strong>Wrong time shown?</strong> Slots are displayed in your browser's local timezone ({localTimezone}).
+                  <strong>Wrong time shown?</strong> Slots are displayed in your browser's local
+                  timezone ({localTimezone}).
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <AlertCircle size={18} color={theme.palette.text.secondary} style={{ marginTop: 2, flexShrink: 0 }} />
+                <AlertCircle
+                  size={18}
+                  color={theme.palette.text.secondary}
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
                 <Typography variant="body2" color="text.secondary">
-                  <strong>Already booked?</strong> Check your email for a confirmation — you may have already secured a slot.
+                  <strong>Already booked?</strong> Check your email for a confirmation — you may
+                  have already secured a slot.
                 </Typography>
               </Box>
             </Stack>
@@ -187,7 +234,7 @@ export function TroubleshootDialog({ open, onClose }: TroubleshootDialogProps) {
             borderRadius: 2,
             px: 3,
             bgcolor: 'primary.main',
-            '&:hover': { bgcolor: 'primary.dark' }
+            '&:hover': { bgcolor: 'primary.dark' },
           }}
         >
           Reload Booking Data

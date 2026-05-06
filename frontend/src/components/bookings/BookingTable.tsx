@@ -47,12 +47,7 @@ const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
 })
 
-export function BookingTable({
-  bookings,
-  pagination,
-  onPageChange,
-  onRowsPerPageChange,
-}: Props) {
+export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPageChange }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const {
     sortedItems: sortedBookings,

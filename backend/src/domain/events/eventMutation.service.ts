@@ -58,9 +58,10 @@ const resolveSessionLeadershipConfig = ({
   //    from assignment strategy (MANY_TO_ONE / MANY_TO_MANY). Cannot be overridden by
   //    user input; the assignmentStrategy is the single source of truth for these types.
   if (caps.derivesLeadershipFromAssignment) {
-    strategy = assignmentStrategy === AssignmentStrategy.DIRECT
-      ? SessionLeadershipStrategy.FIXED_LEAD
-      : SessionLeadershipStrategy.ROTATING_LEAD;
+    strategy =
+      assignmentStrategy === AssignmentStrategy.DIRECT
+        ? SessionLeadershipStrategy.FIXED_LEAD
+        : SessionLeadershipStrategy.ROTATING_LEAD;
   }
 
   // --- Same logic for the Lead Coach ---
@@ -197,10 +198,10 @@ export const buildEventCreateData = ({
       : validated.allowedWeekdays,
     weeklyAvailability: validated.weeklyAvailability
       ? {
-        createMany: {
-          data: validated.weeklyAvailability,
-        },
-      }
+          createMany: {
+            data: validated.weeklyAvailability,
+          },
+        }
       : undefined,
   };
 
@@ -341,14 +342,14 @@ export const buildDuplicateEventData = ({
     weeklyAvailability:
       sourceEvent.weeklyAvailability.length > 0
         ? {
-          createMany: {
-            data: sourceEvent.weeklyAvailability.map((a) => ({
-              dayOfWeek: a.dayOfWeek,
-              startTime: a.startTime,
-              endTime: a.endTime,
-            })),
-          },
-        }
+            createMany: {
+              data: sourceEvent.weeklyAvailability.map((a) => ({
+                dayOfWeek: a.dayOfWeek,
+                startTime: a.startTime,
+                endTime: a.endTime,
+              })),
+            },
+          }
         : undefined,
   } as any;
 };

@@ -9,13 +9,15 @@ export const eventFormSchema = z
     eventTypeId: z.string().min(1, 'Event Type is required'),
     interactionType: z.enum(['ONE_TO_ONE', 'ONE_TO_MANY', 'MANY_TO_ONE', 'MANY_TO_MANY'] as const),
     locationType: z.enum(['VIRTUAL', 'IN_PERSON', 'CUSTOM'] as const),
-    locationValue: z.string().min(1, 'Location is required'),
+    locationValue: z.string().optional().default(''),
     durationMinutes: z
       .number({ invalid_type_error: 'Enter a valid duration' })
       .min(1, 'Minimum 1 minute'),
     assignmentStrategy: z.enum(['DIRECT', 'ROUND_ROBIN'] as const).default('DIRECT'),
     targetCoHostCount: z.number().int().min(1).nullable().optional(),
-    bookingMode: z.enum(['COACH_AVAILABILITY', 'FIXED_SLOTS'] as const).default('COACH_AVAILABILITY'),
+    bookingMode: z
+      .enum(['COACH_AVAILABILITY', 'FIXED_SLOTS'] as const)
+      .default('COACH_AVAILABILITY'),
     allowedWeekdays: z.array(z.number()).default([]),
     minimumNoticeMinutes: z.number().min(0).default(0),
     sessionLeadershipStrategy: z
@@ -101,10 +103,7 @@ export const eventFormSchema = z
       })
     }
 
-    if (
-      values.maxCoachCount != null &&
-      values.maxCoachCount < (values.minCoachCount ?? 1)
-    ) {
+    if (values.maxCoachCount != null && values.maxCoachCount < (values.minCoachCount ?? 1)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['maxCoachCount'],

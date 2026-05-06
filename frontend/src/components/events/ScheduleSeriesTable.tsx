@@ -37,7 +37,10 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
 
   if (groups.length === 0) {
     return (
-      <Paper variant="outlined" sx={{ p: 8, textAlign: 'center', borderRadius: 1, borderStyle: 'dashed' }}>
+      <Paper
+        variant="outlined"
+        sx={{ p: 8, textAlign: 'center', borderRadius: 1, borderStyle: 'dashed' }}
+      >
         <Typography color="text.secondary">No sessions scheduled yet.</Typography>
       </Paper>
     )
@@ -54,7 +57,9 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
             <TableCell sx={{ fontWeight: 700 }}>Next Instance</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Time</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Occurrences</TableCell>
-            <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
+            <TableCell sx={{ fontWeight: 700 }} align="right">
+              Actions
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -63,20 +68,22 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
             const timeRange = `${format(new Date(group.startTime), 'h:mm a')} - ${format(new Date(group.endTime), 'h:mm a')}`
 
             return (
-              <TableRow 
-                key={group.id} 
-                hover 
+              <TableRow
+                key={group.id}
+                hover
                 onClick={() => onViewTracker(group)}
                 sx={{ cursor: 'pointer' }}
               >
                 <TableCell>
                   <Stack direction="row" spacing={2} alignItems="center">
-                    <Box sx={{ 
-                      p: 1, 
-                      borderRadius: 1, 
-                      bgcolor: group.isRecurring ? 'primary.lighter' : 'transparent',
-                      color: group.isRecurring ? 'primary.main' : 'text.secondary'
-                    }}>
+                    <Box
+                      sx={{
+                        p: 1,
+                        borderRadius: 1,
+                        bgcolor: group.isRecurring ? 'primary.lighter' : 'transparent',
+                        color: group.isRecurring ? 'primary.main' : 'text.secondary',
+                      }}
+                    >
                       {group.isRecurring ? (
                         <EventRepeatIcon sx={{ fontSize: 20 }} />
                       ) : (
@@ -84,36 +91,40 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
                       )}
                     </Box>
                     <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                            {group.isRecurring ? 'Recurring Weekly Series' : 'Individual Session'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            {group.isRecurring ? 'Multiple dates' : 'One-time session'}
-                        </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {group.isRecurring ? 'Recurring Weekly Series' : 'Individual Session'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {group.isRecurring ? 'Multiple dates' : 'One-time session'}
+                      </Typography>
                     </Box>
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={500}>{dateStr}</Typography>
+                  <Typography variant="body2" fontWeight={500}>
+                    {dateStr}
+                  </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">{timeRange}</Typography>
                 </TableCell>
                 <TableCell>
-                   <Box sx={{ 
-                      display: 'inline-flex', 
-                      px: 1, 
-                      py: 0.25, 
-                      borderRadius: 0.5, 
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 0.5,
                       bgcolor: 'action.hover',
                       fontSize: '0.75rem',
-                      fontWeight: 700
-                   }}>
-                      {group.occurrenceCount}
-                   </Box>
+                      fontWeight: 700,
+                    }}
+                  >
+                    {group.occurrenceCount}
+                  </Box>
                 </TableCell>
                 <TableCell align="right">
-                   <RowActions
+                  <RowActions
                     actions={[
                       {
                         label: 'View Tracker',

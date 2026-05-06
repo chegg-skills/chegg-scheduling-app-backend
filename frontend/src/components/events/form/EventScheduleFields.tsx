@@ -1,4 +1,5 @@
 import { useFormContext, Controller } from 'react-hook-form'
+import Alert from '@mui/material/Alert'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
@@ -32,8 +33,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
   } = useFormContext<EventFormValues>()
 
   const assignmentOptions = getAllowedAssignmentStrategies(caps)
-  const selectedStrategy =
-    watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(caps)
+  const selectedStrategy = watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(caps)
   const canChooseStrategy = assignmentOptions.length > 1
   const isRoundRobin = selectedStrategy === 'ROUND_ROBIN'
 
@@ -43,13 +43,13 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
   const leadSelectionOptions =
     eventCoaches.length > 0
       ? eventCoaches.map((coach) => ({
-        value: coach.coachUserId,
-        label: `${coach.coachUser.firstName} ${coach.coachUser.lastName}`,
-      }))
+          value: coach.coachUserId,
+          label: `${coach.coachUser.firstName} ${coach.coachUser.lastName}`,
+        }))
       : (teamMembers ?? []).map((member) => ({
-        value: member.userId,
-        label: `${member.user.firstName} ${member.user.lastName}`,
-      }))
+          value: member.userId,
+          label: `${member.user.firstName} ${member.user.lastName}`,
+        }))
 
   return (
     <Stack spacing={2}>
@@ -87,9 +87,12 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
             </MenuItem>
             <MenuItem value="ROUND_ROBIN">Round Robin — rotate across the coach pool</MenuItem>
           </Select>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Round-robin events need at least two coaches assigned and Min Coaches set to ≥ 2.
-          </Typography>
+          {isRoundRobin && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              Round-robin rotates across all coaches in the pool. At least 2 coaches must be in the
+              pool — a single coach has nothing to rotate to.
+            </Typography>
+          )}
         </FormField>
       ) : (
         <FormField
@@ -103,9 +106,11 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
             disabled
           />
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            {caps
-              ? 'Switch to a multi-coach interaction type if this event should rotate between coaches.'
-              : 'Choose an interaction type to see the assignment options available for this event.'}
+            {!caps
+              ? 'Choose an interaction type to see the assignment options available for this event.'
+              : !caps.multipleCoaches && caps.multipleParticipants
+                ? 'Group sessions always use Direct assignment — all students in the same slot share the same coach.'
+                : 'Switch to a multi-coach interaction type if this event should rotate between coaches.'}
           </Typography>
         </FormField>
       )}
@@ -116,7 +121,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
           label="Coach Pool Size"
           htmlFor="minCoachCount"
           error={errors.minCoachCount?.message || errors.maxCoachCount?.message}
-          info="Set the minimum (required) and maximum (optional) number of coaches for this event pool. Round-robin events require Min ≥ 2."
+          info="Controls how many coaches can be in this event's rotation pool — not how many join each session. ONE_TO_ONE sessions always have exactly one coach per booking regardless of pool size. Round-robin requires Min ≥ 2 so there is always someone to rotate to."
         >
           <Box
             sx={{
@@ -178,7 +183,6 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
             htmlFor="fixedLeadCoachId"
             error={errors.fixedLeadCoachId?.message}
             info="This coach will be the default host for all sessions unless overridden per-slot."
-            required
           >
             <Select
               id="fixedLeadCoachId"
@@ -200,6 +204,12 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 Add coaches to this event first, or assign a team member here to auto-add them.
               </Typography>
+            )}
+            {!watch('fixedLeadCoachId') && eventCoaches.length === 0 && (
+              <Alert severity="warning" sx={{ mt: 1 }}>
+                No default host selected and no coaches are assigned yet. Students will not be able
+                to book sessions until at least one coach is added to this event.
+              </Alert>
             )}
           </FormField>
         )}

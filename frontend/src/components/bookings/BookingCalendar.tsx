@@ -14,14 +14,7 @@ interface BookingCalendarProps {
 
 export function BookingCalendar({ bookings, onViewDetail }: BookingCalendarProps) {
   const theme = useTheme()
-  const {
-    currentMonth,
-    monthStart,
-    calendarDays,
-    nextMonth,
-    prevMonth,
-    goToToday,
-  } = useCalendar()
+  const { currentMonth, monthStart, calendarDays, nextMonth, prevMonth, goToToday } = useCalendar()
 
   const bookingsByDate = useMemo(() => {
     const map: Record<string, Booking[]> = {}
@@ -51,11 +44,14 @@ export function BookingCalendar({ bookings, onViewDetail }: BookingCalendarProps
     [theme]
   )
 
-  const legends = useMemo(() => [
-    { label: 'Confirmed', color: theme.palette.success.main },
-    { label: 'Cancelled', color: theme.palette.error.main },
-    { label: 'Pending', color: theme.palette.warning.main },
-  ], [theme])
+  const legends = useMemo(
+    () => [
+      { label: 'Confirmed', color: theme.palette.success.main },
+      { label: 'Cancelled', color: theme.palette.error.main },
+      { label: 'Pending', color: theme.palette.warning.main },
+    ],
+    [theme]
+  )
 
   return (
     <CalendarLayout

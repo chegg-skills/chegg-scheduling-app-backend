@@ -107,13 +107,13 @@ export function UserTableRow({
             },
             ...(canDeactivate
               ? [
-                {
-                  label: 'Deactivate',
-                  icon: <Trash2 size={16} />,
-                  color: 'error.main',
-                  onClick: () => onDeactivate(user),
-                },
-              ]
+                  {
+                    label: 'Deactivate',
+                    icon: <Trash2 size={16} />,
+                    color: 'error.main',
+                    onClick: () => onDeactivate(user),
+                  },
+                ]
               : []),
           ]}
         />

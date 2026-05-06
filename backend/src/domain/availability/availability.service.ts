@@ -208,15 +208,15 @@ const getAvailableSlots = async (
     const currentBookings = await prisma.booking.count({
       where: (scheduleSlot
         ? {
-          scheduleSlotId: scheduleSlot.id,
-          status: { not: "CANCELLED" },
-        }
+            scheduleSlotId: scheduleSlot.id,
+            status: { not: "CANCELLED" },
+          }
         : {
-          eventId,
-          startTime: slotStart,
-          endTime: slotEnd,
-          status: { not: "CANCELLED" },
-        }) as any,
+            eventId,
+            startTime: slotStart,
+            endTime: slotEnd,
+            status: { not: "CANCELLED" },
+          }) as any,
     });
 
     if (maxParticipants !== null && currentBookings >= maxParticipants) {

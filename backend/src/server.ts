@@ -18,9 +18,13 @@ const validateEnv = (): void => {
 
   if (process.env.JWT_SECRET === "replace-this-with-a-long-random-secret") {
     if (isProduction) {
-      throw new Error("JWT_SECRET is still the placeholder value. Set a strong secret before deploying.");
+      throw new Error(
+        "JWT_SECRET is still the placeholder value. Set a strong secret before deploying.",
+      );
     }
-    logger.warn("JWT_SECRET is still set to the placeholder value. Replace it before production deployment.");
+    logger.warn(
+      "JWT_SECRET is still set to the placeholder value. Replace it before production deployment.",
+    );
   }
 
   if (isProduction && process.env.ENABLE_CSRF_PROTECTION !== "true") {

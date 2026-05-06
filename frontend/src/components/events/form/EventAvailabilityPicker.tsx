@@ -10,7 +10,7 @@ export function EventAvailabilityPicker() {
     <FormField
       htmlFor="weekly-availability"
       label="Weekly availability"
-      info="Define specific time ranges for each weekday when this event can be booked. If empty, all times are available for the enabled days."
+      info="Optionally restrict when this event can be booked on each day. This works on top of each coach's own availability — a slot is only shown to students when the coach is available AND the time falls within these windows. Leave empty to use the coach's full availability without additional restrictions."
     >
       <Controller
         name="weeklyAvailability"

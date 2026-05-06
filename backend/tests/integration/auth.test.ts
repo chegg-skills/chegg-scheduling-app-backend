@@ -416,9 +416,7 @@ describe("SSO error paths", () => {
 
       const token = inviteRes.body.data.token as string;
 
-      const res = await request(app)
-        .get(`/api/auth/sso/accept-invite?token=${token}`)
-        .redirects(0);
+      const res = await request(app).get(`/api/auth/sso/accept-invite?token=${token}`).redirects(0);
 
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("reason=invite_not_sso");
@@ -440,9 +438,7 @@ describe("SSO error paths", () => {
         password: "Accepted1234",
       });
 
-      const res = await request(app)
-        .get(`/api/auth/sso/accept-invite?token=${token}`)
-        .redirects(0);
+      const res = await request(app).get(`/api/auth/sso/accept-invite?token=${token}`).redirects(0);
 
       expect(res.status).toBe(302);
       expect(res.headers.location).toContain("reason=invite_already_accepted");
@@ -507,9 +503,7 @@ describe("JWT security", () => {
   it("returns 401 when a JWT signed with a different secret is sent", async () => {
     const fakeToken = jwt.sign({ sub: "fake-user-id" }, "wrong-secret");
 
-    const res = await request(app)
-      .get("/api/users/me")
-      .set("Authorization", `Bearer ${fakeToken}`);
+    const res = await request(app).get("/api/users/me").set("Authorization", `Bearer ${fakeToken}`);
 
     expect(res.status).toBe(401);
   });
@@ -520,9 +514,7 @@ describe("JWT security", () => {
     const payload = Buffer.from(JSON.stringify({ sub: "any-user-id" })).toString("base64url");
     const noneToken = `${header}.${payload}.`;
 
-    const res = await request(app)
-      .get("/api/users/me")
-      .set("Authorization", `Bearer ${noneToken}`);
+    const res = await request(app).get("/api/users/me").set("Authorization", `Bearer ${noneToken}`);
 
     expect(res.status).toBe(401);
   });

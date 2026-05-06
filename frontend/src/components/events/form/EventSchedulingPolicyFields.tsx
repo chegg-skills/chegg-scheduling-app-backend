@@ -1,6 +1,7 @@
 import { useFormContext } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
@@ -30,27 +31,35 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
 
   return (
     <Stack spacing={3}>
-      <FormField
-        label="Booking mode"
-        htmlFor="bookingMode"
-        error={errors.bookingMode?.message}
-        info={
-          isGroupSession
-            ? `${interactionLabel} events require predefined session slots.`
-            : 'Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions.'
-        }
-      >
-        <Select
-          id="bookingMode"
-          value={bookingMode || 'COACH_AVAILABILITY'}
-          {...register('bookingMode')}
+      {isGroupSession ? (
+        <FormField
+          label="Booking mode"
+          htmlFor="bookingModeLocked"
+          info="Group sessions require students to book into pre-created slots so everyone joins the same coached session."
         >
-          <MenuItem value="COACH_AVAILABILITY" disabled={isGroupSession}>
-            Flexible — based on coach availability {isGroupSession ? '(Not supported for this type)' : ''}
-          </MenuItem>
-          <MenuItem value="FIXED_SLOTS">Fixed — predefined session slots only</MenuItem>
-        </Select>
-      </FormField>
+          <Input id="bookingModeLocked" value="Fixed — predefined session slots only" disabled />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            Flexible availability is not supported for group sessions — all participants must book
+            into the same slot.
+          </Typography>
+        </FormField>
+      ) : (
+        <FormField
+          label="Booking mode"
+          htmlFor="bookingMode"
+          error={errors.bookingMode?.message}
+          info="Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions."
+        >
+          <Select
+            id="bookingMode"
+            value={bookingMode || 'COACH_AVAILABILITY'}
+            {...register('bookingMode')}
+          >
+            <MenuItem value="COACH_AVAILABILITY">Flexible — based on coach availability</MenuItem>
+            <MenuItem value="FIXED_SLOTS">Fixed — predefined session slots only</MenuItem>
+          </Select>
+        </FormField>
+      )}
 
       <EventAvailabilityPicker />
 
@@ -96,7 +105,7 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
           placeholder="e.g. 30"
           {...register('maxBookingWindowDays', {
             valueAsNumber: true,
-            setValueAs: (v: string) => v === '' ? null : Number(v)
+            setValueAs: (v: string) => (v === '' ? null : Number(v)),
           })}
         />
       </FormField>

@@ -16,9 +16,7 @@ describe("renderTemplate — placeholder substitution", () => {
   });
 
   it("throws when the template name does not exist", () => {
-    expect(() => renderTemplate("NONEXISTENT_TEMPLATE_XYZ")).toThrow(
-      /template not found/i,
-    );
+    expect(() => renderTemplate("NONEXISTENT_TEMPLATE_XYZ")).toThrow(/template not found/i);
   });
 
   it("returns subject and text fields as well as html", () => {
@@ -63,7 +61,7 @@ describe("renderTemplate — HTML escaping in html output", () => {
   it("does NOT escape values in RAW_HTML_FIELDS (coHostDetailsHtml)", () => {
     // coHostDetailsHtml is in RAW_HTML_FIELDS — its value must pass through unescaped.
     // Use the BOOKING_CONFIRMED template which contains {{coHostDetailsHtml}}.
-    const rawHtml = '<strong>Coach Name</strong>';
+    const rawHtml = "<strong>Coach Name</strong>";
     const result = renderTemplate("BOOKING_CONFIRMED", {
       studentName: "Alice",
       eventName: "Test Session",
@@ -90,7 +88,10 @@ describe("renderTemplate — HTML escaping in html output", () => {
   it("does NOT HTML-escape values in the subject field", () => {
     // BOOKING_CONFIRMED subject: "Confirmed: {{eventName}} with {{coachName}}"
     const specialChars = "Tom & Jerry <the show>";
-    const result = renderTemplate("BOOKING_CONFIRMED", { eventName: specialChars, coHostDetailsHtml: "" });
+    const result = renderTemplate("BOOKING_CONFIRMED", {
+      eventName: specialChars,
+      coHostDetailsHtml: "",
+    });
     expect(result.subject).toContain(specialChars);
     expect(result.subject).not.toContain("&amp;");
   });

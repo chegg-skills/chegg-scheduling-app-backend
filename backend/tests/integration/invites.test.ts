@@ -322,9 +322,7 @@ describe("POST /api/invites/validate — edge cases", () => {
       },
     });
 
-    const res = await request(app)
-      .post("/api/invites/validate")
-      .send({ token: expiredToken });
+    const res = await request(app).post("/api/invites/validate").send({ token: expiredToken });
 
     expect(res.status).toBe(200);
     expect(res.body.data.valid).toBe(false);

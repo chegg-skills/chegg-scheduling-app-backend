@@ -20,13 +20,13 @@ const scheduleReconnect = (): void => {
   void (async () => {
     for (let attempt = 1; attempt <= MAX_RECONNECT_ATTEMPTS; attempt++) {
       const delayMs = RECONNECT_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-      console.log(`RabbitMQ reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delayMs}ms…`);
+      console.log(
+        `RabbitMQ reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delayMs}ms…`,
+      );
       await wait(delayMs);
 
       try {
-        const rabbitConnection = await amqp.connect(
-          process.env.RABBITMQ_URL ?? "amqp://localhost",
-        );
+        const rabbitConnection = await amqp.connect(process.env.RABBITMQ_URL ?? "amqp://localhost");
 
         attachListeners(rabbitConnection);
         connection = rabbitConnection;
@@ -38,9 +38,7 @@ const scheduleReconnect = (): void => {
       }
     }
 
-    console.error(
-      `RabbitMQ: exhausted ${MAX_RECONNECT_ATTEMPTS} reconnect attempts. Exiting.`,
-    );
+    console.error(`RabbitMQ: exhausted ${MAX_RECONNECT_ATTEMPTS} reconnect attempts. Exiting.`);
     process.exit(1);
   })();
 };
@@ -65,9 +63,7 @@ const getRabbitConnection = async (): Promise<RabbitConnection> => {
   }
 
   try {
-    const rabbitConnection = await amqp.connect(
-      process.env.RABBITMQ_URL ?? "amqp://localhost",
-    );
+    const rabbitConnection = await amqp.connect(process.env.RABBITMQ_URL ?? "amqp://localhost");
 
     attachListeners(rabbitConnection);
     connection = rabbitConnection;

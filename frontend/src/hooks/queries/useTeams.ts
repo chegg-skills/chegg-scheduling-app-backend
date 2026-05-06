@@ -61,7 +61,8 @@ export function useDeleteTeam() {
 export function useTeamNotificationConfig(teamId: string) {
   return useQuery({
     queryKey: teamKeys.config(teamId),
-    queryFn: ({ signal }) => teamsApi.getNotificationConfig(teamId, signal).then((r) => r.data.data!),
+    queryFn: ({ signal }) =>
+      teamsApi.getNotificationConfig(teamId, signal).then((r) => r.data.data!),
     enabled: !!teamId,
   })
 }

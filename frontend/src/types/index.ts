@@ -228,7 +228,7 @@ export interface Event {
 export interface PublicTeamSummary extends Pick<
   Team,
   'id' | 'name' | 'description' | 'publicBookingSlug'
-> { }
+> {}
 
 export interface PublicHostInfo {
   id: string
@@ -428,7 +428,7 @@ export interface CreateEventDto {
   }>
 }
 
-export interface UpdateEventDto extends Partial<CreateEventDto> { }
+export interface UpdateEventDto extends Partial<CreateEventDto> {}
 
 export interface SetEventCoachesDto {
   coaches: Array<{ userId: string; coachOrder?: number }>
@@ -442,7 +442,7 @@ export interface CreateEventTypeDto {
   isActive?: boolean
 }
 
-export interface UpdateEventTypeDto extends Partial<CreateEventTypeDto> { }
+export interface UpdateEventTypeDto extends Partial<CreateEventTypeDto> {}
 
 // Deleted CreateInteractionTypeDto and UpdateInteractionTypeDto manually elsewhere
 

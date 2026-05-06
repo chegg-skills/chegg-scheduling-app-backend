@@ -32,7 +32,7 @@ export function PageHeader({
   breadcrumbs,
   backTo,
   backLabel,
-  tags
+  tags,
 }: PageHeaderProps) {
   return (
     <Stack
@@ -87,7 +87,7 @@ export function PageHeader({
               separator={<ChevronRight size={14} />}
               sx={{ mb: 0.5, '& .MuiBreadcrumbs-li': { display: 'flex', alignItems: 'center' } }}
             >
-              {breadcrumbs.map((item, index) => (
+              {breadcrumbs.map((item, index) =>
                 item.to ? (
                   <Link
                     key={index}
@@ -95,22 +95,26 @@ export function PageHeader({
                     to={item.to}
                     underline="hover"
                     color="inherit"
-                    sx={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 500,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
                     }}
                   >
                     {item.label}
                   </Link>
                 ) : (
-                  <Typography key={index} color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 700 }}>
+                  <Typography
+                    key={index}
+                    color="text.primary"
+                    sx={{ fontSize: '0.875rem', fontWeight: 700 }}
+                  >
                     {item.label}
                   </Typography>
                 )
-              ))}
+              )}
             </Breadcrumbs>
           )}
           <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">

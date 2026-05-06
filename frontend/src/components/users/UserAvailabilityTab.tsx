@@ -43,7 +43,7 @@ export function UserAvailabilityTab({ user }: UserAvailabilityTabProps) {
                         <Badge
                           key={slotIndex}
                           label={`${slot.startTime} - ${slot.endTime}`}
-                          color={"gray" as BadgeColor}
+                          color={'gray' as BadgeColor}
                           sx={{ mr: 0.5, fontSize: '0.7rem' }}
                         />
                       ))
