@@ -44,7 +44,7 @@ describe("emailTemplates registry", () => {
   });
 
   it("every entry has non-empty subject, text, and html string fields", () => {
-    for (const [type, template] of Object.entries(emailTemplates)) {
+    for (const [, template] of Object.entries(emailTemplates)) {
       expect(typeof template.subject).toBe("string");
       expect(template.subject.length).toBeGreaterThan(0);
       expect(typeof template.text).toBe("string");
