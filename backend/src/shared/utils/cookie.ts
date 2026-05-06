@@ -36,13 +36,13 @@ export const clearCsrfCookie = (res: Response): void => {
   res.clearCookie(CSRF_COOKIE_NAME, buildCookieOptions(false));
 };
 
-export const setAuthCookie = (res: Response, token: string): void => {
+export const setAuthCookie = (res: Response, token: string): string => {
   const maxAgeMs = Number(process.env.JWT_EXPIRES_IN_SECONDS ?? 86400) * 1000;
   res.cookie(AUTH_COOKIE_NAME, token, {
     ...buildCookieOptions(true),
     maxAge: maxAgeMs,
   });
-  setCsrfCookie(res);
+  return setCsrfCookie(res);
 };
 
 export const clearAuthCookie = (res: Response): void => {
