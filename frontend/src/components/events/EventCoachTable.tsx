@@ -95,7 +95,9 @@ export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTab
                     </Box>
                   </Stack>
                 </TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>{coach.coachUser.country ?? '—'}</TableCell>
+                <TableCell sx={{ fontSize: '0.8125rem' }}>
+                  {coach.coachUser.country ?? '—'}
+                </TableCell>
                 <TableCell sx={{ fontSize: '0.8125rem' }}>
                   {coach.coachUser.timezone?.replace(/_/g, ' ') ?? '—'}
                 </TableCell>

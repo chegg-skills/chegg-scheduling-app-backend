@@ -14,7 +14,12 @@ import {
   Calendar as CalendarIcon,
   ClipboardList,
 } from 'lucide-react'
-import { useEvent, useDeleteEvent, useUpdateEvent, useEventScheduleSlots } from '@/hooks/queries/useEvents'
+import {
+  useEvent,
+  useDeleteEvent,
+  useUpdateEvent,
+  useEventScheduleSlots,
+} from '@/hooks/queries/useEvents'
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -41,7 +46,11 @@ export function EventDetailPage() {
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
   const { data: event, isLoading, error } = useEvent(eventId)
-  const { data: slotsRes, isLoading: isLoadingSlots, isFetching: isFetchingSlots } = useEventScheduleSlots(eventId)
+  const {
+    data: slotsRes,
+    isLoading: isLoadingSlots,
+    isFetching: isFetchingSlots,
+  } = useEventScheduleSlots(eventId)
   const { data: teamMembersResponse } = useTeamMembers(event?.teamId ?? '')
   const updateEventMutation = useUpdateEvent()
   const deleteEventMutation = useDeleteEvent()
@@ -172,21 +181,19 @@ export function EventDetailPage() {
               icon={<Users size={18} />}
               iconPosition="start"
             />
-            <Tab 
-              label={`Bookings (${event._count?.bookings ?? 0})`} 
-              icon={<ClipboardList size={18} />} 
-              iconPosition="start" 
+            <Tab
+              label={`Bookings (${event._count?.bookings ?? 0})`}
+              icon={<ClipboardList size={18} />}
+              iconPosition="start"
             />
             {event.bookingMode === 'FIXED_SLOTS' && (
-              <Tab 
-                label={`Schedule (${event._count?.scheduleSlots ?? 0})`} 
-                icon={<CalendarIcon size={18} />} 
-                iconPosition="start" 
+              <Tab
+                label={`Schedule (${event._count?.scheduleSlots ?? 0})`}
+                icon={<CalendarIcon size={18} />}
+                iconPosition="start"
               />
             )}
           </Tabs>
-
-
         </Box>
 
         <TabPanel value={tabValue} index={0} prefix="event">
@@ -215,7 +222,11 @@ export function EventDetailPage() {
         </TabPanel>
 
         <TabPanel value={tabValue} index={3} prefix="event">
-          <EventScheduleTab event={event} slots={slots} isLoading={isLoadingSlots || isFetchingSlots} teamMembers={teamMembers} />
+          <EventScheduleTab
+            event={event}
+            slots={slots}
+            isLoading={isLoadingSlots || isFetchingSlots}
+          />
         </TabPanel>
 
         <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="Edit event" size="lg">

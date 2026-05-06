@@ -9,10 +9,7 @@ export async function processNotification(notification: NotificationPayload): Pr
       return;
     }
 
-    await cancelNotificationsByEntity(
-      notification.entityType ?? "BOOKING",
-      notification.entityId,
-    );
+    await cancelNotificationsByEntity(notification.entityType ?? "BOOKING", notification.entityId);
     return;
   }
 

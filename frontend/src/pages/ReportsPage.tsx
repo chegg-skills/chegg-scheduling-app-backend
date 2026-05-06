@@ -177,7 +177,12 @@ export function ReportsPage() {
                 </Typography>
               </Box>
               <Box
-                sx={{ p: 2, bgcolor: 'action.hover', borderTop: '1px solid', borderColor: 'divider' }}
+                sx={{
+                  p: 2,
+                  bgcolor: 'action.hover',
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                }}
               >
                 <Button
                   fullWidth

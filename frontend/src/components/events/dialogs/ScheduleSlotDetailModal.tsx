@@ -4,16 +4,7 @@ import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import Avatar from '@mui/material/Avatar'
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  Users, 
-  Trash2, 
-  XCircle, 
-  Edit, 
-  ClipboardList,
-} from 'lucide-react'
+import { Calendar, Clock, User, Users, Trash2, XCircle, Edit, ClipboardList } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { alpha, useTheme } from '@mui/material/styles'
 import { Modal } from '@/components/shared/ui/Modal'
@@ -49,7 +40,7 @@ export function ScheduleSlotDetailModal({
   const endTime = parseISO(slot.endTime)
   const dateInfo = format(startTime, 'EEEE, MMMM d, yyyy')
   const timeInfo = `${format(startTime, 'h:mm a')} - ${format(endTime, 'h:mm a')}`
-  const coachName = slot.assignedCoach 
+  const coachName = slot.assignedCoach
     ? `${slot.assignedCoach.firstName} ${slot.assignedCoach.lastName}`
     : 'Unassigned'
   const bookingCount = slot._count?.bookings ?? 0
@@ -60,17 +51,16 @@ export function ScheduleSlotDetailModal({
   }
 
   return (
-    <Modal
-      isOpen={!!slot}
-      onClose={onClose}
-      title="Session Details"
-      size="md"
-    >
+    <Modal isOpen={!!slot} onClose={onClose} title="Session Details" size="md">
       <Box sx={{ p: 1 }}>
         <Stack spacing={3}>
           {/* Header Info */}
           <Box>
-            <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 1.2 }}>
+            <Typography
+              variant="overline"
+              color="text.secondary"
+              sx={{ fontWeight: 700, letterSpacing: 1.2 }}
+            >
               {event.name}
             </Typography>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
@@ -79,11 +69,11 @@ export function ScheduleSlotDetailModal({
               </Typography>
               <Box>
                 {slot.isCancelled ? (
-                   <Badge label="Cancelled" color="red" />
+                  <Badge label="Cancelled" color="red" />
                 ) : !slot.isActive ? (
-                   <Badge label="Inactive" color="gray" />
+                  <Badge label="Inactive" color="gray" />
                 ) : (
-                   <Badge label="Active" color="green" />
+                  <Badge label="Active" color="green" />
                 )}
               </Box>
             </Stack>
@@ -95,11 +85,24 @@ export function ScheduleSlotDetailModal({
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
             <Stack spacing={1}>
               <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.08), color: 'primary.main', display: 'flex' }}>
-                   <Clock size={18} />
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: 1.5,
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    color: 'primary.main',
+                    display: 'flex',
+                  }}
+                >
+                  <Clock size={18} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    sx={{ textTransform: 'uppercase' }}
+                  >
                     Time Slot
                   </Typography>
                   <Typography variant="body2" fontWeight={700}>
@@ -111,11 +114,24 @@ export function ScheduleSlotDetailModal({
 
             <Stack spacing={1}>
               <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: alpha(theme.palette.success.main, 0.08), color: 'success.main', display: 'flex' }}>
-                   <Users size={18} />
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: 1.5,
+                    bgcolor: alpha(theme.palette.success.main, 0.08),
+                    color: 'success.main',
+                    display: 'flex',
+                  }}
+                >
+                  <Users size={18} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    sx={{ textTransform: 'uppercase' }}
+                  >
                     Occupancy
                   </Typography>
                   <Typography variant="body2" fontWeight={700}>
@@ -127,39 +143,65 @@ export function ScheduleSlotDetailModal({
 
             <Stack spacing={1}>
               <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: alpha(theme.palette.secondary.main, 0.08), color: 'secondary.main', display: 'flex' }}>
-                   <User size={18} />
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: 1.5,
+                    bgcolor: alpha(theme.palette.secondary.main, 0.08),
+                    color: 'secondary.main',
+                    display: 'flex',
+                  }}
+                >
+                  <User size={18} />
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                   <Box>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>
-                        Assigned Coach
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ textTransform: 'uppercase' }}
+                    >
+                      Assigned Coach
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      {slot.assignedCoach && (
+                        <Avatar
+                          src={slot.assignedCoach.avatarUrl || undefined}
+                          sx={{ width: 20, height: 20, fontSize: '0.65rem' }}
+                        >
+                          {slot.assignedCoach.firstName[0]}
+                        </Avatar>
+                      )}
+                      <Typography variant="body2" fontWeight={700}>
+                        {coachName}
                       </Typography>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                         {slot.assignedCoach && (
-                            <Avatar 
-                              src={slot.assignedCoach.avatarUrl || undefined} 
-                              sx={{ width: 20, height: 20, fontSize: '0.65rem' }}
-                            >
-                               {slot.assignedCoach.firstName[0]}
-                            </Avatar>
-                         )}
-                         <Typography variant="body2" fontWeight={700}>
-                           {coachName}
-                         </Typography>
-                      </Stack>
-                   </Box>
+                    </Stack>
+                  </Box>
                 </Box>
               </Stack>
             </Stack>
 
             <Stack spacing={1}>
               <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: alpha(theme.palette.warning.main, 0.08), color: 'warning.main', display: 'flex' }}>
-                   <Calendar size={18} />
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: 1.5,
+                    bgcolor: alpha(theme.palette.warning.main, 0.08),
+                    color: 'warning.main',
+                    display: 'flex',
+                  }}
+                >
+                  <Calendar size={18} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    sx={{ textTransform: 'uppercase' }}
+                  >
                     Series Info
                   </Typography>
                   <Typography variant="body2" fontWeight={700}>
@@ -174,16 +216,27 @@ export function ScheduleSlotDetailModal({
 
           {/* Quick Actions */}
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', mb: 2, display: 'block' }}>
-               Quick Actions
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={700}
+              sx={{ textTransform: 'uppercase', mb: 2, display: 'block' }}
+            >
+              Quick Actions
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
-               <Button
+              <Button
                 variant="outlined"
                 fullWidth
                 startIcon={<Users size={16} />}
                 onClick={() => handleAction(onViewAttendees)}
-                sx={{ justifyContent: 'flex-start', py: 1, borderRadius: 1.5, fontWeight: 600, textTransform: 'none' }}
+                sx={{
+                  justifyContent: 'flex-start',
+                  py: 1,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                }}
               >
                 View Attendees
               </Button>
@@ -192,7 +245,13 @@ export function ScheduleSlotDetailModal({
                 fullWidth
                 startIcon={<ClipboardList size={16} />}
                 onClick={() => handleAction(onLogSession)}
-                sx={{ justifyContent: 'flex-start', py: 1, borderRadius: 1.5, fontWeight: 600, textTransform: 'none' }}
+                sx={{
+                  justifyContent: 'flex-start',
+                  py: 1,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                }}
               >
                 Session Log
               </Button>
@@ -201,20 +260,32 @@ export function ScheduleSlotDetailModal({
                 fullWidth
                 startIcon={<Edit size={16} />}
                 onClick={() => handleAction(onEdit)}
-                sx={{ justifyContent: 'flex-start', py: 1, borderRadius: 1.5, fontWeight: 600, textTransform: 'none' }}
+                sx={{
+                  justifyContent: 'flex-start',
+                  py: 1,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                }}
               >
                 Edit Slot
               </Button>
               {!slot.isCancelled && (
-                 <Button
-                    variant="outlined"
-                    fullWidth
-                    color="error"
-                    startIcon={<XCircle size={16} />}
-                    onClick={() => handleAction(onCancel)}
-                    sx={{ justifyContent: 'flex-start', py: 1, borderRadius: 1.5, fontWeight: 600, textTransform: 'none' }}
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  color="error"
+                  startIcon={<XCircle size={16} />}
+                  onClick={() => handleAction(onCancel)}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    py: 1,
+                    borderRadius: 1.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                  }}
                 >
-                    Cancel Session
+                  Cancel Session
                 </Button>
               )}
             </Box>
@@ -223,18 +294,22 @@ export function ScheduleSlotDetailModal({
           <Divider />
 
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-             <Button
-                size="small"
-                color="error"
-                startIcon={<Trash2 size={16} />}
-                onClick={() => handleAction((s, info) => onRemove(s.id, info || ''))}
-                sx={{ fontWeight: 600, textTransform: 'none' }}
-              >
-                Delete Permanently
-              </Button>
-              <Button variant="contained" onClick={onClose} sx={{ px: 4, fontWeight: 700, borderRadius: 2 }}>
-                Close
-              </Button>
+            <Button
+              size="small"
+              color="error"
+              startIcon={<Trash2 size={16} />}
+              onClick={() => handleAction((s, info) => onRemove(s.id, info || ''))}
+              sx={{ fontWeight: 600, textTransform: 'none' }}
+            >
+              Delete Permanently
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onClose}
+              sx={{ px: 4, fontWeight: 700, borderRadius: 2 }}
+            >
+              Close
+            </Button>
           </Stack>
         </Stack>
       </Box>

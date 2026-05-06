@@ -682,9 +682,14 @@ async function main() {
         throw new Error(`Missing seed catalog dependency for ${eventDefinition.name}`);
       }
 
-      const isGroupEvent = eventDefinition.interactionKey === "one_to_many" || eventDefinition.interactionKey === "many_to_many";
-      const isMultiCoachType = eventDefinition.interactionKey === "many_to_one" || eventDefinition.interactionKey === "many_to_many";
-      const needsFixedLead = isMultiCoachType && eventDefinition.assignmentStrategy === AssignmentStrategy.DIRECT;
+      const isGroupEvent =
+        eventDefinition.interactionKey === "one_to_many" ||
+        eventDefinition.interactionKey === "many_to_many";
+      const isMultiCoachType =
+        eventDefinition.interactionKey === "many_to_one" ||
+        eventDefinition.interactionKey === "many_to_many";
+      const needsFixedLead =
+        isMultiCoachType && eventDefinition.assignmentStrategy === AssignmentStrategy.DIRECT;
       const event = await apiRequest<{ id: string; name: string }>(
         "POST",
         `/teams/${teamResponse.id}/events`,
@@ -698,7 +703,8 @@ async function main() {
           locationType: EventLocationType.VIRTUAL,
           locationValue: "https://zoom.us/j/demo-session-room",
           isActive: true,
-          minCoachCount: eventDefinition.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN ? 2 : 1,
+          minCoachCount:
+            eventDefinition.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN ? 2 : 1,
           ...(isGroupEvent && { bookingMode: "FIXED_SLOTS" }),
           ...(needsFixedLead && coaches[0] && { fixedLeadCoachId: coaches[0].id }),
         },

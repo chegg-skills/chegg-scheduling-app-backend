@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventsApi, type ListEventsParams } from '@/api/events'
-import type { CreateEventDto, UpdateEventDto, SetEventCoachesDto, UpsertSessionLogDto } from '@/types'
+import type {
+  CreateEventDto,
+  UpdateEventDto,
+  SetEventCoachesDto,
+  UpsertSessionLogDto,
+} from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
 
@@ -144,7 +149,11 @@ export function useSetEventCoaches(eventId: string) {
   return useMutation({
     mutationFn: (data: SetEventCoachesDto) => eventsApi.setCoaches(eventId, data),
     onSuccess: () =>
-      invalidateQueryKeys(qc, [eventKeys.coaches(eventId), eventKeys.detail(eventId), statsKeys.all]),
+      invalidateQueryKeys(qc, [
+        eventKeys.coaches(eventId),
+        eventKeys.detail(eventId),
+        statsKeys.all,
+      ]),
   })
 }
 
@@ -153,7 +162,11 @@ export function useRemoveEventCoach(eventId: string) {
   return useMutation({
     mutationFn: (userId: string) => eventsApi.removeCoach(eventId, userId),
     onSuccess: () =>
-      invalidateQueryKeys(qc, [eventKeys.coaches(eventId), eventKeys.detail(eventId), statsKeys.all]),
+      invalidateQueryKeys(qc, [
+        eventKeys.coaches(eventId),
+        eventKeys.detail(eventId),
+        statsKeys.all,
+      ]),
   })
 }
 

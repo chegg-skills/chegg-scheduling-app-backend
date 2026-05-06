@@ -72,16 +72,25 @@ export function ScheduleSeriesTrackerView({
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Breadcrumbs 
-            separator={<ChevronRight size={14} />} 
-            sx={{ mb: 1, '& .MuiBreadcrumbs-li': { display: 'flex', alignItems: 'center' } }}
+        <Breadcrumbs
+          separator={<ChevronRight size={14} />}
+          sx={{ mb: 1, '& .MuiBreadcrumbs-li': { display: 'flex', alignItems: 'center' } }}
         >
           <Link
             underline="hover"
             color="inherit"
             href="#"
-            onClick={(e) => { e.preventDefault(); onBack(); }}
-            sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}
+            onClick={(e) => {
+              e.preventDefault()
+              onBack()
+            }}
+            sx={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+            }}
           >
             Scheduled Sessions
           </Link>
@@ -89,36 +98,39 @@ export function ScheduleSeriesTrackerView({
             {group.isRecurring ? 'Series Tracker' : 'Session Tracker'}
           </Typography>
         </Breadcrumbs>
-        
+
         <Stack direction="row" spacing={2} alignItems="center">
-            <Box sx={{ 
-               p: group.isRecurring ? 1.5 : 0.5, 
-               borderRadius: 1, 
-               bgcolor: group.isRecurring ? 'background.paper' : 'transparent', 
-               border: group.isRecurring ? '1px solid' : 'none', 
-               borderColor: 'divider',
-               color: group.isRecurring ? 'primary.main' : 'text.secondary'
-            }}>
-              {group.isRecurring ? (
-                <EventRepeatIcon sx={{ fontSize: 28 }} />
-              ) : (
-                <CalendarTodayIcon sx={{ fontSize: 28 }} />
-              )}
-           </Box>
-           <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {group.isRecurring ? 'Weekly Recurring Series' : 'Individual Session Detail'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {format(new Date(group.startTime), 'EEEE')}s at {format(new Date(group.startTime), 'h:mm a')} • {group.slots.length} occurrences
-              </Typography>
-           </Box>
+          <Box
+            sx={{
+              p: group.isRecurring ? 1.5 : 0.5,
+              borderRadius: 1,
+              bgcolor: group.isRecurring ? 'background.paper' : 'transparent',
+              border: group.isRecurring ? '1px solid' : 'none',
+              borderColor: 'divider',
+              color: group.isRecurring ? 'primary.main' : 'text.secondary',
+            }}
+          >
+            {group.isRecurring ? (
+              <EventRepeatIcon sx={{ fontSize: 28 }} />
+            ) : (
+              <CalendarTodayIcon sx={{ fontSize: 28 }} />
+            )}
+          </Box>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {group.isRecurring ? 'Weekly Recurring Series' : 'Individual Session Detail'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {format(new Date(group.startTime), 'EEEE')}s at{' '}
+              {format(new Date(group.startTime), 'h:mm a')} • {group.slots.length} occurrences
+            </Typography>
+          </Box>
         </Stack>
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs 
-          value={activeTab} 
+        <Tabs
+          value={activeTab}
           onChange={handleTabChange}
           sx={{
             '& .MuiTab-root': {
@@ -126,7 +138,7 @@ export function ScheduleSeriesTrackerView({
               fontWeight: 600,
               fontSize: '0.875rem',
               minWidth: 100,
-            }
+            },
           }}
         >
           <Tab label={`Upcoming (${counts.upcoming})`} value="upcoming" />

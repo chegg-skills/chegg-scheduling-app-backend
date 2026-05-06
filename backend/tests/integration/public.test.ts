@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../../src/app";
+import { prisma } from "../../src/shared/db/prisma";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
@@ -247,6 +248,58 @@ describe("Public API", () => {
     it("should return 400 if dates are missing", async () => {
       const res = await request(app).get(`/api/public/events/${eventId}/slots`);
       expect(res.status).toBe(400);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // GET /api/public/bookings/:id — Authorization header vs query param
+  // ─────────────────────────────────────────────────────────────
+  describe("GET /api/public/bookings/:id", () => {
+    let bookingId: string;
+    let rescheduleToken: string;
+
+    beforeAll(async () => {
+      const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // tomorrow
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Public Token Student",
+          studentEmail: "pub-token@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+      bookingId = booking.id;
+      rescheduleToken = booking.rescheduleToken!;
+    });
+
+    it("returns booking when token is sent via Authorization: Bearer header (200)", async () => {
+      const res = await request(app)
+        .get(`/api/public/bookings/${bookingId}`)
+        .set("Authorization", `Bearer ${rescheduleToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.id).toBe(bookingId);
+    });
+
+    it("returns booking when token is sent via ?token= query param fallback (200)", async () => {
+      const res = await request(app)
+        .get(`/api/public/bookings/${bookingId}`)
+        .query({ token: rescheduleToken });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.id).toBe(bookingId);
+    });
+
+    it("returns 404 for a wrong token regardless of how it is sent", async () => {
+      const res = await request(app)
+        .get(`/api/public/bookings/${bookingId}`)
+        .set("Authorization", "Bearer completely-wrong-token-xyz");
+
+      expect(res.status).toBe(404);
     });
   });
 });

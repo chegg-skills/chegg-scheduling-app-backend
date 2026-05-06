@@ -48,7 +48,9 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
     // updates `caps`. Running resets with mismatched caps incorrectly clears fields like
     // sessionLeadershipStrategy/targetCoHostCount for multi-coach types on initial edit load.
     const currentInteractionType = getValues('interactionType') as InteractionType | undefined
-    const currentCaps = currentInteractionType ? INTERACTION_TYPE_CAPS[currentInteractionType] : null
+    const currentCaps = currentInteractionType
+      ? INTERACTION_TYPE_CAPS[currentInteractionType]
+      : null
     if (currentCaps !== caps) return
 
     // Reset assignment strategy if the current one is not allowed for this type
@@ -106,8 +108,7 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
     const apiPayload = {
       ...values,
       fixedLeadCoachId: values.fixedLeadCoachId || null,
-      assignmentStrategy:
-        values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
+      assignmentStrategy: values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
       durationSeconds: values.durationMinutes * 60,
     }
 

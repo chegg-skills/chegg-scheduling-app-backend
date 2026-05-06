@@ -1,4 +1,4 @@
-import { addSeconds } from 'date-fns'
+import { addSeconds, format } from 'date-fns'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Alert from '@mui/material/Alert'
@@ -10,7 +10,7 @@ import { Input } from '@/components/shared/form/Input'
 import MenuItem from '@mui/material/MenuItem'
 import { Select } from '@/components/shared/form/Select'
 import Avatar from '@mui/material/Avatar'
-import type { Event, EventScheduleSlot, TeamMember, InteractionType } from '@/types'
+import type { Event, EventScheduleSlot, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { useScheduleSlotForm } from './useScheduleSlotForm'
 import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
@@ -28,7 +28,6 @@ interface UpsertScheduleSlotDialogProps {
     recurrence?: RecurrenceConfig | null
   }) => void
   isPending: boolean
-  teamMembers: TeamMember[]
 }
 
 export function UpsertScheduleSlotDialog({
@@ -38,7 +37,6 @@ export function UpsertScheduleSlotDialog({
   slot,
   onSave,
   isPending,
-  teamMembers,
 }: UpsertScheduleSlotDialogProps) {
   const mode = slot ? 'Edit' : 'Add'
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
@@ -66,15 +64,13 @@ export function UpsertScheduleSlotDialog({
     onSave({
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
-      capacity: !supportsMultipleParticipants
-        ? 1
-        : newSlotCapacity === ''
-          ? null
-          : newSlotCapacity,
+      capacity: !supportsMultipleParticipants ? 1 : newSlotCapacity === '' ? null : newSlotCapacity,
       assignedCoachId,
       recurrence,
     })
   }
+
+  const noCoachesConfigured = event.coaches.length === 0 && !event.fixedLeadCoachId
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`${mode} Scheduled Session`}>
@@ -97,7 +93,11 @@ export function UpsertScheduleSlotDialog({
           <FormField
             label="Capacity Override (Optional)"
             htmlFor="slot-capacity"
-            info="Leave empty to use the default event capacity."
+            info={
+              event.maxParticipantCount
+                ? `Leave empty to use the event default (${event.maxParticipantCount} students).`
+                : 'Leave empty — this event has no default capacity limit.'
+            }
           >
             <Input
               id="slot-capacity"
@@ -116,17 +116,23 @@ export function UpsertScheduleSlotDialog({
           </Alert>
         )}
 
-        <Box sx={{ mt: 1, p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
+        <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
           <Typography variant="caption" color="text.secondary" display="block">
             Note: The session will last {event.durationSeconds / 60} minutes based on the event
             configuration.
           </Typography>
+          {newSlotDate && (
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+              Session ends at:{' '}
+              {format(addSeconds(new Date(newSlotDate), event.durationSeconds), 'h:mm a')}
+            </Typography>
+          )}
         </Box>
 
         <FormField
           label="Override Host (Optional)"
           htmlFor="slot-coach"
-          info="If specified, this coach will host this specific session. Leave as 'Default' to use the event lead."
+          info="If specified, this coach will host this specific session. Leave as 'Event Default' to use the event lead."
         >
           <Select
             id="slot-coach"
@@ -135,29 +141,40 @@ export function UpsertScheduleSlotDialog({
             displayEmpty
           >
             <MenuItem value="">
-              <em>Team Default (Round Robin / Direct)</em>
+              <em>Event Default</em>
             </MenuItem>
-            {teamMembers.map((member) => (
-              <MenuItem key={member.id} value={member.user.id}>
+            {event.coaches.map((coach) => (
+              <MenuItem key={coach.id} value={coach.coachUserId}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Avatar
-                    src={member.user.avatarUrl ?? undefined}
+                    src={coach.coachUser.avatarUrl ?? undefined}
                     sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
                   >
-                    {member.user.firstName[0]}
-                    {member.user.lastName[0]}
+                    {coach.coachUser.firstName[0]}
+                    {coach.coachUser.lastName[0]}
                   </Avatar>
                   <Typography variant="body2">
-                    {member.user.firstName} {member.user.lastName}
+                    {coach.coachUser.firstName} {coach.coachUser.lastName}
                   </Typography>
                 </Stack>
               </MenuItem>
             ))}
           </Select>
+          {noCoachesConfigured && !assignedCoachId && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              No coaches are assigned to this event. Students will not be able to book this slot
+              until at least one coach is added to the event.
+            </Alert>
+          )}
         </FormField>
 
         {mode === 'Add' && (
-          <RecurrenceSelector value={recurrence} onChange={setRecurrence} disabled={isPending} />
+          <RecurrenceSelector
+            value={recurrence}
+            onChange={setRecurrence}
+            disabled={isPending}
+            startDate={newSlotDate}
+          />
         )}
 
         <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 2 }}>

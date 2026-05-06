@@ -279,9 +279,9 @@ describe("Interaction type routes", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data.interactionTypes)).toBe(true);
     expect(res.body.data.interactionTypes).toHaveLength(4);
-    expect(
-      res.body.data.interactionTypes.map((t: { key: string }) => t.key),
-    ).toEqual(expect.arrayContaining(["ONE_TO_ONE", "ONE_TO_MANY", "MANY_TO_ONE", "MANY_TO_MANY"]));
+    expect(res.body.data.interactionTypes.map((t: { key: string }) => t.key)).toEqual(
+      expect.arrayContaining(["ONE_TO_ONE", "ONE_TO_MANY", "MANY_TO_ONE", "MANY_TO_MANY"]),
+    );
     expect(res.body.data.interactionTypes[0]).toMatchObject({
       key: expect.any(String),
       label: expect.any(String),
@@ -1742,8 +1742,7 @@ describe("Recurrence — slot creation", () => {
     );
     expect(slots).toHaveLength(2);
 
-    const diffMs =
-      new Date(slots[1].startTime).getTime() - new Date(slots[0].startTime).getTime();
+    const diffMs = new Date(slots[1].startTime).getTime() - new Date(slots[0].startTime).getTime();
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
     expect(diffDays).toBe(14);
   });

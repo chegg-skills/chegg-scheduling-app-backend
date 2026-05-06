@@ -1,8 +1,24 @@
 export const INTERACTION_TYPE_CAPS = {
-  ONE_TO_ONE:  { multipleCoaches: false, multipleParticipants: false, derivesLeadershipFromAssignment: false },
-  ONE_TO_MANY: { multipleCoaches: false, multipleParticipants: true,  derivesLeadershipFromAssignment: false },
-  MANY_TO_ONE: { multipleCoaches: true,  multipleParticipants: false, derivesLeadershipFromAssignment: true  },
-  MANY_TO_MANY:{ multipleCoaches: true,  multipleParticipants: true,  derivesLeadershipFromAssignment: true  },
+  ONE_TO_ONE: {
+    multipleCoaches: false,
+    multipleParticipants: false,
+    derivesLeadershipFromAssignment: false,
+  },
+  ONE_TO_MANY: {
+    multipleCoaches: false,
+    multipleParticipants: true,
+    derivesLeadershipFromAssignment: false,
+  },
+  MANY_TO_ONE: {
+    multipleCoaches: true,
+    multipleParticipants: false,
+    derivesLeadershipFromAssignment: true,
+  },
+  MANY_TO_MANY: {
+    multipleCoaches: true,
+    multipleParticipants: true,
+    derivesLeadershipFromAssignment: true,
+  },
 } as const;
 
 export type InteractionType = keyof typeof INTERACTION_TYPE_CAPS;
@@ -16,4 +32,3 @@ export const INTERACTION_TYPE_LABELS: Record<InteractionType, string> = {
 };
 
 export const INTERACTION_TYPE_KEYS = Object.keys(INTERACTION_TYPE_CAPS) as InteractionType[];
-

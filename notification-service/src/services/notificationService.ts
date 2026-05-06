@@ -47,10 +47,7 @@ export async function sendStoredNotification(
 ): Promise<NotificationSendResult> {
   if (!record) return null;
 
-  if (
-    record.status === NotificationStatus.SENT ||
-    record.status === NotificationStatus.CANCELLED
-  ) {
+  if (record.status === NotificationStatus.SENT || record.status === NotificationStatus.CANCELLED) {
     return { skipped: true, notificationId: record.id, status: record.status };
   }
 

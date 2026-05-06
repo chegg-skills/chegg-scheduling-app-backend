@@ -42,9 +42,8 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
   const [coachNotes, setCoachNotes] = useState('')
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({})
 
-  const activeBookings = (bookings as Booking[] | undefined)?.filter(
-    (b) => b.status !== 'CANCELLED',
-  ) ?? []
+  const activeBookings =
+    (bookings as Booking[] | undefined)?.filter((b) => b.status !== 'CANCELLED') ?? []
 
   useEffect(() => {
     if (!isOpen) return
@@ -99,8 +98,8 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
             title: 'Save Failed',
             message: 'Failed to save session log. Please try again.',
           })
-        }
-      },
+        },
+      }
     )
   }
 
@@ -132,13 +131,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
   )
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Log Session"
-      size="md"
-      footer={footer}
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Log Session" size="md" footer={footer}>
       <Stack spacing={3} sx={{ mt: 1 }}>
         {/* Session header banner */}
         <Box
@@ -190,7 +183,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
           <LogSessionParticipantList
             participants={activeBookings}
             attendanceMap={attendanceMap}
-            onToggle={(id) => setAttendanceMap(prev => ({ ...prev, [id]: !prev[id] }))}
+            onToggle={(id) => setAttendanceMap((prev) => ({ ...prev, [id]: !prev[id] }))}
             isLoading={isLoading}
           />
         </Box>

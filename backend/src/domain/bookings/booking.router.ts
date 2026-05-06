@@ -1,9 +1,10 @@
 import { Router } from "express";
 import * as BookingController from "./booking.controller";
-import { authenticate, authorize } from "../../shared/middleware/auth";
+import { authenticate, optionalAuthenticate, authorize } from "../../shared/middleware/auth";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { UserRole } from "@prisma/client";
 import { validate } from "../../shared/middleware/validate";
+import { bookingCreationLimiter, standardLimiter } from "../../shared/middleware/rateLimit";
 import {
   CreateBookingSchema,
   ListBookingsSchema,
@@ -18,7 +19,7 @@ const router = Router();
  */
 router
   .route("/")
-  .post(validate(CreateBookingSchema), BookingController.createBooking) // Public for students to book
+  .post(bookingCreationLimiter, validate(CreateBookingSchema), BookingController.createBooking) // Public for students to book
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
@@ -40,7 +41,12 @@ router
 
 router
   .route("/:bookingId/reschedule")
-  .post(validate(RescheduleBookingSchema), BookingController.rescheduleBooking) // Token auth or session auth handled in controller
+  .post(
+    standardLimiter,
+    optionalAuthenticate,
+    validate(RescheduleBookingSchema),
+    BookingController.rescheduleBooking,
+  ) // Token auth or session auth handled in controller
   .all(methodNotAllowed);
 
 export default router;

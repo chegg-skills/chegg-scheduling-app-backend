@@ -76,7 +76,9 @@ export function LogSessionParticipantList({
           <Paper key={participant.id} variant="outlined" sx={{ p: 1.5, borderRadius: 1.5 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Stack direction="row" alignItems="center" spacing={1.5}>
-                <Avatar sx={{ width: 36, height: 36, fontSize: '0.8rem', bgcolor: 'secondary.main' }}>
+                <Avatar
+                  sx={{ width: 36, height: 36, fontSize: '0.8rem', bgcolor: 'secondary.main' }}
+                >
                   {getInitials(displayName)}
                 </Avatar>
                 <Box>

@@ -6,7 +6,9 @@ import type { ScheduleSeriesGroup } from '@/components/events/ScheduleSeriesTabl
  * Custom hook to group flat schedule slots into series groups for table display.
  * Encapsulates the logic for identifying recurring series vs individual sessions.
  */
-export function useScheduleSeriesGroups(slots: EventScheduleSlot[] | undefined): ScheduleSeriesGroup[] {
+export function useScheduleSeriesGroups(
+  slots: EventScheduleSlot[] | undefined
+): ScheduleSeriesGroup[] {
   return useMemo(() => {
     if (!slots) return []
     const groups: Record<string, ScheduleSeriesGroup> = {}

@@ -5,6 +5,7 @@ dotenv.config();
 import app from "./app";
 import { prisma } from "./shared/db/prisma";
 import { logger } from "./shared/logging/logger";
+import { getOidcClient } from "./shared/utils/oidcClient";
 
 const validateEnv = (): void => {
   const required = ["DATABASE_URL", "JWT_SECRET"];
@@ -12,34 +13,53 @@ const validateEnv = (): void => {
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
   }
+
+  const isProduction = process.env.NODE_ENV === "production";
+
   if (process.env.JWT_SECRET === "replace-this-with-a-long-random-secret") {
+    if (isProduction) {
+      throw new Error(
+        "JWT_SECRET is still the placeholder value. Set a strong secret before deploying.",
+      );
+    }
     logger.warn(
       "JWT_SECRET is still set to the placeholder value. Replace it before production deployment.",
     );
   }
+
+  if (isProduction && process.env.ENABLE_CSRF_PROTECTION !== "true") {
+    throw new Error("ENABLE_CSRF_PROTECTION must be 'true' in production.");
+  }
 };
 
-validateEnv();
+const start = async (): Promise<void> => {
+  validateEnv();
 
-const port = Number(process.env.PORT) || 4000;
+  // Fail fast on OIDC misconfiguration rather than surfacing a 500 on first SSO login
+  if (process.env.OIDC_ISSUER_URL) {
+    await getOidcClient();
+    logger.info("OIDC client initialized.");
+  }
 
-const server = app.listen(port, () => {
-  logger.info("Server listening", { port });
-});
+  const port = Number(process.env.PORT) || 4000;
 
-const shutdown = (signal: string) => {
-  logger.info("Shutdown signal received", { signal });
-
-  server.close(async () => {
-    await prisma.$disconnect();
-    process.exit(0);
+  const server = app.listen(port, () => {
+    logger.info("Server listening", { port });
   });
+
+  const shutdown = (signal: string) => {
+    logger.info("Shutdown signal received", { signal });
+    server.close(async () => {
+      await prisma.$disconnect();
+      process.exit(0);
+    });
+  };
+
+  process.once("SIGINT", () => shutdown("SIGINT"));
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
 };
 
-process.once("SIGINT", () => {
-  shutdown("SIGINT");
-});
-
-process.once("SIGTERM", () => {
-  shutdown("SIGTERM");
+start().catch((error) => {
+  logger.error("Server startup failed.", { error });
+  process.exit(1);
 });

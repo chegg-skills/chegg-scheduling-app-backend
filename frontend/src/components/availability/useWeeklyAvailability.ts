@@ -15,11 +15,7 @@ interface UseWeeklyAvailabilityProps {
   showFooter?: boolean
 }
 
-export function useWeeklyAvailability({
-  value,
-  onChange,
-  showFooter,
-}: UseWeeklyAvailabilityProps) {
+export function useWeeklyAvailability({ value, onChange, showFooter }: UseWeeklyAvailabilityProps) {
   const [days, setDays] = useState<DayAvailability[]>(() => buildDaysFromValue(value))
 
   // Sync internal state when the value prop changes from the parent

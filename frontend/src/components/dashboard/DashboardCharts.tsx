@@ -16,7 +16,11 @@ interface DashboardChartsProps {
 }
 
 export function DashboardCharts({ timeframe }: DashboardChartsProps) {
-  const { data: trendsData, isLoading: trendsLoading, error: trendsError } = useBookingTrends(timeframe)
+  const {
+    data: trendsData,
+    isLoading: trendsLoading,
+    error: trendsError,
+  } = useBookingTrends(timeframe)
   const { data: teamData, isLoading: teamLoading, error: teamError } = useTeamPerformance(timeframe)
   const { data: peakData, isLoading: peakLoading, error: peakError } = usePeakActivity(timeframe)
 

@@ -17,6 +17,8 @@ export const emailTemplates: EmailTemplateMap = {
 // without a corresponding template entry, this line will produce a type error.
 // CANCEL_BOOKING_REMINDERS is intentionally omitted — it is a control message,
 // not an email template, so we cast to allow it.
-const _exhaustivenessCheck: Omit<Record<NotificationType, EmailTemplate>, "CANCEL_BOOKING_REMINDERS"> =
-  emailTemplates as Omit<Record<NotificationType, EmailTemplate>, "CANCEL_BOOKING_REMINDERS">;
+const _exhaustivenessCheck: Omit<
+  Record<NotificationType, EmailTemplate>,
+  "CANCEL_BOOKING_REMINDERS"
+> = emailTemplates as Omit<Record<NotificationType, EmailTemplate>, "CANCEL_BOOKING_REMINDERS">;
 void _exhaustivenessCheck;

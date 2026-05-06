@@ -39,9 +39,7 @@ export async function bootstrap(): Promise<void> {
 
   clearTimeout(startupTimeout);
 
-  const failed = results.filter(
-    (r): r is PromiseRejectedResult => r.status === "rejected",
-  );
+  const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
 
   if (failed.length > 0) {
     console.error(

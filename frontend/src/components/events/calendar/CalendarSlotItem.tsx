@@ -24,15 +24,12 @@ const SERIES_COLORS = [
   '#607d8b', // Blue Grey
 ]
 
-export function CalendarSlotItem({
-  slot,
-  onViewDetail,
-}: CalendarSlotItemProps) {
+export function CalendarSlotItem({ slot, onViewDetail }: CalendarSlotItemProps) {
   const theme = useTheme()
 
   const getBaseColor = () => {
     if (!slot.recurrenceGroupId) return theme.palette.primary.main
-    
+
     // Simple hash to pick a color from the palette
     let hash = 0
     const id = slot.recurrenceGroupId
@@ -44,12 +41,15 @@ export function CalendarSlotItem({
   }
 
   const baseColor = getBaseColor()
-  const coachName = slot.assignedCoach 
+  const coachName = slot.assignedCoach
     ? `${slot.assignedCoach.firstName} ${slot.assignedCoach.lastName}`
     : 'Unassigned'
 
   return (
-    <Tooltip title={`${format(parseISO(slot.startTime), 'p')} - ${coachName}${slot.isCancelled ? ' (Cancelled)' : ''}`} arrow>
+    <Tooltip
+      title={`${format(parseISO(slot.startTime), 'p')} - ${coachName}${slot.isCancelled ? ' (Cancelled)' : ''}`}
+      arrow
+    >
       <Box
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation()

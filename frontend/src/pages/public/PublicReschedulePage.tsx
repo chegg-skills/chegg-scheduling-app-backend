@@ -1,5 +1,11 @@
 import * as React from 'react'
-import { useParams, useSearchParams, useNavigate, useOutletContext } from 'react-router-dom'
+import {
+  useParams,
+  useSearchParams,
+  useNavigate,
+  useLocation,
+  useOutletContext,
+} from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { startOfDay, endOfDay } from 'date-fns'
 import Box from '@mui/material/Box'
@@ -29,8 +35,10 @@ import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout
 export function PublicReschedulePage() {
   const { bookingId = '' } = useParams()
   const [searchParams] = useSearchParams()
-  const token = searchParams.get('token') || ''
   const navigate = useNavigate()
+  const location = useLocation()
+  // Capture token once from initial URL so it survives after we clean the URL below
+  const [token] = React.useState(() => searchParams.get('token') || '')
 
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date())
   const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null)
@@ -44,6 +52,14 @@ export function PublicReschedulePage() {
     setFramed(!isSuccess)
     return () => setFramed(true)
   }, [isSuccess, setFramed])
+
+  // Strip token from URL after capturing it — prevents it lingering in browser history
+  React.useEffect(() => {
+    if (searchParams.get('token')) {
+      navigate(location.pathname, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 1. Fetch Booking Details
   const {
@@ -124,10 +140,10 @@ export function PublicReschedulePage() {
           newTime={
             selectedSlot
               ? new Intl.DateTimeFormat('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-              }).format(new Date(selectedSlot))
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                }).format(new Date(selectedSlot))
               : ''
           }
           eventName={bookingData.event?.name || ''}
@@ -223,10 +239,7 @@ export function PublicReschedulePage() {
           />
         </PublicMainContent>
       </PublicBaseLayout>
-      <TroubleshootDialog
-        open={troubleshootOpen}
-        onClose={() => setTroubleshootOpen(false)}
-      />
+      <TroubleshootDialog open={troubleshootOpen} onClose={() => setTroubleshootOpen(false)} />
     </LocalizationProvider>
   )
 }

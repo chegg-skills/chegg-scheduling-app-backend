@@ -1,9 +1,4 @@
-import {
-  AssignmentStrategy,
-  Prisma,
-  SessionLeadershipStrategy,
-  UserRole,
-} from "@prisma/client";
+import { AssignmentStrategy, Prisma, SessionLeadershipStrategy, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";

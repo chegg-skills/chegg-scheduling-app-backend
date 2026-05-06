@@ -68,9 +68,7 @@ export function AddCoachForm({
               {selectedUserIds.map((id) => {
                 const user = teamMembers.find((m) => m.userId === id)?.user
                 if (!user) return null
-                return (
-                  <Badge key={id} label={`${user.firstName} ${user.lastName}`} color="blue" />
-                )
+                return <Badge key={id} label={`${user.firstName} ${user.lastName}`} color="blue" />
               })}
             </Box>
           )}

@@ -1,5 +1,13 @@
-import { AssignmentStrategy, BookingStatus, Prisma, SessionLeadershipStrategy } from "@prisma/client";
-import { INTERACTION_TYPE_CAPS, type InteractionType } from "../../shared/constants/interactionType";
+import {
+  AssignmentStrategy,
+  BookingStatus,
+  Prisma,
+  SessionLeadershipStrategy,
+} from "@prisma/client";
+import {
+  INTERACTION_TYPE_CAPS,
+  type InteractionType,
+} from "../../shared/constants/interactionType";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { isCoachAvailable } from "../availability/availability.service";
@@ -107,7 +115,9 @@ const resolvePreferredSingleHost = async ({
 }: ResolveBookingCoachSelectionInput & {
   preferredCoachId: string;
 }): Promise<ResolvedBookingCoachSelection> => {
-  const preferredHost = activeCoaches.find((candidate) => candidate.coachUserId === preferredCoachId);
+  const preferredHost = activeCoaches.find(
+    (candidate) => candidate.coachUserId === preferredCoachId,
+  );
 
   if (!preferredHost) {
     throw new ErrorHandler(
@@ -285,8 +295,8 @@ const resolveCollaborativeCoHosts = async ({
   if (coHostPoolSize > 0 && availableCoHosts.length === 0) {
     console.warn(
       `[booking] No co-hosts available for event ${event.id} at ${start.toISOString()}. ` +
-      `Candidates checked: ${coHostPoolSize}. ` +
-      `Session will proceed with lead coach ${leadCoachId} only.`,
+        `Candidates checked: ${coHostPoolSize}. ` +
+        `Session will proceed with lead coach ${leadCoachId} only.`,
     );
   }
 
@@ -333,7 +343,7 @@ export const resolveBookingCoachSelection = async (
     if (input.matchedScheduleSlotId) {
       const slot = await tx.eventScheduleSlot.findUnique({
         where: { id: input.matchedScheduleSlotId },
-        select: { assignedCoachId: true, assignedCoach: { select: { zoomIsvLink: true } } }
+        select: { assignedCoachId: true, assignedCoach: { select: { zoomIsvLink: true } } },
       });
 
       if (slot?.assignedCoachId) {

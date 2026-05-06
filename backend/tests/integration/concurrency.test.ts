@@ -64,7 +64,6 @@ describe("Concurrency Integration Tests", () => {
       },
     });
     eventTypeId = offering.id;
-
   });
 
   afterAll(async () => {

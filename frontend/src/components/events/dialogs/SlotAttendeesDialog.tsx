@@ -24,12 +24,13 @@ interface SlotAttendeesDialogProps {
   slot: EventScheduleSlot | null
 }
 
-const STATUS_STYLES: Record<string, { color: 'green' | 'blue' | 'yellow' | 'red'; label: string }> = {
-  CONFIRMED:  { color: 'green', label: 'Confirmed' },
-  COMPLETED:  { color: 'blue', label: 'Completed' },
-  NO_SHOW:    { color: 'yellow', label: 'No Show' },
-  CANCELLED:  { color: 'red', label: 'Cancelled' },
-}
+const STATUS_STYLES: Record<string, { color: 'green' | 'blue' | 'yellow' | 'red'; label: string }> =
+  {
+    CONFIRMED: { color: 'green', label: 'Confirmed' },
+    COMPLETED: { color: 'blue', label: 'Completed' },
+    NO_SHOW: { color: 'yellow', label: 'No Show' },
+    CANCELLED: { color: 'red', label: 'Cancelled' },
+  }
 
 export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAttendeesDialogProps) {
   const slotId = slot?.id || ''
@@ -48,24 +49,45 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
       <Box sx={{ mt: 1 }}>
         {/* Session header */}
         <Box sx={{ mb: 3, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-          <Typography variant="subtitle2" color="text.secondary">Session Details</Typography>
-          <Typography variant="body1" fontWeight={600}>{dateStr}</Typography>
-          <Typography variant="body2" color="text.secondary">{timeStr}</Typography>
+          <Typography variant="subtitle2" color="text.secondary">
+            Session Details
+          </Typography>
+          <Typography variant="body1" fontWeight={600}>
+            {dateStr}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {timeStr}
+          </Typography>
         </Box>
 
         {isLoading ? (
-          <Box sx={{ py: 4, textAlign: 'center' }}><Spinner /></Box>
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Spinner />
+          </Box>
         ) : (
           <>
             {/* Attendees table */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
               <Users size={16} />
-              <Typography variant="subtitle2" fontWeight={700}>Bookings</Typography>
+              <Typography variant="subtitle2" fontWeight={700}>
+                Bookings
+              </Typography>
             </Stack>
 
             {!bookings || (bookings as Booking[]).length === 0 ? (
-              <Box sx={{ py: 6, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
-                <Typography color="text.secondary">No students have booked this session yet.</Typography>
+              <Box
+                sx={{
+                  py: 6,
+                  textAlign: 'center',
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  mb: 3,
+                }}
+              >
+                <Typography color="text.secondary">
+                  No students have booked this session yet.
+                </Typography>
               </Box>
             ) : (
               <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
@@ -82,7 +104,11 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
                     {(bookings as Booking[]).map((booking) => {
                       const displayName = booking.studentName || 'Anonymous Student'
                       const displayEmail = booking.studentEmail || 'N/A'
-                      const style = STATUS_STYLES[booking.status] ?? { bgcolor: 'action.hover', color: 'text.secondary', label: booking.status }
+                      const style = STATUS_STYLES[booking.status] ?? {
+                        bgcolor: 'action.hover',
+                        color: 'text.secondary',
+                        label: booking.status,
+                      }
                       return (
                         <TableRow key={booking.id}>
                           <TableCell sx={{ fontWeight: 500 }}>{displayName}</TableCell>
@@ -108,11 +134,21 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
             <Divider sx={{ mb: 2.5 }} />
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
               <ClipboardCheck size={16} />
-              <Typography variant="subtitle2" fontWeight={700}>Session Log</Typography>
+              <Typography variant="subtitle2" fontWeight={700}>
+                Session Log
+              </Typography>
             </Stack>
 
             {!sessionLog ? (
-              <Box sx={{ py: 3, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
+              <Box
+                sx={{
+                  py: 3,
+                  textAlign: 'center',
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   No session log recorded yet. Use "Log Session" from the slot actions to add one.
                 </Typography>
@@ -136,8 +172,19 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
 
                 {/* Attendance summary */}
                 {sessionLog.attendance.length > 0 && (
-                  <Box sx={{ p: 1.5, bgcolor: '#FFF6F0', border: '1px solid #DEE3ED', borderRadius: 1.5 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      bgcolor: '#FFF6F0',
+                      border: '1px solid #DEE3ED',
+                      borderRadius: 1.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mb: 1 }}
+                    >
                       Attendance
                     </Typography>
                     <Stack direction="row" flexWrap="wrap" gap={0.75}>
@@ -156,7 +203,11 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
                         )
                       })}
                     </Stack>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 1 }}
+                    >
                       {sessionLog.attendance.filter((a) => a.attended).length} attended ·{' '}
                       {sessionLog.attendance.filter((a) => !a.attended).length} absent
                     </Typography>
@@ -166,7 +217,12 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
                 {/* Topics */}
                 {sessionLog.topicsDiscussed && (
                   <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: 'block', mb: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ display: 'block', mb: 0.5 }}
+                    >
                       Topics Discussed
                     </Typography>
                     <Typography variant="body2">{sessionLog.topicsDiscussed}</Typography>
@@ -176,20 +232,41 @@ export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAtte
                 {/* Summary */}
                 {sessionLog.summary && (
                   <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: 'block', mb: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ display: 'block', mb: 0.5 }}
+                    >
                       Session Summary
                     </Typography>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{sessionLog.summary}</Typography>
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                      {sessionLog.summary}
+                    </Typography>
                   </Box>
                 )}
 
                 {/* Coach notes — shown as a distinct private box */}
                 {sessionLog.coachNotes && (
-                  <Box sx={{ p: 1.5, bgcolor: '#FFFBE9', border: '1px solid #DEE3ED', borderRadius: 1.5 }}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: 'block', mb: 0.5 }}>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      bgcolor: '#FFFBE9',
+                      border: '1px solid #DEE3ED',
+                      borderRadius: 1.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ display: 'block', mb: 0.5 }}
+                    >
                       Coach Notes (Private)
                     </Typography>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{sessionLog.coachNotes}</Typography>
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                      {sessionLog.coachNotes}
+                    </Typography>
                   </Box>
                 )}
               </Stack>

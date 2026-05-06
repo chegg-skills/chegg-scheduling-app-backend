@@ -10,7 +10,7 @@ const mockUseAuth = vi.fn()
 vi.mock('@/context/auth', async () => {
   const actual = await vi.importActual('@/context/auth')
   return {
-    ...actual as any,
+    ...(actual as any),
     useAuth: () => mockUseAuth(),
   }
 })
@@ -23,18 +23,16 @@ const handlers = [
         teams: [
           { id: 'team-1', name: 'Math Team', isActive: true },
           { id: 'team-2', name: 'Science Team', isActive: true },
-        ]
-      }
+        ],
+      },
     })
   }),
   http.get('*/api/teams/:id/events', () => {
     return HttpResponse.json({
       success: true,
       data: {
-        events: [
-          { id: 'event-1', name: 'Algebra 101', duration: 30, isActive: true, coaches: [] },
-        ]
-      }
+        events: [{ id: 'event-1', name: 'Algebra 101', duration: 30, isActive: true, coaches: [] }],
+      },
     })
   }),
   http.get('*/api/v1/stats/events', () => {
@@ -42,10 +40,10 @@ const handlers = [
       success: true,
       data: {
         metrics: { newEvents: 1, activeEvents: 1, roundRobinEvents: 0, hostedEvents: 1 },
-        timeframe: { label: 'January 2026' }
-      }
+        timeframe: { label: 'January 2026' },
+      },
     })
-  })
+  }),
 ]
 
 describe('Events Domain Integration', () => {
@@ -76,9 +74,12 @@ describe('Events Domain Integration', () => {
     fireEvent.click(await screen.findByText('Math Team'))
 
     // 3. Verify events load
-    await waitFor(() => {
-      expect(screen.getByText('Algebra 101')).toBeInTheDocument()
-    }, { timeout: 8000 })
+    await waitFor(
+      () => {
+        expect(screen.getByText('Algebra 101')).toBeInTheDocument()
+      },
+      { timeout: 8000 }
+    )
     expect(screen.getByText('Active events')).toBeInTheDocument()
   }, 15000)
 

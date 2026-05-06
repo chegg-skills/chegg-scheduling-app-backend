@@ -35,10 +35,7 @@ export const getCoachConflicts = async (
 
   const bookings = (await client.booking.findMany({
     where: {
-      OR: [
-        { coachUserId: userId },
-        { coCoachUserIds: { has: userId } },
-      ],
+      OR: [{ coachUserId: userId }, { coCoachUserIds: { has: userId } }],
       status: { in: ["CONFIRMED", "PENDING"] },
       AND: [
         {

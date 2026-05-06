@@ -1,10 +1,5 @@
 import apiClient from '@/lib/axios'
-import type {
-  ApiResponse,
-  EventType,
-  CreateEventTypeDto,
-  UpdateEventTypeDto,
-} from '@/types'
+import type { ApiResponse, EventType, CreateEventTypeDto, UpdateEventTypeDto } from '@/types'
 
 export interface ListEventTypesResponse {
   eventTypes: EventType[]

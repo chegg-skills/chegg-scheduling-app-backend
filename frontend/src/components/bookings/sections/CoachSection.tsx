@@ -88,7 +88,9 @@ export function CoachSection({ booking }: CoachSectionProps) {
           </Typography>
           <Stack spacing={1.5}>
             {booking.coCoachUserIds.map((coCoachId) => {
-              const coCoach = booking.event?.coaches?.find((c) => c.coachUserId === coCoachId)?.coachUser
+              const coCoach = booking.event?.coaches?.find(
+                (c) => c.coachUserId === coCoachId
+              )?.coachUser
               if (!coCoach) return null
 
               return (

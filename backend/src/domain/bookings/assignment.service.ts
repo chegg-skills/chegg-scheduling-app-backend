@@ -125,9 +125,7 @@ export class RoundRobinAssignmentStrategy implements IAssignmentStrategy {
     const sortedCandidates = [...candidates].sort((a, b) => a.coachOrder - b.coachOrder);
     const maxOrder = Math.max(...sortedCandidates.map((c) => c.coachOrder));
 
-    let startIndex = sortedCandidates.findIndex(
-      (c) => c.coachOrder >= routingState.nextCoachOrder,
-    );
+    let startIndex = sortedCandidates.findIndex((c) => c.coachOrder >= routingState.nextCoachOrder);
     if (startIndex === -1) {
       startIndex = 0;
     }

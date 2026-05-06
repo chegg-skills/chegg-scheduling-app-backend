@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../../src/app";
+import { prisma } from "../../src/shared/db/prisma";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
 
@@ -235,10 +236,102 @@ describe("requiresSso — invite creation and acceptance", () => {
     expect(res.body.message).toMatch(/SSO authentication/i);
   });
 
-  it("GET /invites/validate returns requiresSso: true for an SSO-required invite", async () => {
-    const res = await request(app).get(`/api/invites/validate?token=${ssoInviteToken}`);
+  it("POST /invites/validate returns requiresSso: true for an SSO-required invite", async () => {
+    const res = await request(app).post("/api/invites/validate").send({ token: ssoInviteToken });
 
     expect(res.status).toBe(200);
     expect(res.body.data.requiresSso).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/invites/validate — edge cases
+// ─────────────────────────────────────────────────────────────
+describe("POST /api/invites/validate — edge cases", () => {
+  let standardInviteToken: string;
+  let acceptedInviteToken: string;
+
+  beforeAll(async () => {
+    // Standard (non-SSO) invite
+    const res = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ email: "validate-standard@invites.com", role: "COACH" });
+
+    standardInviteToken = res.body.data.token as string;
+
+    // Invite that will be accepted so we can test the "already_accepted" path
+    const acceptRes = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ email: "validate-accepted@invites.com", role: "COACH" });
+
+    acceptedInviteToken = acceptRes.body.data.token as string;
+
+    await request(app).post("/api/invites/accept-invite").send({
+      token: acceptedInviteToken,
+      firstName: "Already",
+      lastName: "Accepted",
+      password: "Accepted1234",
+    });
+  });
+
+  it("returns valid: true with email and role for a standard (non-SSO) invite token", async () => {
+    const res = await request(app)
+      .post("/api/invites/validate")
+      .send({ token: standardInviteToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.valid).toBe(true);
+    expect(res.body.data.email).toBe("validate-standard@invites.com");
+    expect(res.body.data.role).toBe("COACH");
+    expect(res.body.data.requiresSso).toBe(false);
+  });
+
+  it("returns valid: false with reason: not_found for an unknown token", async () => {
+    const res = await request(app)
+      .post("/api/invites/validate")
+      .send({ token: "this-token-does-not-exist-xyz" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.valid).toBe(false);
+    expect(res.body.data.reason).toBe("not_found");
+  });
+
+  it("returns valid: false with reason: already_accepted for a used token", async () => {
+    const res = await request(app)
+      .post("/api/invites/validate")
+      .send({ token: acceptedInviteToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.valid).toBe(false);
+    expect(res.body.data.reason).toBe("already_accepted");
+  });
+
+  it("returns valid: false with reason: expired for an expired token", async () => {
+    // Insert an already-expired invite directly into the DB
+    const expiredToken = `expired-validate-${Date.now()}`;
+    await prisma.userInvite.create({
+      data: {
+        token: expiredToken,
+        email: "validate-expired@invites.com",
+        role: "COACH",
+        requiresSso: false,
+        expiresAt: new Date(Date.now() - 1000),
+        createdBy: (await prisma.user.findFirst({ where: { role: "SUPER_ADMIN" } }))!.id,
+      },
+    });
+
+    const res = await request(app).post("/api/invites/validate").send({ token: expiredToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.valid).toBe(false);
+    expect(res.body.data.reason).toBe("expired");
+  });
+
+  it("returns 400 when the token field is missing from body", async () => {
+    const res = await request(app).post("/api/invites/validate").send({});
+
+    expect(res.status).toBe(400);
   });
 });

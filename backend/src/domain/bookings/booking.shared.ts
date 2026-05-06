@@ -1,6 +1,24 @@
 import { BookingStatus, Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+
+export const assertRescheduleTokenValid = (booking: {
+  status: BookingStatus;
+  startTime: Date;
+  event: { durationSeconds: number };
+}): void => {
+  if (booking.status !== BookingStatus.PENDING && booking.status !== BookingStatus.CONFIRMED) {
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "This booking link is no longer valid.");
+  }
+  const sessionEndMs = new Date(booking.startTime).getTime() + booking.event.durationSeconds * 1000;
+  const gracePeriodMs = 2 * 60 * 60 * 1000; // 2 hours after session end
+  if (Date.now() > sessionEndMs + gracePeriodMs) {
+    throw new ErrorHandler(
+      StatusCodes.FORBIDDEN,
+      "This session has ended. To book a new session, visit the team's booking page.",
+    );
+  }
+};
 import { normalizeEmail } from "../../shared/utils/userUtils";
 
 export type CreateBookingInput = {

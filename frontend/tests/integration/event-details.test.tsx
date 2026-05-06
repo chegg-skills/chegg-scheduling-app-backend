@@ -9,7 +9,7 @@ import { server } from '../msw/server'
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
   return {
-    ...actual as any,
+    ...(actual as any),
     useParams: () => ({ eventId: 'event-1' }),
   }
 })
@@ -35,26 +35,30 @@ const mockEvent = {
   sessionLeadershipStrategy: 'STUDENT_LED',
   publicBookingSlug: 'math-tutoring',
   coaches: [
-    { id: 'coach-1', coachUserId: 'coach-1', coachUser: { id: 'coach-1', firstName: 'John', lastName: 'Coach', timezone: 'UTC' } }
+    {
+      id: 'coach-1',
+      coachUserId: 'coach-1',
+      coachUser: { id: 'coach-1', firstName: 'John', lastName: 'Coach', timezone: 'UTC' },
+    },
   ],
   _count: {
     bookings: 5,
-    scheduleSlots: 3
+    scheduleSlots: 3,
   },
-  team: { id: 'team-1', name: 'Math Team' }
+  team: { id: 'team-1', name: 'Math Team' },
 }
 
 const handlers = [
   http.get('*/api/events/event-1', () => {
     return HttpResponse.json({
       success: true,
-      data: mockEvent
+      data: mockEvent,
     })
   }),
   http.get('*/api/events/event-1/coaches', () => {
     return HttpResponse.json({
       success: true,
-      data: { coaches: mockEvent.coaches }
+      data: { coaches: mockEvent.coaches },
     })
   }),
   http.get('*/api/events/event-1/schedule-slots', () => {
@@ -62,15 +66,15 @@ const handlers = [
       success: true,
       data: {
         slots: [
-          { 
-            id: 'slot-1', 
-            startTime: new Date(Date.now() + 2 * 3600000).toISOString(), 
-            endTime: new Date(Date.now() + 3 * 3600000).toISOString(), 
-            coachId: 'coach-1', 
-            recurrenceGroupId: 'series-1' 
-          }
-        ]
-      }
+          {
+            id: 'slot-1',
+            startTime: new Date(Date.now() + 2 * 3600000).toISOString(),
+            endTime: new Date(Date.now() + 3 * 3600000).toISOString(),
+            coachId: 'coach-1',
+            recurrenceGroupId: 'series-1',
+          },
+        ],
+      },
     })
   }),
   http.get('*/api/teams/team-1/members', () => {
@@ -79,9 +83,9 @@ const handlers = [
       data: {
         members: [
           { id: 'coach-1', user: { firstName: 'John', lastName: 'Coach' }, role: 'COACH' },
-          { id: 'admin-1', user: { firstName: 'Admin', lastName: 'User' }, role: 'TEAM_ADMIN' }
-        ]
-      }
+          { id: 'admin-1', user: { firstName: 'Admin', lastName: 'User' }, role: 'TEAM_ADMIN' },
+        ],
+      },
     })
   }),
 
@@ -90,8 +94,14 @@ const handlers = [
     return HttpResponse.json({
       success: true,
       data: [
-        { id: 'booking-1', studentName: 'Alice Student', studentEmail: 'alice@example.com', status: 'CONFIRMED', createdAt: new Date().toISOString() }
-      ]
+        {
+          id: 'booking-1',
+          studentName: 'Alice Student',
+          studentEmail: 'alice@example.com',
+          status: 'CONFIRMED',
+          createdAt: new Date().toISOString(),
+        },
+      ],
     })
   }),
   http.get('*/api/events/:eventId/schedule-slots/:slotId/log', () => {
@@ -99,7 +109,7 @@ const handlers = [
   }),
   http.post('*/api/events/:eventId/schedule-slots/:slotId/log', () => {
     return HttpResponse.json({ success: true })
-  })
+  }),
 ]
 
 describe('Event Detail Integration', () => {
@@ -115,10 +125,12 @@ describe('Event Detail Integration', () => {
   it('should render event details and allow tab switching', async () => {
     // Admin persona
     server.use(
-      http.get('*/api/users/me', () => HttpResponse.json({
-        success: true,
-        data: { id: 'admin-1', role: 'SUPER_ADMIN' }
-      }))
+      http.get('*/api/users/me', () =>
+        HttpResponse.json({
+          success: true,
+          data: { id: 'admin-1', role: 'SUPER_ADMIN' },
+        })
+      )
     )
 
     renderWithProviders(<EventDetailPage />)
@@ -154,10 +166,12 @@ describe('Event Detail Integration', () => {
   it('should restrict management actions to admins', async () => {
     // Coach persona
     server.use(
-      http.get('*/api/users/me', () => HttpResponse.json({
-        success: true,
-        data: { id: 'coach-1', role: 'COACH' }
-      }))
+      http.get('*/api/users/me', () =>
+        HttpResponse.json({
+          success: true,
+          data: { id: 'coach-1', role: 'COACH' },
+        })
+      )
     )
 
     renderWithProviders(<EventDetailPage />)
@@ -177,10 +191,12 @@ describe('Event Detail Integration', () => {
   it('should allow logging a session and marking attendance', async () => {
     // Admin persona
     server.use(
-      http.get('*/api/users/me', () => HttpResponse.json({
-        success: true,
-        data: { id: 'admin-1', role: 'SUPER_ADMIN' }
-      }))
+      http.get('*/api/users/me', () =>
+        HttpResponse.json({
+          success: true,
+          data: { id: 'admin-1', role: 'SUPER_ADMIN' },
+        })
+      )
     )
 
     renderWithProviders(<EventDetailPage />)
@@ -194,7 +210,7 @@ describe('Event Detail Integration', () => {
     const moreButtons = await screen.findAllByRole('button', { name: /more/i })
     // In the tracker view, moreButtons[0] is in the header, moreButtons[1] is the first row.
     fireEvent.click(moreButtons[1])
-    
+
     const logSessionMenuItem = await screen.findByText(/Log Session/i)
     fireEvent.click(logSessionMenuItem)
 
@@ -203,9 +219,13 @@ describe('Event Detail Integration', () => {
     expect(await screen.findByText('Alice Student')).toBeInTheDocument()
 
     // 4. Fill and Save
-    fireEvent.change(screen.getByPlaceholderText(/e.g. React hooks/i), { target: { value: 'Test Topics' } })
-    fireEvent.change(screen.getByPlaceholderText(/Describe what was covered/i), { target: { value: 'Test Summary' } })
-    
+    fireEvent.change(screen.getByPlaceholderText(/e.g. React hooks/i), {
+      target: { value: 'Test Topics' },
+    })
+    fireEvent.change(screen.getByPlaceholderText(/Describe what was covered/i), {
+      target: { value: 'Test Summary' },
+    })
+
     fireEvent.click(screen.getByRole('button', { name: /Save Log/i }))
 
     // 5. Verify dialog closes

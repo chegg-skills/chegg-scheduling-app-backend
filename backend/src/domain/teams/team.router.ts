@@ -6,7 +6,10 @@ import * as teamController from "./team.controller";
 import * as teamNotifConfigController from "./team.notificationConfig.controller";
 import { validate } from "../../shared/middleware/validate";
 import { CreateTeamSchema, ListTeamsSchema, UpdateTeamSchema } from "./team.schema";
-import { GetNotificationConfigSchema, UpsertNotificationConfigSchema } from "./team.notificationConfig.schema";
+import {
+  GetNotificationConfigSchema,
+  UpsertNotificationConfigSchema,
+} from "./team.notificationConfig.schema";
 
 const router = express.Router();
 

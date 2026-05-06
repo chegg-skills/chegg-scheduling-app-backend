@@ -165,10 +165,7 @@ export const getActiveEventType = async (eventTypeId: string) => {
   });
 
   if (!eventType || !eventType.isActive) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Selected event type is invalid or inactive.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Selected event type is invalid or inactive.");
   }
 
   return eventType;

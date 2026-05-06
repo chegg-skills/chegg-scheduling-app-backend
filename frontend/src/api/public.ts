@@ -97,7 +97,7 @@ export const publicApi = {
 
   getBooking: (id: string, token: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<{ booking: Booking }>>(`/public/bookings/${id}`, {
-      params: { token },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       signal,
     }),
 }

@@ -1,5 +1,6 @@
 import { BookingStatus } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import { randomUUID } from "crypto";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { logger } from "../../shared/logging/logger";
@@ -25,6 +26,7 @@ import {
   lockCoach,
 } from "./booking.repository";
 import {
+  assertRescheduleTokenValid,
   buildSchedulingContext,
   normalizeStudentEmailAddress,
   normalizeStudentName,
@@ -129,65 +131,69 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   }
 
   // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
-  const booking = await prisma.$transaction(async (tx) => {
-    // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
-    if (matchedScheduleSlot) {
-      await lockScheduleSlot(tx, matchedScheduleSlot.id);
-    } else {
-      await lockEvent(tx, eventId);
-    }
+  const booking = await prisma.$transaction(
+    async (tx) => {
+      // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
+      if (matchedScheduleSlot) {
+        await lockScheduleSlot(tx, matchedScheduleSlot.id);
+      } else {
+        await lockEvent(tx, eventId);
+      }
 
-    const { assignedCoachId, meetingJoinUrl, coCoachUserIds } = await resolveBookingCoachSelection({
-      preferredCoachId,
-      activeCoaches,
-      event,
-      start,
-      end,
-      allowSharedSessionOverlap,
-      matchedScheduleSlotId: matchedScheduleSlot?.id,
-      tx,
-    });
+      const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
+        await resolveBookingCoachSelection({
+          preferredCoachId,
+          activeCoaches,
+          event,
+          start,
+          end,
+          allowSharedSessionOverlap,
+          matchedScheduleSlotId: matchedScheduleSlot?.id,
+          tx,
+        });
 
-    // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
-    await lockCoach(tx, assignedCoachId);
+      // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
+      await lockCoach(tx, assignedCoachId);
 
-    const scheduleSlot =
-      matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
+      const scheduleSlot =
+        matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-    const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+      const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
 
-    const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
+      const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
 
-    assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
 
-    const student = await upsertStudentForBooking(
-      tx,
-      normalizedStudentName,
-      normalizedStudentEmail,
-      start,
-    );
+      const student = await upsertStudentForBooking(
+        tx,
+        normalizedStudentName,
+        normalizedStudentEmail,
+        start,
+      );
 
-    return createBookingRecord(tx, {
-      studentId: student.id,
-      scheduleSlotId: scheduleSlot?.id ?? null,
-      studentName: normalizedStudentName,
-      studentEmail: normalizedStudentEmail,
-      teamId,
-      eventId,
-      coachUserId: assignedCoachId,
-      coCoachUserIds,
-      startTime: start,
-      endTime: end,
-      timezone: timezone || "UTC",
-      notes,
-      specificQuestion,
-      triedSolutions,
-      usedResources,
-      sessionObjectives,
-      meetingJoinUrl,
-      status: BookingStatus.CONFIRMED,
-    });
-  }, { timeout: 15000 });
+      return createBookingRecord(tx, {
+        studentId: student.id,
+        scheduleSlotId: scheduleSlot?.id ?? null,
+        studentName: normalizedStudentName,
+        studentEmail: normalizedStudentEmail,
+        teamId,
+        eventId,
+        coachUserId: assignedCoachId,
+        coCoachUserIds,
+        startTime: start,
+        endTime: end,
+        timezone: timezone || "UTC",
+        notes,
+        specificQuestion,
+        triedSolutions,
+        usedResources,
+        sessionObjectives,
+        meetingJoinUrl,
+        status: BookingStatus.CONFIRMED,
+      });
+    },
+    { timeout: 15000 },
+  );
 
   logger.info("Booking created successfully.", {
     bookingId: booking.id,
@@ -235,6 +241,8 @@ const rescheduleBooking = async (
   // 1. Find booking (verify token if provided)
   const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
 
+  if (token) assertRescheduleTokenValid(booking);
+
   // 2. Resolve booking window and slot context
   const event = await getBookableEvent(booking.teamId, booking.eventId);
   const { end } = resolveBookingWindow(event, start);
@@ -243,56 +251,61 @@ const rescheduleBooking = async (
   const activeCoaches = event.coaches as CoachCandidate[];
 
   // 3. Re-assign host (prefer current host if available)
-  const updatedBooking = await prisma.$transaction(async (tx) => {
-    // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
-    if (matchedScheduleSlot) {
-      await lockScheduleSlot(tx, matchedScheduleSlot.id);
-    } else {
-      await lockEvent(tx, event.id);
-    }
+  const updatedBooking = await prisma.$transaction(
+    async (tx) => {
+      // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
+      if (matchedScheduleSlot) {
+        await lockScheduleSlot(tx, matchedScheduleSlot.id);
+      } else {
+        await lockEvent(tx, event.id);
+      }
 
-    const { assignedCoachId, meetingJoinUrl, coCoachUserIds } = await resolveBookingCoachSelection({
-      preferredCoachId: booking.coachUserId,
-      activeCoaches,
-      event,
-      start,
-      end,
-      allowSharedSessionOverlap,
-      matchedScheduleSlotId: matchedScheduleSlot?.id,
-      tx,
-    });
+      const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
+        await resolveBookingCoachSelection({
+          preferredCoachId: booking.coachUserId,
+          activeCoaches,
+          event,
+          start,
+          end,
+          allowSharedSessionOverlap,
+          matchedScheduleSlotId: matchedScheduleSlot?.id,
+          tx,
+        });
 
-    // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
-    await lockCoach(tx, assignedCoachId);
+      // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
+      await lockCoach(tx, assignedCoachId);
 
-    const scheduleSlot =
-      matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
+      const scheduleSlot =
+        matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-    // Check capacity for the NEW time
-    const schedulingContext = buildSchedulingContext(event);
-    const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+      // Check capacity for the NEW time
+      const schedulingContext = buildSchedulingContext(event);
+      const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
 
-    const currentParticipantCount = await countActiveParticipantsForTime(
-      tx,
-      booking.eventId,
-      start,
-    );
+      const currentParticipantCount = await countActiveParticipantsForTime(
+        tx,
+        booking.eventId,
+        start,
+      );
 
-    // When rescheduling, the student is ALREADY counted if they are moving within the same slot
-    // but since we are changing the start time, we just check the new start time's capacity.
-    assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      // When rescheduling, the student is ALREADY counted if they are moving within the same slot
+      // but since we are changing the start time, we just check the new start time's capacity.
+      assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
 
-    return updateBookingById(id, {
-      startTime: start,
-      endTime: end,
-      timezone: timezone || booking.timezone,
-      coachUserId: assignedCoachId,
-      coCoachUserIds,
-      meetingJoinUrl,
-      scheduleSlotId: scheduleSlot?.id ?? null,
-      status: BookingStatus.CONFIRMED, // Reset to confirmed if it was something else
-    });
-  }, { timeout: 15000 });
+      return updateBookingById(id, {
+        startTime: start,
+        endTime: end,
+        timezone: timezone || booking.timezone,
+        coachUserId: assignedCoachId,
+        coCoachUserIds,
+        meetingJoinUrl,
+        scheduleSlotId: scheduleSlot?.id ?? null,
+        status: BookingStatus.CONFIRMED,
+        ...(token && { rescheduleToken: randomUUID() }), // rotate token to invalidate the old link
+      });
+    },
+    { timeout: 15000 },
+  );
 
   logger.info("Booking rescheduled successfully.", {
     bookingId: updatedBooking.id,

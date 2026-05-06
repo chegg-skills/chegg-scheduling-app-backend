@@ -27,10 +27,7 @@ module.exports = async function globalSetup() {
   const client = new Client({ connectionString: maintenanceUrl.toString() });
   await client.connect();
 
-  const { rows } = await client.query(
-    "SELECT 1 FROM pg_database WHERE datname = $1",
-    [dbName]
-  );
+  const { rows } = await client.query("SELECT 1 FROM pg_database WHERE datname = $1", [dbName]);
 
   if (rows.length === 0) {
     await client.query(`CREATE DATABASE "${dbName}"`);

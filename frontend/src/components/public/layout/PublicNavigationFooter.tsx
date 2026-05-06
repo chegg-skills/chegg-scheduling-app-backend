@@ -71,7 +71,11 @@ export function PublicNavigationFooter({
               textTransform: 'none',
               color: 'text.secondary',
               fontSize: '0.75rem',
-              '&:hover': { color: 'primary.main', bgcolor: 'transparent', textDecoration: 'underline' }
+              '&:hover': {
+                color: 'primary.main',
+                bgcolor: 'transparent',
+                textDecoration: 'underline',
+              },
             }}
           >
             Having trouble?

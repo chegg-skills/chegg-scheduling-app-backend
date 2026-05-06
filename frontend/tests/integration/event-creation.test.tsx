@@ -10,7 +10,7 @@ const mockUseAuth = vi.fn()
 vi.mock('@/context/auth', async () => {
   const actual = await vi.importActual('@/context/auth')
   return {
-    ...actual as any,
+    ...(actual as any),
     useAuth: () => mockUseAuth(),
   }
 })
@@ -20,14 +20,14 @@ const handlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        teams: [{ id: 'team-1', name: 'Math Team', isActive: true }]
-      }
+        teams: [{ id: 'team-1', name: 'Math Team', isActive: true }],
+      },
     })
   }),
   http.get('*/api/teams/team-1/events', () => {
     return HttpResponse.json({
       success: true,
-      data: { events: [] }
+      data: { events: [] },
     })
   }),
   http.get('*/api/v1/stats/events', () => {
@@ -35,16 +35,16 @@ const handlers = [
       success: true,
       data: {
         metrics: { newEvents: 0, activeEvents: 0, roundRobinEvents: 0, hostedEvents: 0 },
-        timeframe: { label: 'January 2026' }
-      }
+        timeframe: { label: 'January 2026' },
+      },
     })
   }),
   http.get('*/api/event-types', () => {
     return HttpResponse.json({
       success: true,
       data: {
-        eventTypes: [{ id: 'type-1', name: 'Tutorial', isActive: true }]
-      }
+        eventTypes: [{ id: 'type-1', name: 'Tutorial', isActive: true }],
+      },
     })
   }),
   http.get('*/api/teams/team-1/members', () => {
@@ -52,18 +52,23 @@ const handlers = [
       success: true,
       data: {
         members: [
-          { id: 'coach-1', coachUserId: 'user-1', user: { firstName: 'John', lastName: 'Coach' }, role: 'COACH' }
-        ]
-      }
+          {
+            id: 'coach-1',
+            coachUserId: 'user-1',
+            user: { firstName: 'John', lastName: 'Coach' },
+            role: 'COACH',
+          },
+        ],
+      },
     })
   }),
   http.post('*/api/teams/team-1/events', async ({ request }) => {
     const body = await request.json()
     return HttpResponse.json({
       success: true,
-      data: { id: 'event-new', ...body as any }
+      data: { id: 'event-new', ...(body as any) },
     })
-  })
+  }),
 ]
 
 describe('Event Creation Integration', () => {
@@ -98,7 +103,7 @@ describe('Event Creation Integration', () => {
     // 3. Fill Basic Info
     const nameInput = await screen.findByLabelText(/Event name/i)
     fireEvent.change(nameInput, { target: { value: 'New Test Event' } })
-    
+
     const descInput = screen.getByLabelText(/Description/i)
     fireEvent.change(descInput, { target: { value: 'Test description' } })
 
@@ -114,7 +119,7 @@ describe('Event Creation Integration', () => {
     const locationTypeSelect = await screen.findByRole('combobox', { name: /Location type/i })
     fireEvent.mouseDown(locationTypeSelect)
     fireEvent.click(await screen.findByRole('option', { name: /Virtual \(URL\)/i }))
-    
+
     const locationValueInput = screen.getByRole('textbox', { name: /Location/i })
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/test' } })
 
@@ -150,8 +155,10 @@ describe('Event Creation Integration', () => {
     fireEvent.click(newEventBtn)
 
     // 3. Fill Basic Info
-    fireEvent.change(await screen.findByLabelText(/Event name/i), { target: { value: 'Group Tutorial' } })
-    
+    fireEvent.change(await screen.findByLabelText(/Event name/i), {
+      target: { value: 'Group Tutorial' },
+    })
+
     // 4. Select Event Type
     const typeSelect = await screen.findByRole('combobox', { name: /Event type/i })
     fireEvent.mouseDown(typeSelect)
@@ -164,7 +171,9 @@ describe('Event Creation Integration', () => {
     const locationTypeSelect = await screen.findByRole('combobox', { name: /Location type/i })
     fireEvent.mouseDown(locationTypeSelect)
     fireEvent.click(await screen.findByRole('option', { name: /Virtual \(URL\)/i }))
-    fireEvent.change(screen.getByRole('textbox', { name: /Location/i }), { target: { value: 'https://zoom.us/group' } })
+    fireEvent.change(screen.getByRole('textbox', { name: /Location/i }), {
+      target: { value: 'https://zoom.us/group' },
+    })
 
     // 7. Fill Participant Capacity (shown for One-to-Many)
     const minInput = screen.getByLabelText(/Minimum participants/i)

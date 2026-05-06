@@ -10,14 +10,14 @@ const handlers = [
   http.get('*/api/users/me', () => {
     return HttpResponse.json({
       success: true,
-      data: { id: 'admin-1', role: 'TEAM_ADMIN', firstName: 'Admin', lastName: 'User' }
+      data: { id: 'admin-1', role: 'TEAM_ADMIN', firstName: 'Admin', lastName: 'User' },
     })
   }),
   http.patch('*/api/bookings/:id', async ({ request, params }) => {
     const body = await request.json()
     return HttpResponse.json({
       success: true,
-      data: { id: params.id, ...body as any }
+      data: { id: params.id, ...(body as any) },
     })
   }),
 
@@ -26,8 +26,8 @@ const handlers = [
       success: true,
       data: {
         metrics: { totalBookings: 2, upcomingBookings: 1 },
-        timeframe: { label: 'May 2026' }
-      }
+        timeframe: { label: 'May 2026' },
+      },
     })
   }),
 
@@ -50,7 +50,7 @@ const handlers = [
         status: 'CONFIRMED',
         createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
         event: { name: 'Math Tutoring' },
-        coach: { firstName: 'John', lastName: 'Coach' }
+        coach: { firstName: 'John', lastName: 'Coach' },
       },
       {
         id: 'booking-2',
@@ -61,7 +61,7 @@ const handlers = [
         status: 'CANCELLED',
         createdAt: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(),
         event: { name: 'Science Lab' },
-        coach: { firstName: 'Jane', lastName: 'Coach' }
+        coach: { firstName: 'Jane', lastName: 'Coach' },
       },
       {
         id: 'booking-3',
@@ -72,27 +72,27 @@ const handlers = [
         status: 'CONFIRMED',
         createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
         event: { name: 'History' },
-        coach: { firstName: 'Mike', lastName: 'Coach' }
-      }
+        coach: { firstName: 'Mike', lastName: 'Coach' },
+      },
     ]
 
     if (status && status !== 'ALL') {
       if (status === 'UPCOMING') {
-        bookings = bookings.filter(b => b.status === 'CONFIRMED' && new Date(b.startTime) > now)
+        bookings = bookings.filter((b) => b.status === 'CONFIRMED' && new Date(b.startTime) > now)
       } else {
-        bookings = bookings.filter(b => b.status === status)
+        bookings = bookings.filter((b) => b.status === status)
       }
     }
 
     return HttpResponse.json({
       success: true,
-      data: { bookings, pagination: { total: bookings.length } }
+      data: { bookings, pagination: { total: bookings.length } },
     })
   }),
 
   http.patch('*/api/bookings/:id/status', () => {
     return HttpResponse.json({ success: true })
-  })
+  }),
 ]
 
 describe('Bookings Domain Integration', () => {
@@ -109,9 +109,12 @@ describe('Bookings Domain Integration', () => {
     renderWithProviders(<BookingsPage />)
 
     // 1. Initial State (Upcoming/Confirmed)
-    await waitFor(() => {
-      expect(screen.getByText('Alice Student')).toBeInTheDocument()
-    }, { timeout: 8000 })
+    await waitFor(
+      () => {
+        expect(screen.getByText('Alice Student')).toBeInTheDocument()
+      },
+      { timeout: 8000 }
+    )
 
     expect(screen.queryByText('Bob Student')).not.toBeInTheDocument()
 
@@ -119,9 +122,12 @@ describe('Bookings Domain Integration', () => {
     const cancelledTab = screen.getByRole('tab', { name: /Cancelled/i })
     fireEvent.click(cancelledTab)
 
-    await waitFor(() => {
-      expect(screen.getByText('Bob Student')).toBeInTheDocument()
-    }, { timeout: 8000 })
+    await waitFor(
+      () => {
+        expect(screen.getByText('Bob Student')).toBeInTheDocument()
+      },
+      { timeout: 8000 }
+    )
     expect(screen.queryByText('Alice Student')).not.toBeInTheDocument()
   }, 15000)
 
@@ -145,7 +151,11 @@ describe('Bookings Domain Integration', () => {
     fireEvent.click(detailsButton)
 
     // 3. Mark as No-show
-    const noShowButton = await screen.findByRole('button', { name: /Mark as No Show/i }, { timeout: 8000 })
+    const noShowButton = await screen.findByRole(
+      'button',
+      { name: /Mark as No Show/i },
+      { timeout: 8000 }
+    )
     fireEvent.click(noShowButton)
 
     // 4. Verify Modal appears

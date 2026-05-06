@@ -117,7 +117,7 @@ export function isSlotWithinAvailability(
 
   const startHour = startTime.getHours()
   const startMin = startTime.getMinutes()
-  
+
   // Calculate end time
   const endTime = new Date(startTime.getTime() + durationSeconds * 1000)
   const endHour = endTime.getHours()
@@ -160,12 +160,12 @@ export function formatAvailabilityRanges(
   weeklyAvailability?: Array<{ dayOfWeek: number; startTime: string; endTime: string }>
 ): string {
   if (!weeklyAvailability || weeklyAvailability.length === 0) return 'Any time'
-  
+
   const d = typeof date === 'string' ? new Date(date) : date
   const day = d.getDay()
   const dayRanges = weeklyAvailability.filter((a) => a.dayOfWeek === day)
-  
+
   if (dayRanges.length === 0) return 'No availability defined for this day'
-  
-  return dayRanges.map(r => `${r.startTime} – ${r.endTime}`).join(', ')
+
+  return dayRanges.map((r) => `${r.startTime} – ${r.endTime}`).join(', ')
 }

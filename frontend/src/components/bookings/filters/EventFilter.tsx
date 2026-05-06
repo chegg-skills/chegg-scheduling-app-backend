@@ -13,11 +13,19 @@ interface EventFilterProps {
 
 export function EventFilter({ teamId, value, onChange }: EventFilterProps) {
   // If teamId is provided, fetch team events. Otherwise fetch all.
-  const { data: teamData, isLoading: teamLoading, error: teamError } = useTeamEvents(teamId!, {
+  const {
+    data: teamData,
+    isLoading: teamLoading,
+    error: teamError,
+  } = useTeamEvents(teamId!, {
     page: 1,
     pageSize: 100,
   })
-  const { data: allData, isLoading: allLoading, error: allError } = useEvents({ page: 1, pageSize: 200 })
+  const {
+    data: allData,
+    isLoading: allLoading,
+    error: allError,
+  } = useEvents({ page: 1, pageSize: 200 })
 
   const events = teamId ? (teamData?.events ?? []) : (allData?.events ?? [])
   const isLoading = teamId ? teamLoading : allLoading
