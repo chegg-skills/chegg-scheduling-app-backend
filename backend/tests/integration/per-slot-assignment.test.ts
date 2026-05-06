@@ -107,7 +107,7 @@ describe("Per-Slot Coach Assignment Integration Tests", () => {
     const endTime = new Date(startTime.getTime() + 3600000);
 
     // Create a slot assigned to Coach 2
-    const slot = await prisma.eventScheduleSlot.create({
+    await prisma.eventScheduleSlot.create({
       data: {
         eventId: event.id,
         startTime,
