@@ -23,7 +23,8 @@ type NotificationType =
   | "CANCEL_BOOKING_REMINDERS"
   | "TEAM_MEMBER_ADDED"
   | "EVENT_COACH_ADDED"
-  | "AVAILABILITY_EXCEPTION_CREATED";
+  | "AVAILABILITY_EXCEPTION_CREATED"
+  | "AVAILABILITY_EXCEPTION_REMOVED";
 
 type NotificationPayload = {
   type: NotificationType;

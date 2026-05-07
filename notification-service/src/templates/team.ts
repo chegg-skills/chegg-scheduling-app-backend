@@ -47,6 +47,22 @@ export const teamTemplates: EmailTemplateMap = {
     ),
   },
 
+  AVAILABILITY_EXCEPTION_REMOVED: {
+    subject: "Availability Update: {{userName}} ({{date}})",
+    preheader: "An availability exception has been removed for {{userName}}.",
+    text: "An availability exception has been removed for {{userName}} on {{date}} ({{timeRange}}).",
+    html: wrapLayout(
+      "Availability Update",
+      `<p>An availability exception has been <strong>removed</strong> for <strong>{{userName}}</strong>.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Date", "{{date}}")}
+         ${detailRow("Time Range", "{{timeRange}}")}
+       </p>`,
+      "An availability exception has been removed for {{userName}}.",
+      { text: "Manage Availability", url: "{{frontendUrl}}" },
+    ),
+  },
+
   TEAM_BOOKING_CONFIRMED: {
     subject: "Team Update: New Booking ({{eventName}})",
     preheader: "A new session has been added to your team's schedule.",

@@ -9,6 +9,7 @@ const EXPECTED_TYPES = [
   "TEAM_MEMBER_ADDED",
   "EVENT_HOST_ADDED",
   "AVAILABILITY_EXCEPTION_CREATED",
+  "AVAILABILITY_EXCEPTION_REMOVED",
   "BOOKING_CONFIRMED",
   "BOOKING_RESCHEDULED",
   "BOOKING_CANCELLED",
@@ -39,8 +40,8 @@ describe("emailTemplates registry", () => {
     expect(emailTemplates).not.toHaveProperty("CANCEL_BOOKING_REMINDERS");
   });
 
-  it("has exactly 22 entries", () => {
-    expect(Object.keys(emailTemplates)).toHaveLength(22);
+  it("has exactly 23 entries", () => {
+    expect(Object.keys(emailTemplates)).toHaveLength(23);
   });
 
   it("every entry has non-empty subject, text, and html string fields", () => {

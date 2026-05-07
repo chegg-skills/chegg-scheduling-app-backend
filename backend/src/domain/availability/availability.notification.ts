@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import { logger } from "../../shared/logging/logger";
 import {
@@ -5,7 +6,6 @@ import {
   resolveFrontendUrl,
 } from "../../shared/notifications/notification.publisher";
 import { getTeamNotificationConfig } from "../../shared/notifications/notificationConfig";
-
 import { formatNotificationDate } from "../../shared/utils/date";
 
 type AvailabilityExceptionNotificationInput = {
@@ -14,10 +14,76 @@ type AvailabilityExceptionNotificationInput = {
   isUnavailable: boolean;
   startTime?: string | null;
   endTime?: string | null;
+  callerIsAdmin: boolean;
 };
 
-const queueAvailabilityExceptionNotification = async (
+const buildVariables = (
+  userName: string,
+  dateStr: string,
+  timeStr: string,
+  frontendUrl: string,
+) => ({ userName, date: dateStr, timeRange: timeStr, frontendUrl });
+
+const notifyAdminRecipients = async (
+  userId: string,
+  variables: ReturnType<typeof buildVariables>,
+  type: "AVAILABILITY_EXCEPTION_CREATED" | "AVAILABILITY_EXCEPTION_REMOVED",
+) => {
+  const teams = await prisma.team.findMany({
+    where: {
+      members: { some: { userId, isActive: true } },
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  const notifiedEmails = new Set<string>();
+
+  for (const team of teams) {
+    const config = await getTeamNotificationConfig(team.id);
+    if (!config.notifyLeadOnAvailability) continue;
+
+    const teamAdmins = await prisma.teamMember.findMany({
+      where: {
+        teamId: team.id,
+        isActive: true,
+        user: { isActive: true, role: UserRole.TEAM_ADMIN },
+      },
+      select: { user: { select: { email: true } } },
+    });
+
+    for (const member of teamAdmins) {
+      if (!member.user.email || notifiedEmails.has(member.user.email)) continue;
+      notifiedEmails.add(member.user.email);
+      await publishNotificationSafely({
+        type,
+        recipients: member.user.email,
+        userId,
+        variables: { ...variables, isSelfNotification: false },
+      });
+    }
+  }
+
+  const superAdmins = await prisma.user.findMany({
+    where: { role: UserRole.SUPER_ADMIN, isActive: true },
+    select: { email: true },
+  });
+
+  for (const admin of superAdmins) {
+    if (!admin.email || notifiedEmails.has(admin.email)) continue;
+    notifiedEmails.add(admin.email);
+    await publishNotificationSafely({
+      type,
+      recipients: admin.email,
+      userId,
+      variables: { ...variables, isSelfNotification: false },
+    });
+  }
+};
+
+const queueExceptionNotification = async (
   input: AvailabilityExceptionNotificationInput,
+  type: "AVAILABILITY_EXCEPTION_CREATED" | "AVAILABILITY_EXCEPTION_REMOVED",
 ) => {
   try {
     const user = await prisma.user.findUnique({
@@ -28,65 +94,36 @@ const queueAvailabilityExceptionNotification = async (
     if (!user) return;
 
     const dateStr = formatNotificationDate(new Date(input.date));
-
     const timeStr = input.isUnavailable ? "Whole Day" : `${input.startTime} - ${input.endTime}`;
-
     const userName = `${user.firstName} ${user.lastName}`.trim();
     const frontendUrl = resolveFrontendUrl();
+    const variables = buildVariables(userName, dateStr, timeStr, frontendUrl);
 
-    // 1. Notify the User themselves
     await publishNotificationSafely({
-      type: "AVAILABILITY_EXCEPTION_CREATED",
+      type,
       recipients: user.email,
       userId: input.userId,
-      variables: {
-        userName,
-        date: dateStr,
-        timeRange: timeStr,
-        frontendUrl,
-        isSelfNotification: true,
-      },
+      variables: { ...variables, isSelfNotification: true },
     });
 
-    // 2. Notify Team Leads
-    const teams = await prisma.team.findMany({
-      where: {
-        members: { some: { userId: input.userId, isActive: true } },
-        isActive: true,
-      },
-      select: {
-        id: true,
-        teamLead: {
-          select: { email: true, id: true },
-        },
-      },
-    });
-
-    for (const team of teams) {
-      const config = await getTeamNotificationConfig(team.id);
-      if (!config.notifyLeadOnAvailability) continue;
-      if (!team.teamLead?.email) continue;
-
-      await publishNotificationSafely({
-        type: "AVAILABILITY_EXCEPTION_CREATED",
-        recipients: team.teamLead.email,
-        userId: input.userId, // Action performed by user
-        variables: {
-          userName,
-          date: dateStr,
-          timeRange: timeStr,
-          frontendUrl,
-          isSelfNotification: false,
-        },
-      });
+    if (!input.callerIsAdmin) {
+      await notifyAdminRecipients(input.userId, variables, type);
     }
   } catch (error) {
     logger.error("Failed to queue availability exception notification.", {
       userId: input.userId,
       date: input.date,
+      type,
       error,
     });
   }
 };
 
-export { queueAvailabilityExceptionNotification };
+const queueAvailabilityExceptionNotification = (input: AvailabilityExceptionNotificationInput) =>
+  queueExceptionNotification(input, "AVAILABILITY_EXCEPTION_CREATED");
+
+const queueAvailabilityExceptionRemovedNotification = (
+  input: AvailabilityExceptionNotificationInput,
+) => queueExceptionNotification(input, "AVAILABILITY_EXCEPTION_REMOVED");
+
+export { queueAvailabilityExceptionNotification, queueAvailabilityExceptionRemovedNotification };

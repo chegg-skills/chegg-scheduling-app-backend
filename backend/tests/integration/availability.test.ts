@@ -159,6 +159,30 @@ describe("Availability Domain Integration Tests", () => {
 
       expect(res.status).toBe(404);
     });
+
+    it("SUPER_ADMIN can add an exception for a coach", async () => {
+      const res = await request(app)
+        .post(`/api/users/${coachId}/availability/exceptions`)
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({ date: "2026-12-26", isUnavailable: true });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.isUnavailable).toBe(true);
+      exceptionId = res.body.data.id;
+    });
+
+    it("SUPER_ADMIN can remove an exception for a coach", async () => {
+      const res = await request(app)
+        .delete(`/api/users/${coachId}/availability/exceptions/${exceptionId}`)
+        .set("Authorization", `Bearer ${superAdminToken}`);
+
+      expect(res.status).toBe(200);
+
+      const listRes = await request(app)
+        .get(`/api/users/${coachId}/availability/exceptions`)
+        .set("Authorization", `Bearer ${coachToken}`);
+      expect(listRes.body.data).toHaveLength(0);
+    });
   });
 
   describe("Effective Availability", () => {

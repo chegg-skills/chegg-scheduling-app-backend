@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { Prisma, UserAvailabilityException, UserWeeklyAvailability } from "@prisma/client";
+import { Prisma, UserAvailabilityException, UserRole, UserWeeklyAvailability } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -9,7 +9,10 @@ import {
   validateAvailabilityExceptionInput,
   validateWeeklySlots,
 } from "./availability.shared";
-import { queueAvailabilityExceptionNotification } from "./availability.notification";
+import {
+  queueAvailabilityExceptionNotification,
+  queueAvailabilityExceptionRemovedNotification,
+} from "./availability.notification";
 
 /**
  * Service responsible for managing the raw availability data (weekly and exceptions) for users.
@@ -87,6 +90,7 @@ export const addAvailabilityException = async (
     isUnavailable: payload.isUnavailable,
     startTime: payload.startTime,
     endTime: payload.endTime,
+    callerIsAdmin: caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN,
   });
 
   return result;
@@ -99,9 +103,9 @@ export const removeAvailabilityException = async (
 ): Promise<void> => {
   await assertCanManageAvailability(userId, caller, "exceptions", "write");
 
-  // Authorization and ownership check is performed at the repository/service boundary
+  let deleted: UserAvailabilityException;
   try {
-    await prisma.userAvailabilityException.delete({
+    deleted = await prisma.userAvailabilityException.delete({
       where: { id: exceptionId, userId },
     });
   } catch (err: any) {
@@ -110,6 +114,15 @@ export const removeAvailabilityException = async (
     }
     throw err;
   }
+
+  void queueAvailabilityExceptionRemovedNotification({
+    userId,
+    date: deleted.date,
+    isUnavailable: deleted.isUnavailable,
+    startTime: deleted.startTime,
+    endTime: deleted.endTime,
+    callerIsAdmin: caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN,
+  });
 };
 
 /**
