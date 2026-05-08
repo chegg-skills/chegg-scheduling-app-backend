@@ -1,10 +1,12 @@
-import { useFormContext } from 'react-hook-form'
+import { useFormContext, Controller } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
+import { Switch } from '@/components/shared/form/Switch'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionTypeCaps } from '@/types'
 import { ParticipantCapacityFields } from './ParticipantCapacityFields'
@@ -12,16 +14,18 @@ import { EventAvailabilityPicker } from './EventAvailabilityPicker'
 
 interface EventSchedulingPolicyFieldsProps {
   caps?: InteractionTypeCaps | null
+  isLocked?: boolean
 }
 
 /**
  * Handles booking mode, weekdays, notice, buffer, and capacity fields.
  * Consumes the EventForm context.
  */
-export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyFieldsProps) {
+export function EventSchedulingPolicyFields({ caps, isLocked }: EventSchedulingPolicyFieldsProps) {
   const {
     register,
     watch,
+    control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
   const bookingMode = watch('bookingMode')
@@ -110,6 +114,43 @@ export function EventSchedulingPolicyFields({ caps }: EventSchedulingPolicyField
       </FormField>
 
       {caps?.multipleParticipants && <ParticipantCapacityFields />}
+
+      {caps?.multipleParticipants && !caps?.multipleCoaches && (
+        <Stack spacing={0.5}>
+          <Tooltip
+            title={
+              isLocked
+                ? 'Cannot be changed after students have booked sessions for this event.'
+                : ''
+            }
+            placement="top"
+          >
+            <span>
+              <Controller
+                name="deferCoachReveal"
+                control={control}
+                render={({ field }) => (
+                  <Switch
+                    label="Defer coach reveal"
+                    checked={field.value}
+                    onChange={field.onChange}
+                    disabled={isLocked}
+                  />
+                )}
+              />
+            </span>
+          </Tooltip>
+          <Typography
+            variant="caption"
+            color={isLocked ? 'text.disabled' : 'text.secondary'}
+            sx={{ pl: 0.5 }}
+          >
+            {isLocked
+              ? 'Locked — sessions have been booked under this setting.'
+              : 'Students receive a booking confirmation without the coach name and join URL. Admin sends the reveal manually before the session starts.'}
+          </Typography>
+        </Stack>
+      )}
     </Stack>
   )
 }

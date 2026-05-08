@@ -292,6 +292,43 @@ const cancelEventScheduleSlot = async (
   }
 };
 
+const getCoachAvailabilityForSlot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.getCoachAvailabilityForSlot(
+      req.params.eventId as string,
+      req.params.slotId as string,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Coach availability fetched.");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const revealCoachForSlot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const slot = await eventService.revealCoachForSlot(
+      req.params.eventId as string,
+      req.params.slotId as string,
+      req.body,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, slot, "Coach reveal sent successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 const listAllEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
@@ -344,6 +381,8 @@ export {
   updateEvent,
   updateEventScheduleSlot,
   listSlotBookings,
+  revealCoachForSlot,
+  getCoachAvailabilityForSlot,
   getSessionLog,
   upsertSessionLog,
 };

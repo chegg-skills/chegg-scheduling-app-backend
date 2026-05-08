@@ -72,6 +72,7 @@ export type CreateEventInput = {
   bufferAfterMinutes?: number;
   maxBookingWindowDays?: number | null;
   showDescription?: boolean;
+  deferCoachReveal?: boolean;
   weeklyAvailability?: Array<{
     dayOfWeek: number;
     startTime: string;

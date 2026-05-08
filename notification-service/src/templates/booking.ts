@@ -83,4 +83,45 @@ export const bookingTemplates: EmailTemplateMap = {
       { text: "Book New Session", url: "{{publicBookingUrl}}" },
     ),
   },
+
+  BOOKING_CONFIRMED_DEFERRED: {
+    subject: "Confirmed: {{eventName}} on {{startTime}}",
+    preheader: "Your session is confirmed. Coach details will follow shortly before the session.",
+    text: "Hi {{studentName}}, your booking for {{eventName}} on {{startTime}} ({{timezone}}) with {{teamName}} is confirmed. You will receive coach and join details shortly before the session starts.",
+    html: wrapLayout(
+      "Booking Confirmation",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your session for <strong>{{eventName}}</strong> with the <strong>{{teamName}}</strong> is confirmed.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+       </p>
+       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>
+       <p style="margin-top: 16px; font-size: 13px;">
+         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")}
+       </p>`,
+      "Your session is confirmed. Coach details coming soon.",
+      { text: "View Booking", url: "{{frontendUrl}}" },
+    ),
+  },
+
+  COACH_REVEAL_SENT: {
+    subject: "Session Details Ready: {{eventName}} on {{startTime}}",
+    preheader: "Your coach and session join details are now available.",
+    text: "Hi {{studentName}}, your upcoming session {{eventName}} on {{startTime}} ({{timezone}}) will be hosted by {{coachName}}. Join here: {{meetingJoinUrl}}",
+    html: wrapLayout(
+      "Session Details Ready",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your upcoming session details are now ready. Here is everything you need:</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Coach", "{{coachName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+       </p>`,
+      "Your coach details are ready for {{startTime}}.",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
 };

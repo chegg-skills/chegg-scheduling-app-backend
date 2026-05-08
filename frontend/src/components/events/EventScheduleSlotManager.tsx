@@ -22,6 +22,8 @@ import { LogSessionDialog } from './dialogs/LogSessionDialog'
 import { ScheduleSeriesTable, type ScheduleSeriesGroup } from './ScheduleSeriesTable'
 import { ScheduleSeriesTrackerView } from './ScheduleSeriesTrackerView'
 import { ScheduleCalendar } from './ScheduleCalendar'
+import { useConfirm } from '@/context/confirm'
+import { extractApiError } from '@/utils/apiError'
 import { ScheduleSlotDetailModal } from './dialogs/ScheduleSlotDetailModal'
 
 interface Props {
@@ -36,6 +38,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
   const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
   const { mutate: cancel } = useCancelEventScheduleSlot(event.id)
+  const { alert } = useConfirm()
   const { handleAction } = useAsyncAction()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -87,12 +90,24 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
             setIsModalOpen(false)
             setEditingSlot(null)
           },
+          onError: (err) => {
+            alert({
+              title: 'Update Failed',
+              message: extractApiError(err),
+            })
+          },
         }
       )
     } else {
       create(slotData, {
         onSuccess: () => {
           setIsModalOpen(false)
+        },
+        onError: (err) => {
+          alert({
+            title: 'Add Session Failed',
+            message: extractApiError(err),
+          })
         },
       })
     }
@@ -165,7 +180,6 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
                       textTransform: 'none',
                       fontWeight: 600,
                       fontSize: '0.8125rem',
-                      height: 32,
                       '&.Mui-selected': {
                         bgcolor: alpha(theme.palette.primary.main, 0.08),
                         color: 'primary.main',
@@ -177,11 +191,11 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
                   }}
                 >
                   <ToggleButton value="list">
-                    <LayoutList size={14} style={{ marginRight: 8 }} />
+                    <LayoutList size={16} style={{ marginRight: 8 }} />
                     List
                   </ToggleButton>
                   <ToggleButton value="calendar">
-                    <CalendarIcon size={14} style={{ marginRight: 8 }} />
+                    <CalendarIcon size={16} style={{ marginRight: 8 }} />
                     Calendar
                   </ToggleButton>
                 </ToggleButtonGroup>

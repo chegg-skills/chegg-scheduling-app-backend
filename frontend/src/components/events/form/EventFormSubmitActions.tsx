@@ -3,6 +3,9 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import { Info } from 'lucide-react'
 import { Button } from '@/components/shared/ui/Button'
 import type { EventFormValues } from './eventFormSchema'
 
@@ -29,7 +32,18 @@ export function EventFormSubmitActions({
     <Stack spacing={4}>
       <Box sx={{ py: 1 }}>
         <FormControlLabel
-          label="Event is Active"
+          label={
+            <Stack direction="row" alignItems="center" spacing={0.5}>
+              <Typography variant="body2" fontWeight={500}>
+                Event is Active
+              </Typography>
+              <Tooltip title="Inactive events are hidden from the public booking page and cannot be booked by students.">
+                <Box sx={{ display: 'flex', color: 'text.secondary', cursor: 'default' }}>
+                  <Info size={14} />
+                </Box>
+              </Tooltip>
+            </Stack>
+          }
           control={<Switch defaultChecked={defaultActive} {...register('isActive')} />}
         />
       </Box>

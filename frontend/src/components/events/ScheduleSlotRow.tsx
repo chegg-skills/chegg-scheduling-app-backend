@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import Box from '@mui/material/Box'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
-import { Edit, Trash2, User, RefreshCw, ClipboardList, Users, Ban } from 'lucide-react'
+import { Edit, Trash2, User, RefreshCw, ClipboardList, Users, Ban, Eye } from 'lucide-react'
 import Avatar from '@mui/material/Avatar'
 import { Stack, Typography, Tooltip } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
@@ -18,6 +18,7 @@ interface ScheduleSlotRowProps {
   onViewAttendees: (slot: EventScheduleSlot) => void
   onLogSession: (slot: EventScheduleSlot) => void
   onCancel: (slot: EventScheduleSlot, info: string) => void
+  onReveal?: (slot: EventScheduleSlot) => void
 }
 
 /**
@@ -32,6 +33,7 @@ export function ScheduleSlotRow({
   onViewAttendees,
   onLogSession,
   onCancel,
+  onReveal,
 }: ScheduleSlotRowProps) {
   const dateStr = format(new Date(slot.startTime), 'EEE, MMM d, yyyy')
   const timeRange = `${format(new Date(slot.startTime), 'h:mm a')} – ${format(
@@ -197,6 +199,21 @@ export function ScheduleSlotRow({
               icon: <Edit size={16} />,
               onClick: () => onEdit(slot),
             },
+            ...(event.deferCoachReveal
+              ? [
+                  {
+                    label: slot.coachRevealSentAt ? 'Reveal Sent' : 'Send Reveal',
+                    icon: <Eye size={16} />,
+                    onClick: () => onReveal?.(slot),
+                    disabled: !!slot.coachRevealSentAt || slot.isCancelled,
+                    tooltip: slot.coachRevealSentAt
+                      ? `Reveal sent on ${format(new Date(slot.coachRevealSentAt), 'MMM d @ h:mm a')}`
+                      : slot.isCancelled
+                        ? 'Session is cancelled'
+                        : 'Send coach and join URL to all participants',
+                  },
+                ]
+              : []),
             {
               label: 'Cancel Session',
               icon: <Ban size={16} />,

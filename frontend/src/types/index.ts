@@ -150,6 +150,12 @@ export interface EventCoach {
   coachUser: SafeUser
 }
 
+export interface CoachAvailabilityEntry {
+  coachUserId: string
+  coachUser: SafeUser
+  isAvailable: boolean
+}
+
 export type EventBookingMode = 'COACH_AVAILABILITY' | 'FIXED_SLOTS'
 
 export interface EventScheduleSlot {
@@ -164,6 +170,8 @@ export interface EventScheduleSlot {
   updatedAt: string
   assignedCoachId: string | null
   recurrenceGroupId: string | null
+  coachRevealSentAt: string | null
+  sessionJoinUrl: string | null
   assignedCoach?: SafeUser | null
   _count?: {
     bookings: number
@@ -205,6 +213,7 @@ export interface Event {
   maxParticipantCount: number | null
   bufferAfterMinutes: number
   showDescription: boolean
+  deferCoachReveal: boolean
   maxBookingWindowDays: number | null
   teamId: string
   createdById: string

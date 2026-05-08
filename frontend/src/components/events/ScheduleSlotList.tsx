@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
@@ -9,6 +10,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import { TablePagination } from '@/components/shared/table/TablePagination'
 import { ScheduleSlotRow } from './ScheduleSlotRow'
+import { RevealCoachDialog } from './dialogs/RevealCoachDialog'
 import type { EventScheduleSlot, Event } from '@/types'
 
 interface ScheduleSlotListProps {
@@ -32,6 +34,17 @@ export function ScheduleSlotList({
 }: ScheduleSlotListProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [revealSlot, setRevealSlot] = useState<EventScheduleSlot | null>(null)
+
+  const unreveledUpcoming = event.deferCoachReveal
+    ? slots.filter(
+        (s) =>
+          !s.coachRevealSentAt &&
+          !s.isCancelled &&
+          new Date(s.startTime) > new Date() &&
+          new Date(s.startTime) < new Date(Date.now() + 3 * 60 * 60 * 1000)
+      )
+    : []
 
   if (slots.length === 0) {
     return (
@@ -52,53 +65,70 @@ export function ScheduleSlotList({
   const paginatedSlots = slots.slice((page - 1) * pageSize, page * pageSize)
 
   return (
-    <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={{ borderRadius: 2, overflow: 'hidden' }}
-    >
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Date</TableCell>
-            <TableCell>Time Range</TableCell>
-            <TableCell>Occupancy</TableCell>
-            <TableCell>Assigned Coach</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Logged</TableCell>
-            <TableCell align="right" sx={{ pr: 3 }}>
-              Actions
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {paginatedSlots.map((slot) => (
-            <ScheduleSlotRow
-              key={slot.id}
-              slot={slot}
-              event={event}
-              onRemove={onRemove}
-              onEdit={onEdit}
-              onViewAttendees={onViewAttendees}
-              onLogSession={onLogSession}
-              onCancel={onCancel}
-            />
-          ))}
-        </TableBody>
-      </Table>
-      <TablePagination
-        pagination={{
-          page,
-          pageSize,
-          total: slots.length,
-          totalPages: Math.ceil(slots.length / pageSize),
-        }}
-        onPageChange={setPage}
-        onRowsPerPageChange={(newSize) => {
-          setPageSize(newSize)
-          setPage(1)
-        }}
+    <>
+      {unreveledUpcoming.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {unreveledUpcoming.length} upcoming session
+          {unreveledUpcoming.length > 1 ? 's' : ''} within the next 3 hours{' '}
+          {unreveledUpcoming.length > 1 ? 'have' : 'has'} not had the coach reveal sent.
+        </Alert>
+      )}
+      <TableContainer
+        component={Paper}
+        variant="outlined"
+        sx={{ borderRadius: 2, overflow: 'hidden' }}
+      >
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Time Range</TableCell>
+              <TableCell>Occupancy</TableCell>
+              <TableCell>Assigned Coach</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Logged</TableCell>
+              <TableCell align="right" sx={{ pr: 3 }}>
+                Actions
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginatedSlots.map((slot) => (
+              <ScheduleSlotRow
+                key={slot.id}
+                slot={slot}
+                event={event}
+                onRemove={onRemove}
+                onEdit={onEdit}
+                onViewAttendees={onViewAttendees}
+                onLogSession={onLogSession}
+                onCancel={onCancel}
+                onReveal={setRevealSlot}
+              />
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination
+          pagination={{
+            page,
+            pageSize,
+            total: slots.length,
+            totalPages: Math.ceil(slots.length / pageSize),
+          }}
+          onPageChange={setPage}
+          onRowsPerPageChange={(newSize) => {
+            setPageSize(newSize)
+            setPage(1)
+          }}
+        />
+      </TableContainer>
+
+      <RevealCoachDialog
+        isOpen={!!revealSlot}
+        onClose={() => setRevealSlot(null)}
+        event={event}
+        slot={revealSlot}
       />
-    </TableContainer>
+    </>
   )
 }

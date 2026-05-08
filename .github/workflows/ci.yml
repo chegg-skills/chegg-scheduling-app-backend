@@ -39,6 +39,18 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Check for missing migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/chegg_drift_check
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE chegg_drift_check;"
+          npx prisma migrate deploy
+          npx prisma migrate diff \
+            --from-config-datasource \
+            --to-schema prisma/schema.prisma \
+            --exit-code
+
       - name: Build backend
         working-directory: backend
         run: npm run build

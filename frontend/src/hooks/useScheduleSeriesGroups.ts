@@ -12,6 +12,7 @@ export function useScheduleSeriesGroups(
   return useMemo(() => {
     if (!slots) return []
     const groups: Record<string, ScheduleSeriesGroup> = {}
+    const now = new Date()
 
     slots.forEach((slot) => {
       const key = slot.recurrenceGroupId || `single-${slot.id}`
@@ -20,6 +21,7 @@ export function useScheduleSeriesGroups(
           id: key,
           startTime: slot.startTime,
           endTime: slot.endTime,
+          nextInstanceTime: null,
           isRecurring: !!slot.recurrenceGroupId,
           occurrenceCount: 0,
           slots: [],
@@ -28,10 +30,17 @@ export function useScheduleSeriesGroups(
       groups[key].occurrenceCount++
       groups[key].slots.push(slot)
 
-      // Ensure the group represents the "earliest" or "next" relevant instance for display
       if (new Date(slot.startTime) < new Date(groups[key].startTime)) {
         groups[key].startTime = slot.startTime
         groups[key].endTime = slot.endTime
+      }
+
+      // Track the earliest upcoming non-cancelled slot for the "Next Instance" column
+      if (!slot.isCancelled && new Date(slot.startTime) > now) {
+        const current = groups[key].nextInstanceTime
+        if (!current || new Date(slot.startTime) < new Date(current)) {
+          groups[key].nextInstanceTime = slot.startTime
+        }
       }
     })
 

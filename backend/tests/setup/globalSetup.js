@@ -36,11 +36,13 @@ module.exports = async function globalSetup() {
 
   await client.end();
 
-  // Sync schema with the test DB
-  console.log("[globalSetup] Syncing database schema...");
-  execSync("npx prisma db push --accept-data-loss", {
+  // Apply all pending migrations to the test DB.
+  // Using migrate deploy (not db push) so tests validate the actual migration SQL,
+  // not just a schema snapshot. This is the same command production runs.
+  console.log("[globalSetup] Applying migrations...");
+  execSync("npx prisma migrate deploy", {
     env: { ...process.env },
     stdio: "inherit",
   });
-  console.log("[globalSetup] Database synchronized successfully.");
+  console.log("[globalSetup] Migrations applied successfully.");
 };

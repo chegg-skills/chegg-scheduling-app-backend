@@ -148,6 +148,7 @@ model Event {
   showDescription           Boolean                   @default(false)
   targetCoHostCount         Int?
   maxBookingWindowDays      Int?
+  deferCoachReveal          Boolean                   @default(false)
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
   eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
@@ -202,6 +203,8 @@ model EventScheduleSlot {
   assignedCoachId   String?
   recurrenceGroupId String?
   isCancelled       Boolean     @default(false)
+  coachRevealSentAt DateTime?
+  sessionJoinUrl    String?
   bookings          Booking[]
   assignedCoach     User?       @relation("SlotCoach", fields: [assignedCoachId], references: [id])
   event             Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)

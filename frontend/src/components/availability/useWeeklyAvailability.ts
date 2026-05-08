@@ -18,16 +18,17 @@ interface UseWeeklyAvailabilityProps {
 export function useWeeklyAvailability({ value, onChange, showFooter }: UseWeeklyAvailabilityProps) {
   const [days, setDays] = useState<DayAvailability[]>(() => buildDaysFromValue(value))
 
-  // Sync internal state when the value prop changes from the parent
+  // Sync internal state when the value prop changes from the parent.
+  // Uses functional setState so `days` is not a dependency — otherwise every local
+  // toggle would trigger the effect and immediately revert the change.
   useEffect(() => {
-    const nextDays = buildDaysFromValue(value)
-    const currentSerialized = JSON.stringify(serializeDaysToValue(days))
-    const nextSerialized = JSON.stringify(serializeDaysToValue(nextDays))
-
-    if (currentSerialized !== nextSerialized) {
-      setDays(nextDays)
-    }
-  }, [value, days])
+    setDays(prev => {
+      const nextDays = buildDaysFromValue(value)
+      const currentSerialized = JSON.stringify(serializeDaysToValue(prev))
+      const nextSerialized = JSON.stringify(serializeDaysToValue(nextDays))
+      return currentSerialized === nextSerialized ? prev : nextDays
+    })
+  }, [value])
 
   const notifyChange = (nextDays: DayAvailability[]) => {
     setDays(nextDays)

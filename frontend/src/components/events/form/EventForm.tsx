@@ -82,7 +82,10 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
 
           <Stack spacing={2}>
             <Typography {...sectionLabelStyle}>Booking rules & policy</Typography>
-            <EventSchedulingPolicyFields caps={caps} />
+            <EventSchedulingPolicyFields
+              caps={caps}
+              isLocked={(event?._count?.bookings ?? 0) > 0}
+            />
           </Stack>
 
           <Divider />

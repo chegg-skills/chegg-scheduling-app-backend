@@ -196,13 +196,24 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
     );
 
     const config = await getTeamNotificationConfig(booking.teamId);
+    const isDeferredReveal = booking.event?.deferCoachReveal === true;
 
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
-        type: "BOOKING_CONFIRMED",
+        type: isDeferredReveal ? "BOOKING_CONFIRMED_DEFERRED" : "BOOKING_CONFIRMED",
         recipients: booking.studentEmail,
         userId: booking.coachUserId,
-        variables: studentVariables,
+        variables: isDeferredReveal
+          ? {
+              studentName: studentVariables.studentName,
+              eventName: studentVariables.eventName,
+              teamName: studentVariables.teamName,
+              startTime: studentVariables.startTime,
+              timezone: studentVariables.timezone,
+              frontendUrl: studentVariables.frontendUrl,
+              rescheduleUrl: studentVariables.rescheduleUrl,
+            }
+          : studentVariables,
       }),
     ];
 
@@ -252,7 +263,9 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
     }
 
     await Promise.all(publishTasks);
-    await queueBookingReminderNotifications(booking, config);
+    if (!isDeferredReveal) {
+      await queueBookingReminderNotifications(booking, config);
+    }
   } catch (error) {
     logger.error("Failed to queue booking creation notifications.", {
       bookingId: booking.id,
