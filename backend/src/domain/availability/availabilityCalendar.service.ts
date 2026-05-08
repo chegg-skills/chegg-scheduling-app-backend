@@ -1,6 +1,5 @@
 import { StatusCodes } from "http-status-codes";
 import {
-  Prisma,
   UserAvailabilityException,
   UserRole,
   UserWeeklyAvailability,
