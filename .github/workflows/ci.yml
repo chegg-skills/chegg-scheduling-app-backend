@@ -39,6 +39,17 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Check for missing migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+        run: |
+          npx prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "postgresql://postgres:postgres@127.0.0.1:5432/chegg_shadow" \
+            --exit-code
+
       - name: Build backend
         working-directory: backend
         run: npm run build
