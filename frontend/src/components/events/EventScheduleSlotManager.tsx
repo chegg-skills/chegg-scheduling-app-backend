@@ -38,7 +38,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
   const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
   const { mutate: cancel } = useCancelEventScheduleSlot(event.id)
-  const { confirm, alert } = useConfirm()
+  const { alert } = useConfirm()
   const { handleAction } = useAsyncAction()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
