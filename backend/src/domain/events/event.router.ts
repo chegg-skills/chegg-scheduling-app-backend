@@ -10,6 +10,7 @@ import {
   ListAllEventsSchema,
   UpdateEventSchema,
   UpsertSessionLogSchema,
+  RevealCoachSchema,
 } from "./event.schema";
 
 const router = express.Router();
@@ -154,6 +155,25 @@ router
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.cancelEventScheduleSlot,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/events/:eventId/schedule-slots/:slotId/coach-availability")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.getCoachAvailabilityForSlot,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/events/:eventId/schedule-slots/:slotId/reveal")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(RevealCoachSchema),
+    eventController.revealCoachForSlot,
   )
   .all(methodNotAllowed);
 

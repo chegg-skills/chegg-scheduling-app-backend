@@ -1,5 +1,10 @@
 import { StatusCodes } from "http-status-codes";
-import { Prisma, UserAvailabilityException, UserRole, UserWeeklyAvailability } from "@prisma/client";
+import {
+  Prisma,
+  UserAvailabilityException,
+  UserRole,
+  UserWeeklyAvailability,
+} from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { ErrorHandler } from "../../shared/error/errorhandler";

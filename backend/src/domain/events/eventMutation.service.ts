@@ -189,6 +189,7 @@ export const buildEventCreateData = ({
     targetCoHostCount: validated.targetCoHostCount ?? undefined,
     maxBookingWindowDays: validated.maxBookingWindowDays ?? undefined,
     showDescription: validated.showDescription ?? false,
+    deferCoachReveal: validated.deferCoachReveal ?? false,
     team: { connect: { id: teamId } },
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
@@ -292,6 +293,10 @@ export const buildEventUpdateData = ({
     updateData.maxBookingWindowDays = validated.maxBookingWindowDays;
   }
 
+  if (validated.deferCoachReveal !== undefined) {
+    updateData.deferCoachReveal = validated.deferCoachReveal;
+  }
+
   return updateData as any;
 };
 
@@ -335,6 +340,7 @@ export const buildDuplicateEventData = ({
     targetCoHostCount: (sourceEvent as any).targetCoHostCount ?? undefined,
     maxBookingWindowDays: (sourceEvent as any).maxBookingWindowDays ?? undefined,
     showDescription: (sourceEvent as any).showDescription,
+    deferCoachReveal: (sourceEvent as any).deferCoachReveal ?? false,
     allowedWeekdays:
       sourceEvent.weeklyAvailability.length > 0
         ? Array.from(new Set(sourceEvent.weeklyAvailability.map((a) => a.dayOfWeek))).sort()

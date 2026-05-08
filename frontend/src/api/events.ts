@@ -1,6 +1,7 @@
 import apiClient from '@/lib/axios'
 import type {
   ApiResponse,
+  CoachAvailabilityEntry,
   Event,
   EventCoach,
   EventScheduleSlot,
@@ -73,5 +74,19 @@ export const eventsApi = {
     apiClient.post<ApiResponse<SessionLog>>(
       `/events/${eventId}/schedule-slots/${slotId}/log`,
       data
+    ),
+  revealCoachForSlot: (
+    eventId: string,
+    slotId: string,
+    data: { coachUserId?: string; sessionJoinUrl?: string | null }
+  ) =>
+    apiClient.post<ApiResponse<EventScheduleSlot>>(
+      `/events/${eventId}/schedule-slots/${slotId}/reveal`,
+      data
+    ),
+  getCoachAvailabilityForSlot: (eventId: string, slotId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<CoachAvailabilityEntry[]>>(
+      `/events/${eventId}/schedule-slots/${slotId}/coach-availability`,
+      { signal }
     ),
 }

@@ -46,6 +46,7 @@ export const eventFormSchema = z
     bufferAfterMinutes: z.number().min(0).default(0),
     maxBookingWindowDays: z.number().int().min(1).max(365).nullable().optional(),
     showDescription: z.boolean().default(false),
+    deferCoachReveal: z.boolean().default(false),
     isActive: z.boolean().default(true),
     weeklyAvailability: z
       .array(
@@ -150,6 +151,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       bufferAfterMinutes: event.bufferAfterMinutes,
       maxBookingWindowDays: event.maxBookingWindowDays,
       showDescription: event.showDescription,
+      deferCoachReveal: event.deferCoachReveal ?? false,
       isActive: event.isActive,
       weeklyAvailability: (event.weeklyAvailability || []).map((a) => ({
         dayOfWeek: a.dayOfWeek,
@@ -181,6 +183,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     bufferAfterMinutes: 15,
     maxBookingWindowDays: null,
     showDescription: false,
+    deferCoachReveal: false,
     isActive: true,
     weeklyAvailability: [],
   }

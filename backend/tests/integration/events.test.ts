@@ -1834,3 +1834,132 @@ describe("Recurrence — slot creation", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("Deferred Coach Reveal", () => {
+  let eventTypeId: string;
+  let deferredEventId: string;
+  let slotId: string;
+
+  beforeAll(async () => {
+    const eventType = await createEventType(context.superAdminToken, {
+      key: `deferred-reveal-offering-${Date.now()}`,
+      name: "Deferred Reveal Offering",
+    });
+    eventTypeId = eventType.body.data.id;
+
+    // Assign coachOne to team so they can be assigned to event
+    await prisma.teamMember.upsert({
+      where: { teamId_userId: { teamId: context.teamId, userId: context.coachOneId } },
+      update: { isActive: true },
+      create: { teamId: context.teamId, userId: context.coachOneId, isActive: true },
+    });
+
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Deferred Reveal Event",
+      eventTypeId,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      deferCoachReveal: true,
+      maxParticipantCount: 5,
+    });
+    expect(event.status).toBe(201);
+    deferredEventId = event.body.data.id;
+    expect(event.body.data.deferCoachReveal).toBe(true);
+
+    // Assign coach to event
+    await request(app)
+      .put(`/api/events/${deferredEventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserIds: [context.coachOneId] });
+  });
+
+  it("creates a slot for the deferred reveal event", async () => {
+    const start = getNextUtcWeekdayAt(3, 14, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ startTime: start.toISOString(), endTime: end.toISOString(), capacity: 5 });
+
+    expect(res.status).toBe(201);
+    slotId = res.body.data.id;
+  });
+
+  it("POST /reveal with no coach assigned returns 400", async () => {
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/No coach assigned/);
+  });
+
+  it("POST /reveal with explicit coachUserId returns 200 and sets coachRevealSentAt", async () => {
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.coachRevealSentAt).not.toBeNull();
+    expect(res.body.data.assignedCoachId).toBe(context.coachOneId);
+  });
+
+  it("POST /reveal again returns 409 (already sent)", async () => {
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId });
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/already been sent/);
+  });
+
+  it("POST /reveal on a non-deferred event returns 400", async () => {
+    const otherEventType = await createEventType(context.superAdminToken);
+    const otherEvent = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: otherEventType.body.data.id,
+      interactionType: "ONE_TO_ONE",
+    });
+    const otherEventId = otherEvent.body.data.id;
+
+    const start = getNextUtcWeekdayAt(4, 15, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const slotRes = await request(app)
+      .post(`/api/events/${otherEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ startTime: start.toISOString(), endTime: end.toISOString() });
+    const otherSlotId = slotRes.body.data.id;
+
+    const res = await request(app)
+      .post(`/api/events/${otherEventId}/schedule-slots/${otherSlotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/does not use deferred coach reveal/);
+  });
+
+  it("COACH role POST /reveal returns 403", async () => {
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
+      .set("Authorization", `Bearer ${context.coachToken}`)
+      .send({ coachUserId: context.coachOneId });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("schema rejects deferCoachReveal=true for ONE_TO_ONE event", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_ONE",
+      deferCoachReveal: true,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/ONE_TO_MANY/);
+  });
+});

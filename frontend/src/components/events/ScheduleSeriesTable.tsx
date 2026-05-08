@@ -20,6 +20,7 @@ export interface ScheduleSeriesGroup {
   id: string
   startTime: string
   endTime: string
+  nextInstanceTime: string | null
   isRecurring: boolean
   occurrenceCount: number
   slots: EventScheduleSlot[]
@@ -64,7 +65,6 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
         </TableHead>
         <TableBody>
           {paginatedGroups.map((group) => {
-            const dateStr = format(new Date(group.startTime), 'EEE, MMM d')
             const timeRange = `${format(new Date(group.startTime), 'h:mm a')} - ${format(new Date(group.endTime), 'h:mm a')}`
 
             return (
@@ -101,9 +101,15 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={500}>
-                    {dateStr}
-                  </Typography>
+                  {group.nextInstanceTime ? (
+                    <Typography variant="body2" fontWeight={500}>
+                      {format(new Date(group.nextInstanceTime), 'EEE, MMM d')}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" color="text.disabled">
+                      —
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">{timeRange}</Typography>

@@ -53,6 +53,7 @@ const EventBaseObjectCore = z.object({
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
   showDescription: z.boolean().optional(),
+  deferCoachReveal: z.boolean().optional(),
   weeklyAvailability: z
     .array(
       z.object({
@@ -78,6 +79,7 @@ const EventBaseObject = EventBaseObjectCore.extend({
   minimumNoticeMinutes: z.coerce.number().int().nonnegative().default(0),
   bufferAfterMinutes: z.coerce.number().int().nonnegative().default(0),
   minCoachCount: z.coerce.number().int().positive().default(1),
+  deferCoachReveal: z.boolean().default(false),
 });
 
 /**
@@ -173,6 +175,17 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
       path: ["targetCoHostCount"],
       message: "targetCoHostCount must be at least 1.",
     });
+  }
+
+  // deferCoachReveal is only valid for ONE_TO_MANY (single-coach group) events
+  if (data.deferCoachReveal === true && caps) {
+    if (caps.multipleCoaches || !caps.multipleParticipants) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["deferCoachReveal"],
+        message: "Deferred coach reveal is only supported for ONE_TO_MANY events.",
+      });
+    }
   }
 };
 
@@ -279,5 +292,16 @@ export const UpsertSessionLogSchema = {
         attended: z.boolean(),
       }),
     ),
+  }),
+};
+
+export const RevealCoachSchema = {
+  params: z.object({
+    eventId: z.string().uuid("Invalid event ID"),
+    slotId: z.string().uuid("Invalid slot ID"),
+  }),
+  body: z.object({
+    coachUserId: z.string().uuid("Invalid coach user ID").optional(),
+    sessionJoinUrl: z.string().url("Invalid URL").optional().nullable(),
   }),
 };

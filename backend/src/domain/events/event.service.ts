@@ -40,6 +40,8 @@ import {
   resolveMatchingScheduleSlot,
   updateEventScheduleSlot,
   cancelEventScheduleSlot,
+  revealCoachForSlot,
+  getCoachAvailabilityForSlot,
 } from "./eventScheduling.service";
 import {
   buildDuplicateEventData,
@@ -140,6 +142,18 @@ const updateEvent = async (
   caller: CallerContext,
 ): Promise<SafeEvent> => {
   const existingEvent = await getManagedEvent(eventId, caller);
+
+  if (
+    payload.deferCoachReveal !== undefined &&
+    payload.deferCoachReveal !== existingEvent.deferCoachReveal &&
+    existingEvent._count.bookings > 0
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Deferred coach reveal cannot be changed after students have booked sessions for this event.",
+    );
+  }
+
   const context = await resolveUpdateEventContext({ payload, existingEvent });
 
   let updatedEvent: SafeEvent;
@@ -303,5 +317,7 @@ export {
   assertParticipantCapacityAvailable,
   resolveMatchingScheduleSlot,
   cancelEventScheduleSlot,
+  revealCoachForSlot,
+  getCoachAvailabilityForSlot,
   type SafeEvent,
 };

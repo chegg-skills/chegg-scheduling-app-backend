@@ -18,7 +18,10 @@ import { bookingInclude } from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
 import { generateRecurrenceDates } from "./recurrence.service";
 import { queueBookingStatusNotifications } from "../bookings/booking.notification";
+import { queueCoachRevealNotifications } from "./coachReveal.notification";
+import { getCoachConflicts } from "../availability/availabilityConflict.service";
 import { logger } from "../../shared/logging/logger";
+import { BookingStatus } from "@prisma/client";
 
 type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
   include: {
@@ -312,6 +315,14 @@ const createEventScheduleSlot = async (
 
   await assertSlotWithinAvailability(eventId, validated.startTime, validated.endTime, caller);
 
+  const existingSlot = await resolveMatchingScheduleSlot(eventId, validated.startTime);
+  if (existingSlot) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "A session already exists at this time for this event.",
+    );
+  }
+
   return prisma.eventScheduleSlot.create({
     data: {
       eventId,
@@ -486,6 +497,136 @@ const cancelEventScheduleSlot = async (
   return updatedSlot;
 };
 
+const revealCoachForSlot = async (
+  eventId: string,
+  slotId: string,
+  payload: { coachUserId?: string; sessionJoinUrl?: string | null },
+  caller: CallerContext,
+): Promise<EventScheduleSlot> => {
+  const event = await getManagedEvent(eventId, caller);
+
+  if (!event.deferCoachReveal) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "This event does not use deferred coach reveal.",
+    );
+  }
+
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId, eventId },
+    include: {
+      bookings: {
+        where: { status: { notIn: [BookingStatus.CANCELLED] } },
+        select: { studentEmail: true, studentName: true, timezone: true },
+      },
+    },
+  });
+
+  if (!slot) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found.");
+  }
+  if (slot.coachRevealSentAt) {
+    throw new ErrorHandler(StatusCodes.CONFLICT, "Reveal has already been sent for this slot.");
+  }
+  if (slot.isCancelled) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Cannot send reveal for a cancelled slot.");
+  }
+
+  const finalCoachId = payload.coachUserId ?? slot.assignedCoachId;
+  if (!finalCoachId) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "No coach assigned. Assign a coach before sending the reveal.",
+    );
+  }
+
+  const coach = await prisma.user.findUnique({
+    where: { id: finalCoachId },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      timezone: true,
+      zoomIsvLink: true,
+    },
+  });
+  if (!coach || !coach.email) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Coach not found.");
+  }
+
+  const finalJoinUrl =
+    payload.sessionJoinUrl !== undefined
+      ? payload.sessionJoinUrl
+      : (slot.sessionJoinUrl ?? coach.zoomIsvLink ?? event.locationValue ?? "");
+
+  const [updatedSlot] = await prisma.$transaction([
+    prisma.eventScheduleSlot.update({
+      where: { id: slotId },
+      data: {
+        assignedCoachId: finalCoachId,
+        sessionJoinUrl: finalJoinUrl || null,
+        coachRevealSentAt: new Date(),
+      },
+    }),
+    // Keep booking records in sync so cancellation notifications reference the revealed coach
+    prisma.booking.updateMany({
+      where: { scheduleSlotId: slotId, status: { notIn: [BookingStatus.CANCELLED] } },
+      data: { coachUserId: finalCoachId },
+    }),
+  ]);
+
+  void queueCoachRevealNotifications({
+    slot: updatedSlot,
+    event: { name: event.name, locationValue: event.locationValue },
+    coach: {
+      id: coach.id,
+      email: coach.email,
+      firstName: coach.firstName,
+      lastName: coach.lastName,
+      timezone: coach.timezone,
+    },
+    participants: slot.bookings,
+    joinUrl: finalJoinUrl || "",
+  });
+
+  return updatedSlot;
+};
+
+const getCoachAvailabilityForSlot = async (
+  eventId: string,
+  slotId: string,
+  caller: CallerContext,
+) => {
+  const event = await getManagedEvent(eventId, caller);
+
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId, eventId },
+    select: { startTime: true, endTime: true },
+  });
+  if (!slot) throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found.");
+
+  const results = await Promise.all(
+    event.coaches.map(async (ec) => {
+      const conflicts = await getCoachConflicts(ec.coachUserId, slot.startTime, slot.endTime, {
+        scheduleSlotId: slotId,
+      });
+      return {
+        coachUserId: ec.coachUserId,
+        coachUser: ec.coachUser,
+        isAvailable: conflicts.length === 0,
+        conflicts: conflicts.map((c) => ({
+          eventName: c.event.name,
+          startTime: c.startTime,
+          endTime: c.endTime,
+        })),
+      };
+    }),
+  );
+
+  return results.sort((a, b) => Number(b.isAvailable) - Number(a.isAvailable));
+};
+
 export {
   resolveEventSchedulingConfig,
   assertBookingNoticeSatisfied,
@@ -499,4 +640,6 @@ export {
   deleteEventScheduleSlot,
   cancelEventScheduleSlot,
   listSlotBookings,
+  revealCoachForSlot,
+  getCoachAvailabilityForSlot,
 };

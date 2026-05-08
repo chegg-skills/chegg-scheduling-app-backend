@@ -14,7 +14,12 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
     const result = await authService.register(data);
     const csrfToken = setAuthCookie(res, result.token);
 
-    sendSuccessResponse(res, StatusCodes.CREATED, { ...result, csrfToken }, "User registered successfully.");
+    sendSuccessResponse(
+      res,
+      StatusCodes.CREATED,
+      { ...result, csrfToken },
+      "User registered successfully.",
+    );
   } catch (error) {
     next(error);
   }

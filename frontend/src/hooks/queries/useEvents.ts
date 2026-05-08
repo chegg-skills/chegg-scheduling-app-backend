@@ -21,6 +21,8 @@ export const eventKeys = {
     [...eventKeys.scheduleSlots(eventId), 'bookings', slotId] as const,
   slotLog: (eventId: string, slotId: string) =>
     [...eventKeys.scheduleSlots(eventId), 'log', slotId] as const,
+  slotCoachAvailability: (eventId: string, slotId: string) =>
+    [...eventKeys.scheduleSlots(eventId), 'coach-availability', slotId] as const,
 }
 
 export function useEvents(params?: ListEventsParams) {
@@ -189,5 +191,26 @@ export function useUpsertSessionLog(eventId: string, slotId: string) {
       qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
       qc.invalidateQueries({ queryKey: eventKeys.all })
     },
+  })
+}
+
+export function useRevealCoach(eventId: string, slotId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { coachUserId?: string; sessionJoinUrl?: string | null }) =>
+      eventsApi.revealCoachForSlot(eventId, slotId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+    },
+  })
+}
+
+export function useCoachAvailabilityForSlot(eventId: string, slotId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: eventKeys.slotCoachAvailability(eventId, slotId),
+    queryFn: ({ signal }) =>
+      eventsApi.getCoachAvailabilityForSlot(eventId, slotId, signal).then((r) => r.data.data),
+    enabled: enabled && !!eventId && !!slotId,
+    staleTime: 30_000,
   })
 }
