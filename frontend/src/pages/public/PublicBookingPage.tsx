@@ -158,7 +158,16 @@ export function PublicBookingPage() {
           </PublicStepHeader>
 
           {/* Main Content Area */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: currentStepKey === 'schedule' ? 0 : 2 }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflowY: currentStepKey === 'schedule' ? 'hidden' : 'auto',
+              display: currentStepKey === 'schedule' ? 'flex' : 'block',
+              flexDirection: 'column',
+              p: currentStepKey === 'schedule' ? 0 : 2,
+              minHeight: 0,
+            }}
+          >
             <PublicBookingFlow
               currentStepKey={currentStepKey}
               scope={scope}

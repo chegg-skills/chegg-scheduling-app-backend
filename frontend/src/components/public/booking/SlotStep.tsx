@@ -122,175 +122,184 @@ export function SlotStep({
   const coachNotYetChosen = hasCoachPicker && !selectedCoachId
 
   return (
-    <Box sx={{ overflow: 'hidden', height: { lg: '100%' } }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
       {hasCoachPicker && (
-        <Box sx={{ px: 3, pt: 3, pb: 1 }}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-            Choose your coach
+        <Box sx={{ px: 3, py: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontWeight={700}
+            sx={{ display: 'block', mb: 1.5, textTransform: 'uppercase', letterSpacing: 1 }}
+          >
+            Select a coach
           </Typography>
-          <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1.5,
+              overflowX: 'auto',
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+              mx: -1,
+              px: 1,
+            }}
+          >
             {coaches!.map((c) => {
               const isSelected = selectedCoachId === c.coachUserId
               return (
-                <Paper
+                <Box
                   key={c.coachUserId}
-                  variant="outlined"
                   onClick={() => onCoachSelect?.(c.coachUserId)}
                   sx={{
-                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.25,
+                    px: 1.5,
+                    py: 1,
                     cursor: 'pointer',
+                    borderRadius: 2,
+                    border: 1,
                     borderColor: isSelected ? 'primary.main' : 'divider',
-                    borderWidth: isSelected ? 2 : 1,
-                    bgcolor: isSelected
-                      ? alpha(theme.palette.primary.main, 0.06)
-                      : 'background.paper',
-                    '&:hover': { borderColor: 'primary.main' },
-                    minWidth: 120,
-                    transition: 'border-color 0.15s, background-color 0.15s',
+                    bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.04) : 'transparent',
+                    transition: 'all 0.1s ease',
+                    whiteSpace: 'nowrap',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.06) : 'grey.50',
+                    }
                   }}
                 >
-                  <Stack alignItems="center" spacing={1}>
-                    <Avatar
-                      src={(c.coachUser as any).avatarUrl ?? undefined}
-                      sx={{ width: 48, height: 48, fontSize: '1rem' }}
-                    >
-                      {c.coachUser.firstName[0]}
-                      {c.coachUser.lastName[0]}
-                    </Avatar>
-                    <Typography variant="body2" fontWeight={600} textAlign="center">
-                      {c.coachUser.firstName} {c.coachUser.lastName}
-                    </Typography>
-                  </Stack>
-                </Paper>
+                  <Avatar
+                    src={(c.coachUser as any).avatarUrl ?? undefined}
+                    sx={{ width: 32, height: 32, fontSize: '0.875rem' }}
+                  >
+                    {c.coachUser.firstName[0]}
+                    {c.coachUser.lastName[0]}
+                  </Avatar>
+                  <Typography variant="body2" fontWeight={isSelected ? 600 : 500}>
+                    {c.coachUser.firstName} {c.coachUser.lastName}
+                  </Typography>
+                </Box>
               )
             })}
-          </Stack>
+          </Box>
         </Box>
       )}
 
       {coachNotYetChosen ? (
-        <Box sx={{ py: 8, textAlign: 'center' }}>
+        <Box sx={{ p: 6, textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Typography variant="body2" color="text.secondary">
             Select a coach above to see available times.
           </Typography>
         </Box>
       ) : (
-      <Stack
-        direction={{ xs: 'column', lg: 'row' }}
-        alignItems="stretch"
-        divider={
-          <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', lg: 'block' } }} />
-        }
-        sx={{ height: '100%' }}
-      >
-        {/* Column 1: Calendar Picker */}
-        <Box sx={{ width: { xs: '100%', lg: 400 }, flexShrink: 0, p: 3 }}>
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            fontWeight={800}
-            sx={{ display: 'block', mb: 2, letterSpacing: 1.2, fontSize: '0.7rem' }}
-          >
-            Select date
-          </Typography>
-          <Paper
-            variant="outlined"
-            sx={{ overflow: 'hidden', borderRadius: 1, bgcolor: 'background.paper' }}
-          >
-            <StaticDatePicker
-              displayStaticWrapperAs="desktop"
-              value={selectedDate}
-              onChange={(newValue) => newValue && onDateSelect(newValue)}
-              onMonthChange={onMonthChange}
-              minDate={new Date()}
-              maxDate={maxDate}
-              shouldDisableDate={(day) => {
-                if (maxDate && day > maxDate) return true
-                if (isFixedSlots && !isLoadingDates && availableDates) {
-                  return !availableDates.has(format(day, 'yyyy-MM-dd'))
-                }
-                return false
-              }}
-              slots={{ day: DaySlot }}
-              slotProps={{
-                actionBar: { actions: [] },
-              }}
-              sx={{
-                '.MuiDateCalendar-root': {
-                  width: '100%',
-                  maxWidth: 'none',
-                },
-              }}
-            />
-          </Paper>
-        </Box>
-
-        {/* Column 2: Slot Selection */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            overflow: 'hidden',
-          }}
+        <Stack
+          direction={{ xs: 'column', lg: 'row' }}
+          alignItems="stretch"
+          sx={{ flexGrow: 1, minHeight: 0 }}
+          divider={<Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', lg: 'block' } }} />}
         >
-          <Box sx={{ mb: 2 }}>
+          {/* Column 1: Calendar Picker */}
+          <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, p: 3 }}>
             <Typography
-              variant="overline"
+              variant="caption"
               color="text.secondary"
-              fontWeight={800}
-              sx={{ display: 'block', mb: 1, letterSpacing: 1.2, fontSize: '0.7rem' }}
+              fontWeight={700}
+              sx={{ display: 'block', mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}
             >
-              Available slots
+              1. Select date
             </Typography>
-            <Typography variant="h6" fontWeight={800} color="text.primary">
-              {dateFormat.format(selectedDate)}
-            </Typography>
+            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+              <StaticDatePicker
+                displayStaticWrapperAs="desktop"
+                value={selectedDate}
+                onChange={(newValue) => newValue && onDateSelect(newValue)}
+                onMonthChange={onMonthChange}
+                minDate={new Date()}
+                maxDate={maxDate}
+                shouldDisableDate={(day) => {
+                  if (maxDate && day > maxDate) return true
+                  if (isFixedSlots && !isLoadingDates && availableDates) {
+                    return !availableDates.has(format(day, 'yyyy-MM-dd'))
+                  }
+                  return false
+                }}
+                slots={{ day: DaySlot }}
+                slotProps={{
+                  actionBar: { actions: [] },
+                }}
+                sx={{
+                  '.MuiDateCalendar-root': { width: '100%', maxWidth: 'none' },
+                }}
+              />
+            </Paper>
           </Box>
-          <Divider sx={{ mb: 1 }} />
 
-          {/* Scrollable area for slots */}
+          {/* Column 2: Slot Selection */}
           <Box
             sx={{
-              overflowY: 'auto',
               flexGrow: 1,
-              pr: 1,
-              mt: 1,
-              '&::-webkit-scrollbar': { width: 4 },
-              '&::-webkit-scrollbar-thumb': { bgcolor: 'grey.200', borderRadius: 2 },
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
             }}
           >
-            {loading ? (
-              <PageSpinner />
-            ) : slots.length === 0 ? (
-              <Box sx={{ py: 6, textAlign: 'center' }}>
-                <Typography color="text.secondary" variant="body2">
-                  No availability on this date.
-                </Typography>
-              </Box>
-            ) : (
-              <Box sx={{ pb: 2 }}>
-                <SlotGroup
-                  title="Morning"
-                  slots={amSlots}
-                  selectedSlot={selectedSlot}
-                  onSelect={onSelect}
-                  timeFormat={timeFormat}
-                />
-                <SlotGroup
-                  title="Afternoon & Evening"
-                  slots={pmSlots}
-                  selectedSlot={selectedSlot}
-                  onSelect={onSelect}
-                  timeFormat={timeFormat}
-                />
-              </Box>
-            )}
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={700}
+                sx={{ display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: 1 }}
+              >
+                2. Available slots
+              </Typography>
+              <Typography variant="h6" fontWeight={800} color="text.primary">
+                {dateFormat.format(selectedDate)}
+              </Typography>
+            </Box>
+            <Divider sx={{ mb: 1 }} />
+
+            {/* Scrollable area for slots */}
+            <Box
+              sx={{
+                overflowY: 'auto',
+                flexGrow: 1,
+                pr: 1,
+                mt: 1,
+                '&::-webkit-scrollbar': { width: 4 },
+                '&::-webkit-scrollbar-thumb': { bgcolor: 'grey.200', borderRadius: 2 },
+              }}
+            >
+              {loading ? (
+                <PageSpinner />
+              ) : slots.length === 0 ? (
+                <Box sx={{ py: 6, textAlign: 'center' }}>
+                  <Typography color="text.secondary" variant="body2">
+                    No availability on this date.
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ pb: 2 }}>
+                  <SlotGroup
+                    title="Morning"
+                    slots={amSlots}
+                    selectedSlot={selectedSlot}
+                    onSelect={onSelect}
+                    timeFormat={timeFormat}
+                  />
+                  <SlotGroup
+                    title="Afternoon & Evening"
+                    slots={pmSlots}
+                    selectedSlot={selectedSlot}
+                    onSelect={onSelect}
+                    timeFormat={timeFormat}
+                  />
+                </Box>
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Stack>
+        </Stack>
       )}
     </Box>
   )
