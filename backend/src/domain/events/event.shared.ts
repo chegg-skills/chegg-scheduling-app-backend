@@ -73,6 +73,7 @@ export type CreateEventInput = {
   maxBookingWindowDays?: number | null;
   showDescription?: boolean;
   deferCoachReveal?: boolean;
+  allowStudentCoachChoice?: boolean;
   weeklyAvailability?: Array<{
     dayOfWeek: number;
     startTime: string;

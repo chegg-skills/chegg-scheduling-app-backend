@@ -31,6 +31,7 @@ const publicEventSelect = {
   maxBookingWindowDays: true,
   interactionType: true,
   assignmentStrategy: true,
+  allowStudentCoachChoice: true,
   coaches: {
     where: { isActive: true },
     orderBy: { coachOrder: "asc" as const },

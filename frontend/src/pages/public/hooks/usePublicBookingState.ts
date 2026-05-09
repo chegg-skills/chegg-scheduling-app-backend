@@ -52,6 +52,7 @@ export function usePublicBookingState() {
   const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null)
   const [calendarMonth, setCalendarMonth] = React.useState<Date>(new Date())
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [selectedCoachId, setSelectedCoachId] = React.useState<string | null>(null)
   const [studentInfo, setStudentInfo] = React.useState({
     name: '',
     email: '',
@@ -182,8 +183,23 @@ export function usePublicBookingState() {
           ? coachDetailsError || coachEventsError
           : directoryEventsError
 
-  // For coach-slug scope the coach is pre-selected via the URL.
-  const preferredCoachId = scope === 'coach' ? coachDetails?.id : undefined
+  // Reset selectedCoachId and selectedSlot when the selected event changes
+  React.useEffect(() => {
+    setSelectedCoachId(null)
+    setSelectedSlot(null)
+  }, [selectedEvent])
+
+  // Reset selectedSlot when the chosen coach changes
+  React.useEffect(() => {
+    setSelectedSlot(null)
+  }, [selectedCoachId])
+
+  const preferredCoachId =
+    scope === 'coach'
+      ? coachDetails?.id
+      : eventDetails?.allowStudentCoachChoice
+        ? (selectedCoachId ?? undefined)
+        : undefined
   const startDate = new Date(
     selectedDate.getFullYear(),
     selectedDate.getMonth(),
@@ -306,5 +322,7 @@ export function usePublicBookingState() {
     availableDates,
     isLoadingDates,
     handleMonthChange,
+    selectedCoachId,
+    setSelectedCoachId,
   }
 }

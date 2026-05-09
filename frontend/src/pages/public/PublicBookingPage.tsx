@@ -61,7 +61,13 @@ export function PublicBookingPage() {
     availableDates,
     isLoadingDates,
     handleMonthChange,
+    selectedCoachId,
+    setSelectedCoachId,
   } = usePublicBookingState()
+
+  const showCoachPicker =
+    !!eventDetails?.allowStudentCoachChoice && (eventDetails.coaches?.length ?? 0) > 0
+  const eventCoaches = showCoachPicker ? (eventDetails?.coaches ?? []) : []
 
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
@@ -152,7 +158,16 @@ export function PublicBookingPage() {
           </PublicStepHeader>
 
           {/* Main Content Area */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: currentStepKey === 'schedule' ? 0 : 2 }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflowY: currentStepKey === 'schedule' ? 'hidden' : 'auto',
+              display: currentStepKey === 'schedule' ? 'flex' : 'block',
+              flexDirection: 'column',
+              p: currentStepKey === 'schedule' ? 0 : 2,
+              minHeight: 0,
+            }}
+          >
             <PublicBookingFlow
               currentStepKey={currentStepKey}
               scope={scope}
@@ -180,6 +195,9 @@ export function PublicBookingPage() {
               availableDates={availableDates}
               isLoadingDates={isLoadingDates}
               onMonthChange={handleMonthChange}
+              eventCoaches={eventCoaches}
+              selectedCoachId={selectedCoachId}
+              onCoachSelect={setSelectedCoachId}
             />
           </Box>
 
@@ -195,7 +213,8 @@ export function PublicBookingPage() {
             nextDisabled={
               (currentStepKey === 'team' && !selectedTeam) ||
               (currentStepKey === 'event' && !selectedEvent) ||
-              (currentStepKey === 'schedule' && !selectedSlot) ||
+              (currentStepKey === 'schedule' &&
+                (!selectedSlot || (showCoachPicker && !selectedCoachId))) ||
               (currentStepKey === 'confirm' && (!studentInfo.name || !studentInfo.email))
             }
             isSubmitting={isSubmitting}

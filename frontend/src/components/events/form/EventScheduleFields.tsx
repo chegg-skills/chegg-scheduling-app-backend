@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
+import { Switch } from '@/components/shared/form/Switch'
 import type { EventFormValues } from './eventFormSchema'
 import {
   getAllowedAssignmentStrategies,
@@ -32,6 +33,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
     formState: { errors },
   } = useFormContext<EventFormValues>()
 
+  const allowStudentCoachChoice = watch('allowStudentCoachChoice')
   const assignmentOptions = getAllowedAssignmentStrategies(caps)
   const selectedStrategy = watch('assignmentStrategy') ?? getDefaultEventAssignmentStrategy(caps)
   const canChooseStrategy = assignmentOptions.length > 1
@@ -69,7 +71,28 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
         />
       </FormField>
 
-      {canChooseStrategy ? (
+      {/* ONE_TO_ONE only: let students pick their own coach from the pool */}
+      {!caps?.multipleParticipants && !caps?.multipleCoaches && (
+        <Stack spacing={0.5}>
+          <Controller
+            name="allowStudentCoachChoice"
+            control={control}
+            render={({ field }) => (
+              <Switch
+                label="Let students choose their coach"
+                checked={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ pl: 0.5 }}>
+            Students see the coach pool and pick who they want to book with before seeing available
+            slots.
+          </Typography>
+        </Stack>
+      )}
+
+      {!allowStudentCoachChoice && (canChooseStrategy ? (
         <FormField
           label="Assignment Strategy"
           htmlFor="assignmentStrategy"
@@ -113,7 +136,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
                 : 'Switch to a multi-coach interaction type if this event should rotate between coaches.'}
           </Typography>
         </FormField>
-      )}
+      ))}
 
       {/* Coach pool size — shown for all types when round-robin is selected, always for multi-coach */}
       {(isRoundRobin || caps?.multipleCoaches) && (
@@ -175,8 +198,9 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
 
       {/* DIRECT strategy: pick the always-assigned coach (stored as fixedLeadCoachId).
           Shown for all interaction types when DIRECT is selected, unless the FIXED_LEAD
-          leadership picker already shows it for multi-coach types. */}
-      {selectedStrategy === 'DIRECT' &&
+          leadership picker already shows it for multi-coach types.
+          Hidden when allowStudentCoachChoice is ON — students pick at booking time. */}
+      {!allowStudentCoachChoice && selectedStrategy === 'DIRECT' &&
         !(caps?.multipleCoaches && leadershipStrategy === 'FIXED_LEAD') && (
           <FormField
             label="Default Event Host"

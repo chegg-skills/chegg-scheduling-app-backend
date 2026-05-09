@@ -149,6 +149,7 @@ model Event {
   targetCoHostCount         Int?
   maxBookingWindowDays      Int?
   deferCoachReveal          Boolean                   @default(false)
+  allowStudentCoachChoice   Boolean                   @default(false)
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
   eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
