@@ -130,6 +130,13 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     );
   }
 
+  if (event.allowStudentCoachChoice && !preferredCoachId) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "A coach must be selected to book this session.",
+    );
+  }
+
   // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
   const booking = await prisma.$transaction(
     async (tx) => {

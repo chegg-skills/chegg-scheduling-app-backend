@@ -54,6 +54,7 @@ const EventBaseObjectCore = z.object({
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
+  allowStudentCoachChoice: z.boolean().optional(),
   weeklyAvailability: z
     .array(
       z.object({
@@ -184,6 +185,17 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
         code: z.ZodIssueCode.custom,
         path: ["deferCoachReveal"],
         message: "Deferred coach reveal is only supported for ONE_TO_MANY events.",
+      });
+    }
+  }
+
+  // allowStudentCoachChoice is only valid for ONE_TO_ONE events
+  if (data.allowStudentCoachChoice === true && caps) {
+    if (caps.multipleParticipants || caps.multipleCoaches) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["allowStudentCoachChoice"],
+        message: "Student coach choice is only supported for ONE_TO_ONE events.",
       });
     }
   }

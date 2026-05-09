@@ -4,12 +4,15 @@ import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
+import Avatar from '@mui/material/Avatar'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
 import { PickersDay } from '@mui/x-date-pickers/PickersDay'
 import type { PickersDayProps } from '@mui/x-date-pickers/PickersDay'
 import { format } from 'date-fns'
+import { alpha, useTheme } from '@mui/material/styles'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import type { AvailableSlot } from '@/api/public'
+import type { PublicEventCoach } from '@/types'
 import { SlotGroup } from './SlotGroup'
 
 interface SlotStepProps {
@@ -24,6 +27,9 @@ interface SlotStepProps {
   availableDates?: Set<string>
   isLoadingDates?: boolean
   onMonthChange?: (date: Date) => void
+  coaches?: PublicEventCoach[]
+  selectedCoachId?: string | null
+  onCoachSelect?: (coachId: string) => void
 }
 
 function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
@@ -74,7 +80,11 @@ export function SlotStep({
   availableDates,
   isLoadingDates,
   onMonthChange,
+  coaches,
+  selectedCoachId,
+  onCoachSelect,
 }: SlotStepProps) {
+  const theme = useTheme()
   // Use UTC arithmetic to match the backend's window calculation in
   // availability.service.ts. Both sides pin to UTC end-of-day so the boundary
   // is the same regardless of the server's or client's local timezone.
@@ -108,8 +118,63 @@ export function SlotStep({
     return { amSlots: am, pmSlots: pm }
   }, [slots])
 
+  const hasCoachPicker = !!coaches && coaches.length > 0
+  const coachNotYetChosen = hasCoachPicker && !selectedCoachId
+
   return (
     <Box sx={{ overflow: 'hidden', height: { lg: '100%' } }}>
+      {hasCoachPicker && (
+        <Box sx={{ px: 3, pt: 3, pb: 1 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+            Choose your coach
+          </Typography>
+          <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+            {coaches!.map((c) => {
+              const isSelected = selectedCoachId === c.coachUserId
+              return (
+                <Paper
+                  key={c.coachUserId}
+                  variant="outlined"
+                  onClick={() => onCoachSelect?.(c.coachUserId)}
+                  sx={{
+                    p: 2,
+                    cursor: 'pointer',
+                    borderColor: isSelected ? 'primary.main' : 'divider',
+                    borderWidth: isSelected ? 2 : 1,
+                    bgcolor: isSelected
+                      ? alpha(theme.palette.primary.main, 0.06)
+                      : 'background.paper',
+                    '&:hover': { borderColor: 'primary.main' },
+                    minWidth: 120,
+                    transition: 'border-color 0.15s, background-color 0.15s',
+                  }}
+                >
+                  <Stack alignItems="center" spacing={1}>
+                    <Avatar
+                      src={(c.coachUser as any).avatarUrl ?? undefined}
+                      sx={{ width: 48, height: 48, fontSize: '1rem' }}
+                    >
+                      {c.coachUser.firstName[0]}
+                      {c.coachUser.lastName[0]}
+                    </Avatar>
+                    <Typography variant="body2" fontWeight={600} textAlign="center">
+                      {c.coachUser.firstName} {c.coachUser.lastName}
+                    </Typography>
+                  </Stack>
+                </Paper>
+              )
+            })}
+          </Stack>
+        </Box>
+      )}
+
+      {coachNotYetChosen ? (
+        <Box sx={{ py: 8, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Select a coach above to see available times.
+          </Typography>
+        </Box>
+      ) : (
       <Stack
         direction={{ xs: 'column', lg: 'row' }}
         alignItems="stretch"
@@ -226,6 +291,7 @@ export function SlotStep({
           </Box>
         </Box>
       </Stack>
+      )}
     </Box>
   )
 }

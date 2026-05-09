@@ -214,6 +214,7 @@ export interface Event {
   bufferAfterMinutes: number
   showDescription: boolean
   deferCoachReveal: boolean
+  allowStudentCoachChoice: boolean
   maxBookingWindowDays: number | null
   teamId: string
   createdById: string
@@ -269,6 +270,7 @@ export interface PublicEventSummary extends Pick<
   | 'interactionType'
   | 'assignmentStrategy'
   | 'showDescription'
+  | 'allowStudentCoachChoice'
   | 'bookingMode'
   | 'maxBookingWindowDays'
 > {

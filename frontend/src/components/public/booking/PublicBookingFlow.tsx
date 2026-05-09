@@ -7,7 +7,7 @@ import { SlotStep } from '@/components/public/booking/SlotStep'
 import { ConfirmationForm } from '@/components/public/booking/ConfirmationForm'
 import type { BookingScope } from '@/pages/public/hooks/usePublicBookingState'
 import { AvailableSlot } from '@/api/public'
-import type { PublicTeamSummary, PublicEventSummary } from '@/types'
+import type { PublicTeamSummary, PublicEventSummary, PublicEventCoach } from '@/types'
 
 import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
@@ -80,6 +80,9 @@ interface PublicBookingFlowProps {
   availableDates?: Set<string>
   isLoadingDates?: boolean
   onMonthChange?: (date: Date) => void
+  eventCoaches?: PublicEventCoach[]
+  selectedCoachId?: string | null
+  onCoachSelect?: (coachId: string) => void
 }
 
 /**
@@ -112,6 +115,9 @@ export function PublicBookingFlow({
   availableDates,
   isLoadingDates,
   onMonthChange,
+  eventCoaches,
+  selectedCoachId,
+  onCoachSelect,
 }: PublicBookingFlowProps) {
   switch (currentStepKey) {
     case 'team':
@@ -165,6 +171,9 @@ export function PublicBookingFlow({
           availableDates={availableDates}
           isLoadingDates={isLoadingDates}
           onMonthChange={onMonthChange}
+          coaches={eventCoaches}
+          selectedCoachId={selectedCoachId}
+          onCoachSelect={onCoachSelect}
         />
       )
     case 'confirm':
