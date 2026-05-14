@@ -1,28 +1,39 @@
 import { useFormContext, Controller } from 'react-hook-form'
-import MenuItem from '@mui/material/MenuItem'
-import Stack from '@mui/material/Stack'
-import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
-import RadioGroup from '@mui/material/RadioGroup'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Radio from '@mui/material/Radio'
-import Typography from '@mui/material/Typography'
+import {
+  Autocomplete,
+  createFilterOptions,
+  TextField,
+  CircularProgress,
+  Stack,
+  Box,
+  Paper,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Typography,
+} from '@mui/material'
 import { FormField } from '@/components/shared/form/FormField'
-import { Select } from '@/components/shared/form/Select'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { useEventTypes } from '@/hooks/queries/useEventTypes'
 import { INTERACTION_TYPE_OPTIONS } from '@/constants/interactionTypes'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionType } from '@/types'
 
+const filter = createFilterOptions<EventTypeOption>()
+
+interface EventTypeOption {
+  id?: string
+  name: string
+  inputValue?: string
+}
+
 export function EventResourceFields() {
   const {
-    register,
     watch,
     control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
-  const { data: allEventTypes = [] } = useEventTypes()
+  const { data: allEventTypes = [], isLoading } = useEventTypes()
 
   const eventTypes = allEventTypes.filter((et) => et.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
@@ -33,23 +44,92 @@ export function EventResourceFields() {
         label="Event type"
         htmlFor="eventTypeId"
         error={errors.eventTypeId?.message}
-        info="The type of service for this event (e.g., Tutorial)."
+        info="The type of service for this event (e.g., Tutorial). You can also type to create a new one."
         required
       >
-        <Select
-          id="eventTypeId"
-          hasError={!!errors.eventTypeId}
-          value={watch('eventTypeId') || ''}
-          inputProps={{ 'aria-label': 'Event type' }}
-          {...register('eventTypeId')}
-        >
-          <MenuItem value="">Select an event type…</MenuItem>
-          {eventTypes.map((et) => (
-            <MenuItem key={et.id} value={et.id}>
-              {toTitleCase(et.name)}
-            </MenuItem>
-          ))}
-        </Select>
+        <Controller
+          name="eventTypeId"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              value={
+                eventTypes.find((et) => et.id === field.value) ||
+                (field.value ? { name: field.value } : null)
+              }
+              onChange={(_event, newValue) => {
+                if (typeof newValue === 'string') {
+                  field.onChange(newValue)
+                } else if (newValue && newValue.inputValue) {
+                  field.onChange(newValue.inputValue)
+                } else {
+                  field.onChange(newValue?.id || '')
+                }
+              }}
+              filterOptions={(options, params) => {
+                const filtered = filter(options, params)
+
+                const { inputValue } = params
+                // Suggest the creation of a new value
+                const isExisting = options.some((option) => inputValue === option.name)
+                if (inputValue !== '' && !isExisting) {
+                  filtered.push({
+                    inputValue,
+                    name: `Add "${inputValue}"`,
+                  })
+                }
+
+                return filtered
+              }}
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+              id="event-type-autocomplete"
+              options={eventTypes as EventTypeOption[]}
+              getOptionLabel={(option) => {
+                // Value selected with enter, right from the input
+                if (typeof option === 'string') {
+                  return option
+                }
+                // Add "xxx" option created dynamically
+                if (option.inputValue) {
+                  return option.inputValue
+                }
+                // Regular option
+                return toTitleCase(option.name)
+              }}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id || option.inputValue}>
+                  {option.name}
+                </li>
+              )}
+              sx={{ width: '100%' }}
+              freeSolo
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Select or type to create…"
+                  size="small"
+                  error={!!errors.eventTypeId}
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {isLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                    sx: {
+                      borderRadius: 1.5,
+                      '& fieldset': {
+                        borderColor: 'divider',
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+          )}
+        />
       </FormField>
 
       <FormField
@@ -73,14 +153,16 @@ export function EventResourceFields() {
                 return (
                   <Paper
                     key={option.key}
-                    variant="outlined"
                     sx={{
                       borderRadius: 1.5,
+                      border: '1px solid',
                       borderColor: isSelected ? 'primary.main' : 'divider',
-                      borderWidth: isSelected ? 2 : 1,
+                      boxShadow: isSelected
+                        ? (theme) => `inset 0 0 0 1px ${theme.palette.primary.main}`
+                        : 'none',
                       bgcolor: isSelected ? '#FFF6F0' : 'background.paper',
                       cursor: 'pointer',
-                      transition: 'border-color 0.15s, background-color 0.15s',
+                      transition: 'all 0.15s ease',
                       '&:hover': {
                         borderColor: 'primary.main',
                         bgcolor: '#FFF6F0',
