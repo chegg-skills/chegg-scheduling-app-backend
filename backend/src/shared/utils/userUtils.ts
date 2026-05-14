@@ -24,6 +24,8 @@ export const safeUserSelect = Prisma.validator<Prisma.UserSelect>()({
   role: true,
   timezone: true,
   zoomIsvLink: true,
+  zoomIsvLinkExpiresAt: true,
+  zoomIsvLinkReminderDays: true,
   isActive: true,
   lastLoginAt: true,
   createdAt: true,

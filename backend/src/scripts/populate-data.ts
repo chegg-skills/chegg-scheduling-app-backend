@@ -117,6 +117,16 @@ const demoTeams: DemoTeamDefinition[] = [
         lastName: "APIs",
         email: "noah.apis@demo.chegg.local",
       },
+      {
+        firstName: "Sophia",
+        lastName: "Cloud",
+        email: "sophia.cloud@demo.chegg.local",
+      },
+      {
+        firstName: "James",
+        lastName: "DevOps",
+        email: "james.devops@demo.chegg.local",
+      },
     ],
     events: [
       {
@@ -206,6 +216,16 @@ const demoTeams: DemoTeamDefinition[] = [
         firstName: "Mason",
         lastName: "Product",
         email: "mason.product@demo.chegg.local",
+      },
+      {
+        firstName: "Leo",
+        lastName: "Visual",
+        email: "leo.visual@demo.chegg.local",
+      },
+      {
+        firstName: "Zoe",
+        lastName: "Interaction",
+        email: "zoe.interaction@demo.chegg.local",
       },
     ],
     events: [
@@ -504,6 +524,7 @@ async function ensureAuthenticatedAdmin(): Promise<{
         lastName: SUPER_ADMIN_LAST_NAME,
         email: SUPER_ADMIN_EMAIL,
         password: DEFAULT_PASSWORD,
+        timezone: "Asia/Kolkata",
       },
     );
 
@@ -569,7 +590,7 @@ async function ensureUser(
       email: member.email,
       password: DEFAULT_PASSWORD,
       role,
-      timezone: "UTC",
+      timezone: "Asia/Kolkata",
     },
     authToken,
   );
@@ -611,8 +632,8 @@ async function ensureCoachAvailability(userIds: string[]) {
       data: [1, 2, 3, 4, 5].map((dayOfWeek) => ({
         userId,
         dayOfWeek,
-        startTime: "09:00",
-        endTime: "17:00",
+        startTime: "00:00",
+        endTime: "23:59",
       })),
     });
   }

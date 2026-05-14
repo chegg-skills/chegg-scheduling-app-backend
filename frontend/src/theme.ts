@@ -217,9 +217,15 @@ export const appTheme = createTheme({
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderWidth: '2px',
           },
+          '&.MuiInputBase-sizeSmall': {
+            minHeight: 40,
+          },
         },
         input: {
           padding: '14.5px 14px',
+          '&.MuiInputBase-inputSizeSmall': {
+            padding: '8.5px 14px',
+          },
         },
       },
     },

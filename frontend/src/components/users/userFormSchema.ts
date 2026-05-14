@@ -24,6 +24,14 @@ export const userFormSchema = z.object({
         return false
       }
     }, 'Enter a valid https Zoom ISV meeting link'),
+  zoomIsvLinkExpiresAt: z.string().nullable().optional(),
+  zoomIsvLinkReminderDays: z
+    .number()
+    .int()
+    .min(1, 'Must be at least 1')
+    .max(90, 'Must be 90 or fewer')
+    .nullable()
+    .optional(),
   isActive: z.boolean().optional(),
 })
 
@@ -41,6 +49,8 @@ export function getUserFormDefaults(user: SafeUser): UserFormValues {
     role: user.role,
     timezone: user.timezone,
     zoomIsvLink: user.zoomIsvLink ?? '',
+    zoomIsvLinkExpiresAt: user.zoomIsvLinkExpiresAt ?? null,
+    zoomIsvLinkReminderDays: user.zoomIsvLinkReminderDays ?? null,
     isActive: user.isActive,
   }
 }

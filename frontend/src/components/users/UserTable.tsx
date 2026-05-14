@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -39,6 +39,14 @@ export function UserTable({
 }: UserTableProps) {
   const [editingUser, setEditingUser] = useState<SafeUser | null>(null)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+
+  // Keep editingUser in sync with the live list so stale cached data doesn't
+  // persist in the form after the list refetches following a save.
+  useEffect(() => {
+    if (!editingUser) return
+    const fresh = users.find((u) => u.id === editingUser.id)
+    if (fresh && fresh !== editingUser) setEditingUser(fresh)
+  }, [users])
   const { mutate: deactivate } = useDeactivateUser()
   const { confirm, alert } = useConfirm()
   const {
@@ -96,7 +104,7 @@ export function UserTable({
           <TableBody>
             {sortedUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">
                     No users found.
                   </Typography>

@@ -1,5 +1,8 @@
-import type { Control, FieldErrors } from 'react-hook-form'
+import { Controller, type Control, type FieldErrors } from 'react-hook-form'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import Stack from '@mui/material/Stack'
+import { FormField } from '@/components/shared/form/FormField'
 import type { UserFormValues } from './userFormSchema'
 import { UserRoleStatusFields } from './UserRoleStatusFields'
 import { UserTimezoneField } from './UserTimezoneField'
@@ -25,10 +28,30 @@ export function UserSystemFields({
         control={control}
         errors={errors}
         canChangeRole={canChangeRole}
-        canChangeActiveStatus={canChangeActiveStatus}
       />
       <UserTimezoneField control={control} errors={errors} />
       <UserZoomLinkField control={control} errors={errors} />
+
+      {canChangeActiveStatus && (
+        <FormField label="Active status" htmlFor="isActive" error={errors.isActive?.message}>
+          <Controller
+            name="isActive"
+            control={control}
+            render={({ field }) => (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    id="isActive"
+                    checked={field.value ?? true}
+                    onChange={(event) => field.onChange(event.target.checked)}
+                  />
+                }
+                label="Account is active"
+              />
+            )}
+          />
+        </FormField>
+      )}
     </Stack>
   )
 }

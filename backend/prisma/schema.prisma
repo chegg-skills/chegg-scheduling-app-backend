@@ -24,8 +24,10 @@ model User {
   lockedUntil            DateTime?
   country                String?
   preferredLanguage      String                      @default("en")
-  zoomIsvLink            String?
-  publicBookingSlug      String                      @unique
+  zoomIsvLink              String?
+  zoomIsvLinkExpiresAt     DateTime?
+  zoomIsvLinkReminderDays  Int?
+  publicBookingSlug        String                      @unique
   ssoProvider            String?
   ssoSub                 String?
   ssoLinkedAt            DateTime?

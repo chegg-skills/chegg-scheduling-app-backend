@@ -116,4 +116,19 @@ export const teamTemplates: EmailTemplateMap = {
       { text: "View Team Dashboard", url: "{{frontendUrl}}" },
     ),
   },
+
+  ZOOM_ISV_LINK_EXPIRY_REMINDER: {
+    subject: "Action Required: Your Zoom ISV link expires on {{expiryDate}}",
+    preheader:
+      "Your Zoom ISV link expires in {{reminderDays}} days — update it before it breaks student sessions.",
+    text: "Hi {{coachName}}, your Zoom ISV link is set to expire on {{expiryDate}}. Please update it in your profile before it expires to avoid disrupting student sessions.",
+    html: wrapLayout(
+      "Zoom ISV Link Expiring Soon",
+      `<p>Hi <strong>{{coachName}}</strong>,</p>
+       <p>Your Zoom ISV link is set to expire on <strong>{{expiryDate}}</strong>.</p>
+       <p style="margin-top: 16px;">Please update your link before it expires — once expired, students won't be able to join sessions until a new link is saved.</p>`,
+      "Your Zoom ISV link expires on {{expiryDate}}.",
+      { text: "Update Profile", url: "{{frontendUrl}}/profile" },
+    ),
+  },
 };
