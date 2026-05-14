@@ -124,24 +124,24 @@ export function SlotStep({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
       {hasCoachPicker && (
-        <Box sx={{ px: 3, py: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ px: 3, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
           <Typography
             variant="caption"
             color="text.secondary"
             fontWeight={700}
-            sx={{ display: 'block', mb: 1.5, textTransform: 'uppercase', letterSpacing: 1 }}
+            sx={{ display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.625rem' }}
           >
             Select a coach
           </Typography>
           <Box
             sx={{
               display: 'flex',
-              gap: 1.5,
+              gap: 1,
               overflowX: 'auto',
               scrollbarWidth: 'none',
               '&::-webkit-scrollbar': { display: 'none' },
-              mx: -1,
-              px: 1,
+              mx: -0.5,
+              px: 0.5,
             }}
           >
             {coaches!.map((c) => {
@@ -153,11 +153,11 @@ export function SlotStep({
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1.25,
-                    px: 1.5,
-                    py: 1,
+                    gap: 1,
+                    px: 1.25,
+                    py: 0.75,
                     cursor: 'pointer',
-                    borderRadius: 2,
+                    borderRadius: 1.5,
                     border: 1,
                     borderColor: isSelected ? 'primary.main' : 'divider',
                     bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.04) : 'transparent',
@@ -171,12 +171,12 @@ export function SlotStep({
                 >
                   <Avatar
                     src={(c.coachUser as any).avatarUrl ?? undefined}
-                    sx={{ width: 32, height: 32, fontSize: '0.875rem' }}
+                    sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
                   >
                     {c.coachUser.firstName[0]}
                     {c.coachUser.lastName[0]}
                   </Avatar>
-                  <Typography variant="body2" fontWeight={isSelected ? 600 : 500}>
+                  <Typography variant="caption" fontWeight={isSelected ? 700 : 500}>
                     {c.coachUser.firstName} {c.coachUser.lastName}
                   </Typography>
                 </Box>

@@ -30,7 +30,7 @@ const EventTypeBase = z.object({
 const EventBaseObjectCore = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  eventTypeId: z.string().uuid("Invalid event type ID"),
+  eventTypeId: z.string().min(1, "Event Type is required"),
   interactionType: z.enum(INTERACTION_TYPE_KEYS),
   assignmentStrategy: z.nativeEnum(AssignmentStrategy),
   durationSeconds: z.coerce.number().int().positive(),

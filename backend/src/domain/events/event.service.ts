@@ -101,7 +101,7 @@ const createEvent = async (
 ): Promise<SafeEvent> => {
   await getManagedTeam(teamId, caller);
 
-  const context = await resolveCreateEventContext(payload);
+  const context = await resolveCreateEventContext(payload, caller.id);
 
   return prisma.event.create({
     data: buildEventCreateData({
@@ -154,7 +154,7 @@ const updateEvent = async (
     );
   }
 
-  const context = await resolveUpdateEventContext({ payload, existingEvent });
+  const context = await resolveUpdateEventContext({ payload, existingEvent, callerId: caller.id });
 
   let updatedEvent: SafeEvent;
   try {

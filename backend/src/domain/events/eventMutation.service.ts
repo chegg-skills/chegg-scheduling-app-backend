@@ -14,6 +14,8 @@ import {
 import { validateEventConfiguration } from "./eventCoach.service";
 import { resolveEventSchedulingConfig } from "./eventScheduling.service";
 import { CreateEventSchema, UpdateEventSchema } from "./event.schema";
+import { normalizeKey } from "./event.shared";
+import { prisma } from "../../shared/db/prisma";
 
 type ResolvedEventMutationContext = {
   eventType: Awaited<ReturnType<typeof getActiveEventType>>;
@@ -77,12 +79,51 @@ const resolveSessionLeadershipConfig = ({
   };
 };
 
+/**
+ * Ensures we have a valid eventTypeId. If the input is not a UUID,
+ * it treats it as a name for a new EventType, creating it if it doesn't exist.
+ */
+async function ensureEventTypeId(idOrName: string, callerId: string): Promise<string> {
+  // Check if it's already a UUID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(idOrName)) {
+    return idOrName;
+  }
+
+  const name = idOrName.trim();
+  const key = normalizeKey(name);
+
+  // Check for existing by key
+  const existing = await prisma.eventType.findUnique({
+    where: { key },
+  });
+
+  if (existing) {
+    return existing.id;
+  }
+
+  // Create new
+  const created = await prisma.eventType.create({
+    data: {
+      key,
+      name,
+      isActive: true,
+      createdById: callerId,
+      updatedById: callerId,
+    },
+  });
+
+  return created.id;
+}
+
 export const resolveCreateEventContext = async (
   payload: CreateEventInput,
+  callerId: string,
 ): Promise<ResolvedEventMutationContext> => {
   const validated = CreateEventSchema.body.parse(payload);
 
-  const eventType = await getActiveEventType(validated.eventTypeId);
+  const eventTypeId = await ensureEventTypeId(validated.eventTypeId, callerId);
+  const eventType = await getActiveEventType(eventTypeId);
   const interactionType = validated.interactionType as InteractionType;
   const assignmentStrategy = validated.assignmentStrategy;
 
@@ -116,13 +157,18 @@ export const resolveCreateEventContext = async (
 export const resolveUpdateEventContext = async ({
   payload,
   existingEvent,
+  callerId,
 }: {
   payload: UpdateEventInput;
   existingEvent: SafeEvent;
+  callerId: string;
 }): Promise<ResolvedEventMutationContext> => {
   const validated = UpdateEventSchema.body.parse(payload);
 
-  const nextEventTypeId = validated.eventTypeId ?? existingEvent.eventTypeId;
+  const nextEventTypeId = await ensureEventTypeId(
+    validated.eventTypeId ?? existingEvent.eventTypeId,
+    callerId,
+  );
   const nextInteractionType = (validated.interactionType ??
     existingEvent.interactionType) as InteractionType;
 
