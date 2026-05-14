@@ -5,6 +5,7 @@ import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Clock, Mail, MapPin, Phone, Video } from 'lucide-react'
+import { useMemo } from 'react'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/ui/Badge'
@@ -20,6 +21,16 @@ const roleColor = {
 }
 
 export function UserProfileHeader({ user }: UserProfileHeaderProps) {
+  const zoomExpiryBadge = useMemo(() => {
+    if (!user.zoomIsvLink || !user.zoomIsvLinkExpiresAt) return null
+    const daysLeft = Math.ceil(
+      (new Date(user.zoomIsvLinkExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+    )
+    if (daysLeft <= 0) return <Badge label="Expired" color="red" variant="soft" />
+    if (daysLeft <= 7) return <Badge label={`${daysLeft}d left`} color="yellow" variant="soft" />
+    return <Badge label={`Expires in ${daysLeft}d`} color="gray" variant="soft" />
+  }, [user.zoomIsvLink, user.zoomIsvLinkExpiresAt])
+
   return (
     <Stack direction="row" spacing={3} alignItems="flex-start" sx={{ mb: 4 }}>
       <Avatar
@@ -86,7 +97,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
                 <Video size={16} />
-                <Typography variant="body2" sx={{ display: 'flex', gap: 0.5 }}>
+                <Typography variant="body2" sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                   Zoom ISV link:{' '}
                   {user.zoomIsvLink ? (
                     <Link
@@ -106,6 +117,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
                     'Not configured'
                   )}
                 </Typography>
+                {zoomExpiryBadge}
               </Stack>
             </Stack>
           </Grid>

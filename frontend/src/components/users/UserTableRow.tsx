@@ -10,7 +10,7 @@ import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { SafeUser } from '@/types'
-import { getUserRoleBadgeProps, getUserStatusBadgeProps } from './userTableUtils'
+import { getUserRoleBadgeProps, getUserStatusBadgeProps, getZoomExpiryLabel } from './userTableUtils'
 
 interface UserTableRowProps {
   canDeactivate: boolean
@@ -78,6 +78,9 @@ export function UserTableRow({
       </TableCell>
       <TableCell>
         <Badge {...getUserStatusBadgeProps(user.isActive)} />
+      </TableCell>
+      <TableCell>
+        <Badge {...getZoomExpiryLabel(user.zoomIsvLinkExpiresAt)} />
       </TableCell>
       <TableCell>
         {user.role === 'COACH' ? (

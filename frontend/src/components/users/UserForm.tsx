@@ -52,11 +52,22 @@ export function UserForm({ user, currentUserRole, onSuccess, onCancel }: UserFor
 
     if (isSelf) {
       const { email: _email, role: _role, isActive: _isActive, ...selfPayload } = payload
-      updateSelf.mutate(selfPayload, { onSuccess })
+      updateSelf.mutate(selfPayload, {
+        onSuccess: () => {
+          onSuccess?.()
+        },
+      })
       return
     }
 
-    updateAdmin.mutate({ userId: user.id, data: payload }, { onSuccess })
+    updateAdmin.mutate(
+      { userId: user.id, data: payload },
+      {
+        onSuccess: () => {
+          onSuccess?.()
+        },
+      }
+    )
   }
 
   function handleCancel() {

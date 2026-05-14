@@ -56,6 +56,8 @@ export const UpdateUserSchema = {
       preferredLanguage: z.string().trim().optional(),
       isActive: z.boolean().optional(),
       zoomIsvLink: z.string().trim().url().optional().or(z.literal("")).nullable(),
+      zoomIsvLinkExpiresAt: z.coerce.date().optional().nullable(),
+      zoomIsvLinkReminderDays: z.number().int().min(1).max(90).optional().nullable(),
       publicBookingSlug: z.string().trim().optional(),
     })
     .passthrough(),
@@ -73,6 +75,8 @@ export const UpdateMyProfileSchema = {
       timezone: z.string().trim().optional(),
       preferredLanguage: z.string().trim().optional(),
       zoomIsvLink: z.string().trim().url().optional().or(z.literal("")).nullable(),
+      zoomIsvLinkExpiresAt: z.coerce.date().optional().nullable(),
+      zoomIsvLinkReminderDays: z.number().int().min(1).max(90).optional().nullable(),
     })
     .passthrough(),
 };

@@ -34,6 +34,8 @@ export interface SafeUser {
   role: UserRole
   timezone: string
   zoomIsvLink: string | null
+  zoomIsvLinkExpiresAt: string | null
+  zoomIsvLinkReminderDays: number | null
   isActive: boolean
   failedLoginAttempts?: number
   lockedUntil?: string | null

@@ -48,7 +48,14 @@ export function TeamForm({ team, onSuccess, onCancel }: TeamFormProps) {
 
   function onSubmit(values: TeamFormValues) {
     if (isEdit && team) {
-      update({ teamId: team.id, data: values }, { onSuccess })
+      update(
+        { teamId: team.id, data: values },
+        {
+          onSuccess: () => {
+            onSuccess?.()
+          },
+        }
+      )
       return
     }
 

@@ -16,6 +16,7 @@ import {
   validateZoomIsvLink,
 } from "../../shared/utils/userUtils";
 import { ListUsersSchema, UpdateUserSchema, UpdateMyProfileSchema } from "./user.schema";
+import { queueZoomIsvLinkExpiryReminder } from "./user.notification";
 
 type ListUsersOptions = {
   page?: number;
@@ -35,6 +36,8 @@ type UpdateUserInput = {
   timezone?: string;
   preferredLanguage?: string;
   zoomIsvLink?: string;
+  zoomIsvLinkExpiresAt?: Date | null;
+  zoomIsvLinkReminderDays?: number | null;
   isActive?: boolean;
 };
 
@@ -48,6 +51,8 @@ type UpdateMyProfileInput = {
   timezone?: string;
   preferredLanguage?: string;
   zoomIsvLink?: string;
+  zoomIsvLinkExpiresAt?: Date | null;
+  zoomIsvLinkReminderDays?: number | null;
 };
 
 const assignCoachPublicBookingSlug = async (
@@ -255,6 +260,12 @@ const updateUser = async (
       ? validateZoomIsvLink(validated.zoomIsvLink)
       : null;
   }
+  if (validated.zoomIsvLinkExpiresAt !== undefined) {
+    updateData.zoomIsvLinkExpiresAt = validated.zoomIsvLinkExpiresAt ?? null;
+  }
+  if (validated.zoomIsvLinkReminderDays !== undefined) {
+    updateData.zoomIsvLinkReminderDays = validated.zoomIsvLinkReminderDays ?? null;
+  }
 
   await assignCoachPublicBookingSlug(userId, validated, updateData);
 
@@ -271,7 +282,9 @@ const updateUser = async (
       data: updateData,
     });
 
-    return toSafeUser(updatedUser);
+    const safeUser = toSafeUser(updatedUser);
+    void queueZoomIsvLinkExpiryReminder(safeUser);
+    return safeUser;
   } catch (error) {
     return rethrowPrismaError(error, {
       P2025: { status: StatusCodes.NOT_FOUND, message: "User not found." },
@@ -353,6 +366,12 @@ const updateMyProfile = async (
       ? validateZoomIsvLink(validated.zoomIsvLink)
       : null;
   }
+  if (validated.zoomIsvLinkExpiresAt !== undefined) {
+    updateData.zoomIsvLinkExpiresAt = validated.zoomIsvLinkExpiresAt ?? null;
+  }
+  if (validated.zoomIsvLinkReminderDays !== undefined) {
+    updateData.zoomIsvLinkReminderDays = validated.zoomIsvLinkReminderDays ?? null;
+  }
 
   await assignCoachPublicBookingSlug(userId, validated, updateData);
 
@@ -369,7 +388,9 @@ const updateMyProfile = async (
       data: updateData,
     });
 
-    return toSafeUser(updatedUser);
+    const safeUser = toSafeUser(updatedUser);
+    void queueZoomIsvLinkExpiryReminder(safeUser);
+    return safeUser;
   } catch (error) {
     return rethrowPrismaError(error, {
       P2025: { status: StatusCodes.NOT_FOUND, message: "User not found." },

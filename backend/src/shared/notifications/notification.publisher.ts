@@ -26,7 +26,8 @@ type NotificationType =
   | "EVENT_COACH_ADDED"
   | "AVAILABILITY_EXCEPTION_CREATED"
   | "AVAILABILITY_EXCEPTION_REMOVED"
-  | "COACH_REVEAL_SENT";
+  | "COACH_REVEAL_SENT"
+  | "ZOOM_ISV_LINK_EXPIRY_REMINDER";
 
 type NotificationPayload = {
   type: NotificationType;

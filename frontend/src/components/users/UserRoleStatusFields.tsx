@@ -1,5 +1,3 @@
-import Checkbox from '@mui/material/Checkbox'
-import FormControlLabel from '@mui/material/FormControlLabel'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import { Controller, type Control, type FieldErrors } from 'react-hook-form'
@@ -9,14 +7,12 @@ import type { UserFormValues } from './userFormSchema'
 import { USER_ROLES } from './userSystemFieldUtils'
 
 interface UserRoleStatusFieldsProps {
-  canChangeActiveStatus: boolean
   canChangeRole: boolean
   control: Control<UserFormValues>
   errors: FieldErrors<UserFormValues>
 }
 
 export function UserRoleStatusFields({
-  canChangeActiveStatus,
   canChangeRole,
   control,
   errors,
@@ -38,27 +34,6 @@ export function UserRoleStatusFields({
           )}
         />
       </FormField>
-
-      {canChangeActiveStatus && (
-        <FormField label="Active status" htmlFor="isActive" error={errors.isActive?.message}>
-          <Controller
-            name="isActive"
-            control={control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    id="isActive"
-                    checked={field.value ?? true}
-                    onChange={(event) => field.onChange(event.target.checked)}
-                  />
-                }
-                label="Account is active"
-              />
-            )}
-          />
-        </FormField>
-      )}
     </Stack>
   )
 }

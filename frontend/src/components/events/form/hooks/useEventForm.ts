@@ -116,7 +116,14 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
     delete apiPayload.durationMinutes
 
     if (isEdit && event) {
-      update({ eventId: event.id, data: apiPayload as any }, { onSuccess })
+      update(
+        { eventId: event.id, data: apiPayload as any },
+        {
+          onSuccess: () => {
+            onSuccess?.()
+          },
+        }
+      )
     } else {
       create(apiPayload as any, {
         onSuccess: () => {
