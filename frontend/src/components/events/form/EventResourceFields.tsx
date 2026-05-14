@@ -83,7 +83,7 @@ export function EventResourceFields() {
               selectOnFocus
               clearOnBlur
               handleHomeEndKeys
-              id="event-type-autocomplete"
+              id="eventTypeId"
               options={eventTypes as EventTypeOption[]}
               getOptionLabel={(option) => {
                 // Value selected with enter, right from the input
