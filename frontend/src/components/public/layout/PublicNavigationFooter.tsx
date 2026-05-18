@@ -14,6 +14,7 @@ interface PublicNavigationFooterProps {
   submittingLabel?: string
   showBack?: boolean
   onTroubleshoot?: () => void
+  extraAccessory?: React.ReactNode
 }
 
 /**
@@ -31,6 +32,7 @@ export function PublicNavigationFooter({
   submittingLabel = 'Confirming...',
   showBack = true,
   onTroubleshoot,
+  extraAccessory,
 }: PublicNavigationFooterProps) {
   return (
     <Box
@@ -56,7 +58,7 @@ export function PublicNavigationFooter({
               fontWeight: 700,
               textTransform: 'none',
               color: 'text.secondary',
-              visibility: backDisabled ? 'hidden' : 'visible',
+              display: backDisabled ? 'none' : 'inline-flex',
             }}
           >
             {backLabel}
@@ -81,6 +83,7 @@ export function PublicNavigationFooter({
             Having trouble?
           </Button>
         )}
+        {extraAccessory}
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

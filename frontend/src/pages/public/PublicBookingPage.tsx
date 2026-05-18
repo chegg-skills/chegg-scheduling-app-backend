@@ -12,6 +12,7 @@ import { PublicBookingSummary } from '@/components/public/booking/PublicBookingS
 import { PublicBookingFlow } from '@/components/public/booking/PublicBookingFlow'
 import { SessionIntroduction } from '@/components/public/booking/SessionIntroduction'
 import { TroubleshootDialog } from '@/components/public/booking/TroubleshootDialog'
+import { PublicTimezoneSelect } from '@/components/public/booking/PublicTimezoneSelect'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
 import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel'
@@ -63,6 +64,8 @@ export function PublicBookingPage() {
     handleMonthChange,
     selectedCoachId,
     setSelectedCoachId,
+    selectedTimezone,
+    setSelectedTimezone,
   } = usePublicBookingState()
 
   const showCoachPicker =
@@ -99,6 +102,7 @@ export function PublicBookingPage() {
           newTime={
             selectedSlot
               ? new Intl.DateTimeFormat('en-US', {
+                  timeZone: selectedTimezone,
                   hour: 'numeric',
                   minute: '2-digit',
                   hour12: true,
@@ -198,6 +202,8 @@ export function PublicBookingPage() {
               eventCoaches={eventCoaches}
               selectedCoachId={selectedCoachId}
               onCoachSelect={setSelectedCoachId}
+              selectedTimezone={selectedTimezone}
+              setSelectedTimezone={setSelectedTimezone}
             />
           </Box>
 
@@ -221,6 +227,14 @@ export function PublicBookingPage() {
             nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
             onTroubleshoot={() => setTroubleshootOpen(true)}
+            extraAccessory={
+              currentStepKey === 'schedule' ? (
+                <PublicTimezoneSelect
+                  value={selectedTimezone}
+                  onChange={setSelectedTimezone}
+                />
+              ) : undefined
+            }
           />
         </PublicMainContent>
       </PublicBaseLayout>

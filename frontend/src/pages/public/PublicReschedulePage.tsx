@@ -21,6 +21,7 @@ import { SuccessStep } from '@/components/public/booking/SuccessStep'
 import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHeader'
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { SlotStep } from '@/components/public/booking/SlotStep'
+import { PublicTimezoneSelect } from '@/components/public/booking/PublicTimezoneSelect'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
@@ -44,6 +45,9 @@ export function PublicReschedulePage() {
   const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isSuccess, setIsSuccess] = React.useState(false)
+  const [selectedTimezone, setSelectedTimezone] = React.useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  )
   const [rescheduleError, setRescheduleError] = React.useState<string | null>(null)
   const [troubleshootOpen, setTroubleshootOpen] = React.useState(false)
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
@@ -102,6 +106,7 @@ export function PublicReschedulePage() {
     try {
       await bookingsApi.reschedule(bookingId, {
         startTime: selectedSlot,
+        timezone: selectedTimezone,
         token,
       })
       setIsSuccess(true)
@@ -140,6 +145,7 @@ export function PublicReschedulePage() {
           newTime={
             selectedSlot
               ? new Intl.DateTimeFormat('en-US', {
+                  timeZone: selectedTimezone,
                   hour: 'numeric',
                   minute: '2-digit',
                   hour12: true,
@@ -219,6 +225,8 @@ export function PublicReschedulePage() {
               }}
               selectedSlot={selectedSlot}
               onSelect={setSelectedSlot}
+              selectedTimezone={selectedTimezone}
+              setSelectedTimezone={setSelectedTimezone}
             />
           </Box>
 
@@ -236,6 +244,12 @@ export function PublicReschedulePage() {
             nextDisabled={!selectedSlot}
             isSubmitting={isSubmitting}
             onTroubleshoot={() => setTroubleshootOpen(true)}
+            extraAccessory={
+              <PublicTimezoneSelect
+                value={selectedTimezone}
+                onChange={setSelectedTimezone}
+              />
+            }
           />
         </PublicMainContent>
       </PublicBaseLayout>
