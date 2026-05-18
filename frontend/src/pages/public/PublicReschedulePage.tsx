@@ -7,7 +7,7 @@ import {
   useOutletContext,
 } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { startOfDay, endOfDay } from 'date-fns'
+import { startOfDayInTimezone } from '@/utils/dateTimezone'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
@@ -38,8 +38,24 @@ export function PublicReschedulePage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
-  // Capture token once from initial URL so it survives after we clean the URL below
-  const [token] = React.useState(() => searchParams.get('token') || '')
+  // Capture token once from initial URL or fallback to sessionStorage so it survives refreshes
+  const [token] = React.useState(() => {
+    const urlToken = searchParams.get('token')
+    const storageKey = `reschedule_token_${bookingId}`
+    if (urlToken) {
+      try {
+        sessionStorage.setItem(storageKey, urlToken)
+      } catch (e) {
+        console.warn('Failed to save reschedule token to sessionStorage', e)
+      }
+      return urlToken
+    }
+    try {
+      return sessionStorage.getItem(storageKey) || ''
+    } catch {
+      return ''
+    }
+  })
 
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date())
   const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null)
@@ -81,10 +97,22 @@ export function PublicReschedulePage() {
   // 2. Fetch Slots for the Event
   const { startDate, endDate } = React.useMemo(
     () => ({
-      startDate: startOfDay(selectedDate).toISOString(),
-      endDate: endOfDay(selectedDate).toISOString(),
+      startDate: startOfDayInTimezone(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        selectedTimezone
+      ).toISOString(),
+      endDate: new Date(
+        startOfDayInTimezone(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate() + 1,
+          selectedTimezone
+        ).getTime() - 1
+      ).toISOString(),
     }),
-    [selectedDate]
+    [selectedDate, selectedTimezone]
   )
 
   const { data: slotsData, isLoading: isLoadingSlots } = useQuery({
@@ -144,19 +172,30 @@ export function PublicReschedulePage() {
           newDate={selectedDate}
           newTime={
             selectedSlot
-              ? new Intl.DateTimeFormat('en-US', {
-                timeZone: selectedTimezone,
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-              }).format(new Date(selectedSlot))
+              ? (() => {
+                  const dateObj = new Date(selectedSlot)
+                  const timeStr = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(dateObj)
+                  const tzName = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    timeZoneName: 'long',
+                  })
+                    .formatToParts(dateObj)
+                    .find((p) => p.type === 'timeZoneName')?.value || ''
+                  return tzName ? `${timeStr} (${tzName})` : timeStr
+                })()
               : ''
           }
           eventName={bookingData.event?.name || ''}
           mentorName={
             bookingData.coach ? `${bookingData.coach.firstName} ${bookingData.coach.lastName}` : ''
           }
-          onReset={() => window.location.reload()}
+          selectedTimezone={selectedTimezone}
+          onReset={() => navigate('/')}
         />
       </LocalizationProvider>
     )
@@ -189,12 +228,14 @@ export function PublicReschedulePage() {
             {...currentBookingInfo}
             selectedDate={currentBookingInfo.date}
             selectedSlot={currentBookingInfo.slot}
+            selectedTimezone={selectedTimezone}
           />
 
           <PublicBookingSummary
             title="New selection"
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
+            selectedTimezone={selectedTimezone}
           />
         </PublicSidePanel>
 
@@ -214,7 +255,16 @@ export function PublicReschedulePage() {
           </PublicStepHeader>
 
           {/* Main Step Content */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflowY: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              p: 0,
+              minHeight: 0,
+            }}
+          >
             <SlotStep
               slots={slots}
               loading={isLoadingSlots}
@@ -236,11 +286,10 @@ export function PublicReschedulePage() {
             </Box>
           )}
           <PublicNavigationFooter
-            onBack={() => navigate('/')}
+            showBack={false}
             onNext={handleReschedule}
-            backLabel="Cancel"
-            nextLabel="Confirm reschedule"
-            submittingLabel="Updating..."
+            nextLabel="Reschedule"
+            submittingLabel="Rescheduling..."
             nextDisabled={!selectedSlot}
             isSubmitting={isSubmitting}
             onTroubleshoot={() => setTroubleshootOpen(true)}

@@ -1,5 +1,6 @@
-import { EventBookingMode, Prisma, UserRole } from "@prisma/client";
+import { EventBookingMode, Prisma, UserAvailabilityException, UserRole, UserWeeklyAvailability } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
+import { toDateOnlyString } from "../../shared/utils/date";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   findAvailabilityException,
@@ -7,6 +8,7 @@ import {
   toLocalAvailabilityInfo,
   resolveAvailabilityFromException,
   type AvailabilityClient,
+  type LocalAvailabilityInfo,
 } from "./availability.shared";
 import { type SafeEvent } from "../events/event.shared";
 import {
@@ -28,6 +30,127 @@ import { getCoachConflicts } from "./availabilityConflict.service";
  * Facade service for availability lookups.
  * Orchestrates calendar data (weekly/exceptions) and booking conflicts.
  */
+
+function toNextDateString(dateString: string): string {
+  const [y, m, d] = dateString.split("-").map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d + 1));
+  return toDateOnlyString(next);
+}
+
+/**
+ * Checks availability for a session that spans the coach's local midnight by
+ * splitting the session at midnight and verifying each half independently:
+ *   - Day 1: start → 23:59 must be covered by availability
+ *   - Day 2: 00:00 → end must be covered by availability
+ */
+function isCoachAvailableAcrossMidnight(
+  startTime: Date,
+  endTime: Date,
+  calendar: { weekly: UserWeeklyAvailability[]; exceptions: UserAvailabilityException[] },
+  timezone: string,
+): boolean {
+  const startLocal = toLocalAvailabilityInfo(startTime, timezone);
+  const endLocal = toLocalAvailabilityInfo(endTime, timezone);
+  const day2DateString = toNextDateString(startLocal.dateString);
+  const day2DayOfWeek = (startLocal.dayOfWeek + 1) % 7;
+
+  const beforeMidnight: LocalAvailabilityInfo = {
+    hhmm: "23:59",
+    dayOfWeek: startLocal.dayOfWeek,
+    dateString: startLocal.dateString,
+  };
+  const atMidnight: LocalAvailabilityInfo = {
+    hhmm: "00:00",
+    dayOfWeek: day2DayOfWeek,
+    dateString: day2DateString,
+  };
+
+  // Day 1: start → 23:59
+  const day1Exception = findAvailabilityException(calendar.exceptions, startLocal.dateString);
+  const day1ExceptionResult = resolveAvailabilityFromException(
+    day1Exception,
+    startLocal,
+    beforeMidnight,
+  );
+  if (day1ExceptionResult === false) return false;
+  if (
+    day1ExceptionResult === null &&
+    !isWithinWeeklyAvailability(calendar.weekly, startLocal, beforeMidnight)
+  ) {
+    return false;
+  }
+
+  // Day 2: 00:00 → end
+  const day2Exception = findAvailabilityException(calendar.exceptions, day2DateString);
+  const day2ExceptionResult = resolveAvailabilityFromException(
+    day2Exception,
+    atMidnight,
+    endLocal,
+  );
+  if (day2ExceptionResult === false) return false;
+  if (
+    day2ExceptionResult === null &&
+    !isWithinWeeklyAvailability(calendar.weekly, atMidnight, endLocal)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Computes the end-of-day boundary (23:59:59.999) for today + daysAhead in the
+ * given IANA timezone using a two-pass approach, mirroring the frontend's
+ * startOfDayInTimezone utility. Falls back to UTC arithmetic if timezone is
+ * invalid so booking-window enforcement degrades gracefully.
+ */
+function endOfBookingWindowInTimezone(timezone: string, daysAhead: number): Date {
+  try {
+    const now = Date.now();
+    const dateParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date(now));
+    const get = (type: string) =>
+      parseInt(dateParts.find((p) => p.type === type)?.value ?? "0", 10);
+    const year = get("year");
+    const month = get("month") - 1; // 0-indexed for Date.UTC
+    const day = get("day");
+
+    // Target: start of (today + daysAhead + 1) in the student's TZ, minus 1ms
+    const targetDay = day + daysAhead + 1;
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    const parseHMS = (ms: number) => {
+      const parts = fmt.formatToParts(new Date(ms));
+      const g = (t: string) => parseInt(parts.find((p) => p.type === t)?.value ?? "0", 10);
+      return { h: g("hour") % 24, m: g("minute"), s: g("second") };
+    };
+
+    let utcMs = Date.UTC(year, month, targetDay, 12, 0, 0);
+    const { h: h1, m: m1, s: s1 } = parseHMS(utcMs);
+    utcMs -= (h1 * 3600 + m1 * 60 + s1) * 1000;
+    const { h: h2, m: m2, s: s2 } = parseHMS(utcMs);
+    if (h2 !== 0 || m2 !== 0 || s2 !== 0) {
+      if (h2 > 12) utcMs += (24 - h2) * 3_600_000 - m2 * 60_000 - s2 * 1000;
+      else utcMs -= (h2 * 3600 + m2 * 60 + s2) * 1000;
+    }
+    return new Date(utcMs - 1); // 1ms before next-day midnight = end of window day
+  } catch {
+    // Invalid timezone — fall back to UTC arithmetic
+    const windowEnd = new Date();
+    windowEnd.setUTCDate(windowEnd.getUTCDate() + daysAhead);
+    windowEnd.setUTCHours(23, 59, 59, 999);
+    return windowEnd;
+  }
+}
 
 const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
   scheduleSlots: {
@@ -83,11 +206,21 @@ const isCoachAvailable = async (
   }
 
   // 3. Exception Decision (Overrides)
-  const startLocal = toLocalAvailabilityInfo(startTime, user.timezone);
-  const endLocal = toLocalAvailabilityInfo(effectiveEndTime, user.timezone);
+  let startLocal: LocalAvailabilityInfo;
+  let endLocal: LocalAvailabilityInfo;
+  try {
+    startLocal = toLocalAvailabilityInfo(startTime, user.timezone);
+    endLocal = toLocalAvailabilityInfo(effectiveEndTime, user.timezone);
+  } catch {
+    console.warn(
+      `[isCoachAvailable] Invalid timezone "${user.timezone}" for user ${userId}. Treating as unavailable.`,
+    );
+    return false;
+  }
 
   if (startLocal.dateString !== endLocal.dateString) {
-    return false; // Sessions across date boundaries are currently unsupported
+    if (options.ignoreWeeklySchedule) return true;
+    return isCoachAvailableAcrossMidnight(startTime, effectiveEndTime, calendar, user.timezone);
   }
 
   const dayException = findAvailabilityException(calendar.exceptions, startLocal.dateString);
@@ -124,6 +257,7 @@ const getAvailableSlots = async (
   startDate: Date,
   endDate: Date,
   preferredCoachId?: string,
+  studentTimezone?: string,
 ): Promise<AvailableSlot[]> => {
   const eventResult = await prisma.event.findUnique({
     where: { id: eventId },
@@ -157,15 +291,21 @@ const getAvailableSlots = async (
   }
 
   // Enforce booking window if set.
-  // Use UTC arithmetic throughout so the boundary is consistent regardless of
-  // the server's local timezone. The frontend mirrors this with setUTCDate /
-  // setUTCHours so both sides agree on the last bookable moment.
+  // When studentTimezone is provided, anchor the window boundary to the end of
+  // day in the student's timezone so UTC±12 users are not off by a day.
+  // Falls back to UTC arithmetic (matching the frontend's SlotStep.tsx behaviour)
+  // when studentTimezone is absent or invalid.
   let effectiveMaxDate = endDate;
   const event = eventResult as any;
   if (event.maxBookingWindowDays != null) {
-    const windowEnd = new Date();
-    windowEnd.setUTCDate(windowEnd.getUTCDate() + event.maxBookingWindowDays);
-    windowEnd.setUTCHours(23, 59, 59, 999);
+    const windowEnd = studentTimezone
+      ? endOfBookingWindowInTimezone(studentTimezone, event.maxBookingWindowDays)
+      : (() => {
+          const d = new Date();
+          d.setUTCDate(d.getUTCDate() + event.maxBookingWindowDays);
+          d.setUTCHours(23, 59, 59, 999);
+          return d;
+        })();
 
     if (windowEnd < effectiveMaxDate) {
       effectiveMaxDate = windowEnd;

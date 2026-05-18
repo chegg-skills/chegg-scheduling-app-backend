@@ -21,6 +21,7 @@ import {
   useEventScheduleSlots,
 } from '@/hooks/queries/useEvents'
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
+import { useBookings } from '@/hooks/queries/useBookings'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TabPanel } from '@/components/shared/ui/TabPanel'
@@ -52,6 +53,19 @@ export function EventDetailPage() {
     isFetching: isFetchingSlots,
   } = useEventScheduleSlots(eventId)
   const { data: teamMembersResponse } = useTeamMembers(event?.teamId ?? '')
+  
+  const { data: upcomingBookingsRes } = useBookings({
+    eventId,
+    status: 'CONFIRMED',
+    limit: 100,
+  })
+
+  const upcomingCount = useMemo(() => {
+    const bookings = upcomingBookingsRes?.bookings ?? []
+    const now = new Date()
+    return bookings.filter((b) => new Date(b.startTime) >= now).length
+  }, [upcomingBookingsRes])
+
   const updateEventMutation = useUpdateEvent()
   const deleteEventMutation = useDeleteEvent()
   const { handleAction } = useAsyncAction()
@@ -182,7 +196,7 @@ export function EventDetailPage() {
               iconPosition="start"
             />
             <Tab
-              label={`Bookings (${event._count?.bookings ?? 0})`}
+              label={`Bookings (${upcomingCount})`}
               icon={<ClipboardList size={18} />}
               iconPosition="start"
             />

@@ -13,44 +13,10 @@ import {
 } from '@/hooks/queries/usePublicBooking'
 import { bookingsApi } from '@/api/bookings'
 import type { PublicEventSummary } from '@/types'
+import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
 export type BookingScope = 'directory' | 'team' | 'event' | 'coach'
 export type BookingStepKey = 'team' | 'event' | 'schedule' | 'confirm'
-
-function startOfDayInTimezone(year: number, month: number, day: number, tz: string): Date {
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz,
-    hour12: false,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-  const parseHMS = (utcMs: number) => {
-    const s = fmt.format(new Date(utcMs)) // 'YYYY-MM-DD, HH:MM:SS'
-    const [h, m, sec] = s.split(', ')[1].split(':').map(Number)
-    return { h: h % 24, m, sec } // h%24 handles rare '24:00' edge in some environments
-  }
-  // Start from noon UTC — guaranteed to be on the correct calendar day for any timezone (UTC-12..+14)
-  let utcMs = Date.UTC(year, month, day, 12, 0, 0)
-  // Pass 1: subtract local HMS from noon to land near local midnight
-  const { h: h1, m: m1, sec: s1 } = parseHMS(utcMs)
-  utcMs -= (h1 * 3600 + m1 * 60 + s1) * 1000
-  // Pass 2: correct for DST transition days where noon's offset ≠ midnight's offset
-  const { h: h2, m: m2, sec: s2 } = parseHMS(utcMs)
-  if (h2 !== 0 || m2 !== 0 || s2 !== 0) {
-    if (h2 > 12) {
-      // Overshot backward into previous-day evening — advance to midnight
-      utcMs += (24 - h2) * 3_600_000 - m2 * 60_000 - s2 * 1000
-    } else {
-      // Landed slightly past midnight — subtract the remainder
-      utcMs -= (h2 * 3600 + m2 * 60 + s2) * 1000
-    }
-  }
-  return new Date(utcMs)
-}
 
 const getBookingScope = (
   teamSlug?: string,
@@ -257,7 +223,8 @@ export function usePublicBookingState() {
     selectedEvent || '',
     startDate,
     endDate,
-    preferredCoachId
+    preferredCoachId,
+    selectedTimezone
   )
 
   const isFixedSlots = eventDetails?.bookingMode === 'FIXED_SLOTS'
@@ -265,7 +232,8 @@ export function usePublicBookingState() {
     selectedEvent || '',
     calendarMonth,
     isFixedSlots,
-    preferredCoachId
+    preferredCoachId,
+    selectedTimezone
   )
 
   const handleMonthChange = React.useCallback((date: Date) => {

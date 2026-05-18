@@ -5,6 +5,7 @@ import { PublicReschedulePage } from '@/pages/public/PublicReschedulePage'
 import { renderWithProviders } from '../utils/renderWithProviders'
 import { http, HttpResponse } from 'msw'
 import { server } from '../msw/server'
+import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
 // PublicReschedulePage calls useOutletContext to get setFramed from its parent layout.
 // In tests there is no outlet — mock it to return a no-op so the component renders.
@@ -56,6 +57,7 @@ function renderReschedulePage(search = `?token=${RESCHEDULE_TOKEN}`) {
 
 describe('PublicReschedulePage', () => {
   beforeEach(() => {
+    sessionStorage.clear()
     server.use(...successHandlers)
   })
 
@@ -95,10 +97,50 @@ describe('PublicReschedulePage', () => {
     })
   })
 
-  it('shows a missing-token error when no token is in the URL', () => {
-    // With no token, the query is disabled (enabled = false) — no fetch fires.
-    // The page immediately renders the error branch with a specific message.
+  it('shows a missing-token error when no token is in the URL', async () => {
+    // With no token in URL and no sessionStorage token, the query is disabled —
+    // the page renders the error branch once the initial pending state clears.
     renderReschedulePage('') // no query string → token = ''
-    expect(screen.getByText(/token is missing/i)).toBeTruthy()
+    await waitFor(() => expect(screen.getByText(/token is missing/i)).toBeTruthy())
+  })
+
+  it('sends timezone-aware startDate/endDate to the slots API', async () => {
+    let capturedUrl: URL | null = null
+
+    server.use(
+      http.get('*/api/public/bookings/:id', () =>
+        HttpResponse.json({ success: true, data: { booking: mockBooking } })
+      ),
+      http.get('*/api/public/events/*/slots', ({ request }) => {
+        capturedUrl = new URL(request.url)
+        return HttpResponse.json({ success: true, data: { slots: [] } })
+      })
+    )
+
+    renderReschedulePage()
+
+    await waitFor(() => {
+      expect(capturedUrl).not.toBeNull()
+    })
+
+    const startDate = capturedUrl!.searchParams.get('startDate')
+    const endDate = capturedUrl!.searchParams.get('endDate')
+
+    // Both params must be present and parseable as ISO dates.
+    expect(startDate).not.toBeNull()
+    expect(endDate).not.toBeNull()
+    expect(Number.isNaN(new Date(startDate!).getTime())).toBe(false)
+    expect(Number.isNaN(new Date(endDate!).getTime())).toBe(false)
+
+    // The startDate must be midnight in the component's default timezone (browser tz in jsdom = UTC).
+    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const today = new Date()
+    const expectedStart = startOfDayInTimezone(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      browserTz
+    )
+    expect(new Date(startDate!).getTime()).toBe(expectedStart.getTime())
   })
 })

@@ -16,6 +16,7 @@ interface SuccessStepProps {
   newDate?: Date | null
   newTime?: string | null
   mentorName?: string | null
+  selectedTimezone?: string
 }
 
 export function SuccessStep({
@@ -26,6 +27,7 @@ export function SuccessStep({
   newDate,
   newTime,
   mentorName,
+  selectedTimezone,
 }: SuccessStepProps) {
   const isReschedule = mode === 'reschedule'
   const theme = useTheme()

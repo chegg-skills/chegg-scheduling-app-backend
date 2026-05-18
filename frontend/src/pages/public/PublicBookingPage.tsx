@@ -101,15 +101,26 @@ export function PublicBookingPage() {
           newDate={selectedDate}
           newTime={
             selectedSlot
-              ? new Intl.DateTimeFormat('en-US', {
-                timeZone: selectedTimezone,
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-              }).format(new Date(selectedSlot))
+              ? (() => {
+                  const dateObj = new Date(selectedSlot)
+                  const timeStr = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(dateObj)
+                  const tzName = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    timeZoneName: 'long',
+                  })
+                    .formatToParts(dateObj)
+                    .find((p) => p.type === 'timeZoneName')?.value || ''
+                  return tzName ? `${timeStr} (${tzName})` : timeStr
+                })()
               : ''
           }
           mentorName={coachDetails ? `${coachDetails.firstName} ${coachDetails.lastName}` : ''}
+          selectedTimezone={selectedTimezone}
           onReset={() => window.location.reload()}
         />
       </LocalizationProvider>
@@ -134,6 +145,7 @@ export function PublicBookingPage() {
             coachDetails={selectedSlotCoach || coachDetails}
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
+            selectedTimezone={selectedTimezone}
             compact
           />
 

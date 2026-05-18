@@ -14,6 +14,7 @@ import { PageSpinner } from '@/components/shared/ui/Spinner'
 import type { AvailableSlot } from '@/api/public'
 import type { PublicEventCoach } from '@/types'
 import { SlotGroup } from './SlotGroup'
+import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
 interface SlotStepProps {
   slots: AvailableSlot[]
@@ -86,27 +87,30 @@ export function SlotStep({
   }), [selectedTimezone])
 
   const dateFormat = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
-    timeZone: selectedTimezone,
     weekday: 'long',
     month: 'long',
     day: 'numeric',
-  }), [selectedTimezone])
+  }), [])
 
   const hourExtractor = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
     timeZone: selectedTimezone,
     hour: 'numeric',
     hourCycle: 'h23',
   }), [selectedTimezone])
-  // Use UTC arithmetic to match the backend's window calculation in
-  // availability.service.ts. Both sides pin to UTC end-of-day so the boundary
-  // is the same regardless of the server's or client's local timezone.
+  // Anchor the booking window to end-of-day in the student's selected timezone,
+  // mirroring the backend's endOfBookingWindowInTimezone helper. This prevents
+  // UTC±12 students from seeing the window end a full day early or late.
   const maxDate = React.useMemo(() => {
     if (maxBookingWindowDays == null) return undefined
-    const d = new Date()
-    d.setUTCDate(d.getUTCDate() + maxBookingWindowDays)
-    d.setUTCHours(23, 59, 59, 999)
-    return d
-  }, [maxBookingWindowDays])
+    const now = new Date()
+    const windowDayStart = startOfDayInTimezone(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + maxBookingWindowDays + 1,
+      selectedTimezone
+    )
+    return new Date(windowDayStart.getTime() - 1)
+  }, [maxBookingWindowDays, selectedTimezone])
 
   const DaySlot = React.useMemo(() => makeSlotDayIndicator(availableDates), [availableDates])
 
@@ -122,7 +126,7 @@ export function SlotStep({
       const date = new Date(s.startTime)
       const hourStr = hourExtractor.format(date)
       const hour = parseInt(hourStr, 10)
-      
+
       if (hour < 12) {
         am.push(s)
       } else {

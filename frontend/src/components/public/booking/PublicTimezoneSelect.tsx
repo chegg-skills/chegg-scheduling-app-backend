@@ -85,7 +85,7 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
         }}
       >
         <PublicIcon sx={{ fontSize: '1.125rem', mr: 0.75, color: 'text.secondary' }} />
-        <Typography variant="caption" sx={{ fontWeight: 600, mr: 0.5 }}>
+        <Typography variant="caption" sx={{ fontWeight: 600, mr: 0.5, display: { xs: 'none', sm: 'inline' } }}>
           Viewing slots in:
         </Typography>
         <Typography className="timezone-text" variant="caption" sx={{ fontWeight: 700, color: 'primary.main' }}>

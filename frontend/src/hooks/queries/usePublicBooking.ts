@@ -12,10 +12,10 @@ export const publicKeys = {
   event: (slug: string) => [...publicKeys.all, 'event', slug] as const,
   coach: (slug: string) => [...publicKeys.all, 'coach', slug] as const,
   coachEvents: (slug: string) => [...publicKeys.all, 'coach-events', slug] as const,
-  slots: (eventId: string, start: string, end: string, preferredCoachId?: string) =>
-    [...publicKeys.all, 'slots', eventId, start, end, preferredCoachId ?? 'any'] as const,
-  slotDates: (eventId: string, start: string, end: string, preferredCoachId?: string) =>
-    [...publicKeys.all, 'slot-dates', eventId, start, end, preferredCoachId ?? 'any'] as const,
+  slots: (eventId: string, start: string, end: string, preferredCoachId?: string, timezone?: string) =>
+    [...publicKeys.all, 'slots', eventId, start, end, preferredCoachId ?? 'any', timezone ?? 'local'] as const,
+  slotDates: (eventId: string, start: string, end: string, preferredCoachId?: string, timezone?: string) =>
+    [...publicKeys.all, 'slot-dates', eventId, start, end, preferredCoachId ?? 'any', timezone ?? 'local'] as const,
 }
 
 export function usePublicTeams() {
@@ -89,16 +89,17 @@ export function usePublicSlotDates(
   eventId: string,
   calendarMonth: Date,
   isFixedSlots: boolean,
-  preferredCoachId?: string
+  preferredCoachId?: string,
+  timezone?: string
 ): { availableDates: Set<string>; isLoading: boolean } {
   const startDate = startOfMonth(calendarMonth).toISOString()
   const endDate = endOfMonth(calendarMonth).toISOString()
 
   const { data: slots = [], isLoading } = useQuery({
-    queryKey: publicKeys.slotDates(eventId, startDate, endDate, preferredCoachId),
+    queryKey: publicKeys.slotDates(eventId, startDate, endDate, preferredCoachId, timezone),
     queryFn: ({ signal }) =>
       publicApi
-        .getAvailableSlots(eventId, startDate, endDate, preferredCoachId, signal)
+        .getAvailableSlots(eventId, startDate, endDate, preferredCoachId, signal, timezone)
         .then((r) => r.data.data?.slots ?? []),
     enabled: isFixedSlots && !!eventId,
     staleTime: 5 * 60 * 1000,
@@ -106,11 +107,25 @@ export function usePublicSlotDates(
 
   const availableDates = useMemo(() => {
     const dates = new Set<string>()
+    const formatter = timezone 
+      ? new Intl.DateTimeFormat('en-US', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' })
+      : null
+
     for (const slot of slots) {
-      dates.add(format(new Date(slot.startTime), 'yyyy-MM-dd'))
+      if (formatter) {
+        const parts = formatter.formatToParts(new Date(slot.startTime))
+        const year = parts.find(p => p.type === 'year')?.value
+        const month = parts.find(p => p.type === 'month')?.value
+        const day = parts.find(p => p.type === 'day')?.value
+        if (year && month && day) {
+          dates.add(`${year}-${month}-${day}`)
+        }
+      } else {
+        dates.add(format(new Date(slot.startTime), 'yyyy-MM-dd'))
+      }
     }
     return dates
-  }, [slots])
+  }, [slots, timezone])
 
   return { availableDates, isLoading }
 }
@@ -119,13 +134,14 @@ export function usePublicSlots(
   eventId: string,
   startDate: string,
   endDate: string,
-  preferredCoachId?: string
+  preferredCoachId?: string,
+  timezone?: string
 ) {
   return useQuery({
-    queryKey: publicKeys.slots(eventId, startDate, endDate, preferredCoachId),
+    queryKey: publicKeys.slots(eventId, startDate, endDate, preferredCoachId, timezone),
     queryFn: ({ signal }) =>
       publicApi
-        .getAvailableSlots(eventId, startDate, endDate, preferredCoachId, signal)
+        .getAvailableSlots(eventId, startDate, endDate, preferredCoachId, signal, timezone)
         .then((response) => response.data.data?.slots ?? []),
     enabled: !!eventId && !!startDate && !!endDate,
   })

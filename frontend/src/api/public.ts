@@ -88,10 +88,11 @@ export const publicApi = {
     startDate: string,
     endDate: string,
     preferredCoachId?: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    timezone?: string
   ) =>
     apiClient.get<ApiResponse<ListSlotsResponse>>(`/public/events/${eventId}/slots`, {
-      params: { startDate, endDate, preferredCoachId },
+      params: { startDate, endDate, preferredCoachId, timezone },
       signal,
     }),
 

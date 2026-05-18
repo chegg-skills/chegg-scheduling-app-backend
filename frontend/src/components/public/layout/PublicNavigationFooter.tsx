@@ -48,12 +48,20 @@ export function PublicNavigationFooter({
         flexShrink: 0,
       }}
     >
-      <Box sx={{ minWidth: 100, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box
+        sx={{
+          minWidth: 100,
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: 1, sm: 2 },
+          flexWrap: 'wrap',
+        }}
+      >
         {showBack && (
           <Button
             disabled={backDisabled || isSubmitting}
             onClick={onBack}
-            startIcon={<ChevronLeft size={18} />}
+            startIcon={backLabel === 'Back' ? <ChevronLeft size={18} /> : undefined}
             sx={{
               fontWeight: 700,
               textTransform: 'none',
@@ -94,8 +102,9 @@ export function PublicNavigationFooter({
           disabled={nextDisabled || isSubmitting}
           onClick={onNext}
           sx={{
-            px: 6,
+            px: (nextLabel.toLowerCase().includes('confirm') || nextLabel.toLowerCase().includes('reschedule')) ? 4 : 6,
             py: 1.25,
+            minWidth: (nextLabel.toLowerCase().includes('confirm') || nextLabel.toLowerCase().includes('reschedule')) ? 220 : 140,
             fontWeight: 800,
             borderRadius: 3,
             bgcolor: 'primary.main',

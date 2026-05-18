@@ -86,6 +86,9 @@ export const parseBoundedDateRange = ({
 };
 
 export const formatNotificationDate = (date: Date, timezone?: string | null): string => {
+  if (!timezone) {
+    console.warn("[formatNotificationDate] No timezone provided, falling back to UTC.");
+  }
   try {
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
@@ -97,8 +100,10 @@ export const formatNotificationDate = (date: Date, timezone?: string | null): st
       hour12: true,
       timeZone: timezone || "UTC",
     }).format(date);
-  } catch (error) {
-    // Fallback if timezone is invalid
+  } catch {
+    console.warn(
+      `[formatNotificationDate] Invalid timezone "${timezone}", falling back to UTC.`,
+    );
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
       month: "long",
