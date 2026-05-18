@@ -127,7 +127,7 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
               handleClose()
             }
           }}
-          onClose={(e, reason) => {
+          onClose={(_, reason) => {
             if (reason === 'escape') {
               handleClose()
             }
