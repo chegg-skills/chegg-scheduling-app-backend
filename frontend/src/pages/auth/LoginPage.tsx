@@ -26,20 +26,18 @@ export function LoginPage() {
             src={LogoOrange}
             alt="Chegg Skills"
             sx={{
-              height: 40,
+              height: 60,
               width: 'auto',
               mx: 'auto',
               display: 'block',
               mb: 1,
             }}
           />
-          <Box>
-            <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: -1 }}>
-              Sign in
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            Enter your credentials to access the scheduling app.
+          <Typography variant="h5" fontWeight={500} sx={{ letterSpacing: -1 }}>
+            Welcome
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Sign in to your account
           </Typography>
         </Stack>
         <Paper variant="outlined" sx={{ p: 4 }}>
