@@ -73,10 +73,11 @@ export function PublicNavigationFooter({
               textTransform: 'none',
               color: 'text.secondary',
               fontSize: '0.75rem',
+              p: 0.5,
+              px: 1,
+              borderRadius: 1.5,
               '&:hover': {
-                color: 'primary.main',
-                bgcolor: 'transparent',
-                textDecoration: 'underline',
+                bgcolor: 'action.hover',
               },
             }}
           >

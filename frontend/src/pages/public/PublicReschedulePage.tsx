@@ -145,11 +145,11 @@ export function PublicReschedulePage() {
           newTime={
             selectedSlot
               ? new Intl.DateTimeFormat('en-US', {
-                  timeZone: selectedTimezone,
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                }).format(new Date(selectedSlot))
+                timeZone: selectedTimezone,
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              }).format(new Date(selectedSlot))
               : ''
           }
           eventName={bookingData.event?.name || ''}

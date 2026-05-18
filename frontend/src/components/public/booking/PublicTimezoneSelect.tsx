@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete'
@@ -8,7 +8,6 @@ import Popover from '@mui/material/Popover'
 import PublicIcon from '@mui/icons-material/Public'
 import SearchIcon from '@mui/icons-material/Search'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
-import { useTheme } from '@mui/material/styles'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { getTimezoneInfo } from '@/components/users/userSystemFieldUtils'
 
@@ -22,7 +21,6 @@ const filterOptions = createFilterOptions<any>({
 })
 
 export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectProps) {
-  const theme = useTheme()
   const { data: timezones = [] } = useTimezones()
   const [now, setNow] = useState(new Date())
   
@@ -30,9 +28,11 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
   const open = Boolean(anchorEl)
 
   useEffect(() => {
+    if (open) return
+    
     const timer = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(timer)
-  }, [])
+  }, [open])
 
   const options = useMemo(() => {
     return timezones
@@ -57,6 +57,7 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
   )
 
   const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setNow(new Date())
     setAnchorEl(event.currentTarget)
   }
 
@@ -80,9 +81,6 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
           borderRadius: 1.5,
           '&:hover': {
             bgcolor: 'action.hover',
-            '& .timezone-text': {
-              textDecoration: 'underline',
-            }
           },
         }}
       >
@@ -108,13 +106,12 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
           vertical: 'bottom',
           horizontal: 'left',
         }}
-        sx={{ mt: -1 }}
+        sx={{ mt: -1}}
         slotProps={{
           paper: {
             sx: {
               width: 320,
-              borderRadius: 2,
-              boxShadow: theme.shadows[8],
+              borderRadius: 1,
               display: 'flex',
               flexDirection: 'column',
             }
@@ -142,12 +139,16 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
           disableClearable
           disablePortal
           size="small"
-          PopperComponent={({ children }) => <Box sx={{ width: '100%' }}>{children}</Box>}
-          PaperComponent={({ children }) => <Box sx={{ m: 0, boxShadow: 'none' }}>{children}</Box>}
-          ListboxProps={{
-            style: {
-              maxHeight: 300,
-              padding: 0,
+          slots={{
+            popper: (props: any) => <Box sx={{ width: '100%' }}>{props.children}</Box>,
+            paper: (props: any) => <Box sx={{ m: 0, boxShadow: 'none' }}>{props.children}</Box>,
+          }}
+          slotProps={{
+            listbox: {
+              style: {
+                maxHeight: 300,
+                padding: 0,
+              },
             },
           }}
           renderInput={(params) => (
@@ -177,18 +178,21 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
               />
             </Box>
           )}
-          renderOption={(props, option) => (
-            <Box component="li" {...props} sx={{ ...props.sx, py: 1, px: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                <Typography variant="caption" sx={{ fontWeight: 500, color: 'text.primary' }}>
-                  {option.name}
-                </Typography>
-                <Typography variant="caption" sx={{ ml: 2, color: 'primary.main', fontWeight: 600 }}>
-                  {option.time}
-                </Typography>
+          renderOption={(props, option) => {
+            const { key, ...otherProps } = props as any;
+            return (
+              <Box component="li" key={key} {...otherProps} sx={{ py: 1, px: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    {option.name}
+                  </Typography>
+                  <Typography variant="caption" sx={{ ml: 2, color: 'primary.main', fontWeight: 600 }}>
+                    {option.time}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          )}
+            );
+          }}
           renderGroup={(params) => (
             <li key={params.key}>
               <Typography
