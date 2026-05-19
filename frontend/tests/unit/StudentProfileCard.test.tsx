@@ -70,6 +70,37 @@ const mockInPersonEvent = {
   publicBookingSlug: 'db-architecture',
 } as unknown as Event
 
+// Centralized builder to generate complete mock Booking objects satisfying TypeScript strictly
+const createMockBooking = (overrides: Partial<Booking>): Booking => {
+  return {
+    id: 'booking-mock-id',
+    studentId: null,
+    scheduleSlotId: null,
+    studentName: 'John Doe',
+    studentEmail: 'john.doe@example.com',
+    startTime: '2026-05-19T10:00:00.000Z',
+    endTime: '2026-05-19T11:00:00.000Z',
+    timezone: 'Asia/Kolkata',
+    status: 'CONFIRMED',
+    notes: null,
+    specificQuestion: null,
+    triedSolutions: null,
+    usedResources: null,
+    sessionObjectives: null,
+    teamId: 'team-1',
+    eventId: 'event-1',
+    coachUserId: 'coach-alice',
+    coCoachUserIds: [],
+    meetingJoinUrl: null,
+    rescheduleToken: null,
+    createdAt: '2026-05-19T09:00:00.000Z',
+    updatedAt: '2026-05-19T09:00:00.000Z',
+    coach: mockCoachAlice,
+    event: mockVirtualEvent,
+    ...overrides,
+  }
+}
+
 describe('StudentProfileCard', () => {
   it('renders student name, email, avatar, and registration date correctly', () => {
     renderWithProviders(<StudentProfileCard student={mockStudent} bookings={[]} />)
@@ -95,54 +126,40 @@ describe('StudentProfileCard', () => {
 
   it('calculates and displays Favorite Coach based on maximum session tallies', () => {
     const bookings: Booking[] = [
-      {
+      createMockBooking({
         id: 'booking-1',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
-        eventId: 'event-1',
         startTime: '2026-05-18T10:00:00.000Z',
         endTime: '2026-05-18T11:00:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-18T09:00:00.000Z',
         updatedAt: '2026-05-18T09:00:00.000Z',
         coachUserId: 'coach-alice',
         coach: mockCoachAlice,
         event: mockVirtualEvent,
-      },
-      {
+      }),
+      createMockBooking({
         id: 'booking-2',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
-        eventId: 'event-1',
         startTime: '2026-05-19T10:00:00.000Z',
         endTime: '2026-05-19T11:00:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-19T09:00:00.000Z',
         updatedAt: '2026-05-19T09:00:00.000Z',
         coachUserId: 'coach-alice',
         coach: mockCoachAlice,
         event: mockVirtualEvent,
-      },
-      {
+      }),
+      createMockBooking({
         id: 'booking-3',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
         eventId: 'event-2',
         startTime: '2026-05-19T14:00:00.000Z',
         endTime: '2026-05-19T15:30:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-19T11:00:00.000Z',
         updatedAt: '2026-05-19T11:00:00.000Z',
         coachUserId: 'coach-bob',
         coach: mockCoachBob,
         event: mockInPersonEvent,
-      },
+      }),
     ]
 
     renderWithProviders(<StudentProfileCard student={mockStudent} bookings={bookings} />)
@@ -154,54 +171,40 @@ describe('StudentProfileCard', () => {
   it('determines the preferred Learning Mode based on majority booking locationType', () => {
     // Test Case 1: Majority Virtual Bookings
     const virtualBookings: Booking[] = [
-      {
+      createMockBooking({
         id: 'booking-1',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
-        eventId: 'event-1',
         startTime: '2026-05-18T10:00:00.000Z',
         endTime: '2026-05-18T11:00:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-18T09:00:00.000Z',
         updatedAt: '2026-05-18T09:00:00.000Z',
         coachUserId: 'coach-alice',
         coach: mockCoachAlice,
         event: mockVirtualEvent,
-      },
-      {
+      }),
+      createMockBooking({
         id: 'booking-2',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
-        eventId: 'event-1',
         startTime: '2026-05-19T10:00:00.000Z',
         endTime: '2026-05-19T11:00:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-19T09:00:00.000Z',
         updatedAt: '2026-05-19T09:00:00.000Z',
         coachUserId: 'coach-alice',
         coach: mockCoachAlice,
         event: mockVirtualEvent,
-      },
-      {
+      }),
+      createMockBooking({
         id: 'booking-3',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
         eventId: 'event-2',
         startTime: '2026-05-19T14:00:00.000Z',
         endTime: '2026-05-19T15:30:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-19T11:00:00.000Z',
         updatedAt: '2026-05-19T11:00:00.000Z',
         coachUserId: 'coach-bob',
         coach: mockCoachBob,
         event: mockInPersonEvent,
-      },
+      }),
     ]
 
     const { unmount } = renderWithProviders(
@@ -212,54 +215,41 @@ describe('StudentProfileCard', () => {
 
     // Test Case 2: Majority In-Person Bookings
     const inPersonBookings: Booking[] = [
-      {
+      createMockBooking({
         id: 'booking-1',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
-        eventId: 'event-1',
         startTime: '2026-05-18T10:00:00.000Z',
         endTime: '2026-05-18T11:00:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-18T09:00:00.000Z',
         updatedAt: '2026-05-18T09:00:00.000Z',
         coachUserId: 'coach-alice',
         coach: mockCoachAlice,
         event: mockVirtualEvent,
-      },
-      {
+      }),
+      createMockBooking({
         id: 'booking-2',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
         eventId: 'event-2',
         startTime: '2026-05-19T10:00:00.000Z',
         endTime: '2026-05-19T11:30:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-19T09:00:00.000Z',
         updatedAt: '2026-05-19T09:00:00.000Z',
         coachUserId: 'coach-bob',
         coach: mockCoachBob,
         event: mockInPersonEvent,
-      },
-      {
+      }),
+      createMockBooking({
         id: 'booking-3',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
         eventId: 'event-2',
         startTime: '2026-05-19T14:00:00.000Z',
         endTime: '2026-05-19T15:30:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-19T11:00:00.000Z',
         updatedAt: '2026-05-19T11:00:00.000Z',
         coachUserId: 'coach-bob',
         coach: mockCoachBob,
         event: mockInPersonEvent,
-      },
+      }),
     ]
 
     renderWithProviders(<StudentProfileCard student={mockStudent} bookings={inPersonBookings} />)
@@ -268,38 +258,28 @@ describe('StudentProfileCard', () => {
 
   it('displays the timezone associated with the latest booking', () => {
     const bookings: Booking[] = [
-      {
+      createMockBooking({
         id: 'booking-latest',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
-        eventId: 'event-1',
         startTime: '2026-05-19T10:00:00.000Z',
         endTime: '2026-05-19T11:00:00.000Z',
         timezone: 'America/New_York',
-        status: 'CONFIRMED',
         createdAt: '2026-05-19T09:00:00.000Z',
         updatedAt: '2026-05-19T09:00:00.000Z',
         coachUserId: 'coach-alice',
         coach: mockCoachAlice,
         event: mockVirtualEvent,
-      },
-      {
+      }),
+      createMockBooking({
         id: 'booking-older',
-        studentName: 'John Doe',
-        studentEmail: 'john.doe@example.com',
-        teamId: 'team-1',
-        eventId: 'event-1',
         startTime: '2026-05-18T10:00:00.000Z',
         endTime: '2026-05-18T11:00:00.000Z',
         timezone: 'Asia/Kolkata',
-        status: 'CONFIRMED',
         createdAt: '2026-05-18T09:00:00.000Z',
         updatedAt: '2026-05-18T09:00:00.000Z',
         coachUserId: 'coach-alice',
         coach: mockCoachAlice,
         event: mockVirtualEvent,
-      },
+      }),
     ]
 
     renderWithProviders(<StudentProfileCard student={mockStudent} bookings={bookings} />)
