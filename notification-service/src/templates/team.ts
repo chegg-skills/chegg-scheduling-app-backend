@@ -85,7 +85,7 @@ export const teamTemplates: EmailTemplateMap = {
   TEAM_BOOKING_CANCELLED: {
     subject: "Team Update: Booking Cancelled ({{eventName}})",
     preheader: "A session in your team has been cancelled.",
-    text: "A booking for {{teamName}} ({{eventName}}) has been cancelled. Student: {{studentName}}. Time: {{startTime}}.",
+    text: "A booking for {{teamName}} ({{eventName}}) has been cancelled. Student: {{studentName}}. Time: {{startTime}}.{{cancellationDetails}}",
     html: wrapLayout(
       "Team Booking Cancelled",
       `<p>A session in your team schedule has been <strong>cancelled</strong>.</p>
@@ -93,6 +93,7 @@ export const teamTemplates: EmailTemplateMap = {
          ${detailRow("Event", "{{eventName}}")}
          ${detailRow("Student", "{{studentName}}")}
          ${detailRow("Time", "{{startTime}}")}
+         {{cancellationDetailsHtml}}
        </p>`,
       "A session in your team has been cancelled.",
       { text: "View Team Dashboard", url: "{{frontendUrl}}" },
@@ -114,6 +115,32 @@ export const teamTemplates: EmailTemplateMap = {
        </p>`,
       "A student did not show up for a session in your team.",
       { text: "View Team Dashboard", url: "{{frontendUrl}}" },
+    ),
+  },
+
+  EVENT_ACTIVATED: {
+    subject: "Event Activated: {{eventName}}",
+    preheader: "{{changedByName}} has activated the event {{eventName}}.",
+    text: "The event {{eventName}} has been activated by {{changedByName}}.",
+    html: wrapLayout(
+      "Event Activated",
+      `<p>The event <strong>{{eventName}}</strong> has been <strong>activated</strong> by {{changedByName}}.</p>
+       <p>Students can now book sessions for this event.</p>`,
+      "{{changedByName}} has activated the event {{eventName}}.",
+      { text: "View Event", url: "{{frontendUrl}}" },
+    ),
+  },
+
+  EVENT_DEACTIVATED: {
+    subject: "Event Deactivated: {{eventName}}",
+    preheader: "{{changedByName}} has deactivated the event {{eventName}}.",
+    text: "The event {{eventName}} has been deactivated by {{changedByName}}.",
+    html: wrapLayout(
+      "Event Deactivated",
+      `<p>The event <strong>{{eventName}}</strong> has been <strong>deactivated</strong> by {{changedByName}}.</p>
+       <p>Students will no longer be able to book sessions for this event.</p>`,
+      "{{changedByName}} has deactivated the event {{eventName}}.",
+      { text: "View Event", url: "{{frontendUrl}}" },
     ),
   },
 

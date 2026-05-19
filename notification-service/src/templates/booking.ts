@@ -50,7 +50,7 @@ export const bookingTemplates: EmailTemplateMap = {
   BOOKING_CANCELLED: {
     subject: "Session Cancelled: {{eventName}}",
     preheader: "Your booking for {{eventName}} has been cancelled.",
-    text: "The booking for {{eventName}} scheduled at {{startTime}} ({{timezone}}) with {{coachName}} has been cancelled.",
+    text: "The booking for {{eventName}} scheduled at {{startTime}} ({{timezone}}) with {{coachName}} has been cancelled.{{cancellationDetails}}",
     html: wrapLayout(
       "Session Cancelled",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -60,6 +60,7 @@ export const bookingTemplates: EmailTemplateMap = {
          ${detailRow("Time", "{{startTime}}")}
          ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Coach", "{{coachName}}")}
+         {{cancellationDetailsHtml}}
        </p>
        <p style="margin-top: 16px;">You can reschedule your session by visiting our booking page.</p>`,
       "Your booking for {{eventName}} has been cancelled.",
@@ -70,7 +71,7 @@ export const bookingTemplates: EmailTemplateMap = {
   BOOKING_CANCELLED_DEFERRED: {
     subject: "Session Cancelled: {{eventName}}",
     preheader: "Your booking for {{eventName}} has been cancelled.",
-    text: "Hi {{studentName}}, your booking for {{eventName}} with {{teamName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled. You can book a new session at any time.",
+    text: "Hi {{studentName}}, your booking for {{eventName}} with {{teamName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled.{{cancellationDetails}} You can book a new session at any time.",
     html: wrapLayout(
       "Session Cancelled",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -80,6 +81,7 @@ export const bookingTemplates: EmailTemplateMap = {
          ${detailRow("Time", "{{startTime}}")}
          ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Team", "{{teamName}}")}
+         {{cancellationDetailsHtml}}
        </p>
        <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>`,
       "Your booking for {{eventName}} has been cancelled.",

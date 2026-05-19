@@ -44,7 +44,7 @@ export const coachTemplates: EmailTemplateMap = {
   COACH_BOOKING_CANCELLED: {
     subject: "Session Cancelled: {{eventName}} (Student: {{studentName}})",
     preheader: "A session with {{studentName}} has been cancelled.",
-    text: "Your session for {{eventName}} with {{studentName}} at {{startTime}} has been cancelled.",
+    text: "Your session for {{eventName}} with {{studentName}} at {{startTime}} has been cancelled.{{cancellationDetails}}",
     html: wrapLayout(
       "Student Session Cancelled",
       `<p>Hi <strong>{{coachName}}</strong>,</p>
@@ -53,6 +53,7 @@ export const coachTemplates: EmailTemplateMap = {
          ${detailRow("Event", "{{eventName}}")}
          ${detailRow("Time", "{{startTime}}")}
          ${detailRow("Student", "{{studentName}}")}
+         {{cancellationDetailsHtml}}
        </p>`,
       "A session with {{studentName}} has been cancelled.",
     ),
@@ -61,7 +62,7 @@ export const coachTemplates: EmailTemplateMap = {
   COACH_BOOKING_COHOST_CANCELLED: {
     subject: "Co-host Session Cancelled: {{eventName}}",
     preheader: "A co-hosted session has been cancelled.",
-    text: "Your co-hosting session for {{eventName}} with {{studentName}} has been cancelled.",
+    text: "Your co-hosting session for {{eventName}} with {{studentName}} has been cancelled.{{cancellationDetails}}",
     html: wrapLayout(
       "Co-host Session Cancelled",
       `<p>Hi there,</p>
@@ -70,6 +71,7 @@ export const coachTemplates: EmailTemplateMap = {
          ${detailRow("Event", "{{eventName}}")}
          ${detailRow("Time", "{{startTime}}")}
          ${detailRow("Student", "{{studentName}}")}
+         {{cancellationDetailsHtml}}
        </p>`,
       "A co-hosted session has been cancelled.",
     ),

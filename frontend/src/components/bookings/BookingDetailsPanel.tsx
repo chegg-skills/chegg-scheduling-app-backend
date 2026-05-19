@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { FileText } from 'lucide-react'
+import { FileText, AlertTriangle } from 'lucide-react'
 import type { Booking } from '@/types'
 import { BookingDetailsLeftSection } from './BookingDetailsLeftSection'
 import { BookingDetailsRightSection } from './BookingDetailsRightSection'
@@ -26,6 +26,34 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
 
   return (
     <>
+      {booking.status === 'CANCELLED' && booking.cancellationReason && (
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            bgcolor: 'error.lighter',
+            border: '1px solid',
+            borderColor: 'error.light',
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 1.5,
+          }}
+        >
+          <Box sx={{ color: 'error.main', mt: 0.25 }}>
+            <AlertTriangle size={18} />
+          </Box>
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'error.dark' }}>
+              Booking Cancelled
+            </Typography>
+            <Typography variant="body2" color="error.dark">
+              <strong>Reason:</strong> {booking.cancellationReason}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       <Typography
         variant="subtitle2"
         gutterBottom

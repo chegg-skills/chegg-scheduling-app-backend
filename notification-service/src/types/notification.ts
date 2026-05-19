@@ -32,7 +32,9 @@ export type NotificationType =
   | "SESSION_REMINDER_1H"
   | "CANCEL_BOOKING_REMINDERS"
   | "COACH_REVEAL_SENT"
-  | "ZOOM_ISV_LINK_EXPIRY_REMINDER";
+  | "ZOOM_ISV_LINK_EXPIRY_REMINDER"
+  | "EVENT_ACTIVATED"
+  | "EVENT_DEACTIVATED";
 
 export type NotificationPayload = {
   type: NotificationType;

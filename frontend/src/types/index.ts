@@ -548,6 +548,7 @@ export interface Booking {
   coCoachUserIds: string[]
   meetingJoinUrl: string | null
   rescheduleToken: string | null
+  cancellationReason?: string | null
   createdAt: string
   updatedAt: string
   team?: Pick<Team, 'id' | 'name' | 'publicBookingSlug' | 'description' | 'isActive'>
@@ -585,6 +586,7 @@ export interface ListBookingsFilters {
 
 export interface UpdateBookingStatusDto {
   status: BookingStatus
+  cancellationReason?: string
 }
 // ─── Student Models ───────────────────────────────────────────────────────────
 export interface Student {

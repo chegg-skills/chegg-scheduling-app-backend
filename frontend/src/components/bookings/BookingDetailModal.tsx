@@ -7,6 +7,7 @@ import type { Booking } from '@/types'
 import { Modal } from '@/components/shared/ui/Modal'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
 import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
+import { CancelBookingDialog } from './CancelBookingDialog'
 
 interface BookingDetailModalProps {
   booking: Booking | null
@@ -14,7 +15,14 @@ interface BookingDetailModalProps {
 }
 
 export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
-  const { handleStatusUpdate, canMarkNoShow } = useBookingStatusUpdate()
+  const {
+    handleStatusUpdate,
+    canMarkNoShow,
+    cancelBooking,
+    setCancelBooking,
+    handleCancelConfirm,
+    isPending,
+  } = useBookingStatusUpdate()
 
   if (!booking) return null
 
@@ -104,6 +112,16 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
           </Button>
         </Box>
       </Box>
+      <CancelBookingDialog
+        isOpen={!!cancelBooking}
+        booking={cancelBooking}
+        onClose={() => setCancelBooking(null)}
+        onConfirm={(reason) => {
+          handleCancelConfirm(reason)
+          onClose()
+        }}
+        isLoading={isPending}
+      />
     </Modal>
   )
 }

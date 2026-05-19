@@ -48,6 +48,13 @@ const getBookingNotificationVariables = async (
     rescheduleUrl: `${resolveFrontendUrl()}/reschedule/${booking.id}?token=${(booking as any).rescheduleToken ?? ""}`,
     coCoachDetails: "",
     coCoachNames: "",
+    cancellationReason: (booking as any).cancellationReason ?? "",
+    cancellationDetails: (booking as any).cancellationReason
+      ? `\nReason: ${(booking as any).cancellationReason}`
+      : "",
+    cancellationDetailsHtml: (booking as any).cancellationReason
+      ? `<br/><strong>Reason:</strong> ${(booking as any).cancellationReason}`
+      : "",
   };
 
   if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {

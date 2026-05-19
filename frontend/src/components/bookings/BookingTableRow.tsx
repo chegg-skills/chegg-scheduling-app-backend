@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
 import type { Booking } from '@/types'
 import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
 import { BookingStatusBadge } from './BookingStatusBadge'
+import { CancelBookingDialog } from './CancelBookingDialog'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
 import { BookingStudentCell } from './cells/BookingStudentCell'
 import { BookingTimeCell } from './cells/BookingTimeCell'
@@ -16,7 +17,14 @@ interface BookingTableRowProps {
 }
 
 export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableRowProps) {
-  const { handleStatusUpdate, canMarkNoShow } = useBookingStatusUpdate()
+  const {
+    handleStatusUpdate,
+    canMarkNoShow,
+    cancelBooking,
+    setCancelBooking,
+    handleCancelConfirm,
+    isPending,
+  } = useBookingStatusUpdate()
 
   return (
     <>
@@ -165,6 +173,13 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
           </Collapse>
         </TableCell>
       </TableRow>
+      <CancelBookingDialog
+        isOpen={!!cancelBooking}
+        booking={cancelBooking}
+        onClose={() => setCancelBooking(null)}
+        onConfirm={handleCancelConfirm}
+        isLoading={isPending}
+      />
     </>
   )
 }

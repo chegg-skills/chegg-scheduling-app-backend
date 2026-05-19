@@ -79,8 +79,12 @@ export const listBookings = async (req: Request, res: Response) => {
 
 export const updateBooking = async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
-  const { status, coCoachUserIds } = req.body;
-  const booking = await BookingService.updateBooking(bookingId, { status, coCoachUserIds });
+  const { status, coCoachUserIds, cancellationReason } = req.body;
+  const booking = await BookingService.updateBooking(bookingId, {
+    status,
+    coCoachUserIds,
+    cancellationReason,
+  });
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking updated successfully.");
 };

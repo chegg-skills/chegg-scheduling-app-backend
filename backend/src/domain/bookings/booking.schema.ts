@@ -63,6 +63,7 @@ export const UpdateBookingStatusSchema = {
   body: z
     .object({
       status: z.nativeEnum(BookingStatus),
+      cancellationReason: z.string().trim().max(500).optional(),
     })
     .strip(),
 };
