@@ -154,11 +154,40 @@ export function PublicReschedulePage() {
         ? 'Reschedule token is missing from the link.'
         : 'Booking not found or link has expired.'
     return (
-      <Box sx={{ p: { xs: 2, sm: 4 } }}>
-        <ErrorAlert message={errorMessage} />
-        <Button onClick={() => navigate('/')} variant="outlined" sx={{ mt: 2 }}>
-          Back to homepage
-        </Button>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 4,
+          backgroundColor: 'background.default',
+        }}
+      >
+        <Box sx={{ maxWidth: 500, width: '100%', textAlign: 'center' }}>
+          <ErrorAlert
+            title={
+              errorMessage.toLowerCase().includes('token')
+                ? 'Invalid Authorization'
+                : 'Booking Link Expired'
+            }
+            message={errorMessage}
+            severity="error"
+          />
+          <Button
+            onClick={() => navigate('/')}
+            variant="outlined"
+            sx={{
+              mt: 3,
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Back to homepage
+          </Button>
+        </Box>
       </Box>
     )
   }

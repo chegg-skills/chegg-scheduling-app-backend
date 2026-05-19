@@ -64,8 +64,8 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
     virtualCount === 0 && inPersonCount === 0
       ? 'No bookings yet'
       : virtualCount >= inPersonCount
-      ? 'Virtual (Video Call)'
-      : 'In-Person Session'
+        ? 'Virtual (Video Call)'
+        : 'In-Person Session'
 
   // 3. Favorite Coach
   const coachCounts = bookings.reduce((acc, b) => {
@@ -156,7 +156,7 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
                     </Box>
                   </Tooltip>
                 </Stack>
-                
+
                 <Stack direction="row" spacing={0.5} alignItems="center">
                   <Typography variant="body2" color="text.secondary">
                     {student.email}
@@ -173,7 +173,6 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
                     label="Active student"
                     size="small"
                     color="success"
-                    variant="soft"
                     sx={{
                       fontWeight: 600,
                       textTransform: 'uppercase',
