@@ -193,7 +193,6 @@ export const isWithinWeeklyAvailability = (
   const startMins = hhmmToMinutes(startLocal.hhmm);
   const endMins = hhmmToMinutes(endLocal.hhmm);
   return daySlots.some(
-    (slot) =>
-      startMins >= hhmmToMinutes(slot.startTime) && endMins <= hhmmToMinutes(slot.endTime),
+    (slot) => startMins >= hhmmToMinutes(slot.startTime) && endMins <= hhmmToMinutes(slot.endTime),
   );
 };

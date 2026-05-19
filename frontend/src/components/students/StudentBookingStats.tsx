@@ -51,10 +51,9 @@ export function StudentBookingStats({ bookings, totalCount }: StudentBookingStat
     <Card
       variant="outlined"
       sx={{
-        borderRadius: 2,
+        borderRadius: 1.5,
         backgroundColor: 'background.paper',
         borderColor: 'divider',
-        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)',
       }}
     >
       <CardContent sx={{ p: 3 }}>

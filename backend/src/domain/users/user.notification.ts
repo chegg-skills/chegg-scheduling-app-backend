@@ -1,4 +1,7 @@
-import { publishNotificationSafely, resolveFrontendUrl } from "../../shared/notifications/notification.publisher";
+import {
+  publishNotificationSafely,
+  resolveFrontendUrl,
+} from "../../shared/notifications/notification.publisher";
 import type { SafeUser } from "../../shared/utils/userUtils";
 
 export const queueZoomIsvLinkExpiryReminder = async (user: SafeUser): Promise<void> => {

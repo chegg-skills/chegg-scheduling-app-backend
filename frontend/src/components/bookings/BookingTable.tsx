@@ -81,7 +81,7 @@ export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPage
         sx={{
           p: 8,
           textAlign: 'center',
-          borderRadius: 3,
+          borderRadius: 1.5,
           borderStyle: 'dashed',
           bgcolor: 'transparent',
         }}
@@ -94,7 +94,7 @@ export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPage
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined">
+    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
       <Table>
         <TableHead>
           <TableRow>

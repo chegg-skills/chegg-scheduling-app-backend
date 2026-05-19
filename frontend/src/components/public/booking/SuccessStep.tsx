@@ -27,7 +27,7 @@ export function SuccessStep({
   newDate,
   newTime,
   mentorName,
-  selectedTimezone,
+  selectedTimezone: _,
 }: SuccessStepProps) {
   const isReschedule = mode === 'reschedule'
   const theme = useTheme()

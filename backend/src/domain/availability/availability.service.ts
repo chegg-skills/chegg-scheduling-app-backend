@@ -1,4 +1,10 @@
-import { EventBookingMode, Prisma, UserAvailabilityException, UserRole, UserWeeklyAvailability } from "@prisma/client";
+import {
+  EventBookingMode,
+  Prisma,
+  UserAvailabilityException,
+  UserRole,
+  UserWeeklyAvailability,
+} from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import { toDateOnlyString } from "../../shared/utils/date";
 import type { CallerContext } from "../../shared/utils/userUtils";
@@ -82,11 +88,7 @@ function isCoachAvailableAcrossMidnight(
 
   // Day 2: 00:00 → end
   const day2Exception = findAvailabilityException(calendar.exceptions, day2DateString);
-  const day2ExceptionResult = resolveAvailabilityFromException(
-    day2Exception,
-    atMidnight,
-    endLocal,
-  );
+  const day2ExceptionResult = resolveAvailabilityFromException(day2Exception, atMidnight, endLocal);
   if (day2ExceptionResult === false) return false;
   if (
     day2ExceptionResult === null &&

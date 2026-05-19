@@ -31,6 +31,7 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
           <BookingStudentCell
             name={toTitleCase(booking.studentName)}
             email={booking.studentEmail}
+            studentId={booking.studentId}
           />
         </TableCell>
 

@@ -101,9 +101,7 @@ export const formatNotificationDate = (date: Date, timezone?: string | null): st
       timeZone: timezone || "UTC",
     }).format(date);
   } catch {
-    console.warn(
-      `[formatNotificationDate] Invalid timezone "${timezone}", falling back to UTC.`,
-    );
+    console.warn(`[formatNotificationDate] Invalid timezone "${timezone}", falling back to UTC.`);
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
       month: "long",

@@ -205,14 +205,14 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
         userId: booking.coachUserId,
         variables: isDeferredReveal
           ? {
-            studentName: studentVariables.studentName,
-            eventName: studentVariables.eventName,
-            teamName: studentVariables.teamName,
-            startTime: studentVariables.startTime,
-            timezone: studentVariables.timezone,
-            frontendUrl: studentVariables.frontendUrl,
-            rescheduleUrl: studentVariables.rescheduleUrl,
-          }
+              studentName: studentVariables.studentName,
+              eventName: studentVariables.eventName,
+              teamName: studentVariables.teamName,
+              startTime: studentVariables.startTime,
+              timezone: studentVariables.timezone,
+              frontendUrl: studentVariables.frontendUrl,
+              rescheduleUrl: studentVariables.rescheduleUrl,
+            }
           : studentVariables,
       }),
     ];
@@ -292,15 +292,17 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     const coCoachUserIds = (booking as any).coCoachUserIds as string[] | undefined;
     const coHostUsers = coCoachUserIds?.length
       ? await prisma.user.findMany({
-        where: { id: { in: coCoachUserIds }, isActive: true },
-        select: { id: true, email: true, timezone: true },
-      })
+          where: { id: { in: coCoachUserIds }, isActive: true },
+          select: { id: true, email: true, timezone: true },
+        })
       : [];
 
     if (booking.status === BookingStatus.CANCELLED) {
       const publishTasks: Array<Promise<boolean>> = [
         publishNotificationSafely({
-          type: booking.event?.deferCoachReveal ? "BOOKING_CANCELLED_DEFERRED" : "BOOKING_CANCELLED",
+          type: booking.event?.deferCoachReveal
+            ? "BOOKING_CANCELLED_DEFERRED"
+            : "BOOKING_CANCELLED",
           recipients: booking.studentEmail,
           userId: booking.coachUserId,
           variables: studentVariables,

@@ -219,7 +219,7 @@ describe("Timezone edge cases in slot availability", () => {
   const getNextWeekdayAtUTC = (dow: number, hour: number, min = 0): Date => {
     const now = new Date();
     const currentDay = now.getUTCDay();
-    const daysAhead = ((dow - currentDay + 7) % 7) || 7;
+    const daysAhead = (dow - currentDay + 7) % 7 || 7;
     return new Date(
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysAhead, hour, min),
     );
@@ -418,13 +418,11 @@ describe("Timezone edge cases in slot availability", () => {
   it("accepts a student timezone query param and returns 200 without errors", async () => {
     const startDate = new Date();
     const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const res = await request(app)
-      .get(`/api/public/events/${istEventId}/slots`)
-      .query({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        timezone: "Pacific/Kiritimati",
-      });
+    const res = await request(app).get(`/api/public/events/${istEventId}/slots`).query({
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      timezone: "Pacific/Kiritimati",
+    });
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data.slots)).toBe(true);

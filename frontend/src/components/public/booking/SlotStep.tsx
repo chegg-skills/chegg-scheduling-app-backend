@@ -75,7 +75,7 @@ export function SlotStep({
   selectedCoachId,
   onCoachSelect,
   selectedTimezone,
-  setSelectedTimezone,
+  setSelectedTimezone: _,
 }: SlotStepProps) {
   const theme = useTheme()
 
