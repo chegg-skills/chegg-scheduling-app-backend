@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { StudentProfileCard } from '@/components/students/StudentProfileCard'
-import type { StudentSummary, Booking } from '@/types'
+import type { StudentSummary, Booking, SafeUser, Event } from '@/types'
 import { renderWithProviders } from '../utils/renderWithProviders'
 
 const mockStudent: StudentSummary = {
@@ -25,7 +25,7 @@ const mockCoachAlice = {
   role: 'COACH' as const,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
-}
+} as unknown as SafeUser
 
 const mockCoachBob = {
   id: 'coach-bob',
@@ -36,7 +36,7 @@ const mockCoachBob = {
   role: 'COACH' as const,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
-}
+} as unknown as SafeUser
 
 const mockVirtualEvent = {
   id: 'event-1',
@@ -52,7 +52,7 @@ const mockVirtualEvent = {
   hosts: [],
   coHosts: [],
   publicBookingSlug: 'react-basics',
-}
+} as unknown as Event
 
 const mockInPersonEvent = {
   id: 'event-2',
@@ -68,7 +68,7 @@ const mockInPersonEvent = {
   hosts: [],
   coHosts: [],
   publicBookingSlug: 'db-architecture',
-}
+} as unknown as Event
 
 describe('StudentProfileCard', () => {
   it('renders student name, email, avatar, and registration date correctly', () => {
