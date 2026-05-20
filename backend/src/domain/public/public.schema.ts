@@ -10,24 +10,22 @@ export const PublicSlugSchema = {
 
 export const ListTeamEventsSchema = {
   params: z.object({
-    teamId: z.string().uuid("Invalid team ID"),
+    teamId: z.uuid("Invalid team ID"),
   }),
 };
 
 export const GetAvailableSlotsSchema = {
   params: z.object({
-    eventId: z.string().uuid("Invalid event ID"),
+    eventId: z.uuid("Invalid event ID"),
   }),
-  query: z
-    .object({
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-    })
-    .passthrough(),
+  query: z.looseObject({
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+  }),
 };
 
 export const GetPublicBookingSchema = {
   params: z.object({
-    id: z.string().uuid("Invalid booking ID"),
+    id: z.uuid("Invalid booking ID"),
   }),
 };
