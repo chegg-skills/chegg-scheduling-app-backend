@@ -2,12 +2,11 @@ import { z } from "zod";
 import { UserRole } from "@prisma/client";
 
 const userIdSchema = z.object({
-  userId: z.string().uuid("Invalid user ID"),
+  userId: z.uuid("Invalid user ID"),
 });
 
 export const ListUsersSchema = {
-  query: z
-    .object({
+  query: z.looseObject({
       page: z.preprocess((val) => {
         const parsed = parseInt(String(val), 10);
         return isNaN(parsed) || parsed < 1 ? undefined : parsed;
@@ -20,13 +19,11 @@ export const ListUsersSchema = {
       search: z.string().optional(),
       role: z.nativeEnum(UserRole).optional(),
       isActive: z.preprocess((val) => val === "true" || val === true, z.boolean()).optional(),
-    })
-    .passthrough(),
+    }),
 };
 
 export const CreateUserSchema = {
-  body: z
-    .object({
+  body: z.looseObject({
       firstName: z.string().min(1, "First name is required"),
       lastName: z.string().min(1, "Last name is required"),
       email: z.string().email("Invalid email address"),
@@ -36,14 +33,12 @@ export const CreateUserSchema = {
       country: z.string().optional(),
       timezone: z.string().default("UTC"),
       zoomIsvLink: z.string().url().optional(),
-    })
-    .passthrough(),
+    }),
 };
 
 export const UpdateUserSchema = {
   params: userIdSchema,
-  body: z
-    .object({
+  body: z.looseObject({
       firstName: z.string().trim().min(1, "First name cannot be empty").optional(),
       lastName: z.string().trim().min(1, "Last name cannot be empty").optional(),
       email: z.string().trim().email().optional(),
@@ -59,13 +54,11 @@ export const UpdateUserSchema = {
       zoomIsvLinkExpiresAt: z.coerce.date().optional().nullable(),
       zoomIsvLinkReminderDays: z.number().int().min(1).max(90).optional().nullable(),
       publicBookingSlug: z.string().trim().optional(),
-    })
-    .passthrough(),
+    }),
 };
 
 export const UpdateMyProfileSchema = {
-  body: z
-    .object({
+  body: z.looseObject({
       firstName: z.string().trim().min(1, "First name cannot be empty").optional(),
       lastName: z.string().trim().min(1, "Last name cannot be empty").optional(),
       password: z.string().trim().min(8, "Password must be at least 8 characters").optional(),
@@ -77,6 +70,5 @@ export const UpdateMyProfileSchema = {
       zoomIsvLink: z.string().trim().url().optional().or(z.literal("")).nullable(),
       zoomIsvLinkExpiresAt: z.coerce.date().optional().nullable(),
       zoomIsvLinkReminderDays: z.number().int().min(1).max(90).optional().nullable(),
-    })
-    .passthrough(),
+    }),
 };

@@ -5,21 +5,21 @@ const timeStringSchema = z
   .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)");
 
 const userIdSchema = z.object({
-  userId: z.string().uuid("Invalid user ID"),
+  userId: z.uuid("Invalid user ID"),
 });
 
 const exceptionIdSchema = z.object({
-  userId: z.string().uuid("Invalid user ID"),
-  exceptionId: z.string().uuid("Invalid exception ID"),
+  userId: z.uuid("Invalid user ID"),
+  exceptionId: z.uuid("Invalid exception ID"),
 });
 
-const WeeklyAvailabilityBase = z.object({
+const WeeklyAvailabilityBase = z.looseObject({
   dayOfWeek: z.number().int().min(0).max(6),
   startTime: timeStringSchema,
   endTime: timeStringSchema,
 });
 
-const AvailabilityExceptionBase = z.object({
+const AvailabilityExceptionBase = z.looseObject({
   date: z.preprocess(
     (val) => {
       if (val instanceof Date) {
@@ -70,18 +70,15 @@ export const AddAvailabilityExceptionSchema = {
     .refine(validateTimeRange, {
       message: "startTime must be before endTime",
       path: ["endTime"],
-    })
-    .passthrough(),
+    }),
 };
 
 export const GetEffectiveAvailabilitySchema = {
   params: userIdSchema,
-  query: z
-    .object({
+  query: z.looseObject({
       from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
       to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-    })
-    .passthrough(),
+    }),
 };
 
 export const UserIdParamSchema = {
@@ -97,7 +94,6 @@ export const AvailabilitySchemas = {
     base: AvailabilityExceptionBase,
     // For partials, we separate the object from the refinement to avoid Zod restriction
     partial: AvailabilityExceptionBase.partial()
-      .passthrough()
       .refine(validateTimeRange, {
         message: "startTime must be before endTime",
         path: ["endTime"],
@@ -106,7 +102,6 @@ export const AvailabilitySchemas = {
   weekly: {
     base: WeeklyAvailabilityBase,
     partial: WeeklyAvailabilityBase.partial()
-      .passthrough()
       .refine(validateTimeRange, {
         message: "startTime must be before endTime",
         path: ["endTime"],

@@ -50,6 +50,7 @@ import {
   resolveCreateEventContext,
   resolveUpdateEventContext,
 } from "./eventMutation.service";
+import { queueEventStatusChangedNotification } from "./event.notification";
 
 const listEventsByQuery = async (
   where: Prisma.EventWhereInput,
@@ -193,6 +194,15 @@ const updateEvent = async (
       updatedEvent.coaches.length,
     );
   });
+
+  if (payload.isActive !== undefined && payload.isActive !== existingEvent.isActive) {
+    void queueEventStatusChangedNotification({
+      eventId,
+      eventName: updatedEvent.name,
+      isActive: updatedEvent.isActive,
+      callerId: caller.id,
+    });
+  }
 
   return prisma.event.findUniqueOrThrow({
     where: { id: eventId },

@@ -52,6 +52,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
   const startDate = req.query.startDate as string;
   const endDate = req.query.endDate as string;
   const preferredCoachId = req.query.preferredCoachId as string | undefined;
+  const timezone = req.query.timezone as string | undefined;
 
   const { start, end } = parseBoundedDateRange({
     startDate,
@@ -64,6 +65,7 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
     start,
     end,
     preferredCoachId,
+    timezone,
   );
 
   return sendSuccessResponse(

@@ -11,6 +11,8 @@ import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { SafeUser } from '@/types'
 import { getUserRoleBadgeProps, getUserStatusBadgeProps, getZoomExpiryLabel } from './userTableUtils'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from './userSystemFieldUtils'
 
 interface UserTableRowProps {
   canDeactivate: boolean
@@ -27,6 +29,7 @@ export function UserTableRow({
   onView,
   user,
 }: UserTableRowProps) {
+  const { data: timezones = [] } = useTimezones()
   return (
     <TableRow hover>
       <TableCell>
@@ -74,7 +77,7 @@ export function UserTableRow({
         <Badge {...getUserRoleBadgeProps(user.role)} />
       </TableCell>
       <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-        {user.timezone.replace(/_/g, ' ')}
+        {formatTimezoneLabel(user.timezone, timezones)}
       </TableCell>
       <TableCell>
         <Badge {...getUserStatusBadgeProps(user.isActive)} />

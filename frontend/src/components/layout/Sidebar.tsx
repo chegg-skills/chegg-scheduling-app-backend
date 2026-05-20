@@ -4,6 +4,7 @@ import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import LogoOrange from '@/assets/Color=Orange.svg'
+import CollapsedLogo from '@/assets/Shape=Circle, Color=Orange.svg'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { APP_HEADER_MIN_HEIGHT } from '@/components/shared/layoutConstants'
@@ -50,7 +51,7 @@ export function Sidebar() {
     >
       <Box
         sx={{
-          px: isCollapsed ? 1 : 3,
+          px: isCollapsed ? 0.5 : 3, // matches list px: 0.5 perfectly! (4px left/right spacing)
           minHeight: APP_HEADER_MIN_HEIGHT,
           boxSizing: 'border-box',
           display: 'flex',
@@ -58,17 +59,41 @@ export function Sidebar() {
           justifyContent: isCollapsed ? 'center' : 'space-between',
         }}
       >
-        {!isCollapsed && (
-          <Box
-            component={Link}
-            to="/dashboard"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              overflow: 'hidden',
-              textDecoration: 'none',
-            }}
-          >
+        <Box
+          component={Link}
+          to="/dashboard"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textDecoration: 'none',
+            width: isCollapsed ? '100%' : 'auto',
+          }}
+        >
+          {isCollapsed ? (
+            <Box
+              sx={{
+                width: '100%', // takes up full 77px width to align with nav items!
+                height: 64,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <img
+                src={CollapsedLogo}
+                alt="Chegg Skills"
+                style={{
+                  height: 64, // concrete dimensions prevent circular collapse!
+                  width: 64,
+                  display: 'block',
+                  borderRadius: '50%', // completely circular of 64px x 64px!
+                  transition: 'all 0.2s ease-in-out',
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
+          ) : (
             <img
               src={LogoOrange}
               alt="Chegg Skills"
@@ -76,25 +101,49 @@ export function Sidebar() {
                 height: 32,
                 width: 'auto',
                 display: 'block',
+                transition: 'all 0.2s ease-in-out',
               }}
             />
-          </Box>
+          )}
+        </Box>
+        {!isCollapsed && (
+          <IconButton
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            size="small"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'primary.main',
+              },
+            }}
+          >
+            <ChevronsLeft size={18} />
+          </IconButton>
         )}
-        <IconButton
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          size="small"
-          sx={{ color: 'text.secondary' }}
-        >
-          {isCollapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
-        </IconButton>
       </Box>
 
       {isCollapsed ? (
-        <CollapsedSidebarContent
-          items={visibleItems}
-          pathname={location.pathname}
-          logout={logout}
-        />
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'center', pt: 0, pb: 0.5 }}>
+            <IconButton
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main',
+                },
+              }}
+            >
+              <ChevronsRight size={18} />
+            </IconButton>
+          </Box>
+          <CollapsedSidebarContent
+            items={visibleItems}
+            pathname={location.pathname}
+            logout={logout}
+          />
+        </>
       ) : (
         <ExpandedSidebarContent items={visibleItems} pathname={location.pathname} logout={logout} />
       )}

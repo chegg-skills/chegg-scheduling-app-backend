@@ -22,6 +22,7 @@ interface PublicBookingSummaryProps {
   variant?: 'default' | 'current'
   compact?: boolean
   condensed?: boolean
+  selectedTimezone?: string
 }
 
 /**
@@ -38,6 +39,7 @@ export function PublicBookingSummary({
   variant = 'default',
   compact = false,
   condensed = false,
+  selectedTimezone,
 }: PublicBookingSummaryProps) {
   const hasSelection = !!(
     teamDetails ||
@@ -51,6 +53,7 @@ export function PublicBookingSummary({
 
   const formatSlot = (slot: string) => {
     return new Intl.DateTimeFormat('en-US', {
+      timeZone: selectedTimezone || undefined,
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -59,6 +62,7 @@ export function PublicBookingSummary({
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
+      timeZone: variant === 'current' ? (selectedTimezone || undefined) : undefined,
       weekday: 'long',
       month: 'long',
       day: 'numeric',

@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import Box from '@mui/material/Box'
 import ListSubheader from '@mui/material/ListSubheader'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 import { Controller, useWatch, type Control, type FieldErrors } from 'react-hook-form'
 import { FormField } from '@/components/shared/form/FormField'
 import { Select } from '@/components/shared/form/Select'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import type { UserFormValues } from './userFormSchema'
-import { getTimezoneInfo, groupTimezonesByRegion } from './userSystemFieldUtils'
+import { getTimezoneInfo, groupTimezonesByRegion, GROUP_ORDER } from './userSystemFieldUtils'
 
 interface UserTimezoneFieldProps {
   control: Control<UserFormValues>
@@ -52,13 +52,14 @@ export function UserTimezoneField({ control, errors }: UserTimezoneFieldProps) {
     return () => clearInterval(timer)
   }, [])
 
-  const groupedTimezones = useMemo(
-    () =>
-      groupTimezonesByRegion(
-        timezones.filter((timezone): timezone is string => typeof timezone === 'string')
-      ),
-    [timezones]
-  )
+  const groupedTimezones = useMemo(() => groupTimezonesByRegion(timezones), [timezones])
+
+  const selectedLabel = useMemo(() => {
+    const match = timezones.find((tz) => tz.iana === selectedTimezone)
+    if (match) return match.label
+    if (selectedTimezone) return getTimezoneInfo(selectedTimezone, now).name
+    return null
+  }, [timezones, selectedTimezone, now])
 
   return (
     <FormField
@@ -66,8 +67,8 @@ export function UserTimezoneField({ control, errors }: UserTimezoneFieldProps) {
       htmlFor="timezone"
       error={errors.timezone?.message}
       hint={
-        currentTime && selectedTimezone
-          ? `Current time in ${selectedTimezone.replace(/_/g, ' ')}: ${currentTime}`
+        currentTime && selectedLabel
+          ? `Current time in ${selectedLabel}: ${currentTime}`
           : 'Select your preferred timezone'
       }
     >
@@ -84,15 +85,14 @@ export function UserTimezoneField({ control, errors }: UserTimezoneFieldProps) {
               if (!selected) {
                 return <em>Choose a timezone...</em>
               }
-
-              return getTimezoneInfo(selected as string, now).name
+              return selectedLabel ?? (selected as string).replace(/_/g, ' ')
             }}
           >
             <MenuItem value="">
               <em>Choose a timezone...</em>
             </MenuItem>
 
-            {Object.entries(groupedTimezones).map(([region, regionTimezones]) => [
+            {GROUP_ORDER.filter((region) => groupedTimezones[region]?.length).map((region) => [
               <ListSubheader
                 key={region}
                 sx={{
@@ -107,11 +107,11 @@ export function UserTimezoneField({ control, errors }: UserTimezoneFieldProps) {
               >
                 {region}
               </ListSubheader>,
-              regionTimezones.map((timezone) => {
-                const info = getTimezoneInfo(timezone, now)
+              groupedTimezones[region].map((tz) => {
+                const { time } = getTimezoneInfo(tz.iana, now)
 
                 return (
-                  <MenuItem key={timezone} value={timezone} sx={{ py: 1.5, px: 2 }}>
+                  <MenuItem key={tz.iana} value={tz.iana} sx={{ py: 1.5, px: 2 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -121,13 +121,13 @@ export function UserTimezoneField({ control, errors }: UserTimezoneFieldProps) {
                       }}
                     >
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {info.name}
+                        {tz.label}
                       </Typography>
                       <Typography
                         variant="body2"
                         sx={{ ml: 2, color: 'text.secondary', fontWeight: 400 }}
                       >
-                        {info.time}
+                        {time}
                       </Typography>
                     </Box>
                   </MenuItem>

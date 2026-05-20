@@ -225,7 +225,7 @@ const listBookings = async (filters: ListBookingsFilters) => {
 
 const updateBooking = async (
   id: string,
-  data: { status?: BookingStatus; coCoachUserIds?: string[] },
+  data: { status?: BookingStatus; coCoachUserIds?: string[]; cancellationReason?: string },
 ): Promise<SafeBooking> => {
   const oldBooking = await findBookingById(id);
   const booking = await updateBookingById(id, data);

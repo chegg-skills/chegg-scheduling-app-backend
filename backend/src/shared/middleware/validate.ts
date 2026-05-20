@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { ZodError, ZodTypeAny } from "zod";
-import { StatusCodes } from "http-status-codes";
-import { ErrorHandler } from "../error/errorhandler";
+import { ZodType } from "zod";
 
 interface ValidationSchema {
-  body?: ZodTypeAny;
-  query?: ZodTypeAny;
-  params?: ZodTypeAny;
+  body?: ZodType;
+  query?: ZodType;
+  params?: ZodType;
 }
 
 export const validate = (schema: ValidationSchema) => {

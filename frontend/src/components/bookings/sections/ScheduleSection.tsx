@@ -1,31 +1,36 @@
 import { Box, Typography } from '@mui/material'
 import type { Booking } from '@/types'
 import { SectionLabel } from './Common'
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-})
-
-const timeFormatter = new Intl.DateTimeFormat('en-US', {
-  hour: 'numeric',
-  minute: '2-digit',
-  hour12: true,
-})
+import React from 'react'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 
 interface ScheduleSectionProps {
   booking: Booking
 }
 
 export function ScheduleSection({ booking }: ScheduleSectionProps) {
+  const { data: timezones = [] } = useTimezones()
   const start = new Date(booking.startTime)
   const end = new Date(booking.endTime)
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  const dateFormatter = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }), [])
+
+  const timeFormatter = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }), [])
 
   return (
     <Box>
-      <SectionLabel label="Session Date & Time" />
+      <SectionLabel label="Session Date & Time (Your Local Time)" />
       <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
         {dateFormatter.format(start)}
       </Typography>
@@ -47,8 +52,13 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
         )}
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-        Timezone: {booking.timezone?.replace(/_/g, ' ') || 'N/A'}
+        <strong>Your Timezone:</strong> {formatTimezoneLabel(localTz, timezones)}
       </Typography>
+      {booking.timezone && booking.timezone !== localTz && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          <strong>Student Booked In:</strong> {formatTimezoneLabel(booking.timezone, timezones)}
+        </Typography>
+      )}
     </Box>
   )
 }

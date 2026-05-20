@@ -7,7 +7,7 @@ import {
   useOutletContext,
 } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { startOfDay, endOfDay } from 'date-fns'
+import { startOfDayInTimezone } from '@/utils/dateTimezone'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
@@ -21,6 +21,7 @@ import { SuccessStep } from '@/components/public/booking/SuccessStep'
 import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHeader'
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { SlotStep } from '@/components/public/booking/SlotStep'
+import { PublicTimezoneSelect } from '@/components/public/booking/PublicTimezoneSelect'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
@@ -37,13 +38,32 @@ export function PublicReschedulePage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
-  // Capture token once from initial URL so it survives after we clean the URL below
-  const [token] = React.useState(() => searchParams.get('token') || '')
+  // Capture token once from initial URL or fallback to sessionStorage so it survives refreshes
+  const [token] = React.useState(() => {
+    const urlToken = searchParams.get('token')
+    const storageKey = `reschedule_token_${bookingId}`
+    if (urlToken) {
+      try {
+        sessionStorage.setItem(storageKey, urlToken)
+      } catch (e) {
+        console.warn('Failed to save reschedule token to sessionStorage', e)
+      }
+      return urlToken
+    }
+    try {
+      return sessionStorage.getItem(storageKey) || ''
+    } catch {
+      return ''
+    }
+  })
 
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date())
   const [selectedSlot, setSelectedSlot] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isSuccess, setIsSuccess] = React.useState(false)
+  const [selectedTimezone, setSelectedTimezone] = React.useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  )
   const [rescheduleError, setRescheduleError] = React.useState<string | null>(null)
   const [troubleshootOpen, setTroubleshootOpen] = React.useState(false)
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
@@ -77,10 +97,22 @@ export function PublicReschedulePage() {
   // 2. Fetch Slots for the Event
   const { startDate, endDate } = React.useMemo(
     () => ({
-      startDate: startOfDay(selectedDate).toISOString(),
-      endDate: endOfDay(selectedDate).toISOString(),
+      startDate: startOfDayInTimezone(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        selectedTimezone
+      ).toISOString(),
+      endDate: new Date(
+        startOfDayInTimezone(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate() + 1,
+          selectedTimezone
+        ).getTime() - 1
+      ).toISOString(),
     }),
-    [selectedDate]
+    [selectedDate, selectedTimezone]
   )
 
   const { data: slotsData, isLoading: isLoadingSlots } = useQuery({
@@ -102,6 +134,7 @@ export function PublicReschedulePage() {
     try {
       await bookingsApi.reschedule(bookingId, {
         startTime: selectedSlot,
+        timezone: selectedTimezone,
         token,
       })
       setIsSuccess(true)
@@ -121,11 +154,40 @@ export function PublicReschedulePage() {
         ? 'Reschedule token is missing from the link.'
         : 'Booking not found or link has expired.'
     return (
-      <Box sx={{ p: { xs: 2, sm: 4 } }}>
-        <ErrorAlert message={errorMessage} />
-        <Button onClick={() => navigate('/')} variant="outlined" sx={{ mt: 2 }}>
-          Back to homepage
-        </Button>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 4,
+          backgroundColor: 'background.default',
+        }}
+      >
+        <Box sx={{ maxWidth: 500, width: '100%', textAlign: 'center' }}>
+          <ErrorAlert
+            title={
+              errorMessage.toLowerCase().includes('token')
+                ? 'Invalid Authorization'
+                : 'Booking Link Expired'
+            }
+            message={errorMessage}
+            severity="error"
+          />
+          <Button
+            onClick={() => navigate('/')}
+            variant="outlined"
+            sx={{
+              mt: 3,
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Back to homepage
+          </Button>
+        </Box>
       </Box>
     )
   }
@@ -139,18 +201,30 @@ export function PublicReschedulePage() {
           newDate={selectedDate}
           newTime={
             selectedSlot
-              ? new Intl.DateTimeFormat('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                }).format(new Date(selectedSlot))
+              ? (() => {
+                  const dateObj = new Date(selectedSlot)
+                  const timeStr = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(dateObj)
+                  const tzName = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    timeZoneName: 'long',
+                  })
+                    .formatToParts(dateObj)
+                    .find((p) => p.type === 'timeZoneName')?.value || ''
+                  return tzName ? `${timeStr} (${tzName})` : timeStr
+                })()
               : ''
           }
           eventName={bookingData.event?.name || ''}
           mentorName={
             bookingData.coach ? `${bookingData.coach.firstName} ${bookingData.coach.lastName}` : ''
           }
-          onReset={() => window.location.reload()}
+          selectedTimezone={selectedTimezone}
+          onReset={() => navigate('/')}
         />
       </LocalizationProvider>
     )
@@ -183,12 +257,14 @@ export function PublicReschedulePage() {
             {...currentBookingInfo}
             selectedDate={currentBookingInfo.date}
             selectedSlot={currentBookingInfo.slot}
+            selectedTimezone={selectedTimezone}
           />
 
           <PublicBookingSummary
             title="New selection"
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
+            selectedTimezone={selectedTimezone}
           />
         </PublicSidePanel>
 
@@ -208,7 +284,16 @@ export function PublicReschedulePage() {
           </PublicStepHeader>
 
           {/* Main Step Content */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflowY: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              p: 0,
+              minHeight: 0,
+            }}
+          >
             <SlotStep
               slots={slots}
               loading={isLoadingSlots}
@@ -219,6 +304,8 @@ export function PublicReschedulePage() {
               }}
               selectedSlot={selectedSlot}
               onSelect={setSelectedSlot}
+              selectedTimezone={selectedTimezone}
+              setSelectedTimezone={setSelectedTimezone}
             />
           </Box>
 
@@ -228,14 +315,19 @@ export function PublicReschedulePage() {
             </Box>
           )}
           <PublicNavigationFooter
-            onBack={() => navigate('/')}
+            showBack={false}
             onNext={handleReschedule}
-            backLabel="Cancel"
-            nextLabel="Confirm reschedule"
-            submittingLabel="Updating..."
+            nextLabel="Reschedule"
+            submittingLabel="Rescheduling..."
             nextDisabled={!selectedSlot}
             isSubmitting={isSubmitting}
             onTroubleshoot={() => setTroubleshootOpen(true)}
+            extraAccessory={
+              <PublicTimezoneSelect
+                value={selectedTimezone}
+                onChange={setSelectedTimezone}
+              />
+            }
           />
         </PublicMainContent>
       </PublicBaseLayout>

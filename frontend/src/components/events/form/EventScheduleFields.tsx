@@ -138,8 +138,9 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
         </FormField>
       ))}
 
-      {/* Coach pool size — shown for all types when round-robin is selected, always for multi-coach */}
-      {(isRoundRobin || caps?.multipleCoaches) && (
+      {/* Coach pool size — shown for all types when round-robin is selected, always for multi-coach.
+          Hidden when allowStudentCoachChoice is ON — students pick at booking time. */}
+      {!allowStudentCoachChoice && (isRoundRobin || caps?.multipleCoaches) && (
         <FormField
           label="Coach Pool Size"
           htmlFor="minCoachCount"

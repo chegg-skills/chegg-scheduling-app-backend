@@ -140,6 +140,7 @@ const updateBookingById = async (
     sessionJoinUrl?: string | null;
     scheduleSlotId?: string | null;
     rescheduleToken?: string;
+    cancellationReason?: string | null;
   },
 ): Promise<SafeBooking> => {
   try {

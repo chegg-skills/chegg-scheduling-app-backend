@@ -95,19 +95,28 @@ export const buildSameSessionExclusion = (
   };
 };
 
-export const toLocalAvailabilityInfo = (date: Date, timeZone: string): LocalAvailabilityInfo => {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    weekday: "short",
-  });
+export const hhmmToMinutes = (hhmm: string): number => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
 
-  const parts = formatter.formatToParts(date);
+export const toLocalAvailabilityInfo = (date: Date, timeZone: string): LocalAvailabilityInfo => {
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      weekday: "short",
+    }).formatToParts(date);
+  } catch {
+    throw new Error(`Invalid IANA timezone string: "${timeZone}"`);
+  }
+
   const getPart = (type: string) => parts.find((part) => part.type === type)?.value;
 
   const year = getPart("year")!;
@@ -158,13 +167,17 @@ export const resolveAvailabilityFromException = (
 
   if (dayException.isUnavailable && dayException.startTime && dayException.endTime) {
     const overlapsException =
-      startLocal.hhmm < dayException.endTime && endLocal.hhmm > dayException.startTime;
+      hhmmToMinutes(startLocal.hhmm) < hhmmToMinutes(dayException.endTime) &&
+      hhmmToMinutes(endLocal.hhmm) > hhmmToMinutes(dayException.startTime);
 
     return overlapsException ? false : null;
   }
 
   if (!dayException.isUnavailable && dayException.startTime && dayException.endTime) {
-    return startLocal.hhmm >= dayException.startTime && endLocal.hhmm <= dayException.endTime;
+    return (
+      hhmmToMinutes(startLocal.hhmm) >= hhmmToMinutes(dayException.startTime) &&
+      hhmmToMinutes(endLocal.hhmm) <= hhmmToMinutes(dayException.endTime)
+    );
   }
 
   return null;
@@ -177,7 +190,9 @@ export const isWithinWeeklyAvailability = (
 ): boolean => {
   const daySlots = weekly.filter((slot) => slot.dayOfWeek === startLocal.dayOfWeek);
 
+  const startMins = hhmmToMinutes(startLocal.hhmm);
+  const endMins = hhmmToMinutes(endLocal.hhmm);
   return daySlots.some(
-    (slot) => startLocal.hhmm >= slot.startTime && endLocal.hhmm <= slot.endTime,
+    (slot) => startMins >= hhmmToMinutes(slot.startTime) && endMins <= hhmmToMinutes(slot.endTime),
   );
 };

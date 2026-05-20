@@ -1,8 +1,14 @@
 import apiClient from '@/lib/axios'
 import type { ApiResponse } from '@/types'
 
+export interface TimezoneOption {
+  iana: string
+  label: string
+  group: string
+}
+
 export interface TimezonesResponse {
-  timezones: string[]
+  timezones: TimezoneOption[]
 }
 
 export interface CountriesResponse {

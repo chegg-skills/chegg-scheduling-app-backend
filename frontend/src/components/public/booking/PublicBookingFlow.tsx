@@ -1,6 +1,7 @@
 import Skeleton from '@mui/material/Skeleton'
 import Box from '@mui/material/Box'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
+import { extractApiError } from '@/utils/apiError'
 import { TeamStep } from '@/components/public/booking/TeamStep'
 import { EventStep } from '@/components/public/booking/EventStep'
 import { SlotStep } from '@/components/public/booking/SlotStep'
@@ -83,6 +84,8 @@ interface PublicBookingFlowProps {
   eventCoaches?: PublicEventCoach[]
   selectedCoachId?: string | null
   onCoachSelect?: (coachId: string) => void
+  selectedTimezone: string
+  setSelectedTimezone: (tz: string) => void
 }
 
 /**
@@ -118,6 +121,8 @@ export function PublicBookingFlow({
   eventCoaches,
   selectedCoachId,
   onCoachSelect,
+  selectedTimezone,
+  setSelectedTimezone,
 }: PublicBookingFlowProps) {
   switch (currentStepKey) {
     case 'team':
@@ -151,11 +156,29 @@ export function PublicBookingFlow({
       }
 
       if (scope === 'event' && eventDetailsError) {
-        return <ErrorAlert message="This public event link is invalid or no longer available." />
+        const errorMsg = extractApiError(eventDetailsError)
+        const isInactive = errorMsg.toLowerCase().includes('inactive') || errorMsg.toLowerCase().includes('paused')
+        return (
+          <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', width: '100%' }}>
+            <Box sx={{ maxWidth: 500, width: '100%' }}>
+              <ErrorAlert
+                title={isInactive ? 'Scheduling Paused' : 'Invalid Booking Link'}
+                message={errorMsg}
+                severity={isInactive ? 'info' : 'error'}
+              />
+            </Box>
+          </Box>
+        )
       }
 
       if (!selectedEvent) {
-        return <ErrorAlert message="Please select an event before choosing a time slot." />
+        return (
+          <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', width: '100%' }}>
+            <Box sx={{ maxWidth: 500, width: '100%' }}>
+              <ErrorAlert message="Please select an event before choosing a time slot." />
+            </Box>
+          </Box>
+        )
       }
 
       return (
@@ -174,6 +197,8 @@ export function PublicBookingFlow({
           coaches={eventCoaches}
           selectedCoachId={selectedCoachId}
           onCoachSelect={onCoachSelect}
+          selectedTimezone={selectedTimezone}
+          setSelectedTimezone={setSelectedTimezone}
         />
       )
     case 'confirm':

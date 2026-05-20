@@ -28,7 +28,7 @@ export function CollapsedSidebarContent({ items, pathname, logout }: CollapsedSi
                 to={to}
                 selected={selected}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 1,
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -73,7 +73,7 @@ export function CollapsedSidebarContent({ items, pathname, logout }: CollapsedSi
           component={NavLink}
           to="/profile"
           sx={{
-            borderRadius: 2,
+            borderRadius: 1,
             mb: 0.5,
             flexDirection: 'column',
             alignItems: 'center',
@@ -96,7 +96,7 @@ export function CollapsedSidebarContent({ items, pathname, logout }: CollapsedSi
         <ListItemButton
           onClick={logout}
           sx={{
-            borderRadius: 2,
+            borderRadius: 1,
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',

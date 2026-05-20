@@ -12,6 +12,7 @@ import { PublicBookingSummary } from '@/components/public/booking/PublicBookingS
 import { PublicBookingFlow } from '@/components/public/booking/PublicBookingFlow'
 import { SessionIntroduction } from '@/components/public/booking/SessionIntroduction'
 import { TroubleshootDialog } from '@/components/public/booking/TroubleshootDialog'
+import { PublicTimezoneSelect } from '@/components/public/booking/PublicTimezoneSelect'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
 import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel'
@@ -63,6 +64,8 @@ export function PublicBookingPage() {
     handleMonthChange,
     selectedCoachId,
     setSelectedCoachId,
+    selectedTimezone,
+    setSelectedTimezone,
   } = usePublicBookingState()
 
   const showCoachPicker =
@@ -98,14 +101,26 @@ export function PublicBookingPage() {
           newDate={selectedDate}
           newTime={
             selectedSlot
-              ? new Intl.DateTimeFormat('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                }).format(new Date(selectedSlot))
+              ? (() => {
+                  const dateObj = new Date(selectedSlot)
+                  const timeStr = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(dateObj)
+                  const tzName = new Intl.DateTimeFormat('en-US', {
+                    timeZone: selectedTimezone,
+                    timeZoneName: 'long',
+                  })
+                    .formatToParts(dateObj)
+                    .find((p) => p.type === 'timeZoneName')?.value || ''
+                  return tzName ? `${timeStr} (${tzName})` : timeStr
+                })()
               : ''
           }
           mentorName={coachDetails ? `${coachDetails.firstName} ${coachDetails.lastName}` : ''}
+          selectedTimezone={selectedTimezone}
           onReset={() => window.location.reload()}
         />
       </LocalizationProvider>
@@ -130,6 +145,7 @@ export function PublicBookingPage() {
             coachDetails={selectedSlotCoach || coachDetails}
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
+            selectedTimezone={selectedTimezone}
             compact
           />
 
@@ -198,6 +214,8 @@ export function PublicBookingPage() {
               eventCoaches={eventCoaches}
               selectedCoachId={selectedCoachId}
               onCoachSelect={setSelectedCoachId}
+              selectedTimezone={selectedTimezone}
+              setSelectedTimezone={setSelectedTimezone}
             />
           </Box>
 
@@ -221,6 +239,14 @@ export function PublicBookingPage() {
             nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
             onTroubleshoot={() => setTroubleshootOpen(true)}
+            extraAccessory={
+              currentStepKey === 'schedule' ? (
+                <PublicTimezoneSelect
+                  value={selectedTimezone}
+                  onChange={setSelectedTimezone}
+                />
+              ) : undefined
+            }
           />
         </PublicMainContent>
       </PublicBaseLayout>

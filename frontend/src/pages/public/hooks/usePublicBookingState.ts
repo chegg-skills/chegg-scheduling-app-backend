@@ -13,6 +13,7 @@ import {
 } from '@/hooks/queries/usePublicBooking'
 import { bookingsApi } from '@/api/bookings'
 import type { PublicEventSummary } from '@/types'
+import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
 export type BookingScope = 'directory' | 'team' | 'event' | 'coach'
 export type BookingStepKey = 'team' | 'event' | 'schedule' | 'confirm'
@@ -53,6 +54,9 @@ export function usePublicBookingState() {
   const [calendarMonth, setCalendarMonth] = React.useState<Date>(new Date())
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [selectedCoachId, setSelectedCoachId] = React.useState<string | null>(null)
+  const [selectedTimezone, setSelectedTimezone] = React.useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  )
   const [studentInfo, setStudentInfo] = React.useState({
     name: '',
     email: '',
@@ -200,26 +204,27 @@ export function usePublicBookingState() {
       : eventDetails?.allowStudentCoachChoice
         ? (selectedCoachId ?? undefined)
         : undefined
-  const startDate = new Date(
-    selectedDate.getFullYear(),
-    selectedDate.getMonth(),
-    selectedDate.getDate()
-  ).toISOString()
-  const endDate = new Date(
+  const startDate = startOfDayInTimezone(
     selectedDate.getFullYear(),
     selectedDate.getMonth(),
     selectedDate.getDate(),
-    23,
-    59,
-    59,
-    999
+    selectedTimezone
+  ).toISOString()
+  const endDate = new Date(
+    startOfDayInTimezone(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate() + 1,
+      selectedTimezone
+    ).getTime() - 1
   ).toISOString()
 
   const { data: slots = [], isLoading: loadingSlots } = usePublicSlots(
     selectedEvent || '',
     startDate,
     endDate,
-    preferredCoachId
+    preferredCoachId,
+    selectedTimezone
   )
 
   const isFixedSlots = eventDetails?.bookingMode === 'FIXED_SLOTS'
@@ -227,7 +232,8 @@ export function usePublicBookingState() {
     selectedEvent || '',
     calendarMonth,
     isFixedSlots,
-    preferredCoachId
+    preferredCoachId,
+    selectedTimezone
   )
 
   const handleMonthChange = React.useCallback((date: Date) => {
@@ -269,7 +275,7 @@ export function usePublicBookingState() {
         teamId: selectedTeam,
         eventId: selectedEvent,
         startTime: selectedSlot,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: selectedTimezone,
         notes: studentInfo.notes,
         specificQuestion: studentInfo.specificQuestion,
         triedSolutions: studentInfo.triedSolutions,
@@ -324,5 +330,8 @@ export function usePublicBookingState() {
     handleMonthChange,
     selectedCoachId,
     setSelectedCoachId,
+    selectedTimezone,
+    setSelectedTimezone,
   }
 }
+

@@ -1,11 +1,11 @@
 import { useParams } from 'react-router-dom'
 import { Box, Stack } from '@mui/material'
-import { toTitleCase } from '@/utils/toTitleCase'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { StudentBookingHistory } from '@/components/students/StudentBookingHistory'
 import { StudentBookingStats } from '@/components/students/StudentBookingStats'
+import { StudentProfileCard } from '@/components/students/StudentProfileCard'
 import { useStudent, useStudentBookings } from '@/hooks/queries/useStudents'
 
 export function StudentDetailPage() {
@@ -33,12 +33,16 @@ export function StudentDetailPage() {
   return (
     <Box>
       <PageHeader
-        title={toTitleCase(student.fullName)}
-        subtitle={student.email}
+        title="Student Profile"
         breadcrumbs={[{ label: 'Students', to: '/students' }]}
       />
 
       <Stack spacing={4} sx={{ px: { xs: 2.5, md: 4 }, pb: 6 }}>
+        <StudentProfileCard
+          student={student}
+          bookings={bookingsData?.bookings ?? []}
+        />
+
         <StudentBookingStats
           bookings={bookingsData?.bookings ?? []}
           totalCount={student.bookingCount}

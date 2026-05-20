@@ -2,13 +2,13 @@ import { z } from "zod";
 
 export const GetNotificationConfigSchema = {
   params: z.object({
-    teamId: z.string().uuid(),
+    teamId: z.uuid(),
   }),
 };
 
 export const UpsertNotificationConfigSchema = {
   params: z.object({
-    teamId: z.string().uuid(),
+    teamId: z.uuid(),
   }),
   body: z.object({
     reminderOffsets: z

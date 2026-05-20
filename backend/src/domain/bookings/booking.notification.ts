@@ -8,7 +8,7 @@ import {
 } from "../../shared/notifications/notification.publisher";
 import type { SafeBooking } from "./booking.service";
 
-import { formatNotificationDate } from "../../shared/utils/date";
+import { formatNotificationDate, getFriendlyTimezoneLabel } from "../../shared/utils/date";
 import {
   getTeamNotificationConfig,
   type ResolvedNotificationConfig,
@@ -38,7 +38,7 @@ const getBookingNotificationVariables = async (
     coachName: getCoachName(booking),
     startTime: formatNotificationDate(new Date(booking.startTime), displayTimezone),
     endTime: formatNotificationDate(new Date(booking.endTime), displayTimezone),
-    timezone: displayTimezone,
+    timezone: getFriendlyTimezoneLabel(displayTimezone),
     meetingJoinUrl: booking.meetingJoinUrl ?? "",
     bookingStatus: booking.status,
     frontendUrl: resolveFrontendUrl(),
@@ -48,6 +48,13 @@ const getBookingNotificationVariables = async (
     rescheduleUrl: `${resolveFrontendUrl()}/reschedule/${booking.id}?token=${(booking as any).rescheduleToken ?? ""}`,
     coCoachDetails: "",
     coCoachNames: "",
+    cancellationReason: (booking as any).cancellationReason ?? "",
+    cancellationDetails: (booking as any).cancellationReason
+      ? `\nReason: ${(booking as any).cancellationReason}`
+      : "",
+    cancellationDetailsHtml: (booking as any).cancellationReason
+      ? `<br/><strong>Reason:</strong> ${(booking as any).cancellationReason}`
+      : "",
   };
 
   if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
@@ -300,7 +307,9 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     if (booking.status === BookingStatus.CANCELLED) {
       const publishTasks: Array<Promise<boolean>> = [
         publishNotificationSafely({
-          type: "BOOKING_CANCELLED",
+          type: booking.event?.deferCoachReveal
+            ? "BOOKING_CANCELLED_DEFERRED"
+            : "BOOKING_CANCELLED",
           recipients: booking.studentEmail,
           userId: booking.coachUserId,
           variables: studentVariables,

@@ -44,6 +44,7 @@ export type RescheduleBookingInput = {
 
 export type UpdateBookingStatusInput = {
   status: BookingStatus;
+  cancellationReason?: string;
 };
 
 export type ListBookingsFilters = {

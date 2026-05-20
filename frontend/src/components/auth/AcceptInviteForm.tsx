@@ -152,9 +152,9 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
           <MenuItem value="">
             <em>Choose a timezone...</em>
           </MenuItem>
-          {timezones.map((tz: string) => (
-            <MenuItem key={tz} value={tz}>
-              {tz.replace(/_/g, ' ')}
+          {timezones.map((tz) => (
+            <MenuItem key={tz.iana} value={tz.iana}>
+              {tz.label}
             </MenuItem>
           ))}
         </Select>

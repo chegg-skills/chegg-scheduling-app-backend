@@ -50,7 +50,7 @@ export const bookingTemplates: EmailTemplateMap = {
   BOOKING_CANCELLED: {
     subject: "Session Cancelled: {{eventName}}",
     preheader: "Your booking for {{eventName}} has been cancelled.",
-    text: "The booking for {{eventName}} scheduled at {{startTime}} with {{coachName}} has been cancelled.",
+    text: "The booking for {{eventName}} scheduled at {{startTime}} ({{timezone}}) with {{coachName}} has been cancelled.{{cancellationDetails}}",
     html: wrapLayout(
       "Session Cancelled",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -58,18 +58,41 @@ export const bookingTemplates: EmailTemplateMap = {
        <p style="margin-top: 16px;">
          ${detailRow("Event", "{{eventName}}")}
          ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Coach", "{{coachName}}")}
+         {{cancellationDetailsHtml}}
        </p>
        <p style="margin-top: 16px;">You can reschedule your session by visiting our booking page.</p>`,
       "Your booking for {{eventName}} has been cancelled.",
-      { text: "Reschedule Now", url: "{{publicBookingUrl}}" },
+      { text: "Book Again", url: "{{publicBookingUrl}}" },
+    ),
+  },
+
+  BOOKING_CANCELLED_DEFERRED: {
+    subject: "Session Cancelled: {{eventName}}",
+    preheader: "Your booking for {{eventName}} has been cancelled.",
+    text: "Hi {{studentName}}, your booking for {{eventName}} with {{teamName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled.{{cancellationDetails}} You can book a new session at any time.",
+    html: wrapLayout(
+      "Session Cancelled",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>This is to inform you that your upcoming booking has been cancelled.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+         {{cancellationDetailsHtml}}
+       </p>
+       <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>`,
+      "Your booking for {{eventName}} has been cancelled.",
+      { text: "Book Again", url: "{{publicBookingUrl}}" },
     ),
   },
 
   BOOKING_NO_SHOW: {
     subject: "Booking Marked: No-Show ({{eventName}})",
     preheader: "Your session has been marked as a no-show.",
-    text: "The booking for {{eventName}} at {{startTime}} has been marked as a no-show.",
+    text: "The booking for {{eventName}} at {{startTime}} ({{timezone}}) has been marked as a no-show.",
     html: wrapLayout(
       "Session Update: No-Show",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -77,6 +100,7 @@ export const bookingTemplates: EmailTemplateMap = {
        <p style="margin-top: 16px;">
          ${detailRow("Event", "{{eventName}}")}
          ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Coach", "{{coachName}}")}
        </p>`,
       "Your session has been marked as a no-show.",

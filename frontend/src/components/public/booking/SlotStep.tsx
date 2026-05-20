@@ -14,6 +14,7 @@ import { PageSpinner } from '@/components/shared/ui/Spinner'
 import type { AvailableSlot } from '@/api/public'
 import type { PublicEventCoach } from '@/types'
 import { SlotGroup } from './SlotGroup'
+import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
 interface SlotStepProps {
   slots: AvailableSlot[]
@@ -30,6 +31,8 @@ interface SlotStepProps {
   coaches?: PublicEventCoach[]
   selectedCoachId?: string | null
   onCoachSelect?: (coachId: string) => void
+  selectedTimezone: string
+  setSelectedTimezone: (tz: string) => void
 }
 
 function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
@@ -56,18 +59,6 @@ function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
   }
 }
 
-const timeFormat = new Intl.DateTimeFormat('en-US', {
-  hour: 'numeric',
-  minute: '2-digit',
-  hour12: true,
-})
-
-const dateFormat = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-})
-
 export function SlotStep({
   slots,
   loading,
@@ -83,18 +74,43 @@ export function SlotStep({
   coaches,
   selectedCoachId,
   onCoachSelect,
+  selectedTimezone,
+  setSelectedTimezone: _,
 }: SlotStepProps) {
   const theme = useTheme()
-  // Use UTC arithmetic to match the backend's window calculation in
-  // availability.service.ts. Both sides pin to UTC end-of-day so the boundary
-  // is the same regardless of the server's or client's local timezone.
+
+  const timeFormat = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
+    timeZone: selectedTimezone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }), [selectedTimezone])
+
+  const dateFormat = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }), [])
+
+  const hourExtractor = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
+    timeZone: selectedTimezone,
+    hour: 'numeric',
+    hourCycle: 'h23',
+  }), [selectedTimezone])
+  // Anchor the booking window to end-of-day in the student's selected timezone,
+  // mirroring the backend's endOfBookingWindowInTimezone helper. This prevents
+  // UTC±12 students from seeing the window end a full day early or late.
   const maxDate = React.useMemo(() => {
     if (maxBookingWindowDays == null) return undefined
-    const d = new Date()
-    d.setUTCDate(d.getUTCDate() + maxBookingWindowDays)
-    d.setUTCHours(23, 59, 59, 999)
-    return d
-  }, [maxBookingWindowDays])
+    const now = new Date()
+    const windowDayStart = startOfDayInTimezone(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + maxBookingWindowDays + 1,
+      selectedTimezone
+    )
+    return new Date(windowDayStart.getTime() - 1)
+  }, [maxBookingWindowDays, selectedTimezone])
 
   const DaySlot = React.useMemo(() => makeSlotDayIndicator(availableDates), [availableDates])
 
@@ -108,7 +124,10 @@ export function SlotStep({
 
     sorted.forEach((s) => {
       const date = new Date(s.startTime)
-      if (date.getHours() < 12) {
+      const hourStr = hourExtractor.format(date)
+      const hour = parseInt(hourStr, 10)
+
+      if (hour < 12) {
         am.push(s)
       } else {
         pm.push(s)
@@ -116,7 +135,7 @@ export function SlotStep({
     })
 
     return { amSlots: am, pmSlots: pm }
-  }, [slots])
+  }, [slots, hourExtractor])
 
   const hasCoachPicker = !!coaches && coaches.length > 0
   const coachNotYetChosen = hasCoachPicker && !selectedCoachId
@@ -201,14 +220,16 @@ export function SlotStep({
         >
           {/* Column 1: Calendar Picker */}
           <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, p: 3 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              fontWeight={700}
-              sx={{ display: 'block', mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}
-            >
-              1. Select date
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={700}
+                sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
+              >
+                1. Select date
+              </Typography>
+            </Box>
             <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
               <StaticDatePicker
                 displayStaticWrapperAs="desktop"

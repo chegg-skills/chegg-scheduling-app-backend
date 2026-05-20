@@ -8,7 +8,7 @@ import {
 
 // --- Base Schemas ---
 
-const EventTypeBase = z.object({
+const EventTypeBase = z.looseObject({
   key: z
     .string()
     .trim()
@@ -27,7 +27,7 @@ const EventTypeBase = z.object({
  * This lets `resolveUpdateEventContext` distinguish "user did not send this field"
  * (→ fall back to existing DB value) from "user explicitly sent a new value".
  */
-const EventBaseObjectCore = z.object({
+const EventBaseObjectCore = z.looseObject({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   eventTypeId: z.string().min(1, "Event Type is required"),
@@ -48,7 +48,7 @@ const EventBaseObjectCore = z.object({
   sessionLeadershipStrategy: z.string().optional(),
   fixedLeadCoachId: z.preprocess(
     (val) => (val === "" ? null : val),
-    z.string().uuid().optional().nullable(),
+    z.uuid().optional().nullable(),
   ),
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
@@ -203,11 +203,11 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
 
 const EventBase = EventBaseObject.superRefine(refineEventConstraints);
 
-const EventScheduleSlotBase = z.object({
+const EventScheduleSlotBase = z.looseObject({
   startTime: z.preprocess((val) => (typeof val === "string" ? new Date(val) : val), z.date()),
   endTime: z.preprocess((val) => (typeof val === "string" ? new Date(val) : val), z.date()),
   capacity: z.coerce.number().int().nonnegative().optional().nullable(),
-  assignedCoachId: z.string().uuid().optional().nullable(),
+  assignedCoachId: z.uuid().optional().nullable(),
   isActive: z.boolean().default(true),
   isCancelled: z.boolean().default(false),
   recurrence: z
@@ -222,37 +222,35 @@ const EventScheduleSlotBase = z.object({
 // --- Exported Schemas with Refinements ---
 
 export const EventTypeSchema = {
-  body: EventTypeBase.passthrough(),
+  body: EventTypeBase,
 };
 
 export const CreateEventSchema = {
   params: z.object({
-    teamId: z.string().uuid("Invalid team ID"),
+    teamId: z.uuid("Invalid team ID"),
   }),
-  body: EventBase.passthrough(),
+  body: EventBase,
 };
 
 export const UpdateEventSchema = {
   params: z.object({
-    eventId: z.string().uuid("Invalid event ID"),
+    eventId: z.uuid("Invalid event ID"),
   }),
   // EventBaseObjectCore has no defaults, so absent fields stay undefined rather than
   // being silently replaced by a Zod default. This lets resolveUpdateEventContext
   // correctly fall back to the existing DB value for any field the caller omits.
-  body: EventBaseObjectCore.partial().superRefine(refineEventConstraints).passthrough(),
+  body: EventBaseObjectCore.partial().superRefine(refineEventConstraints),
 };
 
 export const ReplaceEventCoachesSchema = {
-  body: z
-    .object({
+  body: z.looseObject({
       coaches: z.array(
         z.object({
-          userId: z.string().uuid("Invalid user ID"),
+          userId: z.uuid("Invalid user ID"),
           coachOrder: z.coerce.number().int().positive().optional(),
         }),
       ),
-    })
-    .passthrough(),
+    }),
 };
 
 // Schemas below are already using Coach nomenclature
@@ -263,36 +261,32 @@ export const EventScheduleSlotSchema = {
       return data.endTime > data.startTime;
     },
     { message: "endTime must be after startTime", path: ["endTime"] },
-  ).passthrough(),
-  partial: EventScheduleSlotBase.partial().passthrough(),
+  ),
+  partial: EventScheduleSlotBase.partial(),
 };
 
 export const ListTeamEventsSchema = {
   params: z.object({
-    teamId: z.string().uuid("Invalid team ID"),
+    teamId: z.uuid("Invalid team ID"),
   }),
-  query: z
-    .object({
+  query: z.looseObject({
       page: z.coerce.number().int().positive().default(1),
       pageSize: z.coerce.number().int().positive().default(10),
-    })
-    .passthrough(),
+    }),
 };
 
 export const ListAllEventsSchema = {
-  query: z
-    .object({
+  query: z.looseObject({
       page: z.coerce.number().int().positive().default(1),
       pageSize: z.coerce.number().int().positive().default(10),
-      teamId: z.string().uuid().optional(),
-    })
-    .passthrough(),
+      teamId: z.uuid().optional(),
+    }),
 };
 
 export const UpsertSessionLogSchema = {
   params: z.object({
-    eventId: z.string().uuid("Invalid event ID"),
-    slotId: z.string().uuid("Invalid slot ID"),
+    eventId: z.uuid("Invalid event ID"),
+    slotId: z.uuid("Invalid slot ID"),
   }),
   body: z.object({
     topicsDiscussed: z.string().trim().optional().nullable(),
@@ -300,7 +294,7 @@ export const UpsertSessionLogSchema = {
     coachNotes: z.string().trim().optional().nullable(),
     attendance: z.array(
       z.object({
-        bookingId: z.string().uuid("Invalid booking ID"),
+        bookingId: z.uuid("Invalid booking ID"),
         attended: z.boolean(),
       }),
     ),
@@ -309,11 +303,11 @@ export const UpsertSessionLogSchema = {
 
 export const RevealCoachSchema = {
   params: z.object({
-    eventId: z.string().uuid("Invalid event ID"),
-    slotId: z.string().uuid("Invalid slot ID"),
+    eventId: z.uuid("Invalid event ID"),
+    slotId: z.uuid("Invalid slot ID"),
   }),
   body: z.object({
-    coachUserId: z.string().uuid("Invalid coach user ID").optional(),
+    coachUserId: z.uuid("Invalid coach user ID").optional(),
     sessionJoinUrl: z.string().url("Invalid URL").optional().nullable(),
   }),
 };

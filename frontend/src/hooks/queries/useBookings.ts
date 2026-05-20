@@ -33,8 +33,15 @@ export function useBooking(id: string) {
 export function useUpdateBookingStatus() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
-      bookingsApi.updateStatus(id, { status }),
+    mutationFn: ({
+      id,
+      status,
+      cancellationReason,
+    }: {
+      id: string
+      status: BookingStatus
+      cancellationReason?: string
+    }) => bookingsApi.updateStatus(id, { status, cancellationReason }),
     onSuccess: (_, { id }) =>
       invalidateQueryKeys(qc, [bookingKeys.all, bookingKeys.detail(id), statsKeys.all]),
   })
