@@ -9,6 +9,8 @@ import { useMemo } from 'react'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/ui/Badge'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from './userSystemFieldUtils'
 
 interface UserProfileHeaderProps {
   user: UserWithDetails
@@ -21,6 +23,7 @@ const roleColor = {
 }
 
 export function UserProfileHeader({ user }: UserProfileHeaderProps) {
+  const { data: timezones = [] } = useTimezones()
   const zoomExpiryBadge = useMemo(() => {
     if (!user.zoomIsvLink || !user.zoomIsvLinkExpiresAt) return null
     const daysLeft = Math.ceil(
@@ -93,7 +96,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
             <Stack spacing={1}>
               <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
                 <Clock size={16} />
-                <Typography variant="body2">{user.timezone.replace(/_/g, ' ')} (UTC)</Typography>
+                <Typography variant="body2">{formatTimezoneLabel(user.timezone, timezones)}</Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
                 <Video size={16} />

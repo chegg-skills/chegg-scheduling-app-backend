@@ -8,7 +8,7 @@ import {
 } from "../../shared/notifications/notification.publisher";
 import type { SafeBooking } from "./booking.service";
 
-import { formatNotificationDate } from "../../shared/utils/date";
+import { formatNotificationDate, getFriendlyTimezoneLabel } from "../../shared/utils/date";
 import {
   getTeamNotificationConfig,
   type ResolvedNotificationConfig,
@@ -38,7 +38,7 @@ const getBookingNotificationVariables = async (
     coachName: getCoachName(booking),
     startTime: formatNotificationDate(new Date(booking.startTime), displayTimezone),
     endTime: formatNotificationDate(new Date(booking.endTime), displayTimezone),
-    timezone: displayTimezone,
+    timezone: getFriendlyTimezoneLabel(displayTimezone),
     meetingJoinUrl: booking.meetingJoinUrl ?? "",
     bookingStatus: booking.status,
     frontendUrl: resolveFrontendUrl(),
