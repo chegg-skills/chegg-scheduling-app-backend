@@ -105,7 +105,7 @@ export const toLocalAvailabilityInfo = (date: Date, timeZone: string): LocalAvai
   try {
     parts = new Intl.DateTimeFormat("en-US", {
       timeZone,
-      hour12: false,
+      hourCycle: "h23",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
