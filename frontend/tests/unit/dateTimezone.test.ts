@@ -5,7 +5,7 @@ describe('startOfDayInTimezone', () => {
   const formatLocal = (date: Date, tz: string) =>
     new Intl.DateTimeFormat('en-US', {
       timeZone: tz,
-      hour12: false,
+      hourCycle: 'h23',
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
@@ -61,7 +61,7 @@ describe('startOfDayInTimezone', () => {
     const endOfDay = new Date(d2Start.getTime() - 1)
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Kolkata',
-      hour12: false,
+      hourCycle: 'h23',
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
