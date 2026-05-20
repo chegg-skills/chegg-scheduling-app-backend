@@ -220,7 +220,7 @@ async function main() {
 
   const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour duration
 
-  const slot = await prisma.eventScheduleSlot.create({
+  await prisma.eventScheduleSlot.create({
     data: {
       eventId: event5.id,
       startTime,
