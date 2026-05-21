@@ -1,11 +1,14 @@
+import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { alpha, useTheme } from '@mui/material/styles'
-import { ChevronRight, Users, EyeOff } from 'lucide-react'
+import { ChevronRight, Users, EyeOff, Edit, Eye, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/shared/ui/Badge'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
+import { RowActions } from '@/components/shared/table/RowActions'
+import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { Team, SafeUser } from '@/types'
 
@@ -13,9 +16,29 @@ interface TeamQuickSelectProps {
   teams: Team[]
   users: SafeUser[]
   onSelectTeam: (teamId: string) => void
+  title?: string
+  description?: string
+  actionLabel?: string
+  showSectionHeader?: boolean
+  canManageTeam?: boolean
+  onEdit?: (team: Team) => void
+  onToggleActive?: (team: Team) => void | Promise<void>
+  onDelete?: (team: Team) => void | Promise<void>
 }
 
-export function TeamQuickSelect({ teams, users, onSelectTeam }: TeamQuickSelectProps) {
+export function TeamQuickSelect({
+  teams,
+  users,
+  onSelectTeam,
+  title = 'Select a Team to View Events',
+  description = 'Choose a team from the options below to manage schedules, view event configurations, and share direct booking links.',
+  actionLabel = 'View Events',
+  showSectionHeader = true,
+  canManageTeam = false,
+  onEdit,
+  onToggleActive,
+  onDelete,
+}: TeamQuickSelectProps) {
   const theme = useTheme()
 
   if (!teams || teams.length === 0) {
@@ -45,10 +68,12 @@ export function TeamQuickSelect({ teams, users, onSelectTeam }: TeamQuickSelectP
 
   return (
     <Box sx={{ mt: 2, mb: 4 }}>
-      <SectionHeader
-        title="Select a Team to View Events"
-        description="Choose a team from the options below to manage schedules, view event configurations, and share direct booking links."
-      />
+      {showSectionHeader && (
+        <SectionHeader
+          title={title}
+          description={description}
+        />
+      )}
 
       <Box
         sx={{
@@ -64,6 +89,9 @@ export function TeamQuickSelect({ teams, users, onSelectTeam }: TeamQuickSelectP
           const isActive = team.isActive
           const leadUser = users.find((u) => u.id === team.teamLeadId)
           const leadName = leadUser ? `${leadUser.firstName} ${leadUser.lastName}` : 'No lead'
+          const leadInitials = leadUser
+            ? `${leadUser.firstName?.[0] ?? ''}${leadUser.lastName?.[0] ?? ''}`.toUpperCase()
+            : ''
 
           return (
             <Card
@@ -124,10 +152,41 @@ export function TeamQuickSelect({ teams, users, onSelectTeam }: TeamQuickSelectP
                     {isActive ? <Users size={22} /> : <EyeOff size={22} />}
                   </Box>
 
-                  <Badge
-                    label={isActive ? 'Active' : 'Inactive'}
-                    color={isActive ? 'green' : 'yellow'}
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Badge
+                      label={isActive ? 'Active' : 'Inactive'}
+                      color={isActive ? 'green' : 'red'}
+                    />
+
+                    <PublicBookingLinkCell
+                      type="team"
+                      slug={team.publicBookingSlug}
+                      isActive={team.isActive}
+                    />
+
+                    {canManageTeam && onEdit && onToggleActive && onDelete && (
+                      <RowActions
+                        actions={[
+                          {
+                            label: 'Edit team details',
+                            icon: <Edit size={16} />,
+                            onClick: () => onEdit(team),
+                          },
+                          {
+                            label: team.isActive ? 'Mark as inactive' : 'Mark as active',
+                            icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                            onClick: () => onToggleActive(team),
+                          },
+                          {
+                            label: 'Delete team',
+                            icon: <Trash2 size={16} />,
+                            color: 'error.main',
+                            onClick: () => onDelete(team),
+                          },
+                        ]}
+                      />
+                    )}
+                  </Box>
                 </Box>
 
                 {/* Team Details */}
@@ -157,7 +216,11 @@ export function TeamQuickSelect({ teams, users, onSelectTeam }: TeamQuickSelectP
                       color: 'text.secondary',
                     }}
                   >
-                    {team.description || 'No description provided for this team.'}
+                    {team.description
+                      ? team.description.length > 60
+                        ? `${team.description.slice(0, 60)}...`
+                        : team.description
+                      : 'No description provided for this team.'}
                   </Typography>
                 </Box>
 
@@ -186,33 +249,56 @@ export function TeamQuickSelect({ teams, users, onSelectTeam }: TeamQuickSelectP
                       },
                     }}
                   >
-                    <span>View Events</span>
+                    <span>{actionLabel}</span>
                     <ChevronRight size={16} />
                   </Box>
 
                   {team.teamLeadId && (
-                    <Typography
-                      variant="caption"
+                    <Box
                       sx={{
-                        color: 'text.secondary',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        backgroundColor: alpha(theme.palette.text.secondary, 0.04),
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1,
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 0.5,
+                        gap: 1,
                         alignSelf: { xs: 'flex-start', sm: 'auto' },
                         ml: { xs: 0, sm: 'auto' },
                       }}
                     >
-                      <Box component="span" sx={{ color: 'text.disabled', fontWeight: 400 }}>
-                        Lead:
-                      </Box>{' '}
-                      {leadName}
-                    </Typography>
+                      {leadUser && (
+                        <Avatar
+                          src={leadUser.avatarUrl ?? undefined}
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            fontSize: '0.675rem',
+                            bgcolor: 'primary.light',
+                            color: 'primary.dark',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {leadInitials}
+                        </Avatar>
+                      )}
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          backgroundColor: alpha(theme.palette.text.secondary, 0.04),
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: 1,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                        }}
+                      >
+                        <Box component="span" sx={{ color: 'text.disabled', fontWeight: 400 }}>
+                          Lead:
+                        </Box>{' '}
+                        {leadName}
+                      </Typography>
+                    </Box>
                   )}
                 </Box>
               </CardContent>

@@ -22,6 +22,7 @@ import { TeamQuickSelect } from '@/components/events/TeamQuickSelect'
 import { useEventStats } from '@/hooks/queries/useStats'
 import { useUsers } from '@/hooks/queries/useUsers'
 import type { StatsTimeframe } from '@/types'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 export function EventsPage() {
   const { user } = useAuth()
@@ -83,8 +84,9 @@ export function EventsPage() {
   return (
     <Box>
       <PageHeader
-        title="Events"
-        subtitle="View events by team"
+        title={selectedTeam ? toTitleCase(selectedTeam.name) : 'Events'}
+        subtitle={selectedTeam ? (selectedTeam.description ?? undefined) : 'View events by team'}
+        breadcrumbs={selectedTeam ? [{ label: 'Teams', to: '/teams' }] : undefined}
         actions={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
             <Box
