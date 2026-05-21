@@ -1,4 +1,3 @@
-import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -89,9 +88,6 @@ export function TeamQuickSelect({
           const isActive = team.isActive
           const leadUser = users.find((u) => u.id === team.teamLeadId)
           const leadName = leadUser ? `${leadUser.firstName} ${leadUser.lastName}` : 'No lead'
-          const leadInitials = leadUser
-            ? `${leadUser.firstName?.[0] ?? ''}${leadUser.lastName?.[0] ?? ''}`.toUpperCase()
-            : ''
 
           return (
             <Card
@@ -318,21 +314,6 @@ export function TeamQuickSelect({
                         ml: { xs: 0, sm: 'auto' },
                       }}
                     >
-                      {leadUser && (
-                        <Avatar
-                          src={leadUser.avatarUrl ?? undefined}
-                          sx={{
-                            width: 24,
-                            height: 24,
-                            fontSize: '0.675rem',
-                            bgcolor: 'primary.light',
-                            color: 'primary.dark',
-                            fontWeight: 700,
-                          }}
-                        >
-                          {leadInitials}
-                        </Avatar>
-                      )}
                       <Typography
                         variant="caption"
                         sx={{
