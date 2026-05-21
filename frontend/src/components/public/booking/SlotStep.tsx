@@ -79,24 +79,36 @@ export function SlotStep({
 }: SlotStepProps) {
   const theme = useTheme()
 
-  const timeFormat = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
-    timeZone: selectedTimezone,
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }), [selectedTimezone])
+  const timeFormat = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: selectedTimezone,
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }),
+    [selectedTimezone]
+  )
 
-  const dateFormat = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  }), [])
+  const dateFormat = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      }),
+    []
+  )
 
-  const hourExtractor = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
-    timeZone: selectedTimezone,
-    hour: 'numeric',
-    hourCycle: 'h23',
-  }), [selectedTimezone])
+  const hourExtractor = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: selectedTimezone,
+        hour: 'numeric',
+        hourCycle: 'h23',
+      }),
+    [selectedTimezone]
+  )
   // Anchor the booking window to end-of-day in the student's selected timezone,
   // mirroring the backend's endOfBookingWindowInTimezone helper. This prevents
   // UTC±12 students from seeing the window end a full day early or late.
@@ -148,7 +160,13 @@ export function SlotStep({
             variant="caption"
             color="text.secondary"
             fontWeight={700}
-            sx={{ display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.625rem' }}
+            sx={{
+              display: 'block',
+              mb: 1,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              fontSize: '0.625rem',
+            }}
           >
             Select a coach
           </Typography>
@@ -185,7 +203,7 @@ export function SlotStep({
                     '&:hover': {
                       borderColor: 'primary.main',
                       bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.06) : 'grey.50',
-                    }
+                    },
                   }}
                 >
                   <Avatar
@@ -206,7 +224,16 @@ export function SlotStep({
       )}
 
       {coachNotYetChosen ? (
-        <Box sx={{ p: 6, textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box
+          sx={{
+            p: 6,
+            textAlign: 'center',
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
             Select a coach above to see available times.
           </Typography>
@@ -216,11 +243,19 @@ export function SlotStep({
           direction={{ xs: 'column', lg: 'row' }}
           alignItems="stretch"
           sx={{ flexGrow: 1, minHeight: 0 }}
-          divider={<Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', lg: 'block' } }} />}
+          divider={
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ display: { xs: 'none', lg: 'block' } }}
+            />
+          }
         >
           {/* Column 1: Calendar Picker */}
           <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            >
               <Typography
                 variant="caption"
                 color="text.secondary"

@@ -62,7 +62,7 @@ export function PublicBookingSummary({
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
-      timeZone: variant === 'current' ? (selectedTimezone || undefined) : undefined,
+      timeZone: variant === 'current' ? selectedTimezone || undefined : undefined,
       weekday: 'long',
       month: 'long',
       day: 'numeric',

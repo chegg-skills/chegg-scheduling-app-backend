@@ -209,12 +209,13 @@ export function PublicReschedulePage() {
                     minute: '2-digit',
                     hour12: true,
                   }).format(dateObj)
-                  const tzName = new Intl.DateTimeFormat('en-US', {
-                    timeZone: selectedTimezone,
-                    timeZoneName: 'long',
-                  })
-                    .formatToParts(dateObj)
-                    .find((p) => p.type === 'timeZoneName')?.value || ''
+                  const tzName =
+                    new Intl.DateTimeFormat('en-US', {
+                      timeZone: selectedTimezone,
+                      timeZoneName: 'long',
+                    })
+                      .formatToParts(dateObj)
+                      .find((p) => p.type === 'timeZoneName')?.value || ''
                   return tzName ? `${timeStr} (${tzName})` : timeStr
                 })()
               : ''
@@ -323,10 +324,7 @@ export function PublicReschedulePage() {
             isSubmitting={isSubmitting}
             onTroubleshoot={() => setTroubleshootOpen(true)}
             extraAccessory={
-              <PublicTimezoneSelect
-                value={selectedTimezone}
-                onChange={setSelectedTimezone}
-              />
+              <PublicTimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
             }
           />
         </PublicMainContent>

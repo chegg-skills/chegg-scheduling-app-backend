@@ -5,7 +5,7 @@ export const CreateBookingSchema = {
   body: z
     .object({
       studentName: z.string().trim().min(1, "Student name is required"),
-      studentEmail: z.string().trim().email("Invalid email address"),
+      studentEmail: z.email("Invalid email address").trim(),
       teamId: z.uuid("Invalid team ID"),
       eventId: z.uuid("Invalid event ID"),
       startTime: z.preprocess((arg) => {
@@ -44,7 +44,7 @@ export const ListBookingsSchema = {
       teamId: z.uuid("Invalid team ID").optional(),
       eventId: z.uuid("Invalid event ID").optional(),
       coachUserId: z.uuid("Invalid host ID").optional(),
-      status: z.nativeEnum(BookingStatus).optional(),
+      status: z.enum(BookingStatus).optional(),
       search: z.string().trim().optional(),
       startDate: z.string().datetime().optional(),
       endDate: z.string().datetime().optional(),
@@ -62,7 +62,7 @@ export const UpdateBookingStatusSchema = {
     .strip(),
   body: z
     .object({
-      status: z.nativeEnum(BookingStatus),
+      status: z.enum(BookingStatus),
       cancellationReason: z.string().trim().max(500).optional(),
     })
     .strip(),

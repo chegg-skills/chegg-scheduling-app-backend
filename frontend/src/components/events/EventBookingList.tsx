@@ -85,19 +85,9 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
             },
           }}
         >
-          <Tab
-            label="Upcoming"
-            value="UPCOMING"
-            icon={<Clock3 size={18} />}
-            iconPosition="start"
-          />
+          <Tab label="Upcoming" value="UPCOMING" icon={<Clock3 size={18} />} iconPosition="start" />
           <Tab label="All" value="ALL" icon={<CalendarDays size={18} />} iconPosition="start" />
-          <Tab
-            label="Cancelled"
-            value="CANCELLED"
-            icon={<X size={18} />}
-            iconPosition="start"
-          />
+          <Tab label="Cancelled" value="CANCELLED" icon={<X size={18} />} iconPosition="start" />
           <Tab
             label="Completed"
             value="COMPLETED"

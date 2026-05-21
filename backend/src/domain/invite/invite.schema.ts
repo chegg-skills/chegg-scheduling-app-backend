@@ -3,8 +3,8 @@ import { UserRole } from "@prisma/client";
 
 export const CreateInviteSchema = {
   body: z.looseObject({
-    email: z.string().email("Invalid email address"),
-    role: z.nativeEnum(UserRole).default(UserRole.COACH),
+    email: z.email("Invalid email address"),
+    role: z.enum(UserRole).default(UserRole.COACH),
     teamId: z.uuid().optional().nullable(),
     requiresSso: z.boolean().optional().default(false),
   }),

@@ -4,7 +4,7 @@ import { UserRole } from "@prisma/client";
 export const LoginSchema = {
   body: z
     .object({
-      email: z.string().trim().email("Invalid email address"),
+      email: z.email("Invalid email address").trim(),
       password: z.string().trim().min(1, "Password is required"),
     })
     .strip(),
@@ -15,10 +15,10 @@ export const RegisterSchema = {
     .object({
       firstName: z.string().trim().min(1, "First name is required"),
       lastName: z.string().trim().min(1, "Last name is required"),
-      email: z.string().trim().email("Invalid email address"),
+      email: z.email("Invalid email address").trim(),
       password: z.string().trim().min(8, "Password must be at least 8 characters"),
       timezone: z.string().trim().default("UTC"),
-      role: z.nativeEnum(UserRole).optional(),
+      role: z.enum(UserRole).optional(),
       phoneNumber: z.string().trim().optional(),
       avatarUrl: z.string().trim().url("Invalid avatar URL").optional().or(z.string().length(0)),
     })
@@ -28,7 +28,7 @@ export const RegisterSchema = {
 export const ResetPasswordRequestSchema = {
   body: z
     .object({
-      email: z.string().trim().email("Invalid email address"),
+      email: z.email("Invalid email address").trim(),
     })
     .strip(),
 };

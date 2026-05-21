@@ -15,18 +15,26 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
   const end = new Date(booking.endTime)
   const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-  const dateFormatter = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  }), [])
+  const dateFormatter = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+    []
+  )
 
-  const timeFormatter = React.useMemo(() => new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }), [])
+  const timeFormatter = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }),
+    []
+  )
 
   return (
     <Box>

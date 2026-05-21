@@ -16,7 +16,6 @@ export const GROUP_ORDER = [
   'Universal',
 ]
 
-
 export function getTimezoneInfo(timezone: string, date: Date) {
   try {
     const time = date
@@ -43,7 +42,9 @@ export function getTimezoneInfo(timezone: string, date: Date) {
   }
 }
 
-export function groupTimezonesByRegion(timezones: TimezoneOption[]): Record<string, TimezoneOption[]> {
+export function groupTimezonesByRegion(
+  timezones: TimezoneOption[]
+): Record<string, TimezoneOption[]> {
   return timezones.reduce<Record<string, TimezoneOption[]>>((groups, tz) => {
     if (!groups[tz.group]) {
       groups[tz.group] = []

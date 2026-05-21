@@ -24,11 +24,7 @@ export function UserSystemFields({
 }: UserSystemFieldsProps) {
   return (
     <Stack spacing={2}>
-      <UserRoleStatusFields
-        control={control}
-        errors={errors}
-        canChangeRole={canChangeRole}
-      />
+      <UserRoleStatusFields control={control} errors={errors} canChangeRole={canChangeRole} />
       <UserTimezoneField control={control} errors={errors} />
       <UserZoomLinkField control={control} errors={errors} />
 

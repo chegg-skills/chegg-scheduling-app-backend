@@ -12,10 +12,38 @@ export const publicKeys = {
   event: (slug: string) => [...publicKeys.all, 'event', slug] as const,
   coach: (slug: string) => [...publicKeys.all, 'coach', slug] as const,
   coachEvents: (slug: string) => [...publicKeys.all, 'coach-events', slug] as const,
-  slots: (eventId: string, start: string, end: string, preferredCoachId?: string, timezone?: string) =>
-    [...publicKeys.all, 'slots', eventId, start, end, preferredCoachId ?? 'any', timezone ?? 'local'] as const,
-  slotDates: (eventId: string, start: string, end: string, preferredCoachId?: string, timezone?: string) =>
-    [...publicKeys.all, 'slot-dates', eventId, start, end, preferredCoachId ?? 'any', timezone ?? 'local'] as const,
+  slots: (
+    eventId: string,
+    start: string,
+    end: string,
+    preferredCoachId?: string,
+    timezone?: string
+  ) =>
+    [
+      ...publicKeys.all,
+      'slots',
+      eventId,
+      start,
+      end,
+      preferredCoachId ?? 'any',
+      timezone ?? 'local',
+    ] as const,
+  slotDates: (
+    eventId: string,
+    start: string,
+    end: string,
+    preferredCoachId?: string,
+    timezone?: string
+  ) =>
+    [
+      ...publicKeys.all,
+      'slot-dates',
+      eventId,
+      start,
+      end,
+      preferredCoachId ?? 'any',
+      timezone ?? 'local',
+    ] as const,
 }
 
 export function usePublicTeams() {
@@ -107,16 +135,21 @@ export function usePublicSlotDates(
 
   const availableDates = useMemo(() => {
     const dates = new Set<string>()
-    const formatter = timezone 
-      ? new Intl.DateTimeFormat('en-US', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' })
+    const formatter = timezone
+      ? new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
       : null
 
     for (const slot of slots) {
       if (formatter) {
         const parts = formatter.formatToParts(new Date(slot.startTime))
-        const year = parts.find(p => p.type === 'year')?.value
-        const month = parts.find(p => p.type === 'month')?.value
-        const day = parts.find(p => p.type === 'day')?.value
+        const year = parts.find((p) => p.type === 'year')?.value
+        const month = parts.find((p) => p.type === 'month')?.value
+        const day = parts.find((p) => p.type === 'day')?.value
         if (year && month && day) {
           dates.add(`${year}-${month}-${day}`)
         }

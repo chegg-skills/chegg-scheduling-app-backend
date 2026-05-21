@@ -102,9 +102,17 @@ export function PublicNavigationFooter({
           disabled={nextDisabled || isSubmitting}
           onClick={onNext}
           sx={{
-            px: (nextLabel.toLowerCase().includes('confirm') || nextLabel.toLowerCase().includes('reschedule')) ? 4 : 6,
+            px:
+              nextLabel.toLowerCase().includes('confirm') ||
+              nextLabel.toLowerCase().includes('reschedule')
+                ? 4
+                : 6,
             py: 1.25,
-            minWidth: (nextLabel.toLowerCase().includes('confirm') || nextLabel.toLowerCase().includes('reschedule')) ? 220 : 140,
+            minWidth:
+              nextLabel.toLowerCase().includes('confirm') ||
+              nextLabel.toLowerCase().includes('reschedule')
+                ? 220
+                : 140,
             fontWeight: 800,
             borderRadius: 3,
             bgcolor: 'primary.main',

@@ -11,7 +11,7 @@ export const AddTeamMemberSchema = {
     .looseObject({
       userId: z.uuid("Invalid user ID").optional(),
       userIds: z.array(z.uuid()).optional(),
-      role: z.nativeEnum(UserRole).optional(),
+      role: z.enum(UserRole).optional(),
     })
     .refine((data) => data.userId || (data.userIds && data.userIds.length > 0), {
       message: "Either userId or a non-empty userIds array must be provided",
