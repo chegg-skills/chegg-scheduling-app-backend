@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { CalendarDays, Plus, Repeat2, ToggleRight, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAuth } from '@/context/auth'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
@@ -17,7 +17,10 @@ import { EventTable } from '@/components/events/table/EventTable'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Select } from '@/components/shared/form/Select'
 import { StatsOverview } from '@/components/shared/StatsOverview'
+import { TeamQuickLink } from '@/components/events/TeamQuickLink'
+import { TeamQuickSelect } from '@/components/events/TeamQuickSelect'
 import { useEventStats } from '@/hooks/queries/useStats'
+import { useUsers } from '@/hooks/queries/useUsers'
 import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
@@ -28,6 +31,14 @@ export function EventsPage() {
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const canManageTeam = user?.role === 'SUPER_ADMIN'
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
+  const { data: usersData } = useUsers({ pageSize: 200 })
+
+  const sortedTeams = useMemo(() => {
+    if (!teamsData?.teams) return []
+    return [...teamsData.teams].sort((a, b) => a.name.localeCompare(b.name))
+  }, [teamsData?.teams])
+
+  const selectedTeam = sortedTeams.find((team) => team.id === selectedTeamId)
   const {
     data: eventsData,
     isLoading: eventsLoading,
@@ -118,10 +129,7 @@ export function EventsPage() {
                       )
                     }
 
-                    return (
-                      teamsData?.teams?.find((team) => team.id === value)?.name ??
-                      'Choose a team...'
-                    )
+                    return sortedTeams.find((team) => team.id === value)?.name ?? 'Choose a team...'
                   }}
                   sx={{
                     minWidth: { xs: '100%', sm: 280 },
@@ -157,7 +165,7 @@ export function EventsPage() {
                   }}
                 >
                   <MenuItem value="">Choose a team...</MenuItem>
-                  {teamsData?.teams?.map((team) => (
+                  {sortedTeams.map((team) => (
                     <MenuItem key={team.id} value={team.id}>
                       {team.name}
                     </MenuItem>
@@ -197,10 +205,14 @@ export function EventsPage() {
               isLoading={statsLoading}
             />
 
+            {selectedTeamId !== '' && <TeamQuickLink team={selectedTeam} />}
+
             {selectedTeamId === '' ? (
-              <Typography variant="body2" color="text.secondary">
-                Please select a team to view its events.
-              </Typography>
+              <TeamQuickSelect
+                teams={sortedTeams}
+                users={usersData?.users ?? []}
+                onSelectTeam={setSelectedTeamId}
+              />
             ) : eventsLoading ? (
               <PageSpinner />
             ) : eventsError ? (

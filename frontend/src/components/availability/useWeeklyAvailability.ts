@@ -22,7 +22,7 @@ export function useWeeklyAvailability({ value, onChange, showFooter }: UseWeekly
   // Uses functional setState so `days` is not a dependency — otherwise every local
   // toggle would trigger the effect and immediately revert the change.
   useEffect(() => {
-    setDays(prev => {
+    setDays((prev) => {
       const nextDays = buildDaysFromValue(value)
       const currentSerialized = JSON.stringify(serializeDaysToValue(prev))
       const nextSerialized = JSON.stringify(serializeDaysToValue(nextDays))

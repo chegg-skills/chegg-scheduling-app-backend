@@ -32,16 +32,10 @@ export function StudentDetailPage() {
 
   return (
     <Box>
-      <PageHeader
-        title="Student Profile"
-        breadcrumbs={[{ label: 'Students', to: '/students' }]}
-      />
+      <PageHeader title="Student Profile" breadcrumbs={[{ label: 'Students', to: '/students' }]} />
 
       <Stack spacing={4} sx={{ px: { xs: 2.5, md: 4 }, pb: 6 }}>
-        <StudentProfileCard
-          student={student}
-          bookings={bookingsData?.bookings ?? []}
-        />
+        <StudentProfileCard student={student} bookings={bookingsData?.bookings ?? []} />
 
         <StudentBookingStats
           bookings={bookingsData?.bookings ?? []}

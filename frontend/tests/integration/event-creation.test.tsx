@@ -91,7 +91,7 @@ describe('Event Creation Integration', () => {
     // 1. Select team
     const selectEl = await screen.findByRole('combobox', { name: /Select team/i })
     fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByText('Math Team'))
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     // 2. Open "New event" modal
     const newEventBtn = await screen.findByRole('button', { name: /New event/i })
@@ -148,7 +148,7 @@ describe('Event Creation Integration', () => {
     // 1. Select team
     const selectEl = await screen.findByRole('combobox', { name: /Select team/i })
     fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByText('Math Team'))
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     // 2. Open "New event" modal
     const newEventBtn = await screen.findByRole('button', { name: /New event/i })

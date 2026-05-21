@@ -17,7 +17,7 @@ export const ListUsersSchema = {
       }, z.number().int().positive().default(50)),
       limit: z.coerce.number().int().positive().optional(),
       search: z.string().optional(),
-      role: z.nativeEnum(UserRole).optional(),
+      role: z.enum(UserRole).optional(),
       isActive: z.preprocess((val) => val === "true" || val === true, z.boolean()).optional(),
     }),
 };
@@ -26,9 +26,9 @@ export const CreateUserSchema = {
   body: z.looseObject({
       firstName: z.string().min(1, "First name is required"),
       lastName: z.string().min(1, "Last name is required"),
-      email: z.string().email("Invalid email address"),
+      email: z.email("Invalid email address"),
       password: z.string().min(8, "Password must be at least 8 characters"),
-      role: z.nativeEnum(UserRole).default(UserRole.COACH),
+      role: z.enum(UserRole).default(UserRole.COACH),
       phoneNumber: z.string().optional(),
       country: z.string().optional(),
       timezone: z.string().default("UTC"),
@@ -41,9 +41,9 @@ export const UpdateUserSchema = {
   body: z.looseObject({
       firstName: z.string().trim().min(1, "First name cannot be empty").optional(),
       lastName: z.string().trim().min(1, "Last name cannot be empty").optional(),
-      email: z.string().trim().email().optional(),
+      email: z.email().trim().optional(),
       password: z.string().trim().min(8, "Password must be at least 8 characters").optional(),
-      role: z.nativeEnum(UserRole).optional(),
+      role: z.enum(UserRole).optional(),
       phoneNumber: z.string().trim().optional().nullable(),
       country: z.string().trim().optional().nullable(),
       avatarUrl: z.string().trim().url().optional().or(z.literal("")).nullable(),

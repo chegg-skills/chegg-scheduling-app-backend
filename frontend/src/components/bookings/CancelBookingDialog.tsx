@@ -72,9 +72,7 @@ export function CancelBookingDialog({
     }
 
     const finalReason =
-      selectedReason === 'Other (Please specify)'
-        ? customReason.trim()
-        : selectedReason
+      selectedReason === 'Other (Please specify)' ? customReason.trim() : selectedReason
 
     onConfirm(finalReason)
   }
@@ -118,15 +116,13 @@ export function CancelBookingDialog({
 
       <DialogContent dividers sx={{ py: 3 }}>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Are you sure you want to cancel the booking for <strong>{toTitleCase(booking.studentName)}</strong>?
-          This action will release the slot and notify all participants via email.
+          Are you sure you want to cancel the booking for{' '}
+          <strong>{toTitleCase(booking.studentName)}</strong>? This action will release the slot and
+          notify all participants via email.
         </Typography>
 
         <FormControl component="fieldset" fullWidth error={!!error && !selectedReason}>
-          <FormLabel
-            component="legend"
-            sx={{ fontWeight: 'bold', color: 'text.primary', mb: 1.5 }}
-          >
+          <FormLabel component="legend" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 1.5 }}>
             Why is this booking being cancelled?
           </FormLabel>
           <RadioGroup

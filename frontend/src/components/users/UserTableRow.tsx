@@ -10,7 +10,11 @@ import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { SafeUser } from '@/types'
-import { getUserRoleBadgeProps, getUserStatusBadgeProps, getZoomExpiryLabel } from './userTableUtils'
+import {
+  getUserRoleBadgeProps,
+  getUserStatusBadgeProps,
+  getZoomExpiryLabel,
+} from './userTableUtils'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from './userSystemFieldUtils'
 

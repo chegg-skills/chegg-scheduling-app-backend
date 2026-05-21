@@ -10,16 +10,7 @@ import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import { useTheme, alpha } from '@mui/material/styles'
-import {
-  Globe,
-  Calendar,
-  Video,
-  User,
-  Copy,
-  Check,
-  ShieldCheck,
-  Info,
-} from 'lucide-react'
+import { Globe, Calendar, Video, User, Copy, Check, ShieldCheck, Info } from 'lucide-react'
 import { format } from 'date-fns'
 import type { StudentSummary, Booking } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
@@ -68,13 +59,16 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
         : 'In-Person Session'
 
   // 3. Favorite Coach
-  const coachCounts = bookings.reduce((acc, b) => {
-    if (b.coach) {
-      const name = `${b.coach.firstName} ${b.coach.lastName}`
-      acc[name] = (acc[name] || 0) + 1
-    }
-    return acc
-  }, {} as Record<string, number>)
+  const coachCounts = bookings.reduce(
+    (acc, b) => {
+      if (b.coach) {
+        const name = `${b.coach.firstName} ${b.coach.lastName}`
+        acc[name] = (acc[name] || 0) + 1
+      }
+      return acc
+    },
+    {} as Record<string, number>
+  )
 
   let favoriteCoach = 'N/A'
   let maxCoachCount = 0
@@ -92,7 +86,7 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
       value: studentTimezone,
       icon: <Globe size={18} />,
       color: theme.palette.primary.main,
-      tooltip: 'Derived from the timezone selected during this student\'s latest booking.',
+      tooltip: "Derived from the timezone selected during this student's latest booking.",
     },
     {
       label: 'Learning Mode',
@@ -147,7 +141,10 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
               </Avatar>
               <Stack spacing={0.75}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}
+                  >
                     {toTitleCase(student.fullName)}
                   </Typography>
                   <Tooltip title="Verified Student">
@@ -162,8 +159,16 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
                     {student.email}
                   </Typography>
                   <Tooltip title={copied ? 'Copied!' : 'Copy Email'}>
-                    <IconButton size="small" onClick={handleCopyEmail} sx={{ ml: 0.5, color: 'text.secondary' }}>
-                      {copied ? <Check size={14} color={theme.palette.success.main} /> : <Copy size={14} />}
+                    <IconButton
+                      size="small"
+                      onClick={handleCopyEmail}
+                      sx={{ ml: 0.5, color: 'text.secondary' }}
+                    >
+                      {copied ? (
+                        <Check size={14} color={theme.palette.success.main} />
+                      ) : (
+                        <Copy size={14} />
+                      )}
                     </IconButton>
                   </Tooltip>
                 </Stack>

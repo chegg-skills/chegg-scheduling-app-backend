@@ -157,9 +157,19 @@ export function PublicBookingFlow({
 
       if (scope === 'event' && eventDetailsError) {
         const errorMsg = extractApiError(eventDetailsError)
-        const isInactive = errorMsg.toLowerCase().includes('inactive') || errorMsg.toLowerCase().includes('paused')
+        const isInactive =
+          errorMsg.toLowerCase().includes('inactive') || errorMsg.toLowerCase().includes('paused')
         return (
-          <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', width: '100%' }}>
+          <Box
+            sx={{
+              p: 4,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '60vh',
+              width: '100%',
+            }}
+          >
             <Box sx={{ maxWidth: 500, width: '100%' }}>
               <ErrorAlert
                 title={isInactive ? 'Scheduling Paused' : 'Invalid Booking Link'}
@@ -173,7 +183,16 @@ export function PublicBookingFlow({
 
       if (!selectedEvent) {
         return (
-          <Box sx={{ p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', width: '100%' }}>
+          <Box
+            sx={{
+              p: 4,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '60vh',
+              width: '100%',
+            }}
+          >
             <Box sx={{ maxWidth: 500, width: '100%' }}>
               <ErrorAlert message="Please select an event before choosing a time slot." />
             </Box>

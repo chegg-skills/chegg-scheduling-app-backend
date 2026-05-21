@@ -53,7 +53,7 @@ export function EventDetailPage() {
     isFetching: isFetchingSlots,
   } = useEventScheduleSlots(eventId)
   const { data: teamMembersResponse } = useTeamMembers(event?.teamId ?? '')
-  
+
   const { data: upcomingBookingsRes } = useBookings({
     eventId,
     status: 'CONFIRMED',

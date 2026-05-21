@@ -71,7 +71,11 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
       }
       const targetOffset = getOffsetMs(value)
       const match = timezones.find((tz) => {
-        try { return getOffsetMs(tz.iana) === targetOffset } catch { return false }
+        try {
+          return getOffsetMs(tz.iana) === targetOffset
+        } catch {
+          return false
+        }
       })
       if (match) onChange(match.iana)
     } catch {
@@ -80,7 +84,8 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
   }, [timezones.length, value]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const options = useMemo(() => {
-    return timezones.filter((tz) => typeof tz === 'object' && tz !== null)
+    return timezones
+      .filter((tz) => typeof tz === 'object' && tz !== null)
       .map((tz) => ({
         ...tz,
         time: getTimezoneInfo(tz.iana, now).time,
@@ -97,7 +102,7 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
 
   const selectedOption = useMemo(
     () => options.find((opt) => opt.iana === value) || null,
-    [options, value],
+    [options, value]
   )
 
   const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -237,7 +242,7 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
                     >
                       <ClearIcon sx={{ fontSize: '1.125rem' }} />
                     </IconButton>
-                  ) : null
+                  ) : null,
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {

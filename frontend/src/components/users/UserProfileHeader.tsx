@@ -27,7 +27,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
   const zoomExpiryBadge = useMemo(() => {
     if (!user.zoomIsvLink || !user.zoomIsvLinkExpiresAt) return null
     const daysLeft = Math.ceil(
-      (new Date(user.zoomIsvLinkExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+      (new Date(user.zoomIsvLinkExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     )
     if (daysLeft <= 0) return <Badge label="Expired" color="red" variant="soft" />
     if (daysLeft <= 7) return <Badge label={`${daysLeft}d left`} color="yellow" variant="soft" />
@@ -96,7 +96,9 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
             <Stack spacing={1}>
               <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
                 <Clock size={16} />
-                <Typography variant="body2">{formatTimezoneLabel(user.timezone, timezones)}</Typography>
+                <Typography variant="body2">
+                  {formatTimezoneLabel(user.timezone, timezones)}
+                </Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
                 <Video size={16} />
