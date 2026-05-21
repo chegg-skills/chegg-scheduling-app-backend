@@ -66,12 +66,12 @@ describe('Events Domain Integration', () => {
     renderWithProviders(<EventsPage />)
 
     // 1. Wait for teams to load, then verify initial empty-state message
-    await screen.findByText(/Please select a team/i, {}, { timeout: 8000 })
+    await screen.findByText(/Select a Team to View Events/i, {}, { timeout: 8000 })
 
     // 2. Open the MUI Select via its aria-label and pick a team
     const selectEl = screen.getByLabelText('Select team')
     fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByText('Math Team'))
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     // 3. Verify events load
     await waitFor(
@@ -91,11 +91,11 @@ describe('Events Domain Integration', () => {
     })
     renderWithProviders(<EventsPage />)
 
-    await screen.findByText(/Please select a team/i, {}, { timeout: 8000 })
+    await screen.findByText(/Select a Team to View Events/i, {}, { timeout: 8000 })
 
     const selectEl = screen.getByLabelText('Select team')
     fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByText('Math Team'))
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     expect(screen.getAllByRole('button', { name: /New event/i })[0]).toBeInTheDocument()
 
@@ -108,11 +108,11 @@ describe('Events Domain Integration', () => {
     })
     renderWithProviders(<EventsPage />)
 
-    await screen.findByText(/Please select a team/i, {}, { timeout: 8000 })
+    await screen.findByText(/Select a Team to View Events/i, {}, { timeout: 8000 })
 
     const selectEl2 = screen.getByLabelText('Select team')
     fireEvent.mouseDown(selectEl2)
-    fireEvent.click(await screen.findByText('Math Team'))
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     expect(screen.queryAllByRole('button', { name: /New event/i })).toHaveLength(0)
   }, 15000)
