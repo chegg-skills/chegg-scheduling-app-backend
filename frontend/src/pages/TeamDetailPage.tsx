@@ -23,6 +23,7 @@ import { RowActions } from '@/components/shared/table/RowActions'
 import { TeamMembersTab } from '@/components/teams/tabs/TeamMembersTab'
 import { TeamEventsTab } from '@/components/teams/tabs/TeamEventsTab'
 import { TeamNotificationsTab } from '@/components/teams/tabs/TeamNotificationsTab'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 export function TeamDetailPage() {
   const { teamId = '' } = useParams<{ teamId: string }>()
@@ -64,7 +65,7 @@ export function TeamDetailPage() {
   return (
     <Stack spacing={4}>
       <PageHeader
-        title={team.name}
+        title={toTitleCase(team.name)}
         subtitle={team.description ?? undefined}
         breadcrumbs={[{ label: 'Teams', to: '/teams' }]}
         tags={

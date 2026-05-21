@@ -26,6 +26,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TabPanel } from '@/components/shared/ui/TabPanel'
 import { Modal } from '@/components/shared/ui/Modal'
+import { toTitleCase } from '@/utils/toTitleCase'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { Badge } from '@/components/shared/ui/Badge'
@@ -118,11 +119,12 @@ export function EventDetailPage() {
   return (
     <Stack spacing={4}>
       <PageHeader
-        title={event.name}
+        title={toTitleCase(event.name)}
         subtitle={event.description ?? undefined}
         breadcrumbs={[
           { label: 'Teams', to: '/teams' },
-          { label: event.team?.name || 'Team', to: `/teams/${event.teamId}` },
+          { label: toTitleCase(event.team?.name || 'Team'), to: `/teams/${event.teamId}` },
+          { label: 'Event' },
         ]}
         tags={
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">

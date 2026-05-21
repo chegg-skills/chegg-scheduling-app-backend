@@ -34,7 +34,8 @@ export function RowActions({ actions }: RowActionsProps) {
     setAnchorEl(null)
   }
 
-  const handleActionClick = (onClick: () => void) => {
+  const handleActionClick = (event: MouseEvent<HTMLElement>, onClick: () => void) => {
+    event.stopPropagation()
     handleClose()
     onClick()
   }
@@ -59,6 +60,7 @@ export function RowActions({ actions }: RowActionsProps) {
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
+        onClick={(e) => e.stopPropagation()}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         PaperProps={{
@@ -77,7 +79,7 @@ export function RowActions({ actions }: RowActionsProps) {
           const menuItem = (
             <MenuItem
               key={action.label}
-              onClick={() => handleActionClick(action.onClick)}
+              onClick={(e) => handleActionClick(e, action.onClick)}
               disabled={action.disabled}
               sx={{
                 px: 2,

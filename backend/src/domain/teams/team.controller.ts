@@ -4,17 +4,6 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as teamService from "./team.service";
 
-const getTeamIdParam = (req: Request): string => {
-  const { teamId } = req.params;
-  return Array.isArray(teamId) ? teamId[0] : teamId;
-};
-
-const parsePositiveInt = (value: unknown): number | undefined => {
-  if (typeof value !== "string") return undefined;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
-  return parsed;
-};
 
 const createTeam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

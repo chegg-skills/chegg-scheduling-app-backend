@@ -201,18 +201,18 @@ export function ScheduleSlotRow({
             },
             ...(event.deferCoachReveal
               ? [
-                  {
-                    label: slot.coachRevealSentAt ? 'Reveal Sent' : 'Send Reveal',
-                    icon: <Eye size={16} />,
-                    onClick: () => onReveal?.(slot),
-                    disabled: !!slot.coachRevealSentAt || slot.isCancelled,
-                    tooltip: slot.coachRevealSentAt
-                      ? `Reveal sent on ${format(new Date(slot.coachRevealSentAt), 'MMM d @ h:mm a')}`
-                      : slot.isCancelled
-                        ? 'Session is cancelled'
-                        : 'Send coach and join URL to all participants',
-                  },
-                ]
+                {
+                  label: slot.coachRevealSentAt ? 'Reveal Sent' : 'Send Reveal',
+                  icon: <Eye size={16} />,
+                  onClick: () => onReveal?.(slot),
+                  disabled: !!slot.coachRevealSentAt || slot.isCancelled,
+                  tooltip: slot.coachRevealSentAt
+                    ? `Reveal sent on ${format(new Date(slot.coachRevealSentAt), 'MMM d @ h:mm a')}`
+                    : slot.isCancelled
+                      ? 'Session is cancelled'
+                      : 'Send coach and join URL to all participants',
+                },
+              ]
               : []),
             {
               label: 'Cancel Session',

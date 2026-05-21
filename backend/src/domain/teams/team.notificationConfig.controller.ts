@@ -8,7 +8,6 @@ export const getNotificationConfig = async (req: Request, res: Response, next: N
   try {
     const { teamId } = req.params;
     const caller = res.locals.authUser as CallerContext;
-    console.log("Fetching notification config", { teamId, caller });
     const config = await service.getNotificationConfig(teamId as string, caller);
     sendSuccessResponse(
       res,

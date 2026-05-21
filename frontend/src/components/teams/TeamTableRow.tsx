@@ -1,15 +1,17 @@
+import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
+import Typography from '@mui/material/Typography'
 import { Edit, Eye, EyeOff, Trash2, Users } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import { Badge } from '@/components/shared/ui/Badge'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { toTitleCase } from '@/utils/toTitleCase'
-import type { Team } from '@/types'
+import type { Team, SafeUser } from '@/types'
 
 interface TeamTableRowProps {
   canManageTeam: boolean
@@ -17,6 +19,7 @@ interface TeamTableRowProps {
   onEdit: (team: Team) => void
   onToggleActive: (team: Team) => void | Promise<void>
   team: Team
+  users: SafeUser[]
 }
 
 export function TeamTableRow({
@@ -25,7 +28,14 @@ export function TeamTableRow({
   onEdit,
   onToggleActive,
   team,
+  users,
 }: TeamTableRowProps) {
+  const leadUser = users.find((u) => u.id === team.teamLeadId)
+  const leadName = leadUser ? `${leadUser.firstName} ${leadUser.lastName}` : 'No lead'
+  const leadInitials = leadUser
+    ? `${leadUser.firstName?.[0] ?? ''}${leadUser.lastName?.[0] ?? ''}`.toUpperCase()
+    : ''
+
   return (
     <TableRow hover>
       <TableCell>
@@ -61,8 +71,62 @@ export function TeamTableRow({
         </Stack>
       </TableCell>
 
-      <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-        {team.description ?? 'No description provided'}
+      <TableCell
+        sx={{
+          color: 'text.secondary',
+          fontSize: '0.875rem',
+          width: '25%',
+          minWidth: 200,
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+        }}
+      >
+        {team.description
+          ? team.description.length > 60
+            ? `${team.description.slice(0, 60)}...`
+            : team.description
+          : 'No description provided'}
+      </TableCell>
+
+      <TableCell sx={{ width: '25%', minWidth: 150 }}>
+        {leadUser ? (
+          <Stack direction="row" spacing={1.25} alignItems="center">
+            <Avatar
+              src={leadUser.avatarUrl ?? undefined}
+              sx={{
+                width: 30,
+                height: 30,
+                flexShrink: 0,
+                fontSize: '0.75rem',
+                bgcolor: 'primary.light',
+                color: 'primary.dark',
+                fontWeight: 700,
+              }}
+            >
+              {leadInitials}
+            </Avatar>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'text.primary',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            >
+              {leadName}
+            </Typography>
+          </Stack>
+        ) : (
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.875rem',
+            }}
+          >
+            No lead
+          </Typography>
+        )}
       </TableCell>
 
       <TableCell>
