@@ -8,7 +8,9 @@ type TestContext = {
   teamAdminToken: string;
   teamAdminId: string;
   coachId: string;
+  coachToken: string;
   coachTwoId: string;
+  coachTwoToken: string;
   teamId: string;
 };
 
@@ -68,7 +70,9 @@ beforeAll(async () => {
     teamAdminToken: teamAdmin.token,
     teamAdminId: teamAdmin.id,
     coachId: coach.id,
+    coachToken: coach.token,
     coachTwoId: coachTwo.id,
+    coachTwoToken: coachTwo.token,
     teamId: teamRes.body.data.id as string,
   };
 });
@@ -174,5 +178,45 @@ describe("Team member routes", () => {
 
     expect(res.status).toBe(201);
     expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  it("allows a coach user who is a team member to list active team members", async () => {
+    // Add coach to the team first if not active
+    await request(app)
+      .post(`/api/teams/${context.teamId}/members`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ userId: context.coachId });
+
+    const res = await request(app)
+      .get(`/api/teams/${context.teamId}/members`)
+      .set("Authorization", `Bearer ${context.coachToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data.members)).toBe(true);
+  });
+
+  it("prevents a coach user who is NOT a team member from listing team members", async () => {
+    const res = await request(app)
+      .get(`/api/teams/${context.teamId}/members`)
+      .set("Authorization", `Bearer ${context.coachTwoToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("prevents a coach user from adding a team member", async () => {
+    const res = await request(app)
+      .post(`/api/teams/${context.teamId}/members`)
+      .set("Authorization", `Bearer ${context.coachToken}`)
+      .send({ userId: context.coachTwoId });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("prevents a coach user from removing a team member", async () => {
+    const res = await request(app)
+      .delete(`/api/teams/${context.teamId}/members/${context.teamAdminId}`)
+      .set("Authorization", `Bearer ${context.coachToken}`);
+
+    expect(res.status).toBe(403);
   });
 });

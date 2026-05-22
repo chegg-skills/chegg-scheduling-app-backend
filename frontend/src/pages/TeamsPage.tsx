@@ -9,7 +9,7 @@ import {
   LayoutList,
   LayoutGrid,
 } from 'lucide-react'
-import { useAuth } from '@/context/auth/useAuth'
+import { usePermissions } from '@/hooks/usePermissions'
 import { useTeams, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useUsers } from '@/hooks/queries/useUsers'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -34,7 +34,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction'
 export function TeamsPage() {
   const theme = useTheme()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { isCoach, isSuperAdmin } = usePermissions()
   const { pageSize, backendPage, onPageChange, onRowsPerPageChange } = usePagination(20)
 
   const [showCreate, setShowCreate] = useState(false)
@@ -44,7 +44,7 @@ export function TeamsPage() {
     const saved = localStorage.getItem('teams_view_mode')
     return saved === 'card' ? 'card' : 'table'
   })
-  const canManageTeam = user?.role === 'SUPER_ADMIN'
+  const canManageTeam = isSuperAdmin
 
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
@@ -54,8 +54,10 @@ export function TeamsPage() {
     page: backendPage,
     pageSize,
   })
-  const { data: usersData } = useUsers({ pageSize: 200 })
-  const { data: teamStats, isLoading: statsLoading } = useTeamStats(timeframe)
+  const { data: usersData } = useUsers({ pageSize: 200 }, { enabled: !isCoach })
+  const { data: teamStats, isLoading: statsLoading } = useTeamStats(timeframe, {
+    enabled: !isCoach,
+  })
 
   async function handleToggleActive(team: Team) {
     const newStatus = !team.isActive
@@ -139,13 +141,15 @@ export function TeamsPage() {
           </Box>
         ) : (
           <>
-            <StatsOverview
-              timeframe={timeframe}
-              onTimeframeChange={setTimeframe}
-              timeframeInfo={teamStats?.timeframe}
-              items={teamStatItems}
-              isLoading={statsLoading}
-            />
+            {!isCoach && (
+              <StatsOverview
+                timeframe={timeframe}
+                onTimeframeChange={setTimeframe}
+                timeframeInfo={teamStats?.timeframe}
+                items={teamStatItems}
+                isLoading={statsLoading}
+              />
+            )}
 
             <Box
               sx={{

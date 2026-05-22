@@ -25,9 +25,16 @@ interface EventTableProps {
   stuckToTop?: boolean
   groupByGroup?: boolean
   groups?: EventGroup[]
+  canManage?: boolean
 }
 
-export function EventTable({ events, teamId, onViewUser, stuckToTop = false }: EventTableProps) {
+export function EventTable({
+  events,
+  teamId,
+  onViewUser,
+  stuckToTop = false,
+  canManage = false,
+}: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()
@@ -98,24 +105,26 @@ export function EventTable({ events, teamId, onViewUser, stuckToTop = false }: E
                   tooltip={column.tooltip}
                 />
               ))}
-              <TableCell
-                sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  color: 'text.secondary',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Actions
-              </TableCell>
+              {canManage && (
+                <TableCell
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: 'text.secondary',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Actions
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
 
           <TableBody>
             {sortedEvents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                <TableCell colSpan={canManage ? 8 : 7} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">
                     No events found in this team.
                   </Typography>
@@ -131,6 +140,7 @@ export function EventTable({ events, teamId, onViewUser, stuckToTop = false }: E
                   onToggleActive={handleToggleActive}
                   onDelete={handleDelete}
                   onViewUser={onViewUser}
+                  canManage={canManage}
                 />
               ))
             )}

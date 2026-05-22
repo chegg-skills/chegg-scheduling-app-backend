@@ -299,3 +299,68 @@ describe("Event group assignment on events", () => {
     expect(cleared.body.data.group).toBeNull();
   });
 });
+
+describe("Event group Coach visibility validations", () => {
+  let coachUserId: string;
+
+  beforeAll(async () => {
+    const coachDb = await prisma.user.findUnique({
+      where: { email: "coach-groups@example.com" },
+    });
+    if (!coachDb) {
+      throw new Error("Coach user not found");
+    }
+    coachUserId = coachDb.id;
+
+    // Enroll the coach as an active team member of context.teamId
+    await prisma.teamMember.create({
+      data: {
+        teamId: context.teamId,
+        userId: coachUserId,
+        isActive: true,
+      },
+    });
+  });
+
+  it("allows enrolled coach to list their team's event groups", async () => {
+    const res = await request(app)
+      .get(`/api/teams/${context.teamId}/event-groups`)
+      .set("Authorization", `Bearer ${context.coachToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty("groups");
+    expect(Array.isArray(res.body.data.groups)).toBe(true);
+  });
+
+  it("allows enrolled coach to read a single event group from their team", async () => {
+    const group = await createGroup(context.teamId, context.teamAdminToken);
+    const groupId = group.body.data.id;
+
+    const res = await request(app)
+      .get(`/api/event-groups/${groupId}`)
+      .set("Authorization", `Bearer ${context.coachToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe(groupId);
+  });
+
+  it("denies coach access to list groups of a team they are not enrolled in", async () => {
+    const res = await request(app)
+      .get(`/api/teams/${context.otherTeamId}/event-groups`)
+      .set("Authorization", `Bearer ${context.coachToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("denies coach access to read a group belonging to a team they are not enrolled in", async () => {
+    const group = await createGroup(context.otherTeamId, context.otherTeamAdminToken);
+    const groupId = group.body.data.id;
+
+    const res = await request(app)
+      .get(`/api/event-groups/${groupId}`)
+      .set("Authorization", `Bearer ${context.coachToken}`);
+
+    expect(res.status).toBe(403);
+  });
+});
+

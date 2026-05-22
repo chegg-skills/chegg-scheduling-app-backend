@@ -6,6 +6,7 @@ import type { CallerContext } from "./userUtils";
 
 type TeamAccessOptions = {
   allowInactive?: boolean;
+  allowCoachMember?: boolean;
 };
 
 type AccessibleTeam = {
@@ -32,18 +33,36 @@ const getManagedTeam = async (
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
   }
 
-  if (caller.role === UserRole.TEAM_ADMIN && team.teamLeadId !== caller.id) {
-    throw new ErrorHandler(
-      StatusCodes.FORBIDDEN,
-      "You do not have permission to manage this team.",
-    );
-  }
+  if (caller.role === UserRole.COACH && options.allowCoachMember) {
+    const membership = await prisma.teamMember.findUnique({
+      where: {
+        teamId_userId: {
+          teamId: team.id,
+          userId: caller.id,
+        },
+      },
+    });
 
-  if (caller.role !== UserRole.SUPER_ADMIN && caller.role !== UserRole.TEAM_ADMIN) {
-    throw new ErrorHandler(
-      StatusCodes.FORBIDDEN,
-      "You do not have permission to manage this team.",
-    );
+    if (!membership || !membership.isActive) {
+      throw new ErrorHandler(
+        StatusCodes.FORBIDDEN,
+        "You do not have permission to access this team.",
+      );
+    }
+  } else {
+    if (caller.role === UserRole.TEAM_ADMIN && team.teamLeadId !== caller.id) {
+      throw new ErrorHandler(
+        StatusCodes.FORBIDDEN,
+        "You do not have permission to manage this team.",
+      );
+    }
+
+    if (caller.role !== UserRole.SUPER_ADMIN && caller.role !== UserRole.TEAM_ADMIN) {
+      throw new ErrorHandler(
+        StatusCodes.FORBIDDEN,
+        "You do not have permission to manage this team.",
+      );
+    }
   }
 
   if (options.allowInactive === false && !team.isActive) {

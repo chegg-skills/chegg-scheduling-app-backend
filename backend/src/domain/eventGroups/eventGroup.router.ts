@@ -23,7 +23,7 @@ router
   )
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(ListEventGroupsSchema),
     eventGroupController.listTeamEventGroups,
   )
@@ -33,7 +33,7 @@ router
   .route("/event-groups/:groupId")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(EventGroupParamsSchema),
     eventGroupController.readEventGroup,
   )

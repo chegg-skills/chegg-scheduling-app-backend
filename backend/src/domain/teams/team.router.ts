@@ -23,7 +23,7 @@ router
   )
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(ListTeamsSchema),
     teamController.listTeams,
   )
@@ -31,7 +31,11 @@ router
 
 router
   .route("/:teamId")
-  .get(authenticate, authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN), teamController.readTeam)
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    teamController.readTeam,
+  )
   .patch(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
@@ -45,7 +49,7 @@ router
   .route("/:teamId/notification-config")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(GetNotificationConfigSchema),
     teamNotifConfigController.getNotificationConfig,
   )

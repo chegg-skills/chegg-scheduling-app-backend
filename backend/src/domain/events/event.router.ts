@@ -24,7 +24,7 @@ router
   )
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     eventController.listEventTypes,
   )
   .all(methodNotAllowed);
@@ -52,7 +52,7 @@ router
   .route("/event-interaction-types")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     eventController.listInteractionTypes,
   )
   .all(methodNotAllowed);
@@ -72,7 +72,7 @@ router
   .route("/events")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(ListAllEventsSchema),
     eventController.listAllEvents,
   )
@@ -82,7 +82,7 @@ router
   .route("/events/:eventId")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     eventController.readEvent,
   )
   .patch(
@@ -111,7 +111,7 @@ router
   .route("/events/:eventId/coaches")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     eventController.listEventCoaches,
   )
   .put(
@@ -125,7 +125,7 @@ router
   .route("/events/:eventId/schedule-slots")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     eventController.listEventScheduleSlots,
   )
   .post(
@@ -162,7 +162,7 @@ router
   .route("/events/:eventId/schedule-slots/:slotId/coach-availability")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     eventController.getCoachAvailabilityForSlot,
   )
   .all(methodNotAllowed);
@@ -171,7 +171,7 @@ router
   .route("/events/:eventId/schedule-slots/:slotId/reveal")
   .post(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(RevealCoachSchema),
     eventController.revealCoachForSlot,
   )
@@ -181,7 +181,7 @@ router
   .route("/events/:eventId/schedule-slots/:slotId/bookings")
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     eventController.listSlotBookings,
   )
   .all(methodNotAllowed);

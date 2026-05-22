@@ -12,6 +12,7 @@ import { TablePagination } from '@/components/shared/table/TablePagination'
 import { ScheduleSlotRow } from './ScheduleSlotRow'
 import { RevealCoachDialog } from './dialogs/RevealCoachDialog'
 import type { EventScheduleSlot, Event } from '@/types'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface ScheduleSlotListProps {
   slots: EventScheduleSlot[]
@@ -21,6 +22,7 @@ interface ScheduleSlotListProps {
   onViewAttendees: (slot: EventScheduleSlot) => void
   onLogSession: (slot: EventScheduleSlot) => void
   onCancel: (slot: EventScheduleSlot, info: string) => void
+  canManage?: boolean
 }
 
 export function ScheduleSlotList({
@@ -31,7 +33,9 @@ export function ScheduleSlotList({
   onViewAttendees,
   onLogSession,
   onCancel,
+  canManage = true,
 }: ScheduleSlotListProps) {
+  const { isCoach } = usePermissions()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [revealSlot, setRevealSlot] = useState<EventScheduleSlot | null>(null)
@@ -66,7 +70,7 @@ export function ScheduleSlotList({
 
   return (
     <>
-      {unreveledUpcoming.length > 0 && (
+      {(canManage || isCoach) && unreveledUpcoming.length > 0 && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           {unreveledUpcoming.length} upcoming session
           {unreveledUpcoming.length > 1 ? 's' : ''} within the next 3 hours{' '}
@@ -104,6 +108,7 @@ export function ScheduleSlotList({
                 onLogSession={onLogSession}
                 onCancel={onCancel}
                 onReveal={setRevealSlot}
+                canManage={canManage}
               />
             ))}
           </TableBody>

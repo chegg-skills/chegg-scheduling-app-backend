@@ -23,6 +23,7 @@ import {
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
 import { useBookings } from '@/hooks/queries/useBookings'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { usePermissions } from '@/hooks/usePermissions'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TabPanel } from '@/components/shared/ui/TabPanel'
 import { Modal } from '@/components/shared/ui/Modal'
@@ -42,6 +43,7 @@ import { getEventCoachSetupStatus } from '@/components/events/form/eventCapabili
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams<{ eventId: string }>()
+  const { isCoach } = usePermissions()
   const [showEdit, setShowEdit] = useState(false)
   const [tabValue, setTabValue] = useState(0)
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
@@ -137,28 +139,30 @@ export function EventDetailPage() {
           </Stack>
         }
         actions={
-          <Stack direction="row" spacing={1} alignItems="center">
-            <RowActions
-              actions={[
-                {
-                  label: 'Edit event details',
-                  icon: <Edit size={16} />,
-                  onClick: () => setShowEdit(true),
-                },
-                {
-                  label: event.isActive ? 'Mark as Inactive' : 'Mark as Active',
-                  icon: event.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
-                  onClick: () => handleToggleStatus(!event.isActive),
-                },
-                {
-                  label: 'Delete event',
-                  icon: <Trash2 size={16} />,
-                  color: 'error.main',
-                  onClick: handleDelete,
-                },
-              ]}
-            />
-          </Stack>
+          !isCoach ? (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <RowActions
+                actions={[
+                  {
+                    label: 'Edit event details',
+                    icon: <Edit size={16} />,
+                    onClick: () => setShowEdit(true),
+                  },
+                  {
+                    label: event.isActive ? 'Mark as Inactive' : 'Mark as Active',
+                    icon: event.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                    onClick: () => handleToggleStatus(!event.isActive),
+                  },
+                  {
+                    label: 'Delete event',
+                    icon: <Trash2 size={16} />,
+                    color: 'error.main',
+                    onClick: handleDelete,
+                  },
+                ]}
+              />
+            </Stack>
+          ) : null
         }
       />
 
@@ -228,6 +232,7 @@ export function EventDetailPage() {
             onOpenAddModal={() => setShowAddCoachModal(true)}
             onCloseAddModal={() => setShowAddCoachModal(false)}
             onViewUser={setViewingUserId}
+            canManage={!isCoach}
           />
         </TabPanel>
 
@@ -242,6 +247,7 @@ export function EventDetailPage() {
             event={event}
             slots={slots}
             isLoading={isLoadingSlots || isFetchingSlots}
+            canManage={!isCoach}
           />
         </TabPanel>
 

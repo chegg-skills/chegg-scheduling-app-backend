@@ -9,6 +9,7 @@ import { RowActions } from '@/components/shared/table/RowActions'
 import { Badge } from '@/components/shared/ui/Badge'
 import type { EventScheduleSlot, Event, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface ScheduleSlotRowProps {
   slot: EventScheduleSlot
@@ -19,6 +20,7 @@ interface ScheduleSlotRowProps {
   onLogSession: (slot: EventScheduleSlot) => void
   onCancel: (slot: EventScheduleSlot, info: string) => void
   onReveal?: (slot: EventScheduleSlot) => void
+  canManage?: boolean
 }
 
 /**
@@ -34,7 +36,10 @@ export function ScheduleSlotRow({
   onLogSession,
   onCancel,
   onReveal,
+  canManage = true,
 }: ScheduleSlotRowProps) {
+  const { isCoach } = usePermissions()
+
   const dateStr = format(new Date(slot.startTime), 'EEE, MMM d, yyyy')
   const timeRange = `${format(new Date(slot.startTime), 'h:mm a')} – ${format(
     new Date(slot.endTime),
@@ -194,12 +199,16 @@ export function ScheduleSlotRow({
               icon: <ClipboardList size={16} />,
               onClick: () => onLogSession(slot),
             },
-            {
-              label: 'Edit Session',
-              icon: <Edit size={16} />,
-              onClick: () => onEdit(slot),
-            },
-            ...(event.deferCoachReveal
+            ...(canManage
+              ? [
+                  {
+                    label: 'Edit Session',
+                    icon: <Edit size={16} />,
+                    onClick: () => onEdit(slot),
+                  },
+                ]
+              : []),
+            ...((canManage || isCoach) && event.deferCoachReveal
               ? [
                   {
                     label: slot.coachRevealSentAt ? 'Reveal Sent' : 'Send Reveal',
@@ -214,26 +223,30 @@ export function ScheduleSlotRow({
                   },
                 ]
               : []),
-            {
-              label: 'Cancel Session',
-              icon: <Ban size={16} />,
-              color: 'error.main',
-              onClick: () => onCancel(slot, `${dateStr} at ${timeRange}`),
-              disabled: slot.isCancelled,
-              tooltip: slot.isCancelled
-                ? 'Session is already cancelled'
-                : 'Cancel this session and notify all participants',
-            },
-            {
-              label: 'Delete Session',
-              icon: <Trash2 size={16} />,
-              color: 'error.main',
-              onClick: () => onRemove(slot.id, `${dateStr} at ${timeRange}`),
-              disabled: !canDelete,
-              tooltip: !canDelete
-                ? 'Cannot delete session with active bookings. Request everyone to cancel first.'
-                : undefined,
-            },
+            ...(canManage
+              ? [
+                  {
+                    label: 'Cancel Session',
+                    icon: <Ban size={16} />,
+                    color: 'error.main' as const,
+                    onClick: () => onCancel(slot, `${dateStr} at ${timeRange}`),
+                    disabled: slot.isCancelled,
+                    tooltip: slot.isCancelled
+                      ? 'Session is already cancelled'
+                      : 'Cancel this session and notify all participants',
+                  },
+                  {
+                    label: 'Delete Session',
+                    icon: <Trash2 size={16} />,
+                    color: 'error.main' as const,
+                    onClick: () => onRemove(slot.id, `${dateStr} at ${timeRange}`),
+                    disabled: !canDelete,
+                    tooltip: !canDelete
+                      ? 'Cannot delete session with active bookings. Request everyone to cancel first.'
+                      : undefined,
+                  },
+                ]
+              : []),
           ]}
         />
       </TableCell>

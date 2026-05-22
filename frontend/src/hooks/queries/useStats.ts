@@ -19,12 +19,14 @@ export const statsKeys = {
 
 function useStatsQuery<TData>(
   queryKey: readonly unknown[],
-  queryFn: (context: { signal: AbortSignal }) => Promise<TData>
+  queryFn: (context: { signal: AbortSignal }) => Promise<TData>,
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey,
     queryFn,
     placeholderData: (prev) => prev,
+    ...options,
   })
 }
 
@@ -49,17 +51,21 @@ export function useUserStats(timeframe: StatsParams['timeframe']) {
   )
 }
 
-export function useTeamStats(timeframe: StatsParams['timeframe']) {
+export function useTeamStats(timeframe: StatsParams['timeframe'], options?: { enabled?: boolean }) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.teams(params), ({ signal }) =>
-    statsApi.getTeams(params, signal).then((r) => r.data.data)
+  return useStatsQuery(
+    statsKeys.teams(params),
+    ({ signal }) => statsApi.getTeams(params, signal).then((r) => r.data.data),
+    options
   )
 }
 
-export function useEventStats(timeframe: StatsParams['timeframe'], teamId?: string) {
+export function useEventStats(timeframe: StatsParams['timeframe'], teamId?: string, options?: { enabled?: boolean }) {
   const params = { timeframe, teamId }
-  return useStatsQuery(statsKeys.events(params), ({ signal }) =>
-    statsApi.getEvents(params, signal).then((r) => r.data.data)
+  return useStatsQuery(
+    statsKeys.events(params),
+    ({ signal }) => statsApi.getEvents(params, signal).then((r) => r.data.data),
+    options
   )
 }
 
@@ -84,10 +90,12 @@ export function useBookingTrends(timeframe: StatsParams['timeframe']) {
   )
 }
 
-export function useTeamPerformance(timeframe: StatsParams['timeframe']) {
+export function useTeamPerformance(timeframe: StatsParams['timeframe'], options?: { enabled?: boolean }) {
   const params = { timeframe }
-  return useStatsQuery(statsKeys.teamPerformance(params), ({ signal }) =>
-    statsApi.getTeamPerformance(params, signal).then((r) => r.data.data)
+  return useStatsQuery(
+    statsKeys.teamPerformance(params),
+    ({ signal }) => statsApi.getTeamPerformance(params, signal).then((r) => r.data.data),
+    options
   )
 }
 

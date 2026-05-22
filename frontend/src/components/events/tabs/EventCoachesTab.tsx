@@ -8,6 +8,7 @@ interface EventCoachesTabProps {
   onOpenAddModal: () => void
   onCloseAddModal: () => void
   onViewUser: (userId: string) => void
+  canManage?: boolean
 }
 
 export function EventCoachesTab({
@@ -17,6 +18,7 @@ export function EventCoachesTab({
   onOpenAddModal,
   onCloseAddModal,
   onViewUser,
+  canManage = true,
 }: EventCoachesTabProps) {
   return (
     <EventCoachManager
@@ -29,6 +31,7 @@ export function EventCoachesTab({
       onOpenAddModal={onOpenAddModal}
       onCloseAddModal={onCloseAddModal}
       onViewUser={onViewUser}
+      canManage={canManage}
     />
   )
 }

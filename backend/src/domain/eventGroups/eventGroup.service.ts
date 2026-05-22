@@ -1,4 +1,5 @@
 import { StatusCodes } from "http-status-codes";
+import { UserRole } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
@@ -57,7 +58,10 @@ const listTeamEventGroups = async (
   teamId: string,
   caller: CallerContext,
 ): Promise<SafeEventGroup[]> => {
-  await getManagedTeam(teamId, caller, { allowInactive: true });
+  await getManagedTeam(teamId, caller, { 
+    allowInactive: true,
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
 
   return prisma.eventGroup.findMany({
     where: { teamId },
@@ -68,7 +72,10 @@ const listTeamEventGroups = async (
 
 const readEventGroup = async (groupId: string, caller: CallerContext): Promise<SafeEventGroup> => {
   const group = await loadGroupOrThrow(groupId);
-  await getManagedTeam(group.teamId, caller, { allowInactive: true });
+  await getManagedTeam(group.teamId, caller, { 
+    allowInactive: true,
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
   return group;
 };
 

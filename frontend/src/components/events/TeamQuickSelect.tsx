@@ -81,7 +81,7 @@ export function TeamQuickSelect({
       >
         {teams.map((team) => {
           const isActive = team.isActive
-          const leadUser = users.find((u) => u.id === team.teamLeadId)
+          const leadUser = team.teamLead || users.find((u) => u.id === team.teamLeadId)
           const leadName = leadUser ? `${leadUser.firstName} ${leadUser.lastName}` : 'No lead'
 
           return (

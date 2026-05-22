@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { UserMinus } from 'lucide-react'
 import { Badge } from '@/components/shared/ui/Badge'
 import { RowActions } from '@/components/shared/table/RowActions'
+import { useAuth } from '@/context/auth'
 
 interface TeamMemberRowProps {
   member: TeamMember
@@ -25,6 +26,10 @@ export function TeamMemberRow({
 }: TeamMemberRowProps) {
   const { user } = member
   const isLead = user.id === teamLeadId
+  const { user: currentUser } = useAuth()
+  const isCoach = currentUser?.role === 'COACH'
+  const isSelf = user.id === currentUser?.id
+  const canView = onViewUser && (!isCoach || isSelf)
 
   return (
     <ListItem
@@ -70,15 +75,15 @@ export function TeamMemberRow({
           <Box>
             <Typography
               variant="body2"
-              onClick={() => onViewUser?.(user.id)}
+              onClick={() => canView && onViewUser?.(user.id)}
               sx={{
                 fontWeight: 600,
                 color: 'text.primary',
                 textDecoration: 'none',
-                cursor: onViewUser ? 'pointer' : 'default',
+                cursor: canView ? 'pointer' : 'default',
                 '&:hover': {
-                  color: onViewUser ? 'primary.main' : 'inherit',
-                  textDecoration: onViewUser ? 'underline' : 'none',
+                  color: canView ? 'primary.main' : 'inherit',
+                  textDecoration: canView ? 'underline' : 'none',
                 },
               }}
             >

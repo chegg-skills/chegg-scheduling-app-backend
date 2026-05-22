@@ -16,7 +16,8 @@ const createTeam = async (req: Request, res: Response, next: NextFunction): Prom
 
 const listTeams = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await teamService.listTeams(req.query as any);
+    const caller = res.locals.authUser as CallerContext;
+    const result = await teamService.listTeams(req.query as any, caller);
     sendSuccessResponse(res, StatusCodes.OK, result, "Teams fetched successfully.");
   } catch (error) {
     next(error);
@@ -25,7 +26,8 @@ const listTeams = async (req: Request, res: Response, next: NextFunction): Promi
 
 const readTeam = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const team = await teamService.readTeam((req.params as any).teamId);
+    const caller = res.locals.authUser as CallerContext;
+    const team = await teamService.readTeam((req.params as any).teamId, caller);
     sendSuccessResponse(res, StatusCodes.OK, team, "Team fetched successfully.");
   } catch (error) {
     next(error);

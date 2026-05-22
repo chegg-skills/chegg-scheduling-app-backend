@@ -30,7 +30,7 @@ export function TeamTableRow({
   team,
   users,
 }: TeamTableRowProps) {
-  const leadUser = users.find((u) => u.id === team.teamLeadId)
+  const leadUser = team.teamLead || users.find((u) => u.id === team.teamLeadId)
   const leadName = leadUser ? `${leadUser.firstName} ${leadUser.lastName}` : 'No lead'
   const leadInitials = leadUser
     ? `${leadUser.firstName?.[0] ?? ''}${leadUser.lastName?.[0] ?? ''}`.toUpperCase()
