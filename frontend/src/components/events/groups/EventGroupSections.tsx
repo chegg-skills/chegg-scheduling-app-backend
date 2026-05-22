@@ -7,13 +7,13 @@ import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import Tooltip from '@mui/material/Tooltip'
+import Menu from '@mui/material/Menu'
+import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
-import { Edit, Trash2, Plus, HelpCircle } from 'lucide-react'
+import { Edit, Trash2, Plus, HelpCircle, MoreVertical } from 'lucide-react'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { useDeleteEventGroup } from '@/hooks/queries/useEventGroups'
 import type { Event, EventGroup } from '@/types'
-import { Button } from '@/components/shared/ui/Button'
-import { Badge } from '@/components/shared/ui/Badge'
 import { EventTable } from '../table/EventTable'
 import { EventGroupFormDialog } from './EventGroupFormDialog'
 
@@ -43,8 +43,19 @@ export function EventGroupSections({
   const [selectedTab, setSelectedTab] = useState<string>('all')
   const [editingGroup, setEditingGroup] = useState<EventGroup | null>(null)
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
   const { mutate: deleteGroup } = useDeleteEventGroup(teamId)
   const { handleAction } = useAsyncAction()
+
+  const isMenuOpen = Boolean(menuAnchorEl)
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null)
+  }
 
   // Reset tab when team changes
   useEffect(() => {
@@ -134,13 +145,14 @@ export function EventGroupSections({
           borderRadius: 1.2,
           borderBottomLeftRadius: 0,
           borderBottomRightRadius: 0,
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: (theme) => alpha(themeColor, 0.06),
+          backgroundColor: alpha(themeColor, 0.04),
           borderColor: 'divider',
+          borderBottom: '1px solid',
+          borderBottomColor: alpha(themeColor, 0.35),
           transition: 'all 0.2s ease-in-out',
         }}
       >
+
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           alignItems={{ xs: 'flex-start', sm: 'center' }}
@@ -208,7 +220,7 @@ export function EventGroupSections({
                   borderRadius: 1.2,
                   height: 38,
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'divider',
+                    borderColor: alpha(themeColor, 0.4),
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
                     borderColor: themeColor,
@@ -216,6 +228,10 @@ export function EventGroupSections({
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                     borderColor: themeColor,
                     borderWidth: 1.5,
+                  },
+                  '& .MuiSelect-icon': {
+                    color: themeColor,
+                    transition: 'color 0.2s ease-in-out',
                   },
                 }}
               >
@@ -315,8 +331,8 @@ export function EventGroupSections({
                   cursor: 'pointer',
                   '&:hover': {
                     opacity: 1,
-                    color: themeColor,
-                    backgroundColor: alpha(themeColor, 0.08),
+                    color: 'primary.main',
+                    backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
                   },
                   transition: 'all 0.2s',
                 }}
@@ -326,44 +342,122 @@ export function EventGroupSections({
             </Tooltip>
           </Stack>
 
-          {/* Right side: Administrative Controls */}
-          {canManage && currentGroup && (
-            <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setEditingGroup(currentGroup)}
-                sx={{
-                  gap: 1,
-                  borderRadius: 1.2,
-                  color: themeColor,
-                  borderColor: alpha(themeColor, 0.4),
-                  '&:hover': {
-                    borderColor: themeColor,
-                    backgroundColor: alpha(themeColor, 0.04),
-                  },
-                }}
-              >
-                <Edit size={14} /> Rename
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => handleDelete(currentGroup)}
-                sx={{
-                  gap: 1,
-                  borderRadius: 1.2,
-                  color: 'error.main',
-                  borderColor: (theme) => alpha(theme.palette.error.main, 0.4),
-                  '&:hover': {
-                    borderColor: 'error.main',
-                    backgroundColor: (theme) => alpha(theme.palette.error.main, 0.04),
-                  },
-                }}
-              >
-                <Trash2 size={14} /> Delete Group
-              </Button>
-            </Stack>
+          {/* Elegant Group Options Menu or Creation Button (aligned on the right) */}
+          {canManage && (
+            <Box sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}>
+              {currentGroup ? (
+                <>
+                  <Tooltip title="Group settings" arrow placement="top">
+                    <IconButton
+                      size="small"
+                      onClick={handleMenuOpen}
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        color: themeColor,
+                        backgroundColor: 'transparent',
+                        border: '1px solid',
+                        borderColor: alpha(themeColor, 0.2),
+                        '&:hover': {
+                          color: themeColor,
+                          backgroundColor: alpha(themeColor, 0.08),
+                          borderColor: themeColor,
+                        },
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <MoreVertical size={16} />
+                    </IconButton>
+                  </Tooltip>
+                  <Menu
+                    anchorEl={menuAnchorEl}
+                    open={isMenuOpen}
+                    onClose={handleMenuClose}
+                    onClick={handleMenuClose}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    PaperProps={{
+                      elevation: 3,
+                      sx: {
+                        borderRadius: 1.2,
+                        mt: 0.75,
+                        minWidth: 160,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.06)',
+                        '& .MuiMenuItem-root': {
+                          fontSize: '0.825rem',
+                          py: 1,
+                          px: 1.75,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.25,
+                        },
+                      },
+                    }}
+                  >
+                    <MenuItem
+                      onClick={() => {
+                        setEditingGroup(currentGroup)
+                        handleMenuClose()
+                      }}
+                      sx={{
+                        color: 'text.primary',
+                        '&:hover': {
+                          backgroundColor: alpha(themeColor, 0.06),
+                          color: themeColor,
+                        },
+                      }}
+                    >
+                      <Edit size={14} style={{ color: themeColor }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Rename Group
+                      </Typography>
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        handleDelete(currentGroup)
+                        handleMenuClose()
+                      }}
+                      sx={{
+                        color: 'error.main',
+                        '&:hover': {
+                          backgroundColor: (theme) => alpha(theme.palette.error.main, 0.06),
+                        },
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Delete Group
+                      </Typography>
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <Tooltip title="Create new event group" arrow placement="top">
+                  <IconButton
+                    size="small"
+                    onClick={() => setIsCreatingGroup(true)}
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      color: themeColor,
+                      backgroundColor: 'transparent',
+                      border: '1px solid',
+                      borderColor: alpha(themeColor, 0.2),
+                      '&:hover': {
+                        color: themeColor,
+                        backgroundColor: alpha(themeColor, 0.08),
+                        borderColor: themeColor,
+                      },
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <Plus size={16} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
           )}
         </Stack>
       </Paper>
@@ -375,6 +469,8 @@ export function EventGroupSections({
           teamId={teamId}
           onViewUser={onViewUser}
           stuckToTop
+          groupByGroup={selectedTab === 'all'}
+          groups={groups}
         />
       </Box>
 

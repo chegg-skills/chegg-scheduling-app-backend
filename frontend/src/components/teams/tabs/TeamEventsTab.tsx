@@ -39,15 +39,13 @@ export function TeamEventsTab({
         <ErrorAlert message="Failed to load events. Please refresh the page." />
       ) : isLoading ? (
         <PageSpinner />
-      ) : groups.length > 0 ? (
+      ) : (
         <EventGroupSections
           groups={groups}
           events={events}
           teamId={teamId}
           canManage={canManage}
         />
-      ) : (
-        <EventTable events={events} teamId={teamId} />
       )}
 
       <Modal isOpen={showCreateModal} onClose={onCloseCreateModal} title="New event" size="lg">

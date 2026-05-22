@@ -14,9 +14,7 @@ import { Modal } from '@/components/shared/ui/Modal'
 import { EventForm } from '@/components/events/form/EventForm'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { EventTable } from '@/components/events/table/EventTable'
 import { EventGroupSections } from '@/components/events/groups/EventGroupSections'
-import { EventGroupFormDialog } from '@/components/events/groups/EventGroupFormDialog'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Select } from '@/components/shared/form/Select'
 import { StatsOverview } from '@/components/shared/StatsOverview'
@@ -226,21 +224,13 @@ export function EventsPage() {
               </Box>
             ) : (
               <Box sx={{ mt: 3 }}>
-                {groups.length > 0 ? (
-                  <EventGroupSections
-                    groups={groups}
-                    events={eventsData?.events ?? []}
-                    teamId={selectedTeamId}
-                    onViewUser={setViewingUserId}
-                    canManage={canManageTeam}
-                  />
-                ) : (
-                  <EventTable
-                    events={eventsData?.events ?? []}
-                    teamId={selectedTeamId}
-                    onViewUser={setViewingUserId}
-                  />
-                )}
+                <EventGroupSections
+                  groups={groups}
+                  events={eventsData?.events ?? []}
+                  teamId={selectedTeamId}
+                  onViewUser={setViewingUserId}
+                  canManage={canManageTeam}
+                />
               </Box>
             )}
           </>

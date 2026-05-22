@@ -7,7 +7,7 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
-import type { Event } from '@/types'
+import type { Event, EventGroup } from '@/types'
 import { Modal } from '@/components/shared/ui/Modal'
 import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { useDeleteEvent, useDuplicateEvent, useUpdateEvent } from '@/hooks/queries/useEvents'
@@ -23,9 +23,16 @@ interface EventTableProps {
   teamId?: string
   onViewUser?: (userId: string) => void
   stuckToTop?: boolean
+  groupByGroup?: boolean
+  groups?: EventGroup[]
 }
 
-export function EventTable({ events, teamId, onViewUser, stuckToTop = false }: EventTableProps) {
+export function EventTable({
+  events,
+  teamId,
+  onViewUser,
+  stuckToTop = false,
+}: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()

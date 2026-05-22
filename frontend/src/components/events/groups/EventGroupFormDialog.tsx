@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import { Modal } from '@/components/shared/ui/Modal'
 import { Button } from '@/components/shared/ui/Button'
@@ -7,20 +6,11 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
-import { useCreateEventGroup, useUpdateEventGroup } from '@/hooks/queries/useEventGroups'
+import { useCreateEventGroup, useUpdateEventGroup, useTeamEventGroups } from '@/hooks/queries/useEventGroups'
 import { extractApiError } from '@/utils/apiError'
+import { GROUP_COLOR_SWATCHES, generateBeautifulRandomColor } from '@/utils/color'
+import { ColorSwatchesPicker } from './ColorSwatchesPicker'
 import type { EventGroup } from '@/types'
-
-const GROUP_COLOR_SWATCHES = [
-  '#3b82f6', // blue
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#14b8a6', // teal
-  '#64748b', // slate
-] as const
 
 interface EventGroupFormDialogProps {
   isOpen: boolean
@@ -42,6 +32,8 @@ export function EventGroupFormDialog({
   const [description, setDescription] = useState(group?.description ?? '')
   const [color, setColor] = useState<string | null>(group?.color ?? null)
   const [validationError, setValidationError] = useState<string | null>(null)
+
+  const { data: groupsList } = useTeamEventGroups(teamId)
 
   const { mutate: createGroup, isPending: creating, error: createError } =
     useCreateEventGroup(teamId)
@@ -70,10 +62,34 @@ export function EventGroupFormDialog({
       return
     }
 
+    let finalColor = color
+    if (!finalColor) {
+      // Find colors that are not yet taken by any group in the team
+      const existingColors = new Set(
+        (groupsList ?? [])
+          .filter((g) => g.id !== group?.id) // exclude the current group if editing
+          .map((g) => g.color)
+          .filter(Boolean)
+      )
+
+      const availableColors = GROUP_COLOR_SWATCHES.filter(
+        (swatch) => !existingColors.has(swatch)
+      )
+
+      if (availableColors.length > 0) {
+        // Choose a random color from the remaining unused ones among the 10
+        const randomIndex = Math.floor(Math.random() * availableColors.length)
+        finalColor = availableColors[randomIndex]
+      } else {
+        // All 10 fixed colors are already taken! Generate a beautiful random HSL color
+        finalColor = generateBeautifulRandomColor()
+      }
+    }
+
     const payload = {
       name: trimmed,
       description: description.trim() || null,
-      color,
+      color: finalColor,
     }
 
     if (isEdit && group) {
@@ -139,33 +155,8 @@ export function EventGroupFormDialog({
           />
         </FormField>
 
-        <FormField label="Color" htmlFor="event-group-color" hint="Optional accent color.">
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-            {GROUP_COLOR_SWATCHES.map((swatch) => (
-              <Box
-                key={swatch}
-                role="button"
-                aria-label={`Color ${swatch}`}
-                aria-pressed={color === swatch}
-                onClick={() => setColor(swatch)}
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  backgroundColor: swatch,
-                  cursor: 'pointer',
-                  outline: color === swatch ? '3px solid' : 'none',
-                  outlineColor: 'primary.main',
-                  outlineOffset: '2px',
-                }}
-              />
-            ))}
-            {color && (
-              <Button variant="ghost" size="sm" onClick={() => setColor(null)}>
-                Clear
-              </Button>
-            )}
-          </Stack>
+        <FormField label="Color" htmlFor="event-group-color" hint="Optional accent color. If not selected, a random color will be auto-assigned.">
+          <ColorSwatchesPicker selectedColor={color} onColorSelect={setColor} />
         </FormField>
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
@@ -180,3 +171,5 @@ export function EventGroupFormDialog({
     </Modal>
   )
 }
+
+
