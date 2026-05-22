@@ -16,7 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
-import { useAuth } from '@/context/auth'
+import { usePermissions } from '@/hooks/usePermissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
 import { useTeamEventGroups } from '@/hooks/queries/useEventGroups'
@@ -37,12 +37,12 @@ import type { StatsTimeframe } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 
 export function EventsPage() {
-  const { user } = useAuth()
+  const { isCoach, isSuperAdmin } = usePermissions()
   const [selectedTeamId, setSelectedTeamId] = useState<string>('')
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
-  const canManageTeam = user?.role === 'SUPER_ADMIN'
+  const canManageTeam = isSuperAdmin
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -54,7 +54,7 @@ export function EventsPage() {
     }
   }
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
-  const { data: usersData } = useUsers({ pageSize: 200 })
+  const { data: usersData } = useUsers({ pageSize: 200 }, { enabled: !isCoach })
 
   const sortedTeams = useMemo(() => {
     if (!teamsData?.teams) return []
@@ -71,7 +71,8 @@ export function EventsPage() {
   const groups = useMemo(() => groupsData ?? [], [groupsData])
   const { data: eventStats, isLoading: statsLoading } = useEventStats(
     timeframe,
-    selectedTeamId || undefined
+    selectedTeamId || undefined,
+    { enabled: !isCoach }
   )
 
   const eventStatItems = [
@@ -280,13 +281,15 @@ export function EventsPage() {
           </Box>
         ) : (
           <>
-            <StatsOverview
-              timeframe={timeframe}
-              onTimeframeChange={setTimeframe}
-              timeframeInfo={eventStats?.timeframe}
-              items={eventStatItems}
-              isLoading={statsLoading}
-            />
+            {!isCoach && (
+              <StatsOverview
+                timeframe={timeframe}
+                onTimeframeChange={setTimeframe}
+                timeframeInfo={eventStats?.timeframe}
+                items={eventStatItems}
+                isLoading={statsLoading}
+              />
+            )}
 
             {selectedTeamId === '' ? (
               <TeamQuickSelect

@@ -122,7 +122,10 @@ const listTeamMembers = async (
   teamId: string,
   caller: CallerContext,
 ): Promise<{ members: SafeTeamMember[] }> => {
-  await getManagedTeam(teamId, caller, { allowInactive: true });
+  await getManagedTeam(teamId, caller, { 
+    allowInactive: true,
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
 
   const members = await prisma.teamMember.findMany({
     where: { teamId, isActive: true },

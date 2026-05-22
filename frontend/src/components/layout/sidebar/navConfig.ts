@@ -54,13 +54,13 @@ export const navItems: NavItem[] = [
     to: '/teams',
     label: 'Teams',
     Icon: UsersRound,
-    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
+    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'],
   },
   {
     to: '/events',
     label: 'Events',
     Icon: CalendarDays,
-    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
+    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'],
   },
   {
     to: '/event-types',

@@ -30,7 +30,7 @@ export function EventGroupSection({
   onEditGroup,
   onDeleteGroup,
   defaultExpanded = true,
-  canManage,
+  canManage = false,
 }: EventGroupSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const isUngrouped = group === null
@@ -114,7 +114,7 @@ export function EventGroupSection({
 
       <Collapse in={expanded}>
         <Box sx={{ p: 1.5 }}>
-          <EventTable events={events} teamId={teamId} onViewUser={onViewUser} />
+          <EventTable events={events} teamId={teamId} onViewUser={onViewUser} canManage={canManage} />
         </Box>
       </Collapse>
     </Paper>

@@ -27,6 +27,7 @@ interface Props {
   onViewAttendees: (slot: EventScheduleSlot) => void
   onLogSession: (slot: EventScheduleSlot) => void
   onCancelSlot: (slot: EventScheduleSlot, info: string) => void
+  canManage?: boolean
 }
 
 type TabValue = 'all' | 'upcoming' | 'past'
@@ -40,6 +41,7 @@ export function ScheduleSeriesTrackerView({
   onViewAttendees,
   onLogSession,
   onCancelSlot,
+  canManage = true,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabValue>('upcoming')
 
@@ -155,6 +157,7 @@ export function ScheduleSeriesTrackerView({
         onViewAttendees={onViewAttendees}
         onLogSession={onLogSession}
         onCancel={onCancelSlot}
+        canManage={canManage}
       />
     </Box>
   )

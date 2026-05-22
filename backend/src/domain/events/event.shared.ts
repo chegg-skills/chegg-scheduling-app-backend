@@ -151,6 +151,7 @@ export const assertCatalogManagementAllowed = (caller: CallerContext): void => {
 export const getManagedEvent = async (
   eventId: string,
   caller: CallerContext,
+  options: { allowCoachMember?: boolean } = {},
 ): Promise<SafeEvent> => {
   if (!eventId?.trim()) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "eventId is required.");
@@ -165,7 +166,28 @@ export const getManagedEvent = async (
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event not found.");
   }
 
-  await getManagedTeam(event.teamId, caller, { allowInactive: true });
+  if (caller.role === UserRole.COACH && options.allowCoachMember) {
+    const coachAssignment = await prisma.eventCoach.findUnique({
+      where: {
+        eventId_coachUserId: {
+          eventId: event.id,
+          coachUserId: caller.id,
+        },
+      },
+    });
+
+    if (!coachAssignment || !coachAssignment.isActive) {
+      throw new ErrorHandler(
+        StatusCodes.FORBIDDEN,
+        "You do not have permission to access this event.",
+      );
+    }
+
+    await getManagedTeam(event.teamId, caller, { allowCoachMember: true, allowInactive: true });
+  } else {
+    await getManagedTeam(event.teamId, caller, { allowInactive: true });
+  }
+
   return event;
 };
 

@@ -1,10 +1,26 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
+// Shared enums are generated from backend/prisma/schema.prisma — see
+// `backend/src/scripts/sync-shared-enums.ts`. Do not redefine them here.
 
-export type UserRole = 'SUPER_ADMIN' | 'TEAM_ADMIN' | 'COACH'
-export type AssignmentStrategy = 'DIRECT' | 'ROUND_ROBIN'
-export type EventLocationType = 'VIRTUAL' | 'IN_PERSON' | 'CUSTOM'
-export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
-export type SessionLeadershipStrategy = 'SINGLE_COACH' | 'FIXED_LEAD' | 'ROTATING_LEAD'
+import type {
+  UserRole,
+  AssignmentStrategy,
+  EventLocationType,
+  EventBookingMode,
+  BookingStatus,
+  SessionLeadershipStrategy,
+  InteractionType,
+} from './generated/enums'
+
+export type {
+  UserRole,
+  AssignmentStrategy,
+  EventLocationType,
+  EventBookingMode,
+  BookingStatus,
+  SessionLeadershipStrategy,
+  InteractionType,
+}
 export type StatsTimeframe =
   | 'today'
   | 'yesterday'
@@ -93,6 +109,7 @@ export interface Team {
   createdById: string
   createdAt: string
   updatedAt: string
+  teamLead?: SafeUser
 }
 
 export interface TeamMember {
@@ -127,8 +144,6 @@ export interface EventType {
   updatedAt: string
 }
 
-export type InteractionType = 'ONE_TO_ONE' | 'ONE_TO_MANY' | 'MANY_TO_ONE' | 'MANY_TO_MANY'
-
 export interface InteractionTypeCaps {
   multipleCoaches: boolean
   multipleParticipants: boolean
@@ -158,7 +173,6 @@ export interface CoachAvailabilityEntry {
   isAvailable: boolean
 }
 
-export type EventBookingMode = 'COACH_AVAILABILITY' | 'FIXED_SLOTS'
 
 export interface EventScheduleSlot {
   id: string

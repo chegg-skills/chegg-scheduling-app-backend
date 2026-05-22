@@ -1,7 +1,7 @@
 import express from "express";
 import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import { authenticate, authorize } from "../../shared/middleware/auth";
+import { authenticate, authorize, authorizeUserRead } from "../../shared/middleware/auth";
 import * as userController from "./user.controller";
 import availabilityRouter from "../availability/availability.router";
 import { validate } from "../../shared/middleware/validate";
@@ -27,7 +27,7 @@ router
 
 router
   .route("/:userId")
-  .get(authenticate, authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN), userController.readUser)
+  .get(authenticate, authorizeUserRead, userController.readUser)
   .put(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),

@@ -182,10 +182,39 @@ describe("GET /api/teams", () => {
     expect(Array.isArray(res.body.data.teams)).toBe(true);
   });
 
-  it("COACH cannot list teams (403)", async () => {
+  it("COACH can list teams (returns 200 with empty list if not enrolled in any)", async () => {
     const res = await request(app).get("/api/teams").set("Authorization", `Bearer ${coachToken}`);
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.teams).toEqual([]);
+  });
+
+  it("COACH can list teams they are a member of", async () => {
+    // Create a team first
+    const teamRes = await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ name: "Coach Team List Test", teamLeadId: teamAdminId });
+    const enrolledTeamId = teamRes.body.data.id;
+
+    // Enroll the coach in the team
+    await prisma.teamMember.create({
+      data: {
+        teamId: enrolledTeamId,
+        userId: coachId,
+        isActive: true,
+      },
+    });
+
+    const res = await request(app)
+      .get("/api/teams")
+      .set("Authorization", `Bearer ${coachToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.teams.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.teams.some((t: any) => t.id === enrolledTeamId)).toBe(true);
   });
 
   it("returns 401 when no auth token is provided", async () => {
@@ -258,7 +287,33 @@ describe("GET /api/teams/:teamId", () => {
     expect(res.body.data.id).toBe(teamId);
   });
 
-  it("COACH cannot read a team (403)", async () => {
+  it("COACH can read a specific team they are a member of", async () => {
+    // Create a team
+    const teamRes = await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ name: "Coach Read Test Team", teamLeadId: teamAdminId });
+    const enrolledTeamId = teamRes.body.data.id;
+
+    // Enroll the coach
+    await prisma.teamMember.create({
+      data: {
+        teamId: enrolledTeamId,
+        userId: coachId,
+        isActive: true,
+      },
+    });
+
+    const res = await request(app)
+      .get(`/api/teams/${enrolledTeamId}`)
+      .set("Authorization", `Bearer ${coachToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.id).toBe(enrolledTeamId);
+  });
+
+  it("COACH cannot read a team they are not a member of (403)", async () => {
     const res = await request(app)
       .get(`/api/teams/${teamId}`)
       .set("Authorization", `Bearer ${coachToken}`);
@@ -559,5 +614,111 @@ describe("DELETE /api/teams/:teamId", () => {
       .send({});
 
     expect(res.status).toBe(405);
+  });
+
+  describe("GET /api/teams/:teamId/notification-config", () => {
+    let teamId: string;
+
+    beforeEach(async () => {
+      const createRes = await request(app)
+        .post("/api/teams")
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({ name: "Notif Config Team " + Math.random().toString(36).substring(7), teamLeadId: teamAdminId });
+      teamId = createRes.body.data.id as string;
+    });
+
+    it("allows SUPER_ADMIN to get notification config", async () => {
+      const res = await request(app)
+        .get(`/api/teams/${teamId}/notification-config`)
+        .set("Authorization", `Bearer ${superAdminToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveProperty("reminderOffsets");
+    });
+
+    it("allows TEAM_ADMIN (lead) to get notification config", async () => {
+      const res = await request(app)
+        .get(`/api/teams/${teamId}/notification-config`)
+        .set("Authorization", `Bearer ${teamAdminToken}`);
+      expect(res.status).toBe(200);
+    });
+
+    it("allows COACH enrolled in team to get notification config", async () => {
+      // enroll coach
+      await prisma.teamMember.create({
+        data: {
+          teamId,
+          userId: coachId,
+          isActive: true,
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/teams/${teamId}/notification-config`)
+        .set("Authorization", `Bearer ${coachToken}`);
+      expect(res.status).toBe(200);
+    });
+
+    it("prevents COACH NOT enrolled in team from getting notification config", async () => {
+      const res = await request(app)
+        .get(`/api/teams/${teamId}/notification-config`)
+        .set("Authorization", `Bearer ${coachToken}`);
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe("PUT /api/teams/:teamId/notification-config", () => {
+    let teamId: string;
+
+    beforeEach(async () => {
+      const createRes = await request(app)
+        .post("/api/teams")
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({ name: "Notif Config Write Team " + Math.random().toString(36).substring(7), teamLeadId: teamAdminId });
+      teamId = createRes.body.data.id as string;
+    });
+
+    it("allows TEAM_ADMIN (lead) to upsert notification config", async () => {
+      const res = await request(app)
+        .put(`/api/teams/${teamId}/notification-config`)
+        .set("Authorization", `Bearer ${teamAdminToken}`)
+        .send({
+          reminderOffsets: [60, 1440],
+          adminNotifyOnBooking: true,
+          adminNotifyOnCancellation: true,
+          adminNotifyOnNoShow: true,
+          coachNotifyOnBooking: true,
+          coachNotifyOnCancellation: true,
+          coachNotifyOnNoShow: true,
+          notifyLeadOnAvailability: true,
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.data.reminderOffsets).toEqual([60, 1440]);
+    });
+
+    it("prevents COACH enrolled in team from upserting notification config", async () => {
+      // enroll coach
+      await prisma.teamMember.create({
+        data: {
+          teamId,
+          userId: coachId,
+          isActive: true,
+        },
+      });
+
+      const res = await request(app)
+        .put(`/api/teams/${teamId}/notification-config`)
+        .set("Authorization", `Bearer ${coachToken}`)
+        .send({
+          reminderOffsets: [60, 1440],
+          adminNotifyOnBooking: true,
+          adminNotifyOnCancellation: true,
+          adminNotifyOnNoShow: true,
+          coachNotifyOnBooking: true,
+          coachNotifyOnCancellation: true,
+          coachNotifyOnNoShow: true,
+          notifyLeadOnAvailability: true,
+        });
+      expect(res.status).toBe(403);
+    });
   });
 });

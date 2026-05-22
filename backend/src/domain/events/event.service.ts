@@ -1,4 +1,4 @@
-import { AssignmentStrategy, Prisma } from "@prisma/client";
+import { AssignmentStrategy, Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -133,13 +133,18 @@ const listTeamEvents = async (
     totalPages: number;
   };
 }> => {
-  await getManagedTeam(teamId, caller, { allowInactive: true });
+  await getManagedTeam(teamId, caller, { allowCoachMember: true, allowInactive: true });
 
-  return listEventsByQuery({ teamId }, options);
+  const whereClause: Prisma.EventWhereInput = { teamId };
+  if (caller.role === UserRole.COACH) {
+    whereClause.coaches = { some: { coachUserId: caller.id, isActive: true } };
+  }
+
+  return listEventsByQuery(whereClause, options);
 };
 
 const readEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
-  return getManagedEvent(eventId, caller);
+  return getManagedEvent(eventId, caller, { allowCoachMember: true });
 };
 
 const updateEvent = async (
@@ -294,7 +299,7 @@ const duplicateEvent = async (eventId: string, caller: CallerContext): Promise<S
 };
 
 const listAllEvents = async (
-  _caller: CallerContext,
+  caller: CallerContext,
   options: ListEventsOptions = {},
 ): Promise<{
   events: SafeEvent[];
@@ -305,7 +310,11 @@ const listAllEvents = async (
     totalPages: number;
   };
 }> => {
-  return listEventsByQuery({}, options);
+  const where: Prisma.EventWhereInput = {};
+  if (caller.role === UserRole.COACH) {
+    where.coaches = { some: { coachUserId: caller.id, isActive: true } };
+  }
+  return listEventsByQuery(where, options);
 };
 
 export {

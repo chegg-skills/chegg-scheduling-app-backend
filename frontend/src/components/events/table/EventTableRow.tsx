@@ -17,6 +17,7 @@ import type { Event } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { formatEventDuration } from './eventTableUtils'
 import { MoveEventToGroupDialog } from '../groups/MoveEventToGroupDialog'
+import { useAuth } from '@/context/auth'
 
 interface EventTableRowProps {
   event: Event
@@ -25,6 +26,7 @@ interface EventTableRowProps {
   onDuplicate: (event: Event) => void
   onToggleActive: (event: Event) => void | Promise<void>
   onViewUser?: (userId: string) => void
+  canManage?: boolean
 }
 
 function getCoachInitials(firstName: string, lastName: string) {
@@ -38,9 +40,12 @@ export function EventTableRow({
   onDuplicate,
   onToggleActive,
   onViewUser,
+  canManage = false,
 }: EventTableRowProps) {
   const theme = useTheme()
   const [showMoveDialog, setShowMoveDialog] = useState(false)
+  const { user: currentUser } = useAuth()
+  const isCoach = currentUser?.role === 'COACH'
 
   return (
     <TableRow hover>
@@ -94,28 +99,32 @@ export function EventTableRow({
             '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.75rem' },
           }}
         >
-          {event.coaches.map((coach) => (
-            <Tooltip
-              key={coach.id}
-              title={`${toTitleCase(coach.coachUser.firstName)} ${toTitleCase(coach.coachUser.lastName)} (${coach.coachUser.email})`}
-              arrow
-            >
-              <Avatar
-                onClick={() => onViewUser?.(coach.coachUser.id)}
-                sx={{
-                  bgcolor: 'secondary.light',
-                  color: 'secondary.dark',
-                  textDecoration: 'none',
-                  cursor: onViewUser ? 'pointer' : 'default',
-                  '&:hover': {
-                    opacity: 0.8,
-                  },
-                }}
+          {event.coaches.map((coach) => {
+            const isSelf = coach.coachUser.id === currentUser?.id
+            const canView = onViewUser && (!isCoach || isSelf)
+            return (
+              <Tooltip
+                key={coach.id}
+                title={`${toTitleCase(coach.coachUser.firstName)} ${toTitleCase(coach.coachUser.lastName)} (${coach.coachUser.email})`}
+                arrow
               >
-                {getCoachInitials(coach.coachUser.firstName, coach.coachUser.lastName)}
-              </Avatar>
-            </Tooltip>
-          ))}
+                <Avatar
+                  onClick={canView ? () => onViewUser?.(coach.coachUser.id) : undefined}
+                  sx={{
+                    bgcolor: 'secondary.light',
+                    color: 'secondary.dark',
+                    textDecoration: 'none',
+                    cursor: canView ? 'pointer' : 'default',
+                    '&:hover': {
+                      opacity: canView ? 0.8 : 1,
+                    },
+                  }}
+                >
+                  {getCoachInitials(coach.coachUser.firstName, coach.coachUser.lastName)}
+                </Avatar>
+              </Tooltip>
+            )
+          })}
         </AvatarGroup>
       </TableCell>
 
@@ -140,41 +149,43 @@ export function EventTableRow({
         />
       </TableCell>
 
-      <TableCell>
-        <RowActions
-          actions={[
-            {
-              label: 'Edit event details',
-              icon: <Edit size={16} />,
-              onClick: () => onEdit(event),
-            },
-            {
-              label: 'Move to group…',
-              icon: <FolderInput size={16} />,
-              onClick: () => setShowMoveDialog(true),
-            },
-            {
-              label: 'Duplicate event',
-              icon: <Copy size={16} />,
-              onClick: () => onDuplicate(event),
-            },
-            {
-              label: event.isActive ? 'Mark as inactive' : 'Mark as active',
-              icon: event.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
-              onClick: () => onToggleActive(event),
-            },
-            {
-              label: 'Delete event',
-              icon: <Trash2 size={16} />,
-              color: 'error.main',
-              onClick: () => onDelete(event),
-            },
-          ]}
-        />
-        {showMoveDialog && (
-          <MoveEventToGroupDialog isOpen onClose={() => setShowMoveDialog(false)} event={event} />
-        )}
-      </TableCell>
+      {canManage && (
+        <TableCell>
+          <RowActions
+            actions={[
+              {
+                label: 'Edit event details',
+                icon: <Edit size={16} />,
+                onClick: () => onEdit(event),
+              },
+              {
+                label: 'Move to group…',
+                icon: <FolderInput size={16} />,
+                onClick: () => setShowMoveDialog(true),
+              },
+              {
+                label: 'Duplicate event',
+                icon: <Copy size={16} />,
+                onClick: () => onDuplicate(event),
+              },
+              {
+                label: event.isActive ? 'Mark as inactive' : 'Mark as active',
+                icon: event.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                onClick: () => onToggleActive(event),
+              },
+              {
+                label: 'Delete event',
+                icon: <Trash2 size={16} />,
+                color: 'error.main',
+                onClick: () => onDelete(event),
+              },
+            ]}
+          />
+          {showMoveDialog && (
+            <MoveEventToGroupDialog isOpen onClose={() => setShowMoveDialog(false)} event={event} />
+          )}
+        </TableCell>
+      )}
     </TableRow>
   )
 }

@@ -10,18 +10,25 @@ import { BookingVolumeTrendChart } from './charts/BookingVolumeTrendChart'
 import { SessionOutcomesChart } from './charts/SessionOutcomesChart'
 import { TeamPerformanceChart } from './charts/TeamPerformanceChart'
 import { PeakActivityChart } from './charts/PeakActivityChart'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface DashboardChartsProps {
   timeframe: StatsTimeframe
 }
 
 export function DashboardCharts({ timeframe }: DashboardChartsProps) {
+  const { isCoach } = usePermissions()
+
   const {
     data: trendsData,
     isLoading: trendsLoading,
     error: trendsError,
   } = useBookingTrends(timeframe)
-  const { data: teamData, isLoading: teamLoading, error: teamError } = useTeamPerformance(timeframe)
+  const {
+    data: teamData,
+    isLoading: teamLoading,
+    error: teamError,
+  } = useTeamPerformance(timeframe, { enabled: !isCoach })
   const { data: peakData, isLoading: peakLoading, error: peakError } = usePeakActivity(timeframe)
 
   const chartData = useMemo(() => {
@@ -44,7 +51,8 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
     }))
   }, [peakData])
 
-  if (trendsError || teamError || peakError) {
+  const hasError = trendsError || peakError || (!isCoach && teamError)
+  if (hasError) {
     return (
       <Box sx={{ mt: 4 }}>
         <ErrorAlert message="Failed to load dashboard charts. Please refresh the page." />
@@ -52,7 +60,8 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
     )
   }
 
-  if (trendsLoading || teamLoading || peakLoading) {
+  const isStatsLoading = trendsLoading || peakLoading || (!isCoach && teamLoading)
+  if (isStatsLoading) {
     return (
       <Box sx={{ mt: 4 }}>
         <Box
@@ -68,10 +77,12 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
           <Box sx={{ gridColumn: { lg: 'span 4' } }}>
             <Skeleton variant="rectangular" height={380} sx={{ borderRadius: 2 }} />
           </Box>
-          <Box sx={{ gridColumn: { lg: 'span 6' } }}>
-            <Skeleton variant="rectangular" height={380} sx={{ borderRadius: 2 }} />
-          </Box>
-          <Box sx={{ gridColumn: { lg: 'span 6' } }}>
+          {!isCoach && (
+            <Box sx={{ gridColumn: { lg: 'span 6' } }}>
+              <Skeleton variant="rectangular" height={380} sx={{ borderRadius: 2 }} />
+            </Box>
+          )}
+          <Box sx={{ gridColumn: { lg: isCoach ? 'span 12' : 'span 6' } }}>
             <Skeleton variant="rectangular" height={380} sx={{ borderRadius: 2 }} />
           </Box>
         </Box>
@@ -108,10 +119,12 @@ export function DashboardCharts({ timeframe }: DashboardChartsProps) {
         <Box sx={{ gridColumn: { lg: 'span 4' } }}>
           <SessionOutcomesChart chartData={chartData} />
         </Box>
-        <Box sx={{ gridColumn: { lg: 'span 6' } }}>
-          <TeamPerformanceChart performanceData={performanceData} />
-        </Box>
-        <Box sx={{ gridColumn: { lg: 'span 6' } }}>
+        {!isCoach && (
+          <Box sx={{ gridColumn: { lg: 'span 6' } }}>
+            <TeamPerformanceChart performanceData={performanceData} />
+          </Box>
+        )}
+        <Box sx={{ gridColumn: { lg: isCoach ? 'span 12' : 'span 6' } }}>
           <PeakActivityChart activityData={activityData} />
         </Box>
       </Box>

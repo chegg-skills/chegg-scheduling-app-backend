@@ -1,4 +1,4 @@
-import { EventBookingMode, Prisma, type EventScheduleSlot } from "@prisma/client";
+import { EventBookingMode, Prisma, type EventScheduleSlot, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -202,7 +202,7 @@ const listEventScheduleSlots = async (
   eventId: string,
   caller: CallerContext,
 ): Promise<{ slots: EventScheduleSlotWithBookingCount[] }> => {
-  await getManagedEvent(eventId, caller);
+  await getManagedEvent(eventId, caller, { allowCoachMember: true });
 
   const slots = await prisma.eventScheduleSlot.findMany({
     where: { eventId },
@@ -420,7 +420,7 @@ const deleteEventScheduleSlot = async (
 };
 
 const listSlotBookings = async (eventId: string, slotId: string, caller: CallerContext) => {
-  await getManagedEvent(eventId, caller);
+  await getManagedEvent(eventId, caller, { allowCoachMember: true });
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
   });
@@ -503,7 +503,7 @@ const revealCoachForSlot = async (
   payload: { coachUserId?: string; sessionJoinUrl?: string | null },
   caller: CallerContext,
 ): Promise<EventScheduleSlot> => {
-  const event = await getManagedEvent(eventId, caller);
+  const event = await getManagedEvent(eventId, caller, { allowCoachMember: caller.role === UserRole.COACH });
 
   if (!event.deferCoachReveal) {
     throw new ErrorHandler(
@@ -537,6 +537,21 @@ const revealCoachForSlot = async (
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       "No coach assigned. Assign a coach before sending the reveal.",
+    );
+  }
+
+  if (caller.role === UserRole.COACH && finalCoachId !== caller.id) {
+    throw new ErrorHandler(
+      StatusCodes.FORBIDDEN,
+      "Coaches may only reveal themselves for a slot.",
+    );
+  }
+
+  const coachInPool = event.coaches.some((ec) => ec.coachUserId === finalCoachId);
+  if (!coachInPool) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "Selected coach is not in this event's coach pool.",
     );
   }
 
@@ -598,7 +613,7 @@ const getCoachAvailabilityForSlot = async (
   slotId: string,
   caller: CallerContext,
 ) => {
-  const event = await getManagedEvent(eventId, caller);
+  const event = await getManagedEvent(eventId, caller, { allowCoachMember: caller.role === UserRole.COACH });
 
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId, eventId },

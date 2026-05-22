@@ -23,7 +23,7 @@ router
   )
   .get(
     authenticate,
-    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(TeamIdParamSchema),
     teamMemberController.listTeamMembers,
   )

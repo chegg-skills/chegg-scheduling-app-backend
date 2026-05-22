@@ -5,6 +5,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { resolvePagination } from "../../shared/utils/pagination";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
+import { getManagedTeam } from "../../shared/utils/teamAccess";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import type { Team } from "@prisma/client";
 import { CreateTeamSchema, UpdateTeamSchema, ListTeamsSchema } from "./team.schema";
@@ -106,6 +107,7 @@ const createTeam = async (payload: CreateTeamInput, caller: CallerContext): Prom
 
 const listTeams = async (
   options: ListTeamsOptions = {},
+  caller: CallerContext,
 ): Promise<{
   teams: SafeTeam[];
   pagination: {
@@ -118,13 +120,31 @@ const listTeams = async (
   const validatedOptions = ListTeamsSchema.query.parse(options);
   const { page, pageSize, skip } = resolvePagination(validatedOptions);
 
+  const whereClause: Prisma.TeamWhereInput = {};
+  if (caller.role === UserRole.COACH) {
+    whereClause.members = { some: { userId: caller.id, isActive: true } };
+  }
+
   const [teams, total] = await prisma.$transaction([
     prisma.team.findMany({
+      where: whereClause,
+      include: {
+        teamLead: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
       skip,
       take: pageSize,
     }),
-    prisma.team.count(),
+    prisma.team.count({
+      where: whereClause,
+    }),
   ]);
 
   return {
@@ -138,9 +158,23 @@ const listTeams = async (
   };
 };
 
-const readTeam = async (teamId: string): Promise<SafeTeam> => {
+const readTeam = async (teamId: string, caller?: CallerContext): Promise<SafeTeam> => {
+  if (caller) {
+    await getManagedTeam(teamId, caller, { allowCoachMember: true, allowInactive: true });
+  }
+
   const team = await prisma.team.findUnique({
     where: { id: teamId },
+    include: {
+      teamLead: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+        },
+      },
+    },
   });
 
   if (!team) {

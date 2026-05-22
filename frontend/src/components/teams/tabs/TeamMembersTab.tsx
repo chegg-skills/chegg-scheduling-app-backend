@@ -53,12 +53,14 @@ export function TeamMembersTab({
       )}
 
       <Modal isOpen={showAddModal} onClose={onCloseAddModal} title="Add member">
-        <AddMemberForm
-          teamId={teamId}
-          existingMemberIds={existingMemberIds}
-          onSuccess={onCloseAddModal}
-          onCancel={onCloseAddModal}
-        />
+        {showAddModal && (
+          <AddMemberForm
+            teamId={teamId}
+            existingMemberIds={existingMemberIds}
+            onSuccess={onCloseAddModal}
+            onCancel={onCloseAddModal}
+          />
+        )}
       </Modal>
     </Stack>
   )

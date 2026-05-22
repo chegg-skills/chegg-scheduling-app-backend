@@ -202,7 +202,7 @@ const listEventCoaches = async (
   eventId: string,
   caller: CallerContext,
 ): Promise<{ coaches: SafeEvent["coaches"] }> => {
-  const event = await getManagedEvent(eventId, caller);
+  const event = await getManagedEvent(eventId, caller, { allowCoachMember: true });
   return { coaches: event.coaches };
 };
 

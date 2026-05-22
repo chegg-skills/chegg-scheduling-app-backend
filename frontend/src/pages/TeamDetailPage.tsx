@@ -20,7 +20,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import { useAuth } from '@/context/auth/useAuth'
+import { usePermissions } from '@/hooks/usePermissions'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
@@ -43,7 +43,7 @@ import { toTitleCase } from '@/utils/toTitleCase'
 
 export function TeamDetailPage() {
   const { teamId = '' } = useParams<{ teamId: string }>()
-  const { user } = useAuth()
+  const { isCoach, isTeamAdmin, isSuperAdmin, isAdmin, role } = usePermissions()
   const [showEditTeam, setShowEditTeam] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
@@ -71,7 +71,7 @@ export function TeamDetailPage() {
   const { data: groups } = useTeamEventGroups(teamId)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
-  const canManageTeam = user?.role === 'SUPER_ADMIN'
+  const canManageTeam = isSuperAdmin
 
   const members = membersResponse?.members ?? []
   const teamEvents = events?.events ?? []
@@ -248,12 +248,12 @@ export function TeamDetailPage() {
           </Tabs>
 
           <Box sx={{ mb: 1 }}>
-            {tabValue === 0 && (
+            {!isCoach && tabValue === 0 && (
               <Button size="sm" onClick={() => setShowCreateEvent(true)}>
                 <Plus size={16} /> New event
               </Button>
             )}
-            {tabValue === 1 && (
+            {!isCoach && tabValue === 1 && (
               <Button size="sm" onClick={() => setShowAddMember(true)}>
                 <Plus size={16} /> Add member
               </Button>
@@ -268,7 +268,7 @@ export function TeamDetailPage() {
             teamId={teamId}
             isLoading={eventsLoading}
             error={eventsError}
-            canManage={canManageTeam || user?.role === 'TEAM_ADMIN'}
+            canManage={canManageTeam || isTeamAdmin}
             showCreateModal={showCreateEvent}
             onCloseCreateModal={() => setShowCreateEvent(false)}
           />
@@ -278,7 +278,7 @@ export function TeamDetailPage() {
           <TeamMembersTab
             members={members}
             teamId={teamId}
-            currentUserRole={user?.role ?? 'TEAM_ADMIN'}
+            currentUserRole={role ?? 'TEAM_ADMIN'}
             teamLeadId={team.teamLeadId}
             isLoading={membersLoading}
             error={membersError}
@@ -292,7 +292,7 @@ export function TeamDetailPage() {
         <TabPanel value={tabValue} index={2} prefix="team">
           <TeamNotificationsTab
             teamId={teamId}
-            canEdit={user?.role === 'SUPER_ADMIN' || user?.role === 'TEAM_ADMIN'}
+            canEdit={isAdmin}
           />
         </TabPanel>
       </Box>

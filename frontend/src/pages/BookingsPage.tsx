@@ -34,12 +34,14 @@ import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useBookingStats } from '@/hooks/queries/useStats'
 import { useBookingFilters } from '@/hooks/useBookingFilters'
 import { BookingViewProvider } from '@/context/bookingView'
+import { usePermissions } from '@/hooks/usePermissions'
 import { Badge, Button as MuiButton } from '@mui/material'
 import type { Booking } from '@/types'
 import { useState } from 'react'
 
 export function BookingsPage() {
   const theme = useTheme()
+  const { isCoach } = usePermissions()
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
 
@@ -82,40 +84,71 @@ export function BookingsPage() {
     )
   }, [bookings, statusFilter])
 
-  const bookingStatItems = [
-    {
-      label: 'Scheduled',
-      value: bookingStats?.metrics.totalBookings ?? 0,
-      helperText: 'Bookings inside the selected time frame',
-      icon: <CalendarDays size={18} />,
-      accent: 'orange' as const,
-    },
-    {
-      label: 'Upcoming',
-      value: bookingStats?.metrics.upcomingBookings ?? 0,
-      helperText: 'Confirmed sessions still ahead',
-      icon: <Clock3 size={18} />,
-      accent: 'teal' as const,
-    },
-    {
-      label: 'Top Coach',
-      value: bookingStats?.metrics.mostBookedCoach?.name ?? 'N/A',
-      helperText: bookingStats?.metrics.mostBookedCoach
-        ? `${bookingStats.metrics.mostBookedCoach.count} bookings assigned`
-        : 'No coach metrics',
-      icon: <GraduationCap size={18} />,
-      accent: 'purple' as const,
-    },
-    {
-      label: 'Top Team',
-      value: bookingStats?.metrics.mostBookedTeam?.name ?? 'N/A',
-      helperText: bookingStats?.metrics.mostBookedTeam
-        ? `${bookingStats.metrics.mostBookedTeam.count} team bookings`
-        : 'No team metrics',
-      icon: <UsersRound size={18} />,
-      accent: 'green' as const,
-    },
-  ]
+  const bookingStatItems = isCoach
+    ? [
+        {
+          label: 'Scheduled',
+          value: bookingStats?.metrics.totalBookings ?? 0,
+          helperText: 'Bookings inside the selected time frame',
+          icon: <CalendarDays size={18} />,
+          accent: 'orange' as const,
+        },
+        {
+          label: 'Upcoming',
+          value: bookingStats?.metrics.upcomingBookings ?? 0,
+          helperText: 'Confirmed sessions still ahead',
+          icon: <Clock3 size={18} />,
+          accent: 'teal' as const,
+        },
+        {
+          label: 'Completed',
+          value: bookingStats?.metrics.completedBookings ?? 0,
+          helperText: 'Successfully conducted sessions',
+          icon: <CheckCircle2 size={18} />,
+          accent: 'green' as const,
+        },
+        {
+          label: 'Cancelled',
+          value: bookingStats?.metrics.cancelledBookings ?? 0,
+          helperText: 'Cancelled sessions in period',
+          icon: <X size={18} />,
+          accent: 'purple' as const,
+        },
+      ]
+    : [
+        {
+          label: 'Scheduled',
+          value: bookingStats?.metrics.totalBookings ?? 0,
+          helperText: 'Bookings inside the selected time frame',
+          icon: <CalendarDays size={18} />,
+          accent: 'orange' as const,
+        },
+        {
+          label: 'Upcoming',
+          value: bookingStats?.metrics.upcomingBookings ?? 0,
+          helperText: 'Confirmed sessions still ahead',
+          icon: <Clock3 size={18} />,
+          accent: 'teal' as const,
+        },
+        {
+          label: 'Top Coach',
+          value: bookingStats?.metrics.mostBookedCoach?.name ?? 'N/A',
+          helperText: bookingStats?.metrics.mostBookedCoach
+            ? `${bookingStats.metrics.mostBookedCoach.count} bookings assigned`
+            : 'No coach metrics',
+          icon: <GraduationCap size={18} />,
+          accent: 'purple' as const,
+        },
+        {
+          label: 'Top Team',
+          value: bookingStats?.metrics.mostBookedTeam?.name ?? 'N/A',
+          helperText: bookingStats?.metrics.mostBookedTeam
+            ? `${bookingStats.metrics.mostBookedTeam.count} team bookings`
+            : 'No team metrics',
+          icon: <UsersRound size={18} />,
+          accent: 'green' as const,
+        },
+      ]
 
   return (
     <Box>

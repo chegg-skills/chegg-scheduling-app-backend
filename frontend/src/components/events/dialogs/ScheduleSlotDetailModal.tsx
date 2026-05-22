@@ -20,6 +20,7 @@ interface ScheduleSlotDetailModalProps {
   onViewAttendees: (slot: EventScheduleSlot) => void
   onLogSession: (slot: EventScheduleSlot) => void
   onCancel: (slot: EventScheduleSlot, info: string) => void
+  canManage?: boolean
 }
 
 export function ScheduleSlotDetailModal({
@@ -31,6 +32,7 @@ export function ScheduleSlotDetailModal({
   onViewAttendees,
   onLogSession,
   onCancel,
+  canManage = true,
 }: ScheduleSlotDetailModalProps) {
   const theme = useTheme()
 
@@ -255,22 +257,24 @@ export function ScheduleSlotDetailModal({
               >
                 Session Log
               </Button>
-              <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<Edit size={16} />}
-                onClick={() => handleAction(onEdit)}
-                sx={{
-                  justifyContent: 'flex-start',
-                  py: 1,
-                  borderRadius: 1.5,
-                  fontWeight: 600,
-                  textTransform: 'none',
-                }}
-              >
-                Edit Slot
-              </Button>
-              {!slot.isCancelled && (
+              {canManage && (
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<Edit size={16} />}
+                  onClick={() => handleAction(onEdit)}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    py: 1,
+                    borderRadius: 1.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                  }}
+                >
+                  Edit Slot
+                </Button>
+              )}
+              {canManage && !slot.isCancelled && (
                 <Button
                   variant="outlined"
                   fullWidth
@@ -293,16 +297,18 @@ export function ScheduleSlotDetailModal({
 
           <Divider />
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Button
-              size="small"
-              color="error"
-              startIcon={<Trash2 size={16} />}
-              onClick={() => handleAction((s, info) => onRemove(s.id, info || ''))}
-              sx={{ fontWeight: 600, textTransform: 'none' }}
-            >
-              Delete Permanently
-            </Button>
+          <Stack direction="row" justifyContent={canManage ? "space-between" : "flex-end"} alignItems="center">
+            {canManage && (
+              <Button
+                size="small"
+                color="error"
+                startIcon={<Trash2 size={16} />}
+                onClick={() => handleAction((s, info) => onRemove(s.id, info || ''))}
+                sx={{ fontWeight: 600, textTransform: 'none' }}
+              >
+                Delete Permanently
+              </Button>
+            )}
             <Button
               variant="contained"
               onClick={onClose}

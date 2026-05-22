@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
 import { prisma } from "../db/prisma";
+import { canReadUser } from "../auth/permissions";
 import { getJwtSecret } from "../utils/jwtUtils";
 
 const AUTH_COOKIE_NAME = "auth_token";
@@ -144,4 +145,26 @@ const authorize = (...allowedRoles: UserRole[]) => {
   };
 };
 
-export { authenticate, optionalAuthenticate, authorize, type AuthUser };
+const authorizeUserRead = (req: Request, res: Response, next: NextFunction): void => {
+  const authUser = res.locals.authUser as AuthUser | undefined;
+
+  if (!authUser) {
+    next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Authentication is required."));
+    return;
+  }
+
+  const targetUserId = String(req.params.userId ?? "");
+  if (canReadUser(authUser, targetUserId)) {
+    next();
+    return;
+  }
+
+  next(
+    new ErrorHandler(
+      StatusCodes.FORBIDDEN,
+      "You do not have permission to perform this action.",
+    ),
+  );
+};
+
+export { authenticate, optionalAuthenticate, authorize, authorizeUserRead, type AuthUser };

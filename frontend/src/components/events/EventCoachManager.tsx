@@ -25,6 +25,7 @@ interface EventCoachManagerProps {
   onOpenAddModal?: () => void
   onCloseAddModal?: () => void
   onViewUser?: (userId: string) => void
+  canManage?: boolean
 }
 
 export function EventCoachManager({
@@ -39,6 +40,7 @@ export function EventCoachManager({
   onOpenAddModal,
   onCloseAddModal,
   onViewUser,
+  canManage = true,
 }: EventCoachManagerProps) {
   const [localShowAddModal, setLocalShowAddModal] = useState(false)
   const [addCoachError, setAddCoachError] = useState<string | null>(null)
@@ -106,7 +108,7 @@ export function EventCoachManager({
           title={title || 'Assigned Coaches'}
           description="Manage coaches assigned to this event and their participation status."
           action={
-            eligibleCount > 0 && (
+            canManage && eligibleCount > 0 && (
               <Button
                 size="sm"
                 startIcon={<Plus size={16} />}
@@ -125,7 +127,7 @@ export function EventCoachManager({
         />
       )}
 
-      <EventCoachTable coaches={activeCoaches} onRemove={handleRemove} onViewUser={onViewUser} />
+      <EventCoachTable coaches={activeCoaches} onRemove={handleRemove} onViewUser={onViewUser} canManage={canManage} />
 
       <Modal
         isOpen={showAddModal}

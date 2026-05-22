@@ -30,9 +30,10 @@ interface Props {
   event: Event
   slots: EventScheduleSlot[]
   isLoading: boolean
+  canManage?: boolean
 }
 
-export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
+export function EventScheduleSlotManager({ event, slots, isLoading, canManage = true }: Props) {
   const theme = useTheme()
   const { mutate: create, isPending: creating } = useCreateEventScheduleSlot(event.id)
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
@@ -200,9 +201,11 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
                   </ToggleButton>
                 </ToggleButtonGroup>
 
-                <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
-                  Add Session
-                </Button>
+                {canManage && (
+                  <Button size="sm" startIcon={<Plus size={16} />} onClick={handleOpenAdd}>
+                    Add Session
+                  </Button>
+                )}
               </Box>
             }
           />
@@ -212,6 +215,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
               groups={seriesGroups}
               onViewTracker={(group) => setActiveSeriesId(group.id)}
               onRemoveSeries={handleRemoveSeries}
+              canManage={canManage}
             />
           ) : (
             <ScheduleCalendar slots={slots} onViewDetail={setViewingSlot} />
@@ -227,6 +231,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
           onViewAttendees={handleOpenAttendees}
           onLogSession={handleOpenLogSession}
           onCancelSlot={handleCancelSlot}
+          canManage={canManage}
         />
       )}
 
@@ -239,6 +244,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading }: Props) {
         onViewAttendees={handleOpenAttendees}
         onLogSession={handleOpenLogSession}
         onCancel={handleCancelSlot}
+        canManage={canManage}
       />
 
       <UpsertScheduleSlotDialog

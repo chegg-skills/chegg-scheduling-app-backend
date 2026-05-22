@@ -11,11 +11,12 @@ export const userKeys = {
   me: () => [...userKeys.all, 'me'] as const,
 }
 
-export function useUsers(params?: ListUsersParams) {
+export function useUsers(params?: ListUsersParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: ({ signal }) => usersApi.list(params, signal).then((r) => r.data.data),
     placeholderData: (prev) => prev,
+    ...options,
   })
 }
 

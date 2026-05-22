@@ -14,16 +14,20 @@ import { Trash2 } from 'lucide-react'
 import type { EventCoach } from '@/types'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TablePagination } from '@/components/shared/table/TablePagination'
+import { useAuth } from '@/context/auth'
 
 interface EventCoachTableProps {
   coaches: EventCoach[]
   onRemove: (coachUserId: string, name: string) => void
   onViewUser?: (userId: string) => void
+  canManage?: boolean
 }
 
-export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTableProps) {
+export function EventCoachTable({ coaches, onRemove, onViewUser, canManage = true }: EventCoachTableProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const { user: currentUser } = useAuth()
+  const isCoach = currentUser?.role === 'COACH'
 
   const paginatedCoaches = coaches.slice((page - 1) * pageSize, page * pageSize)
 
@@ -32,7 +36,7 @@ export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTab
       <Table>
         <TableHead>
           <TableRow>
-            {['Coach', 'Country', 'Time Zone', 'Language', 'Actions'].map((col) => (
+            {['Coach', 'Country', 'Time Zone', 'Language', ...(canManage ? ['Actions'] : [])].map((col) => (
               <TableCell
                 key={col}
                 sx={{
@@ -51,47 +55,50 @@ export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTab
         </TableHead>
         <TableBody>
           {paginatedCoaches.length > 0 ? (
-            paginatedCoaches.map((coach) => (
-              <TableRow key={coach.id} hover>
-                <TableCell>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Avatar
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        fontSize: '0.875rem',
-                        bgcolor: 'primary.light',
-                        color: 'primary.dark',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {coach.coachUser.firstName[0]}
-                      {coach.coachUser.lastName[0]}
-                    </Avatar>
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        onClick={() => onViewUser?.(coach.coachUser.id)}
+            paginatedCoaches.map((coach) => {
+              const isSelf = coach.coachUser.id === currentUser?.id
+              const canView = onViewUser && (!isCoach || isSelf)
+              return (
+                <TableRow key={coach.id} hover>
+                  <TableCell>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar
                         sx={{
+                          width: 36,
+                          height: 36,
+                          fontSize: '0.875rem',
+                          bgcolor: 'primary.light',
+                          color: 'primary.dark',
                           fontWeight: 600,
-                          color: 'text.primary',
-                          textDecoration: 'none',
-                          cursor: onViewUser ? 'pointer' : 'default',
-                          '&:hover': {
-                            color: onViewUser ? 'primary.main' : 'inherit',
-                            textDecoration: onViewUser ? 'underline' : 'none',
-                          },
                         }}
                       >
-                        {coach.coachUser.firstName} {coach.coachUser.lastName}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: 'block' }}
-                      >
-                        {coach.coachUser.email}
-                      </Typography>
+                        {coach.coachUser.firstName[0]}
+                        {coach.coachUser.lastName[0]}
+                      </Avatar>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          onClick={() => canView && onViewUser?.(coach.coachUser.id)}
+                          sx={{
+                            fontWeight: 600,
+                            color: 'text.primary',
+                            textDecoration: 'none',
+                            cursor: canView ? 'pointer' : 'default',
+                            '&:hover': {
+                              color: canView ? 'primary.main' : 'inherit',
+                              textDecoration: canView ? 'underline' : 'none',
+                            },
+                          }}
+                        >
+                          {coach.coachUser.firstName} {coach.coachUser.lastName}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block' }}
+                        >
+                          {coach.coachUser.email}
+                        </Typography>
                     </Box>
                   </Stack>
                 </TableCell>
@@ -104,27 +111,30 @@ export function EventCoachTable({ coaches, onRemove, onViewUser }: EventCoachTab
                 <TableCell sx={{ fontSize: '0.8125rem' }}>
                   {coach.coachUser.preferredLanguage ?? '—'}
                 </TableCell>
-                <TableCell align="right">
-                  <RowActions
-                    actions={[
-                      {
-                        label: 'Remove',
-                        icon: <Trash2 size={16} />,
-                        color: 'error.main',
-                        onClick: () =>
-                          onRemove(
-                            coach.coachUserId,
-                            `${coach.coachUser.firstName} ${coach.coachUser.lastName}`
-                          ),
-                      },
-                    ]}
-                  />
-                </TableCell>
+                {canManage && (
+                  <TableCell align="right">
+                    <RowActions
+                      actions={[
+                        {
+                          label: 'Remove',
+                          icon: <Trash2 size={16} />,
+                          color: 'error.main',
+                          onClick: () =>
+                            onRemove(
+                              coach.coachUserId,
+                              `${coach.coachUser.firstName} ${coach.coachUser.lastName}`
+                            ),
+                        },
+                      ]}
+                    />
+                  </TableCell>
+                )}
               </TableRow>
-            ))
+              )
+            })
           ) : (
             <TableRow>
-              <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+              <TableCell colSpan={canManage ? 5 : 4} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                 No coaches assigned yet.
               </TableCell>
             </TableRow>
