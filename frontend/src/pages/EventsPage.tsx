@@ -2,7 +2,10 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import { CalendarDays, Plus, Repeat2, ToggleRight, Users } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
+import IconButton from '@mui/material/IconButton'
+import { alpha } from '@mui/material/styles'
+import { CalendarDays, Plus, Repeat2, ToggleRight, Users, Copy, Check, ExternalLink } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { useAuth } from '@/context/auth'
 import { useTeams } from '@/hooks/queries/useTeams'
@@ -31,6 +34,16 @@ export function EventsPage() {
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const canManageTeam = user?.role === 'SUPER_ADMIN'
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    if (selectedTeam?.publicBookingSlug) {
+      const shareUrl = `${window.location.origin}/book/team/${selectedTeam.publicBookingSlug}`
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
   const { data: usersData } = useUsers({ pageSize: 200 })
 
@@ -91,6 +104,60 @@ export function EventsPage() {
         breadcrumbs={selectedTeam ? [{ label: 'Teams', to: '/teams' }] : undefined}
         actions={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+            {selectedTeam?.publicBookingSlug && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Tooltip title="Open booking page" arrow>
+                  <IconButton
+                    onClick={() => {
+                      const shareUrl = `${window.location.origin}/book/team/${selectedTeam.publicBookingSlug}`
+                      window.open(shareUrl, '_blank', 'noopener,noreferrer')
+                    }}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1.2,
+                      width: 36,
+                      height: 36,
+                      color: 'text.secondary',
+                      bgcolor: 'transparent',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        color: 'primary.main',
+                        borderColor: 'primary.main',
+                        transform: 'scale(1.05)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    <ExternalLink size={16} />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title={copied ? 'Copied!' : 'Copy booking link'} arrow>
+                  <IconButton
+                    onClick={handleCopy}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: copied ? 'success.main' : 'divider',
+                      borderRadius: 1.2,
+                      width: 36,
+                      height: 36,
+                      bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
+                      color: (theme) => copied ? theme.palette.success.main : 'text.secondary',
+                      '&:hover': {
+                        bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
+                        color: (theme) => copied ? theme.palette.success.main : 'primary.main',
+                        borderColor: (theme) => copied ? theme.palette.success.main : 'primary.main',
+                        transform: 'scale(1.05)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            )}
             <Box
               sx={{
                 width: { xs: '100%', sm: 280 },

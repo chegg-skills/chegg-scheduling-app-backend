@@ -3,8 +3,11 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
+import Tooltip from '@mui/material/Tooltip'
+import IconButton from '@mui/material/IconButton'
+import { alpha } from '@mui/material/styles'
 import { useParams } from 'react-router-dom'
-import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar, Bell, FolderTree, ExternalLink } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar, Bell, FolderTree, ExternalLink, Copy, Check } from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
@@ -35,6 +38,16 @@ export function TeamDetailPage() {
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [tabValue, setTabValue] = useState(0)
   const { handleAction } = useAsyncAction()
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    if (team?.publicBookingSlug) {
+      const shareUrl = `${window.location.origin}/book/team/${team.publicBookingSlug}`
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   const { data: team, isLoading: teamLoading, error: teamError } = useTeam(teamId)
   const {
@@ -79,18 +92,58 @@ export function TeamDetailPage() {
         actions={
           <Stack direction="row" spacing={1.5} alignItems="center">
             {team.publicBookingSlug && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  const shareUrl = `${window.location.origin}/book/team/${team.publicBookingSlug}`
-                  window.open(shareUrl, '_blank', 'noopener,noreferrer')
-                }}
-                sx={{ gap: 1, borderRadius: 1.2 }}
-              >
-                <ExternalLink size={16} />
-                Booking Link
-              </Button>
+              <>
+                <Tooltip title="Open booking page" arrow>
+                  <IconButton
+                    onClick={() => {
+                      const shareUrl = `${window.location.origin}/book/team/${team.publicBookingSlug}`
+                      window.open(shareUrl, '_blank', 'noopener,noreferrer')
+                    }}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1.2,
+                      width: 36,
+                      height: 36,
+                      color: 'text.secondary',
+                      bgcolor: 'transparent',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        color: 'primary.main',
+                        borderColor: 'primary.main',
+                        transform: 'scale(1.05)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    <ExternalLink size={16} />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title={copied ? 'Copied!' : 'Copy booking link'} arrow>
+                  <IconButton
+                    onClick={handleCopy}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: copied ? 'success.main' : 'divider',
+                      borderRadius: 1.2,
+                      width: 36,
+                      height: 36,
+                      bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
+                      color: (theme) => copied ? theme.palette.success.main : 'text.secondary',
+                      '&:hover': {
+                        bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
+                        color: (theme) => copied ? theme.palette.success.main : 'primary.main',
+                        borderColor: (theme) => copied ? theme.palette.success.main : 'primary.main',
+                        transform: 'scale(1.05)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                  </IconButton>
+                </Tooltip>
+              </>
             )}
             {canManageTeam && (
               <RowActions
