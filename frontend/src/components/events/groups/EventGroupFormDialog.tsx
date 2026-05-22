@@ -6,7 +6,11 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
-import { useCreateEventGroup, useUpdateEventGroup, useTeamEventGroups } from '@/hooks/queries/useEventGroups'
+import {
+  useCreateEventGroup,
+  useUpdateEventGroup,
+  useTeamEventGroups,
+} from '@/hooks/queries/useEventGroups'
 import { extractApiError } from '@/utils/apiError'
 import { GROUP_COLOR_SWATCHES, generateBeautifulRandomColor } from '@/utils/color'
 import { ColorSwatchesPicker } from './ColorSwatchesPicker'
@@ -35,10 +39,16 @@ export function EventGroupFormDialog({
 
   const { data: groupsList } = useTeamEventGroups(teamId)
 
-  const { mutate: createGroup, isPending: creating, error: createError } =
-    useCreateEventGroup(teamId)
-  const { mutate: updateGroup, isPending: updating, error: updateError } =
-    useUpdateEventGroup(teamId)
+  const {
+    mutate: createGroup,
+    isPending: creating,
+    error: createError,
+  } = useCreateEventGroup(teamId)
+  const {
+    mutate: updateGroup,
+    isPending: updating,
+    error: updateError,
+  } = useUpdateEventGroup(teamId)
 
   useEffect(() => {
     if (isOpen) {
@@ -49,10 +59,7 @@ export function EventGroupFormDialog({
     }
   }, [isOpen, group])
 
-  const submitError = useMemo(
-    () => createError ?? updateError ?? null,
-    [createError, updateError]
-  )
+  const submitError = useMemo(() => createError ?? updateError ?? null, [createError, updateError])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,9 +79,7 @@ export function EventGroupFormDialog({
           .filter(Boolean)
       )
 
-      const availableColors = GROUP_COLOR_SWATCHES.filter(
-        (swatch) => !existingColors.has(swatch)
-      )
+      const availableColors = GROUP_COLOR_SWATCHES.filter((swatch) => !existingColors.has(swatch))
 
       if (availableColors.length > 0) {
         // Choose a random color from the remaining unused ones among the 10
@@ -113,23 +118,10 @@ export function EventGroupFormDialog({
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={isEdit ? 'Edit group' : 'New group'}
-      size="sm"
-    >
-      <Stack
-        component="form"
-        spacing={3}
-        onSubmit={handleSubmit}
-        noValidate
-        sx={{ pb: 1 }}
-      >
+    <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Edit group' : 'New group'} size="sm">
+      <Stack component="form" spacing={3} onSubmit={handleSubmit} noValidate sx={{ pb: 1 }}>
         {(validationError || submitError) && (
-          <ErrorAlert
-            message={validationError ?? extractApiError(submitError)}
-          />
+          <ErrorAlert message={validationError ?? extractApiError(submitError)} />
         )}
 
         <FormField label="Name" htmlFor="event-group-name" required>
@@ -155,12 +147,21 @@ export function EventGroupFormDialog({
           />
         </FormField>
 
-        <FormField label="Color" htmlFor="event-group-color" hint="Optional accent color. If not selected, a random color will be auto-assigned.">
+        <FormField
+          label="Color"
+          htmlFor="event-group-color"
+          hint="Optional accent color. If not selected, a random color will be auto-assigned."
+        >
           <ColorSwatchesPicker selectedColor={color} onColorSelect={setColor} />
         </FormField>
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button variant="secondary" type="button" onClick={onClose} disabled={creating || updating}>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={onClose}
+            disabled={creating || updating}
+          >
             Cancel
           </Button>
           <Button type="submit" isLoading={creating || updating}>
@@ -171,5 +172,3 @@ export function EventGroupFormDialog({
     </Modal>
   )
 }
-
-

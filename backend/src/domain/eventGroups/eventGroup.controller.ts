@@ -4,11 +4,7 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as eventGroupService from "./eventGroup.service";
 
-const createEventGroup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const createEventGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { teamId } = req.params as { teamId: string };
@@ -34,11 +30,7 @@ const listTeamEventGroups = async (
   }
 };
 
-const readEventGroup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const readEventGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { groupId } = req.params as { groupId: string };
@@ -49,11 +41,7 @@ const readEventGroup = async (
   }
 };
 
-const updateEventGroup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const updateEventGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { groupId } = req.params as { groupId: string };
@@ -64,11 +52,7 @@ const updateEventGroup = async (
   }
 };
 
-const deleteEventGroup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+const deleteEventGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { groupId } = req.params as { groupId: string };

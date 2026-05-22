@@ -93,21 +93,21 @@ export function StatsOverview({
         >
           {isLoading && !timeframeInfo
             ? Array.from({ length: cardCount }).map((_, index) => (
-              <Box
-                key={index}
-                sx={{
-                  p: 2,
-                  borderRadius: 1.2,
-                  border: 1,
-                  borderColor: 'divider',
-                  backgroundColor: '#fff',
-                }}
-              >
-                <Skeleton variant="text" width="40%" height={20} />
-                <Skeleton variant="text" width="55%" height={42} />
-                <Skeleton variant="text" width="85%" height={18} />
-              </Box>
-            ))
+                <Box
+                  key={index}
+                  sx={{
+                    p: 2,
+                    borderRadius: 1.2,
+                    border: 1,
+                    borderColor: 'divider',
+                    backgroundColor: '#fff',
+                  }}
+                >
+                  <Skeleton variant="text" width="40%" height={20} />
+                  <Skeleton variant="text" width="55%" height={42} />
+                  <Skeleton variant="text" width="85%" height={18} />
+                </Box>
+              ))
             : items.map((item) => <StatCard key={item.label} {...item} />)}
         </Box>
       </CardContent>

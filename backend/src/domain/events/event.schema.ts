@@ -55,10 +55,7 @@ const EventBaseObjectCore = z.looseObject({
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
-  groupId: z.preprocess(
-    (val) => (val === "" ? null : val),
-    z.uuid().nullable().optional(),
-  ),
+  groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
   weeklyAvailability: z
     .array(
       z.object({
@@ -248,13 +245,13 @@ export const UpdateEventSchema = {
 
 export const ReplaceEventCoachesSchema = {
   body: z.looseObject({
-      coaches: z.array(
-        z.object({
-          userId: z.uuid("Invalid user ID"),
-          coachOrder: z.coerce.number().int().positive().optional(),
-        }),
-      ),
-    }),
+    coaches: z.array(
+      z.object({
+        userId: z.uuid("Invalid user ID"),
+        coachOrder: z.coerce.number().int().positive().optional(),
+      }),
+    ),
+  }),
 };
 
 // Schemas below are already using Coach nomenclature
@@ -274,17 +271,17 @@ export const ListTeamEventsSchema = {
     teamId: z.uuid("Invalid team ID"),
   }),
   query: z.looseObject({
-      page: z.coerce.number().int().positive().default(1),
-      pageSize: z.coerce.number().int().positive().default(10),
-    }),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().positive().default(10),
+  }),
 };
 
 export const ListAllEventsSchema = {
   query: z.looseObject({
-      page: z.coerce.number().int().positive().default(1),
-      pageSize: z.coerce.number().int().positive().default(10),
-      teamId: z.uuid().optional(),
-    }),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().positive().default(10),
+    teamId: z.uuid().optional(),
+  }),
 };
 
 export const UpsertSessionLogSchema = {

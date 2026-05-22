@@ -38,11 +38,7 @@ export function TeamTable({
   onDelete,
 }: TeamTableProps) {
   const sortAccessors = useMemo(() => getTeamSortAccessors(users), [users])
-  const {
-    sortedItems: sortedTeams,
-    sortConfig,
-    requestSort,
-  } = useTableSort(teams, sortAccessors)
+  const { sortedItems: sortedTeams, sortConfig, requestSort } = useTableSort(teams, sortAccessors)
 
   return (
     <>

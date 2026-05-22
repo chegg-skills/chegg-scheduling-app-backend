@@ -67,12 +67,7 @@ export function TeamQuickSelect({
 
   return (
     <Box sx={{ mt: 2, mb: 4 }}>
-      {showSectionHeader && (
-        <SectionHeader
-          title={title}
-          description={description}
-        />
-      )}
+      {showSectionHeader && <SectionHeader title={title} description={description} />}
 
       <Box
         sx={{
@@ -239,7 +234,6 @@ export function TeamQuickSelect({
                   '&:last-child': { pb: 3 },
                 }}
               >
-
                 {/* Team Details */}
                 <Box sx={{ flexGrow: 1, mb: 3.5 }}>
                   <Typography

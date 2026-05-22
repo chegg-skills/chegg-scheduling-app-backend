@@ -1,6 +1,14 @@
 import Box from '@mui/material/Box'
 import { useState } from 'react'
-import { CalendarDays, Plus, ToggleRight, Users, UsersRound, LayoutList, LayoutGrid } from 'lucide-react'
+import {
+  CalendarDays,
+  Plus,
+  ToggleRight,
+  Users,
+  UsersRound,
+  LayoutList,
+  LayoutGrid,
+} from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { useTeams, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useUsers } from '@/hooks/queries/useUsers'
@@ -131,110 +139,110 @@ export function TeamsPage() {
           </Box>
         ) : (
           <>
-             <StatsOverview
-               timeframe={timeframe}
-               onTimeframeChange={setTimeframe}
-               timeframeInfo={teamStats?.timeframe}
-               items={teamStatItems}
-               isLoading={statsLoading}
-             />
- 
-             <Box
-               sx={{
-                 display: 'flex',
-                 justifyContent: 'flex-end',
-                 alignItems: 'center',
-                 mt: 4,
-                 mb: 2,
-               }}
-             >
-               <ToggleButtonGroup
-                 value={viewMode}
-                 exclusive
-                 onChange={(_, next) => {
-                   if (next) {
-                     setViewMode(next)
-                     localStorage.setItem('teams_view_mode', next)
-                   }
-                 }}
-                 size="small"
-                 sx={{
-                   bgcolor: 'background.paper',
-                   '& .MuiToggleButton-root': {
-                     px: 2,
-                     py: 0.75,
-                     border: '1px solid',
-                     borderColor: 'divider',
-                     textTransform: 'none',
-                     fontWeight: 600,
-                     fontSize: '0.8125rem',
-                     '&.Mui-selected': {
-                       bgcolor: alpha(theme.palette.primary.main, 0.08),
-                       color: 'primary.main',
-                       '&:hover': {
-                         bgcolor: alpha(theme.palette.primary.main, 0.12),
-                       },
-                     },
-                   },
-                 }}
-               >
-                 <ToggleButton value="table">
-                   <LayoutList size={16} style={{ marginRight: 8 }} />
-                   Table
-                 </ToggleButton>
-                 <ToggleButton value="card">
-                   <LayoutGrid size={16} style={{ marginRight: 8 }} />
-                   Cards
-                 </ToggleButton>
-               </ToggleButtonGroup>
-             </Box>
+            <StatsOverview
+              timeframe={timeframe}
+              onTimeframeChange={setTimeframe}
+              timeframeInfo={teamStats?.timeframe}
+              items={teamStatItems}
+              isLoading={statsLoading}
+            />
 
-             {viewMode === 'table' ? (
-               <Box sx={{ mt: 1 }}>
-                 <TeamTable
-                   teams={teams}
-                   users={usersData?.users ?? []}
-                   pagination={pagination}
-                   onPageChange={onPageChange}
-                   onRowsPerPageChange={onRowsPerPageChange}
-                   canManageTeam={canManageTeam}
-                   onEdit={setEditingTeam}
-                   onToggleActive={handleToggleActive}
-                   onDelete={handleDelete}
-                 />
-               </Box>
-             ) : (
-               <Box sx={{ mt: 1 }}>
-                 <TeamQuickSelect
-                   teams={teams}
-                   users={usersData?.users ?? []}
-                   onSelectTeam={(teamId) => navigate(`/teams/${teamId}`)}
-                   actionLabel="View Details"
-                   showSectionHeader={false}
-                   canManageTeam={canManageTeam}
-                   onEdit={setEditingTeam}
-                   onToggleActive={handleToggleActive}
-                   onDelete={handleDelete}
-                 />
-                 {pagination && (
-                   <Box
-                     sx={{
-                       mt: 3,
-                       border: '1px solid',
-                       borderColor: 'divider',
-                       borderRadius: 2,
-                       overflow: 'hidden',
-                     }}
-                   >
-                     <TablePagination
-                       pagination={pagination}
-                       onPageChange={onPageChange}
-                       onRowsPerPageChange={onRowsPerPageChange}
-                     />
-                   </Box>
-                 )}
-               </Box>
-             )}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                mt: 4,
+                mb: 2,
+              }}
+            >
+              <ToggleButtonGroup
+                value={viewMode}
+                exclusive
+                onChange={(_, next) => {
+                  if (next) {
+                    setViewMode(next)
+                    localStorage.setItem('teams_view_mode', next)
+                  }
+                }}
+                size="small"
+                sx={{
+                  bgcolor: 'background.paper',
+                  '& .MuiToggleButton-root': {
+                    px: 2,
+                    py: 0.75,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.8125rem',
+                    '&.Mui-selected': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.12),
+                      },
+                    },
+                  },
+                }}
+              >
+                <ToggleButton value="table">
+                  <LayoutList size={16} style={{ marginRight: 8 }} />
+                  Table
+                </ToggleButton>
+                <ToggleButton value="card">
+                  <LayoutGrid size={16} style={{ marginRight: 8 }} />
+                  Cards
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
+            {viewMode === 'table' ? (
+              <Box sx={{ mt: 1 }}>
+                <TeamTable
+                  teams={teams}
+                  users={usersData?.users ?? []}
+                  pagination={pagination}
+                  onPageChange={onPageChange}
+                  onRowsPerPageChange={onRowsPerPageChange}
+                  canManageTeam={canManageTeam}
+                  onEdit={setEditingTeam}
+                  onToggleActive={handleToggleActive}
+                  onDelete={handleDelete}
+                />
+              </Box>
+            ) : (
+              <Box sx={{ mt: 1 }}>
+                <TeamQuickSelect
+                  teams={teams}
+                  users={usersData?.users ?? []}
+                  onSelectTeam={(teamId) => navigate(`/teams/${teamId}`)}
+                  actionLabel="View Details"
+                  showSectionHeader={false}
+                  canManageTeam={canManageTeam}
+                  onEdit={setEditingTeam}
+                  onToggleActive={handleToggleActive}
+                  onDelete={handleDelete}
+                />
+                {pagination && (
+                  <Box
+                    sx={{
+                      mt: 3,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <TablePagination
+                      pagination={pagination}
+                      onPageChange={onPageChange}
+                      onRowsPerPageChange={onRowsPerPageChange}
+                    />
+                  </Box>
+                )}
+              </Box>
+            )}
           </>
         )}
 

@@ -25,12 +25,12 @@ interface SlotAttendeesDialogProps {
 }
 
 const STATUS_STYLES: Record<string, { color: 'green' | 'blue' | 'yellow' | 'red'; label: string }> =
-{
-  CONFIRMED: { color: 'green', label: 'Confirmed' },
-  COMPLETED: { color: 'blue', label: 'Completed' },
-  NO_SHOW: { color: 'yellow', label: 'No Show' },
-  CANCELLED: { color: 'red', label: 'Cancelled' },
-}
+  {
+    CONFIRMED: { color: 'green', label: 'Confirmed' },
+    COMPLETED: { color: 'blue', label: 'Completed' },
+    NO_SHOW: { color: 'yellow', label: 'No Show' },
+    CANCELLED: { color: 'red', label: 'Cancelled' },
+  }
 
 export function SlotAttendeesDialog({ isOpen, onClose, eventId, slot }: SlotAttendeesDialogProps) {
   const slotId = slot?.id || ''

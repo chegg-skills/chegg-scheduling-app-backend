@@ -77,7 +77,13 @@ export function EventGroupSection({
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ ml: 1, fontStyle: 'italic', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
+            sx={{
+              ml: 1,
+              fontStyle: 'italic',
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
             noWrap
           >
             {group.description}

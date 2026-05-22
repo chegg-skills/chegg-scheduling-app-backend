@@ -351,9 +351,7 @@ export const buildEventUpdateData = ({
 
   if (validated.groupId !== undefined) {
     updateData.group =
-      validated.groupId === null
-        ? { disconnect: true }
-        : { connect: { id: validated.groupId } };
+      validated.groupId === null ? { disconnect: true } : { connect: { id: validated.groupId } };
   }
 
   return updateData as any;

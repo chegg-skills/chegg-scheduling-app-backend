@@ -7,7 +7,19 @@ import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
 import { useParams } from 'react-router-dom'
-import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar, Bell, FolderTree, ExternalLink, Copy, Check } from 'lucide-react'
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  EyeOff,
+  Users,
+  Calendar,
+  Bell,
+  ExternalLink,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
@@ -129,12 +141,15 @@ export function TeamDetailPage() {
                       borderRadius: 1.2,
                       width: 36,
                       height: 36,
-                      bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
-                      color: (theme) => copied ? theme.palette.success.main : 'text.secondary',
+                      bgcolor: (theme) =>
+                        copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
+                      color: (theme) => (copied ? theme.palette.success.main : 'text.secondary'),
                       '&:hover': {
-                        bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
-                        color: (theme) => copied ? theme.palette.success.main : 'primary.main',
-                        borderColor: (theme) => copied ? theme.palette.success.main : 'primary.main',
+                        bgcolor: (theme) =>
+                          copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
+                        color: (theme) => (copied ? theme.palette.success.main : 'primary.main'),
+                        borderColor: (theme) =>
+                          copied ? theme.palette.success.main : 'primary.main',
                         transform: 'scale(1.05)',
                       },
                       transition: 'all 0.2s ease-in-out',
@@ -191,7 +206,6 @@ export function TeamDetailPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-
         <Box
           sx={{
             display: 'flex',

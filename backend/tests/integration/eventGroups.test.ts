@@ -20,11 +20,7 @@ let context: TestContext;
 const uniqueValue = (prefix: string): string =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-const createGroup = async (
-  teamId: string,
-  token: string,
-  payload: Record<string, unknown> = {},
-) =>
+const createGroup = async (teamId: string, token: string, payload: Record<string, unknown> = {}) =>
   request(app)
     .post(`/api/teams/${teamId}/event-groups`)
     .set("Authorization", `Bearer ${token}`)
@@ -254,10 +250,7 @@ describe("Event group assignment on events", () => {
   });
 
   it("rejects creating an event with a group belonging to a different team", async () => {
-    const otherTeamGroup = await createGroup(
-      context.otherTeamId,
-      context.otherTeamAdminToken,
-    );
+    const otherTeamGroup = await createGroup(context.otherTeamId, context.otherTeamAdminToken);
     const otherGroupId = otherTeamGroup.body.data.id;
 
     const event = await createEvent(context.teamId, context.teamAdminToken, context.eventTypeId, {

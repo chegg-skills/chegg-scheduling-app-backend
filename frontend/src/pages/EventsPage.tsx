@@ -5,7 +5,16 @@ import Typography from '@mui/material/Typography'
 import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
-import { CalendarDays, Plus, Repeat2, ToggleRight, Users, Copy, Check, ExternalLink } from 'lucide-react'
+import {
+  CalendarDays,
+  Plus,
+  Repeat2,
+  ToggleRight,
+  Users,
+  Copy,
+  Check,
+  ExternalLink,
+} from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { useAuth } from '@/context/auth'
 import { useTeams } from '@/hooks/queries/useTeams'
@@ -142,12 +151,15 @@ export function EventsPage() {
                       borderRadius: 1.2,
                       width: 36,
                       height: 36,
-                      bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
-                      color: (theme) => copied ? theme.palette.success.main : 'text.secondary',
+                      bgcolor: (theme) =>
+                        copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
+                      color: (theme) => (copied ? theme.palette.success.main : 'text.secondary'),
                       '&:hover': {
-                        bgcolor: (theme) => copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
-                        color: (theme) => copied ? theme.palette.success.main : 'primary.main',
-                        borderColor: (theme) => copied ? theme.palette.success.main : 'primary.main',
+                        bgcolor: (theme) =>
+                          copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
+                        color: (theme) => (copied ? theme.palette.success.main : 'primary.main'),
+                        borderColor: (theme) =>
+                          copied ? theme.palette.success.main : 'primary.main',
                         transform: 'scale(1.05)',
                       },
                       transition: 'all 0.2s ease-in-out',
@@ -276,7 +288,6 @@ export function EventsPage() {
               isLoading={statsLoading}
             />
 
-
             {selectedTeamId === '' ? (
               <TeamQuickSelect
                 teams={sortedTeams}
@@ -317,8 +328,6 @@ export function EventsPage() {
             />
           </Modal>
         )}
-
-
 
         {viewingUserId && (
           <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />

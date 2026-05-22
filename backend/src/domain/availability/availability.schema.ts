@@ -66,19 +66,18 @@ export const AddAvailabilityExceptionSchema = {
       message: "Availability exceptions require startTime and endTime if not unavailable",
       path: ["startTime"],
     },
-  )
-    .refine(validateTimeRange, {
-      message: "startTime must be before endTime",
-      path: ["endTime"],
-    }),
+  ).refine(validateTimeRange, {
+    message: "startTime must be before endTime",
+    path: ["endTime"],
+  }),
 };
 
 export const GetEffectiveAvailabilitySchema = {
   params: userIdSchema,
   query: z.looseObject({
-      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-    }),
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  }),
 };
 
 export const UserIdParamSchema = {
@@ -93,18 +92,16 @@ export const AvailabilitySchemas = {
   exception: {
     base: AvailabilityExceptionBase,
     // For partials, we separate the object from the refinement to avoid Zod restriction
-    partial: AvailabilityExceptionBase.partial()
-      .refine(validateTimeRange, {
-        message: "startTime must be before endTime",
-        path: ["endTime"],
-      }),
+    partial: AvailabilityExceptionBase.partial().refine(validateTimeRange, {
+      message: "startTime must be before endTime",
+      path: ["endTime"],
+    }),
   },
   weekly: {
     base: WeeklyAvailabilityBase,
-    partial: WeeklyAvailabilityBase.partial()
-      .refine(validateTimeRange, {
-        message: "startTime must be before endTime",
-        path: ["endTime"],
-      }),
+    partial: WeeklyAvailabilityBase.partial().refine(validateTimeRange, {
+      message: "startTime must be before endTime",
+      path: ["endTime"],
+    }),
   },
 };

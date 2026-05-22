@@ -21,16 +21,10 @@ interface MoveEventToGroupDialogProps {
 const NEW_GROUP_VALUE = '__create__'
 const UNASSIGNED_VALUE = '__unassigned__'
 
-export function MoveEventToGroupDialog({
-  isOpen,
-  onClose,
-  event,
-}: MoveEventToGroupDialogProps) {
+export function MoveEventToGroupDialog({ isOpen, onClose, event }: MoveEventToGroupDialogProps) {
   const { data: groups = [] } = useTeamEventGroups(event.teamId)
   const { mutate: updateEvent, isPending, error } = useUpdateEvent()
-  const [selection, setSelection] = useState<string>(
-    event.groupId ?? UNASSIGNED_VALUE
-  )
+  const [selection, setSelection] = useState<string>(event.groupId ?? UNASSIGNED_VALUE)
   const [showCreate, setShowCreate] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {

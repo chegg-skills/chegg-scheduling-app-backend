@@ -172,11 +172,7 @@ export function EventTableRow({
           ]}
         />
         {showMoveDialog && (
-          <MoveEventToGroupDialog
-            isOpen
-            onClose={() => setShowMoveDialog(false)}
-            event={event}
-          />
+          <MoveEventToGroupDialog isOpen onClose={() => setShowMoveDialog(false)} event={event} />
         )}
       </TableCell>
     </TableRow>

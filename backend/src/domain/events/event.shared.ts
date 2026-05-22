@@ -169,10 +169,7 @@ export const getManagedEvent = async (
   return event;
 };
 
-export const assertGroupBelongsToTeam = async (
-  groupId: string,
-  teamId: string,
-): Promise<void> => {
+export const assertGroupBelongsToTeam = async (groupId: string, teamId: string): Promise<void> => {
   const group = await prisma.eventGroup.findUnique({
     where: { id: groupId },
     select: { teamId: true },

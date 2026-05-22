@@ -34,4 +34,3 @@ export const ListTeamsSchema = {
     search: z.string().optional(),
   }),
 };
-

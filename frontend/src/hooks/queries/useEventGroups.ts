@@ -26,8 +26,7 @@ export function useCreateEventGroup(teamId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateEventGroupDto) => eventGroupsApi.create(teamId, data),
-    onSuccess: () =>
-      invalidateQueryKeys(qc, [eventGroupKeys.byTeam(teamId), eventKeys.all]),
+    onSuccess: () => invalidateQueryKeys(qc, [eventGroupKeys.byTeam(teamId), eventKeys.all]),
   })
 }
 
@@ -49,7 +48,6 @@ export function useDeleteEventGroup(teamId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (groupId: string) => eventGroupsApi.remove(groupId),
-    onSuccess: () =>
-      invalidateQueryKeys(qc, [eventGroupKeys.byTeam(teamId), eventKeys.all]),
+    onSuccess: () => invalidateQueryKeys(qc, [eventGroupKeys.byTeam(teamId), eventKeys.all]),
   })
 }

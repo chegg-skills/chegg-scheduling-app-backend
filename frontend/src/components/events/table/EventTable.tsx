@@ -27,12 +27,7 @@ interface EventTableProps {
   groups?: EventGroup[]
 }
 
-export function EventTable({
-  events,
-  teamId,
-  onViewUser,
-  stuckToTop = false,
-}: EventTableProps) {
+export function EventTable({ events, teamId, onViewUser, stuckToTop = false }: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()

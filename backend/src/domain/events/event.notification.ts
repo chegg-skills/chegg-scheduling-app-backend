@@ -72,9 +72,7 @@ const queueEventStatusChangedNotification = async (
       .map((sa) => sa.email)
       .filter(
         (email): email is string =>
-          Boolean(email) &&
-          email !== caller.email &&
-          email !== teamLeadEmail,
+          Boolean(email) && email !== caller.email && email !== teamLeadEmail,
       );
 
     if (superAdminEmails.length > 0) {

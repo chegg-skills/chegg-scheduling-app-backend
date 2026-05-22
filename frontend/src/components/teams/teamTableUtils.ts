@@ -14,7 +14,11 @@ export const getTeamSortAccessors = (users: SafeUser[]): SortAccessorMap<Team, T
   bookingLink: () => '',
 })
 
-export const teamTableColumns: Array<{ label: string; sortKey: TeamSortKey; width?: string | number }> = [
+export const teamTableColumns: Array<{
+  label: string
+  sortKey: TeamSortKey
+  width?: string | number
+}> = [
   { label: 'Team', sortKey: 'team', width: '30%' },
   { label: 'Description', sortKey: 'description', width: '25%' },
   { label: 'Team Lead', sortKey: 'teamLead', width: '20%' },

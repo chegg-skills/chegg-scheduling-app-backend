@@ -64,10 +64,7 @@ const listTeamEventGroups = async (
   });
 };
 
-const readEventGroup = async (
-  groupId: string,
-  caller: CallerContext,
-): Promise<SafeEventGroup> => {
+const readEventGroup = async (groupId: string, caller: CallerContext): Promise<SafeEventGroup> => {
   const group = await loadGroupOrThrow(groupId);
   await getManagedTeam(group.teamId, caller, { allowInactive: true });
   return group;
@@ -100,10 +97,7 @@ const updateEventGroup = async (
   }
 };
 
-const deleteEventGroup = async (
-  groupId: string,
-  caller: CallerContext,
-): Promise<void> => {
+const deleteEventGroup = async (groupId: string, caller: CallerContext): Promise<void> => {
   await prisma.$transaction(async (tx) => {
     const group = await tx.eventGroup.findUnique({
       where: { id: groupId },

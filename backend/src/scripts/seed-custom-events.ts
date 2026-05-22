@@ -17,7 +17,9 @@ async function main() {
   });
 
   if (!team) {
-    throw new Error("❌ Could not find Engineering Team in the database. Please seed the demo data first!");
+    throw new Error(
+      "❌ Could not find Engineering Team in the database. Please seed the demo data first!",
+    );
   }
   console.log(`✅ Found Team: ${team.name} (${team.id})`);
 
@@ -47,7 +49,9 @@ async function main() {
   });
 
   if (!ava || !liam || !noah) {
-    throw new Error("❌ Target coaches (Ava, Liam, Noah) could not be found. Ensure they are in the database.");
+    throw new Error(
+      "❌ Target coaches (Ava, Liam, Noah) could not be found. Ensure they are in the database.",
+    );
   }
   console.log("✅ Found Coaches for Live Lesson: Ava Backend, Liam Systems, Noah APIs");
 
@@ -195,8 +199,8 @@ async function main() {
     isActive: true,
     bookingMode: EventBookingMode.FIXED_SLOTS,
     sessionLeadershipStrategy: SessionLeadershipStrategy.SINGLE_COACH,
-    minCoachCount: 1,      // 1 lead coach
-    targetCoHostCount: 2,  // 2 co-hosts
+    minCoachCount: 1, // 1 lead coach
+    targetCoHostCount: 2, // 2 co-hosts
     deferCoachReveal: true, // "send the reveal later"
     allowStudentCoachChoice: false,
     createdById: creator.id,
@@ -231,7 +235,9 @@ async function main() {
     },
   });
 
-  console.log(`✅ Pre-defined schedule slot created: ${startTime.toISOString()} to ${endTime.toISOString()} (Capacity: 25)`);
+  console.log(
+    `✅ Pre-defined schedule slot created: ${startTime.toISOString()} to ${endTime.toISOString()} (Capacity: 25)`,
+  );
   console.log("🎉 Seeding completed successfully!");
 }
 

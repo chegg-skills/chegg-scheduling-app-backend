@@ -24,6 +24,5 @@ export const eventGroupsApi = {
     apiClient.get<ApiResponse<EventGroup>>(`/event-groups/${groupId}`, { signal }),
   update: (groupId: string, data: UpdateEventGroupDto) =>
     apiClient.patch<ApiResponse<EventGroup>>(`/event-groups/${groupId}`, data),
-  remove: (groupId: string) =>
-    apiClient.delete<ApiResponse<null>>(`/event-groups/${groupId}`),
+  remove: (groupId: string) => apiClient.delete<ApiResponse<null>>(`/event-groups/${groupId}`),
 }

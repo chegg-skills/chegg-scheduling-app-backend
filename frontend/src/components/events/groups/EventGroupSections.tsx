@@ -81,7 +81,13 @@ export function EventGroupSections({
       { id: 'all', name: 'All Events', count: events.length, color: null, rawGroup: null },
     ]
     if (ungrouped.length > 0) {
-      list.push({ id: 'ungrouped', name: 'Ungrouped', count: ungrouped.length, color: null, rawGroup: null })
+      list.push({
+        id: 'ungrouped',
+        name: 'Ungrouped',
+        count: ungrouped.length,
+        color: null,
+        rawGroup: null,
+      })
     }
     for (const group of groups) {
       const groupEvents = eventsByGroupId.get(group.id) ?? []
@@ -98,7 +104,11 @@ export function EventGroupSections({
 
   // Reset to 'all' if selected group is deleted
   useEffect(() => {
-    if (selectedTab !== 'all' && selectedTab !== 'ungrouped' && !groups.some((g) => g.id === selectedTab)) {
+    if (
+      selectedTab !== 'all' &&
+      selectedTab !== 'ungrouped' &&
+      !groups.some((g) => g.id === selectedTab)
+    ) {
       setSelectedTab('all')
     }
   }, [groups, selectedTab])
@@ -131,7 +141,10 @@ export function EventGroupSections({
     if (selectedTab === 'ungrouped') {
       return 'These events are not assigned to any group. Edit an event to assign it to a group or move it between groups.'
     }
-    return currentGroup?.description || 'No description provided for this group. Click "Rename" to add a description or change its settings.'
+    return (
+      currentGroup?.description ||
+      'No description provided for this group. Click "Rename" to add a description or change its settings.'
+    )
   }, [selectedTab, currentGroup])
 
   return (
@@ -152,7 +165,6 @@ export function EventGroupSections({
           transition: 'all 0.2s ease-in-out',
         }}
       >
-
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           alignItems={{ xs: 'flex-start', sm: 'center' }}
@@ -161,8 +173,16 @@ export function EventGroupSections({
           sx={{ width: '100%' }}
         >
           {/* Left side: Group Selector Dropdown */}
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}
+            >
               Group:
             </Typography>
 
@@ -282,7 +302,8 @@ export function EventGroupSections({
                             px: 0.75,
                             py: 0.1,
                             borderRadius: '6px',
-                            backgroundColor: selectedTab === tab.id ? alpha(tabColor, 0.12) : 'grey.100',
+                            backgroundColor:
+                              selectedTab === tab.id ? alpha(tabColor, 0.12) : 'grey.100',
                             color: selectedTab === tab.id ? tabColor : 'text.secondary',
                             ml: 'auto',
                           }}
@@ -486,11 +507,7 @@ export function EventGroupSections({
 
       {/* Create Group Dialog Modal */}
       {isCreatingGroup && (
-        <EventGroupFormDialog
-          isOpen
-          onClose={() => setIsCreatingGroup(false)}
-          teamId={teamId}
-        />
+        <EventGroupFormDialog isOpen onClose={() => setIsCreatingGroup(false)} teamId={teamId} />
       )}
     </Box>
   )

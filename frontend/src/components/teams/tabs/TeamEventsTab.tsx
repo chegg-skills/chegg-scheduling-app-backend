@@ -1,7 +1,6 @@
 import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { EventTable } from '@/components/events/table/EventTable'
 import { EventGroupSections } from '@/components/events/groups/EventGroupSections'
 import { EventForm } from '@/components/events/form/EventForm'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
@@ -40,12 +39,7 @@ export function TeamEventsTab({
       ) : isLoading ? (
         <PageSpinner />
       ) : (
-        <EventGroupSections
-          groups={groups}
-          events={events}
-          teamId={teamId}
-          canManage={canManage}
-        />
+        <EventGroupSections groups={groups} events={events} teamId={teamId} canManage={canManage} />
       )}
 
       <Modal isOpen={showCreateModal} onClose={onCloseCreateModal} title="New event" size="lg">
