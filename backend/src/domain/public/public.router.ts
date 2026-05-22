@@ -47,6 +47,16 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/groups/slug/:slug")
+  .get(validate(PublicSlugSchema), PublicController.getGroupBySlug)
+  .all(methodNotAllowed);
+
+router
+  .route("/groups/slug/:slug/events")
+  .get(validate(PublicSlugSchema), PublicController.listGroupEventsBySlug)
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId/slots")
   .get(validate(GetAvailableSlotsSchema), PublicController.getAvailableSlots)
   .all(methodNotAllowed);

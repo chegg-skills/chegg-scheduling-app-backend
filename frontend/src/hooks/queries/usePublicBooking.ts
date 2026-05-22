@@ -12,6 +12,8 @@ export const publicKeys = {
   event: (slug: string) => [...publicKeys.all, 'event', slug] as const,
   coach: (slug: string) => [...publicKeys.all, 'coach', slug] as const,
   coachEvents: (slug: string) => [...publicKeys.all, 'coach-events', slug] as const,
+  group: (slug: string) => [...publicKeys.all, 'group', slug] as const,
+  groupEventsBySlug: (slug: string) => [...publicKeys.all, 'group-events', slug] as const,
   slots: (
     eventId: string,
     start: string,
@@ -104,6 +106,24 @@ export function usePublicCoachEventsBySlug(slug: string) {
     queryKey: publicKeys.coachEvents(slug),
     queryFn: ({ signal }) =>
       publicApi.listCoachEventsBySlug(slug, signal).then((response) => response.data.data ?? null),
+    enabled: !!slug,
+  })
+}
+
+export function usePublicGroupBySlug(slug: string) {
+  return useQuery({
+    queryKey: publicKeys.group(slug),
+    queryFn: ({ signal }) =>
+      publicApi.getGroupBySlug(slug, signal).then((response) => response.data.data?.group ?? null),
+    enabled: !!slug,
+  })
+}
+
+export function usePublicGroupEventsBySlug(slug: string) {
+  return useQuery({
+    queryKey: publicKeys.groupEventsBySlug(slug),
+    queryFn: ({ signal }) =>
+      publicApi.listGroupEventsBySlug(slug, signal).then((response) => response.data.data ?? null),
     enabled: !!slug,
   })
 }

@@ -10,22 +10,26 @@ import {
   usePublicCoachEventsBySlug,
   usePublicSlots,
   usePublicSlotDates,
+  usePublicGroupBySlug,
+  usePublicGroupEventsBySlug,
 } from '@/hooks/queries/usePublicBooking'
 import { bookingsApi } from '@/api/bookings'
 import type { PublicEventSummary } from '@/types'
 import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
-export type BookingScope = 'directory' | 'team' | 'event' | 'coach'
+export type BookingScope = 'directory' | 'team' | 'event' | 'coach' | 'group'
 export type BookingStepKey = 'team' | 'event' | 'schedule' | 'confirm'
 
 const getBookingScope = (
   teamSlug?: string,
   eventSlug?: string,
-  coachSlug?: string
+  coachSlug?: string,
+  groupSlug?: string
 ): BookingScope => {
   if (teamSlug) return 'team'
   if (eventSlug) return 'event'
   if (coachSlug) return 'coach'
+  if (groupSlug) return 'group'
   return 'directory'
 }
 
@@ -33,6 +37,7 @@ const getStepKeysForScope = (scope: BookingScope): BookingStepKey[] => {
   switch (scope) {
     case 'team':
     case 'coach':
+    case 'group':
       return ['event', 'schedule', 'confirm']
     case 'event':
       return ['schedule', 'confirm']
@@ -43,8 +48,8 @@ const getStepKeysForScope = (scope: BookingScope): BookingStepKey[] => {
 }
 
 export function usePublicBookingState() {
-  const { teamSlug = '', eventSlug = '', coachSlug = '' } = useParams()
-  const scope = getBookingScope(teamSlug, eventSlug, coachSlug)
+  const { teamSlug = '', eventSlug = '', coachSlug = '', groupSlug = '' } = useParams()
+  const scope = getBookingScope(teamSlug, eventSlug, coachSlug, groupSlug)
 
   const [activeStep, setActiveStep] = React.useState(0)
   const [selectedTeam, setSelectedTeam] = React.useState<string | null>(null)
@@ -104,17 +109,30 @@ export function usePublicBookingState() {
     error: coachEventsError,
   } = usePublicCoachEventsBySlug(coachSlug)
 
+  const {
+    data: groupDetailsFromSlug,
+    isLoading: loadingGroupDetails,
+    error: groupDetailsError,
+  } = usePublicGroupBySlug(groupSlug)
+
+  const {
+    data: groupEventsResult,
+    isLoading: loadingGroupEvents,
+    error: groupEventsError,
+  } = usePublicGroupEventsBySlug(groupSlug)
+
   const stepKeys = React.useMemo(() => getStepKeysForScope(scope), [scope])
   const completionStep = stepKeys.length
   const currentStepKey = activeStep < completionStep ? stepKeys[activeStep] : null
 
   const teamDetails = React.useMemo(() => {
     if (scope === 'team') return teamDetailsFromSlug
+    if (scope === 'group') return groupDetailsFromSlug?.team || null
     if (selectedTeam) {
       return teams.find((t) => t.id === selectedTeam) || null
     }
     return null
-  }, [scope, teamDetailsFromSlug, selectedTeam, teams])
+  }, [scope, teamDetailsFromSlug, groupDetailsFromSlug?.team, selectedTeam, teams])
 
   React.useEffect(() => {
     if (scope === 'team' && teamDetailsFromSlug?.id) {
@@ -123,6 +141,14 @@ export function usePublicBookingState() {
       setSelectedSlot(null)
     }
   }, [scope, teamDetailsFromSlug?.id])
+
+  React.useEffect(() => {
+    if (scope === 'group' && groupDetailsFromSlug?.teamId) {
+      setSelectedTeam(groupDetailsFromSlug.teamId)
+      setSelectedEvent(null)
+      setSelectedSlot(null)
+    }
+  }, [scope, groupDetailsFromSlug?.teamId])
 
   React.useEffect(() => {
     if (scope === 'event' && eventDetailsFromSlug?.id) {
@@ -145,6 +171,8 @@ export function usePublicBookingState() {
     switch (scope) {
       case 'team':
         return teamEventsResult?.events ?? []
+      case 'group':
+        return groupEventsResult?.events ?? []
       case 'event':
         return eventDetailsFromSlug ? [eventDetailsFromSlug] : []
       case 'coach':
@@ -159,16 +187,19 @@ export function usePublicBookingState() {
     eventDetailsFromSlug,
     scope,
     teamEventsResult?.events,
+    groupEventsResult?.events,
   ])
 
   const eventsLoading =
     scope === 'team'
       ? loadingTeamDetails || loadingTeamEvents
-      : scope === 'event'
-        ? loadingEventDetails || (!selectedEvent && !eventDetailsError)
-        : scope === 'coach'
-          ? loadingCoachDetails || loadingCoachEvents
-          : loadingDirectoryEvents
+      : scope === 'group'
+        ? loadingGroupDetails || loadingGroupEvents
+        : scope === 'event'
+          ? loadingEventDetails || (!selectedEvent && !eventDetailsError)
+          : scope === 'coach'
+            ? loadingCoachDetails || loadingCoachEvents
+            : loadingDirectoryEvents
 
   const eventDetails = React.useMemo(() => {
     if (scope === 'event') return eventDetailsFromSlug
@@ -181,11 +212,13 @@ export function usePublicBookingState() {
   const eventsError =
     scope === 'team'
       ? teamDetailsError || teamEventsError
-      : scope === 'event'
-        ? eventDetailsError
-        : scope === 'coach'
-          ? coachDetailsError || coachEventsError
-          : directoryEventsError
+      : scope === 'group'
+        ? groupDetailsError || groupEventsError
+        : scope === 'event'
+          ? eventDetailsError
+          : scope === 'coach'
+            ? coachDetailsError || coachEventsError
+            : directoryEventsError
 
   // Reset selectedCoachId and selectedSlot when the selected event changes
   React.useEffect(() => {

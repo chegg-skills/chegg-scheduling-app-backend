@@ -4,6 +4,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import type { CallerContext } from "../../shared/utils/userUtils";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   eventGroupInclude,
   type CreateEventGroupInput,
@@ -41,6 +42,7 @@ const createEventGroup = async (
         description: payload.description ?? null,
         color: payload.color ?? null,
         createdById: caller.id,
+        publicBookingSlug: createPublicBookingSlug(payload.name, "group"),
       },
       include: eventGroupInclude,
     });

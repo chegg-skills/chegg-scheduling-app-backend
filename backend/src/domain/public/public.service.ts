@@ -62,6 +62,18 @@ const publicCoachSelect = {
   publicBookingSlug: true,
 } as const;
 
+const publicGroupSelect = {
+  id: true,
+  name: true,
+  description: true,
+  color: true,
+  publicBookingSlug: true,
+  teamId: true,
+  team: {
+    select: publicTeamSelect,
+  },
+} as const;
+
 const normalizeSlug = (slug: string): string => {
   return slugSchema.parse(slug);
 };
@@ -190,6 +202,39 @@ export const listCoachEventsBySlug = async (slug: string) => {
   });
 
   return { coach, events };
+};
+
+export const getGroupBySlug = async (slug: string) => {
+  const normalizedSlug = normalizeSlug(slug);
+
+  const group = await prisma.eventGroup.findUnique({
+    where: {
+      publicBookingSlug: normalizedSlug,
+    },
+    select: publicGroupSelect,
+  });
+
+  if (!group) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event group not found.");
+  }
+
+  return group;
+};
+
+export const listGroupEventsBySlug = async (slug: string) => {
+  const group = await getGroupBySlug(slug);
+
+  const events = await prisma.event.findMany({
+    where: {
+      groupId: group.id,
+      isActive: true,
+      team: { isActive: true },
+    },
+    select: publicEventSelect,
+    orderBy: { name: "asc" },
+  });
+
+  return { group, team: group.team, events };
 };
 
 export const getPublicBooking = async (id: string, token: string) => {
