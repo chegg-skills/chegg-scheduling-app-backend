@@ -22,9 +22,10 @@ interface EventTableProps {
   events: Event[]
   teamId?: string
   onViewUser?: (userId: string) => void
+  stuckToTop?: boolean
 }
 
-export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
+export function EventTable({ events, teamId, onViewUser, stuckToTop = false }: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()
@@ -70,7 +71,17 @@ export function EventTable({ events, teamId, onViewUser }: EventTableProps) {
 
   return (
     <>
-      <TableContainer component={Paper} variant="outlined">
+      <TableContainer
+        component={Paper}
+        variant="outlined"
+        sx={{
+          ...(stuckToTop && {
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            borderTop: 'none',
+          }),
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>

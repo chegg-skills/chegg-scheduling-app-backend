@@ -7,6 +7,7 @@ import { useState, useMemo } from 'react'
 import { useAuth } from '@/context/auth'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
+import { useTeamEventGroups } from '@/hooks/queries/useEventGroups'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
@@ -14,10 +15,11 @@ import { EventForm } from '@/components/events/form/EventForm'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { EventTable } from '@/components/events/table/EventTable'
+import { EventGroupSections } from '@/components/events/groups/EventGroupSections'
+import { EventGroupFormDialog } from '@/components/events/groups/EventGroupFormDialog'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Select } from '@/components/shared/form/Select'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { TeamQuickLink } from '@/components/events/TeamQuickLink'
 import { TeamQuickSelect } from '@/components/events/TeamQuickSelect'
 import { useEventStats } from '@/hooks/queries/useStats'
 import { useUsers } from '@/hooks/queries/useUsers'
@@ -45,6 +47,8 @@ export function EventsPage() {
     isLoading: eventsLoading,
     error: eventsError,
   } = useTeamEvents(selectedTeamId, { page: 1, pageSize: 100 })
+  const { data: groupsData } = useTeamEventGroups(selectedTeamId)
+  const groups = useMemo(() => groupsData ?? [], [groupsData])
   const { data: eventStats, isLoading: statsLoading } = useEventStats(
     timeframe,
     selectedTeamId || undefined
@@ -207,7 +211,6 @@ export function EventsPage() {
               isLoading={statsLoading}
             />
 
-            {selectedTeamId !== '' && <TeamQuickLink team={selectedTeam} />}
 
             {selectedTeamId === '' ? (
               <TeamQuickSelect
@@ -223,11 +226,21 @@ export function EventsPage() {
               </Box>
             ) : (
               <Box sx={{ mt: 3 }}>
-                <EventTable
-                  events={eventsData?.events ?? []}
-                  teamId={selectedTeamId}
-                  onViewUser={setViewingUserId}
-                />
+                {groups.length > 0 ? (
+                  <EventGroupSections
+                    groups={groups}
+                    events={eventsData?.events ?? []}
+                    teamId={selectedTeamId}
+                    onViewUser={setViewingUserId}
+                    canManage={canManageTeam}
+                  />
+                ) : (
+                  <EventTable
+                    events={eventsData?.events ?? []}
+                    teamId={selectedTeamId}
+                    onViewUser={setViewingUserId}
+                  />
+                )}
               </Box>
             )}
           </>
@@ -247,6 +260,8 @@ export function EventsPage() {
             />
           </Modal>
         )}
+
+
 
         {viewingUserId && (
           <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />

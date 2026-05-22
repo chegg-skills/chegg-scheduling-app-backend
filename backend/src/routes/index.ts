@@ -2,6 +2,7 @@ import express from "express";
 import authRoutes from "../domain/auth/auth.router";
 import ssoRoutes from "../domain/auth/sso.router";
 import eventRoutes from "../domain/events/event.router";
+import eventGroupRoutes from "../domain/eventGroups/eventGroup.router";
 import inviteRoutes from "../domain/invite/invite.router";
 import teamMemberRoutes from "../domain/team-members/teamMember.router";
 import usersRoutes from "../domain/users/user.router";
@@ -26,6 +27,7 @@ router.use("/bookings", bookingRoutes);
 router.use("/students", studentRoutes);
 router.use(teamMemberRoutes);
 router.use(eventRoutes);
+router.use(eventGroupRoutes);
 
 router.use("/v1", authenticate, v1routes);
 

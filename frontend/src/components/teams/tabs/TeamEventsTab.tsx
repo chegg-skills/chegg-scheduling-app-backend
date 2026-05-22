@@ -2,25 +2,30 @@ import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { EventTable } from '@/components/events/table/EventTable'
+import { EventGroupSections } from '@/components/events/groups/EventGroupSections'
 import { EventForm } from '@/components/events/form/EventForm'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import Stack from '@mui/material/Stack'
-import type { Event } from '@/types'
+import type { Event, EventGroup } from '@/types'
 
 interface TeamEventsTabProps {
   events: Event[]
+  groups: EventGroup[]
   teamId: string
   isLoading: boolean
   error?: unknown
+  canManage?: boolean
   showCreateModal: boolean
   onCloseCreateModal: () => void
 }
 
 export function TeamEventsTab({
   events,
+  groups,
   teamId,
   isLoading,
   error,
+  canManage = false,
   showCreateModal,
   onCloseCreateModal,
 }: TeamEventsTabProps) {
@@ -34,6 +39,13 @@ export function TeamEventsTab({
         <ErrorAlert message="Failed to load events. Please refresh the page." />
       ) : isLoading ? (
         <PageSpinner />
+      ) : groups.length > 0 ? (
+        <EventGroupSections
+          groups={groups}
+          events={events}
+          teamId={teamId}
+          canManage={canManage}
+        />
       ) : (
         <EventTable events={events} teamId={teamId} />
       )}

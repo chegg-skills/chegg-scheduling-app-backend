@@ -55,6 +55,10 @@ const EventBaseObjectCore = z.looseObject({
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
+  groupId: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.uuid().nullable().optional(),
+  ),
   weeklyAvailability: z
     .array(
       z.object({

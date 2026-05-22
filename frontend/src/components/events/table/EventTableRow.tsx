@@ -7,14 +7,16 @@ import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 import Tooltip from '@mui/material/Tooltip'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Calendar, Copy, Edit, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { Calendar, Copy, Edit, Eye, EyeOff, FolderInput, Trash2 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
+import { useState } from 'react'
 import { Badge } from '@/components/shared/ui/Badge'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import type { Event } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { formatEventDuration } from './eventTableUtils'
+import { MoveEventToGroupDialog } from '../groups/MoveEventToGroupDialog'
 
 interface EventTableRowProps {
   event: Event
@@ -38,6 +40,7 @@ export function EventTableRow({
   onViewUser,
 }: EventTableRowProps) {
   const theme = useTheme()
+  const [showMoveDialog, setShowMoveDialog] = useState(false)
 
   return (
     <TableRow hover>
@@ -146,6 +149,11 @@ export function EventTableRow({
               onClick: () => onEdit(event),
             },
             {
+              label: 'Move to group…',
+              icon: <FolderInput size={16} />,
+              onClick: () => setShowMoveDialog(true),
+            },
+            {
               label: 'Duplicate event',
               icon: <Copy size={16} />,
               onClick: () => onDuplicate(event),
@@ -163,6 +171,13 @@ export function EventTableRow({
             },
           ]}
         />
+        {showMoveDialog && (
+          <MoveEventToGroupDialog
+            isOpen
+            onClose={() => setShowMoveDialog(false)}
+            event={event}
+          />
+        )}
       </TableCell>
     </TableRow>
   )

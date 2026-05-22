@@ -4,7 +4,7 @@ import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { useParams } from 'react-router-dom'
-import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar, Bell } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, EyeOff, Users, Calendar, Bell, FolderTree, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
@@ -23,6 +23,7 @@ import { RowActions } from '@/components/shared/table/RowActions'
 import { TeamMembersTab } from '@/components/teams/tabs/TeamMembersTab'
 import { TeamEventsTab } from '@/components/teams/tabs/TeamEventsTab'
 import { TeamNotificationsTab } from '@/components/teams/tabs/TeamNotificationsTab'
+import { useTeamEventGroups } from '@/hooks/queries/useEventGroups'
 import { toTitleCase } from '@/utils/toTitleCase'
 
 export function TeamDetailPage() {
@@ -42,6 +43,7 @@ export function TeamDetailPage() {
     error: membersError,
   } = useTeamMembers(teamId)
   const { data: events, isLoading: eventsLoading, error: eventsError } = useTeamEvents(teamId)
+  const { data: groups } = useTeamEventGroups(teamId)
   const { mutate: deleteTeam } = useDeleteTeam()
   const { mutate: updateTeam } = useUpdateTeam()
   const canManageTeam = user?.role === 'SUPER_ADMIN'
@@ -75,8 +77,22 @@ export function TeamDetailPage() {
           />
         }
         actions={
-          canManageTeam ? (
-            <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            {team.publicBookingSlug && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/book/team/${team.publicBookingSlug}`
+                  window.open(shareUrl, '_blank', 'noopener,noreferrer')
+                }}
+                sx={{ gap: 1, borderRadius: 1.2 }}
+              >
+                <ExternalLink size={16} />
+                Booking Link
+              </Button>
+            )}
+            {canManageTeam && (
               <RowActions
                 actions={[
                   {
@@ -116,12 +132,13 @@ export function TeamDetailPage() {
                   },
                 ]}
               />
-            </Stack>
-          ) : null
+            )}
+          </Stack>
         }
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
+
         <Box
           sx={{
             display: 'flex',
@@ -164,12 +181,14 @@ export function TeamDetailPage() {
           </Tabs>
 
           <Box sx={{ mb: 1 }}>
-            {tabValue < 2 && (
-              <Button
-                size="sm"
-                onClick={() => (tabValue === 0 ? setShowCreateEvent(true) : setShowAddMember(true))}
-              >
-                <Plus size={16} /> {tabValue === 0 ? 'New event' : 'Add member'}
+            {tabValue === 0 && (
+              <Button size="sm" onClick={() => setShowCreateEvent(true)}>
+                <Plus size={16} /> New event
+              </Button>
+            )}
+            {tabValue === 1 && (
+              <Button size="sm" onClick={() => setShowAddMember(true)}>
+                <Plus size={16} /> Add member
               </Button>
             )}
           </Box>
@@ -178,9 +197,11 @@ export function TeamDetailPage() {
         <TabPanel value={tabValue} index={0} prefix="team">
           <TeamEventsTab
             events={teamEvents}
+            groups={groups ?? []}
             teamId={teamId}
             isLoading={eventsLoading}
             error={eventsError}
+            canManage={canManageTeam || user?.role === 'TEAM_ADMIN'}
             showCreateModal={showCreateEvent}
             onCloseCreateModal={() => setShowCreateEvent(false)}
           />

@@ -61,7 +61,7 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
 
           <Stack spacing={2}>
             <Typography {...sectionLabelStyle}>Basic info</Typography>
-            <EventBasicFields />
+            <EventBasicFields teamId={teamId} />
           </Stack>
 
           <Divider />

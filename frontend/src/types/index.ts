@@ -219,6 +219,7 @@ export interface Event {
   allowStudentCoachChoice: boolean
   maxBookingWindowDays: number | null
   teamId: string
+  groupId: string | null
   createdById: string
   updatedById: string
   createdAt: string
@@ -230,10 +231,29 @@ export interface Event {
     id: string
     name: string
   }
+  group?: {
+    id: string
+    name: string
+    color: string | null
+  } | null
   scheduleSlots?: EventScheduleSlot[]
   _count?: {
     bookings: number
     scheduleSlots: number
+  }
+}
+
+export interface EventGroup {
+  id: string
+  teamId: string
+  name: string
+  description: string | null
+  color: string | null
+  createdById: string
+  createdAt: string
+  updatedAt: string
+  _count?: {
+    events: number
   }
 }
 
@@ -434,6 +454,7 @@ export interface CreateEventDto {
   bufferAfterMinutes?: number
   description?: string
   isActive?: boolean
+  groupId?: string | null
   weeklyAvailability?: Array<{
     dayOfWeek: number
     startTime: string
