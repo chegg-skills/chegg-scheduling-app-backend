@@ -250,6 +250,7 @@ export interface EventGroup {
   description: string | null
   color: string | null
   createdById: string
+  publicBookingSlug: string
   createdAt: string
   updatedAt: string
   _count?: {
@@ -261,6 +262,13 @@ export interface PublicTeamSummary extends Pick<
   Team,
   'id' | 'name' | 'description' | 'publicBookingSlug'
 > {}
+
+export interface PublicGroupSummary extends Pick<
+  EventGroup,
+  'id' | 'teamId' | 'name' | 'description' | 'color' | 'publicBookingSlug'
+> {
+  team: PublicTeamSummary
+}
 
 export interface PublicHostInfo {
   id: string

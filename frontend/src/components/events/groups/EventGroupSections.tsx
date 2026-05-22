@@ -10,7 +10,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Menu from '@mui/material/Menu'
 import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
-import { Edit, Trash2, Plus, HelpCircle, MoreVertical } from 'lucide-react'
+import { Edit, Trash2, Plus, HelpCircle, MoreVertical, ExternalLink, Copy, Check } from 'lucide-react'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { useDeleteEventGroup } from '@/hooks/queries/useEventGroups'
 import type { Event, EventGroup } from '@/types'
@@ -44,6 +44,7 @@ export function EventGroupSections({
   const [editingGroup, setEditingGroup] = useState<EventGroup | null>(null)
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
+  const [copied, setCopied] = useState(false)
   const { mutate: deleteGroup } = useDeleteEventGroup(teamId)
   const { handleAction } = useAsyncAction()
 
@@ -133,6 +134,15 @@ export function EventGroupSections({
 
   const currentGroup = activeTab.rawGroup
   const themeColor = activeTab.color ?? '#E87100'
+
+  const handleCopy = async () => {
+    if (currentGroup?.publicBookingSlug) {
+      const shareUrl = `${window.location.origin}/book/group/${currentGroup.publicBookingSlug}`
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   const descriptionText = useMemo(() => {
     if (selectedTab === 'all') {
@@ -368,6 +378,71 @@ export function EventGroupSections({
             <Box sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}>
               {currentGroup ? (
                 <>
+                <Stack direction="row" spacing={1.25} alignItems="center">
+                  <Tooltip title="Open group booking page" arrow placement="top">
+                    <IconButton
+                      disabled={!currentGroup.publicBookingSlug}
+                      onClick={() => {
+                        const shareUrl = `${window.location.origin}/book/group/${currentGroup.publicBookingSlug}`
+                        window.open(shareUrl, '_blank', 'noopener,noreferrer')
+                      }}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: alpha(themeColor, 0.2),
+                        borderRadius: 1.2,
+                        width: 28,
+                        height: 28,
+                        color: themeColor,
+                        bgcolor: 'transparent',
+                        '&:hover': {
+                          bgcolor: alpha(themeColor, 0.08),
+                          color: themeColor,
+                          borderColor: themeColor,
+                          transform: 'scale(1.05)',
+                        },
+                        '&.Mui-disabled': {
+                          borderColor: alpha(themeColor, 0.1),
+                          color: alpha(themeColor, 0.3),
+                        },
+                        transition: 'all 0.2s ease-in-out',
+                      }}
+                    >
+                      <ExternalLink size={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  <Tooltip title={copied ? 'Copied!' : 'Copy group booking link'} arrow placement="top">
+                    <IconButton
+                      disabled={!currentGroup.publicBookingSlug}
+                      onClick={handleCopy}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: copied ? 'success.main' : alpha(themeColor, 0.2),
+                        borderRadius: 1.2,
+                        width: 28,
+                        height: 28,
+                        bgcolor: (theme) =>
+                          copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
+                        color: (theme) => (copied ? theme.palette.success.main : themeColor),
+                        '&:hover': {
+                          bgcolor: (theme) =>
+                            copied ? alpha(theme.palette.success.main, 0.1) : alpha(themeColor, 0.08),
+                          color: (theme) => (copied ? theme.palette.success.main : themeColor),
+                          borderColor: (theme) =>
+                            copied ? theme.palette.success.main : themeColor,
+                          transform: 'scale(1.05)',
+                        },
+                        '&.Mui-disabled': {
+                          borderColor: alpha(themeColor, 0.1),
+                          color: alpha(themeColor, 0.3),
+                        },
+                        transition: 'all 0.2s ease-in-out',
+                      }}
+                    >
+                      {copied ? <Check size={14} /> : <Copy size={14} />}
+                    </IconButton>
+                  </Tooltip>
+
                   <Tooltip title="Group settings" arrow placement="top">
                     <IconButton
                       size="small"
@@ -383,13 +458,15 @@ export function EventGroupSections({
                           color: themeColor,
                           backgroundColor: alpha(themeColor, 0.08),
                           borderColor: themeColor,
+                          transform: 'scale(1.05)',
                         },
-                        transition: 'all 0.2s',
+                        transition: 'all 0.2s ease-in-out',
                       }}
                     >
                       <MoreVertical size={16} />
                     </IconButton>
                   </Tooltip>
+                </Stack>
                   <Menu
                     anchorEl={menuAnchorEl}
                     open={isMenuOpen}

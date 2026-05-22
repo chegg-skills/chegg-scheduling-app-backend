@@ -30,6 +30,7 @@ let teamSlug: string;
 let eventId: string;
 let eventSlug: string;
 let coachSlug: string;
+let groupSlugVal: string;
 
 beforeAll(async () => {
   await clearTables();
@@ -107,6 +108,25 @@ beforeAll(async () => {
     .put(`/api/events/${eventId}/coaches`)
     .set("Authorization", `Bearer ${superAdminToken}`)
     .send({ coaches: [{ userId: coachId }] });
+
+  // Create an event group
+  const groupRes = await prisma.eventGroup.create({
+    data: {
+      teamId,
+      name: "Public Group",
+      description: "Discoverable group",
+      color: "#123456",
+      createdById: teamAdminId,
+      publicBookingSlug: "public-group-slug",
+    },
+  });
+  groupSlugVal = groupRes.publicBookingSlug;
+
+  // Assign event to the group
+  await prisma.event.update({
+    where: { id: eventId },
+    data: { groupId: groupRes.id },
+  });
 });
 
 afterAll(clearTables);
@@ -176,6 +196,25 @@ describe("Public API", () => {
       expect(eventsRes.body.data.events.some((event: { id: string }) => event.id === eventId)).toBe(
         true,
       );
+    });
+
+    it("should resolve an event group by public slug", async () => {
+      const res = await request(app).get(`/api/public/groups/slug/${groupSlugVal}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.group.publicBookingSlug).toBe(groupSlugVal);
+      expect(res.body.data.group.teamId).toBe(teamId);
+      expect(res.body.data.group.team).toBeDefined();
+    });
+
+    it("should list a group's public events by slug", async () => {
+      const res = await request(app).get(`/api/public/groups/slug/${groupSlugVal}/events`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.group.publicBookingSlug).toBe(groupSlugVal);
+      expect(res.body.data.events.some((event: { id: string }) => event.id === eventId)).toBe(true);
     });
   });
 

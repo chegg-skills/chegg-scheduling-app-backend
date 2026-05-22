@@ -76,6 +76,18 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
   );
 };
 
+export const getGroupBySlug = async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const group = await PublicService.getGroupBySlug(slug as string);
+  return sendSuccessResponse(res, StatusCodes.OK, { group }, "Group fetched successfully.");
+};
+
+export const listGroupEventsBySlug = async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const result = await PublicService.listGroupEventsBySlug(slug as string);
+  return sendSuccessResponse(res, StatusCodes.OK, result, "Group events fetched successfully.");
+};
+
 export const getPublicBooking = async (req: Request, res: Response) => {
   const { id } = req.params;
   const authHeader = req.headers.authorization;

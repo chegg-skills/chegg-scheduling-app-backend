@@ -5,6 +5,7 @@ import type {
   PublicCoachSummary,
   PublicEventSummary,
   PublicTeamSummary,
+  PublicGroupSummary,
 } from '@/types'
 
 export interface ListPublicTeamsResponse {
@@ -33,6 +34,16 @@ export interface ListCoachEventsResponse {
 }
 
 export interface ListTeamEventsBySlugResponse {
+  team: PublicTeamSummary
+  events: PublicEventSummary[]
+}
+
+export interface GetPublicGroupResponse {
+  group: PublicGroupSummary
+}
+
+export interface ListGroupEventsBySlugResponse {
+  group: PublicGroupSummary
   team: PublicTeamSummary
   events: PublicEventSummary[]
 }
@@ -69,6 +80,14 @@ export const publicApi = {
 
   listTeamEventsBySlug: (slug: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<ListTeamEventsBySlugResponse>>(`/public/teams/slug/${slug}/events`, {
+      signal,
+    }),
+
+  getGroupBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<GetPublicGroupResponse>>(`/public/groups/slug/${slug}`, { signal }),
+
+  listGroupEventsBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListGroupEventsBySlugResponse>>(`/public/groups/slug/${slug}/events`, {
       signal,
     }),
 

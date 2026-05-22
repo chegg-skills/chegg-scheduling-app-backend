@@ -28,6 +28,7 @@ export function PublicBookingHeader({
   const heading = React.useMemo(() => {
     switch (scope) {
       case 'team':
+      case 'group':
         return teamDetails?.name
           ? `Book with ${toTitleCase(teamDetails.name)}`
           : 'Book with this team'
@@ -47,6 +48,8 @@ export function PublicBookingHeader({
     switch (scope) {
       case 'team':
         return 'Choose an event from this team and pick a convenient time.'
+      case 'group':
+        return 'Choose an event from this group and pick a convenient time.'
       case 'event':
         return 'Select a time slot to book this event directly.'
       case 'coach':

@@ -63,3 +63,6 @@ start().catch((error) => {
   logger.error("Server startup failed.", { error });
   process.exit(1);
 });
+
+// Force hot-reload to load fresh Prisma Client with updated database schema
+

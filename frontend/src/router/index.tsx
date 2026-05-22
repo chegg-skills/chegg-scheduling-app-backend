@@ -163,6 +163,7 @@ export const router = createBrowserRouter([
       { path: 'team/:teamSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'event/:eventSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'coach/:coachSlug', element: renderLazyPage(PublicBookingPage) },
+      { path: 'group/:groupSlug', element: renderLazyPage(PublicBookingPage) },
     ],
   },
   {
