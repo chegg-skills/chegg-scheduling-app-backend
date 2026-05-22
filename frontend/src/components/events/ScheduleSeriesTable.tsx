@@ -30,9 +30,15 @@ interface Props {
   groups: ScheduleSeriesGroup[]
   onViewTracker: (group: ScheduleSeriesGroup) => void
   onRemoveSeries: (group: ScheduleSeriesGroup) => void
+  canManage?: boolean
 }
 
-export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: Props) {
+export function ScheduleSeriesTable({
+  groups,
+  onViewTracker,
+  onRemoveSeries,
+  canManage = true,
+}: Props) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
@@ -137,12 +143,16 @@ export function ScheduleSeriesTable({ groups, onViewTracker, onRemoveSeries }: P
                         icon: <ListFilter size={16} />,
                         onClick: () => onViewTracker(group),
                       },
-                      {
-                        label: 'Delete Entire Series',
-                        icon: <MoreVertical size={16} />,
-                        color: 'error.main',
-                        onClick: () => onRemoveSeries(group),
-                      },
+                      ...(canManage
+                        ? [
+                            {
+                              label: 'Delete Entire Series',
+                              icon: <MoreVertical size={16} />,
+                              color: 'error.main',
+                              onClick: () => onRemoveSeries(group),
+                            },
+                          ]
+                        : []),
                     ]}
                   />
                 </TableCell>
