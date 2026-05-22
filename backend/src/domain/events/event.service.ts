@@ -6,6 +6,7 @@ import { resolvePagination } from "../../shared/utils/pagination";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
+  assertGroupBelongsToTeam,
   eventInclude,
   getManagedEvent,
   type CreateEventInput,
@@ -102,6 +103,10 @@ const createEvent = async (
 ): Promise<SafeEvent> => {
   await getManagedTeam(teamId, caller);
 
+  if (payload.groupId) {
+    await assertGroupBelongsToTeam(payload.groupId, teamId);
+  }
+
   const context = await resolveCreateEventContext(payload, caller.id);
 
   return prisma.event.create({
@@ -153,6 +158,10 @@ const updateEvent = async (
       StatusCodes.CONFLICT,
       "Deferred coach reveal cannot be changed after students have booked sessions for this event.",
     );
+  }
+
+  if (payload.groupId) {
+    await assertGroupBelongsToTeam(payload.groupId, existingEvent.teamId);
   }
 
   const context = await resolveUpdateEventContext({ payload, existingEvent, callerId: caller.id });

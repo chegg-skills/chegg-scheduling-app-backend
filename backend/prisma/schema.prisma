@@ -42,6 +42,7 @@ model User {
   teamsCreated           Team[]                      @relation("TeamCreatedBy")
   teamsLed               Team[]                      @relation("TeamLead")
   teamMemberships        TeamMember[]
+  eventGroupsCreated     EventGroup[]                @relation("EventGroupCreatedBy")
   availabilityExceptions UserAvailabilityException[]
   weeklyAvailability     UserWeeklyAvailability[]
 
@@ -60,6 +61,7 @@ model Team {
   publicBookingSlug  String                  @unique
   bookings           Booking[]
   events             Event[]
+  eventGroups        EventGroup[]
   createdByUser      User                    @relation("TeamCreatedBy", fields: [createdById], references: [id])
   teamLead           User                    @relation("TeamLead", fields: [teamLeadId], references: [id])
   members            TeamMember[]
@@ -152,9 +154,11 @@ model Event {
   maxBookingWindowDays      Int?
   deferCoachReveal          Boolean                   @default(false)
   allowStudentCoachChoice   Boolean                   @default(false)
+  groupId                   String?
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
   eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
+  group                     EventGroup?               @relation(fields: [groupId], references: [id], onDelete: Restrict)
   team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
   coaches                   EventCoach[]
@@ -167,6 +171,24 @@ model Event {
   @@index([interactionType])
   @@index([assignmentStrategy])
   @@index([bookingMode])
+  @@index([groupId])
+}
+
+model EventGroup {
+  id            String   @id @default(uuid())
+  teamId        String
+  name          String
+  description   String?
+  color         String?
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdByUser User     @relation("EventGroupCreatedBy", fields: [createdById], references: [id])
+  events        Event[]
+
+  @@unique([teamId, name])
+  @@index([teamId])
 }
 
 model EventCoach {

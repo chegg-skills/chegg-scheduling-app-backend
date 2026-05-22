@@ -30,6 +30,13 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
       name: true,
     },
   },
+  group: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+    },
+  },
   _count: {
     select: {
       bookings: true,
@@ -74,6 +81,7 @@ export type CreateEventInput = {
   showDescription?: boolean;
   deferCoachReveal?: boolean;
   allowStudentCoachChoice?: boolean;
+  groupId?: string | null;
   weeklyAvailability?: Array<{
     dayOfWeek: number;
     startTime: string;
@@ -159,6 +167,24 @@ export const getManagedEvent = async (
 
   await getManagedTeam(event.teamId, caller, { allowInactive: true });
   return event;
+};
+
+export const assertGroupBelongsToTeam = async (groupId: string, teamId: string): Promise<void> => {
+  const group = await prisma.eventGroup.findUnique({
+    where: { id: groupId },
+    select: { teamId: true },
+  });
+
+  if (!group) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Selected event group does not exist.");
+  }
+
+  if (group.teamId !== teamId) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "Event group does not belong to this event's team.",
+    );
+  }
 };
 
 export const getActiveEventType = async (eventTypeId: string) => {

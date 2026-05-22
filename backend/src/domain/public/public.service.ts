@@ -131,14 +131,14 @@ export const getEventBySlug = async (slug: string) => {
   if (!event) {
     throw new ErrorHandler(
       StatusCodes.NOT_FOUND,
-      "This public booking link is invalid. Please double-check the URL or contact your coordinator."
+      "This public booking link is invalid. Please double-check the URL or contact your coordinator.",
     );
   }
 
   if (!event.isActive || !event.team.isActive) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
-      "This booking page is temporarily inactive. Please contact the administrator or coach if you need to schedule a session."
+      "This booking page is temporarily inactive. Please contact the administrator or coach if you need to schedule a session.",
     );
   }
 

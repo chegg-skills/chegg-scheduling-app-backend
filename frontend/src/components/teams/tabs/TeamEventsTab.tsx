@@ -1,26 +1,30 @@
 import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { EventTable } from '@/components/events/table/EventTable'
+import { EventGroupSections } from '@/components/events/groups/EventGroupSections'
 import { EventForm } from '@/components/events/form/EventForm'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import Stack from '@mui/material/Stack'
-import type { Event } from '@/types'
+import type { Event, EventGroup } from '@/types'
 
 interface TeamEventsTabProps {
   events: Event[]
+  groups: EventGroup[]
   teamId: string
   isLoading: boolean
   error?: unknown
+  canManage?: boolean
   showCreateModal: boolean
   onCloseCreateModal: () => void
 }
 
 export function TeamEventsTab({
   events,
+  groups,
   teamId,
   isLoading,
   error,
+  canManage = false,
   showCreateModal,
   onCloseCreateModal,
 }: TeamEventsTabProps) {
@@ -35,7 +39,7 @@ export function TeamEventsTab({
       ) : isLoading ? (
         <PageSpinner />
       ) : (
-        <EventTable events={events} teamId={teamId} />
+        <EventGroupSections groups={groups} events={events} teamId={teamId} canManage={canManage} />
       )}
 
       <Modal isOpen={showCreateModal} onClose={onCloseCreateModal} title="New event" size="lg">

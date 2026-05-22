@@ -49,6 +49,7 @@ export const eventFormSchema = z
     deferCoachReveal: z.boolean().default(false),
     allowStudentCoachChoice: z.boolean().default(false),
     isActive: z.boolean().default(true),
+    groupId: z.string().uuid().nullable().optional(),
     weeklyAvailability: z
       .array(
         z.object({
@@ -155,6 +156,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       deferCoachReveal: event.deferCoachReveal ?? false,
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
       isActive: event.isActive,
+      groupId: event.groupId ?? null,
       weeklyAvailability: (event.weeklyAvailability || []).map((a) => ({
         dayOfWeek: a.dayOfWeek,
         startTime: a.startTime,
@@ -188,6 +190,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     deferCoachReveal: false,
     allowStudentCoachChoice: false,
     isActive: true,
+    groupId: null,
     weeklyAvailability: [],
   }
 }

@@ -1,11 +1,10 @@
-import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
 import { alpha, useTheme } from '@mui/material/styles'
-import { ChevronRight, Users, EyeOff, Edit, Eye, Trash2 } from 'lucide-react'
-import { Badge } from '@/components/shared/ui/Badge'
+import { ChevronRight, Users, User, EyeOff, Edit, Eye, Trash2 } from 'lucide-react'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
@@ -68,12 +67,7 @@ export function TeamQuickSelect({
 
   return (
     <Box sx={{ mt: 2, mb: 4 }}>
-      {showSectionHeader && (
-        <SectionHeader
-          title={title}
-          description={description}
-        />
-      )}
+      {showSectionHeader && <SectionHeader title={title} description={description} />}
 
       <Box
         sx={{
@@ -89,9 +83,6 @@ export function TeamQuickSelect({
           const isActive = team.isActive
           const leadUser = users.find((u) => u.id === team.teamLeadId)
           const leadName = leadUser ? `${leadUser.firstName} ${leadUser.lastName}` : 'No lead'
-          const leadInitials = leadUser
-            ? `${leadUser.firstName?.[0] ?? ''}${leadUser.lastName?.[0] ?? ''}`.toUpperCase()
-            : ''
 
           return (
             <Card
@@ -107,6 +98,7 @@ export function TeamQuickSelect({
                 backgroundColor: 'background.paper',
                 borderColor: 'divider',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                overflow: 'hidden',
                 transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   transform: 'translateY(-4px)',
@@ -117,78 +109,131 @@ export function TeamQuickSelect({
                 },
               }}
             >
+              {/* Header Box with dynamic background accent */}
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2.25,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: isActive
+                    ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, ${alpha(theme.palette.accent.peach, 0.35)} 100%)`
+                    : `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.06)} 0%, ${alpha(theme.palette.secondary.main, 0.02)} 100%)`,
+                  borderBottom: '1.5px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                {/* Left Side: User Icon */}
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 1.25, // 10px
+                    backgroundColor: isActive
+                      ? alpha(theme.palette.primary.main, 0.1)
+                      : alpha(theme.palette.secondary.main, 0.1),
+                    color: isActive ? 'primary.main' : 'secondary.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <User size={18} />
+                </Box>
+
+                {/* Right Side Actions: Active Button, Booking Link, Three-Dot Menu */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (canManageTeam && onToggleActive) {
+                        onToggleActive(team)
+                      }
+                    }}
+                    disabled={!canManageTeam || !onToggleActive}
+                    sx={{
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontWeight: 700,
+                      fontSize: '0.6875rem',
+                      height: 24,
+                      borderRadius: '6px',
+                      px: 1.5,
+                      minWidth: 'auto',
+                      color: isActive ? 'success.dark' : 'error.dark',
+                      backgroundColor: isActive
+                        ? alpha(theme.palette.success.main, 0.12)
+                        : alpha(theme.palette.error.main, 0.12),
+                      border: 'none',
+                      boxShadow: 'none',
+                      cursor: canManageTeam && onToggleActive ? 'pointer' : 'default',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover':
+                        canManageTeam && onToggleActive
+                          ? {
+                              backgroundColor: isActive
+                                ? alpha(theme.palette.success.main, 0.2)
+                                : alpha(theme.palette.error.main, 0.2),
+                              transform: 'scale(1.05)',
+                            }
+                          : {},
+                      '&.Mui-disabled': {
+                        color: isActive ? 'success.dark' : 'error.dark',
+                        opacity: 0.8,
+                        backgroundColor: isActive
+                          ? alpha(theme.palette.success.main, 0.08)
+                          : alpha(theme.palette.error.main, 0.08),
+                      },
+                    }}
+                  >
+                    {isActive ? 'Active' : 'Inactive'}
+                  </Button>
+
+                  <PublicBookingLinkCell
+                    type="team"
+                    slug={team.publicBookingSlug}
+                    isActive={team.isActive}
+                  />
+
+                  {canManageTeam && onEdit && onToggleActive && onDelete && (
+                    <RowActions
+                      actions={[
+                        {
+                          label: 'Edit team details',
+                          icon: <Edit size={16} />,
+                          onClick: () => onEdit(team),
+                        },
+                        {
+                          label: team.isActive ? 'Mark as inactive' : 'Mark as active',
+                          icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                          onClick: () => onToggleActive(team),
+                        },
+                        {
+                          label: 'Delete team',
+                          icon: <Trash2 size={16} />,
+                          color: 'error.main',
+                          onClick: () => onDelete(team),
+                        },
+                      ]}
+                    />
+                  )}
+                </Box>
+              </Box>
+
               <CardContent
                 sx={{
                   p: 3,
+                  pt: 2.5,
                   flexGrow: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   '&:last-child': { pb: 3 },
                 }}
               >
-                {/* Header: Icon & Status Badge */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mb: 2.5,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 1.5, // 12px
-                      backgroundColor: isActive
-                        ? alpha(theme.palette.primary.main, 0.08)
-                        : alpha(theme.palette.warning.main, 0.08),
-                      color: isActive ? 'primary.main' : 'warning.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {isActive ? <Users size={22} /> : <EyeOff size={22} />}
-                  </Box>
-
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Badge
-                      label={isActive ? 'Active' : 'Inactive'}
-                      color={isActive ? 'green' : 'red'}
-                    />
-
-                    <PublicBookingLinkCell
-                      type="team"
-                      slug={team.publicBookingSlug}
-                      isActive={team.isActive}
-                    />
-
-                    {canManageTeam && onEdit && onToggleActive && onDelete && (
-                      <RowActions
-                        actions={[
-                          {
-                            label: 'Edit team details',
-                            icon: <Edit size={16} />,
-                            onClick: () => onEdit(team),
-                          },
-                          {
-                            label: team.isActive ? 'Mark as inactive' : 'Mark as active',
-                            icon: team.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
-                            onClick: () => onToggleActive(team),
-                          },
-                          {
-                            label: 'Delete team',
-                            icon: <Trash2 size={16} />,
-                            color: 'error.main',
-                            onClick: () => onDelete(team),
-                          },
-                        ]}
-                      />
-                    )}
-                  </Box>
-                </Box>
-
                 {/* Team Details */}
                 <Box sx={{ flexGrow: 1, mb: 3.5 }}>
                   <Typography
@@ -263,21 +308,6 @@ export function TeamQuickSelect({
                         ml: { xs: 0, sm: 'auto' },
                       }}
                     >
-                      {leadUser && (
-                        <Avatar
-                          src={leadUser.avatarUrl ?? undefined}
-                          sx={{
-                            width: 24,
-                            height: 24,
-                            fontSize: '0.675rem',
-                            bgcolor: 'primary.light',
-                            color: 'primary.dark',
-                            fontWeight: 700,
-                          }}
-                        >
-                          {leadInitials}
-                        </Avatar>
-                      )}
                       <Typography
                         variant="caption"
                         sx={{

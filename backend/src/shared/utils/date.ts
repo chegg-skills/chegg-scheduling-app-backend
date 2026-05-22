@@ -193,7 +193,7 @@ export const getFriendlyTimezoneLabel = (ianaZone: string | null | undefined): s
     "Australia/Perth": "Australia/Perth",
     "Australia/Sydney": "Sydney, Melbourne Time",
     // UTC
-    "UTC": "UTC Time",
+    UTC: "UTC Time",
     // Europe
     "Europe/Paris": "Central European Time",
     "Europe/Athens": "Eastern European Time",
