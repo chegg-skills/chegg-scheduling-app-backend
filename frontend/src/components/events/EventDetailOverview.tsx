@@ -65,7 +65,11 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
         {/* Scheduling & Policies */}
         <DataField
           label="Minimum notice"
-          value={`${event.minimumNoticeMinutes} min`}
+          value={
+            event.minimumNoticeMinutes >= 60
+              ? `${event.minimumNoticeMinutes / 60} hour${event.minimumNoticeMinutes / 60 === 1 ? '' : 's'}`
+              : `${event.minimumNoticeMinutes} min`
+          }
           tooltip={TOOLTIPS.NOTICE}
         />
         <DataField

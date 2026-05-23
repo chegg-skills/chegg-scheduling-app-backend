@@ -142,7 +142,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       assignmentStrategy: event.assignmentStrategy,
       bookingMode: event.bookingMode,
       allowedWeekdays: event.allowedWeekdays,
-      minimumNoticeMinutes: event.minimumNoticeMinutes,
+      minimumNoticeMinutes: event.minimumNoticeMinutes / 60,
       sessionLeadershipStrategy: event.sessionLeadershipStrategy,
       fixedLeadCoachId: event.fixedLeadCoachId,
       minCoachCount: event.minCoachCount,

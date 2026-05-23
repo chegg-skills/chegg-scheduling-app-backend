@@ -107,6 +107,7 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
   function onSubmit(values: EventFormValues) {
     const apiPayload = {
       ...values,
+      minimumNoticeMinutes: Math.round((values.minimumNoticeMinutes || 0) * 60),
       fixedLeadCoachId: values.fixedLeadCoachId || null,
       assignmentStrategy: values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
       durationSeconds: values.durationMinutes * 60,

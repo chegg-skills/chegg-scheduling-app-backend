@@ -67,15 +67,16 @@ export function EventSchedulingPolicyFields({ caps, isLocked }: EventSchedulingP
       <EventAvailabilityPicker />
 
       <FormField
-        label="Minimum Notice (minutes)"
+        label="Minimum Notice (hours)"
         htmlFor="minimumNoticeMinutes"
         error={errors.minimumNoticeMinutes?.message}
-        info="How much time in advance must a booking be made? (e.g., 180 for 3 hours)."
+        info="How much time in advance must a booking be made? (e.g., 3 for 3 hours)."
       >
         <Input
           id="minimumNoticeMinutes"
           type="number"
           min="0"
+          step="0.5"
           {...register('minimumNoticeMinutes', { valueAsNumber: true })}
         />
       </FormField>
