@@ -67,3 +67,27 @@ export const UpdateBookingStatusSchema = {
     })
     .strip(),
 };
+
+export const BookingIdParamSchema = {
+  params: z
+    .object({
+      bookingId: z.uuid("Invalid booking ID"),
+    })
+    .strip(),
+};
+
+export const UpsertBookingSessionLogSchema = {
+  params: z
+    .object({
+      bookingId: z.uuid("Invalid booking ID"),
+    })
+    .strip(),
+  body: z
+    .object({
+      topicsDiscussed: z.string().trim().nullable().optional(),
+      summary: z.string().trim().nullable().optional(),
+      coachNotes: z.string().trim().nullable().optional(),
+      attended: z.boolean().optional(),
+    })
+    .strip(),
+};

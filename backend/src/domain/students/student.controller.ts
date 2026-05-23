@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
-import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as StudentService from "./student.service";
 
@@ -33,4 +32,18 @@ const listStudentBookings = async (req: Request, res: Response) => {
   return sendSuccessResponse(res, StatusCodes.OK, result, "Student bookings fetched successfully.");
 };
 
-export { listStudents, readStudent, listStudentBookings };
+const listStudentSessionLogs = async (req: Request, res: Response) => {
+  const caller = res.locals.authUser as CallerContext;
+  const { studentId } = req.params;
+
+  const sessionLogs = await StudentService.listStudentSessionLogs(studentId as string, caller);
+
+  return sendSuccessResponse(
+    res,
+    StatusCodes.OK,
+    { sessionLogs },
+    "Student session logs fetched successfully.",
+  );
+};
+
+export { listStudents, readStudent, listStudentBookings, listStudentSessionLogs };

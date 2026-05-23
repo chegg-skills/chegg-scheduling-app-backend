@@ -39,4 +39,14 @@ router
   )
   .all(methodNotAllowed);
 
+router
+  .route("/:studentId/session-logs")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(StudentIdParamSchema),
+    studentController.listStudentSessionLogs,
+  )
+  .all(methodNotAllowed);
+
 export default router;

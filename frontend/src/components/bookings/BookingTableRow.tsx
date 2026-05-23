@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import { Box, Button, Collapse, Divider, TableCell, TableRow } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
+import { ChevronDown, ChevronUp, Clock, XCircle, Calendar, ClipboardCheck } from 'lucide-react'
 import type { Booking } from '@/types'
 import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
+import { usePermissions } from '@/hooks/usePermissions'
+import { useBookingSessionLog } from '@/hooks/queries/useBookingLog'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { CancelBookingDialog } from './CancelBookingDialog'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
+import { BookingLogDialog } from './BookingLogDialog'
 import { BookingStudentCell } from './cells/BookingStudentCell'
 import { BookingTimeCell } from './cells/BookingTimeCell'
 import { BookingCoachInfo } from './cells/BookingCoachInfo'
@@ -25,6 +29,16 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
     handleCancelConfirm,
     isPending,
   } = useBookingStatusUpdate()
+
+  const { isCoach, isAdmin } = usePermissions()
+  const [isLogDialogOpen, setIsLogDialogOpen] = useState(false)
+
+  const { data: fetchedLog } = useBookingSessionLog(booking.id, { enabled: isExpanded })
+
+  const isOneOnOne = !booking.scheduleSlotId
+  const sessionStarted = new Date(booking.startTime).getTime() <= Date.now()
+  const canLog = (isCoach || isAdmin) && isOneOnOne && sessionStarted
+  const existingLog = fetchedLog ?? booking.sessionLog ?? null
 
   return (
     <>
@@ -168,6 +182,19 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
                     Mark as No Show
                   </Button>
                 )}
+
+                {canLog && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    startIcon={<ClipboardCheck size={16} />}
+                    onClick={() => setIsLogDialogOpen(true)}
+                    sx={{ fontWeight: 600, borderRadius: 1.5 }}
+                  >
+                    {existingLog ? 'Edit log / notes' : 'Log session'}
+                  </Button>
+                )}
               </Box>
             </Box>
           </Collapse>
@@ -179,6 +206,11 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
         onClose={() => setCancelBooking(null)}
         onConfirm={handleCancelConfirm}
         isLoading={isPending}
+      />
+      <BookingLogDialog
+        isOpen={isLogDialogOpen}
+        onClose={() => setIsLogDialogOpen(false)}
+        booking={booking}
       />
     </>
   )

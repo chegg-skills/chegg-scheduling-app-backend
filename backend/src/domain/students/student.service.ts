@@ -315,4 +315,114 @@ const listStudentBookings = async (
   };
 };
 
-export { listStudents, readStudent, listStudentBookings };
+export type StudentSessionLogEntry = {
+  logId: string;
+  bookingId: string;
+  sessionDate: Date;
+  eventName: string;
+  interactionType: string;
+  coachName: string;
+  attended: boolean | null;
+  topicsDiscussed: string | null;
+  summary: string | null;
+  coachNotes: string | null;
+  loggedBy: { id: string; firstName: string; lastName: string } | null;
+  isGroupSession: boolean;
+  updatedAt: Date;
+};
+
+const listStudentSessionLogs = async (
+  studentId: string,
+  caller: CallerContext,
+): Promise<StudentSessionLogEntry[]> => {
+  const normalizedStudentId = normalizeStudentId(studentId);
+  await readStudent(normalizedStudentId, caller);
+
+  const accessWhere = buildBookingAccessWhere(caller);
+  const where: Prisma.BookingWhereInput = {
+    studentId: normalizedStudentId,
+    ...accessWhere,
+    OR: [
+      { sessionLog: { isNot: null } },
+      { scheduleSlot: { sessionLog: { isNot: null } } },
+    ],
+  };
+
+  const bookings = await prisma.booking.findMany({
+    where,
+    orderBy: { startTime: "desc" },
+    include: {
+      event: { select: { name: true, interactionType: true } },
+      coach: { select: { firstName: true, lastName: true } },
+      sessionAttendance: { select: { attended: true } },
+      sessionLog: {
+        include: {
+          loggedBy: { select: { id: true, firstName: true, lastName: true } },
+        },
+      },
+      scheduleSlot: {
+        include: {
+          sessionLog: {
+            include: {
+              loggedBy: { select: { id: true, firstName: true, lastName: true } },
+              attendance: {
+                where: {},
+                select: { bookingId: true, attended: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const canSeePrivateNotes =
+    caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN;
+
+  const entries: StudentSessionLogEntry[] = [];
+
+  for (const booking of bookings) {
+    const directLog = booking.sessionLog;
+    const slotLog = booking.scheduleSlot?.sessionLog;
+    const log = directLog ?? slotLog;
+    if (!log) continue;
+
+    const isGroupSession = !!directLog ? false : true;
+    let attended: boolean | null = null;
+
+    if (isGroupSession) {
+      const match = slotLog?.attendance.find((a) => a.bookingId === booking.id);
+      attended = match?.attended ?? null;
+    } else {
+      attended = booking.sessionAttendance?.attended ?? null;
+    }
+
+    entries.push({
+      logId: log.id,
+      bookingId: booking.id,
+      sessionDate: booking.startTime,
+      eventName: booking.event?.name ?? "",
+      interactionType: booking.event?.interactionType ?? "",
+      coachName: booking.coach
+        ? `${booking.coach.firstName} ${booking.coach.lastName}`.trim()
+        : "",
+      attended,
+      topicsDiscussed: log.topicsDiscussed ?? null,
+      summary: log.summary ?? null,
+      coachNotes: canSeePrivateNotes ? log.coachNotes ?? null : null,
+      loggedBy: log.loggedBy
+        ? {
+            id: log.loggedBy.id,
+            firstName: log.loggedBy.firstName,
+            lastName: log.loggedBy.lastName,
+          }
+        : null,
+      isGroupSession,
+      updatedAt: log.updatedAt,
+    });
+  }
+
+  return entries;
+};
+
+export { listStudents, readStudent, listStudentBookings, listStudentSessionLogs };

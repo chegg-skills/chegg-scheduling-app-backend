@@ -114,6 +114,29 @@ export type SafeBooking = Prisma.BookingGetPayload<{
   include: typeof bookingInclude;
 }>;
 
+const sessionLogDetailInclude = {
+  include: {
+    loggedBy: {
+      select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+    },
+    attendance: true,
+  },
+} as const;
+
+export const bookingDetailInclude = Prisma.validator<Prisma.BookingInclude>()({
+  ...bookingInclude,
+  sessionLog: sessionLogDetailInclude,
+  scheduleSlot: {
+    include: {
+      sessionLog: sessionLogDetailInclude,
+    },
+  },
+});
+
+export type DetailedBooking = Prisma.BookingGetPayload<{
+  include: typeof bookingDetailInclude;
+}>;
+
 export const bookableEventInclude = Prisma.validator<Prisma.EventInclude>()({
   routingState: true,
   coaches: {
