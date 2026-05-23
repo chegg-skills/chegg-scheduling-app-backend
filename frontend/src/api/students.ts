@@ -1,5 +1,11 @@
 import apiClient from '@/lib/axios'
-import type { ApiResponse, StudentSummary, Booking, Pagination } from '@/types'
+import type {
+  ApiResponse,
+  StudentSummary,
+  Booking,
+  Pagination,
+  StudentSessionLogEntry,
+} from '@/types'
 
 export interface ListStudentsFilters {
   page?: number
@@ -40,4 +46,10 @@ export const studentsApi = {
       params,
       signal,
     }),
+
+  listSessionLogs: (id: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ sessionLogs: StudentSessionLogEntry[] }>>(
+      `/students/${id}/session-logs`,
+      { signal }
+    ),
 }

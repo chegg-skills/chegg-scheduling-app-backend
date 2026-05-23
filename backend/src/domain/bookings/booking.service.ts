@@ -17,6 +17,7 @@ import {
   createBookingRecord,
   findBookableEvent,
   findBookingById,
+  findBookingDetailById,
   findBookingByToken,
   findBookings,
   updateBookingById,
@@ -215,7 +216,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   return booking;
 };
 const getBooking = async (id: string) => {
-  return findBookingById(id);
+  return findBookingDetailById(id);
 };
 
 const listBookings = async (filters: ListBookingsFilters) => {

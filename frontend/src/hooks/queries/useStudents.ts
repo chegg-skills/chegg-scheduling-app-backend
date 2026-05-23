@@ -8,6 +8,7 @@ export const studentKeys = {
   details: () => [...studentKeys.all, 'detail'] as const,
   detail: (id: string) => [...studentKeys.details(), id] as const,
   bookings: (id: string, filters: any) => [...studentKeys.detail(id), 'bookings', filters] as const,
+  sessionLogs: (id: string) => [...studentKeys.detail(id), 'session-logs'] as const,
 }
 
 export function useStudents(filters: ListStudentsFilters = {}) {
@@ -30,6 +31,15 @@ export function useStudentBookings(id: string, filters: { page?: number; pageSiz
   return useQuery({
     queryKey: studentKeys.bookings(id, filters),
     queryFn: ({ signal }) => studentsApi.listBookings(id, filters, signal).then((r) => r.data.data),
+    enabled: !!id,
+  })
+}
+
+export function useStudentSessionLogs(id: string) {
+  return useQuery({
+    queryKey: studentKeys.sessionLogs(id),
+    queryFn: ({ signal }) =>
+      studentsApi.listSessionLogs(id, signal).then((r) => r.data.data?.sessionLogs ?? []),
     enabled: !!id,
   })
 }

@@ -192,7 +192,7 @@ export interface EventScheduleSlot {
   _count?: {
     bookings: number
   }
-  sessionLog?: { id: string } | null
+  sessionLog?: SessionLog | null
 }
 
 export interface EventWeeklyAvailability {
@@ -550,7 +550,8 @@ export interface SessionAttendance {
 
 export interface SessionLog {
   id: string
-  scheduleSlotId: string
+  scheduleSlotId: string | null
+  bookingId: string | null
   loggedByUserId: string
   topicsDiscussed: string | null
   summary: string | null
@@ -566,6 +567,29 @@ export interface UpsertSessionLogDto {
   summary?: string | null
   coachNotes?: string | null
   attendance: Array<{ bookingId: string; attended: boolean }>
+}
+
+export interface UpsertBookingSessionLogDto {
+  topicsDiscussed?: string | null
+  summary?: string | null
+  coachNotes?: string | null
+  attended?: boolean
+}
+
+export interface StudentSessionLogEntry {
+  logId: string
+  bookingId: string
+  sessionDate: string
+  eventName: string
+  interactionType: string
+  coachName: string
+  attended: boolean | null
+  topicsDiscussed: string | null
+  summary: string | null
+  coachNotes: string | null
+  loggedBy: { id: string; firstName: string; lastName: string } | null
+  isGroupSession: boolean
+  updatedAt: string
 }
 
 // ─── Booking Models ───────────────────────────────────────────────────────────
@@ -598,6 +622,7 @@ export interface Booking {
   event?: Event
   coach?: SafeUser
   scheduleSlot?: EventScheduleSlot
+  sessionLog?: SessionLog | null
 }
 
 export interface CreateBookingDto {

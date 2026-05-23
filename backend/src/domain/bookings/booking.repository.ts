@@ -6,9 +6,11 @@ import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { resolvePagination } from "../../shared/utils/pagination";
 import {
   bookableEventInclude,
+  bookingDetailInclude,
   bookingInclude,
   buildBookingListWhere,
   type BookableEvent,
+  type DetailedBooking,
   type ListBookingsFilters,
   type SafeBooking,
 } from "./booking.shared";
@@ -93,6 +95,19 @@ const findBookingById = async (id: string): Promise<SafeBooking> => {
   return booking;
 };
 
+const findBookingDetailById = async (id: string): Promise<DetailedBooking> => {
+  const booking = await prisma.booking.findUnique({
+    where: { id },
+    include: bookingDetailInclude,
+  });
+
+  if (!booking) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking not found.");
+  }
+
+  return booking;
+};
+
 const findBookingByToken = async (id: string, token: string): Promise<SafeBooking> => {
   const booking = await prisma.booking.findFirst({
     where: { id, rescheduleToken: token },
@@ -161,6 +176,7 @@ export {
   createBookingRecord,
   findBookableEvent,
   findBookingById,
+  findBookingDetailById,
   findBookingByToken,
   findBookings,
   countBookings,

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import * as BookingService from "./booking.service";
+import * as BookingSessionLogService from "./bookingSessionLog.service";
 import { BookingStatus, UserRole } from "@prisma/client";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { CallerContext } from "../../shared/utils/userUtils";
@@ -108,4 +109,26 @@ export const rescheduleBooking = async (req: Request, res: Response) => {
   });
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking rescheduled successfully.");
+};
+
+export const getBookingSessionLog = async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+  const caller = res.locals.authUser as CallerContext;
+
+  const log = await BookingSessionLogService.getBookingSessionLog(bookingId, caller);
+
+  return sendSuccessResponse(res, StatusCodes.OK, log, "Booking session log fetched successfully.");
+};
+
+export const upsertBookingSessionLog = async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+  const caller = res.locals.authUser as CallerContext;
+
+  const log = await BookingSessionLogService.upsertBookingSessionLog(
+    bookingId,
+    req.body,
+    caller,
+  );
+
+  return sendSuccessResponse(res, StatusCodes.OK, log, "Booking session log saved successfully.");
 };

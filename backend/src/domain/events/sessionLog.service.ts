@@ -11,7 +11,7 @@ export type UpsertSessionLogInput = {
   attendance: Array<{ bookingId: string; attended: boolean }>;
 };
 
-const assertSlotLogAccess = async (slotId: string, caller: CallerContext): Promise<void> => {
+export const assertSlotLogAccess = async (slotId: string, caller: CallerContext): Promise<void> => {
   if (caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN) return;
 
   const slot = await prisma.eventScheduleSlot.findUnique({

@@ -6,6 +6,8 @@ import type {
   ListBookingsFilters,
   UpdateBookingStatusDto,
   Pagination,
+  SessionLog,
+  UpsertBookingSessionLogDto,
 } from '@/types'
 
 export interface ListBookingsResponse {
@@ -37,4 +39,10 @@ export const bookingsApi = {
 
   updateStatus: (id: string, data: UpdateBookingStatusDto) =>
     apiClient.patch<ApiResponse<{ booking: Booking }>>(`/bookings/${id}`, data),
+
+  getSessionLog: (bookingId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<SessionLog | null>>(`/bookings/${bookingId}/log`, { signal }),
+
+  upsertSessionLog: (bookingId: string, data: UpsertBookingSessionLogDto) =>
+    apiClient.post<ApiResponse<SessionLog>>(`/bookings/${bookingId}/log`, data),
 }

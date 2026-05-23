@@ -49,7 +49,7 @@ export function useBookingFilters() {
       startDate: advancedFilters.startDate?.toISOString(),
       endDate: advancedFilters.endDate?.toISOString(),
       page: backendPage,
-      pageSize,
+      limit: pageSize,
     }),
     [debouncedSearch, statusFilter, advancedFilters, backendPage, pageSize]
   )

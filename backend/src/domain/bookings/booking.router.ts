@@ -6,10 +6,12 @@ import { UserRole } from "@prisma/client";
 import { validate } from "../../shared/middleware/validate";
 import { bookingCreationLimiter, standardLimiter } from "../../shared/middleware/rateLimit";
 import {
+  BookingIdParamSchema,
   CreateBookingSchema,
   ListBookingsSchema,
   RescheduleBookingSchema,
   UpdateBookingStatusSchema,
+  UpsertBookingSessionLogSchema,
 } from "./booking.schema";
 
 const router = Router();
@@ -47,6 +49,21 @@ router
     validate(RescheduleBookingSchema),
     BookingController.rescheduleBooking,
   ) // Token auth or session auth handled in controller
+  .all(methodNotAllowed);
+
+router
+  .route("/:bookingId/log")
+  .get(
+    authenticate,
+    validate(BookingIdParamSchema),
+    BookingController.getBookingSessionLog,
+  )
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(UpsertBookingSessionLogSchema),
+    BookingController.upsertBookingSessionLog,
+  )
   .all(methodNotAllowed);
 
 export default router;

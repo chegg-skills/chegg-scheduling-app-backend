@@ -244,7 +244,8 @@ model EventScheduleSlot {
 
 model SessionLog {
   id              String              @id @default(uuid())
-  scheduleSlotId  String              @unique
+  scheduleSlotId  String?             @unique
+  bookingId       String?             @unique
   loggedByUserId  String
   topicsDiscussed String?
   summary         String?
@@ -253,9 +254,11 @@ model SessionLog {
   updatedAt       DateTime            @updatedAt
   attendance      SessionAttendance[]
   loggedBy        User                @relation("SessionLogLoggedBy", fields: [loggedByUserId], references: [id])
-  scheduleSlot    EventScheduleSlot   @relation(fields: [scheduleSlotId], references: [id], onDelete: Cascade)
+  scheduleSlot    EventScheduleSlot?  @relation(fields: [scheduleSlotId], references: [id], onDelete: Cascade)
+  booking         Booking?            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([scheduleSlotId])
+  @@index([bookingId])
   @@index([loggedByUserId])
 }
 
@@ -355,6 +358,7 @@ model Booking {
   student           Student?           @relation(fields: [studentId], references: [id])
   team              Team               @relation(fields: [teamId], references: [id])
   sessionAttendance SessionAttendance?
+  sessionLog        SessionLog?
 
   @@index([studentId])
   @@index([scheduleSlotId])
