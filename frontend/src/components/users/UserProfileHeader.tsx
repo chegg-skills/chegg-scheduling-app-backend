@@ -4,11 +4,12 @@ import Grid from '@mui/material/Grid'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { Clock, Mail, MapPin, Phone, Video } from 'lucide-react'
+import { Clock, Mail, MapPin, Phone, Video, Link2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/ui/Badge'
+import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from './userSystemFieldUtils'
 
@@ -124,6 +125,19 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
                 </Typography>
                 {zoomExpiryBadge}
               </Stack>
+              {user.role === 'COACH' && (
+                <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
+                  <Link2 size={16} />
+                  <Typography variant="body2" sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                    Booking link:{' '}
+                    <PublicBookingLinkCell
+                      type="coach"
+                      slug={user.publicBookingSlug}
+                      isActive={user.isActive}
+                    />
+                  </Typography>
+                </Stack>
+              )}
             </Stack>
           </Grid>
         </Grid>

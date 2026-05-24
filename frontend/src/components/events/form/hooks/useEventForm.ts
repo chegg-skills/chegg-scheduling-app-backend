@@ -87,6 +87,11 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
       setValue('maxParticipantCount', null, { shouldDirty: false })
     }
 
+    // Reset student coach choice when switching to an interaction type that doesn't support it
+    if (caps.multipleCoaches || caps.multipleParticipants) {
+      setValue('allowStudentCoachChoice', false, { shouldDirty: false })
+    }
+
     // Ensure multi-coach interaction types (Panels) do not use 'SINGLE_COACH' strategy.
     // If switching to a collaborative type, default to 'ROTATING_LEAD'.
     if (caps.multipleCoaches && getValues('sessionLeadershipStrategy') === 'SINGLE_COACH') {
@@ -102,11 +107,20 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
         setValue('sessionLeadershipStrategy', targetLeadership, { shouldDirty: true })
       }
     }
-  }, [caps, getValues, setValue, watch('assignmentStrategy')])
+
+    // Reset coach pool count constraints when student choice is active,
+    // since students select their own coach from all assigned coaches.
+    const allowStudentCoachChoice = getValues('allowStudentCoachChoice')
+    if (allowStudentCoachChoice) {
+      setValue('minCoachCount', 1, { shouldDirty: false })
+      setValue('maxCoachCount', null, { shouldDirty: false })
+    }
+  }, [caps, getValues, setValue, watch('assignmentStrategy'), watch('allowStudentCoachChoice')])
 
   function onSubmit(values: EventFormValues) {
     const apiPayload = {
       ...values,
+      minimumNoticeMinutes: Math.round((values.minimumNoticeMinutes || 0) * 60),
       fixedLeadCoachId: values.fixedLeadCoachId || null,
       assignmentStrategy: values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
       durationSeconds: values.durationMinutes * 60,
