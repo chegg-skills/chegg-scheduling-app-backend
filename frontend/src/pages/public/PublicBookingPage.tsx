@@ -217,6 +217,7 @@ export function PublicBookingPage() {
               onCoachSelect={setSelectedCoachId}
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
+              eventDetailsName={eventDetails?.name}
             />
           </Box>
 

@@ -9,7 +9,7 @@ import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import { alpha, useTheme } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import type { Event, EventGroup } from '@/types'
 import { Modal } from '@/components/shared/ui/Modal'
 import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
@@ -51,7 +51,7 @@ export function EventTable({
     requestSort,
   } = useTableSort(events, eventSortAccessors)
 
-  const theme = useTheme()
+
 
   const groupedEvents = useMemo(() => {
     if (!groupByGroup) {

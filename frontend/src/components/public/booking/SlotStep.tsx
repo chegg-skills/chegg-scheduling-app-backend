@@ -33,6 +33,7 @@ interface SlotStepProps {
   onCoachSelect?: (coachId: string) => void
   selectedTimezone: string
   setSelectedTimezone: (tz: string) => void
+  eventDetailsName?: string
 }
 
 function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
@@ -76,6 +77,7 @@ export function SlotStep({
   onCoachSelect,
   selectedTimezone,
   setSelectedTimezone: _,
+  eventDetailsName,
 }: SlotStepProps) {
   const theme = useTheme()
 
@@ -168,7 +170,7 @@ export function SlotStep({
               fontSize: '0.625rem',
             }}
           >
-            Select a coach
+            {eventDetailsName ? `Select a coach for this ${eventDetailsName}` : 'Select a coach'}
           </Typography>
           <Box
             sx={{
@@ -235,7 +237,9 @@ export function SlotStep({
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            Select a coach above to see available times.
+            {eventDetailsName
+              ? `Select a coach for this ${eventDetailsName} above to see available times.`
+              : 'Select a coach above to see available times.'}
           </Typography>
         </Box>
       ) : (
