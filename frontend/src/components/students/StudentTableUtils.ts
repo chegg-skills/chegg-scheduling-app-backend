@@ -20,9 +20,6 @@ export const studentSortAccessors: SortAccessorMap<StudentSummary, StudentSortKe
 
 export const studentTableColumns: Array<{ label: string; sortKey: StudentSortKey }> = [
   { label: 'Student', sortKey: 'fullName' },
-  { label: 'Email', sortKey: 'email' },
   { label: 'Total Bookings', sortKey: 'bookingCount' },
-  { label: 'First Booked', sortKey: 'firstBookedAt' },
-  { label: 'Last Booked', sortKey: 'lastBookedAt' },
   { label: 'Latest Interaction', sortKey: 'latestBooking' },
 ]

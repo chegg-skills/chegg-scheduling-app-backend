@@ -8,9 +8,10 @@ import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
+import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import { useTheme, alpha } from '@mui/material/styles'
-import { Globe, Calendar, Video, User, Copy, Check, ShieldCheck, Info } from 'lucide-react'
+import { Globe, Calendar, Video, User, Copy, Check, ShieldCheck, Info, Mail } from 'lucide-react'
 import { format } from 'date-fns'
 import type { StudentSummary, Booking } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
@@ -18,6 +19,7 @@ import { toTitleCase } from '@/utils/toTitleCase'
 interface StudentProfileCardProps {
   student: StudentSummary
   bookings: Booking[]
+  onSendEmail?: () => void
 }
 
 const getInitials = (name: string) => {
@@ -29,7 +31,7 @@ const getInitials = (name: string) => {
     .substring(0, 2)
 }
 
-export function StudentProfileCard({ student, bookings }: StudentProfileCardProps) {
+export function StudentProfileCard({ student, bookings, onSendEmail }: StudentProfileCardProps) {
   const theme = useTheme()
   const [copied, setCopied] = useState(false)
 
@@ -173,7 +175,7 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
                   </Tooltip>
                 </Stack>
 
-                <Box sx={{ mt: 0.5 }}>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1.5 }}>
                   <Chip
                     label="Active student"
                     size="small"
@@ -189,7 +191,26 @@ export function StudentProfileCard({ student, bookings }: StudentProfileCardProp
                       color: theme.palette.success.dark,
                     }}
                   />
-                </Box>
+                  {onSendEmail && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="primary"
+                      startIcon={<Mail size={14} />}
+                      onClick={onSendEmail}
+                      sx={{
+                        textTransform: 'none',
+                        borderRadius: 1.5,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        py: 0.5,
+                        px: 1.5,
+                      }}
+                    >
+                      Send Email
+                    </Button>
+                  )}
+                </Stack>
               </Stack>
             </Stack>
           </Grid>

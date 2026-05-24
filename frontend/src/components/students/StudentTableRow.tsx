@@ -1,15 +1,28 @@
-import { TableRow, TableCell, Typography, Box, Avatar, alpha, Link as MuiLink } from '@mui/material'
+import { TableRow, TableCell, Typography, Box, Avatar, alpha, Link as MuiLink, IconButton, Tooltip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { Link, useNavigate } from 'react-router-dom'
-import { format } from 'date-fns'
+import { format, differenceInDays } from 'date-fns'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { Mail } from 'lucide-react'
 import type { StudentSummary } from '@/types'
 
 interface StudentTableRowProps {
   student: StudentSummary
+  onSendEmail?: (student: StudentSummary) => void
 }
 
-export function StudentTableRow({ student }: StudentTableRowProps) {
+const getRelativeTime = (startTime: string) => {
+  const days = differenceInDays(new Date(), new Date(startTime))
+
+  if (days === 0) return 'today'
+  if (days === 1) return 'yesterday'
+  if (days > 1) return `${days} days ago`
+  return `in ${Math.abs(days)} days`
+}
+
+
+
+export function StudentTableRow({ student, onSendEmail }: StudentTableRowProps) {
   const theme = useTheme()
   const navigate = useNavigate()
 
@@ -37,43 +50,33 @@ export function StudentTableRow({ student }: StudentTableRowProps) {
               .join('')
               .toUpperCase()}
           </Avatar>
-          <Typography variant="body2" fontWeight={600}>
-            <MuiLink
-              component={Link}
-              to={`/students/${student.id}`}
-              onClick={(e) => e.stopPropagation()}
-              sx={{
-                color: 'inherit',
-                textDecoration: 'none',
-                '&:hover': {
-                  color: 'primary.main',
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              {toTitleCase(student.fullName)}
-            </MuiLink>
-          </Typography>
+          <Box>
+            <Typography variant="body2" fontWeight={600}>
+              <MuiLink
+                component={Link}
+                to={`/students/${student.id}`}
+                onClick={(e) => e.stopPropagation()}
+                sx={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                  '&:hover': {
+                    color: 'primary.main',
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                {toTitleCase(student.fullName)}
+              </MuiLink>
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              {student.email}
+            </Typography>
+          </Box>
         </Box>
-      </TableCell>
-      <TableCell>
-        <Typography variant="body2" color="text.secondary">
-          {student.email}
-        </Typography>
       </TableCell>
       <TableCell align="center">
         <Typography variant="body2" fontWeight={600}>
           {student.bookingCount}
-        </Typography>
-      </TableCell>
-      <TableCell>
-        <Typography variant="body2" color="text.secondary">
-          {student.firstBookedAt ? format(new Date(student.firstBookedAt), 'MMM d, yyyy') : 'N/A'}
-        </Typography>
-      </TableCell>
-      <TableCell>
-        <Typography variant="body2" color="text.secondary">
-          {student.lastBookedAt ? format(new Date(student.lastBookedAt), 'MMM d, yyyy') : 'N/A'}
         </Typography>
       </TableCell>
       <TableCell>
@@ -83,13 +86,35 @@ export function StudentTableRow({ student }: StudentTableRowProps) {
               {toTitleCase(student.latestBooking.event.name)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {format(new Date(student.latestBooking.startTime), 'MMM d, yyyy')}
+              {format(new Date(student.latestBooking.startTime), 'MMM d, yyyy')}{' '}
+              <Box component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                ({getRelativeTime(student.latestBooking.startTime)})
+              </Box>
             </Typography>
           </Box>
         ) : (
           <Typography variant="body2" color="text.secondary">
             N/A
           </Typography>
+        )}
+      </TableCell>
+      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+        {onSendEmail && (
+          <Tooltip title="Send email to student" arrow>
+            <IconButton
+              size="medium"
+              onClick={() => onSendEmail(student)}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main',
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                },
+              }}
+            >
+              <Mail size={20} />
+            </IconButton>
+          </Tooltip>
         )}
       </TableCell>
     </TableRow>

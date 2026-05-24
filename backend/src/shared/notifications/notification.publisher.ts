@@ -30,7 +30,8 @@ type NotificationType =
   | "COACH_REVEAL_SENT"
   | "ZOOM_ISV_LINK_EXPIRY_REMINDER"
   | "EVENT_ACTIVATED"
-  | "EVENT_DEACTIVATED";
+  | "EVENT_DEACTIVATED"
+  | "STUDENT_CUSTOM_EMAIL";
 
 type NotificationPayload = {
   type: NotificationType;

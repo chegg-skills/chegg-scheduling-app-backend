@@ -1,10 +1,12 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, UserRole, CommunicationStatus } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { resolvePagination } from "../../shared/utils/pagination";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { bookingInclude, type SafeBooking } from "../bookings/booking.service";
+import { sanitizeHtml } from "../../shared/utils/htmlSanitizer";
+import { publishNotificationSafely } from "../../shared/notifications/notification.publisher";
 
 type ListStudentsOptions = {
   page?: number;
@@ -425,4 +427,135 @@ const listStudentSessionLogs = async (
   return entries;
 };
 
-export { listStudents, readStudent, listStudentBookings, listStudentSessionLogs };
+export {
+  listStudents,
+  readStudent,
+  listStudentBookings,
+  listStudentSessionLogs,
+  sendStudentEmail,
+  listStudentCommunications,
+  retryEmailDispatch,
+};
+
+const sendStudentEmail = async (
+  studentId: string,
+  subject: string,
+  body: string,
+  caller: CallerContext,
+) => {
+  const student = await readStudent(studentId, caller);
+  const sanitizedBody = sanitizeHtml(body);
+
+  // Include sentBy so we avoid a separate N+1 query for the sender's name
+  const log = await prisma.studentCommunicationLog.create({
+    data: {
+      studentId,
+      subject: subject.trim(),
+      body: sanitizedBody,
+      status: CommunicationStatus.PENDING,
+      sentById: caller.id,
+    },
+    include: {
+      sentBy: { select: { firstName: true, lastName: true } },
+    },
+  });
+
+  const senderName = `${log.sentBy.firstName} ${log.sentBy.lastName}`.trim() || "Coach";
+  const textBody = sanitizedBody.replace(/<[^>]*>/g, "");
+
+  await publishNotificationSafely({
+    type: "STUDENT_CUSTOM_EMAIL",
+    recipients: student.email,
+    notificationKey: log.id,
+    userId: caller.id,
+    variables: {
+      subject: log.subject,
+      htmlBody: log.body,
+      textBody,
+      studentName: student.fullName,
+      senderName,
+    },
+  });
+
+  return log;
+};
+
+const listStudentCommunications = async (
+  studentId: string,
+  caller: CallerContext,
+) => {
+  await readStudent(studentId, caller);
+
+  return prisma.studentCommunicationLog.findMany({
+    where: { studentId },
+    include: {
+      sentBy: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    orderBy: { sentAt: "desc" },
+  });
+};
+
+const retryEmailDispatch = async (
+  logId: string,
+  caller: CallerContext,
+) => {
+  const originalLog = await prisma.studentCommunicationLog.findUnique({
+    where: { id: logId },
+  });
+
+  if (!originalLog) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Communication log not found.");
+  }
+
+  const student = await readStudent(originalLog.studentId, caller);
+
+  if (caller.role === UserRole.COACH && originalLog.sentById !== caller.id) {
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "You can only retry your own communications.");
+  }
+
+  if (originalLog.status !== CommunicationStatus.FAILED) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Only failed communications can be retried.");
+  }
+
+  // Reset the existing log in-place: FAILED → PENDING
+  // This keeps exactly one card per email in the Communications tab.
+  // The same logId is reused as the notificationKey so the notification-service
+  // upserts the same notification record, and the feedback consumer updates
+  // this same log on delivery.
+  const updatedLog = await prisma.studentCommunicationLog.update({
+    where: { id: logId },
+    data: {
+      status: CommunicationStatus.PENDING,
+      errorMessage: null,
+    },
+    include: {
+      sentBy: { select: { firstName: true, lastName: true } },
+    },
+  });
+
+  const senderName = `${updatedLog.sentBy.firstName} ${updatedLog.sentBy.lastName}`.trim() || "Coach";
+  const textBody = updatedLog.body.replace(/<[^>]*>/g, "");
+
+  await publishNotificationSafely({
+    type: "STUDENT_CUSTOM_EMAIL",
+    recipients: student.email,
+    notificationKey: logId,   // reuse the same key → upserts the existing notification record
+    userId: originalLog.sentById,
+    variables: {
+      subject: updatedLog.subject,
+      htmlBody: updatedLog.body,
+      textBody,
+      studentName: student.fullName,
+      senderName,
+    },
+  });
+
+  return updatedLog;
+};

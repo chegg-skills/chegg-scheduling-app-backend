@@ -5,7 +5,10 @@ import type {
   Booking,
   Pagination,
   StudentSessionLogEntry,
+  StudentCommunicationLog,
 } from '@/types'
+
+export type { StudentCommunicationLog }
 
 export interface ListStudentsFilters {
   page?: number
@@ -52,4 +55,17 @@ export const studentsApi = {
       `/students/${id}/session-logs`,
       { signal }
     ),
+
+  sendEmail: (id: string, data: { subject: string; body: string }) =>
+    apiClient.post<ApiResponse<{ log: StudentCommunicationLog }>>(`/students/${id}/send-email`, data),
+
+  listCommunications: (id: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ logs: StudentCommunicationLog[] }>>(`/students/${id}/communications`, {
+      signal,
+    }),
+
+  retryEmail: (logId: string) =>
+    apiClient.post<ApiResponse<{ log: StudentCommunicationLog }>>(`/students/communications/${logId}/retry`),
 }
+
+// StudentCommunicationLog is defined in @/types and re-exported above

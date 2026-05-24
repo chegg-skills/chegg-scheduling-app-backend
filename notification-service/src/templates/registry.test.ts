@@ -33,6 +33,7 @@ const EXPECTED_TYPES = [
   "ZOOM_ISV_LINK_EXPIRY_REMINDER",
   "EVENT_ACTIVATED",
   "EVENT_DEACTIVATED",
+  "STUDENT_CUSTOM_EMAIL",
 ] as const;
 
 describe("emailTemplates registry", () => {
@@ -46,8 +47,8 @@ describe("emailTemplates registry", () => {
     expect(emailTemplates).not.toHaveProperty("CANCEL_BOOKING_REMINDERS");
   });
 
-  it("has exactly 29 entries", () => {
-    expect(Object.keys(emailTemplates)).toHaveLength(29);
+  it("has exactly 30 entries", () => {
+    expect(Object.keys(emailTemplates)).toHaveLength(30);
   });
 
   it("every entry has non-empty subject, text, and html string fields", () => {

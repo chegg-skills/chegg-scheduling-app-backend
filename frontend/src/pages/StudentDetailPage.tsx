@@ -8,12 +8,15 @@ import { StudentBookingHistory } from '@/components/students/StudentBookingHisto
 import { StudentBookingStats } from '@/components/students/StudentBookingStats'
 import { StudentProfileCard } from '@/components/students/StudentProfileCard'
 import { StudentSessionLogTimeline } from '@/components/students/StudentSessionLogTimeline'
+import { SendEmailDialog } from '@/components/students/dialogs/SendEmailDialog'
+import { StudentCommunicationsTab } from '@/components/students/tabs/StudentCommunicationsTab'
 import { useStudent, useStudentBookings } from '@/hooks/queries/useStudents'
-import { CalendarDays, ClipboardCheck } from 'lucide-react'
+import { CalendarDays, ClipboardCheck, Mail } from 'lucide-react'
 
 export function StudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()
-  const [activeTab, setActiveTab] = useState<'notes' | 'bookings'>('notes')
+  const [activeTab, setActiveTab] = useState<'notes' | 'bookings' | 'communications'>('notes')
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
   const { data: student, isLoading: studentLoading, error: studentError } = useStudent(studentId!)
   const {
@@ -34,7 +37,7 @@ export function StudentDetailPage() {
     )
   }
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: 'notes' | 'bookings') => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: 'notes' | 'bookings' | 'communications') => {
     setActiveTab(newValue)
   }
 
@@ -43,7 +46,19 @@ export function StudentDetailPage() {
       <PageHeader title="Student Profile" breadcrumbs={[{ label: 'Students', to: '/students' }]} />
 
       <Stack spacing={4} sx={{ px: { xs: 2.5, md: 4 }, pb: 6 }}>
-        <StudentProfileCard student={student} bookings={bookingsData?.bookings ?? []} />
+        <StudentProfileCard
+          student={student}
+          bookings={bookingsData?.bookings ?? []}
+          onSendEmail={() => setEmailDialogOpen(true)}
+        />
+
+        <SendEmailDialog
+          open={emailDialogOpen}
+          onClose={() => setEmailDialogOpen(false)}
+          studentId={student.id}
+          studentName={student.fullName}
+          studentEmail={student.email}
+        />
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
           <Tabs
@@ -71,6 +86,12 @@ export function StudentDetailPage() {
               icon={<CalendarDays size={18} />}
               iconPosition="start"
             />
+            <Tab
+              label="Communications"
+              value="communications"
+              icon={<Mail size={18} />}
+              iconPosition="start"
+            />
           </Tabs>
         </Box>
 
@@ -95,6 +116,10 @@ export function StudentDetailPage() {
               )}
             </Box>
           </Stack>
+        )}
+
+        {activeTab === 'communications' && (
+          <StudentCommunicationsTab studentId={studentId!} />
         )}
       </Stack>
     </Box>

@@ -7,6 +7,7 @@ import {
   markNotificationAsFailed,
   markNotificationAsSent,
 } from "./notificationRepository";
+import { publishFeedback } from "./feedbackPublisher";
 
 type NotificationSendResult =
   | SentMessageInfo
@@ -55,10 +56,23 @@ export async function sendStoredNotification(
     const info = await sendEmailWithRetry(buildMailOptions(record));
     console.log("Email sent successfully:", info.messageId ?? info.response ?? info);
     await markNotificationAsSent(record.id);
+
+    // If this is a custom student email, report success back to RabbitMQ
+    if (record.notificationType === "STUDENT_CUSTOM_EMAIL" && record.notificationKey) {
+      await publishFeedback(record.notificationKey, "SENT");
+    }
+
     return info;
   } catch (error) {
     await markNotificationAsFailed(record.id, error);
     console.error("Error sending notification:", error);
+
+    // If this is a custom student email, report failure back to RabbitMQ
+    if (record.notificationType === "STUDENT_CUSTOM_EMAIL" && record.notificationKey) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      await publishFeedback(record.notificationKey, "FAILED", errMsg);
+    }
+
     throw error;
   }
 }
