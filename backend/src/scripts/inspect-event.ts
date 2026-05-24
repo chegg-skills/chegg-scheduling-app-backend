@@ -21,18 +21,7 @@ async function main() {
       return;
     }
 
-    console.log("-----------------------------------------");
-    console.log("Event Properties:");
-    console.log(`ID: ${event.id}`);
-    console.log(`Name: ${event.name}`);
-    console.log(`Interaction Type: ${event.interactionType}`);
-    console.log(`Min Coach Count: ${event.minCoachCount}`);
-    console.log(`Max Coach Count: ${event.maxCoachCount}`);
-    console.log(`Coaches Assigned Count: ${event.coaches.length}`);
-    console.log("Coaches Assigned Details:");
-    event.coaches.forEach((c) => {
-      console.log(` - ID: ${c.coachUserId}, Name: ${c.coachUser.firstName} ${c.coachUser.lastName}`);
-    });
+    console.log(JSON.stringify(event, null, 2));
     console.log("-----------------------------------------");
   } catch (error) {
     console.error("Error inspecting event:", error);

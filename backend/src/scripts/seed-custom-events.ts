@@ -95,7 +95,7 @@ async function main() {
     eventTypeId: qa?.id ?? standardType.id,
     teamId: team.id,
     interactionType: InteractionType.ONE_TO_ONE,
-    assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
+    assignmentStrategy: AssignmentStrategy.DIRECT,
     durationSeconds: 1800, // 30 minutes
     locationType: EventLocationType.VIRTUAL,
     locationValue: "https://zoom.us/j/on-demand-room",

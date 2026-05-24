@@ -114,6 +114,9 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
     if (allowStudentCoachChoice) {
       setValue('minCoachCount', 1, { shouldDirty: false })
       setValue('maxCoachCount', null, { shouldDirty: false })
+      if (getValues('assignmentStrategy') !== 'DIRECT') {
+        setValue('assignmentStrategy', 'DIRECT', { shouldDirty: false })
+      }
     }
   }, [caps, getValues, setValue, watch('assignmentStrategy'), watch('allowStudentCoachChoice')])
 
