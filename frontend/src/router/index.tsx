@@ -98,6 +98,11 @@ const PublicReschedulePage = lazy(() =>
     default: module.PublicReschedulePage,
   }))
 )
+const PublicCancelPage = lazy(() =>
+  import('@/pages/public/PublicCancelPage').then((module) => ({
+    default: module.PublicCancelPage,
+  }))
+)
 const ReportsPage = lazy(() =>
   import('@/pages/ReportsPage').then((module) => ({
     default: module.ReportsPage,
@@ -170,6 +175,12 @@ export const router = createBrowserRouter([
     path: '/reschedule/:bookingId',
     element: <PublicLayout maxWidth="lg" />,
     children: [{ path: '', element: renderLazyPage(PublicReschedulePage) }],
+    errorElement: <RouteErrorPage />,
+  },
+  {
+    path: '/cancel/:bookingId',
+    element: <PublicLayout maxWidth="lg" />,
+    children: [{ path: '', element: renderLazyPage(PublicCancelPage) }],
     errorElement: <RouteErrorPage />,
   },
 

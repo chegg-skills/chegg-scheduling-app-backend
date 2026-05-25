@@ -43,17 +43,18 @@ const getBookingNotificationVariables = async (
     bookingStatus: booking.status,
     frontendUrl: resolveFrontendUrl(),
     publicBookingUrl: booking.event?.publicBookingSlug
-      ? `${resolveFrontendUrl()}/book/${booking.event.publicBookingSlug}`
+      ? `${resolveFrontendUrl()}/book/event/${booking.event.publicBookingSlug}`
       : resolveFrontendUrl(),
-    rescheduleUrl: `${resolveFrontendUrl()}/reschedule/${booking.id}?token=${(booking as any).rescheduleToken ?? ""}`,
+    rescheduleUrl: `${resolveFrontendUrl()}/reschedule/${booking.id}?token=${booking.rescheduleToken ?? ""}`,
+    cancelUrl: `${resolveFrontendUrl()}/cancel/${booking.id}?token=${booking.rescheduleToken ?? ""}`,
     coCoachDetails: "",
     coCoachNames: "",
-    cancellationReason: (booking as any).cancellationReason ?? "",
-    cancellationDetails: (booking as any).cancellationReason
-      ? `\nReason: ${(booking as any).cancellationReason}`
+    cancellationReason: booking.cancellationReason ?? "",
+    cancellationDetails: booking.cancellationReason
+      ? `\nReason: ${booking.cancellationReason}`
       : "",
-    cancellationDetailsHtml: (booking as any).cancellationReason
-      ? `<br/><strong>Reason:</strong> ${(booking as any).cancellationReason}`
+    cancellationDetailsHtml: booking.cancellationReason
+      ? `<br/><strong>Reason:</strong> ${booking.cancellationReason}`
       : "",
   };
 

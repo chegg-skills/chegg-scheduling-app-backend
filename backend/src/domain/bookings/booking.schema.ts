@@ -68,6 +68,20 @@ export const UpdateBookingStatusSchema = {
     .strip(),
 };
 
+export const CancelBookingSchema = {
+  params: z
+    .object({
+      bookingId: z.uuid("Invalid booking ID"),
+    })
+    .strip(),
+  body: z
+    .object({
+      token: z.string().trim().optional(),
+      cancellationReason: z.string().trim().max(500).optional(),
+    })
+    .strip(),
+};
+
 export const BookingIdParamSchema = {
   params: z
     .object({

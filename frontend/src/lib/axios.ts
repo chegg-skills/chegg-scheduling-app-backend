@@ -70,7 +70,8 @@ apiClient.interceptors.response.use(
         pathname.startsWith('/bootstrap') ||
         pathname.startsWith('/accept-invite') ||
         pathname.startsWith('/book') ||
-        pathname.startsWith('/reschedule')
+        pathname.startsWith('/reschedule') ||
+        pathname.startsWith('/cancel')
 
       if (!isPublicRoute) {
         window.location.href = '/login'

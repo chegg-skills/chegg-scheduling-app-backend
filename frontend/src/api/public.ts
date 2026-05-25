@@ -115,9 +115,10 @@ export const publicApi = {
       signal,
     }),
 
-  getBooking: (id: string, token: string, signal?: AbortSignal) =>
+  getBooking: (id: string, token: string, options?: { mode?: string; signal?: AbortSignal }) =>
     apiClient.get<ApiResponse<{ booking: Booking }>>(`/public/bookings/${id}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-      signal,
+      params: options?.mode ? { mode: options.mode } : undefined,
+      signal: options?.signal,
     }),
 }

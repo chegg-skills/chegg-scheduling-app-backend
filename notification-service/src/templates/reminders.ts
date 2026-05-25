@@ -6,7 +6,7 @@ export const reminderTemplates: EmailTemplateMap = {
   SESSION_REMINDER_24H: {
     subject: "Tomorrow: Your session for {{eventName}} starts soon!",
     preheader: "Your session is tomorrow at {{startTime}} — don't forget!",
-    text: "Hi {{studentName}}, your session for {{eventName}} is scheduled for tomorrow at {{startTime}}. Reschedule: {{rescheduleUrl}}",
+    text: "Hi {{studentName}}, your session for {{eventName}} is scheduled for tomorrow at {{startTime}}. Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
     html: wrapLayout(
       "Upcoming Session Reminder",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -16,7 +16,7 @@ export const reminderTemplates: EmailTemplateMap = {
          <strong>Time:</strong> {{startTime}} ({{timezone}})
        </p>
        <p style="margin-top: 16px; font-size: 13px;">
-         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")}
+         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session is tomorrow at {{startTime}} — don't forget!",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
@@ -35,7 +35,7 @@ export const reminderTemplates: EmailTemplateMap = {
          {{startTime}} ({{timezone}})
        </p>
        <p style="margin-top: 16px; font-size: 13px;">
-         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")}
+         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session starts in 12 hours — see you soon!",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
@@ -61,7 +61,7 @@ export const reminderTemplates: EmailTemplateMap = {
   SESSION_REMINDER_1H: {
     subject: "Starting Soon: {{eventName}} begins in 1 hour",
     preheader: "Your session starts in 1 hour — get ready!",
-    text: "Hi {{studentName}}, your session for {{eventName}} starts in about 1 hour. Reschedule: {{rescheduleUrl}}",
+    text: "Hi {{studentName}}, your session for {{eventName}} starts in about 1 hour. Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
     html: wrapLayout(
       "Session Starting Soon",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -70,7 +70,7 @@ export const reminderTemplates: EmailTemplateMap = {
          {{startTime}} ({{timezone}})
        </p>
        <p style="margin-top: 16px; font-size: 13px;">
-         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")}
+         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session starts in 1 hour — get ready!",
       { text: "Join Now", url: "{{meetingJoinUrl}}" },

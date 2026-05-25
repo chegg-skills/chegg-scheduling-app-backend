@@ -4,9 +4,10 @@ import { authenticate, optionalAuthenticate, authorize } from "../../shared/midd
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { UserRole } from "@prisma/client";
 import { validate } from "../../shared/middleware/validate";
-import { bookingCreationLimiter, standardLimiter } from "../../shared/middleware/rateLimit";
+import { bookingCreationLimiter, sensitiveLimiter, standardLimiter } from "../../shared/middleware/rateLimit";
 import {
   BookingIdParamSchema,
+  CancelBookingSchema,
   CreateBookingSchema,
   ListBookingsSchema,
   RescheduleBookingSchema,
@@ -49,6 +50,16 @@ router
     validate(RescheduleBookingSchema),
     BookingController.rescheduleBooking,
   ) // Token auth or session auth handled in controller
+  .all(methodNotAllowed);
+
+router
+  .route("/:bookingId/cancel")
+  .post(
+    sensitiveLimiter,
+    optionalAuthenticate,
+    validate(CancelBookingSchema),
+    BookingController.cancelBooking,
+  )
   .all(methodNotAllowed);
 
 router

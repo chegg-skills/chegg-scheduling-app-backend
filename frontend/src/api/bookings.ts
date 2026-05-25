@@ -37,6 +37,15 @@ export const bookingsApi = {
       signal,
     }),
 
+  cancel: (
+    id: string,
+    data: { token?: string; cancellationReason?: string },
+    signal?: AbortSignal
+  ) =>
+    apiClient.post<ApiResponse<{ booking: Booking }>>(`/bookings/${id}/cancel`, data, {
+      signal,
+    }),
+
   updateStatus: (id: string, data: UpdateBookingStatusDto) =>
     apiClient.patch<ApiResponse<{ booking: Booking }>>(`/bookings/${id}`, data),
 
@@ -45,4 +54,11 @@ export const bookingsApi = {
 
   upsertSessionLog: (bookingId: string, data: UpsertBookingSessionLogDto) =>
     apiClient.post<ApiResponse<SessionLog>>(`/bookings/${bookingId}/log`, data),
+
+  cancel: (
+    id: string,
+    data: { token?: string; cancellationReason?: string },
+    signal?: AbortSignal
+  ) =>
+    apiClient.post<ApiResponse<{ booking: Booking }>>(`/bookings/${id}/cancel`, data, { signal }),
 }

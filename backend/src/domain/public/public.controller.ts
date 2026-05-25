@@ -95,8 +95,9 @@ export const getPublicBooking = async (req: Request, res: Response) => {
     (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null) ??
     (req.query.token as string | undefined) ??
     "";
+  const mode = req.query.mode as string | undefined;
 
-  const booking = await PublicService.getPublicBooking(id as string, token);
+  const booking = await PublicService.getPublicBooking(id as string, token, mode);
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking fetched successfully.");
 };

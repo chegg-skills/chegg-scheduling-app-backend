@@ -132,3 +132,30 @@ export const upsertBookingSessionLog = async (req: Request, res: Response) => {
 
   return sendSuccessResponse(res, StatusCodes.OK, log, "Booking session log saved successfully.");
 };
+
+export const cancelBooking = async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+  const { token, cancellationReason } = req.body;
+  const caller = res.locals.authUser as CallerContext | undefined;
+
+  if (!caller && !token) {
+    throw new ErrorHandler(
+      StatusCodes.UNAUTHORIZED,
+      "Authentication or cancel token is required.",
+    );
+  }
+
+  if (caller && !token) {
+    if (
+      caller.role !== UserRole.SUPER_ADMIN &&
+      caller.role !== UserRole.TEAM_ADMIN &&
+      caller.role !== UserRole.COACH
+    ) {
+      throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to cancel bookings.");
+    }
+  }
+
+  const booking = await BookingService.cancelBooking(bookingId, { token, cancellationReason }, caller);
+
+  return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking cancelled successfully.");
+};
