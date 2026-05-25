@@ -8,11 +8,10 @@ import {
   Button,
   CircularProgress,
   Paper,
-  Divider,
   Stack,
   Radio,
 } from '@mui/material'
-import { useTheme, alpha } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import {
   XCircle,
   AlertTriangle,
@@ -93,7 +92,7 @@ export function PublicCancelPage() {
     queryKey: ['public', 'cancel', bookingId, token],
     queryFn: ({ signal }) =>
       publicApi
-        .getBooking(bookingId, token, signal)
+        .getBooking(bookingId, token, { signal })
         .then((r) => r.data.data?.booking),
     enabled: !!bookingId && !!token,
     retry: false,
