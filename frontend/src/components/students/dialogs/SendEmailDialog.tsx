@@ -46,7 +46,7 @@ export function SendEmailDialog({
   // Link Edit/Popover states
   const [editingAnchor, setEditingAnchor] = useState<HTMLAnchorElement | null>(null)
   const [linkPopoverAnchor, setLinkPopoverAnchor] = useState<HTMLAnchorElement | null>(null)
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Active formatting state tracking
   const [formatState, setFormatState] = useState({
@@ -328,7 +328,7 @@ export function SendEmailDialog({
             />
           </FormField>
 
-          <FormField label="Message" required>
+          <FormField label="Message" htmlFor="email-body" required>
             <Box
               sx={{
                 border: '1px solid',
@@ -413,39 +413,42 @@ export function SendEmailDialog({
 
               {/* WYSIWYG Editor area */}
               <Box
-                component="div"
-                ref={editorRef}
-                contentEditable={!isPending}
-                onInput={handleInput}
-                onMouseMove={handleMouseMove}
-                onClick={handleEditorClick}
-                onKeyUp={updateFormatState}
-                onMouseUp={updateFormatState}
-                placeholder="Compose your rich-text formatted message here... Select text and use the toolbar to apply styling to selected text."
-                sx={{
-                  width: '100%',
-                  height: '240px',
-                  padding: '16px',
-                  overflowY: 'auto',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                  fontSize: '0.925rem',
-                  lineHeight: '1.6',
-                  color: 'text.primary',
-                  bgcolor: 'transparent',
-                  '&:empty:before': {
-                    content: 'attr(placeholder)',
-                    color: 'text.disabled',
-                    fontStyle: 'italic',
-                    pointerEvents: 'none',
-                    display: 'block',
-                  },
-                  '& a': {
-                    color: 'primary.main',
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                  },
-                }}
+                {...({
+                  component: 'div',
+                  ref: editorRef,
+                  contentEditable: !isPending,
+                  onInput: handleInput,
+                  onMouseMove: handleMouseMove,
+                  onClick: handleEditorClick,
+                  onKeyUp: updateFormatState,
+                  onMouseUp: updateFormatState,
+                  placeholder: 'Compose your rich-text formatted message here... Select text and use the toolbar to apply styling to selected text.',
+                  id: 'email-body',
+                  sx: {
+                    width: '100%',
+                    height: '240px',
+                    padding: '16px',
+                    overflowY: 'auto',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    fontSize: '0.925rem',
+                    lineHeight: '1.6',
+                    color: 'text.primary',
+                    bgcolor: 'transparent',
+                    '&:empty:before': {
+                      content: 'attr(placeholder)',
+                      color: 'text.disabled',
+                      fontStyle: 'italic',
+                      pointerEvents: 'none',
+                      display: 'block',
+                    },
+                    '& a': {
+                      color: 'primary.main',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    },
+                  }
+                } as any)}
               />
             </Box>
           </FormField>
@@ -480,7 +483,7 @@ export function SendEmailDialog({
           </IconButton>
         </DialogTitle>
         <DialogContent sx={{ py: 2 }}>
-          <FormField label="URL Address" required>
+          <FormField label="URL Address" htmlFor="link-dialog-url" required>
             <Input
               id="link-dialog-url"
               placeholder="e.g. https://example.com"

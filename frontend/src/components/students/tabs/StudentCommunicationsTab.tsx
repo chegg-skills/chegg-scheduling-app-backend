@@ -220,9 +220,12 @@ export function StudentCommunicationsTab({ studentId }: StudentCommunicationsTab
                         }
                         label="Sending..."
                         size="small"
-                        color="info"
-                        variant="soft"
-                        sx={{ fontSize: '0.75rem', fontWeight: 600 }}
+                        sx={{
+                          bgcolor: (theme) => alpha(theme.palette.info.main, 0.12),
+                          color: (theme) => theme.palette.info.dark,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
                       />
                     )}
                     {log.status === 'SENT' && (
@@ -230,9 +233,13 @@ export function StudentCommunicationsTab({ studentId }: StudentCommunicationsTab
                         icon={<CheckCircle2 size={12} />}
                         label="Sent"
                         size="small"
-                        color="success"
-                        variant="soft"
-                        sx={{ fontSize: '0.75rem', fontWeight: 600 }}
+                        sx={{
+                          bgcolor: (theme) => alpha(theme.palette.success.main, 0.12),
+                          color: (theme) => theme.palette.success.dark,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          '& .MuiChip-icon': { color: 'success.dark' },
+                        }}
                       />
                     )}
                     {log.status === 'FAILED' && (
@@ -241,9 +248,14 @@ export function StudentCommunicationsTab({ studentId }: StudentCommunicationsTab
                           icon={<AlertTriangle size={12} />}
                           label="Failed"
                           size="small"
-                          color="error"
-                          variant="soft"
-                          sx={{ fontSize: '0.75rem', fontWeight: 600, cursor: 'help' }}
+                          sx={{
+                            bgcolor: (theme) => alpha(theme.palette.error.main, 0.12),
+                            color: (theme) => theme.palette.error.dark,
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'help',
+                            '& .MuiChip-icon': { color: 'error.dark' },
+                          }}
                         />
                       </Tooltip>
                     )}
