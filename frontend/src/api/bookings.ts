@@ -37,6 +37,15 @@ export const bookingsApi = {
       signal,
     }),
 
+  cancel: (
+    id: string,
+    data: { token?: string; cancellationReason?: string },
+    signal?: AbortSignal
+  ) =>
+    apiClient.post<ApiResponse<{ booking: Booking }>>(`/bookings/${id}/cancel`, data, {
+      signal,
+    }),
+
   updateStatus: (id: string, data: UpdateBookingStatusDto) =>
     apiClient.patch<ApiResponse<{ booking: Booking }>>(`/bookings/${id}`, data),
 

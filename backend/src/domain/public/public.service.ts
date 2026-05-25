@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { assertRescheduleTokenValid, bookingInclude } from "../bookings/booking.shared";
+import { assertCancelTokenValid, assertRescheduleTokenValid, bookingInclude } from "../bookings/booking.shared";
 
 const slugSchema = z.string().trim().min(1, "Slug is required");
 
@@ -237,7 +237,7 @@ export const listGroupEventsBySlug = async (slug: string) => {
   return { group, team: group.team, events };
 };
 
-export const getPublicBooking = async (id: string, token: string) => {
+export const getPublicBooking = async (id: string, token: string, mode?: string) => {
   const booking = await prisma.booking.findFirst({
     where: { id, rescheduleToken: token } as any,
     include: bookingInclude,
@@ -247,7 +247,11 @@ export const getPublicBooking = async (id: string, token: string) => {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking not found or invalid token.");
   }
 
-  assertRescheduleTokenValid(booking);
+  if (mode === "cancel") {
+    assertCancelTokenValid(booking);
+  } else {
+    assertRescheduleTokenValid(booking);
+  }
 
   return booking;
 };

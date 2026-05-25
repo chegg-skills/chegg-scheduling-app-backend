@@ -89,7 +89,7 @@ export function PublicReschedulePage() {
   } = useQuery({
     queryKey: ['public', 'booking', bookingId, token],
     queryFn: ({ signal }) =>
-      publicApi.getBooking(bookingId, token, signal).then((r) => r.data.data?.booking),
+      publicApi.getBooking(bookingId, token, { signal }).then((r) => r.data.data?.booking),
     enabled: !!bookingId && !!token,
     retry: false,
   })

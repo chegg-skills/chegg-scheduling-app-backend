@@ -19,6 +19,24 @@ export const assertRescheduleTokenValid = (booking: {
     );
   }
 };
+
+export const assertCancelTokenValid = (booking: {
+  status: BookingStatus;
+  startTime: Date;
+}): void => {
+  if (booking.status === BookingStatus.CANCELLED) {
+    throw new ErrorHandler(StatusCodes.CONFLICT, "This session has already been cancelled.");
+  }
+  if (booking.status !== BookingStatus.PENDING && booking.status !== BookingStatus.CONFIRMED) {
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "This booking link is no longer valid.");
+  }
+  if (Date.now() >= new Date(booking.startTime).getTime()) {
+    throw new ErrorHandler(
+      StatusCodes.FORBIDDEN,
+      "This session has already started and cannot be cancelled via this link.",
+    );
+  }
+};
 import { normalizeEmail } from "../../shared/utils/userUtils";
 
 export type CreateBookingInput = {

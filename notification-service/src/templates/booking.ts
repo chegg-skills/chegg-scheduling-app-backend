@@ -6,7 +6,7 @@ export const bookingTemplates: EmailTemplateMap = {
   BOOKING_CONFIRMED: {
     subject: "Confirmed: {{eventName}} with {{coachName}}",
     preheader: "Your session is confirmed for {{startTime}}.",
-    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}).{{coHostDetails}} Reschedule here: {{rescheduleUrl}}",
+    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}).{{coHostDetails}} Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
     html: wrapLayout(
       "Booking Confirmation",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -18,7 +18,7 @@ export const bookingTemplates: EmailTemplateMap = {
          {{coHostDetailsHtml}}
        </p>
        <p style="margin-top: 16px; font-size: 13px;">
-         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")}
+         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session is confirmed for {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
@@ -40,7 +40,7 @@ export const bookingTemplates: EmailTemplateMap = {
          {{coHostDetailsHtml}}
        </p>
        <p style="margin-top: 16px; font-size: 13px;">
-         Need to change it again? ${inlineLink("Reschedule again", "{{rescheduleUrl}}")}
+         Need to change it again? ${inlineLink("Reschedule again", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session has been rescheduled to {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
@@ -111,7 +111,7 @@ export const bookingTemplates: EmailTemplateMap = {
   BOOKING_CONFIRMED_DEFERRED: {
     subject: "Confirmed: {{eventName}} on {{startTime}}",
     preheader: "Your session is confirmed. Coach details will follow shortly before the session.",
-    text: "Hi {{studentName}}, your booking for {{eventName}} on {{startTime}} ({{timezone}}) with {{teamName}} is confirmed. You will receive coach and join details shortly before the session starts.",
+    text: "Hi {{studentName}}, your booking for {{eventName}} on {{startTime}} ({{timezone}}) with {{teamName}} is confirmed. You will receive coach and join details shortly before the session starts. Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
     html: wrapLayout(
       "Booking Confirmation",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -123,7 +123,7 @@ export const bookingTemplates: EmailTemplateMap = {
        </p>
        <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>
        <p style="margin-top: 16px; font-size: 13px;">
-         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")}
+         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session is confirmed. Coach details coming soon.",
       { text: "View Booking", url: "{{frontendUrl}}" },

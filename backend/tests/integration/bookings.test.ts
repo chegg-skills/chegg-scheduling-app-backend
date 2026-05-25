@@ -823,4 +823,143 @@ describe("Booking Domain Integration Tests", () => {
       expect(res.status).toBe(401);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────
+  // POST /api/bookings/:bookingId/cancel
+  // ─────────────────────────────────────────────────────────────
+  describe("POST /api/bookings/:bookingId/cancel", () => {
+    let bookingId: string;
+    let cancelToken: string;
+
+    beforeEach(async () => {
+      const futureStart = getNextUtcWeekdayAt(1, 10, 0);
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Cancel Student",
+          studentEmail: "cancel@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime: futureStart,
+          endTime: new Date(futureStart.getTime() + 3600 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+      bookingId = booking.id;
+      cancelToken = booking.rescheduleToken!;
+    });
+
+    it("cancels a booking using a valid token (200, status=CANCELLED)", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: cancelToken });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.status).toBe(BookingStatus.CANCELLED);
+    });
+
+    it("saves the cancellationReason when provided", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: cancelToken, cancellationReason: "Schedule conflict" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.cancellationReason).toBe("Schedule conflict");
+    });
+
+    it("sets cancellationReason to null when omitted", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: cancelToken });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.cancellationReason).toBeNull();
+    });
+
+    it("does NOT rotate the rescheduleToken after cancellation", async () => {
+      await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: cancelToken });
+
+      const updated = await prisma.booking.findUnique({ where: { id: bookingId } });
+      expect(updated!.rescheduleToken).toBe(cancelToken);
+    });
+
+    it("returns 409 when booking is already cancelled", async () => {
+      await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: cancelToken });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: cancelToken });
+
+      expect(res.status).toBe(409);
+    });
+
+    it("returns 403 when session has already started", async () => {
+      const pastStart = new Date(Date.now() - 30 * 60 * 1000); // 30 min ago
+      await prisma.booking.update({ where: { id: bookingId }, data: { startTime: pastStart } });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: cancelToken });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("returns 404 for an invalid/unknown token", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({ token: "invalid-token-xyz" });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 401 when neither session auth nor token is provided", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .send({});
+
+      expect(res.status).toBe(401);
+    });
+
+    it("allows an authenticated SUPER_ADMIN to cancel without a token (200)", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.status).toBe(BookingStatus.CANCELLED);
+    });
+
+    it("allows the assigned COACH to cancel their own booking (200)", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .set("Authorization", `Bearer ${coachToken}`)
+        .send({});
+
+      expect(res.status).toBe(200);
+    });
+
+    it("returns 403 when a COACH tries to cancel a booking they are not assigned to", async () => {
+      // coach2 is not assigned to this booking
+      const coach2 = await prisma.user.findFirst({ where: { email: "coach2@test.com" } });
+      const coach2TokenRes = await request(app)
+        .post("/api/auth/login")
+        .send({ email: "coach2@test.com", password: "Coach1234" });
+      const coach2Token = coach2TokenRes.body.data?.token ?? coach2TokenRes.headers["set-cookie"];
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/cancel`)
+        .set("Authorization", `Bearer ${coach2TokenRes.body.data?.token}`)
+        .send({});
+
+      // coach2 is not lead or co-host → 403
+      expect(res.status).toBe(403);
+      void coach2; // silence unused var
+      void coach2Token;
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { BookingStatus } from "@prisma/client";
+import { BookingStatus, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { randomUUID } from "crypto";
 import { prisma } from "../../shared/db/prisma";
@@ -27,6 +27,7 @@ import {
   lockCoach,
 } from "./booking.repository";
 import {
+  assertCancelTokenValid,
   assertRescheduleTokenValid,
   buildSchedulingContext,
   normalizeStudentEmailAddress,
@@ -39,6 +40,7 @@ import {
 } from "./booking.shared";
 import { resolveBookingCoachSelection } from "./bookingAssignmentResolver.service";
 import type { CoachCandidate } from "./assignment.service";
+import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   queueBookingCreatedNotifications,
   queueBookingStatusNotifications,
@@ -327,4 +329,40 @@ const rescheduleBooking = async (
 
   return updatedBooking;
 };
-export { createBooking, getBooking, listBookings, updateBooking, rescheduleBooking };
+const cancelBooking = async (
+  id: string,
+  payload: { token?: string; cancellationReason?: string },
+  caller?: CallerContext,
+): Promise<SafeBooking> => {
+  const { token, cancellationReason } = payload;
+
+  const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
+
+  if (token) {
+    assertCancelTokenValid(booking);
+  } else {
+    // Authenticated path — COACH may only cancel their own sessions
+    if (caller?.role === UserRole.COACH) {
+      const isLead = booking.coachUserId === caller.id;
+      const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
+      if (!isLead && !isCoHost) {
+        throw new ErrorHandler(
+          StatusCodes.FORBIDDEN,
+          "You are not authorized to cancel this booking.",
+        );
+      }
+    }
+  }
+
+  const updatedBooking = await updateBookingById(id, {
+    status: BookingStatus.CANCELLED,
+    cancellationReason: cancellationReason?.trim() || null,
+    // rescheduleToken is NOT rotated — assertCancelTokenValid blocks reuse via status check
+  });
+
+  void queueBookingStatusNotifications(updatedBooking);
+
+  return updatedBooking;
+};
+
+export { createBooking, getBooking, listBookings, updateBooking, rescheduleBooking, cancelBooking };

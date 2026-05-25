@@ -96,3 +96,62 @@ describe("renderTemplate — HTML escaping in html output", () => {
     expect(result.subject).not.toContain("&amp;");
   });
 });
+
+describe("renderTemplate — cancelUrl placement and escaping", () => {
+  const CANCEL_URL = "https://app.example.com/cancel/abc-123?token=tok-456";
+
+  it("renders cancelUrl in BOOKING_CONFIRMED html and text", () => {
+    const result = renderTemplate("BOOKING_CONFIRMED", {
+      cancelUrl: CANCEL_URL,
+      coHostDetailsHtml: "",
+    });
+    expect(result.html).toContain(CANCEL_URL);
+    expect(result.text).toContain(CANCEL_URL);
+  });
+
+  it("renders cancelUrl in BOOKING_RESCHEDULED html", () => {
+    const result = renderTemplate("BOOKING_RESCHEDULED", {
+      cancelUrl: CANCEL_URL,
+      coHostDetailsHtml: "",
+    });
+    expect(result.html).toContain(CANCEL_URL);
+  });
+
+  it("renders cancelUrl in BOOKING_CONFIRMED_DEFERRED html", () => {
+    const result = renderTemplate("BOOKING_CONFIRMED_DEFERRED", { cancelUrl: CANCEL_URL });
+    expect(result.html).toContain(CANCEL_URL);
+  });
+
+  it("renders cancelUrl in SESSION_REMINDER_24H html", () => {
+    const result = renderTemplate("SESSION_REMINDER_24H", { cancelUrl: CANCEL_URL });
+    expect(result.html).toContain(CANCEL_URL);
+  });
+
+  it("renders cancelUrl in SESSION_REMINDER_1H html", () => {
+    const result = renderTemplate("SESSION_REMINDER_1H", { cancelUrl: CANCEL_URL });
+    expect(result.html).toContain(CANCEL_URL);
+  });
+
+  it("cancelUrl is NOT in RAW_HTML_FIELDS — special characters are HTML-escaped in html output", () => {
+    const urlWithAmpersand = "https://app.example.com/cancel/id?token=t&extra=1";
+    const result = renderTemplate("BOOKING_CONFIRMED", {
+      cancelUrl: urlWithAmpersand,
+      coHostDetailsHtml: "",
+    });
+    // & in a URL gets HTML-escaped to &amp; in html output (cancelUrl is not a raw field)
+    expect(result.html).toContain("&amp;extra=1");
+    // text output is unescaped
+    expect(result.text).toContain(urlWithAmpersand);
+  });
+
+  it("cancelUrl does NOT appear in BOOKING_CANCELLED html", () => {
+    const result = renderTemplate("BOOKING_CANCELLED", { cancelUrl: CANCEL_URL });
+    // The BOOKING_CANCELLED template has no {{cancelUrl}} placeholder — it should not render
+    expect(result.html).not.toContain(CANCEL_URL);
+  });
+
+  it("cancelUrl does NOT appear in BOOKING_CANCELLED_DEFERRED html", () => {
+    const result = renderTemplate("BOOKING_CANCELLED_DEFERRED", { cancelUrl: CANCEL_URL });
+    expect(result.html).not.toContain(CANCEL_URL);
+  });
+});
