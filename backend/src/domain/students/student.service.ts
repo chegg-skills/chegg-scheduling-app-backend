@@ -427,16 +427,6 @@ const listStudentSessionLogs = async (
   return entries;
 };
 
-export {
-  listStudents,
-  readStudent,
-  listStudentBookings,
-  listStudentSessionLogs,
-  sendStudentEmail,
-  listStudentCommunications,
-  retryEmailDispatch,
-};
-
 const sendStudentEmail = async (
   studentId: string,
   subject: string,
@@ -558,4 +548,14 @@ const retryEmailDispatch = async (
   });
 
   return updatedLog;
+};
+
+export {
+  listStudents,
+  readStudent,
+  listStudentBookings,
+  listStudentSessionLogs,
+  sendStudentEmail,
+  listStudentCommunications,
+  retryEmailDispatch,
 };
