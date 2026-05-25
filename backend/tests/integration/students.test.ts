@@ -166,4 +166,98 @@ describe("Students API", () => {
     expect(res.body.data.bookings.length).toBeGreaterThanOrEqual(2);
     expect(res.body.data.bookings[0].student.id).toBe(studentId);
   });
+
+  it("allows a coach to send an email to a booked student", async () => {
+    const res = await request(app)
+      .post(`/api/students/${studentId}/send-email`)
+      .set("Authorization", `Bearer ${coachToken}`)
+      .send({
+        subject: "Welcome to Chegg",
+        body: "<strong>Hello</strong> student!",
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.log).toBeDefined();
+    expect(res.body.data.log.subject).toBe("Welcome to Chegg");
+    expect(res.body.data.log.body).toBe("<strong>Hello</strong> student!");
+    expect(res.body.data.log.status).toBe("PENDING");
+  });
+
+  it("fails to send email if subject or body is missing", async () => {
+    const res = await request(app)
+      .post(`/api/students/${studentId}/send-email`)
+      .set("Authorization", `Bearer ${coachToken}`)
+      .send({
+        subject: "",
+        body: "",
+      });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("lists all communications sent to a student", async () => {
+    const res = await request(app)
+      .get(`/api/students/${studentId}/communications`)
+      .set("Authorization", `Bearer ${coachToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.logs).toBeDefined();
+    expect(res.body.data.logs.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.logs[0].subject).toBe("Welcome to Chegg");
+    expect(res.body.data.logs[0].sentBy.id).toBe(coachId);
+  });
+
+  it("allows retrying a failed email by creating a new pending log", async () => {
+    const logsRes = await request(app)
+      .get(`/api/students/${studentId}/communications`)
+      .set("Authorization", `Bearer ${coachToken}`);
+    const originalLogId = logsRes.body.data.logs[0].id;
+
+    await prisma.studentCommunicationLog.update({
+      where: { id: originalLogId },
+      data: { status: "FAILED", errorMessage: "SMTP connection timeout" },
+    });
+
+    const retryRes = await request(app)
+      .post(`/api/students/communications/${originalLogId}/retry`)
+      .set("Authorization", `Bearer ${coachToken}`);
+
+    expect(retryRes.status).toBe(200);
+    expect(retryRes.body.data.log).toBeDefined();
+    // In-place update: same ID is returned, status reset to PENDING, error cleared
+    expect(retryRes.body.data.log.id).toBe(originalLogId);
+    expect(retryRes.body.data.log.status).toBe("PENDING");
+    expect(retryRes.body.data.log.errorMessage).toBeNull();
+    expect(retryRes.body.data.log.subject).toBe("Welcome to Chegg");
+
+    // The original log should now be PENDING (same record, updated in-place)
+    const finalLogsRes = await request(app)
+      .get(`/api/students/${studentId}/communications`)
+      .set("Authorization", `Bearer ${coachToken}`);
+
+    const updatedLog = finalLogsRes.body.data.logs.find((l: any) => l.id === originalLogId);
+    expect(updatedLog).toBeDefined();
+    expect(updatedLog.status).toBe("PENDING");
+    expect(updatedLog.errorMessage).toBeNull();
+  });
+
+  it("blocks a coach from sending emails to a student they have no booking with", async () => {
+    const secondCoach = await registerUser(adminToken, {
+      firstName: "Unbooked",
+      lastName: "Coach",
+      email: "unbooked-coach@test.com",
+      password: "Coach1234",
+      role: "COACH",
+    });
+
+    const res = await request(app)
+      .post(`/api/students/${studentId}/send-email`)
+      .set("Authorization", `Bearer ${secondCoach.token}`)
+      .send({
+        subject: "Unallowed Subject",
+        body: "Unallowed body",
+      });
+
+    expect(res.status).toBe(404);
+  });
 });

@@ -110,4 +110,16 @@ export const coachTemplates: EmailTemplateMap = {
       "A student did not show up for a co-hosted session.",
     ),
   },
+  STUDENT_CUSTOM_EMAIL: {
+    subject: "{{subject}}",
+    preheader: "Message from your coach",
+    text: "{{textBody}}",
+    html: wrapLayout(
+      "Message from your Coach",
+      `<div style="font-size: 15px; line-height: 1.6; color: #333333; white-space: pre-wrap;">
+         {{htmlBody}}
+       </div>`,
+      "Message from your coach",
+    ),
+  },
 };

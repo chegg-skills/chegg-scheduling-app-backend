@@ -45,6 +45,7 @@ model User {
   eventGroupsCreated     EventGroup[]                @relation("EventGroupCreatedBy")
   availabilityExceptions UserAvailabilityException[]
   weeklyAvailability     UserWeeklyAvailability[]
+  communicationsSent     StudentCommunicationLog[]
 
   @@unique([ssoProvider, ssoSub])
 }
@@ -324,6 +325,7 @@ model Student {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   bookings      Booking[]
+  communications StudentCommunicationLog[]
 
   @@index([lastBookedAt])
 }
@@ -425,4 +427,27 @@ enum InteractionType {
   ONE_TO_MANY
   MANY_TO_ONE
   MANY_TO_MANY
+}
+
+enum CommunicationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model StudentCommunicationLog {
+  id           String              @id @default(uuid())
+  studentId    String
+  subject      String
+  body         String              // Stores full HTML formatted email body
+  status       CommunicationStatus @default(PENDING)
+  errorMessage String?             // Stores delivery failure reasons if FAILED
+  sentById     String
+  sentAt       DateTime            @default(now())
+
+  student      Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  sentBy       User                @relation(fields: [sentById], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([sentById])
 }

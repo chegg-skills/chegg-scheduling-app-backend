@@ -5,6 +5,7 @@ import { prisma } from "../../src/shared/db/prisma";
  * Called in beforeAll / afterAll to isolate test suites from each other.
  */
 export const clearTables = async (): Promise<void> => {
+  await prisma.studentCommunicationLog.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.student.deleteMany();
   await prisma.eventRoutingState.deleteMany();
@@ -20,3 +21,4 @@ export const clearTables = async (): Promise<void> => {
   await prisma.userInvite.deleteMany();
   await prisma.user.deleteMany();
 };
+

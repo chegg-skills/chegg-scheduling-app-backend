@@ -6,6 +6,7 @@ import app from "./app";
 import { prisma } from "./shared/db/prisma";
 import { logger } from "./shared/logging/logger";
 import { getOidcClient } from "./shared/utils/oidcClient";
+import { startFeedbackConsumer } from "./shared/notifications/communication.feedback";
 
 const validateEnv = (): void => {
   const required = ["DATABASE_URL", "JWT_SECRET"];
@@ -40,6 +41,9 @@ const start = async (): Promise<void> => {
     await getOidcClient();
     logger.info("OIDC client initialized.");
   }
+
+  // Start the background RabbitMQ consumer to process delivery feedback status
+  await startFeedbackConsumer();
 
   const port = Number(process.env.PORT) || 4000;
 

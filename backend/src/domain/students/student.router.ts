@@ -5,7 +5,12 @@ import { authenticate, authorize } from "../../shared/middleware/auth";
 import * as studentController from "./student.controller";
 
 import { validate } from "../../shared/middleware/validate";
-import { ListStudentsSchema, StudentIdParamSchema } from "./student.schema";
+import {
+  ListStudentsSchema,
+  StudentIdParamSchema,
+  SendEmailSchema,
+  RetryEmailParamsSchema,
+} from "./student.schema";
 
 const router = express.Router();
 
@@ -16,6 +21,16 @@ router
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(ListStudentsSchema),
     studentController.listStudents,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/communications/:logId/retry")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(RetryEmailParamsSchema),
+    studentController.retryEmailDispatch,
   )
   .all(methodNotAllowed);
 
@@ -46,6 +61,26 @@ router
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
     validate(StudentIdParamSchema),
     studentController.listStudentSessionLogs,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/:studentId/send-email")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(SendEmailSchema),
+    studentController.sendEmailToStudent,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/:studentId/communications")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(StudentIdParamSchema),
+    studentController.listStudentCommunications,
   )
   .all(methodNotAllowed);
 

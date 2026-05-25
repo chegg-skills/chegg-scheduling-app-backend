@@ -47,6 +47,11 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
     isEdit,
   } = useEventForm({ teamId, event, onSuccess })
 
+  const {
+    formState: { errors, submitCount },
+  } = form
+  const hasValidationErrors = Object.keys(errors).length > 0
+
   const sectionLabelStyle = {
     variant: 'overline',
     color: 'text.secondary',
@@ -58,6 +63,9 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
       <FormProvider {...form}>
         <Stack component="form" onSubmit={form.handleSubmit(onSubmit)} noValidate spacing={4}>
           {error && <ErrorAlert message={extractApiError(error)} />}
+          {hasValidationErrors && submitCount > 0 && (
+            <ErrorAlert message="Form validation failed. Please check the fields below for errors." />
+          )}
 
           <Stack spacing={2}>
             <Typography {...sectionLabelStyle}>Basic info</Typography>

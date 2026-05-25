@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { studentsApi, type ListStudentsFilters } from '@/api/students'
 
 export const studentKeys = {
@@ -9,6 +9,7 @@ export const studentKeys = {
   detail: (id: string) => [...studentKeys.details(), id] as const,
   bookings: (id: string, filters: any) => [...studentKeys.detail(id), 'bookings', filters] as const,
   sessionLogs: (id: string) => [...studentKeys.detail(id), 'session-logs'] as const,
+  communications: (id: string) => [...studentKeys.detail(id), 'communications'] as const,
 }
 
 export function useStudents(filters: ListStudentsFilters = {}) {
@@ -41,5 +42,42 @@ export function useStudentSessionLogs(id: string) {
     queryFn: ({ signal }) =>
       studentsApi.listSessionLogs(id, signal).then((r) => r.data.data?.sessionLogs ?? []),
     enabled: !!id,
+  })
+}
+
+export function useStudentCommunications(
+  id: string,
+  options?: { refetchInterval?: number | false | ((query: any) => number | false) }
+) {
+  return useQuery({
+    queryKey: studentKeys.communications(id),
+    queryFn: ({ signal }) =>
+      studentsApi.listCommunications(id, signal).then((r) => r.data.data?.logs ?? []),
+    enabled: !!id,
+    ...options,
+  })
+}
+
+export function useSendStudentEmail() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ studentId, subject, body }: { studentId: string; subject: string; body: string }) =>
+      studentsApi.sendEmail(studentId, { subject, body }).then((r) => r.data.data?.log),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: studentKeys.communications(variables.studentId) })
+    },
+  })
+}
+
+export function useRetryStudentEmail() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (logId: string) =>
+      studentsApi.retryEmail(logId).then((r) => r.data.data?.log),
+    onSuccess: (newLog) => {
+      if (newLog) {
+        queryClient.invalidateQueries({ queryKey: studentKeys.communications(newLog.studentId) })
+      }
+    },
   })
 }

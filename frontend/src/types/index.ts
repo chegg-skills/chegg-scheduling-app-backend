@@ -685,3 +685,23 @@ export interface StudentSummary extends Student {
     }
   } | null
 }
+
+// ─── Communication ────────────────────────────────────────────────────────────
+
+export interface StudentCommunicationLog {
+  id: string
+  studentId: string
+  subject: string
+  body: string
+  status: 'PENDING' | 'SENT' | 'FAILED'
+  errorMessage: string | null
+  sentById: string
+  sentAt: string
+  createdAt: string
+  sentBy: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+  }
+}
