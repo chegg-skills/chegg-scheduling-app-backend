@@ -88,6 +88,12 @@ export const listGroupEventsBySlug = async (req: Request, res: Response) => {
   return sendSuccessResponse(res, StatusCodes.OK, result, "Group events fetched successfully.");
 };
 
+export const getPublicBookingPage = async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const page = await PublicService.getPublicBookingPage(slug as string);
+  return sendSuccessResponse(res, StatusCodes.OK, { bookingPage: page }, "Booking page fetched successfully.");
+};
+
 export const getPublicBooking = async (req: Request, res: Response) => {
   const { id } = req.params;
   const authHeader = req.headers.authorization;

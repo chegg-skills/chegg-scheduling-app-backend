@@ -233,12 +233,14 @@ export interface Event {
   allowStudentCoachChoice: boolean
   maxBookingWindowDays: number | null
   teamId: string
+  sessionTypeId: string | null
   groupId: string | null
   createdById: string
   updatedById: string
   createdAt: string
   updatedAt: string
   eventType: EventType
+  sessionType?: { id: string; slug: string; name: string } | null
   coaches: EventCoach[]
   weeklyAvailability: EventWeeklyAvailability[]
   team?: {
@@ -476,6 +478,7 @@ export interface CreateEventDto {
   bufferAfterMinutes?: number
   description?: string
   isActive?: boolean
+  sessionTypeId?: string | null
   groupId?: string | null
   weeklyAvailability?: Array<{
     dayOfWeek: number
@@ -684,6 +687,119 @@ export interface StudentSummary extends Student {
       avatarUrl: string | null
     }
   } | null
+}
+
+// ─── Session Type Models ──────────────────────────────────────────────────────
+
+export interface SessionType {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  isActive: boolean
+  sortOrder: number
+  createdById: string
+  updatedById: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateSessionTypeDto {
+  slug: string
+  name: string
+  description?: string
+  sortOrder?: number
+  isActive?: boolean
+}
+
+export interface UpdateSessionTypeDto extends Partial<CreateSessionTypeDto> {}
+
+// ─── Booking Page Models ──────────────────────────────────────────────────────
+
+export interface BookingPageTeamEntry {
+  id: string
+  sectionId: string
+  teamId: string
+  sortOrder: number
+  createdAt: string
+  team: {
+    id: string
+    name: string
+    description: string | null
+    publicBookingSlug: string | null
+    isActive: boolean
+  }
+}
+
+export interface BookingPageSection {
+  id: string
+  bookingPageId: string
+  sessionTypeId: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  sessionType: SessionType
+  teams: BookingPageTeamEntry[]
+}
+
+export interface BookingPage {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  isActive: boolean
+  createdById: string
+  updatedById: string
+  createdAt: string
+  updatedAt: string
+  sections: BookingPageSection[]
+}
+
+export interface CreateBookingPageDto {
+  slug: string
+  name: string
+  description?: string
+  isActive?: boolean
+}
+
+export interface UpdateBookingPageDto extends Partial<CreateBookingPageDto> {}
+
+export interface AddBookingPageSectionDto {
+  sessionTypeId: string
+  sortOrder?: number
+}
+
+export interface AddBookingPageTeamDto {
+  teamId: string
+  sortOrder?: number
+}
+
+// ─── Public Booking Page Types ────────────────────────────────────────────────
+
+export interface PublicSessionType {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  sortOrder: number
+}
+
+export interface PublicBookingPageTeam {
+  team: PublicTeamSummary
+  events: PublicEventSummary[]
+}
+
+export interface PublicBookingPageSection {
+  sessionType: PublicSessionType
+  teams: PublicBookingPageTeam[]
+}
+
+export interface PublicBookingPageData {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  sections: PublicBookingPageSection[]
 }
 
 // ─── Communication ────────────────────────────────────────────────────────────

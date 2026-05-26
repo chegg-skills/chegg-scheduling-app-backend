@@ -62,6 +62,11 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/booking-pages/slug/:slug")
+  .get(validate(PublicSlugSchema), PublicController.getPublicBookingPage)
+  .all(methodNotAllowed);
+
+router
   .route("/bookings/:id")
   .get(validate(GetPublicBookingSchema), PublicController.getPublicBooking)
   .all(methodNotAllowed);

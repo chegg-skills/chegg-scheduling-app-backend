@@ -6,7 +6,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { Check, Copy, ExternalLink, Link2 } from 'lucide-react'
 
 interface PublicBookingLinkCellProps {
-  type: 'coach' | 'team' | 'event'
+  type: 'coach' | 'team' | 'event' | 'page'
   slug: string | null | undefined
   isActive?: boolean
 }
@@ -17,6 +17,11 @@ export function PublicBookingLinkCell({ type, slug, isActive = true }: PublicBoo
 
   const shareUrl = useMemo(() => {
     if (!slug || typeof window === 'undefined') return ''
+    if (type === 'page') {
+      return slug === 'default'
+        ? `${window.location.origin}/book`
+        : `${window.location.origin}/book/page/${slug}`
+    }
     return `${window.location.origin}/book/${type}/${slug}`
   }, [type, slug])
 

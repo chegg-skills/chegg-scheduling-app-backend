@@ -15,9 +15,10 @@ import {
 import { FormField } from '@/components/shared/form/FormField'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { useEventTypes } from '@/hooks/queries/useEventTypes'
+import { useSessionTypes } from '@/hooks/queries/useSessionTypes'
 import { INTERACTION_TYPE_OPTIONS } from '@/constants/interactionTypes'
 import type { EventFormValues } from './eventFormSchema'
-import type { InteractionType } from '@/types'
+import type { InteractionType, SessionType } from '@/types'
 
 const filter = createFilterOptions<EventTypeOption>()
 
@@ -34,8 +35,10 @@ export function EventResourceFields() {
     formState: { errors },
   } = useFormContext<EventFormValues>()
   const { data: allEventTypes = [], isLoading } = useEventTypes()
+  const { data: allSessionTypes = [], isLoading: sessionTypesLoading } = useSessionTypes()
 
   const eventTypes = allEventTypes.filter((et) => et.isActive)
+  const activeSessionTypes = allSessionTypes.filter((st) => st.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
 
   return (
@@ -124,6 +127,48 @@ export function EventResourceFields() {
                         borderColor: 'divider',
                       },
                     },
+                  }}
+                />
+              )}
+            />
+          )}
+        />
+      </FormField>
+
+      <FormField
+        label="Session type"
+        htmlFor="sessionTypeId"
+        error={errors.sessionTypeId?.message}
+        info="Optional. Links this event to a public session category (e.g. 'One-to-One Tutoring'). When linked, the event will appear on the booking page if this team is configured there."
+      >
+        <Controller
+          name="sessionTypeId"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              value={activeSessionTypes.find((st) => st.id === field.value) ?? null}
+              onChange={(_event, newValue: SessionType | null) => {
+                field.onChange(newValue?.id ?? null)
+              }}
+              id="sessionTypeId"
+              options={activeSessionTypes}
+              getOptionLabel={(option) => option.name}
+              sx={{ width: '100%' }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="None (not linked to a session category)"
+                  size="small"
+                  error={!!errors.sessionTypeId}
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {sessionTypesLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                    sx: { borderRadius: 1.5, '& fieldset': { borderColor: 'divider' } },
                   }}
                 />
               )}

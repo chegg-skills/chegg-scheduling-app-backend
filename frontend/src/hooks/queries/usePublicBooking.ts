@@ -199,3 +199,4 @@ export function usePublicSlots(
     enabled: !!eventId && !!startDate && !!endDate,
   })
 }
+

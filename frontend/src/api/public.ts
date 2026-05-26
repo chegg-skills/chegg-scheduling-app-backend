@@ -6,6 +6,7 @@ import type {
   PublicEventSummary,
   PublicTeamSummary,
   PublicGroupSummary,
+  PublicBookingPageData,
 } from '@/types'
 
 export interface ListPublicTeamsResponse {
@@ -121,4 +122,10 @@ export const publicApi = {
       params: options?.mode ? { mode: options.mode } : undefined,
       signal: options?.signal,
     }),
+
+  getBookingPageBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ bookingPage: PublicBookingPageData }>>(
+      `/public/booking-pages/slug/${slug}`,
+      { signal }
+    ),
 }

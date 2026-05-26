@@ -83,6 +83,21 @@ const PublicBookingPage = lazy(() =>
     default: module.PublicBookingPage,
   }))
 )
+const PublicBookingPageDirectory = lazy(() =>
+  import('@/pages/public/PublicBookingPageDirectory').then((module) => ({
+    default: module.PublicBookingPageDirectory,
+  }))
+)
+const SessionTypesPage = lazy(() =>
+  import('@/pages/SessionTypesPage').then((module) => ({
+    default: module.SessionTypesPage,
+  }))
+)
+const BookingPagesPage = lazy(() =>
+  import('@/pages/BookingPagesPage').then((module) => ({
+    default: module.BookingPagesPage,
+  }))
+)
 const StudentsPage = lazy(() =>
   import('@/pages/StudentsPage').then((module) => ({
     default: module.StudentsPage,
@@ -164,7 +179,8 @@ export const router = createBrowserRouter([
     path: '/book',
     element: <PublicLayout maxWidth="lg" />,
     children: [
-      { path: '', element: renderLazyPage(PublicBookingPage) },
+      { path: '', element: renderLazyPage(PublicBookingPageDirectory) },
+      { path: 'page/:pageSlug', element: renderLazyPage(PublicBookingPageDirectory) },
       { path: 'team/:teamSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'event/:eventSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'coach/:coachSlug', element: renderLazyPage(PublicBookingPage) },
@@ -213,6 +229,8 @@ export const router = createBrowserRouter([
           { path: '/students', element: renderLazyPage(StudentsPage) },
 
           { path: '/students/:studentId', element: renderLazyPage(StudentDetailPage) },
+          { path: '/session-types', element: renderLazyPage(SessionTypesPage) },
+          { path: '/booking-pages', element: renderLazyPage(BookingPagesPage) },
         ],
       },
     ],
