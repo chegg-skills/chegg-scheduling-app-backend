@@ -11,15 +11,24 @@ export function sanitizeHtml(html: string): string {
 
   return sanitizeHtmlLib(html, {
     allowedTags: [
-      "b", "strong",
-      "i", "em",
+      "b",
+      "strong",
+      "i",
+      "em",
       "u",
-      "s", "strike",
+      "s",
+      "strike",
       "a",
-      "p", "br",
-      "ul", "ol", "li",
-      "span", "div",
-      "h1", "h2", "h3",
+      "p",
+      "br",
+      "ul",
+      "ol",
+      "li",
+      "span",
+      "div",
+      "h1",
+      "h2",
+      "h3",
       "blockquote",
     ],
     allowedAttributes: {
@@ -45,4 +54,3 @@ export function sanitizeHtml(html: string): string {
     },
   }).trim();
 }
-

@@ -122,7 +122,7 @@ const listTeamMembers = async (
   teamId: string,
   caller: CallerContext,
 ): Promise<{ members: SafeTeamMember[] }> => {
-  await getManagedTeam(teamId, caller, { 
+  await getManagedTeam(teamId, caller, {
     allowInactive: true,
     allowCoachMember: caller.role === UserRole.COACH,
   });

@@ -175,6 +175,7 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
               <BookingPageForm
                 bookingPage={activePage}
                 onSuccess={() => handleCloseManage(true)}
+                onCancel={() => handleCloseManage()}
               />
             )}
             {manageState.tab === 'sections' && (

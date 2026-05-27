@@ -4,7 +4,11 @@ import { authenticate, optionalAuthenticate, authorize } from "../../shared/midd
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { UserRole } from "@prisma/client";
 import { validate } from "../../shared/middleware/validate";
-import { bookingCreationLimiter, sensitiveLimiter, standardLimiter } from "../../shared/middleware/rateLimit";
+import {
+  bookingCreationLimiter,
+  sensitiveLimiter,
+  standardLimiter,
+} from "../../shared/middleware/rateLimit";
 import {
   BookingIdParamSchema,
   CancelBookingSchema,
@@ -64,11 +68,7 @@ router
 
 router
   .route("/:bookingId/log")
-  .get(
-    authenticate,
-    validate(BookingIdParamSchema),
-    BookingController.getBookingSessionLog,
-  )
+  .get(authenticate, validate(BookingIdParamSchema), BookingController.getBookingSessionLog)
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),

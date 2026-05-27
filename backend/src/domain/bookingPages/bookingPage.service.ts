@@ -18,7 +18,9 @@ const bookingPageInclude = Prisma.validator<Prisma.BookingPageInclude>()({
       sessionType: true,
       teams: {
         orderBy: { sortOrder: "asc" },
-        include: { team: { select: { id: true, name: true, publicBookingSlug: true, isActive: true } } },
+        include: {
+          team: { select: { id: true, name: true, publicBookingSlug: true, isActive: true } },
+        },
       },
     },
   },
@@ -55,7 +57,10 @@ const createBookingPage = async (
     });
   } catch (error) {
     return rethrowPrismaError(error, {
-      P2002: { status: StatusCodes.CONFLICT, message: "A booking page with this slug already exists." },
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "A booking page with this slug already exists.",
+      },
     });
   }
 };
@@ -131,7 +136,10 @@ const addSection = async (
     });
   } catch (error) {
     rethrowPrismaError(error, {
-      P2002: { status: StatusCodes.CONFLICT, message: "This session type is already on the booking page." },
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "This session type is already on the booking page.",
+      },
       P2003: { status: StatusCodes.NOT_FOUND, message: "Booking page not found." },
     });
   }

@@ -67,7 +67,7 @@ export function SessionTypesPage() {
         <SessionTypeTable sessionTypes={sessionTypes} />
 
         <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create session type">
-          <SessionTypeForm onSuccess={() => setShowCreate(false)} />
+          <SessionTypeForm onSuccess={() => setShowCreate(false)} onCancel={() => setShowCreate(false)} />
         </Modal>
       </Box>
     </Box>

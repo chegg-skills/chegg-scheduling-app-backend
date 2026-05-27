@@ -3,11 +3,11 @@ import rateLimit from "express-rate-limit";
 type RateLimitOptions = NonNullable<Parameters<typeof rateLimit>[0]>;
 
 const isTestRuntime = process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID !== undefined;
-const isDevRuntime = process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production";
+const isDevRuntime =
+  process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production";
 
 const shouldBypassRateLimit =
-  (isTestRuntime && process.env.ENABLE_RATE_LIMITS_IN_TEST !== "true") ||
-  isDevRuntime;
+  (isTestRuntime && process.env.ENABLE_RATE_LIMITS_IN_TEST !== "true") || isDevRuntime;
 
 const withTestBypass = <T extends RateLimitOptions>(options: T): T => ({
   ...options,

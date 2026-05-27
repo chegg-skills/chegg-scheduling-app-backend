@@ -5,9 +5,9 @@ import Divider from '@mui/material/Divider'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import Paper from '@mui/material/Paper'
-import { useNavigate, useParams, useOutletContext, useSearchParams, useLocation } from 'react-router-dom'
+import { useNavigate, useParams, useOutletContext, useSearchParams } from 'react-router-dom'
 import { Users, BookOpen, Tag, ChevronLeft, Calendar, ArrowRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { usePublicBookingPageBySlug } from '@/hooks/queries/usePublicBookingPage'
 import LogoOrange from '@/assets/Color=Orange.svg'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
@@ -16,52 +16,48 @@ import { EventCard } from '@/components/public/booking/EventCard'
 
 export function PublicBookingPageDirectory() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const { pageSlug } = useParams<{ pageSlug?: string }>()
+  const { pageSlug, sessionTypeSlug, teamSlug } = useParams<{
+    pageSlug?: string
+    sessionTypeSlug?: string
+    teamSlug?: string
+  }>()
   const outletCtx = useOutletContext<PublicLayoutOutletContext | null>()
 
   const slug = pageSlug ?? 'default'
   const { data: bookingPage, isLoading, error } = usePublicBookingPageBySlug(slug)
 
-  // Track if this was opened directly as a dedicated session page on initial mount
-  const [isDirectSessionPage] = useState(() => {
-    const params = new URLSearchParams(location.search)
-    return params.has('category')
-  })
+  // Legacy redirect: old query-param URLs (?category=slug&team=slug or ?category=UUID)
+  // are redirected to the path-based equivalent /book/sessions/:sessionTypeSlug/:teamSlug
+  const [searchParams] = useSearchParams()
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  useEffect(() => {
+    const categoryParam = searchParams.get('category')
+    const teamParam = searchParams.get('team')
+    if (!categoryParam && !teamParam) return
+    if (!bookingPage) return
 
-  // URL query state to track selected session type ID and team ID for the progressive drill-down views
-  const [searchParams, setSearchParams] = useSearchParams()
-  const selectedSessionTypeId = searchParams.get('category')
-  const selectedTeamId = searchParams.get('team')
+    const resolveCategory = () => {
+      if (!categoryParam) return null
+      if (!UUID_RE.test(categoryParam)) return categoryParam
+      return bookingPage.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType.slug ?? null
+    }
+    const resolvedCategory = resolveCategory()
+    if (!resolvedCategory) { navigate('/book/sessions', { replace: true }); return }
 
-  const setSelectedSessionTypeId = (id: string | null) => {
-    setSearchParams(
-      (prev) => {
-        if (id) {
-          prev.set('category', id)
-        } else {
-          prev.delete('category')
-          prev.delete('team') // Clear team selection when returning to categories
-        }
-        return prev
-      },
-      { replace: false }
-    )
-  }
+    const resolveTeam = () => {
+      if (!teamParam) return null
+      if (!UUID_RE.test(teamParam)) return teamParam
+      const section = bookingPage.sections.find((s) => s.sessionType.slug === resolvedCategory)
+      return section?.teams.find((t) => t.team.id === teamParam)?.team.publicBookingSlug ?? null
+    }
+    const resolvedTeam = resolveTeam()
 
-  const setSelectedTeamId = (id: string | null) => {
-    setSearchParams(
-      (prev) => {
-        if (id) {
-          prev.set('team', id)
-        } else {
-          prev.delete('team')
-        }
-        return prev
-      },
-      { replace: false }
-    )
-  }
+    const dest = resolvedTeam
+      ? `/book/sessions/${resolvedCategory}/${resolvedTeam}`
+      : `/book/sessions/${resolvedCategory}`
+    navigate(dest, { replace: true })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingPage])
 
   useEffect(() => {
     outletCtx?.setFramed(true)
@@ -111,15 +107,47 @@ export function PublicBookingPageDirectory() {
   // Filter out any categories/sections that do not have participating teams to prevent dead-end navigation
   const visibleSections = bookingPage.sections.filter((s) => s.teams.length > 0)
 
-  // Find the selected section if any
-  const selectedSection = bookingPage.sections.find(
-    (s) => s.sessionType.id === selectedSessionTypeId
-  )
+  // Find the selected section and team from path params
+  const selectedSection = sessionTypeSlug
+    ? bookingPage.sections.find((s) => s.sessionType.slug === sessionTypeSlug)
+    : undefined
 
-  // Find the selected team entry if any
-  const selectedTeamEntry = selectedSection?.teams.find(
-    (t) => t.team.id === selectedTeamId
-  )
+  const selectedTeamEntry = teamSlug
+    ? selectedSection?.teams.find((t) => t.team.publicBookingSlug === teamSlug)
+    : undefined
+
+  // A slug in the URL that doesn't match any known entity is a 404, not a silent fallback
+  if (sessionTypeSlug && !selectedSection) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 320, textAlign: 'center', px: 4 }}>
+        <Box component="img" src={LogoOrange} alt="Chegg Skills" sx={{ height: 32, mb: 3, opacity: 0.5 }} />
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Session category not found</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          The session category <strong>{sessionTypeSlug}</strong> doesn't exist or is no longer available.
+        </Typography>
+        <Box role="button" tabIndex={0} onClick={() => navigate('/book/sessions')} sx={{ color: 'primary.main', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { textDecoration: 'underline' } }}>
+          <ChevronLeft size={16} style={{ marginRight: 6 }} />
+          Back to all session categories
+        </Box>
+      </Box>
+    )
+  }
+
+  if (teamSlug && !selectedTeamEntry) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 320, textAlign: 'center', px: 4 }}>
+        <Box component="img" src={LogoOrange} alt="Chegg Skills" sx={{ height: 32, mb: 3, opacity: 0.5 }} />
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Team not found</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          The team <strong>{teamSlug}</strong> doesn't exist under this session category or is no longer available.
+        </Typography>
+        <Box role="button" tabIndex={0} onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)} sx={{ color: 'primary.main', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { textDecoration: 'underline' } }}>
+          <ChevronLeft size={16} style={{ marginRight: 6 }} />
+          Back to teams
+        </Box>
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ height: '100%', overflow: 'auto' }}>
@@ -180,7 +208,7 @@ export function PublicBookingPageDirectory() {
             <Box
               role="button"
               tabIndex={0}
-              onClick={() => setSelectedTeamId(null)}
+              onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)}
               sx={{
                 mb: 4,
                 display: 'inline-flex',
@@ -264,11 +292,10 @@ export function PublicBookingPageDirectory() {
         ) : selectedSection ? (
           /* Step 2: Team List View */
           <Box>
-            {!isDirectSessionPage && (
-              <Box
+            <Box
                 role="button"
                 tabIndex={0}
-                onClick={() => setSelectedSessionTypeId(null)}
+                onClick={() => navigate('/book/sessions')}
                 sx={{
                   mb: 4,
                   display: 'inline-flex',
@@ -285,8 +312,7 @@ export function PublicBookingPageDirectory() {
               >
                 <ChevronLeft size={16} style={{ marginRight: 6 }} />
                 Back to all session categories
-              </Box>
-            )}
+            </Box>
 
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
@@ -348,7 +374,7 @@ export function PublicBookingPageDirectory() {
                   <Paper
                     key={entry.team.id}
                     variant="outlined"
-                    onClick={() => setSelectedTeamId(entry.team.id)}
+                    onClick={() => navigate(`/book/sessions/${sessionTypeSlug}/${entry.team.publicBookingSlug ?? entry.team.id}`)}
                     sx={{
                       p: 3,
                       borderRadius: 1.5,
@@ -524,7 +550,7 @@ export function PublicBookingPageDirectory() {
                   <Paper
                     key={sessionType.id}
                     variant="outlined"
-                    onClick={() => setSelectedSessionTypeId(section.sessionType.id)}
+                    onClick={() => navigate(`/book/sessions/${section.sessionType.slug}`)}
                     sx={{
                       p: 3,
                       borderRadius: 1.5,

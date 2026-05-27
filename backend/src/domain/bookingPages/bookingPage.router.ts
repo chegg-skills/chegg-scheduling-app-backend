@@ -24,11 +24,7 @@ router
     validate(CreateBookingPageSchema),
     bookingPageController.createBookingPage,
   )
-  .get(
-    authenticate,
-    authorize(UserRole.SUPER_ADMIN),
-    bookingPageController.listBookingPages,
-  )
+  .get(authenticate, authorize(UserRole.SUPER_ADMIN), bookingPageController.listBookingPages)
   .all(methodNotAllowed);
 
 router

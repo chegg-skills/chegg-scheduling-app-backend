@@ -25,9 +25,10 @@ type FormValues = z.infer<typeof schema>
 interface EventTypeFormProps {
   eventType?: EventType
   onSuccess?: () => void
+  onCancel?: () => void
 }
 
-export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
+export function EventTypeForm({ eventType, onSuccess, onCancel }: EventTypeFormProps) {
   const isEdit = !!eventType
   const { mutate: create, isPending: creating, error: createError } = useCreateEventType()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateEventType()
@@ -112,7 +113,12 @@ export function EventTypeForm({ eventType, onSuccess }: EventTypeFormProps) {
           />
         </FormField>
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
+        <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ pt: 1 }}>
+          {onCancel && (
+            <Button type="button" variant="secondary" onClick={onCancel} disabled={isPending}>
+              Cancel
+            </Button>
+          )}
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
             {isEdit ? 'Save changes' : 'Create event type'}
           </Button>

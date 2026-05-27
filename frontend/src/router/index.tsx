@@ -181,6 +181,9 @@ export const router = createBrowserRouter([
     children: [
       { path: '', element: renderLazyPage(PublicBookingPageDirectory) },
       { path: 'page/:pageSlug', element: renderLazyPage(PublicBookingPageDirectory) },
+      { path: 'sessions', element: renderLazyPage(PublicBookingPageDirectory) },
+      { path: 'sessions/:sessionTypeSlug', element: renderLazyPage(PublicBookingPageDirectory) },
+      { path: 'sessions/:sessionTypeSlug/:teamSlug', element: renderLazyPage(PublicBookingPageDirectory) },
       { path: 'team/:teamSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'event/:eventSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'coach/:coachSlug', element: renderLazyPage(PublicBookingPage) },

@@ -25,7 +25,7 @@ const mockBookingPage = {
   sections: [
     {
       sessionType: {
-        id: 'st-1',
+        id: '11111111-2222-3333-4444-555555555555',
         slug: 'one-to-one',
         name: '1-to-1 Tutoring Session',
         description: 'Personalized engineering mentorship.',
@@ -34,7 +34,7 @@ const mockBookingPage = {
       teams: [
         {
           team: {
-            id: 'team-1',
+            id: '6314a78c-19f7-4e0c-8f4c-200296e75858',
             name: 'Cyber Security Team',
             publicBookingSlug: 'cyber-sec',
             isActive: true,
@@ -58,7 +58,7 @@ const mockBookingPage = {
 
 const handlers = [
   http.get('*/api/public/booking-pages/slug/:slug', ({ params }) => {
-    if (params.slug === 'eng-academy') {
+    if (params.slug === 'eng-academy' || params.slug === 'default') {
       return HttpResponse.json({
         success: true,
         data: { bookingPage: mockBookingPage },
@@ -70,7 +70,7 @@ const handlers = [
 
 function LocationDisplay() {
   const location = useLocation()
-  return <div data-testid="location-display" style={{ display: 'none' }}>{location.search}</div>
+  return <div data-testid="location-display" style={{ display: 'none' }}>{location.pathname + location.search}</div>
 }
 
 function renderDirectoryPage(slug = 'eng-academy') {
@@ -78,6 +78,33 @@ function renderDirectoryPage(slug = 'eng-academy') {
     <Routes>
       <Route
         path="/book/page/:pageSlug"
+        element={
+          <>
+            <PublicBookingPageDirectory />
+            <LocationDisplay />
+          </>
+        }
+      />
+      <Route
+        path="/book/sessions"
+        element={
+          <>
+            <PublicBookingPageDirectory />
+            <LocationDisplay />
+          </>
+        }
+      />
+      <Route
+        path="/book/sessions/:sessionTypeSlug"
+        element={
+          <>
+            <PublicBookingPageDirectory />
+            <LocationDisplay />
+          </>
+        }
+      />
+      <Route
+        path="/book/sessions/:sessionTypeSlug/:teamSlug"
         element={
           <>
             <PublicBookingPageDirectory />
@@ -121,7 +148,7 @@ describe('PublicBookingPageDirectory Integration', () => {
     // 1. Step 1: Wait for category to render on the landing page
     await screen.findByText('1-to-1 Tutoring Session')
     expect(screen.getByText('1 discipline available')).toBeInTheDocument()
-    expect(screen.getByTestId('location-display')).toHaveTextContent('')
+    expect(screen.getByTestId('location-display').textContent).toContain('/book/page/eng-academy')
 
     // Verify team and events are NOT visible initially
     expect(screen.queryByText('Cyber Security Team')).toBeNull()
@@ -135,8 +162,8 @@ describe('PublicBookingPageDirectory Integration', () => {
     // 2. Step 2: Verify Team Name is visible, but events are NOT
     await screen.findByText('Cyber Security Team')
     expect(screen.queryByText('Cyber Security Mentorship')).toBeNull()
-    expect(screen.getByTestId('location-display').textContent).toContain('category=st-1')
-    expect(screen.getByTestId('location-display').textContent).not.toContain('team=')
+    expect(screen.getByTestId('location-display').textContent).toContain('/book/sessions/one-to-one')
+    expect(screen.getByTestId('location-display').textContent).not.toContain('cyber-sec')
 
     // Click team card to drill down to Step 3
     const teamCard = screen.getByText('Cyber Security Team').closest('.MuiPaper-root')
@@ -147,8 +174,7 @@ describe('PublicBookingPageDirectory Integration', () => {
     await screen.findByText('Cyber Security Mentorship')
     expect(screen.getByText('30 min')).toBeInTheDocument()
     expect(screen.getByText('Virtual')).toBeInTheDocument()
-    expect(screen.getByTestId('location-display').textContent).toContain('category=st-1')
-    expect(screen.getByTestId('location-display').textContent).toContain('team=team-1')
+    expect(screen.getByTestId('location-display').textContent).toContain('/book/sessions/one-to-one/cyber-sec')
 
     // 4. Test "Back to teams" button
     const backToTeamsBtn = screen.getByRole('button', { name: /back to teams/i })
@@ -157,8 +183,8 @@ describe('PublicBookingPageDirectory Integration', () => {
     // Verify we are back on Step 2 (Team list visible, Event hidden)
     await screen.findByText('Cyber Security Team')
     expect(screen.queryByText('Cyber Security Mentorship')).toBeNull()
-    expect(screen.getByTestId('location-display').textContent).toContain('category=st-1')
-    expect(screen.getByTestId('location-display').textContent).not.toContain('team=')
+    expect(screen.getByTestId('location-display').textContent).toContain('/book/sessions/one-to-one')
+    expect(screen.getByTestId('location-display').textContent).not.toContain('cyber-sec')
 
     // 5. Test "Back to all session categories" button
     const backToCategoriesBtn = screen.getByRole('button', { name: /back to all session categories/i })
@@ -167,7 +193,7 @@ describe('PublicBookingPageDirectory Integration', () => {
     // Verify we are back on Step 1 (Categories visible, Team hidden)
     await screen.findByText('Select a Session Category')
     expect(screen.queryByText('Cyber Security Team')).toBeNull()
-    expect(screen.getByTestId('location-display')).toHaveTextContent('')
+    expect(screen.getByTestId('location-display').textContent).toContain('/book/sessions')
   })
 
   it('routes to the slot picker wizard step when clicking an event card', async () => {
@@ -206,7 +232,7 @@ describe('PublicBookingPageDirectory Integration', () => {
       sections: [
         {
           sessionType: {
-            id: 'st-empty',
+            id: '77777777-8888-9999-0000-aaaaaaaaaaaa',
             slug: 'empty-sessions',
             name: 'Empty Session Category',
             description: 'No teams under this.',
@@ -237,8 +263,17 @@ describe('PublicBookingPageDirectory Integration', () => {
             </>
           }
         />
+        <Route
+          path="/book/sessions/:sessionTypeSlug"
+          element={
+            <>
+              <PublicBookingPageDirectory />
+              <LocationDisplay />
+            </>
+          }
+        />
       </Routes>,
-      { initialEntries: ['/book/page/eng-academy?category=st-empty'] }
+      { initialEntries: ['/book/page/eng-academy?category=77777777-8888-9999-0000-aaaaaaaaaaaa'] }
     )
 
     // Verify empty state shows up

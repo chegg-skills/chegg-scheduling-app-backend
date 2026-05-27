@@ -28,9 +28,10 @@ type FormValues = z.infer<typeof schema>
 interface SessionTypeFormProps {
   sessionType?: SessionType
   onSuccess?: () => void
+  onCancel?: () => void
 }
 
-export function SessionTypeForm({ sessionType, onSuccess }: SessionTypeFormProps) {
+export function SessionTypeForm({ sessionType, onSuccess, onCancel }: SessionTypeFormProps) {
   const isEdit = !!sessionType
   const { mutate: create, isPending: creating, error: createError } = useCreateSessionType()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateSessionType()
@@ -39,6 +40,8 @@ export function SessionTypeForm({ sessionType, onSuccess }: SessionTypeFormProps
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -60,6 +63,17 @@ export function SessionTypeForm({ sessionType, onSuccess }: SessionTypeFormProps
       })
     }
   }, [sessionType, reset])
+
+  const name = watch('name')
+  useEffect(() => {
+    if (isEdit) return
+    const derived = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    setValue('slug', derived)
+  }, [name, isEdit, setValue])
 
   function onSubmit(values: FormValues) {
     if (isEdit && sessionType) {
@@ -115,7 +129,12 @@ export function SessionTypeForm({ sessionType, onSuccess }: SessionTypeFormProps
           />
         </FormField>
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
+        <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ pt: 1 }}>
+          {onCancel && (
+            <Button type="button" variant="secondary" onClick={onCancel} disabled={isPending}>
+              Cancel
+            </Button>
+          )}
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
             {isEdit ? 'Save changes' : 'Create session type'}
           </Button>

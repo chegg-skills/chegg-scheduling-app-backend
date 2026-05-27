@@ -344,10 +344,7 @@ const listStudentSessionLogs = async (
   const where: Prisma.BookingWhereInput = {
     studentId: normalizedStudentId,
     ...accessWhere,
-    OR: [
-      { sessionLog: { isNot: null } },
-      { scheduleSlot: { sessionLog: { isNot: null } } },
-    ],
+    OR: [{ sessionLog: { isNot: null } }, { scheduleSlot: { sessionLog: { isNot: null } } }],
   };
 
   const bookings = await prisma.booking.findMany({
@@ -405,13 +402,11 @@ const listStudentSessionLogs = async (
       sessionDate: booking.startTime,
       eventName: booking.event?.name ?? "",
       interactionType: booking.event?.interactionType ?? "",
-      coachName: booking.coach
-        ? `${booking.coach.firstName} ${booking.coach.lastName}`.trim()
-        : "",
+      coachName: booking.coach ? `${booking.coach.firstName} ${booking.coach.lastName}`.trim() : "",
       attended,
       topicsDiscussed: log.topicsDiscussed ?? null,
       summary: log.summary ?? null,
-      coachNotes: canSeePrivateNotes ? log.coachNotes ?? null : null,
+      coachNotes: canSeePrivateNotes ? (log.coachNotes ?? null) : null,
       loggedBy: log.loggedBy
         ? {
             id: log.loggedBy.id,
@@ -470,10 +465,7 @@ const sendStudentEmail = async (
   return log;
 };
 
-const listStudentCommunications = async (
-  studentId: string,
-  caller: CallerContext,
-) => {
+const listStudentCommunications = async (studentId: string, caller: CallerContext) => {
   await readStudent(studentId, caller);
 
   return prisma.studentCommunicationLog.findMany({
@@ -492,10 +484,7 @@ const listStudentCommunications = async (
   });
 };
 
-const retryEmailDispatch = async (
-  logId: string,
-  caller: CallerContext,
-) => {
+const retryEmailDispatch = async (logId: string, caller: CallerContext) => {
   const originalLog = await prisma.studentCommunicationLog.findUnique({
     where: { id: logId },
   });
@@ -530,13 +519,14 @@ const retryEmailDispatch = async (
     },
   });
 
-  const senderName = `${updatedLog.sentBy.firstName} ${updatedLog.sentBy.lastName}`.trim() || "Coach";
+  const senderName =
+    `${updatedLog.sentBy.firstName} ${updatedLog.sentBy.lastName}`.trim() || "Coach";
   const textBody = updatedLog.body.replace(/<[^>]*>/g, "");
 
   await publishNotificationSafely({
     type: "STUDENT_CUSTOM_EMAIL",
     recipients: student.email,
-    notificationKey: logId,   // reuse the same key → upserts the existing notification record
+    notificationKey: logId, // reuse the same key → upserts the existing notification record
     userId: originalLog.sentById,
     variables: {
       subject: updatedLog.subject,

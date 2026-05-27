@@ -4,21 +4,39 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as bookingPageService from "./bookingPage.service";
 
-const createBookingPage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const createBookingPage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const bookingPage = await bookingPageService.createBookingPage(req.body, caller);
-    sendSuccessResponse(res, StatusCodes.CREATED, { bookingPage }, "Booking page created successfully.");
+    sendSuccessResponse(
+      res,
+      StatusCodes.CREATED,
+      { bookingPage },
+      "Booking page created successfully.",
+    );
   } catch (error) {
     next(error);
   }
 };
 
-const listBookingPages = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+const listBookingPages = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const bookingPages = await bookingPageService.listBookingPages(caller);
-    sendSuccessResponse(res, StatusCodes.OK, { bookingPages }, "Booking pages fetched successfully.");
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      { bookingPages },
+      "Booking pages fetched successfully.",
+    );
   } catch (error) {
     next(error);
   }
@@ -35,7 +53,11 @@ const getBookingPage = async (req: Request, res: Response, next: NextFunction): 
   }
 };
 
-const updateBookingPage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const updateBookingPage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { pageId } = req.params as { pageId: string };
@@ -46,7 +68,11 @@ const updateBookingPage = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-const deleteBookingPage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const deleteBookingPage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
     const { pageId } = req.params as { pageId: string };
@@ -83,19 +109,47 @@ const addTeamToSection = async (req: Request, res: Response, next: NextFunction)
   try {
     const caller = res.locals.authUser as CallerContext;
     const { pageId, sectionId } = req.params as { pageId: string; sectionId: string };
-    const bookingPage = await bookingPageService.addTeamToSection(pageId, sectionId, req.body, caller);
-    sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Team added to section successfully.");
+    const bookingPage = await bookingPageService.addTeamToSection(
+      pageId,
+      sectionId,
+      req.body,
+      caller,
+    );
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      { bookingPage },
+      "Team added to section successfully.",
+    );
   } catch (error) {
     next(error);
   }
 };
 
-const removeTeamFromSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const removeTeamFromSection = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const caller = res.locals.authUser as CallerContext;
-    const { pageId, sectionId, teamId } = req.params as { pageId: string; sectionId: string; teamId: string };
-    const bookingPage = await bookingPageService.removeTeamFromSection(pageId, sectionId, teamId, caller);
-    sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Team removed from section successfully.");
+    const { pageId, sectionId, teamId } = req.params as {
+      pageId: string;
+      sectionId: string;
+      teamId: string;
+    };
+    const bookingPage = await bookingPageService.removeTeamFromSection(
+      pageId,
+      sectionId,
+      teamId,
+      caller,
+    );
+    sendSuccessResponse(
+      res,
+      StatusCodes.OK,
+      { bookingPage },
+      "Team removed from section successfully.",
+    );
   } catch (error) {
     next(error);
   }

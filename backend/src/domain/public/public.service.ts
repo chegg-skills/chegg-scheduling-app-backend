@@ -3,7 +3,11 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { assertCancelTokenValid, assertRescheduleTokenValid, bookingInclude } from "../bookings/booking.shared";
+import {
+  assertCancelTokenValid,
+  assertRescheduleTokenValid,
+  bookingInclude,
+} from "../bookings/booking.shared";
 
 const slugSchema = z.string().trim().min(1, "Slug is required");
 

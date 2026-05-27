@@ -53,8 +53,10 @@ export function EventTable({
 
 
 
+  const shouldGroupByGroup = groupByGroup && groups && groups.length > 0
+
   const groupedEvents = useMemo(() => {
-    if (!groupByGroup) {
+    if (!shouldGroupByGroup) {
       return [{ id: 'all', name: 'All Events', color: null, events: sortedEvents }]
     }
 
@@ -91,7 +93,7 @@ export function EventTable({
     }
 
     return result
-  }, [sortedEvents, groupByGroup, groups])
+  }, [sortedEvents, shouldGroupByGroup, groups])
 
   async function handleToggleActive(event: Event) {
     const newStatus = !event.isActive
@@ -180,7 +182,7 @@ export function EventTable({
             ) : (
               groupedEvents.map((group) => (
                 <React.Fragment key={group.id}>
-                  {groupByGroup && (
+                  {shouldGroupByGroup && (
                     <TableRow
                       sx={{
                         bgcolor: (theme) => alpha(group.color ?? theme.palette.primary.main, 0.04),

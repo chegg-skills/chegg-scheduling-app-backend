@@ -22,7 +22,9 @@ async function main() {
     for (let i = 0; i < coaches.length; i++) {
       const coach = coaches[i];
       const newEmail = `itsmohit3005+coach${i + 1}@gmail.com`;
-      console.log(`Updating coach "${coach.firstName} ${coach.lastName}" (${coach.email}) ➡️ ${newEmail}...`);
+      console.log(
+        `Updating coach "${coach.firstName} ${coach.lastName}" (${coach.email}) ➡️ ${newEmail}...`,
+      );
 
       await prisma.user.update({
         where: { id: coach.id },

@@ -95,4 +95,3 @@ export async function sendEmailWithRetry(
   const errorMessage = lastError instanceof Error ? lastError.message : "Unknown error";
   throw new Error(`Failed to send email after ${maxRetries} attempts: ${errorMessage}`);
 }
-

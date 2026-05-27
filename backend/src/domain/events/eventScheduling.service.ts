@@ -503,7 +503,9 @@ const revealCoachForSlot = async (
   payload: { coachUserId?: string; sessionJoinUrl?: string | null },
   caller: CallerContext,
 ): Promise<EventScheduleSlot> => {
-  const event = await getManagedEvent(eventId, caller, { allowCoachMember: caller.role === UserRole.COACH });
+  const event = await getManagedEvent(eventId, caller, {
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
 
   if (!event.deferCoachReveal) {
     throw new ErrorHandler(
@@ -541,10 +543,7 @@ const revealCoachForSlot = async (
   }
 
   if (caller.role === UserRole.COACH && finalCoachId !== caller.id) {
-    throw new ErrorHandler(
-      StatusCodes.FORBIDDEN,
-      "Coaches may only reveal themselves for a slot.",
-    );
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "Coaches may only reveal themselves for a slot.");
   }
 
   const coachInPool = event.coaches.some((ec) => ec.coachUserId === finalCoachId);
@@ -613,7 +612,9 @@ const getCoachAvailabilityForSlot = async (
   slotId: string,
   caller: CallerContext,
 ) => {
-  const event = await getManagedEvent(eventId, caller, { allowCoachMember: caller.role === UserRole.COACH });
+  const event = await getManagedEvent(eventId, caller, {
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
 
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId, eventId },

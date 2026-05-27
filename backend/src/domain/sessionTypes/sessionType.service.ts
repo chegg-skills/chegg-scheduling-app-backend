@@ -45,7 +45,10 @@ const createSessionType = async (
     });
   } catch (error) {
     return rethrowPrismaError(error, {
-      P2002: { status: StatusCodes.CONFLICT, message: "A session type with this slug already exists." },
+      P2002: {
+        status: StatusCodes.CONFLICT,
+        message: "A session type with this slug already exists.",
+      },
     });
   }
 };
@@ -118,4 +121,10 @@ const deleteSessionType = async (sessionTypeId: string, caller: CallerContext): 
   });
 };
 
-export { createSessionType, listSessionTypes, getSessionType, updateSessionType, deleteSessionType };
+export {
+  createSessionType,
+  listSessionTypes,
+  getSessionType,
+  updateSessionType,
+  deleteSessionType,
+};

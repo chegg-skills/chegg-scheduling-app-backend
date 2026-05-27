@@ -160,10 +160,7 @@ const authorizeUserRead = (req: Request, res: Response, next: NextFunction): voi
   }
 
   next(
-    new ErrorHandler(
-      StatusCodes.FORBIDDEN,
-      "You do not have permission to perform this action.",
-    ),
+    new ErrorHandler(StatusCodes.FORBIDDEN, "You do not have permission to perform this action."),
   );
 };
 

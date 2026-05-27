@@ -27,9 +27,10 @@ type FormValues = z.infer<typeof schema>
 interface BookingPageFormProps {
   bookingPage?: BookingPage
   onSuccess?: (pageId?: string) => void
+  onCancel?: () => void
 }
 
-export function BookingPageForm({ bookingPage, onSuccess }: BookingPageFormProps) {
+export function BookingPageForm({ bookingPage, onSuccess, onCancel }: BookingPageFormProps) {
   const isEdit = !!bookingPage
   const { mutate: create, isPending: creating, error: createError } = useCreateBookingPage()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateBookingPage()
@@ -98,7 +99,12 @@ export function BookingPageForm({ bookingPage, onSuccess }: BookingPageFormProps
           <Textarea id="description" rows={3} {...register('description')} />
         </FormField>
 
-        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
+        <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ pt: 1 }}>
+          {onCancel && (
+            <Button type="button" variant="secondary" onClick={onCancel} disabled={isPending}>
+              Cancel
+            </Button>
+          )}
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
             {isEdit ? 'Save changes' : 'Create booking page'}
           </Button>

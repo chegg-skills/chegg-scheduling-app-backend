@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import type { Breakpoint } from '@mui/material'
+import { ConsentNotice } from '../public/ConsentNotice'
 
 interface PublicLayoutProps {
   maxWidth?: Breakpoint
@@ -44,6 +45,7 @@ export function PublicLayout({ maxWidth = 'md' }: PublicLayoutProps) {
           <Outlet context={{ setFramed: setIsFramed }} />
         </Box>
       </Container>
+      <ConsentNotice />
     </Box>
   )
 }

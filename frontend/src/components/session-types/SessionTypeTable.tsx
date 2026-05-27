@@ -195,7 +195,7 @@ export function SessionTypeTable({ sessionTypes }: SessionTypeTableProps) {
 
       {editing && (
         <Modal isOpen onClose={() => setEditing(null)} title={`Edit "${editing.name}"`}>
-          <SessionTypeForm sessionType={editing} onSuccess={() => setEditing(null)} />
+          <SessionTypeForm sessionType={editing} onSuccess={() => setEditing(null)} onCancel={() => setEditing(null)} />
         </Modal>
       )}
     </>

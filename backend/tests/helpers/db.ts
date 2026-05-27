@@ -21,4 +21,3 @@ export const clearTables = async (): Promise<void> => {
   await prisma.userInvite.deleteMany();
   await prisma.user.deleteMany();
 };
-

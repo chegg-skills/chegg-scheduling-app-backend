@@ -877,18 +877,14 @@ describe("Booking Domain Integration Tests", () => {
     });
 
     it("does NOT rotate the rescheduleToken after cancellation", async () => {
-      await request(app)
-        .post(`/api/bookings/${bookingId}/cancel`)
-        .send({ token: cancelToken });
+      await request(app).post(`/api/bookings/${bookingId}/cancel`).send({ token: cancelToken });
 
       const updated = await prisma.booking.findUnique({ where: { id: bookingId } });
       expect(updated!.rescheduleToken).toBe(cancelToken);
     });
 
     it("returns 409 when booking is already cancelled", async () => {
-      await request(app)
-        .post(`/api/bookings/${bookingId}/cancel`)
-        .send({ token: cancelToken });
+      await request(app).post(`/api/bookings/${bookingId}/cancel`).send({ token: cancelToken });
 
       const res = await request(app)
         .post(`/api/bookings/${bookingId}/cancel`)
@@ -917,9 +913,7 @@ describe("Booking Domain Integration Tests", () => {
     });
 
     it("returns 401 when neither session auth nor token is provided", async () => {
-      const res = await request(app)
-        .post(`/api/bookings/${bookingId}/cancel`)
-        .send({});
+      const res = await request(app).post(`/api/bookings/${bookingId}/cancel`).send({});
 
       expect(res.status).toBe(401);
     });

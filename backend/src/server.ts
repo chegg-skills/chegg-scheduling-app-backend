@@ -69,4 +69,3 @@ start().catch((error) => {
 });
 
 // Force hot-reload to load fresh Prisma Client with updated database schema
-

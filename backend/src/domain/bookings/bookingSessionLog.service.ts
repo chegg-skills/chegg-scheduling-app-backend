@@ -91,10 +91,7 @@ export const upsertBookingSessionLog = async (
   }
 
   if (new Date(booking.startTime).getTime() > Date.now()) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Cannot log a session before it has started.",
-    );
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Cannot log a session before it has started.");
   }
 
   assertBookingLogAccess(booking, caller);
@@ -128,10 +125,7 @@ export const upsertBookingSessionLog = async (
         update: { attended: payload.attended },
       });
 
-      if (
-        booking.status !== BookingStatus.CANCELLED &&
-        booking.status !== BookingStatus.PENDING
-      ) {
+      if (booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.PENDING) {
         await tx.booking.update({
           where: { id: bookingId },
           data: {

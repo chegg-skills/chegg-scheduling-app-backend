@@ -124,11 +124,7 @@ export const upsertBookingSessionLog = async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const caller = res.locals.authUser as CallerContext;
 
-  const log = await BookingSessionLogService.upsertBookingSessionLog(
-    bookingId,
-    req.body,
-    caller,
-  );
+  const log = await BookingSessionLogService.upsertBookingSessionLog(bookingId, req.body, caller);
 
   return sendSuccessResponse(res, StatusCodes.OK, log, "Booking session log saved successfully.");
 };
@@ -139,10 +135,7 @@ export const cancelBooking = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext | undefined;
 
   if (!caller && !token) {
-    throw new ErrorHandler(
-      StatusCodes.UNAUTHORIZED,
-      "Authentication or cancel token is required.",
-    );
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Authentication or cancel token is required.");
   }
 
   if (caller && !token) {
@@ -155,7 +148,11 @@ export const cancelBooking = async (req: Request, res: Response) => {
     }
   }
 
-  const booking = await BookingService.cancelBooking(bookingId, { token, cancellationReason }, caller);
+  const booking = await BookingService.cancelBooking(
+    bookingId,
+    { token, cancellationReason },
+    caller,
+  );
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking cancelled successfully.");
 };

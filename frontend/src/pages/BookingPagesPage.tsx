@@ -117,7 +117,7 @@ export function BookingPagesPage() {
         />
 
         <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create booking page">
-          <BookingPageForm onSuccess={() => setShowCreate(false)} />
+          <BookingPageForm onSuccess={() => setShowCreate(false)} onCancel={() => setShowCreate(false)} />
         </Modal>
       </Box>
     </Box>

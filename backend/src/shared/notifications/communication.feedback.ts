@@ -28,7 +28,9 @@ export async function startFeedbackConsumer(): Promise<void> {
 
     await channel.bindQueue(FEEDBACK_QUEUE, FEEDBACK_EXCHANGE, FEEDBACK_ROUTING_KEY);
 
-    logger.info(`[FeedbackConsumer] Subscribed and waiting for messages in queue: ${FEEDBACK_QUEUE}`);
+    logger.info(
+      `[FeedbackConsumer] Subscribed and waiting for messages in queue: ${FEEDBACK_QUEUE}`,
+    );
 
     await channel.consume(FEEDBACK_QUEUE, async (msg) => {
       if (!msg) return;
@@ -48,7 +50,9 @@ export async function startFeedbackConsumer(): Promise<void> {
             },
           });
 
-          logger.info(`[FeedbackConsumer] Successfully updated database status to ${status} for log: ${communicationLogId}`);
+          logger.info(
+            `[FeedbackConsumer] Successfully updated database status to ${status} for log: ${communicationLogId}`,
+          );
         }
 
         channel.ack(msg);
