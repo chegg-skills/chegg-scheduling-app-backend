@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
-import type { CallerContext } from "../../shared/utils/userUtils";
+import { requireAuthUser } from "../../shared/utils/userUtils";
 import * as sessionTypeService from "./sessionType.service";
 
 const createSessionType = async (
@@ -10,7 +10,7 @@ const createSessionType = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const sessionType = await sessionTypeService.createSessionType(req.body, caller);
     sendSuccessResponse(
       res,
@@ -57,7 +57,7 @@ const updateSessionType = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { sessionTypeId } = req.params as { sessionTypeId: string };
     const sessionType = await sessionTypeService.updateSessionType(sessionTypeId, req.body, caller);
     sendSuccessResponse(res, StatusCodes.OK, { sessionType }, "Session type updated successfully.");
@@ -72,7 +72,7 @@ const deleteSessionType = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { sessionTypeId } = req.params as { sessionTypeId: string };
     await sessionTypeService.deleteSessionType(sessionTypeId, caller);
     res.status(StatusCodes.NO_CONTENT).send();

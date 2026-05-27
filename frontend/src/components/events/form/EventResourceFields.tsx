@@ -164,7 +164,9 @@ export function EventResourceFields() {
                     ...params.InputProps,
                     endAdornment: (
                       <>
-                        {sessionTypesLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {sessionTypesLoading ? (
+                          <CircularProgress color="inherit" size={20} />
+                        ) : null}
                         {params.InputProps.endAdornment}
                       </>
                     ),

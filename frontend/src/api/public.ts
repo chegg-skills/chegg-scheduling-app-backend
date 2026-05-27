@@ -88,9 +88,12 @@ export const publicApi = {
     apiClient.get<ApiResponse<GetPublicGroupResponse>>(`/public/groups/slug/${slug}`, { signal }),
 
   listGroupEventsBySlug: (slug: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<ListGroupEventsBySlugResponse>>(`/public/groups/slug/${slug}/events`, {
-      signal,
-    }),
+    apiClient.get<ApiResponse<ListGroupEventsBySlugResponse>>(
+      `/public/groups/slug/${slug}/events`,
+      {
+        signal,
+      }
+    ),
 
   getEventBySlug: (slug: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<GetPublicEventResponse>>(`/public/events/slug/${slug}`, { signal }),

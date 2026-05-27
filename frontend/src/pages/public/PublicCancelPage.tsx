@@ -1,5 +1,11 @@
 import * as React from 'react'
-import { useParams, useSearchParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom'
+import {
+  useParams,
+  useSearchParams,
+  useNavigate,
+  useLocation,
+  useOutletContext,
+} from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   Box,
@@ -7,20 +13,12 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Paper,
-  Stack,
   Radio,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
-import {
-  XCircle,
-  AlertTriangle,
-  Check,
-} from 'lucide-react'
-
 import { publicApi } from '@/api/public'
 import { bookingsApi } from '@/api/bookings'
 import { extractApiError, getApiStatus } from '@/utils/apiError'
+import type { PublicBooking } from '@/types'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
@@ -30,7 +28,9 @@ import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHe
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeader'
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
-import LogoOrange from '@/assets/Color=Orange.svg'
+import { SuccessView } from '@/components/public/cancel/SuccessView'
+import { AlreadyCancelledView } from '@/components/public/cancel/AlreadyCancelledView'
+import { InvalidLinkView } from '@/components/public/cancel/InvalidLinkView'
 
 const cancellationOptions = [
   { value: 'conflict', label: 'Schedule conflict / Need to reschedule' },
@@ -91,9 +91,7 @@ export function PublicCancelPage() {
   } = useQuery({
     queryKey: ['public', 'cancel', bookingId, token],
     queryFn: ({ signal }) =>
-      publicApi
-        .getBooking(bookingId, token, { signal })
-        .then((r) => r.data.data?.booking),
+      publicApi.getBooking(bookingId, token, { signal }).then((r) => r.data.data?.booking as PublicBooking | undefined),
     enabled: !!bookingId && !!token,
     retry: false,
   })
@@ -106,7 +104,11 @@ export function PublicCancelPage() {
     return option ? option.label : ''
   }
 
-  const { mutate: confirmCancel, isPending: isSubmitting, error: cancelError } = useMutation({
+  const {
+    mutate: confirmCancel,
+    isPending: isSubmitting,
+    error: cancelError,
+  } = useMutation({
     mutationFn: () =>
       bookingsApi.cancel(bookingId, {
         token,
@@ -120,8 +122,7 @@ export function PublicCancelPage() {
   const isAlreadyCancelled = fetchStatus === 409 || cancelStatus === 409
 
   const isConfirmDisabled =
-    !selectedOption ||
-    (selectedOption === 'other' && !cancellationReason.trim())
+    !selectedOption || (selectedOption === 'other' && !cancellationReason.trim())
 
   // Loading or token missing
   if (!token) {
@@ -130,7 +131,13 @@ export function PublicCancelPage() {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" bgcolor="background.default">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+        bgcolor="background.default"
+      >
         <CircularProgress />
       </Box>
     )
@@ -177,15 +184,15 @@ export function PublicCancelPage() {
           scope="event"
           customHeading="Cancel your session"
           customSubtitle="Please review details of your booking below before confirming."
-          eventDetails={booking?.event as any}
-          coachDetails={booking?.coach as any}
+          eventDetails={booking?.event}
+          coachDetails={booking?.coach}
         />
 
         <PublicBookingSummary
           title="Current session details"
           variant="current"
-          eventDetails={booking?.event as any}
-          coachDetails={booking?.coach as any}
+          eventDetails={booking?.event}
+          coachDetails={booking?.coach}
           selectedDate={booking ? new Date(booking.startTime) : null}
           selectedSlot={booking?.startTime || null}
           selectedTimezone={booking?.timezone || 'UTC'}
@@ -200,15 +207,15 @@ export function PublicCancelPage() {
             scope="event"
             customHeading="Cancel your session"
             customSubtitle="Please review details of your booking below before confirming."
-            eventDetails={booking?.event as any}
-            coachDetails={booking?.coach as any}
+            eventDetails={booking?.event}
+            coachDetails={booking?.coach}
             selectedDate={booking ? new Date(booking.startTime) : null}
             selectedSlot={booking?.startTime || null}
             currentBookingDetails={
               booking
                 ? {
-                    eventDetails: booking.event as any,
-                    coachDetails: booking.coach as any,
+                    eventDetails: booking.event,
+                    coachDetails: booking.coach,
                     date: new Date(booking.startTime),
                     slot: booking.startTime,
                   }
@@ -237,11 +244,18 @@ export function PublicCancelPage() {
             >
               Cancellation Reason
             </Typography>
-            <Typography variant="h6" fontWeight={800} color="text.primary" mb={1} sx={{ letterSpacing: '-0.3px' }}>
+            <Typography
+              variant="h6"
+              fontWeight={800}
+              color="text.primary"
+              mb={1}
+              sx={{ letterSpacing: '-0.3px' }}
+            >
               Please choose your preferred cancellation reason
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-              We're sorry to see you cancel. Please let us know why you need to cancel this session so we can improve our service.
+              We're sorry to see you cancel. Please let us know why you need to cancel this session
+              so we can improve our service.
             </Typography>
           </Box>
 
@@ -266,14 +280,18 @@ export function PublicCancelPage() {
                     borderRadius: 1.5,
                     border: '1.5px solid',
                     borderColor: isSelected ? 'primary.main' : 'divider',
-                    bgcolor: isSelected ? (theme) => alpha(theme.palette.primary.main, 0.03) : 'background.paper',
+                    bgcolor: isSelected
+                      ? (theme) => alpha(theme.palette.primary.main, 0.03)
+                      : 'background.paper',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     height: '100%',
                     boxSizing: 'border-box',
                     '&:hover': {
                       borderColor: isSelected ? 'primary.main' : 'text.secondary',
-                      bgcolor: isSelected ? (theme) => alpha(theme.palette.primary.main, 0.05) : (theme) => alpha(theme.palette.secondary.main, 0.01),
+                      bgcolor: isSelected
+                        ? (theme) => alpha(theme.palette.primary.main, 0.05)
+                        : (theme) => alpha(theme.palette.secondary.main, 0.01),
                     },
                   }}
                 >
@@ -291,7 +309,11 @@ export function PublicCancelPage() {
                       },
                     }}
                   />
-                  <Typography variant="body2" fontWeight={isSelected ? 600 : 500} color="text.primary">
+                  <Typography
+                    variant="body2"
+                    fontWeight={isSelected ? 600 : 500}
+                    color="text.primary"
+                  >
                     {opt.label}
                   </Typography>
                 </Box>
@@ -346,7 +368,13 @@ export function PublicCancelPage() {
           <Button
             variant="text"
             disabled={isSubmitting}
-            onClick={() => navigate(booking?.event?.publicBookingSlug ? `/book/event/${booking.event.publicBookingSlug}` : '/')}
+            onClick={() =>
+              navigate(
+                booking?.event?.publicBookingSlug
+                  ? `/book/event/${booking.event.publicBookingSlug}`
+                  : '/'
+              )
+            }
             sx={{
               fontWeight: 700,
               textTransform: 'none',
@@ -384,7 +412,7 @@ export function PublicCancelPage() {
               '&.Mui-disabled': {
                 backgroundColor: 'action.disabledBackground',
                 color: 'action.disabled',
-              }
+              },
             }}
           >
             {isSubmitting ? 'Cancelling...' : 'Confirm cancellation'}
@@ -395,343 +423,3 @@ export function PublicCancelPage() {
   )
 }
 
-function SuccessView({ booking, publicBookingUrl }: { booking?: any; publicBookingUrl?: string }) {
-  const navigate = useNavigate()
-  return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        bgcolor: 'background.default',
-        p: 2,
-      }}
-    >
-      <Paper
-        elevation={0}
-        sx={{
-          maxWidth: 480,
-          width: '100%',
-          p: { xs: 3, sm: 4 },
-          textAlign: 'center',
-          borderRadius: 2,
-          border: '1.5px solid',
-          borderColor: 'success.main',
-          bgcolor: 'background.paper',
-          boxShadow: 'none',
-        }}
-      >
-        <Box
-          component="img"
-          src={LogoOrange}
-          alt="Chegg Skills"
-          sx={{ width: 140, height: 'auto', mb: 4 }}
-        />
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              bgcolor: 'success.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <Check size={28} strokeWidth={3} />
-          </Box>
-        </Box>
-
-        <Typography
-          variant="h5"
-          sx={{
-            color: 'text.primary',
-            mb: 1.5,
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Session cancelled
-        </Typography>
-
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, fontWeight: 500, lineHeight: 1.6 }}>
-          Your session has been successfully cancelled. A confirmation email has been sent to your inbox.
-        </Typography>
-
-        {booking && (
-          <Box
-            sx={{
-              p: 2.5,
-              mb: 4,
-              bgcolor: 'accent.peach',
-              borderRadius: 1.5,
-              textAlign: 'left',
-              border: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'text.primary',
-                fontWeight: 700,
-                mb: 1.5,
-                display: 'block',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Cancelled Session Details
-            </Typography>
-
-            <Stack spacing={1}>
-              <Box>
-                <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
-                  {booking.event?.name || 'Session'}
-                </Typography>
-                {booking.startTime && (
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}
-                  >
-                    {new Intl.DateTimeFormat('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    }).format(new Date(booking.startTime))}
-                  </Typography>
-                )}
-                {booking.startTime && (
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {new Intl.DateTimeFormat('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true,
-                      timeZone: booking.timezone || 'UTC',
-                    }).format(new Date(booking.startTime))} ({booking.timezone || 'UTC'})
-                  </Typography>
-                )}
-              </Box>
-
-              {booking.coach && (
-                <Typography variant="caption" fontWeight={700} sx={{ color: 'text.primary' }}>
-                  Coach: {booking.coach.firstName} {booking.coach.lastName}
-                </Typography>
-              )}
-            </Stack>
-          </Box>
-        )}
-
-        <Button
-          variant="contained"
-          onClick={() => navigate(publicBookingUrl || '/')}
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontSize: '0.875rem',
-            fontWeight: 800,
-            borderRadius: 1.5,
-            bgcolor: 'primary.main',
-            textTransform: 'none',
-            '&:hover': {
-              bgcolor: 'primary.dark',
-            },
-          }}
-        >
-          Book another session
-        </Button>
-      </Paper>
-    </Box>
-  )
-}
-
-function AlreadyCancelledView({ publicBookingUrl }: { publicBookingUrl?: string }) {
-  const navigate = useNavigate()
-  return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        bgcolor: 'background.default',
-        p: 2,
-      }}
-    >
-      <Paper
-        elevation={0}
-        sx={{
-          maxWidth: 480,
-          width: '100%',
-          p: { xs: 3, sm: 4 },
-          textAlign: 'center',
-          borderRadius: 2,
-          border: '1.5px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          boxShadow: 'none',
-        }}
-      >
-        <Box
-          component="img"
-          src={LogoOrange}
-          alt="Chegg Skills"
-          sx={{ width: 140, height: 'auto', mb: 4 }}
-        />
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              bgcolor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'text.secondary',
-            }}
-          >
-            <XCircle size={28} strokeWidth={2.5} />
-          </Box>
-        </Box>
-
-        <Typography
-          variant="h5"
-          sx={{
-            color: 'text.primary',
-            mb: 1.5,
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Already cancelled
-        </Typography>
-
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, fontWeight: 500, lineHeight: 1.6 }}>
-          Your session has already been cancelled. No further action is needed.
-        </Typography>
-
-        <Button
-          variant="outlined"
-          onClick={() => navigate(publicBookingUrl || '/')}
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontSize: '0.875rem',
-            fontWeight: 700,
-            borderRadius: 1.5,
-            textTransform: 'none',
-            color: 'text.secondary',
-            borderColor: 'divider',
-            '&:hover': {
-              color: 'primary.main',
-              borderColor: 'primary.main',
-              backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
-            },
-          }}
-        >
-          Book another session
-        </Button>
-      </Paper>
-    </Box>
-  )
-}
-
-function InvalidLinkView() {
-  const navigate = useNavigate()
-  return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        bgcolor: 'background.default',
-        p: 2,
-      }}
-    >
-      <Paper
-        elevation={0}
-        sx={{
-          maxWidth: 480,
-          width: '100%',
-          p: { xs: 3, sm: 4 },
-          textAlign: 'center',
-          borderRadius: 2,
-          border: '1.5px solid',
-          borderColor: 'error.main',
-          bgcolor: 'background.paper',
-          boxShadow: 'none',
-        }}
-      >
-        <Box
-          component="img"
-          src={LogoOrange}
-          alt="Chegg Skills"
-          sx={{ width: 140, height: 'auto', mb: 4 }}
-        />
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              bgcolor: 'error.light',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'error.main',
-            }}
-          >
-            <AlertTriangle size={28} strokeWidth={2.5} />
-          </Box>
-        </Box>
-
-        <Typography
-          variant="h5"
-          sx={{
-            color: 'text.primary',
-            mb: 1.5,
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Link no longer valid
-        </Typography>
-
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, fontWeight: 500, lineHeight: 1.6 }}>
-          This cancellation link is no longer valid or has expired. The session may have already started, or the link has been used.
-        </Typography>
-
-        <Button
-          variant="contained"
-          onClick={() => navigate('/')}
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontSize: '0.875rem',
-            fontWeight: 800,
-            borderRadius: 1.5,
-            bgcolor: 'primary.main',
-            textTransform: 'none',
-            '&:hover': {
-              bgcolor: 'primary.dark',
-            },
-          }}
-        >
-          Back to homepage
-        </Button>
-      </Paper>
-    </Box>
-  )
-}

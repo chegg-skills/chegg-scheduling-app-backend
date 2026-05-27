@@ -63,7 +63,12 @@ export const UpdateBookingStatusSchema = {
   body: z
     .object({
       status: z.enum(BookingStatus),
-      cancellationReason: z.string().trim().max(500).optional(),
+      cancellationReason: z
+        .string()
+        .trim()
+        .max(500)
+        .regex(/^[^<>]*$/, "Cancellation reason must not contain HTML characters")
+        .optional(),
     })
     .strip(),
 };
@@ -77,7 +82,12 @@ export const CancelBookingSchema = {
   body: z
     .object({
       token: z.string().trim().optional(),
-      cancellationReason: z.string().trim().max(500).optional(),
+      cancellationReason: z
+        .string()
+        .trim()
+        .max(500)
+        .regex(/^[^<>]*$/, "Cancellation reason must not contain HTML characters")
+        .optional(),
     })
     .strip(),
 };

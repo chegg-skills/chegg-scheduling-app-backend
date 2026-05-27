@@ -39,10 +39,16 @@ export function PublicBookingPageDirectory() {
     const resolveCategory = () => {
       if (!categoryParam) return null
       if (!UUID_RE.test(categoryParam)) return categoryParam
-      return bookingPage.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType.slug ?? null
+      return (
+        bookingPage.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType.slug ??
+        null
+      )
     }
     const resolvedCategory = resolveCategory()
-    if (!resolvedCategory) { navigate('/book/sessions', { replace: true }); return }
+    if (!resolvedCategory) {
+      navigate('/book/sessions', { replace: true })
+      return
+    }
 
     const resolveTeam = () => {
       if (!teamParam) return null
@@ -56,7 +62,7 @@ export function PublicBookingPageDirectory() {
       ? `/book/sessions/${resolvedCategory}/${resolvedTeam}`
       : `/book/sessions/${resolvedCategory}`
     navigate(dest, { replace: true })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingPage])
 
   useEffect(() => {
@@ -98,7 +104,8 @@ export function PublicBookingPageDirectory() {
           No sessions available
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          There are no booking sessions configured at this time. Please check back later or contact your administrator.
+          There are no booking sessions configured at this time. Please check back later or contact
+          your administrator.
         </Typography>
       </Box>
     )
@@ -119,13 +126,45 @@ export function PublicBookingPageDirectory() {
   // A slug in the URL that doesn't match any known entity is a 404, not a silent fallback
   if (sessionTypeSlug && !selectedSection) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 320, textAlign: 'center', px: 4 }}>
-        <Box component="img" src={LogoOrange} alt="Chegg Skills" sx={{ height: 32, mb: 3, opacity: 0.5 }} />
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Session category not found</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          The session category <strong>{sessionTypeSlug}</strong> doesn't exist or is no longer available.
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 320,
+          textAlign: 'center',
+          px: 4,
+        }}
+      >
+        <Box
+          component="img"
+          src={LogoOrange}
+          alt="Chegg Skills"
+          sx={{ height: 32, mb: 3, opacity: 0.5 }}
+        />
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+          Session category not found
         </Typography>
-        <Box role="button" tabIndex={0} onClick={() => navigate('/book/sessions')} sx={{ color: 'primary.main', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { textDecoration: 'underline' } }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          The session category <strong>{sessionTypeSlug}</strong> doesn't exist or is no longer
+          available.
+        </Typography>
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate('/book/sessions')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/book/sessions') }}
+          sx={{
+            color: 'primary.main',
+            fontWeight: 700,
+            fontSize: '0.875rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
           <ChevronLeft size={16} style={{ marginRight: 6 }} />
           Back to all session categories
         </Box>
@@ -135,13 +174,45 @@ export function PublicBookingPageDirectory() {
 
   if (teamSlug && !selectedTeamEntry) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 320, textAlign: 'center', px: 4 }}>
-        <Box component="img" src={LogoOrange} alt="Chegg Skills" sx={{ height: 32, mb: 3, opacity: 0.5 }} />
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Team not found</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          The team <strong>{teamSlug}</strong> doesn't exist under this session category or is no longer available.
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 320,
+          textAlign: 'center',
+          px: 4,
+        }}
+      >
+        <Box
+          component="img"
+          src={LogoOrange}
+          alt="Chegg Skills"
+          sx={{ height: 32, mb: 3, opacity: 0.5 }}
+        />
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+          Team not found
         </Typography>
-        <Box role="button" tabIndex={0} onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)} sx={{ color: 'primary.main', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', '&:hover': { textDecoration: 'underline' } }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          The team <strong>{teamSlug}</strong> doesn't exist under this session category or is no
+          longer available.
+        </Typography>
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/book/sessions/${sessionTypeSlug}`) }}
+          sx={{
+            color: 'primary.main',
+            fontWeight: 700,
+            fontSize: '0.875rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
           <ChevronLeft size={16} style={{ marginRight: 6 }} />
           Back to teams
         </Box>
@@ -180,7 +251,12 @@ export function PublicBookingPageDirectory() {
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           sx={{ mb: 1.5 }}
         >
-          <Box component="img" src={LogoOrange} alt="Chegg Skills" sx={{ height: 32, flexShrink: 0 }} />
+          <Box
+            component="img"
+            src={LogoOrange}
+            alt="Chegg Skills"
+            sx={{ height: 32, flexShrink: 0 }}
+          />
           {bookingPage.description && (
             <>
               <Divider
@@ -209,6 +285,7 @@ export function PublicBookingPageDirectory() {
               role="button"
               tabIndex={0}
               onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/book/sessions/${sessionTypeSlug}`) }}
               sx={{
                 mb: 4,
                 display: 'inline-flex',
@@ -227,9 +304,15 @@ export function PublicBookingPageDirectory() {
               Back to teams
             </Box>
 
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              alignItems="center"
+              sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}
+            >
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                {toTitleCase(selectedSection.sessionType.name)} — {toTitleCase(selectedTeamEntry.team.name)}
+                {toTitleCase(selectedSection.sessionType.name)} —{' '}
+                {toTitleCase(selectedTeamEntry.team.name)}
               </Typography>
               <Chip
                 label={`${selectedTeamEntry.events.length} event${selectedTeamEntry.events.length !== 1 ? 's' : ''} available`}
@@ -245,7 +328,11 @@ export function PublicBookingPageDirectory() {
                 }}
               />
             </Stack>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ mb: 3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
+            >
               Select an Event
             </Typography>
 
@@ -268,8 +355,14 @@ export function PublicBookingPageDirectory() {
                 <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
                   No sessions scheduled
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.5 }}>
-                  There are currently no active booking events scheduled for the <strong>{toTitleCase(selectedTeamEntry.team.name)}</strong> under this category. Please check back later or contact your coordinator.
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1.5, lineHeight: 1.5 }}
+                >
+                  There are currently no active booking events scheduled for the{' '}
+                  <strong>{toTitleCase(selectedTeamEntry.team.name)}</strong> under this category.
+                  Please check back later or contact your coordinator.
                 </Typography>
               </Paper>
             ) : (
@@ -293,28 +386,34 @@ export function PublicBookingPageDirectory() {
           /* Step 2: Team List View */
           <Box>
             <Box
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate('/book/sessions')}
-                sx={{
-                  mb: 4,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  color: 'primary.main',
-                  fontWeight: 700,
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  '&:hover': {
-                    textDecoration: 'underline',
-                  },
-                }}
-              >
-                <ChevronLeft size={16} style={{ marginRight: 6 }} />
-                Back to all session categories
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate('/book/sessions')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/book/sessions') }}
+              sx={{
+                mb: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: 'primary.main',
+                fontWeight: 700,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                userSelect: 'none',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              <ChevronLeft size={16} style={{ marginRight: 6 }} />
+              Back to all session categories
             </Box>
 
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              alignItems="center"
+              sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}
+            >
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
                 {toTitleCase(selectedSection.sessionType.name)}
               </Typography>
@@ -332,7 +431,11 @@ export function PublicBookingPageDirectory() {
                 }}
               />
             </Stack>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ mb: 3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
+            >
               Select a discipline or team
             </Typography>
 
@@ -355,8 +458,13 @@ export function PublicBookingPageDirectory() {
                 <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
                   No participating teams available
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.5 }}>
-                  There are currently no active disciplines or teams configured to host bookings under this category. Please check back later or contact your coordinator.
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1.5, lineHeight: 1.5 }}
+                >
+                  There are currently no active disciplines or teams configured to host bookings
+                  under this category. Please check back later or contact your coordinator.
                 </Typography>
               </Paper>
             ) : (
@@ -374,7 +482,11 @@ export function PublicBookingPageDirectory() {
                   <Paper
                     key={entry.team.id}
                     variant="outlined"
-                    onClick={() => navigate(`/book/sessions/${sessionTypeSlug}/${entry.team.publicBookingSlug ?? entry.team.id}`)}
+                    onClick={() =>
+                      navigate(
+                        `/book/sessions/${sessionTypeSlug}/${entry.team.publicBookingSlug ?? entry.team.id}`
+                      )
+                    }
                     sx={{
                       p: 3,
                       borderRadius: 1.5,
@@ -510,7 +622,12 @@ export function PublicBookingPageDirectory() {
           </Box>
         ) : (
           <Box>
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              alignItems="center"
+              sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}
+            >
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
                 Select a Session Category
               </Typography>
@@ -608,7 +725,7 @@ export function PublicBookingPageDirectory() {
                             textTransform: 'none',
                           }}
                         >
-                          {sessionType.name}
+                          {toTitleCase(sessionType.name)}
                         </Typography>
                         {sessionType.description ? (
                           <Typography

@@ -193,7 +193,11 @@ export function EventTypeTable({ eventTypes }: EventTypeTableProps) {
           onClose={() => setEditing(null)}
           title={`Edit "${toTitleCase(editing.name)}"`}
         >
-          <EventTypeForm eventType={editing} onSuccess={() => setEditing(null)} onCancel={() => setEditing(null)} />
+          <EventTypeForm
+            eventType={editing}
+            onSuccess={() => setEditing(null)}
+            onCancel={() => setEditing(null)}
+          />
         </Modal>
       )}
     </>

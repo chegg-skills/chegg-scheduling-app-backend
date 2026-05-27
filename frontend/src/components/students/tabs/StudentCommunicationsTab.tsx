@@ -12,20 +12,10 @@ import {
   Tooltip,
   CircularProgress,
 } from '@mui/material'
-import {
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Mail,
-} from 'lucide-react'
+import { CheckCircle2, AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import { format } from 'date-fns'
 import { toTitleCase } from '@/utils/toTitleCase'
-import {
-  useStudentCommunications,
-  useRetryStudentEmail,
-} from '@/hooks/queries/useStudents'
+import { useStudentCommunications, useRetryStudentEmail } from '@/hooks/queries/useStudents'
 import { alpha, keyframes } from '@mui/material/styles'
 import DOMPurify from 'dompurify'
 
@@ -175,7 +165,8 @@ export function StudentCommunicationsTab({ studentId }: StudentCommunicationsTab
                 borderColor: (theme: any) => alpha(theme.palette.primary.main, 0.15),
                 transition: 'all 0.2s',
                 '&:hover': {
-                  boxShadow: (theme: any) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.08)}`,
+                  boxShadow: (theme: any) =>
+                    `0 4px 12px ${alpha(theme.palette.primary.main, 0.08)}`,
                   borderColor: (theme: any) => alpha(theme.palette.primary.main, 0.25),
                 },
               }}
@@ -314,7 +305,8 @@ export function StudentCommunicationsTab({ studentId }: StudentCommunicationsTab
                     pt: 0,
                     borderTop: 1,
                     borderColor: 'divider',
-                    bgcolor: (theme: any) => alpha(theme.palette.accent?.lavender || '#E2DFFF', 0.4),
+                    bgcolor: (theme: any) =>
+                      alpha(theme.palette.accent?.lavender || '#E2DFFF', 0.4),
                   }}
                 >
                   <Box

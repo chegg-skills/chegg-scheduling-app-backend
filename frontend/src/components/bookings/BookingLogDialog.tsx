@@ -12,10 +12,7 @@ import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { Spinner } from '@/components/shared/ui/Spinner'
 import { useConfirm } from '@/context/confirm'
-import {
-  useBookingSessionLog,
-  useUpsertBookingSessionLog,
-} from '@/hooks/queries/useBookingLog'
+import { useBookingSessionLog, useUpsertBookingSessionLog } from '@/hooks/queries/useBookingLog'
 import { extractApiError } from '@/utils/apiError'
 import type { Booking } from '@/types'
 

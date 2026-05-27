@@ -114,7 +114,12 @@ export function EventGroupSection({
 
       <Collapse in={expanded}>
         <Box sx={{ p: 1.5 }}>
-          <EventTable events={events} teamId={teamId} onViewUser={onViewUser} canManage={canManage} />
+          <EventTable
+            events={events}
+            teamId={teamId}
+            onViewUser={onViewUser}
+            canManage={canManage}
+          />
         </Box>
       </Collapse>
     </Paper>

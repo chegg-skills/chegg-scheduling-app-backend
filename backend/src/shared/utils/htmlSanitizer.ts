@@ -1,5 +1,16 @@
 import sanitizeHtmlLib from "sanitize-html";
 
+// Escapes plain-text strings for safe embedding inside HTML (e.g. email templates).
+export function escapeHtml(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /**
  * A secure HTML sanitizer for custom email inputs.
  * Uses an allowlist approach via the sanitize-html library to ensure

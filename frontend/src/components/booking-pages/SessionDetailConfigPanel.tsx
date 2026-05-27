@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -34,17 +34,21 @@ export function SessionDetailConfigPanel({
   handleTeamToggle,
 }: SessionDetailConfigPanelProps) {
   const [copied, setCopied] = useState(false)
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     setCopied(false)
   }, [selectedSessionType])
 
+  useEffect(() => {
+    return () => clearTimeout(copiedTimerRef.current)
+  }, [])
+
   const sessionShareUrl = useMemo(() => {
     if (typeof window === 'undefined' || !selectedSessionType) return ''
     const origin = window.location.origin
-    const base = bookingPage.slug === 'default'
-      ? `${origin}/book`
-      : `${origin}/book/page/${bookingPage.slug}`
+    const base =
+      bookingPage.slug === 'default' ? `${origin}/book` : `${origin}/book/page/${bookingPage.slug}`
     return `${base}?category=${selectedSessionType.id}`
   }, [bookingPage.slug, selectedSessionType])
 
@@ -116,7 +120,7 @@ export function SessionDetailConfigPanel({
                   if (!sessionShareUrl) return
                   await navigator.clipboard.writeText(sessionShareUrl)
                   setCopied(true)
-                  setTimeout(() => setCopied(false), 2000)
+                  copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
                 }}
                 startIcon={copied ? <Check size={14} /> : <Copy size={14} />}
                 sx={{
@@ -126,7 +130,7 @@ export function SessionDetailConfigPanel({
                   height: 28,
                   borderRadius: 1.2,
                   px: 1.25,
-                  borderColor: (theme) => copied ? theme.palette.success.main : 'divider',
+                  borderColor: (theme) => (copied ? theme.palette.success.main : 'divider'),
                   bgcolor: (theme) =>
                     copied ? alpha(theme.palette.success.main, 0.08) : 'transparent',
                   color: (theme) => (copied ? theme.palette.success.main : 'text.secondary'),
@@ -134,8 +138,7 @@ export function SessionDetailConfigPanel({
                     bgcolor: (theme) =>
                       copied ? alpha(theme.palette.success.main, 0.08) : 'action.hover',
                     color: (theme) => (copied ? theme.palette.success.main : 'primary.main'),
-                    borderColor: (theme) =>
-                      copied ? theme.palette.success.main : 'primary.main',
+                    borderColor: (theme) => (copied ? theme.palette.success.main : 'primary.main'),
                     transform: 'scale(1.02)',
                   },
                   transition: 'all 0.2s ease-in-out',
@@ -214,7 +217,8 @@ export function SessionDetailConfigPanel({
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-            ⚠️ No teams checked. This session will not appear on the student site until you assign at least one team.
+            ⚠️ No teams checked. This session will not appear on the student site until you assign
+            at least one team.
           </Typography>
         </Box>
       )}
@@ -236,7 +240,8 @@ export function SessionDetailConfigPanel({
             Teams Configuration Disabled
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Enable this session type using the switch in the left column to select and assign participating teams.
+            Enable this session type using the switch in the left column to select and assign
+            participating teams.
           </Typography>
         </Paper>
       ) : (
@@ -357,24 +362,26 @@ export function SessionDetailConfigPanel({
                       </Typography>
                       {eventCount > 0 && (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                          {getEventsForTeamAndSessionType(selectedSessionType.id, team.id).map((evt) => (
-                            <Chip
-                              key={evt.id}
-                              label={evt.name}
-                              size="small"
-                              variant="outlined"
-                              sx={{
-                                height: 18,
-                                fontSize: '0.65rem',
-                                bgcolor: 'background.paper',
-                                borderColor: alpha('#E87100', 0.25),
-                                color: '#E87100',
-                                '& .MuiChip-label': {
-                                  px: 1,
-                                },
-                              }}
-                            />
-                          ))}
+                          {getEventsForTeamAndSessionType(selectedSessionType.id, team.id).map(
+                            (evt) => (
+                              <Chip
+                                key={evt.id}
+                                label={evt.name}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.65rem',
+                                  bgcolor: 'background.paper',
+                                  borderColor: alpha('#E87100', 0.25),
+                                  color: '#E87100',
+                                  '& .MuiChip-label': {
+                                    px: 1,
+                                  },
+                                }}
+                              />
+                            )
+                          )}
                         </Box>
                       )}
                     </Box>

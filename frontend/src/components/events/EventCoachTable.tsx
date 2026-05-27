@@ -23,7 +23,12 @@ interface EventCoachTableProps {
   canManage?: boolean
 }
 
-export function EventCoachTable({ coaches, onRemove, onViewUser, canManage = true }: EventCoachTableProps) {
+export function EventCoachTable({
+  coaches,
+  onRemove,
+  onViewUser,
+  canManage = true,
+}: EventCoachTableProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const { user: currentUser } = useAuth()
@@ -36,21 +41,23 @@ export function EventCoachTable({ coaches, onRemove, onViewUser, canManage = tru
       <Table>
         <TableHead>
           <TableRow>
-            {['Coach', 'Country', 'Time Zone', 'Language', ...(canManage ? ['Actions'] : [])].map((col) => (
-              <TableCell
-                key={col}
-                sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  color: 'text.secondary',
-                  letterSpacing: '0.05em',
-                }}
-                align={col === 'Actions' ? 'right' : 'left'}
-              >
-                {col}
-              </TableCell>
-            ))}
+            {['Coach', 'Country', 'Time Zone', 'Language', ...(canManage ? ['Actions'] : [])].map(
+              (col) => (
+                <TableCell
+                  key={col}
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: 'text.secondary',
+                    letterSpacing: '0.05em',
+                  }}
+                  align={col === 'Actions' ? 'right' : 'left'}
+                >
+                  {col}
+                </TableCell>
+              )
+            )}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -99,42 +106,46 @@ export function EventCoachTable({ coaches, onRemove, onViewUser, canManage = tru
                         >
                           {coach.coachUser.email}
                         </Typography>
-                    </Box>
-                  </Stack>
-                </TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>
-                  {coach.coachUser.country ?? '—'}
-                </TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>
-                  {coach.coachUser.timezone?.replace(/_/g, ' ') ?? '—'}
-                </TableCell>
-                <TableCell sx={{ fontSize: '0.8125rem' }}>
-                  {coach.coachUser.preferredLanguage ?? '—'}
-                </TableCell>
-                {canManage && (
-                  <TableCell align="right">
-                    <RowActions
-                      actions={[
-                        {
-                          label: 'Remove',
-                          icon: <Trash2 size={16} />,
-                          color: 'error.main',
-                          onClick: () =>
-                            onRemove(
-                              coach.coachUserId,
-                              `${coach.coachUser.firstName} ${coach.coachUser.lastName}`
-                            ),
-                        },
-                      ]}
-                    />
+                      </Box>
+                    </Stack>
                   </TableCell>
-                )}
-              </TableRow>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>
+                    {coach.coachUser.country ?? '—'}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>
+                    {coach.coachUser.timezone?.replace(/_/g, ' ') ?? '—'}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>
+                    {coach.coachUser.preferredLanguage ?? '—'}
+                  </TableCell>
+                  {canManage && (
+                    <TableCell align="right">
+                      <RowActions
+                        actions={[
+                          {
+                            label: 'Remove',
+                            icon: <Trash2 size={16} />,
+                            color: 'error.main',
+                            onClick: () =>
+                              onRemove(
+                                coach.coachUserId,
+                                `${coach.coachUser.firstName} ${coach.coachUser.lastName}`
+                              ),
+                          },
+                        ]}
+                      />
+                    </TableCell>
+                  )}
+                </TableRow>
               )
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={canManage ? 5 : 4} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+              <TableCell
+                colSpan={canManage ? 5 : 4}
+                align="center"
+                sx={{ py: 3, color: 'text.secondary' }}
+              >
                 No coaches assigned yet.
               </TableCell>
             </TableRow>

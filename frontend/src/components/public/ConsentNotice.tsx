@@ -78,12 +78,21 @@ export function ConsentNotice() {
             >
               <Lock size={16} />
             </Box>
-            <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.5, color: 'text.primary' }}>
-              We use essential browser storage for security and to enable booking features. No tracking or ads.
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 500, lineHeight: 1.5, color: 'text.primary' }}
+            >
+              We use essential browser storage for security and to enable booking features. No
+              tracking or ads.
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: 'flex-end' }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            alignItems="center"
+            sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: 'flex-end' }}
+          >
             <Button
               size="small"
               variant="text"
@@ -131,32 +140,68 @@ export function ConsentNotice() {
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <Box sx={{ pt: 1.5 }}>
             <Divider sx={{ mb: 2 }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'text.secondary', mb: 1.5 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                color: 'text.secondary',
+                mb: 1.5,
+              }}
+            >
               What we store & why
             </Typography>
             <Stack spacing={1.5}>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8125rem', color: 'text.primary' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, fontSize: '0.8125rem', color: 'text.primary' }}
+                >
                   CSRF Security Token (<code>csrf_token</code> in localStorage)
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}>
-                  Protects form submissions from cross-site request forgery attacks to ensure booking data cannot be hijacked.
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}
+                >
+                  Protects form submissions from cross-site request forgery attacks to ensure
+                  booking data cannot be hijacked.
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8125rem', color: 'text.primary' }}>
-                  Authorization Tokens (<code>reschedule_token_*</code> & <code>cancel_token_*</code> in sessionStorage)
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, fontSize: '0.8125rem', color: 'text.primary' }}
+                >
+                  Authorization Tokens (<code>reschedule_token_*</code> &{' '}
+                  <code>cancel_token_*</code> in sessionStorage)
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}>
-                  Short-lived security credentials passed from email links to authorize rescheduling or cancellation requests securely without requiring an account. These are automatically cleared when you close your browser tab.
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}
+                >
+                  Short-lived security credentials passed from email links to authorize rescheduling
+                  or cancellation requests securely without requiring an account. These are
+                  automatically cleared when you close your browser tab.
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8125rem', color: 'text.primary' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, fontSize: '0.8125rem', color: 'text.primary' }}
+                >
                   Troubleshooting Probe (<code>__cc_probe__</code> in localStorage)
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}>
-                  A temporary check used during connection diagnostic tests to verify your browser accepts standard local storage keys. It is immediately deleted.
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}
+                >
+                  A temporary check used during connection diagnostic tests to verify your browser
+                  accepts standard local storage keys. It is immediately deleted.
                 </Typography>
               </Box>
             </Stack>

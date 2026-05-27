@@ -124,7 +124,8 @@ export function StudentsPage() {
                 color="text.secondary"
                 sx={{ maxWidth: 450, mx: 'auto', mb: 0, lineHeight: 1.6 }}
               >
-                No students booked yet. When students book a session from your teams or events, their profiles, contact details, and history will automatically appear here.
+                No students booked yet. When students book a session from your teams or events,
+                their profiles, contact details, and history will automatically appear here.
               </Typography>
             </Paper>
           ) : (

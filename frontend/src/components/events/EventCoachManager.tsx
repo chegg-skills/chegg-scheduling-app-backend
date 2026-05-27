@@ -108,7 +108,8 @@ export function EventCoachManager({
           title={title || 'Assigned Coaches'}
           description="Manage coaches assigned to this event and their participation status."
           action={
-            canManage && eligibleCount > 0 && (
+            canManage &&
+            eligibleCount > 0 && (
               <Button
                 size="sm"
                 startIcon={<Plus size={16} />}
@@ -127,7 +128,12 @@ export function EventCoachManager({
         />
       )}
 
-      <EventCoachTable coaches={activeCoaches} onRemove={handleRemove} onViewUser={onViewUser} canManage={canManage} />
+      <EventCoachTable
+        coaches={activeCoaches}
+        onRemove={handleRemove}
+        onViewUser={onViewUser}
+        canManage={canManage}
+      />
 
       <Modal
         isOpen={showAddModal}

@@ -22,7 +22,7 @@ describe('ConsentNotice Component', () => {
   it('toggles the detailed info panel when clicking Learn more', async () => {
     renderWithProviders(<ConsentNotice />)
     const learnMoreBtn = screen.getByRole('button', { name: /Learn more/i })
-    
+
     // Expand drawer
     fireEvent.click(learnMoreBtn)
     expect(await screen.findByText(/What we store & why/i)).toBeInTheDocument()
@@ -32,16 +32,20 @@ describe('ConsentNotice Component', () => {
   it('dismisses notice and sets localStorage key when Got it is clicked', () => {
     renderWithProviders(<ConsentNotice />)
     const gotItBtn = screen.getByRole('button', { name: /Got it/i })
-    
+
     fireEvent.click(gotItBtn)
-    
+
     expect(localStorage.getItem('storage_notice_dismissed')).toBe('true')
-    expect(screen.queryByText(/We use essential browser storage for security/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/We use essential browser storage for security/i)
+    ).not.toBeInTheDocument()
   })
 
   it('does not render if previously dismissed', () => {
     localStorage.setItem('storage_notice_dismissed', 'true')
     renderWithProviders(<ConsentNotice />)
-    expect(screen.queryByText(/We use essential browser storage for security/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/We use essential browser storage for security/i)
+    ).not.toBeInTheDocument()
   })
 })

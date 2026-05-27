@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -65,18 +65,24 @@ export function BookingPageSectionEditor({
     }
   }, [activeSessionTypes, selectedSessionTypeId])
 
+  // Pre-compute grouped events once per allEvents change instead of filtering on every render.
+  const eventsByKey = useMemo(() => {
+    const map = new Map<string, typeof allEvents>()
+    for (const e of allEvents) {
+      if (!e.isActive || !e.sessionTypeId) continue
+      const key = `${e.teamId}:${e.sessionTypeId}`
+      const bucket = map.get(key) ?? []
+      bucket.push(e)
+      map.set(key, bucket)
+    }
+    return map
+  }, [allEvents])
 
-  const getEventCount = (sessionTypeId: string, teamId: string) => {
-    return allEvents.filter(
-      (e) => e.teamId === teamId && e.sessionTypeId === sessionTypeId && e.isActive
-    ).length
-  }
+  const getEventCount = (sessionTypeId: string, teamId: string) =>
+    eventsByKey.get(`${teamId}:${sessionTypeId}`)?.length ?? 0
 
-  const getEventsForTeamAndSessionType = (sessionTypeId: string, teamId: string) => {
-    return allEvents.filter(
-      (e) => e.teamId === teamId && e.sessionTypeId === sessionTypeId && e.isActive
-    )
-  }
+  const getEventsForTeamAndSessionType = (sessionTypeId: string, teamId: string) =>
+    eventsByKey.get(`${teamId}:${sessionTypeId}`) ?? []
 
   // Calculate if local draft state has changes compared to original bookingPage sections
   useEffect(() => {
@@ -233,15 +239,17 @@ export function BookingPageSectionEditor({
       }}
     >
       <Stack spacing={3}>
-
-
         {errorMessage && (
           <Box sx={{ mb: 2 }}>
             <ErrorAlert message={errorMessage} />
           </Box>
         )}
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ height: '52vh', minHeight: 400 }}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={3}
+          sx={{ height: '52vh', minHeight: 400 }}
+        >
           {/* Left Column: list of session types (limited width) */}
           <Box
             sx={{
@@ -285,13 +293,19 @@ export function BookingPageSectionEditor({
                     transition: 'all 0.2s ease',
                     '&:hover': {
                       borderColor: 'primary.main',
-                      bgcolor: (theme) => isSelected 
-                        ? alpha(theme.palette.primary.main, 0.06) 
-                        : alpha(theme.palette.primary.main, 0.01),
+                      bgcolor: (theme) =>
+                        isSelected
+                          ? alpha(theme.palette.primary.main, 0.06)
+                          : alpha(theme.palette.primary.main, 0.01),
                     },
                   }}
                 >
-                  <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
                     <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
                       <Box
                         sx={{
@@ -372,7 +386,10 @@ export function BookingPageSectionEditor({
                 }}
               >
                 <Tag size={24} style={{ opacity: 0.3, marginBottom: 8 }} />
-                <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 600, color: 'text.secondary', display: 'block' }}
+                >
                   No active sessions
                 </Typography>
               </Box>
@@ -380,7 +397,9 @@ export function BookingPageSectionEditor({
           </Box>
 
           {/* Right Column: details / team configuration for selectedSessionType */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', pl: { md: 1 }, pr: { xs: 0.5, md: 1 }, pt: 0.5 }}>
+          <Box
+            sx={{ flexGrow: 1, overflowY: 'auto', pl: { md: 1 }, pr: { xs: 0.5, md: 1 }, pt: 0.5 }}
+          >
             <SessionDetailConfigPanel
               selectedSessionType={selectedSessionType}
               draftCategories={draftCategories}

@@ -79,7 +79,10 @@ export function EventTypesPage() {
         </Box>
 
         <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create event type">
-          <EventTypeForm onSuccess={() => setShowCreate(false)} onCancel={() => setShowCreate(false)} />
+          <EventTypeForm
+            onSuccess={() => setShowCreate(false)}
+            onCancel={() => setShowCreate(false)}
+          />
         </Modal>
       </Box>
     </Box>

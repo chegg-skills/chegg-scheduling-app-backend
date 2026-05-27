@@ -173,7 +173,6 @@ export interface CoachAvailabilityEntry {
   isAvailable: boolean
 }
 
-
 export interface EventScheduleSlot {
   id: string
   eventId: string
@@ -626,6 +625,13 @@ export interface Booking {
   coach?: SafeUser
   scheduleSlot?: EventScheduleSlot
   sessionLog?: SessionLog | null
+}
+
+// Booking shape returned by public-facing endpoints (cancel / reschedule pages).
+// event and coach carry only the public-safe subset of fields.
+export interface PublicBooking extends Omit<Booking, 'event' | 'coach'> {
+  event?: PublicEventSummary | null
+  coach?: PublicCoachSummary | null
 }
 
 export interface CreateBookingDto {

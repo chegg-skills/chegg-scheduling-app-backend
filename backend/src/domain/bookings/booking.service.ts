@@ -336,29 +336,34 @@ const cancelBooking = async (
 ): Promise<SafeBooking> => {
   const { token, cancellationReason } = payload;
 
-  const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
+  const updatedBooking = await prisma.$transaction(
+    async () => {
+      const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
 
-  if (token) {
-    assertCancelTokenValid(booking);
-  } else {
-    // Authenticated path — COACH may only cancel their own sessions
-    if (caller?.role === UserRole.COACH) {
-      const isLead = booking.coachUserId === caller.id;
-      const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
-      if (!isLead && !isCoHost) {
-        throw new ErrorHandler(
-          StatusCodes.FORBIDDEN,
-          "You are not authorized to cancel this booking.",
-        );
+      if (token) {
+        assertCancelTokenValid(booking);
+      } else {
+        // Authenticated path — COACH may only cancel their own sessions
+        if (caller?.role === UserRole.COACH) {
+          const isLead = booking.coachUserId === caller.id;
+          const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
+          if (!isLead && !isCoHost) {
+            throw new ErrorHandler(
+              StatusCodes.FORBIDDEN,
+              "You are not authorized to cancel this booking.",
+            );
+          }
+        }
       }
-    }
-  }
 
-  const updatedBooking = await updateBookingById(id, {
-    status: BookingStatus.CANCELLED,
-    cancellationReason: cancellationReason?.trim() || null,
-    // rescheduleToken is NOT rotated — assertCancelTokenValid blocks reuse via status check
-  });
+      return updateBookingById(id, {
+        status: BookingStatus.CANCELLED,
+        cancellationReason: cancellationReason?.trim() || null,
+        // rescheduleToken is NOT rotated — assertCancelTokenValid blocks reuse via status check
+      });
+    },
+    { timeout: 15000 },
+  );
 
   void queueBookingStatusNotifications(updatedBooking);
 

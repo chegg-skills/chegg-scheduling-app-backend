@@ -70,7 +70,11 @@ const handlers = [
 
 function LocationDisplay() {
   const location = useLocation()
-  return <div data-testid="location-display" style={{ display: 'none' }}>{location.pathname + location.search}</div>
+  return (
+    <div data-testid="location-display" style={{ display: 'none' }}>
+      {location.pathname + location.search}
+    </div>
+  )
 }
 
 function renderDirectoryPage(slug = 'eng-academy') {
@@ -139,7 +143,9 @@ describe('PublicBookingPageDirectory Integration', () => {
 
     // Verify logo is displayed and description is displayed
     await screen.findByAltText('Chegg Skills')
-    expect(screen.getByText('Welcome to the engineering academy booking directory.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Welcome to the engineering academy booking directory.')
+    ).toBeInTheDocument()
   })
 
   it('displays category, team, and event card in progressive drill-down steps', async () => {
@@ -162,7 +168,9 @@ describe('PublicBookingPageDirectory Integration', () => {
     // 2. Step 2: Verify Team Name is visible, but events are NOT
     await screen.findByText('Cyber Security Team')
     expect(screen.queryByText('Cyber Security Mentorship')).toBeNull()
-    expect(screen.getByTestId('location-display').textContent).toContain('/book/sessions/one-to-one')
+    expect(screen.getByTestId('location-display').textContent).toContain(
+      '/book/sessions/one-to-one'
+    )
     expect(screen.getByTestId('location-display').textContent).not.toContain('cyber-sec')
 
     // Click team card to drill down to Step 3
@@ -174,7 +182,9 @@ describe('PublicBookingPageDirectory Integration', () => {
     await screen.findByText('Cyber Security Mentorship')
     expect(screen.getByText('30 min')).toBeInTheDocument()
     expect(screen.getByText('Virtual')).toBeInTheDocument()
-    expect(screen.getByTestId('location-display').textContent).toContain('/book/sessions/one-to-one/cyber-sec')
+    expect(screen.getByTestId('location-display').textContent).toContain(
+      '/book/sessions/one-to-one/cyber-sec'
+    )
 
     // 4. Test "Back to teams" button
     const backToTeamsBtn = screen.getByRole('button', { name: /back to teams/i })
@@ -183,11 +193,15 @@ describe('PublicBookingPageDirectory Integration', () => {
     // Verify we are back on Step 2 (Team list visible, Event hidden)
     await screen.findByText('Cyber Security Team')
     expect(screen.queryByText('Cyber Security Mentorship')).toBeNull()
-    expect(screen.getByTestId('location-display').textContent).toContain('/book/sessions/one-to-one')
+    expect(screen.getByTestId('location-display').textContent).toContain(
+      '/book/sessions/one-to-one'
+    )
     expect(screen.getByTestId('location-display').textContent).not.toContain('cyber-sec')
 
     // 5. Test "Back to all session categories" button
-    const backToCategoriesBtn = screen.getByRole('button', { name: /back to all session categories/i })
+    const backToCategoriesBtn = screen.getByRole('button', {
+      name: /back to all session categories/i,
+    })
     fireEvent.click(backToCategoriesBtn)
 
     // Verify we are back on Step 1 (Categories visible, Team hidden)
@@ -278,7 +292,9 @@ describe('PublicBookingPageDirectory Integration', () => {
 
     // Verify empty state shows up
     await screen.findByText('No participating teams available')
-    expect(screen.getByText(/There are currently no active disciplines or teams configured/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/There are currently no active disciplines or teams configured/i)
+    ).toBeInTheDocument()
 
     // Verify "Explore all session categories" CTA button is NOT visible
     expect(screen.queryByRole('button', { name: /explore all session categories/i })).toBeNull()

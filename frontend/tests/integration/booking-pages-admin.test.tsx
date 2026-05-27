@@ -150,16 +150,27 @@ const handlers = [
       },
     })
   }),
-  http.post('*/api/booking-pages/:pageId/sections/:sectionId/teams', async ({ request, params }) => {
-    const body = (await request.json()) as any
-    apiCalls.addTeamToSection.push({ pageId: params.pageId, sectionId: params.sectionId, ...body })
-    return HttpResponse.json({
-      success: true,
-      data: { bookingPage: mockBookingPages[0] },
-    })
-  }),
+  http.post(
+    '*/api/booking-pages/:pageId/sections/:sectionId/teams',
+    async ({ request, params }) => {
+      const body = (await request.json()) as any
+      apiCalls.addTeamToSection.push({
+        pageId: params.pageId,
+        sectionId: params.sectionId,
+        ...body,
+      })
+      return HttpResponse.json({
+        success: true,
+        data: { bookingPage: mockBookingPages[0] },
+      })
+    }
+  ),
   http.delete('*/api/booking-pages/:pageId/sections/:sectionId/teams/:teamId', ({ params }) => {
-    apiCalls.removeTeamFromSection.push({ pageId: params.pageId, sectionId: params.sectionId, teamId: params.teamId })
+    apiCalls.removeTeamFromSection.push({
+      pageId: params.pageId,
+      sectionId: params.sectionId,
+      teamId: params.teamId,
+    })
     return HttpResponse.json({
       success: true,
       data: { bookingPage: mockBookingPages[0] },
@@ -204,8 +215,12 @@ describe('Booking Pages Admin Config integration', () => {
     await within(modal).findByText('Group Workshop')
 
     // Toggle st-2 (Group Workshop) to enable it (making configuration dirty)
-    const groupWorkshopContainer = within(modal).getByText('Group Workshop').closest('.MuiPaper-root')
-    const groupWorkshopSwitch = groupWorkshopContainer?.querySelector('input[type="checkbox"]') as HTMLInputElement
+    const groupWorkshopContainer = within(modal)
+      .getByText('Group Workshop')
+      .closest('.MuiPaper-root')
+    const groupWorkshopSwitch = groupWorkshopContainer?.querySelector(
+      'input[type="checkbox"]'
+    ) as HTMLInputElement
     expect(groupWorkshopSwitch).toBeInTheDocument()
     expect(groupWorkshopSwitch.checked).toBe(false)
 
@@ -241,7 +256,9 @@ describe('Booking Pages Admin Config integration', () => {
 
     // Verify configuration modal is closed
     await waitFor(() => {
-      expect(screen.queryByText('Manage Booking Directory Sessions & Teams')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText('Manage Booking Directory Sessions & Teams')
+      ).not.toBeInTheDocument()
     })
   })
 
@@ -262,8 +279,12 @@ describe('Booking Pages Admin Config integration', () => {
     await within(modal).findByText('Group Workshop')
 
     // Dirty the state by toggling Group Workshop
-    const groupWorkshopContainer = within(modal).getByText('Group Workshop').closest('.MuiPaper-root')
-    const groupWorkshopSwitch = groupWorkshopContainer?.querySelector('input[type="checkbox"]') as HTMLInputElement
+    const groupWorkshopContainer = within(modal)
+      .getByText('Group Workshop')
+      .closest('.MuiPaper-root')
+    const groupWorkshopSwitch = groupWorkshopContainer?.querySelector(
+      'input[type="checkbox"]'
+    ) as HTMLInputElement
     fireEvent.click(groupWorkshopSwitch)
 
     // Wait for collapsible team grid to render and expand (ensures state updates flush)
@@ -313,15 +334,21 @@ describe('Booking Pages Admin Config integration', () => {
     await within(modal).findByText('Group Workshop')
 
     // Enable Group Workshop
-    const groupWorkshopContainer = within(modal).getByText('Group Workshop').closest('.MuiPaper-root')
-    const groupWorkshopSwitch = groupWorkshopContainer?.querySelector('input[type="checkbox"]') as HTMLInputElement
+    const groupWorkshopContainer = within(modal)
+      .getByText('Group Workshop')
+      .closest('.MuiPaper-root')
+    const groupWorkshopSwitch = groupWorkshopContainer?.querySelector(
+      'input[type="checkbox"]'
+    ) as HTMLInputElement
     fireEvent.click(groupWorkshopSwitch)
 
     // Wait for collapsible team grid to render and expand (ensures state updates flush)
     await within(modal).findByText('Participating Teams / Disciplines')
 
     // Select 1-to-1 Tutoring Session in the left column
-    const tutoringContainer = within(modal).getByText('1-to-1 Tutoring Session').closest('.MuiPaper-root')
+    const tutoringContainer = within(modal)
+      .getByText('1-to-1 Tutoring Session')
+      .closest('.MuiPaper-root')
     fireEvent.click(tutoringContainer!)
 
     // Under the active 1-to-1 Tutoring Session detail pane, click Web Dev Team checkbox card to assign it
@@ -335,7 +362,9 @@ describe('Booking Pages Admin Config integration', () => {
 
     // Verify saving calls appropriate APIs sequentially and closes without warning
     await waitFor(() => {
-      expect(screen.queryByText('Manage Booking Directory Sessions & Teams')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText('Manage Booking Directory Sessions & Teams')
+      ).not.toBeInTheDocument()
     })
 
     // Verify calls to backend APIs occurred as expected
@@ -343,6 +372,10 @@ describe('Booking Pages Admin Config integration', () => {
     expect(apiCalls.addSection[0]).toEqual({ pageId: 'page-1', sessionTypeId: 'st-2' })
 
     expect(apiCalls.addTeamToSection).toHaveLength(1)
-    expect(apiCalls.addTeamToSection[0]).toEqual({ pageId: 'page-1', sectionId: 'sec-1', teamId: 'team-2' })
+    expect(apiCalls.addTeamToSection[0]).toEqual({
+      pageId: 'page-1',
+      sectionId: 'sec-1',
+      teamId: 'team-2',
+    })
   })
 })

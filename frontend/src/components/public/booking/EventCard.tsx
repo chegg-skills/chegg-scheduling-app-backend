@@ -52,17 +52,31 @@ export function EventCard({ event, onBook }: EventCardProps) {
             {toTitleCase(event.name)}
           </Typography>
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ gap: 1 }}>
-            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary' }}>
+            <Stack
+              direction="row"
+              spacing={0.75}
+              alignItems="center"
+              sx={{ color: 'text.secondary' }}
+            >
               <Clock size={14} />
               <Typography variant="caption" sx={{ fontWeight: 500 }}>
                 {formatDuration(event.durationSeconds)}
               </Typography>
             </Stack>
             {event.locationType && (
-              <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary' }}>
+              <Stack
+                direction="row"
+                spacing={0.75}
+                alignItems="center"
+                sx={{ color: 'text.secondary' }}
+              >
                 <MapPin size={14} />
                 <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                  {event.locationType === 'VIRTUAL' ? 'Virtual' : event.locationType === 'IN_PERSON' ? 'In Person' : 'Custom'}
+                  {event.locationType === 'VIRTUAL'
+                    ? 'Virtual'
+                    : event.locationType === 'IN_PERSON'
+                      ? 'In Person'
+                      : 'Custom'}
                 </Typography>
               </Stack>
             )}

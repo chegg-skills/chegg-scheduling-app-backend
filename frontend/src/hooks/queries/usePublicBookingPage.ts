@@ -10,10 +10,9 @@ export function usePublicBookingPageBySlug(slug: string) {
   return useQuery({
     queryKey: publicBookingPageKeys.bySlug(slug),
     queryFn: ({ signal }) =>
-      publicApi
-        .getBookingPageBySlug(slug, signal)
-        .then((r) => r.data.data?.bookingPage ?? null),
+      publicApi.getBookingPageBySlug(slug, signal).then((r) => r.data.data?.bookingPage ?? null),
     enabled: !!slug,
     retry: false,
+    staleTime: 5 * 60 * 1000,
   })
 }

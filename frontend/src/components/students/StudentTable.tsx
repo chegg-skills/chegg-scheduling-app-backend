@@ -53,7 +53,10 @@ export function StudentTable({
                   onSort={requestSort}
                 />
               ))}
-              <TableCell align="right" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.875rem' }}>
+              <TableCell
+                align="right"
+                sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.875rem' }}
+              >
                 Actions
               </TableCell>
             </TableRow>
@@ -69,11 +72,7 @@ export function StudentTable({
               </TableRow>
             ) : (
               sortedStudents.map((student) => (
-                <StudentTableRow
-                  key={student.id}
-                  student={student}
-                  onSendEmail={setEmailStudent}
-                />
+                <StudentTableRow key={student.id} student={student} onSendEmail={setEmailStudent} />
               ))
             )}
           </TableBody>

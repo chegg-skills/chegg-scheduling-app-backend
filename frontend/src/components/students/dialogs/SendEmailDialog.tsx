@@ -10,7 +10,17 @@ import {
   DialogActions,
   Popover,
 } from '@mui/material'
-import { Bold, Italic, Underline, Link as LinkIcon, X, Edit, Trash2, ExternalLink, Send } from 'lucide-react'
+import {
+  Bold,
+  Italic,
+  Underline,
+  Link as LinkIcon,
+  X,
+  Edit,
+  Trash2,
+  ExternalLink,
+  Send,
+} from 'lucide-react'
 import { useSendStudentEmail } from '@/hooks/queries/useStudents'
 import { alpha } from '@mui/material/styles'
 import { Modal } from '@/components/shared/ui/Modal'
@@ -121,7 +131,11 @@ export function SendEmailDialog({
     let cleanUrl = linkUrl.trim()
     if (cleanUrl) {
       // Ensure the URL has a protocol
-      if (!/^https?:\/\//i.test(cleanUrl) && !/^mailto:/i.test(cleanUrl) && !/^tel:/i.test(cleanUrl)) {
+      if (
+        !/^https?:\/\//i.test(cleanUrl) &&
+        !/^mailto:/i.test(cleanUrl) &&
+        !/^tel:/i.test(cleanUrl)
+      ) {
         cleanUrl = 'https://' + cleanUrl
       }
 
@@ -129,9 +143,12 @@ export function SendEmailDialog({
         // We are editing an existing link! Just change its href and text
         const oldHref = editingAnchor.getAttribute('href') || ''
         editingAnchor.href = cleanUrl
-        
+
         // If the text was exactly the old link, update the text too so they don't drift
-        if (editingAnchor.innerText.trim() === oldHref.trim() || editingAnchor.innerText.trim() === cleanUrl) {
+        if (
+          editingAnchor.innerText.trim() === oldHref.trim() ||
+          editingAnchor.innerText.trim() === cleanUrl
+        ) {
           editingAnchor.innerText = cleanUrl
         }
         setEditingAnchor(null)
@@ -145,7 +162,7 @@ export function SendEmailDialog({
           anchor.innerText = cleanUrl
           anchor.target = '_blank'
           anchor.rel = 'noopener noreferrer'
-          
+
           if (savedSelection) {
             savedSelection.insertNode(anchor)
             savedSelection.collapse(false)
@@ -154,7 +171,7 @@ export function SendEmailDialog({
           }
         } else {
           document.execCommand('createLink', false, cleanUrl)
-          
+
           // Add target="_blank" and rel="noopener noreferrer"
           const anchors = editor.getElementsByTagName('a')
           for (let i = 0; i < anchors.length; i++) {
@@ -179,7 +196,7 @@ export function SendEmailDialog({
   const handleMouseMove = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     const anchor = target.closest('a') as HTMLAnchorElement | null
-    
+
     if (anchor) {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current)
@@ -422,7 +439,8 @@ export function SendEmailDialog({
                   onClick: handleEditorClick,
                   onKeyUp: updateFormatState,
                   onMouseUp: updateFormatState,
-                  placeholder: 'Compose your rich-text formatted message here... Select text and use the toolbar to apply styling to selected text.',
+                  placeholder:
+                    'Compose your rich-text formatted message here... Select text and use the toolbar to apply styling to selected text.',
                   id: 'email-body',
                   sx: {
                     width: '100%',
@@ -447,7 +465,7 @@ export function SendEmailDialog({
                       textDecoration: 'underline',
                       cursor: 'pointer',
                     },
-                  }
+                  },
                 } as any)}
               />
             </Box>
@@ -471,14 +489,19 @@ export function SendEmailDialog({
           },
         }}
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+        <DialogTitle
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}
+        >
           <Typography variant="h6" fontWeight={700}>
             {editingAnchor ? 'Edit Link' : 'Insert Link'}
           </Typography>
-          <IconButton onClick={() => {
-            setLinkDialogOpen(false)
-            setEditingAnchor(null)
-          }} size="small">
+          <IconButton
+            onClick={() => {
+              setLinkDialogOpen(false)
+              setEditingAnchor(null)
+            }}
+            size="small"
+          >
             <X size={18} />
           </IconButton>
         </DialogTitle>
@@ -500,10 +523,13 @@ export function SendEmailDialog({
           </FormField>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="secondary" onClick={() => {
-            setLinkDialogOpen(false)
-            setEditingAnchor(null)
-          }}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setLinkDialogOpen(false)
+              setEditingAnchor(null)
+            }}
+          >
             Cancel
           </Button>
           <Button onClick={handleConfirmLink} disabled={!linkUrl.trim()}>

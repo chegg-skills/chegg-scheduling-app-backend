@@ -1,10 +1,5 @@
 import apiClient from '@/lib/axios'
-import type {
-  ApiResponse,
-  SessionType,
-  CreateSessionTypeDto,
-  UpdateSessionTypeDto,
-} from '@/types'
+import type { ApiResponse, SessionType, CreateSessionTypeDto, UpdateSessionTypeDto } from '@/types'
 
 export interface ListSessionTypesResponse {
   sessionTypes: SessionType[]

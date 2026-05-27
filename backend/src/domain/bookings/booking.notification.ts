@@ -9,6 +9,7 @@ import {
 import type { SafeBooking } from "./booking.service";
 
 import { formatNotificationDate, getFriendlyTimezoneLabel } from "../../shared/utils/date";
+import { escapeHtml } from "../../shared/utils/htmlSanitizer";
 import {
   getTeamNotificationConfig,
   type ResolvedNotificationConfig,
@@ -54,7 +55,7 @@ const getBookingNotificationVariables = async (
       ? `\nReason: ${booking.cancellationReason}`
       : "",
     cancellationDetailsHtml: booking.cancellationReason
-      ? `<br/><strong>Reason:</strong> ${booking.cancellationReason}`
+      ? `<br/><strong>Reason:</strong> ${escapeHtml(booking.cancellationReason)}`
       : "",
   };
 

@@ -27,8 +27,7 @@ export const bookingPagesApi = {
   update: (pageId: string, data: UpdateBookingPageDto) =>
     apiClient.patch<ApiResponse<{ bookingPage: BookingPage }>>(`/booking-pages/${pageId}`, data),
 
-  delete: (pageId: string) =>
-    apiClient.delete<ApiResponse<void>>(`/booking-pages/${pageId}`),
+  delete: (pageId: string) => apiClient.delete<ApiResponse<void>>(`/booking-pages/${pageId}`),
 
   addSection: (pageId: string, data: AddBookingPageSectionDto) =>
     apiClient.post<ApiResponse<{ bookingPage: BookingPage }>>(

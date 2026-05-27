@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
-import type { CallerContext } from "../../shared/utils/userUtils";
+import { requireAuthUser } from "../../shared/utils/userUtils";
 import * as bookingPageService from "./bookingPage.service";
 
 const createBookingPage = async (
@@ -10,7 +10,7 @@ const createBookingPage = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const bookingPage = await bookingPageService.createBookingPage(req.body, caller);
     sendSuccessResponse(
       res,
@@ -29,7 +29,7 @@ const listBookingPages = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const bookingPages = await bookingPageService.listBookingPages(caller);
     sendSuccessResponse(
       res,
@@ -44,7 +44,7 @@ const listBookingPages = async (
 
 const getBookingPage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { pageId } = req.params as { pageId: string };
     const bookingPage = await bookingPageService.getBookingPage(pageId, caller);
     sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Booking page fetched successfully.");
@@ -59,7 +59,7 @@ const updateBookingPage = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { pageId } = req.params as { pageId: string };
     const bookingPage = await bookingPageService.updateBookingPage(pageId, req.body, caller);
     sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Booking page updated successfully.");
@@ -74,7 +74,7 @@ const deleteBookingPage = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { pageId } = req.params as { pageId: string };
     await bookingPageService.deleteBookingPage(pageId, caller);
     res.status(StatusCodes.NO_CONTENT).send();
@@ -85,7 +85,7 @@ const deleteBookingPage = async (
 
 const addSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { pageId } = req.params as { pageId: string };
     const bookingPage = await bookingPageService.addSection(pageId, req.body, caller);
     sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Section added successfully.");
@@ -96,7 +96,7 @@ const addSection = async (req: Request, res: Response, next: NextFunction): Prom
 
 const removeSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { pageId, sectionId } = req.params as { pageId: string; sectionId: string };
     const bookingPage = await bookingPageService.removeSection(pageId, sectionId, caller);
     sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Section removed successfully.");
@@ -107,7 +107,7 @@ const removeSection = async (req: Request, res: Response, next: NextFunction): P
 
 const addTeamToSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { pageId, sectionId } = req.params as { pageId: string; sectionId: string };
     const bookingPage = await bookingPageService.addTeamToSection(
       pageId,
@@ -132,7 +132,7 @@ const removeTeamFromSection = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const caller = res.locals.authUser as CallerContext;
+    const caller = requireAuthUser(res.locals);
     const { pageId, sectionId, teamId } = req.params as {
       pageId: string;
       sectionId: string;

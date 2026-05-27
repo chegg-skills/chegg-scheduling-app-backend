@@ -154,7 +154,10 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
                   >
                     Session summary
                   </Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
+                  >
                     {log.summary}
                   </Typography>
                 </Box>
@@ -176,7 +179,10 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
                       Coach notes (private)
                     </Typography>
                   </Stack>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: 'warning.dark' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: 'pre-wrap', color: 'warning.dark' }}
+                  >
                     {log.coachNotes}
                   </Typography>
                 </Box>

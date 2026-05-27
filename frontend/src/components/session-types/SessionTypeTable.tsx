@@ -35,11 +35,7 @@ const sortAccessors: SortAccessorMap<SessionType, SessionTypeSortKey> = {
 
 export function SessionTypeTable({ sessionTypes }: SessionTypeTableProps) {
   const [editing, setEditing] = useState<SessionType | null>(null)
-  const {
-    sortedItems,
-    sortConfig,
-    requestSort,
-  } = useTableSort(sessionTypes, sortAccessors)
+  const { sortedItems, sortConfig, requestSort } = useTableSort(sessionTypes, sortAccessors)
   const { mutate: deleteSessionType } = useDeleteSessionType()
   const { mutate: updateSessionType } = useUpdateSessionType()
   const { handleAction } = useAsyncAction()
@@ -129,7 +125,13 @@ export function SessionTypeTable({ sessionTypes }: SessionTypeTableProps) {
                         <Typography
                           variant="caption"
                           color="text.secondary"
-                          sx={{ display: 'block', maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          sx={{
+                            display: 'block',
+                            maxWidth: 300,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
                         >
                           {st.description}
                         </Typography>
@@ -195,7 +197,11 @@ export function SessionTypeTable({ sessionTypes }: SessionTypeTableProps) {
 
       {editing && (
         <Modal isOpen onClose={() => setEditing(null)} title={`Edit "${editing.name}"`}>
-          <SessionTypeForm sessionType={editing} onSuccess={() => setEditing(null)} onCancel={() => setEditing(null)} />
+          <SessionTypeForm
+            sessionType={editing}
+            onSuccess={() => setEditing(null)}
+            onCancel={() => setEditing(null)}
+          />
         </Modal>
       )}
     </>

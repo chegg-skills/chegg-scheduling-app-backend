@@ -51,8 +51,6 @@ export function EventTable({
     requestSort,
   } = useTableSort(events, eventSortAccessors)
 
-
-
   const shouldGroupByGroup = groupByGroup && groups && groups.length > 0
 
   const groupedEvents = useMemo(() => {
@@ -60,7 +58,10 @@ export function EventTable({
       return [{ id: 'all', name: 'All Events', color: null, events: sortedEvents }]
     }
 
-    const groupMap = new Map<string, { id: string; name: string; color: string | null; events: Event[] }>()
+    const groupMap = new Map<
+      string,
+      { id: string; name: string; color: string | null; events: Event[] }
+    >()
 
     sortedEvents.forEach((event) => {
       const gId = event.groupId ?? 'ungrouped'
@@ -73,7 +74,7 @@ export function EventTable({
     })
 
     const result: { id: string; name: string; color: string | null; events: Event[] }[] = []
-    
+
     if (groups && groups.length > 0) {
       groups.forEach((g) => {
         const match = groupMap.get(g.id)
