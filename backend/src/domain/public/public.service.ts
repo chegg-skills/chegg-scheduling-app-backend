@@ -274,12 +274,10 @@ export const getPublicBookingPage = async (slug: string) => {
         select: publicEventSelect,
         orderBy: { name: "asc" },
       });
-      if (events.length > 0) teamsWithEvents.push({ team: entry.team, events });
+      teamsWithEvents.push({ team: entry.team, events });
     }
 
-    if (teamsWithEvents.length > 0) {
-      sections.push({ sessionType: section.sessionType, teams: teamsWithEvents });
-    }
+    sections.push({ sessionType: section.sessionType, teams: teamsWithEvents });
   }
 
   return { id: page.id, slug: page.slug, name: page.name, description: page.description, sections };

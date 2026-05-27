@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
@@ -16,7 +16,6 @@ import { Globe, Edit, Trash2, Eye, EyeOff, Settings } from 'lucide-react'
 import type { BookingPage } from '@/types'
 import { useDeleteBookingPage, useUpdateBookingPage } from '@/hooks/queries/useBookingPages'
 import { Badge } from '@/components/shared/ui/Badge'
-import { Modal } from '@/components/shared/ui/Modal'
 import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
@@ -27,9 +26,16 @@ import { BookingPageSectionEditor } from './BookingPageSectionEditor'
 import CircularProgress from '@mui/material/CircularProgress'
 import { Button } from '@/components/shared/ui/Button'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
+import { toTitleCase } from '@/utils/toTitleCase'
+
+export interface BookingPageTableRef {
+  closeManage: (skipConfirm?: boolean) => Promise<boolean>
+}
 
 interface BookingPageTableProps {
   bookingPages: BookingPage[]
+  onManageStateChange?: (page: BookingPage | null) => void
 }
 
 type SortKey = 'name' | 'slug' | 'sections' | 'status'
@@ -46,26 +52,49 @@ interface ManageModalState {
   tab: 'details' | 'sections'
 }
 
-export function BookingPageTable({ bookingPages }: BookingPageTableProps) {
-  const [manageState, setManageState] = useState<ManageModalState | null>(null)
-  const [isSavingSections, setIsSavingSections] = useState(false)
-  const [isDirtySections, setIsDirtySections] = useState(false)
+export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTableProps>(
+  ({ bookingPages, onManageStateChange }, ref) => {
+    const [manageState, setManageState] = useState<ManageModalState | null>(null)
+    const [isSavingSections, setIsSavingSections] = useState(false)
+    const [isDirtySections, setIsDirtySections] = useState(false)
 
-  const { confirm } = useConfirm()
+    const { confirm } = useConfirm()
 
-  const handleCloseManage = async (skipConfirm = false) => {
-    if (isDirtySections && !skipConfirm) {
-      const discard = await confirm({
-        title: 'Unsaved Changes',
-        message: 'You have unsaved configuration changes. Are you sure you want to discard them?',
-        confirmText: 'Discard Changes',
-      })
-      if (!discard) return
+    useImperativeHandle(ref, () => ({
+      closeManage: async (skipConfirm = false) => {
+        return handleCloseManage(skipConfirm)
+      },
+    }))
+
+    const handleSetManageState = (
+      stateOrFn: ManageModalState | null | ((prev: ManageModalState | null) => ManageModalState | null)
+    ) => {
+      if (typeof stateOrFn === 'function') {
+        setManageState((prev) => {
+          const next = stateOrFn(prev)
+          onManageStateChange?.(next ? next.page : null)
+          return next
+        })
+      } else {
+        setManageState(stateOrFn)
+        onManageStateChange?.(stateOrFn ? stateOrFn.page : null)
+      }
     }
-    setManageState(null)
-    setIsSavingSections(false)
-    setIsDirtySections(false)
-  }
+
+    const handleCloseManage = async (skipConfirm = false) => {
+      if (isDirtySections && !skipConfirm) {
+        const discard = await confirm({
+          title: 'Unsaved Changes',
+          message: 'You have unsaved configuration changes. Are you sure you want to discard them?',
+          confirmText: 'Discard Changes',
+        })
+        if (!discard) return false
+      }
+      handleSetManageState(null)
+      setIsSavingSections(false)
+      setIsDirtySections(false)
+      return true
+    }
   const { sortedItems, sortConfig, requestSort } = useTableSort(bookingPages, sortAccessors)
   const { mutate: deletePage } = useDeleteBookingPage()
   const { mutate: updatePage } = useUpdateBookingPage()
@@ -92,6 +121,116 @@ export function BookingPageTable({ bookingPages }: BookingPageTableProps) {
       message: `Permanently delete "${page.name}"? This cannot be undone.`,
       actionName: 'Delete',
     })
+  }
+
+  if (manageState) {
+    const activePage =
+      bookingPages.find((p) => p.id === manageState.page.id) ?? manageState.page
+
+    return (
+      <Box role="dialog" aria-label="Manage Booking Page" sx={{ mt: 1 }}>
+        {manageState.tab === 'sections' && (
+          <SectionHeader
+            title="Manage Booking Directory Sessions & Teams"
+            description='Configure sessions and participating teams. Click a session to view/edit its team mappings. Click "Save Changes" at the bottom to apply, or "Cancel" to discard.'
+          />
+        )}
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 3.5,
+            borderRadius: 1,
+            bgcolor: 'background.paper',
+            borderColor: 'divider',
+          }}
+        >
+
+
+          <Tabs
+            value={manageState.tab}
+            onChange={(_e, v) => {
+              if (manageState.tab === 'sections' && v === 'details' && isDirtySections) {
+                confirm({
+                  title: 'Unsaved Changes',
+                  message: 'You have unsaved configuration changes. Are you sure you want to discard them?',
+                  confirmText: 'Discard Changes',
+                }).then((discard) => {
+                  if (discard) {
+                    setIsDirtySections(false)
+                    handleSetManageState((prev) => (prev ? { ...prev, tab: v } : null))
+                  }
+                })
+              } else {
+                handleSetManageState((prev) => (prev ? { ...prev, tab: v } : null))
+              }
+            }}
+            sx={{ mb: 4, borderBottom: '1px solid', borderColor: 'divider' }}
+          >
+            <Tab label="Details" value="details" />
+            <Tab label="Sessions & Teams" value="sections" />
+          </Tabs>
+
+          <Box sx={{ minHeight: '300px' }}>
+            {manageState.tab === 'details' && (
+              <BookingPageForm
+                bookingPage={activePage}
+                onSuccess={() => handleCloseManage(true)}
+              />
+            )}
+            {manageState.tab === 'sections' && (
+              <BookingPageSectionEditor
+                bookingPage={activePage}
+                onClose={() => handleCloseManage(true)}
+                onSavingChange={setIsSavingSections}
+                onDirtyChange={setIsDirtySections}
+              />
+            )}
+          </Box>
+
+          {manageState.tab === 'sections' && (
+            <Box
+              sx={{
+                mt: 4,
+                pt: 3,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center" sx={{ width: '100%' }}>
+                {isSavingSections && (
+                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mr: 'auto' }}>
+                    <CircularProgress size={16} color="primary" />
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                      Saving changes...
+                    </Typography>
+                  </Stack>
+                )}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => handleCloseManage()}
+                  disabled={isSavingSections}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  type="submit"
+                  form="booking-page-sections-form"
+                  disabled={isSavingSections}
+                  isLoading={isSavingSections}
+                >
+                  Save Changes
+                </Button>
+              </Stack>
+            </Box>
+          )}
+        </Paper>
+      </Box>
+    )
   }
 
   return (
@@ -150,8 +289,8 @@ export function BookingPageTable({ bookingPages }: BookingPageTableProps) {
                         height: 32,
                         flexShrink: 0,
                         borderRadius: 1.5,
-                        bgcolor: '#EEF6FF',
-                        color: '#1565C0',
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -160,7 +299,18 @@ export function BookingPageTable({ bookingPages }: BookingPageTableProps) {
                       <Globe size={18} />
                     </Box>
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant="body2"
+                        onClick={() => handleSetManageState({ page, tab: 'sections' })}
+                        sx={{
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          color: 'primary.main',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                          },
+                        }}
+                      >
                         {page.name}
                       </Typography>
                       {page.description && (
@@ -200,7 +350,7 @@ export function BookingPageTable({ bookingPages }: BookingPageTableProps) {
                     {page.sections.slice(0, 3).map((s) => (
                       <Chip
                         key={s.id}
-                        label={s.sessionType.name}
+                        label={toTitleCase(s.sessionType.name)}
                         size="small"
                         sx={{ height: 20, fontSize: '0.7rem' }}
                       />
@@ -234,12 +384,12 @@ export function BookingPageTable({ bookingPages }: BookingPageTableProps) {
                       {
                         label: 'Configure sessions & teams',
                         icon: <Settings size={16} />,
-                        onClick: () => setManageState({ page, tab: 'sections' }),
+                        onClick: () => handleSetManageState({ page, tab: 'sections' }),
                       },
                       {
                         label: 'Edit details',
                         icon: <Edit size={16} />,
-                        onClick: () => setManageState({ page, tab: 'details' }),
+                        onClick: () => handleSetManageState({ page, tab: 'details' }),
                       },
                       {
                         label: page.isActive ? 'Deactivate' : 'Activate',
@@ -267,94 +417,6 @@ export function BookingPageTable({ bookingPages }: BookingPageTableProps) {
           </TableBody>
         </Table>
       </TableContainer>
-
-      {manageState && (
-        <Modal
-          isOpen
-          onClose={() => handleCloseManage()}
-          title={manageState.page.name}
-          size="lg"
-          footer={
-            manageState.tab === 'sections' ? (
-              <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center" sx={{ width: '100%' }}>
-                {isSavingSections && (
-                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mr: 'auto' }}>
-                    <CircularProgress size={16} color="primary" />
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      Saving changes...
-                    </Typography>
-                  </Stack>
-                )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => handleCloseManage()}
-                  disabled={isSavingSections}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  type="submit"
-                  form="booking-page-sections-form"
-                  disabled={isSavingSections}
-                  isLoading={isSavingSections}
-                >
-                  Save Changes
-                </Button>
-              </Stack>
-            ) : null
-          }
-        >
-          <Box>
-            <Tabs
-              value={manageState.tab}
-              onChange={(_e, v) => {
-                if (manageState.tab === 'sections' && v === 'details' && isDirtySections) {
-                  confirm({
-                    title: 'Unsaved Changes',
-                    message: 'You have unsaved configuration changes. Are you sure you want to discard them?',
-                    confirmText: 'Discard Changes',
-                  }).then((discard) => {
-                    if (discard) {
-                      setIsDirtySections(false)
-                      setManageState((prev) => (prev ? { ...prev, tab: v } : null))
-                    }
-                  })
-                } else {
-                  setManageState((prev) => (prev ? { ...prev, tab: v } : null))
-                }
-              }}
-              sx={{ mb: 3, borderBottom: '1px solid', borderColor: 'divider' }}
-            >
-              <Tab label="Details" value="details" />
-              <Tab label="Sessions & Teams" value="sections" />
-            </Tabs>
-
-            {(() => {
-              const activePage = bookingPages.find((p) => p.id === manageState.page.id) ?? manageState.page
-              return (
-                <>
-                  {manageState.tab === 'details' && (
-                    <BookingPageForm
-                      bookingPage={activePage}
-                      onSuccess={() => handleCloseManage(true)}
-                    />
-                  )}
-                  {manageState.tab === 'sections' && (
-                    <BookingPageSectionEditor
-                      bookingPage={activePage}
-                      onClose={() => handleCloseManage(true)}
-                      onSavingChange={setIsSavingSections}
-                      onDirtyChange={setIsDirtySections}
-                    />
-                  )}
-                </>
-              )
-            })()}
-          </Box>
-        </Modal>
-      )}
     </>
   )
-}
+})

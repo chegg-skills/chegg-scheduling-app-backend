@@ -13,10 +13,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 export interface BreadcrumbItem {
   label: string
   to?: string
+  onClick?: (e: React.MouseEvent) => void
 }
 
 interface PageHeaderProps {
-  title: string
+  title: ReactNode
   subtitle?: string
   actions?: ReactNode
   breadcrumbs?: BreadcrumbItem[]
@@ -88,19 +89,26 @@ export function PageHeader({
               sx={{ mb: 0.5, '& .MuiBreadcrumbs-li': { display: 'flex', alignItems: 'center' } }}
             >
               {breadcrumbs.map((item, index) =>
-                item.to ? (
+                item.to || item.onClick ? (
                   <Link
                     key={index}
-                    component={RouterLink}
-                    to={item.to}
+                    component={item.to ? RouterLink : 'button'}
+                    {...(item.to ? { to: item.to } : { type: 'button' })}
+                    onClick={item.onClick}
                     underline="hover"
                     color="inherit"
                     sx={{
                       fontSize: '0.875rem',
                       fontWeight: 500,
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       gap: 0.5,
+                      border: 'none',
+                      background: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      verticalAlign: 'middle',
                     }}
                   >
                     {item.label}

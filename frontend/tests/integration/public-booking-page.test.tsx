@@ -110,8 +110,8 @@ describe('PublicBookingPageDirectory Integration', () => {
       expect(mockSetFramed).toHaveBeenCalledWith(true)
     })
 
-    // Verify booking page name is displayed
-    await screen.findByText('Engineering Academy Booking')
+    // Verify logo is displayed and description is displayed
+    await screen.findByAltText('Chegg Skills')
     expect(screen.getByText('Welcome to the engineering academy booking directory.')).toBeInTheDocument()
   })
 
@@ -198,5 +198,54 @@ describe('PublicBookingPageDirectory Integration', () => {
 
     await screen.findByText('No sessions available')
     expect(screen.getByText(/There are no booking sessions configured/i)).toBeInTheDocument()
+  })
+
+  it('renders Step 2 empty state card when category has 0 teams', async () => {
+    const mockPageEmptyCategory = {
+      ...mockBookingPage,
+      sections: [
+        {
+          sessionType: {
+            id: 'st-empty',
+            slug: 'empty-sessions',
+            name: 'Empty Session Category',
+            description: 'No teams under this.',
+            sortOrder: 1,
+          },
+          teams: [],
+        },
+      ],
+    }
+
+    server.use(
+      http.get('*/api/public/booking-pages/slug/:slug', () => {
+        return HttpResponse.json({
+          success: true,
+          data: { bookingPage: mockPageEmptyCategory },
+        })
+      })
+    )
+
+    renderWithProviders(
+      <Routes>
+        <Route
+          path="/book/page/:pageSlug"
+          element={
+            <>
+              <PublicBookingPageDirectory />
+              <LocationDisplay />
+            </>
+          }
+        />
+      </Routes>,
+      { initialEntries: ['/book/page/eng-academy?category=st-empty'] }
+    )
+
+    // Verify empty state shows up
+    await screen.findByText('No participating teams available')
+    expect(screen.getByText(/There are currently no active disciplines or teams configured/i)).toBeInTheDocument()
+
+    // Verify "Explore all session categories" CTA button is NOT visible
+    expect(screen.queryByRole('button', { name: /explore all session categories/i })).toBeNull()
   })
 })

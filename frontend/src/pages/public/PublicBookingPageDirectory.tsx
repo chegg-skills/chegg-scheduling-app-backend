@@ -5,234 +5,29 @@ import Divider from '@mui/material/Divider'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import Paper from '@mui/material/Paper'
-import Button from '@mui/material/Button'
-import { useNavigate, useParams, useOutletContext, useSearchParams } from 'react-router-dom'
-import { Clock, MapPin, Users, ArrowRight, BookOpen, Tag, ChevronLeft } from 'lucide-react'
-import { useEffect } from 'react'
+import { useNavigate, useParams, useOutletContext, useSearchParams, useLocation } from 'react-router-dom'
+import { Users, BookOpen, Tag, ChevronLeft, Calendar, ArrowRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { usePublicBookingPageBySlug } from '@/hooks/queries/usePublicBookingPage'
-import type { PublicEventSummary, PublicBookingPageSection } from '@/types'
-import { INTERACTION_TYPE_OPTIONS } from '@/constants/interactionTypes'
 import LogoOrange from '@/assets/Color=Orange.svg'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
-
-const INTERACTION_TYPE_LABELS: Record<string, string> = Object.fromEntries(
-  INTERACTION_TYPE_OPTIONS.map((o) => [o.key, o.label])
-)
-
-function formatDuration(seconds: number): string {
-  const mins = Math.round(seconds / 60)
-  if (mins < 60) return `${mins} min`
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return m > 0 ? `${h}h ${m}m` : `${h}h`
-}
-
-interface EventCardProps {
-  event: PublicEventSummary
-  onBook: (slug: string) => void
-}
-
-function EventCard({ event, onBook }: EventCardProps) {
-  return (
-    <Paper
-      variant="outlined"
-      onClick={() => event.publicBookingSlug && onBook(event.publicBookingSlug)}
-      sx={{
-        p: 2.5,
-        borderRadius: 2,
-        cursor: event.publicBookingSlug ? 'pointer' : 'default',
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        bgcolor: 'background.paper',
-        borderColor: 'divider',
-        '&:hover': event.publicBookingSlug
-          ? {
-              borderColor: 'primary.main',
-              boxShadow: '0 8px 24px rgba(232, 113, 0, 0.06)',
-              transform: 'translateY(-2px)',
-            }
-          : {},
-      }}
-    >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-        <Box sx={{ flex: 1, pr: 1 }}>
-          <Typography variant="body1" sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}>
-            {event.name}
-          </Typography>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ gap: 1 }}>
-            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary' }}>
-              <Clock size={14} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                {formatDuration(event.durationSeconds)}
-              </Typography>
-            </Stack>
-            {event.locationType && (
-              <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary' }}>
-                <MapPin size={14} />
-                <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                  {event.locationType === 'VIRTUAL' ? 'Virtual' : event.locationType === 'IN_PERSON' ? 'In Person' : 'Custom'}
-                </Typography>
-              </Stack>
-            )}
-            {event.interactionType && (
-              <Chip
-                label={INTERACTION_TYPE_LABELS[event.interactionType] ?? event.interactionType}
-                size="small"
-                sx={{
-                  height: 20,
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  bgcolor: 'accent.peach',
-                  color: 'primary.main',
-                  border: '1px solid',
-                  borderColor: 'primary.light',
-                }}
-              />
-            )}
-          </Stack>
-        </Box>
-        {event.publicBookingSlug && (
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              bgcolor: 'primary.light',
-              color: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              transition: 'all 0.2s ease',
-              '.MuiPaper-root:hover &': {
-                bgcolor: 'primary.main',
-                color: 'white',
-              },
-            }}
-          >
-            <ArrowRight size={16} />
-          </Box>
-        )}
-      </Stack>
-    </Paper>
-  )
-}
-
-interface TeamGroupProps {
-  teamName: string
-  events: PublicEventSummary[]
-  onBook: (slug: string) => void
-}
-
-function TeamGroup({ teamName, events, onBook }: TeamGroupProps) {
-  return (
-    <Box sx={{ pl: { xs: 0, sm: 2 } }}>
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            borderRadius: 1,
-            bgcolor: 'secondary.light',
-            color: 'secondary.main',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Users size={14} />
-        </Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
-          {teamName}
-        </Typography>
-        <Chip
-          label={`${events.length} session${events.length !== 1 ? 's' : ''}`}
-          size="small"
-          sx={{
-            height: 20,
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            bgcolor: 'action.hover',
-            color: 'text.secondary',
-          }}
-        />
-      </Stack>
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: '1fr 1fr',
-          },
-        }}
-      >
-        {events.map((event) => (
-          <EventCard key={event.id} event={event} onBook={onBook} />
-        ))}
-      </Box>
-    </Box>
-  )
-}
-
-interface SectionCardProps {
-  section: PublicBookingPageSection
-  onBook: (slug: string) => void
-}
-
-function SectionCard({ section, onBook }: SectionCardProps) {
-  return (
-    <Box sx={{ py: 2 }}>
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 2,
-            bgcolor: 'primary.light',
-            color: 'primary.main',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(232, 113, 0, 0.08)',
-          }}
-        >
-          <Tag size={20} />
-        </Box>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.3px' }}>
-            {section.sessionType.name}
-          </Typography>
-          {section.sessionType.description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
-              {section.sessionType.description}
-            </Typography>
-          )}
-        </Box>
-      </Stack>
-
-      <Stack spacing={4}>
-        {section.teams.map(({ team, events }) => (
-          <TeamGroup
-            key={team.id}
-            teamName={team.name}
-            events={events}
-            onBook={onBook}
-          />
-        ))}
-      </Stack>
-    </Box>
-  )
-}
+import { toTitleCase } from '@/utils/toTitleCase'
+import { EventCard } from '@/components/public/booking/EventCard'
 
 export function PublicBookingPageDirectory() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { pageSlug } = useParams<{ pageSlug?: string }>()
   const outletCtx = useOutletContext<PublicLayoutOutletContext | null>()
 
   const slug = pageSlug ?? 'default'
   const { data: bookingPage, isLoading, error } = usePublicBookingPageBySlug(slug)
+
+  // Track if this was opened directly as a dedicated session page on initial mount
+  const [isDirectSessionPage] = useState(() => {
+    const params = new URLSearchParams(location.search)
+    return params.has('category')
+  })
 
   // URL query state to track selected session type ID and team ID for the progressive drill-down views
   const [searchParams, setSearchParams] = useSearchParams()
@@ -300,7 +95,7 @@ export function PublicBookingPageDirectory() {
         <Box
           component="img"
           src={LogoOrange}
-          alt="Chegg"
+          alt="Chegg Skills"
           sx={{ height: 32, mb: 3, opacity: 0.5 }}
         />
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
@@ -357,56 +152,327 @@ export function PublicBookingPageDirectory() {
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           sx={{ mb: 1.5 }}
         >
-          <Box component="img" src={LogoOrange} alt="Chegg" sx={{ height: 32, flexShrink: 0 }} />
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ mx: 1, display: { xs: 'none', sm: 'block' } }}
-          />
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                letterSpacing: '-0.5px',
-                color: 'text.primary',
-                lineHeight: 1.2,
-              }}
-            >
-              {bookingPage.name}
-            </Typography>
-            {bookingPage.description && (
+          <Box component="img" src={LogoOrange} alt="Chegg Skills" sx={{ height: 32, flexShrink: 0 }} />
+          {bookingPage.description && (
+            <>
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ mx: 1, display: { xs: 'none', sm: 'block' } }}
+              />
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{ mt: 1, fontWeight: 500, lineHeight: 1.5, maxWidth: '640px' }}
+                sx={{ fontWeight: 500, lineHeight: 1.5, maxWidth: '640px' }}
               >
                 {bookingPage.description}
               </Typography>
-            )}
-          </Box>
-        </Stack>
-
-        <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', gap: 0.75 }}>
-          <Chip
-            icon={<BookOpen size={13} style={{ color: '#E87100' }} />}
-            label={`${visibleSections.length} Session Categor${visibleSections.length !== 1 ? 'ies' : 'y'}`}
-            size="small"
-            sx={{
-              height: 24,
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              bgcolor: 'background.paper',
-              borderColor: 'divider',
-              border: '1px solid',
-            }}
-          />
+            </>
+          )}
         </Stack>
       </Box>
 
       {/* Content */}
       <Box sx={{ px: { xs: 3, sm: 4 }, py: 4 }}>
-        {visibleSections.length === 0 ? (
+        {selectedSection && selectedTeamEntry ? (
+          /* Step 3: Event List View */
+          <Box>
+            <Box
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedTeamId(null)}
+              sx={{
+                mb: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: 'primary.main',
+                fontWeight: 700,
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                userSelect: 'none',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              <ChevronLeft size={16} style={{ marginRight: 6 }} />
+              Back to teams
+            </Box>
+
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                {toTitleCase(selectedSection.sessionType.name)} — {toTitleCase(selectedTeamEntry.team.name)}
+              </Typography>
+              <Chip
+                label={`${selectedTeamEntry.events.length} event${selectedTeamEntry.events.length !== 1 ? 's' : ''} available`}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  bgcolor: 'accent.peach',
+                  color: 'primary.main',
+                  border: '1px solid',
+                  borderColor: 'primary.light',
+                }}
+              />
+            </Stack>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Select an Event
+            </Typography>
+
+            {selectedTeamEntry.events.length === 0 ? (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 6,
+                  textAlign: 'center',
+                  bgcolor: 'grey.50',
+                  borderStyle: 'dashed',
+                  borderColor: 'divider',
+                  borderRadius: 1.5,
+                  maxWidth: '540px',
+                  mx: 'auto',
+                  mt: 2,
+                }}
+              >
+                <Calendar size={40} style={{ opacity: 0.3, marginBottom: 16, color: '#E87100' }} />
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  No sessions scheduled
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.5 }}>
+                  There are currently no active booking events scheduled for the <strong>{toTitleCase(selectedTeamEntry.team.name)}</strong> under this category. Please check back later or contact your coordinator.
+                </Typography>
+              </Paper>
+            ) : (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 3,
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: '1fr 1fr',
+                  },
+                }}
+              >
+                {selectedTeamEntry.events.map((event) => (
+                  <EventCard key={event.id} event={event} onBook={handleBook} />
+                ))}
+              </Box>
+            )}
+          </Box>
+        ) : selectedSection ? (
+          /* Step 2: Team List View */
+          <Box>
+            {!isDirectSessionPage && (
+              <Box
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedSessionTypeId(null)}
+                sx={{
+                  mb: 4,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                <ChevronLeft size={16} style={{ marginRight: 6 }} />
+                Back to all session categories
+              </Box>
+            )}
+
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                {toTitleCase(selectedSection.sessionType.name)}
+              </Typography>
+              <Chip
+                label={`${selectedSection.teams.length} discipline${selectedSection.teams.length !== 1 ? 's' : ''} available`}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  bgcolor: 'accent.peach',
+                  color: 'primary.main',
+                  border: '1px solid',
+                  borderColor: 'primary.light',
+                }}
+              />
+            </Stack>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Select a discipline or team
+            </Typography>
+
+            {selectedSection.teams.length === 0 ? (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 6,
+                  textAlign: 'center',
+                  bgcolor: 'grey.50',
+                  borderStyle: 'dashed',
+                  borderColor: 'divider',
+                  borderRadius: 1.5,
+                  maxWidth: '540px',
+                  mx: 'auto',
+                  mt: 2,
+                }}
+              >
+                <Users size={40} style={{ opacity: 0.3, marginBottom: 16, color: '#E87100' }} />
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  No participating teams available
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.5 }}>
+                  There are currently no active disciplines or teams configured to host bookings under this category. Please check back later or contact your coordinator.
+                </Typography>
+              </Paper>
+            ) : (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 3,
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: '1fr 1fr',
+                  },
+                }}
+              >
+                {selectedSection.teams.map((entry) => (
+                  <Paper
+                    key={entry.team.id}
+                    variant="outlined"
+                    onClick={() => setSelectedTeamId(entry.team.id)}
+                    sx={{
+                      p: 3,
+                      borderRadius: 1.5,
+                      cursor: 'pointer',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      bgcolor: 'background.paper',
+                      borderColor: 'divider',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        boxShadow: '0 12px 24px -10px rgba(232, 113, 0, 0.12)',
+                        transform: 'translateY(-4px)',
+                        '& .arrow-icon': {
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          transform: 'translateX(4px)',
+                        },
+                      },
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={2.5}
+                      alignItems="center"
+                      sx={{ flexGrow: 1, minWidth: 0 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 2,
+                          bgcolor: 'secondary.light',
+                          color: 'secondary.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          boxShadow: '0 2px 8px rgba(58, 44, 65, 0.08)',
+                        }}
+                      >
+                        <Users size={24} />
+                      </Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: 800,
+                            color: 'text.primary',
+                            mb: 0.5,
+                            lineHeight: 1.3,
+                            textTransform: 'none',
+                          }}
+                        >
+                          {toTitleCase(entry.team.name)}
+                        </Typography>
+                        {entry.team.description ? (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              fontWeight: 500,
+                              lineHeight: 1.4,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              mb: 1.5,
+                            }}
+                          >
+                            {entry.team.description}
+                          </Typography>
+                        ) : (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block', mb: 1.5 }}
+                          >
+                            Click to view available sessions
+                          </Typography>
+                        )}
+                        <Chip
+                          icon={<BookOpen size={12} />}
+                          label={`${entry.events.length} session${entry.events.length !== 1 ? 's' : ''} available`}
+                          size="small"
+                          sx={{
+                            height: 22,
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                            '& .MuiChip-icon': { color: 'inherit' },
+                          }}
+                        />
+                      </Box>
+                    </Stack>
+                    <Box
+                      className="arrow-icon"
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        bgcolor: 'action.hover',
+                        color: 'text.secondary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.2s ease',
+                        ml: 2,
+                      }}
+                    >
+                      <ArrowRight size={16} />
+                    </Box>
+                  </Paper>
+                ))}
+              </Box>
+            )}
+          </Box>
+        ) : visibleSections.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
             <Tag size={32} style={{ opacity: 0.3, marginBottom: 12 }} />
             <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -416,230 +482,26 @@ export function PublicBookingPageDirectory() {
               Sessions will appear here once your administrator configures this booking page.
             </Typography>
           </Box>
-        ) : selectedSection && selectedTeamEntry ? (
-          /* Step 3: Event List View */
-          <Box>
-            <Button
-              onClick={() => setSelectedTeamId(null)}
-              sx={{
-                mb: 4,
-                display: 'inline-flex',
-                alignItems: 'center',
-                color: 'primary.main',
-                fontWeight: 700,
-                textTransform: 'none',
-                fontSize: '0.875rem',
-                p: 0,
-                minWidth: 'auto',
-                bgcolor: 'transparent',
-                '&:hover': {
-                  bgcolor: 'transparent',
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              <ChevronLeft size={16} style={{ marginRight: 6 }} />
-              Back to teams
-            </Button>
-
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: 'text.primary' }}>
-              Select an Event
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4, fontWeight: 500 }}>
-              Choose an event below to book your spot with the <strong>{selectedTeamEntry.team.name}</strong>.
-            </Typography>
-
-            <Box
-              sx={{
-                display: 'grid',
-                gap: 3,
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  md: '1fr 1fr',
-                },
-              }}
-            >
-              {selectedTeamEntry.events.map((event) => (
-                <EventCard key={event.id} event={event} onBook={handleBook} />
-              ))}
-            </Box>
-          </Box>
-        ) : selectedSection ? (
-          /* Step 2: Team List View */
-          <Box>
-            <Button
-              onClick={() => setSelectedSessionTypeId(null)}
-              sx={{
-                mb: 4,
-                display: 'inline-flex',
-                alignItems: 'center',
-                color: 'primary.main',
-                fontWeight: 700,
-                textTransform: 'none',
-                fontSize: '0.875rem',
-                p: 0,
-                minWidth: 'auto',
-                bgcolor: 'transparent',
-                '&:hover': {
-                  bgcolor: 'transparent',
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              <ChevronLeft size={16} style={{ marginRight: 6 }} />
-              Back to all session categories
-            </Button>
-
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: 'text.primary' }}>
-              Select a discipline or team
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4, fontWeight: 500 }}>
-              Select from the participating groups for <strong>{selectedSection.sessionType.name}</strong>.
-            </Typography>
-
-            <Box
-              sx={{
-                display: 'grid',
-                gap: 3,
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  md: '1fr 1fr',
-                },
-              }}
-            >
-              {selectedSection.teams.map((entry) => (
-                <Paper
-                  key={entry.team.id}
-                  variant="outlined"
-                  onClick={() => setSelectedTeamId(entry.team.id)}
-                  sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    cursor: 'pointer',
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                    bgcolor: 'background.paper',
-                    borderColor: 'divider',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      boxShadow: '0 12px 24px -10px rgba(232, 113, 0, 0.12)',
-                      transform: 'translateY(-4px)',
-                      '& .arrow-icon': {
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        transform: 'translateX(4px)',
-                      },
-                    },
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    spacing={2.5}
-                    alignItems="center"
-                    sx={{ flexGrow: 1, minWidth: 0 }}
-                  >
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 2,
-                        bgcolor: 'secondary.light',
-                        color: 'secondary.main',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        boxShadow: '0 2px 8px rgba(58, 44, 65, 0.08)',
-                      }}
-                    >
-                      <Users size={24} />
-                    </Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: 800,
-                          color: 'text.primary',
-                          mb: 0.5,
-                          lineHeight: 1.3,
-                          textTransform: 'none',
-                        }}
-                      >
-                        {entry.team.name}
-                      </Typography>
-                      {entry.team.description ? (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            fontWeight: 500,
-                            lineHeight: 1.4,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            mb: 1.5,
-                          }}
-                        >
-                          {entry.team.description}
-                        </Typography>
-                      ) : (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ display: 'block', mb: 1.5 }}
-                        >
-                          Click to view available sessions
-                        </Typography>
-                      )}
-                      <Chip
-                        icon={<BookOpen size={12} />}
-                        label={`${entry.events.length} session${entry.events.length !== 1 ? 's' : ''} available`}
-                        size="small"
-                        sx={{
-                          height: 22,
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          '& .MuiChip-icon': { color: 'inherit' },
-                        }}
-                      />
-                    </Box>
-                  </Stack>
-                  <Box
-                    className="arrow-icon"
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      bgcolor: 'action.hover',
-                      color: 'text.secondary',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      transition: 'all 0.2s ease',
-                      ml: 2,
-                    }}
-                  >
-                    <ArrowRight size={16} />
-                  </Box>
-                </Paper>
-              ))}
-            </Box>
-          </Box>
         ) : (
-          /* Step 1: Category List View */
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: 'text.primary' }}>
-              Select a Session Category
-            </Typography>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                Select a Session Category
+              </Typography>
+              <Chip
+                label={`${visibleSections.length} available`}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  bgcolor: 'accent.peach',
+                  color: 'primary.main',
+                  border: '1px solid',
+                  borderColor: 'primary.light',
+                }}
+              />
+            </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4, fontWeight: 500 }}>
               Choose a category below to view participating teams and book your session.
             </Typography>
@@ -665,7 +527,7 @@ export function PublicBookingPageDirectory() {
                     onClick={() => setSelectedSessionTypeId(section.sessionType.id)}
                     sx={{
                       p: 3,
-                      borderRadius: 3,
+                      borderRadius: 1.5,
                       cursor: 'pointer',
                       transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                       bgcolor: 'background.paper',

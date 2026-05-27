@@ -214,7 +214,7 @@ describe('Booking Pages Admin Config integration', () => {
     expect(groupWorkshopSwitch.checked).toBe(true)
 
     // Wait for collapsible team grid to render and expand (ensures state updates flush)
-    await within(groupWorkshopContainer!).findByText('Participating Teams / Disciplines')
+    await within(modal).findByText('Participating Teams / Disciplines')
 
     // Click Cancel to close the modal
     const cancelBtn = within(modal).getByRole('button', { name: /cancel/i })
@@ -267,7 +267,7 @@ describe('Booking Pages Admin Config integration', () => {
     fireEvent.click(groupWorkshopSwitch)
 
     // Wait for collapsible team grid to render and expand (ensures state updates flush)
-    await within(groupWorkshopContainer!).findByText('Participating Teams / Disciplines')
+    await within(modal).findByText('Participating Teams / Disciplines')
 
     // Click on the Details tab
     const detailsTab = within(modal).getByRole('tab', { name: /details/i })
@@ -318,11 +318,14 @@ describe('Booking Pages Admin Config integration', () => {
     fireEvent.click(groupWorkshopSwitch)
 
     // Wait for collapsible team grid to render and expand (ensures state updates flush)
-    await within(groupWorkshopContainer!).findByText('Participating Teams / Disciplines')
+    await within(modal).findByText('Participating Teams / Disciplines')
 
-    // Under 1-to-1 Tutoring Session, click Web Dev Team checkbox card to assign it
+    // Select 1-to-1 Tutoring Session in the left column
     const tutoringContainer = within(modal).getByText('1-to-1 Tutoring Session').closest('.MuiPaper-root')
-    const webDevTeamCard = within(tutoringContainer!).getByText('Web Dev Team').closest('.MuiPaper-root')
+    fireEvent.click(tutoringContainer!)
+
+    // Under the active 1-to-1 Tutoring Session detail pane, click Web Dev Team checkbox card to assign it
+    const webDevTeamCard = within(modal).getByText('Web Dev Team').closest('.MuiPaper-root')
     expect(webDevTeamCard).toBeInTheDocument()
     fireEvent.click(webDevTeamCard!)
 
