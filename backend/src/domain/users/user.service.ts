@@ -156,6 +156,7 @@ const readUser = async (userId: string): Promise<SafeUser> => {
           event: {
             include: {
               eventType: true,
+              team: true,
             },
           },
         },

@@ -16,49 +16,64 @@ interface TeamStepProps {
   error?: unknown
   selectedTeamId: string | null
   onSelect: (teamId: string) => void
+  instruction?: string
 }
 
-export function TeamStep({ teams, loading, error, selectedTeamId, onSelect }: TeamStepProps) {
+export function TeamStep({
+  teams,
+  loading,
+  error,
+  selectedTeamId,
+  onSelect,
+  instruction,
+}: TeamStepProps) {
   if (loading) return <PageSpinner />
   if (error) return <ErrorAlert message="Failed to load categories." />
 
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-        gap: 1.5,
-      }}
-    >
-      {teams.map((team) => (
-        <Card
-          key={team.id}
-          variant="outlined"
-          sx={{
-            borderColor: selectedTeamId === team.id ? 'primary.main' : 'divider',
-            borderWidth: selectedTeamId === team.id ? 2 : 1,
-            borderRadius: 1,
-          }}
-        >
-          <CardActionArea onClick={() => onSelect(team.id)}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Box
-                  sx={{ p: 1, borderRadius: 1, bgcolor: 'primary.light', color: 'primary.main' }}
-                >
-                  <Users size={24} />
-                </Box>
-                <Box>
-                  <Typography variant="h6">{toTitleCase(team.name)}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {team.description}
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-      ))}
+    <Box sx={{ width: '100%' }}>
+      {instruction && (
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2.5, fontWeight: 500 }}>
+          {instruction}
+        </Typography>
+      )}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+          gap: 1.5,
+        }}
+      >
+        {teams.map((team) => (
+          <Card
+            key={team.id}
+            variant="outlined"
+            sx={{
+              borderColor: selectedTeamId === team.id ? 'primary.main' : 'divider',
+              borderWidth: selectedTeamId === team.id ? 2 : 1,
+              borderRadius: 1,
+            }}
+          >
+            <CardActionArea onClick={() => onSelect(team.id)}>
+              <CardContent>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box
+                    sx={{ p: 1, borderRadius: 1, bgcolor: 'primary.light', color: 'primary.main' }}
+                  >
+                    <Users size={24} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6">{toTitleCase(team.name)}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {team.description}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        ))}
+      </Box>
     </Box>
   )
 }

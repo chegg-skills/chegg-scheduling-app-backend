@@ -135,6 +135,11 @@ export function PublicBookingFlow({
           error={teamsError}
           selectedTeamId={selectedTeam}
           onSelect={handleTeamSelect}
+          instruction={
+            scope === 'coach'
+              ? 'Select one of the coach’s teams to view their available sessions.'
+              : undefined
+          }
         />
       )
     case 'event':

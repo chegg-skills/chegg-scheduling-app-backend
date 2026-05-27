@@ -49,6 +49,15 @@ const mockBookingPage = {
               interactionType: 'VIDEO',
               publicBookingSlug: 'cyber-sec-tutoring',
             },
+            {
+              id: 'event-2',
+              slug: 'cyber-sec-advanced',
+              name: 'Advanced Cyber Security',
+              durationSeconds: 3600,
+              locationType: 'VIRTUAL',
+              interactionType: 'VIDEO',
+              publicBookingSlug: 'cyber-sec-advanced',
+            },
           ],
         },
       ],
@@ -181,7 +190,7 @@ describe('PublicBookingPageDirectory Integration', () => {
     // 3. Step 3: Verify Event loads
     await screen.findByText('Cyber Security Mentorship')
     expect(screen.getByText('30 min')).toBeInTheDocument()
-    expect(screen.getByText('Virtual')).toBeInTheDocument()
+    expect(screen.getAllByText('Virtual')[0]).toBeInTheDocument()
     expect(screen.getByTestId('location-display').textContent).toContain(
       '/book/sessions/one-to-one/cyber-sec'
     )
@@ -298,5 +307,133 @@ describe('PublicBookingPageDirectory Integration', () => {
 
     // Verify "Explore all session categories" CTA button is NOT visible
     expect(screen.queryByRole('button', { name: /explore all session categories/i })).toBeNull()
+  })
+
+  it('redirects directly to slot picker when clicking a team with a single event', async () => {
+    const mockPageSingleEvent = {
+      ...mockBookingPage,
+      sections: [
+        {
+          sessionType: {
+            id: '11111111-2222-3333-4444-555555555555',
+            slug: 'one-to-one',
+            name: '1-to-1 Tutoring Session',
+            description: 'Personalized engineering mentorship.',
+            sortOrder: 1,
+          },
+          teams: [
+            {
+              team: {
+                id: '6314a78c-19f7-4e0c-8f4c-200296e75858',
+                name: 'Cyber Security Team',
+                publicBookingSlug: 'cyber-sec',
+                isActive: true,
+              },
+              events: [
+                {
+                  id: 'event-1',
+                  slug: 'cyber-sec-tutoring',
+                  name: 'Cyber Security Mentorship',
+                  durationSeconds: 1800,
+                  locationType: 'VIRTUAL',
+                  interactionType: 'VIDEO',
+                  publicBookingSlug: 'cyber-sec-tutoring',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    server.use(
+      http.get('*/api/public/booking-pages/slug/:slug', () => {
+        return HttpResponse.json({
+          success: true,
+          data: { bookingPage: mockPageSingleEvent },
+        })
+      })
+    )
+
+    renderDirectoryPage()
+
+    // 1. Click category card
+    await screen.findByText('1-to-1 Tutoring Session')
+    const categoryCard = screen.getByText('1-to-1 Tutoring Session').closest('.MuiPaper-root')
+    fireEvent.click(categoryCard!)
+
+    // 2. Click team card (which only has 1 event)
+    await screen.findByText('Cyber Security Team')
+    const teamCard = screen.getByText('Cyber Security Team').closest('.MuiPaper-root')
+    fireEvent.click(teamCard!)
+
+    // 3. Verify it redirects directly to slot picker page (skipping event listing)
+    await screen.findByText('Slot Picker Step')
+  })
+
+  it('redirects directly to slot picker when directly navigating to a team with a single event', async () => {
+    const mockPageSingleEvent = {
+      ...mockBookingPage,
+      sections: [
+        {
+          sessionType: {
+            id: '11111111-2222-3333-4444-555555555555',
+            slug: 'one-to-one',
+            name: '1-to-1 Tutoring Session',
+            description: 'Personalized engineering mentorship.',
+            sortOrder: 1,
+          },
+          teams: [
+            {
+              team: {
+                id: '6314a78c-19f7-4e0c-8f4c-200296e75858',
+                name: 'Cyber Security Team',
+                publicBookingSlug: 'cyber-sec',
+                isActive: true,
+              },
+              events: [
+                {
+                  id: 'event-1',
+                  slug: 'cyber-sec-tutoring',
+                  name: 'Cyber Security Mentorship',
+                  durationSeconds: 1800,
+                  locationType: 'VIRTUAL',
+                  interactionType: 'VIDEO',
+                  publicBookingSlug: 'cyber-sec-tutoring',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    server.use(
+      http.get('*/api/public/booking-pages/slug/:slug', () => {
+        return HttpResponse.json({
+          success: true,
+          data: { bookingPage: mockPageSingleEvent },
+        })
+      })
+    )
+
+    renderWithProviders(
+      <Routes>
+        <Route
+          path="/book/sessions/:sessionTypeSlug/:teamSlug"
+          element={
+            <>
+              <PublicBookingPageDirectory />
+              <LocationDisplay />
+            </>
+          }
+        />
+        <Route path="/book/event/:eventSlug" element={<div>Slot Picker Step</div>} />
+      </Routes>,
+      { initialEntries: ['/book/sessions/one-to-one/cyber-sec'] }
+    )
+
+    // Verify it redirects directly to slot picker page (skipping event listing)
+    await screen.findByText('Slot Picker Step')
   })
 })

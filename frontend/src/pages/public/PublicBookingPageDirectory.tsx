@@ -69,6 +69,23 @@ export function PublicBookingPageDirectory() {
     outletCtx?.setFramed(true)
   }, [outletCtx])
 
+  // Find the selected section and team from path params
+  const selectedSection = sessionTypeSlug
+    ? bookingPage?.sections.find((s) => s.sessionType.slug === sessionTypeSlug)
+    : undefined
+
+  const selectedTeamEntry = teamSlug
+    ? selectedSection?.teams.find((t) => t.team.publicBookingSlug === teamSlug)
+    : undefined
+
+  // Redirect directly to the event booking page if the team slug is provided but the team only has 1 event.
+  useEffect(() => {
+    if (selectedTeamEntry && selectedTeamEntry.events.length === 1) {
+      const singleEvent = selectedTeamEntry.events[0]
+      navigate(`/book/event/${singleEvent.publicBookingSlug ?? singleEvent.id}`, { replace: true })
+    }
+  }, [selectedTeamEntry, navigate])
+
   function handleBook(eventSlug: string) {
     navigate(`/book/event/${eventSlug}`)
   }
@@ -114,14 +131,7 @@ export function PublicBookingPageDirectory() {
   // Filter out any categories/sections that do not have participating teams to prevent dead-end navigation
   const visibleSections = bookingPage.sections.filter((s) => s.teams.length > 0)
 
-  // Find the selected section and team from path params
-  const selectedSection = sessionTypeSlug
-    ? bookingPage.sections.find((s) => s.sessionType.slug === sessionTypeSlug)
-    : undefined
-
-  const selectedTeamEntry = teamSlug
-    ? selectedSection?.teams.find((t) => t.team.publicBookingSlug === teamSlug)
-    : undefined
+  // (selectedSection and selectedTeamEntry are defined above loading states to adhere to rules of hooks)
 
   // A slug in the URL that doesn't match any known entity is a 404, not a silent fallback
   if (sessionTypeSlug && !selectedSection) {
@@ -154,7 +164,9 @@ export function PublicBookingPageDirectory() {
           role="button"
           tabIndex={0}
           onClick={() => navigate('/book/sessions')}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/book/sessions') }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') navigate('/book/sessions')
+          }}
           sx={{
             color: 'primary.main',
             fontWeight: 700,
@@ -202,7 +214,9 @@ export function PublicBookingPageDirectory() {
           role="button"
           tabIndex={0}
           onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/book/sessions/${sessionTypeSlug}`) }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') navigate(`/book/sessions/${sessionTypeSlug}`)
+          }}
           sx={{
             color: 'primary.main',
             fontWeight: 700,
@@ -285,7 +299,10 @@ export function PublicBookingPageDirectory() {
               role="button"
               tabIndex={0}
               onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/book/sessions/${sessionTypeSlug}`) }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ')
+                  navigate(`/book/sessions/${sessionTypeSlug}`)
+              }}
               sx={{
                 mb: 4,
                 display: 'inline-flex',
@@ -389,7 +406,9 @@ export function PublicBookingPageDirectory() {
               role="button"
               tabIndex={0}
               onClick={() => navigate('/book/sessions')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/book/sessions') }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') navigate('/book/sessions')
+              }}
               sx={{
                 mb: 4,
                 display: 'inline-flex',
@@ -482,11 +501,15 @@ export function PublicBookingPageDirectory() {
                   <Paper
                     key={entry.team.id}
                     variant="outlined"
-                    onClick={() =>
-                      navigate(
-                        `/book/sessions/${sessionTypeSlug}/${entry.team.publicBookingSlug ?? entry.team.id}`
-                      )
-                    }
+                    onClick={() => {
+                      if (entry.events.length === 1) {
+                        handleBook(entry.events[0].publicBookingSlug ?? entry.events[0].id)
+                      } else {
+                        navigate(
+                          `/book/sessions/${sessionTypeSlug}/${entry.team.publicBookingSlug ?? entry.team.id}`
+                        )
+                      }
+                    }}
                     sx={{
                       p: 3,
                       borderRadius: 1.5,
