@@ -9,6 +9,8 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
 import { Tag, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import type { SessionType } from '@/types'
 import { useDeleteSessionType, useUpdateSessionType } from '@/hooks/queries/useSessionTypes'
@@ -39,6 +41,36 @@ export function SessionTypeTable({ sessionTypes }: SessionTypeTableProps) {
   const { mutate: deleteSessionType } = useDeleteSessionType()
   const { mutate: updateSessionType } = useUpdateSessionType()
   const { handleAction } = useAsyncAction()
+
+  if (sessionTypes.length === 0) {
+    return (
+      <Card variant="outlined" sx={{ borderRadius: 1.5, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 4, textAlign: 'center' }}>
+          <Stack spacing={2} alignItems="center" justifyContent="center">
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '50%',
+                bgcolor: 'action.hover',
+                color: 'text.secondary',
+                display: 'flex',
+              }}
+            >
+              <Tag size={32} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                No session types yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Create a session type to get started.
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const handleToggleActive = (st: SessionType) => {
     const newStatus = !st.isActive
@@ -184,13 +216,7 @@ export function SessionTypeTable({ sessionTypes }: SessionTypeTableProps) {
                 </TableCell>
               </TableRow>
             ))}
-            {sortedItems.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-                  No session types yet. Create one to get started.
-                </TableCell>
-              </TableRow>
-            )}
+
           </TableBody>
         </Table>
       </TableContainer>

@@ -9,6 +9,8 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
 import { Layers, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import type { EventType } from '@/types'
 import { useDeleteEventType, useUpdateEventType } from '@/hooks/queries/useEventTypes'
@@ -50,6 +52,36 @@ export function EventTypeTable({ eventTypes }: EventTypeTableProps) {
   const { mutate: deleteEventType } = useDeleteEventType()
   const { mutate: updateEventType } = useUpdateEventType()
   const { handleAction } = useAsyncAction()
+
+  if (eventTypes.length === 0) {
+    return (
+      <Card variant="outlined" sx={{ borderRadius: 1.5, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 4, textAlign: 'center' }}>
+          <Stack spacing={2} alignItems="center" justifyContent="center">
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '50%',
+                bgcolor: 'action.hover',
+                color: 'text.secondary',
+                display: 'flex',
+              }}
+            >
+              <Layers size={32} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                No event types yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Create an event type to start categorizing your scheduling services.
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const handleToggleActive = (eventType: EventType) => {
     const newStatus = !eventType.isActive

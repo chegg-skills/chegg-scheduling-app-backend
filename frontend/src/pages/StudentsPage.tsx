@@ -6,6 +6,7 @@ import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { Input } from '@/components/shared/form/Input'
 import { StudentTable } from '@/components/students/StudentTable'
+import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { useStudents } from '@/hooks/queries/useStudents'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -94,58 +95,66 @@ export function StudentsPage() {
             <PageSpinner />
           ) : error ? (
             <ErrorAlert message="Failed to load students." />
-          ) : isCoach && students.length === 0 && !debouncedSearch ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: { xs: 4, md: 8 },
-                textAlign: 'center',
-                borderRadius: 3,
-                borderStyle: 'dashed',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                maxWidth: 600,
-                mx: 'auto',
-                mt: 4,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-              }}
-            >
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: '50%',
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                  color: 'primary.main',
-                  mb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Users size={48} />
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5, color: 'text.primary' }}>
-                Your Student Roster is Ready
-              </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ maxWidth: 450, mx: 'auto', mb: 0, lineHeight: 1.6 }}
-              >
-                No students booked yet. When students book a session from your teams or events,
-                their profiles, contact details, and history will automatically appear here.
-              </Typography>
-            </Paper>
           ) : (
-            <StudentTable
-              students={students}
-              pagination={pagination}
-              onPageChange={onPageChange}
-              onRowsPerPageChange={onRowsPerPageChange}
-            />
+            <>
+              <SectionHeader
+                title="Student Roster"
+                description="Manage student profiles, track booking history, and view communication logs."
+              />
+              {isCoach && students.length === 0 && !debouncedSearch ? (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: { xs: 4, md: 8 },
+                    textAlign: 'center',
+                    borderRadius: 3,
+                    borderStyle: 'dashed',
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    maxWidth: 600,
+                    mx: 'auto',
+                    mt: 4,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: '50%',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      mb: 3,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Users size={48} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5, color: 'text.primary' }}>
+                    Your Student Roster is Ready
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ maxWidth: 450, mx: 'auto', mb: 0, lineHeight: 1.6 }}
+                  >
+                    No students booked yet. When students book a session from your teams or events,
+                    their profiles, contact details, and history will automatically appear here.
+                  </Typography>
+                </Paper>
+              ) : (
+                <StudentTable
+                  students={students}
+                  pagination={pagination}
+                  onPageChange={onPageChange}
+                  onRowsPerPageChange={onRowsPerPageChange}
+                />
+              )}
+            </>
           )}
         </Box>
       </Box>

@@ -6,6 +6,7 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
+import Typography from '@mui/material/Typography'
 import { User, LogOut } from 'lucide-react'
 import type { NavItem } from './navConfig'
 
@@ -13,9 +14,15 @@ interface ExpandedSidebarContentProps {
   items: NavItem[]
   pathname: string
   logout: () => void
+  onTerminologyClick: () => void
 }
 
-export function ExpandedSidebarContent({ items, pathname, logout }: ExpandedSidebarContentProps) {
+export function ExpandedSidebarContent({
+  items,
+  pathname,
+  logout,
+  onTerminologyClick,
+}: ExpandedSidebarContentProps) {
   return (
     <>
       <List sx={{ flex: 1, px: 1.5, py: 2 }}>
@@ -63,6 +70,24 @@ export function ExpandedSidebarContent({ items, pathname, logout }: ExpandedSide
           </ListItemIcon>
           <ListItemText primary="Sign out" primaryTypographyProps={{ variant: 'body2' }} />
         </ListItemButton>
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            onClick={onTerminologyClick}
+            sx={{
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              textDecoration: 'underline',
+              display: 'inline-block',
+              '&:hover': {
+                color: 'primary.main',
+              },
+            }}
+          >
+            Terminology & Glossary
+          </Typography>
+        </Box>
       </Box>
     </>
   )

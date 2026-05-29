@@ -11,6 +11,8 @@ import {
   Collapse,
   Tooltip,
   CircularProgress,
+  Card,
+  CardContent,
 } from '@mui/material'
 import { CheckCircle2, AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import { format } from 'date-fns'
@@ -86,25 +88,31 @@ export function StudentCommunicationsTab({ studentId }: StudentCommunicationsTab
 
   if (logs.length === 0) {
     return (
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 6,
-          textAlign: 'center',
-          borderRadius: 3,
-          borderStyle: 'dashed',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Mail size={40} style={{ opacity: 0.4, marginBottom: 12 }} />
-        <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
-          No Communication Logs Found
-        </Typography>
-        <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
-          Email dispatches composed via the Student Table will appear here.
-        </Typography>
-      </Paper>
+      <Card variant="outlined" sx={{ borderRadius: 1.5, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 4, textAlign: 'center' }}>
+          <Stack spacing={2} alignItems="center" justifyContent="center">
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '50%',
+                bgcolor: 'action.hover',
+                color: 'text.secondary',
+                display: 'flex',
+              }}
+            >
+              <Mail size={32} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                No communication yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Email dispatches composed via the Student Table will appear here.
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
     )
   }
 
