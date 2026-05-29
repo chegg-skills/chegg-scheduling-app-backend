@@ -49,14 +49,33 @@ export function usePublicBookingState() {
   const [selectedTimezone, setSelectedTimezone] = React.useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   )
-  const [studentInfo, setStudentInfo] = React.useState({
-    name: '',
-    email: '',
-    notes: '',
-    specificQuestion: '',
-    triedSolutions: '',
-    usedResources: '',
-    sessionObjectives: '',
+  const [studentInfo, setStudentInfo] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem('chegg_student_info')
+      if (saved) {
+        const { name, email } = JSON.parse(saved)
+        return {
+          name: typeof name === 'string' ? name : '',
+          email: typeof email === 'string' ? email : '',
+          notes: '',
+          specificQuestion: '',
+          triedSolutions: '',
+          usedResources: '',
+          sessionObjectives: '',
+        }
+      }
+    } catch {
+      // corrupted storage — fall through to defaults
+    }
+    return {
+      name: '',
+      email: '',
+      notes: '',
+      specificQuestion: '',
+      triedSolutions: '',
+      usedResources: '',
+      sessionObjectives: '',
+    }
   })
 
   const { data: teams = [], isLoading: loadingTeams, error: teamsError } = usePublicTeams()
@@ -362,6 +381,14 @@ export function usePublicBookingState() {
         sessionObjectives: studentInfo.sessionObjectives,
         preferredCoachId,
       })
+      try {
+        localStorage.setItem(
+          'chegg_student_info',
+          JSON.stringify({ name: studentInfo.name, email: studentInfo.email })
+        )
+      } catch {
+        // storage unavailable (private mode, quota exceeded) — silently ignore
+      }
       handleNext()
     } catch (error) {
       throw error

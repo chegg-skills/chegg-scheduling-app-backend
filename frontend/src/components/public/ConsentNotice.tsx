@@ -204,6 +204,22 @@ export function ConsentNotice() {
                   accepts standard local storage keys. It is immediately deleted.
                 </Typography>
               </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, fontSize: '0.8125rem', color: 'text.primary' }}
+                >
+                  Remembered Contact Details (<code>chegg_student_info</code> in localStorage)
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}
+                >
+                  Stores your name and email address after a successful booking to auto-fill the form
+                  for your convenience during future scheduling requests. This is stored strictly locally on your browser.
+                </Typography>
+              </Box>
             </Stack>
           </Box>
         </Collapse>
