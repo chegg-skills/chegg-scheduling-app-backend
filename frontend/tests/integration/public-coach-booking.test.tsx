@@ -1,4 +1,4 @@
-import { screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
+import { screen, cleanup, fireEvent } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { Route, Routes } from 'react-router-dom'
 import { PublicBookingPage } from '@/pages/public/PublicBookingPage'

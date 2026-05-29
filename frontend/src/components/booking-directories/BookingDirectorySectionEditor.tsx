@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
@@ -5,32 +6,32 @@ import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import Switch from '@mui/material/Switch'
 import { Tag } from 'lucide-react'
-import type { BookingPage, Team } from '@/types'
+import type { BookingDirectory, Team } from '@/types'
 import { useSessionTypes } from '@/hooks/queries/useSessionTypes'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useEvents } from '@/hooks/queries/useEvents'
 import { useQueryClient } from '@tanstack/react-query'
-import { bookingPageKeys } from '@/hooks/queries/useBookingPages'
-import { bookingPagesApi } from '@/api/bookingPages'
+import { bookingDirectoryKeys } from '@/hooks/queries/useBookingDirectories'
+import { bookingDirectoriesApi } from '@/api/bookingDirectories'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { extractApiError } from '@/utils/apiError'
 import { alpha } from '@mui/material/styles'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { SessionDetailConfigPanel } from './SessionDetailConfigPanel'
 
-interface BookingPageSectionEditorProps {
-  bookingPage: BookingPage
+interface BookingDirectorySectionEditorProps {
+  bookingDirectory: BookingDirectory
   onClose: () => void
   onSavingChange?: (saving: boolean) => void
   onDirtyChange?: (isDirty: boolean) => void
 }
 
-export function BookingPageSectionEditor({
-  bookingPage,
+export function BookingDirectorySectionEditor({
+  bookingDirectory,
   onClose,
   onSavingChange,
   onDirtyChange,
-}: BookingPageSectionEditorProps) {
+}: BookingDirectorySectionEditorProps) {
   const qc = useQueryClient()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -38,7 +39,7 @@ export function BookingPageSectionEditor({
   // Local draft state: Map of sessionTypeId -> Set of teamIds
   const [draftCategories, setDraftCategories] = useState<Map<string, Set<string>>>(() => {
     const map = new Map<string, Set<string>>()
-    bookingPage.sections.forEach((section) => {
+    bookingDirectory.sections.forEach((section) => {
       const teamIds = new Set(section.teams.map((t) => t.teamId))
       map.set(section.sessionTypeId, teamIds)
     })
@@ -84,10 +85,10 @@ export function BookingPageSectionEditor({
   const getEventsForTeamAndSessionType = (sessionTypeId: string, teamId: string) =>
     eventsByKey.get(`${teamId}:${sessionTypeId}`) ?? []
 
-  // Calculate if local draft state has changes compared to original bookingPage sections
+  // Calculate if local draft state has changes compared to original bookingDirectory sections
   useEffect(() => {
     const origSectionsMap = new Map<string, Set<string>>()
-    bookingPage.sections.forEach((s) => {
+    bookingDirectory.sections.forEach((s) => {
       origSectionsMap.set(s.sessionTypeId, new Set(s.teams.map((t) => t.teamId)))
     })
 
@@ -118,7 +119,7 @@ export function BookingPageSectionEditor({
     }
 
     onDirtyChange?.(isDirty)
-  }, [draftCategories, bookingPage.sections, onDirtyChange])
+  }, [draftCategories, bookingDirectory.sections, onDirtyChange])
 
   useEffect(() => {
     onSavingChange?.(isSaving)
@@ -162,13 +163,13 @@ export function BookingPageSectionEditor({
     // Compute differences
     const sectionsToAdd: string[] = []
     draftCategories.forEach((_, sessionTypeId) => {
-      if (!bookingPage.sections.some((s) => s.sessionTypeId === sessionTypeId)) {
+      if (!bookingDirectory.sections.some((s) => s.sessionTypeId === sessionTypeId)) {
         sectionsToAdd.push(sessionTypeId)
       }
     })
 
     const sectionsToRemove: { id: string; name: string }[] = []
-    bookingPage.sections.forEach((section) => {
+    bookingDirectory.sections.forEach((section) => {
       if (!draftCategories.has(section.sessionTypeId)) {
         sectionsToRemove.push({ id: section.id, name: section.sessionType.name })
       }
@@ -177,24 +178,24 @@ export function BookingPageSectionEditor({
     try {
       // 1. Process sections to remove
       for (const section of sectionsToRemove) {
-        await bookingPagesApi.removeSection(bookingPage.id, section.id)
+        await bookingDirectoriesApi.removeSection(bookingDirectory.id, section.id)
       }
 
       // 2. Process sections to add & their teams
       for (const sessionTypeId of sectionsToAdd) {
-        const response = await bookingPagesApi.addSection(bookingPage.id, { sessionTypeId })
-        const updatedPage = response.data.data?.bookingPage
-        const newSection = updatedPage?.sections.find((s) => s.sessionTypeId === sessionTypeId)
+        const response = await bookingDirectoriesApi.addSection(bookingDirectory.id, { sessionTypeId })
+        const updatedDirectory = response.data.data?.bookingDirectory
+        const newSection = updatedDirectory?.sections.find((s) => s.sessionTypeId === sessionTypeId)
         if (newSection) {
           const draftTeamIds = draftCategories.get(sessionTypeId) ?? new Set()
           for (const teamId of draftTeamIds) {
-            await bookingPagesApi.addTeamToSection(bookingPage.id, newSection.id, { teamId })
+            await bookingDirectoriesApi.addTeamToSection(bookingDirectory.id, newSection.id, { teamId })
           }
         }
       }
 
       // 3. Process existing sections (teams to add & remove)
-      for (const section of bookingPage.sections) {
+      for (const section of bookingDirectory.sections) {
         if (draftCategories.has(section.sessionTypeId)) {
           const draftTeamIds = draftCategories.get(section.sessionTypeId) ?? new Set()
           const origTeamIds = new Set(section.teams.map((t) => t.teamId))
@@ -202,21 +203,21 @@ export function BookingPageSectionEditor({
           // Teams to add
           for (const teamId of draftTeamIds) {
             if (!origTeamIds.has(teamId)) {
-              await bookingPagesApi.addTeamToSection(bookingPage.id, section.id, { teamId })
+              await bookingDirectoriesApi.addTeamToSection(bookingDirectory.id, section.id, { teamId })
             }
           }
 
           // Teams to remove
           for (const teamId of origTeamIds) {
             if (!draftTeamIds.has(teamId)) {
-              await bookingPagesApi.removeTeamFromSection(bookingPage.id, section.id, teamId)
+              await bookingDirectoriesApi.removeTeamFromSection(bookingDirectory.id, section.id, teamId)
             }
           }
         }
       }
 
-      // Invalidate Query Cache to update all booking page tables and components
-      await qc.invalidateQueries({ queryKey: bookingPageKeys.all })
+      // Invalidate Query Cache to update all booking directory tables and components
+      await qc.invalidateQueries({ queryKey: bookingDirectoryKeys.all })
 
       // Successfully saved! Close the modal
       onClose()
@@ -232,7 +233,7 @@ export function BookingPageSectionEditor({
   return (
     <Box
       component="form"
-      id="booking-page-sections-form"
+      id="booking-directory-sections-form"
       onSubmit={(e) => {
         e.preventDefault()
         handleSave()
@@ -265,7 +266,7 @@ export function BookingPageSectionEditor({
               const isEnabled = draftCategories.has(sessionType.id)
               const draftTeamIds = draftCategories.get(sessionType.id)
               const numTeams = isEnabled && draftTeamIds ? draftTeamIds.size : 0
-              const isOriginalEnabled = bookingPage.sections.some(
+              const isOriginalEnabled = bookingDirectory.sections.some(
                 (s) => s.sessionTypeId === sessionType.id
               )
               const isPendingRemoval = isOriginalEnabled && !isEnabled
@@ -403,7 +404,7 @@ export function BookingPageSectionEditor({
             <SessionDetailConfigPanel
               selectedSessionType={selectedSessionType}
               draftCategories={draftCategories}
-              bookingPage={bookingPage}
+              bookingDirectory={bookingDirectory}
               activeTeams={activeTeams}
               isSaving={isSaving}
               getEventCount={getEventCount}

@@ -12,7 +12,7 @@ import bookingRoutes from "../domain/bookings/booking.router";
 import publicRoutes from "../domain/public/public.router";
 import studentRoutes from "../domain/students/student.router";
 import sessionTypeRoutes from "../domain/sessionTypes/sessionType.router";
-import bookingPageRoutes from "../domain/bookingPages/bookingPage.router";
+import bookingDirectoryRoutes from "../domain/bookingDirectories/bookingDirectory.router";
 import v1routes from "./v1/index";
 import { authenticate } from "../shared/middleware/auth";
 
@@ -31,7 +31,7 @@ router.use(teamMemberRoutes);
 router.use(eventRoutes);
 router.use(eventGroupRoutes);
 router.use(sessionTypeRoutes);
-router.use(bookingPageRoutes);
+router.use(bookingDirectoryRoutes);
 
 router.use("/v1", authenticate, v1routes);
 

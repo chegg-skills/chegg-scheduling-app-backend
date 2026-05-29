@@ -7,11 +7,11 @@ import type { CallerContext } from "../../shared/utils/userUtils";
 
 const assertSuperAdmin = (caller: CallerContext): void => {
   if (caller.role !== UserRole.SUPER_ADMIN) {
-    throw new ErrorHandler(StatusCodes.FORBIDDEN, "Only super admins can manage booking pages.");
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "Only super admins can manage booking directories.");
   }
 };
 
-const bookingPageInclude = Prisma.validator<Prisma.BookingPageInclude>()({
+const bookingDirectoryInclude = Prisma.validator<Prisma.BookingDirectoryInclude>()({
   sections: {
     orderBy: { sortOrder: "asc" },
     include: {
@@ -26,25 +26,25 @@ const bookingPageInclude = Prisma.validator<Prisma.BookingPageInclude>()({
   },
 });
 
-type SafeBookingPage = Prisma.BookingPageGetPayload<{ include: typeof bookingPageInclude }>;
+type SafeBookingDirectory = Prisma.BookingDirectoryGetPayload<{ include: typeof bookingDirectoryInclude }>;
 
-const loadOrThrow = async (pageId: string): Promise<SafeBookingPage> => {
-  const page = await prisma.bookingPage.findUnique({
-    where: { id: pageId },
-    include: bookingPageInclude,
+const loadOrThrow = async (directoryId: string): Promise<SafeBookingDirectory> => {
+  const directory = await prisma.bookingDirectory.findUnique({
+    where: { id: directoryId },
+    include: bookingDirectoryInclude,
   });
-  if (!page) throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking page not found.");
-  return page;
+  if (!directory) throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking directory not found.");
+  return directory;
 };
 
-const createBookingPage = async (
+const createBookingDirectory = async (
   payload: { slug: string; name: string; description?: string | null; isActive?: boolean },
   caller: CallerContext,
-): Promise<SafeBookingPage> => {
+): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
 
   try {
-    return await prisma.bookingPage.create({
+    return await prisma.bookingDirectory.create({
       data: {
         slug: payload.slug,
         name: payload.name,
@@ -53,36 +53,36 @@ const createBookingPage = async (
         createdById: caller.id,
         updatedById: caller.id,
       },
-      include: bookingPageInclude,
+      include: bookingDirectoryInclude,
     });
   } catch (error) {
     return rethrowPrismaError(error, {
       P2002: {
         status: StatusCodes.CONFLICT,
-        message: "A booking page with this slug already exists.",
+        message: "A booking directory with this slug already exists.",
       },
     });
   }
 };
 
-const listBookingPages = async (caller: CallerContext): Promise<SafeBookingPage[]> => {
+const listBookingDirectories = async (caller: CallerContext): Promise<SafeBookingDirectory[]> => {
   assertSuperAdmin(caller);
-  return prisma.bookingPage.findMany({
+  return prisma.bookingDirectory.findMany({
     orderBy: { createdAt: "asc" },
-    include: bookingPageInclude,
+    include: bookingDirectoryInclude,
   });
 };
 
-const getBookingPage = async (pageId: string, caller: CallerContext): Promise<SafeBookingPage> => {
+const getBookingDirectory = async (directoryId: string, caller: CallerContext): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
-  return loadOrThrow(pageId);
+  return loadOrThrow(directoryId);
 };
 
-const updateBookingPage = async (
-  pageId: string,
+const updateBookingDirectory = async (
+  directoryId: string,
   payload: { name?: string; description?: string | null; isActive?: boolean },
   caller: CallerContext,
-): Promise<SafeBookingPage> => {
+): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
 
   const data: Record<string, unknown> = { updatedById: caller.id };
@@ -91,34 +91,34 @@ const updateBookingPage = async (
   if (payload.isActive !== undefined) data.isActive = payload.isActive;
 
   try {
-    return await prisma.bookingPage.update({
-      where: { id: pageId },
+    return await prisma.bookingDirectory.update({
+      where: { id: directoryId },
       data,
-      include: bookingPageInclude,
+      include: bookingDirectoryInclude,
     });
   } catch (error) {
     return rethrowPrismaError(error, {
-      P2025: { status: StatusCodes.NOT_FOUND, message: "Booking page not found." },
+      P2025: { status: StatusCodes.NOT_FOUND, message: "Booking directory not found." },
     });
   }
 };
 
-const deleteBookingPage = async (pageId: string, caller: CallerContext): Promise<void> => {
+const deleteBookingDirectory = async (directoryId: string, caller: CallerContext): Promise<void> => {
   assertSuperAdmin(caller);
   try {
-    await prisma.bookingPage.delete({ where: { id: pageId } });
+    await prisma.bookingDirectory.delete({ where: { id: directoryId } });
   } catch (error) {
     rethrowPrismaError(error, {
-      P2025: { status: StatusCodes.NOT_FOUND, message: "Booking page not found." },
+      P2025: { status: StatusCodes.NOT_FOUND, message: "Booking directory not found." },
     });
   }
 };
 
 const addSection = async (
-  pageId: string,
+  directoryId: string,
   payload: { sessionTypeId: string; sortOrder?: number },
   caller: CallerContext,
-): Promise<SafeBookingPage> => {
+): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
 
   const sessionType = await prisma.sessionType.findUnique({ where: { id: payload.sessionTypeId } });
@@ -127,9 +127,9 @@ const addSection = async (
   }
 
   try {
-    await prisma.bookingPageSection.create({
+    await prisma.bookingDirectorySection.create({
       data: {
-        bookingPageId: pageId,
+        bookingDirectoryId: directoryId,
         sessionTypeId: payload.sessionTypeId,
         sortOrder: payload.sortOrder ?? 0,
       },
@@ -138,49 +138,49 @@ const addSection = async (
     rethrowPrismaError(error, {
       P2002: {
         status: StatusCodes.CONFLICT,
-        message: "This session type is already on the booking page.",
+        message: "This session type is already in the booking directory.",
       },
-      P2003: { status: StatusCodes.NOT_FOUND, message: "Booking page not found." },
+      P2003: { status: StatusCodes.NOT_FOUND, message: "Booking directory not found." },
     });
   }
 
-  return loadOrThrow(pageId);
+  return loadOrThrow(directoryId);
 };
 
 const removeSection = async (
-  pageId: string,
+  directoryId: string,
   sectionId: string,
   caller: CallerContext,
-): Promise<SafeBookingPage> => {
+): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
 
-  const section = await prisma.bookingPageSection.findUnique({ where: { id: sectionId } });
-  if (!section || section.bookingPageId !== pageId) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Section not found on this booking page.");
+  const section = await prisma.bookingDirectorySection.findUnique({ where: { id: sectionId } });
+  if (!section || section.bookingDirectoryId !== directoryId) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Section not found in this booking directory.");
   }
 
-  await prisma.bookingPageSection.delete({ where: { id: sectionId } });
-  return loadOrThrow(pageId);
+  await prisma.bookingDirectorySection.delete({ where: { id: sectionId } });
+  return loadOrThrow(directoryId);
 };
 
 const addTeamToSection = async (
-  pageId: string,
+  directoryId: string,
   sectionId: string,
   payload: { teamId: string; sortOrder?: number },
   caller: CallerContext,
-): Promise<SafeBookingPage> => {
+): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
 
-  const section = await prisma.bookingPageSection.findUnique({ where: { id: sectionId } });
-  if (!section || section.bookingPageId !== pageId) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Section not found on this booking page.");
+  const section = await prisma.bookingDirectorySection.findUnique({ where: { id: sectionId } });
+  if (!section || section.bookingDirectoryId !== directoryId) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Section not found in this booking directory.");
   }
 
   const team = await prisma.team.findUnique({ where: { id: payload.teamId } });
   if (!team) throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
 
   try {
-    await prisma.bookingPageTeam.create({
+    await prisma.bookingDirectoryTeam.create({
       data: {
         sectionId,
         teamId: payload.teamId,
@@ -193,37 +193,37 @@ const addTeamToSection = async (
     });
   }
 
-  return loadOrThrow(pageId);
+  return loadOrThrow(directoryId);
 };
 
 const removeTeamFromSection = async (
-  pageId: string,
+  directoryId: string,
   sectionId: string,
   teamId: string,
   caller: CallerContext,
-): Promise<SafeBookingPage> => {
+): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
 
-  const section = await prisma.bookingPageSection.findUnique({ where: { id: sectionId } });
-  if (!section || section.bookingPageId !== pageId) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Section not found on this booking page.");
+  const section = await prisma.bookingDirectorySection.findUnique({ where: { id: sectionId } });
+  if (!section || section.bookingDirectoryId !== directoryId) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Section not found in this booking directory.");
   }
 
-  const entry = await prisma.bookingPageTeam.findUnique({
+  const entry = await prisma.bookingDirectoryTeam.findUnique({
     where: { sectionId_teamId: { sectionId, teamId } },
   });
   if (!entry) throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found in this section.");
 
-  await prisma.bookingPageTeam.delete({ where: { sectionId_teamId: { sectionId, teamId } } });
-  return loadOrThrow(pageId);
+  await prisma.bookingDirectoryTeam.delete({ where: { sectionId_teamId: { sectionId, teamId } } });
+  return loadOrThrow(directoryId);
 };
 
 export {
-  createBookingPage,
-  listBookingPages,
-  getBookingPage,
-  updateBookingPage,
-  deleteBookingPage,
+  createBookingDirectory,
+  listBookingDirectories,
+  getBookingDirectory,
+  updateBookingDirectory,
+  deleteBookingDirectory,
   addSection,
   removeSection,
   addTeamToSection,

@@ -48,8 +48,8 @@ model User {
   communicationsSent     StudentCommunicationLog[]
   createdSessionTypes    SessionType[]               @relation("SessionTypeCreatedBy")
   updatedSessionTypes    SessionType[]               @relation("SessionTypeUpdatedBy")
-  createdBookingPages    BookingPage[]               @relation("BookingPageCreatedBy")
-  updatedBookingPages    BookingPage[]               @relation("BookingPageUpdatedBy")
+  createdBookingDirectories BookingDirectory[]          @relation("BookingDirectoryCreatedBy")
+  updatedBookingDirectories BookingDirectory[]          @relation("BookingDirectoryUpdatedBy")
 
   @@unique([ssoProvider, ssoSub])
 }
@@ -71,7 +71,7 @@ model Team {
   teamLead           User                    @relation("TeamLead", fields: [teamLeadId], references: [id])
   members            TeamMember[]
   notificationConfig TeamNotificationConfig?
-  bookingPageTeams   BookingPageTeam[]
+  bookingDirectoryTeams BookingDirectoryTeam[]
 }
 
 model UserInvite {
@@ -406,51 +406,51 @@ model SessionType {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   events      Event[]
-  sections    BookingPageSection[]
+  sections    BookingDirectorySection[]
   createdBy   User                 @relation("SessionTypeCreatedBy", fields: [createdById], references: [id])
   updatedBy   User                 @relation("SessionTypeUpdatedBy", fields: [updatedById], references: [id])
 
   @@index([isActive, sortOrder])
 }
 
-model BookingPage {
-  id          String               @id @default(uuid())
-  slug        String               @unique
+model BookingDirectory {
+  id          String                    @id @default(uuid())
+  slug        String                    @unique
   name        String
   description String?
-  isActive    Boolean              @default(true)
+  isActive    Boolean                   @default(true)
   createdById String
   updatedById String
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  sections    BookingPageSection[]
-  createdBy   User                 @relation("BookingPageCreatedBy", fields: [createdById], references: [id])
-  updatedBy   User                 @relation("BookingPageUpdatedBy", fields: [updatedById], references: [id])
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  sections    BookingDirectorySection[]
+  createdBy   User                      @relation("BookingDirectoryCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User                      @relation("BookingDirectoryUpdatedBy", fields: [updatedById], references: [id])
 }
 
-model BookingPageSection {
-  id            String           @id @default(uuid())
-  bookingPageId String
-  sessionTypeId String
-  sortOrder     Int              @default(0)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  bookingPage   BookingPage      @relation(fields: [bookingPageId], references: [id], onDelete: Cascade)
-  sessionType   SessionType      @relation(fields: [sessionTypeId], references: [id], onDelete: Restrict)
-  teams         BookingPageTeam[]
+model BookingDirectorySection {
+  id                 String                 @id @default(uuid())
+  bookingDirectoryId String
+  sessionTypeId      String
+  sortOrder          Int                    @default(0)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  bookingDirectory   BookingDirectory       @relation(fields: [bookingDirectoryId], references: [id], onDelete: Cascade)
+  sessionType        SessionType            @relation(fields: [sessionTypeId], references: [id], onDelete: Restrict)
+  teams              BookingDirectoryTeam[]
 
-  @@unique([bookingPageId, sessionTypeId])
-  @@index([bookingPageId])
+  @@unique([bookingDirectoryId, sessionTypeId])
+  @@index([bookingDirectoryId])
 }
 
-model BookingPageTeam {
-  id        String             @id @default(uuid())
+model BookingDirectoryTeam {
+  id        String                  @id @default(uuid())
   sectionId String
   teamId    String
-  sortOrder Int                @default(0)
-  createdAt DateTime           @default(now())
-  section   BookingPageSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  team      Team               @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  sortOrder Int                     @default(0)
+  createdAt DateTime                @default(now())
+  section   BookingDirectorySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  team      Team                    @relation(fields: [teamId], references: [id], onDelete: Restrict)
 
   @@unique([sectionId, teamId])
   @@index([sectionId])

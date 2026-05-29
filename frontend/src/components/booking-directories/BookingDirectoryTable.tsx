@@ -6,54 +6,54 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
+import TableTableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import Chip from '@mui/material/Chip'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import { Globe, Edit, Trash2, Eye, EyeOff, Settings } from 'lucide-react'
-import type { BookingPage } from '@/types'
-import { useDeleteBookingPage, useUpdateBookingPage } from '@/hooks/queries/useBookingPages'
+import type { BookingDirectory } from '@/types'
+import { useDeleteBookingDirectory, useUpdateBookingDirectory } from '@/hooks/queries/useBookingDirectories'
 import { Badge } from '@/components/shared/ui/Badge'
 import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { useConfirm } from '@/context/confirm'
-import { BookingPageForm } from './BookingPageForm'
-import { BookingPageSectionEditor } from './BookingPageSectionEditor'
+import { BookingDirectoryForm } from './BookingDirectoryForm'
+import { BookingDirectorySectionEditor } from './BookingDirectorySectionEditor'
 import CircularProgress from '@mui/material/CircularProgress'
 import { Button } from '@/components/shared/ui/Button'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { toTitleCase } from '@/utils/toTitleCase'
 
-export interface BookingPageTableRef {
+export interface BookingDirectoryTableRef {
   closeManage: (skipConfirm?: boolean) => Promise<boolean>
 }
 
-interface BookingPageTableProps {
-  bookingPages: BookingPage[]
-  onManageStateChange?: (page: BookingPage | null) => void
+interface BookingDirectoryTableProps {
+  bookingDirectories: BookingDirectory[]
+  onManageStateChange?: (directory: BookingDirectory | null) => void
 }
 
 type SortKey = 'name' | 'slug' | 'sections' | 'status'
 
-const sortAccessors: SortAccessorMap<BookingPage, SortKey> = {
-  name: (p) => p.name,
-  slug: (p) => p.slug,
-  sections: (p) => p.sections.length,
-  status: (p) => p.isActive,
+const sortAccessors: SortAccessorMap<BookingDirectory, SortKey> = {
+  name: (d) => d.name,
+  slug: (d) => d.slug,
+  sections: (d) => d.sections.length,
+  status: (d) => d.isActive,
 }
 
 interface ManageModalState {
-  page: BookingPage
+  directory: BookingDirectory
   tab: 'details' | 'sections'
 }
 
-export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTableProps>(
-  ({ bookingPages, onManageStateChange }, ref) => {
+export const BookingDirectoryTable = forwardRef<BookingDirectoryTableRef, BookingDirectoryTableProps>(
+  ({ bookingDirectories, onManageStateChange }, ref) => {
     const [manageState, setManageState] = useState<ManageModalState | null>(null)
     const [isSavingSections, setIsSavingSections] = useState(false)
     const [isDirtySections, setIsDirtySections] = useState(false)
@@ -75,12 +75,12 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
       if (typeof stateOrFn === 'function') {
         setManageState((prev) => {
           const next = stateOrFn(prev)
-          onManageStateChange?.(next ? next.page : null)
+          onManageStateChange?.(next ? next.directory : null)
           return next
         })
       } else {
         setManageState(stateOrFn)
-        onManageStateChange?.(stateOrFn ? stateOrFn.page : null)
+        onManageStateChange?.(stateOrFn ? stateOrFn.directory : null)
       }
     }
 
@@ -98,39 +98,40 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
       setIsDirtySections(false)
       return true
     }
-    const { sortedItems, sortConfig, requestSort } = useTableSort(bookingPages, sortAccessors)
-    const { mutate: deletePage } = useDeleteBookingPage()
-    const { mutate: updatePage } = useUpdateBookingPage()
+
+    const { sortedItems, sortConfig, requestSort } = useTableSort(bookingDirectories, sortAccessors)
+    const { mutate: deleteDirectory } = useDeleteBookingDirectory()
+    const { mutate: updateDirectory } = useUpdateBookingDirectory()
     const { handleAction } = useAsyncAction()
 
-    const handleToggleActive = (page: BookingPage) => {
-      const newStatus = !page.isActive
+    const handleToggleActive = (directory: BookingDirectory) => {
+      const newStatus = !directory.isActive
       handleAction(
-        updatePage,
-        { pageId: page.id, data: { isActive: newStatus } },
+        updateDirectory,
+        { directoryId: directory.id, data: { isActive: newStatus } },
         {
-          title: newStatus ? 'Activate booking page' : 'Deactivate booking page',
+          title: newStatus ? 'Activate booking directory' : 'Deactivate booking directory',
           message: newStatus
-            ? `Make "${page.name}" active? Students visiting /book/${page.slug} will see it.`
-            : `Deactivate "${page.name}"? Students will see a "not found" page.`,
+            ? `Make "${directory.name}" active? Students visiting /book/directory/${directory.slug} will see it.`
+            : `Deactivate "${directory.name}"? Students will see a "not found" page.`,
           actionName: 'Update',
         }
       )
     }
 
-    const handleDelete = (page: BookingPage) => {
-      handleAction(deletePage, page.id, {
-        title: 'Delete booking page',
-        message: `Permanently delete "${page.name}"? This cannot be undone.`,
+    const handleDelete = (directory: BookingDirectory) => {
+      handleAction(deleteDirectory, directory.id, {
+        title: 'Delete booking directory',
+        message: `Permanently delete "${directory.name}"? This cannot be undone.`,
         actionName: 'Delete',
       })
     }
 
     if (manageState) {
-      const activePage = bookingPages.find((p) => p.id === manageState.page.id) ?? manageState.page
+      const activeDirectory = bookingDirectories.find((d) => d.id === manageState.directory.id) ?? manageState.directory
 
       return (
-        <Box role="dialog" aria-label="Manage Booking Page" sx={{ mt: 1 }}>
+        <Box role="dialog" aria-label="Manage Booking Directory" sx={{ mt: 1 }}>
           {manageState.tab === 'sections' && (
             <SectionHeader
               title="Manage Booking Directory Sessions & Teams"
@@ -173,15 +174,15 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
 
             <Box sx={{ minHeight: '300px' }}>
               {manageState.tab === 'details' && (
-                <BookingPageForm
-                  bookingPage={activePage}
+                <BookingDirectoryForm
+                  bookingDirectory={activeDirectory}
                   onSuccess={() => handleCloseManage(true)}
                   onCancel={() => handleCloseManage()}
                 />
               )}
               {manageState.tab === 'sections' && (
-                <BookingPageSectionEditor
-                  bookingPage={activePage}
+                <BookingDirectorySectionEditor
+                  bookingDirectory={activeDirectory}
                   onClose={() => handleCloseManage(true)}
                   onSavingChange={setIsSavingSections}
                   onDirtyChange={setIsDirtySections}
@@ -227,7 +228,7 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                   <Button
                     size="sm"
                     type="submit"
-                    form="booking-page-sections-form"
+                    form="booking-directory-sections-form"
                     disabled={isSavingSections}
                     isLoading={isSavingSections}
                   >
@@ -246,7 +247,7 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
         <TableContainer component={Paper} variant="outlined">
           <Table>
             <TableHead>
-              <TableRow>
+              <TableTableRow>
                 {[
                   { label: 'Name', sortKey: 'name' as const },
                   { label: 'Slug', sortKey: 'slug' as const },
@@ -284,11 +285,11 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                 >
                   Actions
                 </TableCell>
-              </TableRow>
+              </TableTableRow>
             </TableHead>
             <TableBody>
-              {sortedItems.map((page) => (
-                <TableRow key={page.id} hover>
+              {sortedItems.map((directory) => (
+                <TableTableRow key={directory.id} hover>
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <Box
@@ -308,8 +309,8 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                       </Box>
                       <Box>
                         <Typography
-                          variant="body2"
-                          onClick={() => handleSetManageState({ page, tab: 'sections' })}
+                           variant="body2"
+                          onClick={() => handleSetManageState({ directory, tab: 'sections' })}
                           sx={{
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -319,9 +320,9 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                             },
                           }}
                         >
-                          {page.name}
+                          {directory.name}
                         </Typography>
-                        {page.description && (
+                        {directory.description && (
                           <Typography
                             variant="caption"
                             color="text.secondary"
@@ -333,7 +334,7 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                               textOverflow: 'ellipsis',
                             }}
                           >
-                            {page.description}
+                            {directory.description}
                           </Typography>
                         )}
                       </Box>
@@ -350,12 +351,12 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                         borderRadius: 0.5,
                       }}
                     >
-                      {page.slug}
+                      {directory.slug}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5 }}>
-                      {page.sections.slice(0, 3).map((s) => (
+                      {directory.sections.slice(0, 3).map((s) => (
                         <Chip
                           key={s.id}
                           label={toTitleCase(s.sessionType.name)}
@@ -363,14 +364,14 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                           sx={{ height: 20, fontSize: '0.7rem' }}
                         />
                       ))}
-                      {page.sections.length > 3 && (
+                      {directory.sections.length > 3 && (
                         <Chip
-                          label={`+${page.sections.length - 3}`}
+                          label={`+${directory.sections.length - 3}`}
                           size="small"
                           sx={{ height: 20, fontSize: '0.7rem' }}
                         />
                       )}
-                      {page.sections.length === 0 && (
+                      {directory.sections.length === 0 && (
                         <Typography variant="caption" color="text.secondary">
                           No sessions
                         </Typography>
@@ -379,12 +380,12 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                   </TableCell>
                   <TableCell>
                     <Badge
-                      label={page.isActive ? 'Active' : 'Inactive'}
-                      color={page.isActive ? 'green' : 'red'}
+                      label={directory.isActive ? 'Active' : 'Inactive'}
+                      color={directory.isActive ? 'green' : 'red'}
                     />
                   </TableCell>
                   <TableCell>
-                    <PublicBookingLinkCell type="page" slug={page.slug} isActive={page.isActive} />
+                    <PublicBookingLinkCell type="directory" slug={directory.slug} isActive={directory.isActive} />
                   </TableCell>
                   <TableCell>
                     <RowActions
@@ -392,38 +393,38 @@ export const BookingPageTable = forwardRef<BookingPageTableRef, BookingPageTable
                         {
                           label: 'Configure sessions & teams',
                           icon: <Settings size={16} />,
-                          onClick: () => handleSetManageState({ page, tab: 'sections' }),
+                          onClick: () => handleSetManageState({ directory, tab: 'sections' }),
                         },
                         {
                           label: 'Edit details',
                           icon: <Edit size={16} />,
-                          onClick: () => handleSetManageState({ page, tab: 'details' }),
+                          onClick: () => handleSetManageState({ directory, tab: 'details' }),
                         },
                         {
-                          label: page.isActive ? 'Deactivate' : 'Activate',
-                          icon: page.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
-                          onClick: () => handleToggleActive(page),
+                          label: directory.isActive ? 'Deactivate' : 'Activate',
+                          icon: directory.isActive ? <EyeOff size={16} /> : <Eye size={16} />,
+                          onClick: () => handleToggleActive(directory),
                         },
                         {
                           label: 'Delete',
                           icon: <Trash2 size={16} />,
                           color: 'error.main',
-                          onClick: () => handleDelete(page),
+                          onClick: () => handleDelete(directory),
                         },
                       ]}
                     />
                   </TableCell>
-                </TableRow>
+                </TableTableRow>
               ))}
               {sortedItems.length === 0 && (
-                <TableRow>
+                <TableTableRow>
                   <TableCell
                     colSpan={6}
                     sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
                   >
-                    No booking pages yet. Create one to configure the public booking directory.
+                    No booking directories yet. Create one to configure the public booking directory.
                   </TableCell>
-                </TableRow>
+                </TableTableRow>
               )}
             </TableBody>
           </Table>

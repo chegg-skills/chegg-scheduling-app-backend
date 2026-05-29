@@ -720,9 +720,9 @@ export interface CreateSessionTypeDto {
 
 export interface UpdateSessionTypeDto extends Partial<CreateSessionTypeDto> {}
 
-// ─── Booking Page Models ──────────────────────────────────────────────────────
+// ─── Booking Directory Models ──────────────────────────────────────────────────
 
-export interface BookingPageTeamEntry {
+export interface BookingDirectoryTeamEntry {
   id: string
   sectionId: string
   teamId: string
@@ -737,18 +737,18 @@ export interface BookingPageTeamEntry {
   }
 }
 
-export interface BookingPageSection {
+export interface BookingDirectorySection {
   id: string
-  bookingPageId: string
+  bookingDirectoryId: string
   sessionTypeId: string
   sortOrder: number
   createdAt: string
   updatedAt: string
   sessionType: SessionType
-  teams: BookingPageTeamEntry[]
+  teams: BookingDirectoryTeamEntry[]
 }
 
-export interface BookingPage {
+export interface BookingDirectory {
   id: string
   slug: string
   name: string
@@ -758,29 +758,29 @@ export interface BookingPage {
   updatedById: string
   createdAt: string
   updatedAt: string
-  sections: BookingPageSection[]
+  sections: BookingDirectorySection[]
 }
 
-export interface CreateBookingPageDto {
+export interface CreateBookingDirectoryDto {
   slug: string
   name: string
   description?: string
   isActive?: boolean
 }
 
-export interface UpdateBookingPageDto extends Partial<CreateBookingPageDto> {}
+export interface UpdateBookingDirectoryDto extends Partial<CreateBookingDirectoryDto> {}
 
-export interface AddBookingPageSectionDto {
+export interface AddBookingDirectorySectionDto {
   sessionTypeId: string
   sortOrder?: number
 }
 
-export interface AddBookingPageTeamDto {
+export interface AddBookingDirectoryTeamDto {
   teamId: string
   sortOrder?: number
 }
 
-// ─── Public Booking Page Types ────────────────────────────────────────────────
+// ─── Public Booking Directory Types ──────────────────────────────────────────────
 
 export interface PublicSessionType {
   id: string
@@ -790,22 +790,22 @@ export interface PublicSessionType {
   sortOrder: number
 }
 
-export interface PublicBookingPageTeam {
+export interface PublicBookingDirectoryTeam {
   team: PublicTeamSummary
   events: PublicEventSummary[]
 }
 
-export interface PublicBookingPageSection {
+export interface PublicBookingDirectorySection {
   sessionType: PublicSessionType
-  teams: PublicBookingPageTeam[]
+  teams: PublicBookingDirectoryTeam[]
 }
 
-export interface PublicBookingPageData {
+export interface PublicBookingDirectoryData {
   id: string
   slug: string
   name: string
   description: string | null
-  sections: PublicBookingPageSection[]
+  sections: PublicBookingDirectorySection[]
 }
 
 // ─── Communication ────────────────────────────────────────────────────────────

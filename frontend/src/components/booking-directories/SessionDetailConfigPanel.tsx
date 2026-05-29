@@ -8,14 +8,14 @@ import Chip from '@mui/material/Chip'
 import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import { Tag, UsersRound, Check, Copy, ExternalLink } from 'lucide-react'
-import type { BookingPage, SessionType, Team } from '@/types'
+import type { BookingDirectory, SessionType, Team } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { alpha } from '@mui/material/styles'
 
 interface SessionDetailConfigPanelProps {
   selectedSessionType: SessionType | undefined
   draftCategories: Map<string, Set<string>>
-  bookingPage: BookingPage
+  bookingDirectory: BookingDirectory
   activeTeams: Team[]
   isSaving: boolean
   getEventCount: (sessionTypeId: string, teamId: string) => number
@@ -26,7 +26,7 @@ interface SessionDetailConfigPanelProps {
 export function SessionDetailConfigPanel({
   selectedSessionType,
   draftCategories,
-  bookingPage,
+  bookingDirectory,
   activeTeams,
   isSaving,
   getEventCount,
@@ -48,9 +48,9 @@ export function SessionDetailConfigPanel({
     if (typeof window === 'undefined' || !selectedSessionType) return ''
     const origin = window.location.origin
     const base =
-      bookingPage.slug === 'default' ? `${origin}/book` : `${origin}/book/page/${bookingPage.slug}`
+      bookingDirectory.slug === 'default' ? `${origin}/book` : `${origin}/book/directory/${bookingDirectory.slug}`
     return `${base}?category=${selectedSessionType.id}`
-  }, [bookingPage.slug, selectedSessionType])
+  }, [bookingDirectory.slug, selectedSessionType])
 
   if (!selectedSessionType) {
     return (
@@ -81,7 +81,7 @@ export function SessionDetailConfigPanel({
   const draftTeamIds = draftCategories.get(selectedSessionType.id)
 
   // UI Warning checks
-  const isOriginalEnabled = bookingPage.sections.some(
+  const isOriginalEnabled = bookingDirectory.sections.some(
     (s) => s.sessionTypeId === selectedSessionType.id
   )
   const isPendingRemoval = isOriginalEnabled && !isEnabled
@@ -200,11 +200,12 @@ export function SessionDetailConfigPanel({
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-            ⚠️ Session and all team mappings will be permanently removed from this page on save.
+            ⚠️ Session and all team mappings will be permanently removed from this directory on save.
           </Typography>
         </Box>
       )}
 
+      {/* Warnings for Selected Session */}
       {hasNoTeams && (
         <Box
           sx={{

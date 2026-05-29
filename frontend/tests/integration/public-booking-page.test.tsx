@@ -1,7 +1,7 @@
 import { screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import { PublicBookingPageDirectory } from '@/pages/public/PublicBookingPageDirectory'
+import { PublicBookingDirectory } from '@/pages/public/PublicBookingDirectory'
 import { renderWithProviders } from '../utils/renderWithProviders'
 import { http, HttpResponse } from 'msw'
 import { server } from '../msw/server'
@@ -16,8 +16,8 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-const mockBookingPage = {
-  id: 'page-1',
+const mockBookingDirectory = {
+  id: 'directory-1',
   slug: 'eng-academy',
   name: 'Engineering Academy Booking',
   description: 'Welcome to the engineering academy booking directory.',
@@ -66,11 +66,11 @@ const mockBookingPage = {
 }
 
 const handlers = [
-  http.get('*/api/public/booking-pages/slug/:slug', ({ params }) => {
+  http.get('*/api/public/booking-directories/slug/:slug', ({ params }) => {
     if (params.slug === 'eng-academy' || params.slug === 'default') {
       return HttpResponse.json({
         success: true,
-        data: { bookingPage: mockBookingPage },
+        data: { bookingDirectory: mockBookingDirectory },
       })
     }
     return HttpResponse.json({ success: false, message: 'Not found' }, { status: 404 })
@@ -90,10 +90,10 @@ function renderDirectoryPage(slug = 'eng-academy') {
   return renderWithProviders(
     <Routes>
       <Route
-        path="/book/page/:pageSlug"
+        path="/book/directory/:directorySlug"
         element={
           <>
-            <PublicBookingPageDirectory />
+            <PublicBookingDirectory />
             <LocationDisplay />
           </>
         }
@@ -102,7 +102,7 @@ function renderDirectoryPage(slug = 'eng-academy') {
         path="/book/sessions"
         element={
           <>
-            <PublicBookingPageDirectory />
+            <PublicBookingDirectory />
             <LocationDisplay />
           </>
         }
@@ -111,7 +111,7 @@ function renderDirectoryPage(slug = 'eng-academy') {
         path="/book/sessions/:sessionTypeSlug"
         element={
           <>
-            <PublicBookingPageDirectory />
+            <PublicBookingDirectory />
             <LocationDisplay />
           </>
         }
@@ -120,18 +120,18 @@ function renderDirectoryPage(slug = 'eng-academy') {
         path="/book/sessions/:sessionTypeSlug/:teamSlug"
         element={
           <>
-            <PublicBookingPageDirectory />
+            <PublicBookingDirectory />
             <LocationDisplay />
           </>
         }
       />
       <Route path="/book/event/:eventSlug" element={<div>Slot Picker Step</div>} />
     </Routes>,
-    { initialEntries: [`/book/page/${slug}`] }
+    { initialEntries: [`/book/directory/${slug}`] }
   )
 }
 
-describe('PublicBookingPageDirectory Integration', () => {
+describe('PublicBookingDirectory Integration', () => {
   beforeEach(() => {
     server.use(...handlers)
     mockSetFramed.mockClear()
@@ -142,7 +142,7 @@ describe('PublicBookingPageDirectory Integration', () => {
     server.resetHandlers()
   })
 
-  it('renders the booking page header and details correctly', async () => {
+  it('renders the booking directory header and details correctly', async () => {
     renderDirectoryPage()
 
     // Verify it calls setFramed(true) on load
@@ -163,7 +163,7 @@ describe('PublicBookingPageDirectory Integration', () => {
     // 1. Step 1: Wait for category to render on the landing page
     await screen.findByText('1-to-1 Tutoring Session')
     expect(screen.getByText('1 discipline available')).toBeInTheDocument()
-    expect(screen.getByTestId('location-display').textContent).toContain('/book/page/eng-academy')
+    expect(screen.getByTestId('location-display').textContent).toContain('/book/directory/eng-academy')
 
     // Verify team and events are NOT visible initially
     expect(screen.queryByText('Cyber Security Team')).toBeNull()
@@ -242,7 +242,7 @@ describe('PublicBookingPageDirectory Integration', () => {
     await screen.findByText('Slot Picker Step')
   })
 
-  it('shows error state if booking page not found', async () => {
+  it('shows error state if booking directory not found', async () => {
     renderDirectoryPage('non-existent')
 
     await screen.findByText('No sessions available')
@@ -250,8 +250,8 @@ describe('PublicBookingPageDirectory Integration', () => {
   })
 
   it('renders Step 2 empty state card when category has 0 teams', async () => {
-    const mockPageEmptyCategory = {
-      ...mockBookingPage,
+    const mockDirectoryEmptyCategory = {
+      ...mockBookingDirectory,
       sections: [
         {
           sessionType: {
@@ -267,10 +267,10 @@ describe('PublicBookingPageDirectory Integration', () => {
     }
 
     server.use(
-      http.get('*/api/public/booking-pages/slug/:slug', () => {
+      http.get('*/api/public/booking-directories/slug/:slug', () => {
         return HttpResponse.json({
           success: true,
-          data: { bookingPage: mockPageEmptyCategory },
+          data: { bookingDirectory: mockDirectoryEmptyCategory },
         })
       })
     )
@@ -278,10 +278,10 @@ describe('PublicBookingPageDirectory Integration', () => {
     renderWithProviders(
       <Routes>
         <Route
-          path="/book/page/:pageSlug"
+          path="/book/directory/:directorySlug"
           element={
             <>
-              <PublicBookingPageDirectory />
+              <PublicBookingDirectory />
               <LocationDisplay />
             </>
           }
@@ -290,13 +290,13 @@ describe('PublicBookingPageDirectory Integration', () => {
           path="/book/sessions/:sessionTypeSlug"
           element={
             <>
-              <PublicBookingPageDirectory />
+              <PublicBookingDirectory />
               <LocationDisplay />
             </>
           }
         />
       </Routes>,
-      { initialEntries: ['/book/page/eng-academy?category=77777777-8888-9999-0000-aaaaaaaaaaaa'] }
+      { initialEntries: ['/book/directory/eng-academy?category=77777777-8888-9999-0000-aaaaaaaaaaaa'] }
     )
 
     // Verify empty state shows up
@@ -310,8 +310,8 @@ describe('PublicBookingPageDirectory Integration', () => {
   })
 
   it('redirects directly to slot picker when clicking a team with a single event', async () => {
-    const mockPageSingleEvent = {
-      ...mockBookingPage,
+    const mockDirectorySingleEvent = {
+      ...mockBookingDirectory,
       sections: [
         {
           sessionType: {
@@ -347,10 +347,10 @@ describe('PublicBookingPageDirectory Integration', () => {
     }
 
     server.use(
-      http.get('*/api/public/booking-pages/slug/:slug', () => {
+      http.get('*/api/public/booking-directories/slug/:slug', () => {
         return HttpResponse.json({
           success: true,
-          data: { bookingPage: mockPageSingleEvent },
+          data: { bookingDirectory: mockDirectorySingleEvent },
         })
       })
     )
@@ -372,8 +372,8 @@ describe('PublicBookingPageDirectory Integration', () => {
   })
 
   it('redirects directly to slot picker when directly navigating to a team with a single event', async () => {
-    const mockPageSingleEvent = {
-      ...mockBookingPage,
+    const mockDirectorySingleEvent = {
+      ...mockBookingDirectory,
       sections: [
         {
           sessionType: {
@@ -409,10 +409,10 @@ describe('PublicBookingPageDirectory Integration', () => {
     }
 
     server.use(
-      http.get('*/api/public/booking-pages/slug/:slug', () => {
+      http.get('*/api/public/booking-directories/slug/:slug', () => {
         return HttpResponse.json({
           success: true,
-          data: { bookingPage: mockPageSingleEvent },
+          data: { bookingDirectory: mockDirectorySingleEvent },
         })
       })
     )
@@ -423,7 +423,7 @@ describe('PublicBookingPageDirectory Integration', () => {
           path="/book/sessions/:sessionTypeSlug/:teamSlug"
           element={
             <>
-              <PublicBookingPageDirectory />
+              <PublicBookingDirectory />
               <LocationDisplay />
             </>
           }

@@ -3,89 +3,89 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { validate } from "../../shared/middleware/validate";
-import * as bookingPageController from "./bookingPage.controller";
+import * as bookingDirectoryController from "./bookingDirectory.controller";
 import {
-  CreateBookingPageSchema,
-  UpdateBookingPageSchema,
-  BookingPageParamsSchema,
+  CreateBookingDirectorySchema,
+  UpdateBookingDirectorySchema,
+  BookingDirectoryParamsSchema,
   AddSectionSchema,
   SectionParamsSchema,
   AddTeamToSectionSchema,
   TeamInSectionParamsSchema,
-} from "./bookingPage.schema";
+} from "./bookingDirectory.schema";
 
 const router = express.Router();
 
 router
-  .route("/booking-pages")
+  .route("/booking-directories")
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
-    validate(CreateBookingPageSchema),
-    bookingPageController.createBookingPage,
+    validate(CreateBookingDirectorySchema),
+    bookingDirectoryController.createBookingDirectory,
   )
-  .get(authenticate, authorize(UserRole.SUPER_ADMIN), bookingPageController.listBookingPages)
+  .get(authenticate, authorize(UserRole.SUPER_ADMIN), bookingDirectoryController.listBookingDirectories)
   .all(methodNotAllowed);
 
 router
-  .route("/booking-pages/:pageId")
+  .route("/booking-directories/:directoryId")
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
-    validate(BookingPageParamsSchema),
-    bookingPageController.getBookingPage,
+    validate(BookingDirectoryParamsSchema),
+    bookingDirectoryController.getBookingDirectory,
   )
   .patch(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
-    validate(UpdateBookingPageSchema),
-    bookingPageController.updateBookingPage,
+    validate(UpdateBookingDirectorySchema),
+    bookingDirectoryController.updateBookingDirectory,
   )
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
-    validate(BookingPageParamsSchema),
-    bookingPageController.deleteBookingPage,
+    validate(BookingDirectoryParamsSchema),
+    bookingDirectoryController.deleteBookingDirectory,
   )
   .all(methodNotAllowed);
 
 router
-  .route("/booking-pages/:pageId/sections")
+  .route("/booking-directories/:directoryId/sections")
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
     validate(AddSectionSchema),
-    bookingPageController.addSection,
+    bookingDirectoryController.addSection,
   )
   .all(methodNotAllowed);
 
 router
-  .route("/booking-pages/:pageId/sections/:sectionId")
+  .route("/booking-directories/:directoryId/sections/:sectionId")
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
     validate(SectionParamsSchema),
-    bookingPageController.removeSection,
+    bookingDirectoryController.removeSection,
   )
   .all(methodNotAllowed);
 
 router
-  .route("/booking-pages/:pageId/sections/:sectionId/teams")
+  .route("/booking-directories/:directoryId/sections/:sectionId/teams")
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
     validate(AddTeamToSectionSchema),
-    bookingPageController.addTeamToSection,
+    bookingDirectoryController.addTeamToSection,
   )
   .all(methodNotAllowed);
 
 router
-  .route("/booking-pages/:pageId/sections/:sectionId/teams/:teamId")
+  .route("/booking-directories/:directoryId/sections/:sectionId/teams/:teamId")
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
     validate(TeamInSectionParamsSchema),
-    bookingPageController.removeTeamFromSection,
+    bookingDirectoryController.removeTeamFromSection,
   )
   .all(methodNotAllowed);
 

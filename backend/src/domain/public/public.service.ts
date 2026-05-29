@@ -233,10 +233,10 @@ export const listGroupEventsBySlug = async (slug: string) => {
   return { group, team: group.team, events };
 };
 
-export const getPublicBookingPage = async (slug: string) => {
+export const getPublicBookingDirectory = async (slug: string) => {
   const normalizedSlug = normalizeSlug(slug);
 
-  const page = await prisma.bookingPage.findUnique({
+  const directory = await prisma.bookingDirectory.findUnique({
     where: { slug: normalizedSlug },
     include: {
       sections: {
@@ -252,13 +252,13 @@ export const getPublicBookingPage = async (slug: string) => {
     },
   });
 
-  if (!page || !page.isActive) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking page not found.");
+  if (!directory || !directory.isActive) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking directory not found.");
   }
 
   // Collect all active (teamId, sessionTypeId) pairs to load events in one query.
   const activePairs: { teamId: string; sessionTypeId: string }[] = [];
-  for (const section of page.sections) {
+  for (const section of directory.sections) {
     if (!section.sessionType.isActive) continue;
     for (const entry of section.teams) {
       if (!entry.team.isActive) continue;
@@ -284,7 +284,7 @@ export const getPublicBookingPage = async (slug: string) => {
   }
 
   const sections = [];
-  for (const section of page.sections) {
+  for (const section of directory.sections) {
     if (!section.sessionType.isActive) continue;
 
     const teamsWithEvents = [];
@@ -297,7 +297,7 @@ export const getPublicBookingPage = async (slug: string) => {
     sections.push({ sessionType: section.sessionType, teams: teamsWithEvents });
   }
 
-  return { id: page.id, slug: page.slug, name: page.name, description: page.description, sections };
+  return { id: directory.id, slug: directory.slug, name: directory.name, description: directory.description, sections };
 };
 
 export const getPublicBooking = async (id: string, token: string, mode?: string) => {

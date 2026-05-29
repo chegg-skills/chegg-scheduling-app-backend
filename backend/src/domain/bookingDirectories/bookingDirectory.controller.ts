@@ -2,81 +2,81 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import { requireAuthUser } from "../../shared/utils/userUtils";
-import * as bookingPageService from "./bookingPage.service";
+import * as bookingDirectoryService from "./bookingDirectory.service";
 
-const createBookingPage = async (
+const createBookingDirectory = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const bookingPage = await bookingPageService.createBookingPage(req.body, caller);
+    const bookingDirectory = await bookingDirectoryService.createBookingDirectory(req.body, caller);
     sendSuccessResponse(
       res,
       StatusCodes.CREATED,
-      { bookingPage },
-      "Booking page created successfully.",
+      { bookingDirectory },
+      "Booking directory created successfully.",
     );
   } catch (error) {
     next(error);
   }
 };
 
-const listBookingPages = async (
+const listBookingDirectories = async (
   _req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const bookingPages = await bookingPageService.listBookingPages(caller);
+    const bookingDirectories = await bookingDirectoryService.listBookingDirectories(caller);
     sendSuccessResponse(
       res,
       StatusCodes.OK,
-      { bookingPages },
-      "Booking pages fetched successfully.",
+      { bookingDirectories },
+      "Booking directories fetched successfully.",
     );
   } catch (error) {
     next(error);
   }
 };
 
-const getBookingPage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const getBookingDirectory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const { pageId } = req.params as { pageId: string };
-    const bookingPage = await bookingPageService.getBookingPage(pageId, caller);
-    sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Booking page fetched successfully.");
+    const { directoryId } = req.params as { directoryId: string };
+    const bookingDirectory = await bookingDirectoryService.getBookingDirectory(directoryId, caller);
+    sendSuccessResponse(res, StatusCodes.OK, { bookingDirectory }, "Booking directory fetched successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const updateBookingPage = async (
+const updateBookingDirectory = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const { pageId } = req.params as { pageId: string };
-    const bookingPage = await bookingPageService.updateBookingPage(pageId, req.body, caller);
-    sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Booking page updated successfully.");
+    const { directoryId } = req.params as { directoryId: string };
+    const bookingDirectory = await bookingDirectoryService.updateBookingDirectory(directoryId, req.body, caller);
+    sendSuccessResponse(res, StatusCodes.OK, { bookingDirectory }, "Booking directory updated successfully.");
   } catch (error) {
     next(error);
   }
 };
 
-const deleteBookingPage = async (
+const deleteBookingDirectory = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const { pageId } = req.params as { pageId: string };
-    await bookingPageService.deleteBookingPage(pageId, caller);
+    const { directoryId } = req.params as { directoryId: string };
+    await bookingDirectoryService.deleteBookingDirectory(directoryId, caller);
     res.status(StatusCodes.NO_CONTENT).send();
   } catch (error) {
     next(error);
@@ -86,9 +86,9 @@ const deleteBookingPage = async (
 const addSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const { pageId } = req.params as { pageId: string };
-    const bookingPage = await bookingPageService.addSection(pageId, req.body, caller);
-    sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Section added successfully.");
+    const { directoryId } = req.params as { directoryId: string };
+    const bookingDirectory = await bookingDirectoryService.addSection(directoryId, req.body, caller);
+    sendSuccessResponse(res, StatusCodes.OK, { bookingDirectory }, "Section added successfully.");
   } catch (error) {
     next(error);
   }
@@ -97,9 +97,9 @@ const addSection = async (req: Request, res: Response, next: NextFunction): Prom
 const removeSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const { pageId, sectionId } = req.params as { pageId: string; sectionId: string };
-    const bookingPage = await bookingPageService.removeSection(pageId, sectionId, caller);
-    sendSuccessResponse(res, StatusCodes.OK, { bookingPage }, "Section removed successfully.");
+    const { directoryId, sectionId } = req.params as { directoryId: string; sectionId: string };
+    const bookingDirectory = await bookingDirectoryService.removeSection(directoryId, sectionId, caller);
+    sendSuccessResponse(res, StatusCodes.OK, { bookingDirectory }, "Section removed successfully.");
   } catch (error) {
     next(error);
   }
@@ -108,9 +108,9 @@ const removeSection = async (req: Request, res: Response, next: NextFunction): P
 const addTeamToSection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const { pageId, sectionId } = req.params as { pageId: string; sectionId: string };
-    const bookingPage = await bookingPageService.addTeamToSection(
-      pageId,
+    const { directoryId, sectionId } = req.params as { directoryId: string; sectionId: string };
+    const bookingDirectory = await bookingDirectoryService.addTeamToSection(
+      directoryId,
       sectionId,
       req.body,
       caller,
@@ -118,7 +118,7 @@ const addTeamToSection = async (req: Request, res: Response, next: NextFunction)
     sendSuccessResponse(
       res,
       StatusCodes.OK,
-      { bookingPage },
+      { bookingDirectory },
       "Team added to section successfully.",
     );
   } catch (error) {
@@ -133,13 +133,13 @@ const removeTeamFromSection = async (
 ): Promise<void> => {
   try {
     const caller = requireAuthUser(res.locals);
-    const { pageId, sectionId, teamId } = req.params as {
-      pageId: string;
+    const { directoryId, sectionId, teamId } = req.params as {
+      directoryId: string;
       sectionId: string;
       teamId: string;
     };
-    const bookingPage = await bookingPageService.removeTeamFromSection(
-      pageId,
+    const bookingDirectory = await bookingDirectoryService.removeTeamFromSection(
+      directoryId,
       sectionId,
       teamId,
       caller,
@@ -147,7 +147,7 @@ const removeTeamFromSection = async (
     sendSuccessResponse(
       res,
       StatusCodes.OK,
-      { bookingPage },
+      { bookingDirectory },
       "Team removed from section successfully.",
     );
   } catch (error) {
@@ -156,11 +156,11 @@ const removeTeamFromSection = async (
 };
 
 export {
-  createBookingPage,
-  listBookingPages,
-  getBookingPage,
-  updateBookingPage,
-  deleteBookingPage,
+  createBookingDirectory,
+  listBookingDirectories,
+  getBookingDirectory,
+  updateBookingDirectory,
+  deleteBookingDirectory,
   addSection,
   removeSection,
   addTeamToSection,

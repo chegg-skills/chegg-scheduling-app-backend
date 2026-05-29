@@ -33,14 +33,19 @@ export function StudentsPage() {
   const students = data?.students ?? []
   const pagination = data?.pagination
 
-  if (isLoading && !data) return <PageSpinner />
-  if (error) return <ErrorAlert message="Failed to load students." />
+  const showLoading = isLoading && !data
 
   return (
     <Box>
       <PageHeader
         title="Students"
-        subtitle={`${pagination?.total ?? 0} total students`}
+        subtitle={
+          showLoading
+            ? 'Loading students...'
+            : error
+            ? 'Failed to load students'
+            : `${pagination?.total ?? 0} total students`
+        }
         actions={
           <Box
             sx={{
@@ -53,6 +58,7 @@ export function StudentsPage() {
           >
             <Input
               isSearch
+              disabled={showLoading || !!error}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search by name or email"
@@ -69,6 +75,7 @@ export function StudentsPage() {
                       aria-label="Clear student search"
                       edge="end"
                       size="small"
+                      disabled={showLoading || !!error}
                       onClick={() => setSearchInput('')}
                     >
                       <X size={14} />
@@ -83,7 +90,11 @@ export function StudentsPage() {
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
         <Box sx={{ mt: 1 }}>
-          {isCoach && students.length === 0 && !debouncedSearch ? (
+          {showLoading ? (
+            <PageSpinner />
+          ) : error ? (
+            <ErrorAlert message="Failed to load students." />
+          ) : isCoach && students.length === 0 && !debouncedSearch ? (
             <Paper
               variant="outlined"
               sx={{

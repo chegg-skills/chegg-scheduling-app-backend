@@ -83,8 +83,8 @@ export const navItems: NavItem[] = [
     allowedRoles: ['SUPER_ADMIN'],
   },
   {
-    to: '/booking-pages',
-    label: 'Booking Pages',
+    to: '/booking-directories',
+    label: 'Booking Directories',
     Icon: Globe,
     allowedRoles: ['SUPER_ADMIN'],
   },

@@ -9,9 +9,9 @@ import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { Button } from '@/components/shared/ui/Button'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { useCreateBookingPage, useUpdateBookingPage } from '@/hooks/queries/useBookingPages'
+import { useCreateBookingDirectory, useUpdateBookingDirectory } from '@/hooks/queries/useBookingDirectories'
 import { extractApiError } from '@/utils/apiError'
-import type { BookingPage } from '@/types'
+import type { BookingDirectory } from '@/types'
 
 const schema = z.object({
   slug: z
@@ -24,16 +24,16 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-interface BookingPageFormProps {
-  bookingPage?: BookingPage
-  onSuccess?: (pageId?: string) => void
+interface BookingDirectoryFormProps {
+  bookingDirectory?: BookingDirectory
+  onSuccess?: (directoryId?: string) => void
   onCancel?: () => void
 }
 
-export function BookingPageForm({ bookingPage, onSuccess, onCancel }: BookingPageFormProps) {
-  const isEdit = !!bookingPage
-  const { mutate: create, isPending: creating, error: createError } = useCreateBookingPage()
-  const { mutate: update, isPending: updating, error: updateError } = useUpdateBookingPage()
+export function BookingDirectoryForm({ bookingDirectory, onSuccess, onCancel }: BookingDirectoryFormProps) {
+  const isEdit = !!bookingDirectory
+  const { mutate: create, isPending: creating, error: createError } = useCreateBookingDirectory()
+  const { mutate: update, isPending: updating, error: updateError } = useUpdateBookingDirectory()
 
   const {
     register,
@@ -43,31 +43,31 @@ export function BookingPageForm({ bookingPage, onSuccess, onCancel }: BookingPag
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      slug: bookingPage?.slug ?? '',
-      name: bookingPage?.name ?? '',
-      description: bookingPage?.description ?? '',
+      slug: bookingDirectory?.slug ?? '',
+      name: bookingDirectory?.name ?? '',
+      description: bookingDirectory?.description ?? '',
     },
   })
 
   useEffect(() => {
-    if (bookingPage) {
+    if (bookingDirectory) {
       reset({
-        slug: bookingPage.slug,
-        name: bookingPage.name,
-        description: bookingPage.description ?? '',
+        slug: bookingDirectory.slug,
+        name: bookingDirectory.name,
+        description: bookingDirectory.description ?? '',
       })
     }
-  }, [bookingPage, reset])
+  }, [bookingDirectory, reset])
 
   function onSubmit(values: FormValues) {
-    if (isEdit && bookingPage) {
-      update({ pageId: bookingPage.id, data: values }, { onSuccess: () => onSuccess?.() })
+    if (isEdit && bookingDirectory) {
+      update({ directoryId: bookingDirectory.id, data: values }, { onSuccess: () => onSuccess?.() })
     } else {
       create(values, {
         onSuccess: (res) => {
           reset()
-          const newPageId = res.data.data?.bookingPage?.id
-          onSuccess?.(newPageId)
+          const newDirectoryId = res.data.data?.bookingDirectory?.id
+          onSuccess?.(newDirectoryId)
         },
       })
     }
@@ -106,7 +106,7 @@ export function BookingPageForm({ bookingPage, onSuccess, onCancel }: BookingPag
             </Button>
           )}
           <Button type="submit" isLoading={isPending} sx={{ minWidth: 160 }}>
-            {isEdit ? 'Save changes' : 'Create booking page'}
+            {isEdit ? 'Save changes' : 'Create booking directory'}
           </Button>
         </Stack>
       </Stack>

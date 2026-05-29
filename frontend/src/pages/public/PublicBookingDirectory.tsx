@@ -8,23 +8,23 @@ import Paper from '@mui/material/Paper'
 import { useNavigate, useParams, useOutletContext, useSearchParams } from 'react-router-dom'
 import { Users, BookOpen, Tag, ChevronLeft, Calendar, ArrowRight } from 'lucide-react'
 import { useEffect } from 'react'
-import { usePublicBookingPageBySlug } from '@/hooks/queries/usePublicBookingPage'
+import { usePublicBookingDirectoryBySlug } from '@/hooks/queries/usePublicBookingDirectory'
 import LogoOrange from '@/assets/Color=Orange.svg'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { EventCard } from '@/components/public/booking/EventCard'
 
-export function PublicBookingPageDirectory() {
+export function PublicBookingDirectory() {
   const navigate = useNavigate()
-  const { pageSlug, sessionTypeSlug, teamSlug } = useParams<{
-    pageSlug?: string
+  const { directorySlug, sessionTypeSlug, teamSlug } = useParams<{
+    directorySlug?: string
     sessionTypeSlug?: string
     teamSlug?: string
   }>()
   const outletCtx = useOutletContext<PublicLayoutOutletContext | null>()
 
-  const slug = pageSlug ?? 'default'
-  const { data: bookingPage, isLoading, error } = usePublicBookingPageBySlug(slug)
+  const slug = directorySlug ?? 'default'
+  const { data: bookingDirectory, isLoading, error } = usePublicBookingDirectoryBySlug(slug)
 
   // Legacy redirect: old query-param URLs (?category=slug&team=slug or ?category=UUID)
   // are redirected to the path-based equivalent /book/sessions/:sessionTypeSlug/:teamSlug
@@ -34,13 +34,13 @@ export function PublicBookingPageDirectory() {
     const categoryParam = searchParams.get('category')
     const teamParam = searchParams.get('team')
     if (!categoryParam && !teamParam) return
-    if (!bookingPage) return
+    if (!bookingDirectory) return
 
     const resolveCategory = () => {
       if (!categoryParam) return null
       if (!UUID_RE.test(categoryParam)) return categoryParam
       return (
-        bookingPage.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType.slug ??
+        bookingDirectory.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType.slug ??
         null
       )
     }
@@ -53,7 +53,7 @@ export function PublicBookingPageDirectory() {
     const resolveTeam = () => {
       if (!teamParam) return null
       if (!UUID_RE.test(teamParam)) return teamParam
-      const section = bookingPage.sections.find((s) => s.sessionType.slug === resolvedCategory)
+      const section = bookingDirectory.sections.find((s) => s.sessionType.slug === resolvedCategory)
       return section?.teams.find((t) => t.team.id === teamParam)?.team.publicBookingSlug ?? null
     }
     const resolvedTeam = resolveTeam()
@@ -63,7 +63,7 @@ export function PublicBookingPageDirectory() {
       : `/book/sessions/${resolvedCategory}`
     navigate(dest, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingPage])
+  }, [bookingDirectory])
 
   useEffect(() => {
     outletCtx?.setFramed(true)
@@ -71,7 +71,7 @@ export function PublicBookingPageDirectory() {
 
   // Find the selected section and team from path params
   const selectedSection = sessionTypeSlug
-    ? bookingPage?.sections.find((s) => s.sessionType.slug === sessionTypeSlug)
+    ? bookingDirectory?.sections.find((s) => s.sessionType.slug === sessionTypeSlug)
     : undefined
 
   const selectedTeamEntry = teamSlug
@@ -98,7 +98,7 @@ export function PublicBookingPageDirectory() {
     )
   }
 
-  if (error || !bookingPage) {
+  if (error || !bookingDirectory) {
     return (
       <Box
         sx={{
@@ -129,9 +129,7 @@ export function PublicBookingPageDirectory() {
   }
 
   // Filter out any categories/sections that do not have participating teams to prevent dead-end navigation
-  const visibleSections = bookingPage.sections.filter((s) => s.teams.length > 0)
-
-  // (selectedSection and selectedTeamEntry are defined above loading states to adhere to rules of hooks)
+  const visibleSections = bookingDirectory.sections.filter((s) => s.teams.length > 0)
 
   // A slug in the URL that doesn't match any known entity is a 404, not a silent fallback
   if (sessionTypeSlug && !selectedSection) {
@@ -271,7 +269,7 @@ export function PublicBookingPageDirectory() {
             alt="Chegg Skills"
             sx={{ height: 32, flexShrink: 0 }}
           />
-          {bookingPage.description && (
+          {bookingDirectory.description && (
             <>
               <Divider
                 orientation="vertical"
@@ -283,7 +281,7 @@ export function PublicBookingPageDirectory() {
                 color="text.secondary"
                 sx={{ fontWeight: 500, lineHeight: 1.5, maxWidth: '640px' }}
               >
-                {bookingPage.description}
+                {bookingDirectory.description}
               </Typography>
             </>
           )}
@@ -640,7 +638,7 @@ export function PublicBookingPageDirectory() {
               No sessions configured yet
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Sessions will appear here once your administrator configures this booking page.
+              Sessions will appear here once your administrator configures this booking directory.
             </Typography>
           </Box>
         ) : (

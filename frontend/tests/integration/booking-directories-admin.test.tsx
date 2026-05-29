@@ -1,16 +1,16 @@
 import { screen, waitFor, cleanup, fireEvent, within } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { BookingPagesPage } from '@/pages/BookingPagesPage'
+import { describe, expect, it, beforeEach, afterEach } from 'vitest'
+import { BookingDirectoriesPage } from '@/pages/BookingDirectoriesPage'
 import { renderWithProviders } from '../utils/renderWithProviders'
 import { http, HttpResponse } from 'msw'
 import { server } from '../msw/server'
 
-const mockBookingPages = [
+const mockBookingDirectories = [
   {
-    id: 'page-1',
+    id: 'directory-1',
     slug: 'default',
-    name: 'Default Booking Page',
-    description: 'This is the default booking page.',
+    name: 'Default Booking Directory',
+    description: 'This is the default booking directory.',
     isActive: true,
     sections: [
       {
@@ -92,10 +92,10 @@ const apiCalls = {
 }
 
 const handlers = [
-  http.get('*/api/booking-pages', () => {
+  http.get('*/api/booking-directories', () => {
     return HttpResponse.json({
       success: true,
-      data: { bookingPages: mockBookingPages },
+      data: { bookingDirectories: mockBookingDirectories },
     })
   }),
   http.get('*/api/session-types', () => {
@@ -117,16 +117,16 @@ const handlers = [
     })
   }),
   // Save modifications
-  http.post('*/api/booking-pages/:pageId/sections', async ({ request, params }) => {
+  http.post('*/api/booking-directories/:directoryId/sections', async ({ request, params }) => {
     const body = (await request.json()) as any
-    apiCalls.addSection.push({ pageId: params.pageId, ...body })
+    apiCalls.addSection.push({ directoryId: params.directoryId, ...body })
     return HttpResponse.json({
       success: true,
       data: {
-        bookingPage: {
-          ...mockBookingPages[0],
+        bookingDirectory: {
+          ...mockBookingDirectories[0],
           sections: [
-            ...mockBookingPages[0].sections,
+            ...mockBookingDirectories[0].sections,
             {
               id: 'sec-2',
               sessionTypeId: body.sessionTypeId,
@@ -138,47 +138,47 @@ const handlers = [
       },
     })
   }),
-  http.delete('*/api/booking-pages/:pageId/sections/:sectionId', ({ params }) => {
-    apiCalls.removeSection.push({ pageId: params.pageId, sectionId: params.sectionId })
+  http.delete('*/api/booking-directories/:directoryId/sections/:sectionId', ({ params }) => {
+    apiCalls.removeSection.push({ directoryId: params.directoryId, sectionId: params.sectionId })
     return HttpResponse.json({
       success: true,
       data: {
-        bookingPage: {
-          ...mockBookingPages[0],
+        bookingDirectory: {
+          ...mockBookingDirectories[0],
           sections: [],
         },
       },
     })
   }),
   http.post(
-    '*/api/booking-pages/:pageId/sections/:sectionId/teams',
+    '*/api/booking-directories/:directoryId/sections/:sectionId/teams',
     async ({ request, params }) => {
       const body = (await request.json()) as any
       apiCalls.addTeamToSection.push({
-        pageId: params.pageId,
+        directoryId: params.directoryId,
         sectionId: params.sectionId,
         ...body,
       })
       return HttpResponse.json({
         success: true,
-        data: { bookingPage: mockBookingPages[0] },
+        data: { bookingDirectory: mockBookingDirectories[0] },
       })
     }
   ),
-  http.delete('*/api/booking-pages/:pageId/sections/:sectionId/teams/:teamId', ({ params }) => {
+  http.delete('*/api/booking-directories/:directoryId/sections/:sectionId/teams/:teamId', ({ params }) => {
     apiCalls.removeTeamFromSection.push({
-      pageId: params.pageId,
+      directoryId: params.directoryId,
       sectionId: params.sectionId,
       teamId: params.teamId,
     })
     return HttpResponse.json({
       success: true,
-      data: { bookingPage: mockBookingPages[0] },
+      data: { bookingDirectory: mockBookingDirectories[0] },
     })
   }),
 ]
 
-describe('Booking Pages Admin Config integration', () => {
+describe('Booking Directories Admin Config integration', () => {
   beforeEach(() => {
     server.use(...handlers)
     apiCalls.addSection = []
@@ -193,10 +193,10 @@ describe('Booking Pages Admin Config integration', () => {
   })
 
   it('allows opening configuration modal, modifying state, and prompting on discard/close', async () => {
-    renderWithProviders(<BookingPagesPage />)
+    renderWithProviders(<BookingDirectoriesPage />)
 
-    // Wait for the booking page to be loaded and row Actions button to be visible
-    await screen.findByText('Default Booking Page')
+    // Wait for the booking directory to be loaded and row Actions button to be visible
+    await screen.findByText('Default Booking Directory')
 
     // Find and click the row actions button
     const actionsButton = await screen.findByRole('button', { name: /more/i })
@@ -263,9 +263,9 @@ describe('Booking Pages Admin Config integration', () => {
   })
 
   it('allows dirty state protection during tab transitions', async () => {
-    renderWithProviders(<BookingPagesPage />)
+    renderWithProviders(<BookingDirectoriesPage />)
 
-    await screen.findByText('Default Booking Page')
+    await screen.findByText('Default Booking Directory')
     const actionsButton = await screen.findByRole('button', { name: /more/i })
     fireEvent.click(actionsButton)
     const configOption = await screen.findByText('Configure sessions & teams')
@@ -312,15 +312,15 @@ describe('Booking Pages Admin Config integration', () => {
     const yesBtn = screen.getByRole('button', { name: /discard changes/i })
     fireEvent.click(yesBtn)
 
-    // Wait and verify we switched to Details tab (which renders BookingPageForm with a Name label)
+    // Wait and verify we switched to Details tab (which renders BookingDirectoryForm with a Name label)
     await screen.findByLabelText(/Name/i)
     expect(screen.queryByText('Manage Booking Directory Sessions & Teams')).not.toBeInTheDocument()
   })
 
   it('successfully saves dirty changes and closes the modal without prompts', async () => {
-    renderWithProviders(<BookingPagesPage />)
+    renderWithProviders(<BookingDirectoriesPage />)
 
-    await screen.findByText('Default Booking Page')
+    await screen.findByText('Default Booking Directory')
     const actionsButton = await screen.findByRole('button', { name: /more/i })
     fireEvent.click(actionsButton)
     const configOption = await screen.findByText('Configure sessions & teams')
@@ -369,11 +369,11 @@ describe('Booking Pages Admin Config integration', () => {
 
     // Verify calls to backend APIs occurred as expected
     expect(apiCalls.addSection).toHaveLength(1)
-    expect(apiCalls.addSection[0]).toEqual({ pageId: 'page-1', sessionTypeId: 'st-2' })
+    expect(apiCalls.addSection[0]).toEqual({ directoryId: 'directory-1', sessionTypeId: 'st-2' })
 
     expect(apiCalls.addTeamToSection).toHaveLength(1)
     expect(apiCalls.addTeamToSection[0]).toEqual({
-      pageId: 'page-1',
+      directoryId: 'directory-1',
       sectionId: 'sec-1',
       teamId: 'team-2',
     })

@@ -15,9 +15,6 @@ export function SessionTypesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const { data: sessionTypes = [], isLoading, error } = useSessionTypes()
 
-  if (isLoading) return <PageSpinner />
-  if (error) return <ErrorAlert message="Failed to load session types." />
-
   const active = sessionTypes.filter((st) => st.isActive).length
 
   return (
@@ -26,45 +23,53 @@ export function SessionTypesPage() {
         title="Session Types"
         subtitle="Define public-facing session categories that students discover when booking."
         actions={
-          <Button size="sm" onClick={() => setShowCreate(true)}>
+          <Button size="sm" onClick={() => setShowCreate(true)} disabled={isLoading || !!error}>
             <Plus size={16} /> New session type
           </Button>
         }
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 }, pb: 4 }}>
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            mb: 3,
-          }}
-        >
-          <StatCard
-            label="Total session types"
-            value={sessionTypes.length}
-            icon={<Tag size={18} />}
-            accent="orange"
-            helperText="Categories defined for public booking"
-          />
-          <StatCard
-            label="Active session types"
-            value={active}
-            icon={<Tag size={18} />}
-            accent="green"
-            helperText="Available on the booking portal"
-          />
-          <StatCard
-            label="Inactive session types"
-            value={sessionTypes.length - active}
-            icon={<Tag size={18} />}
-            accent="purple"
-            helperText="Hidden from students"
-          />
-        </Box>
+        {isLoading ? (
+          <PageSpinner />
+        ) : error ? (
+          <ErrorAlert message="Failed to load session types." />
+        ) : (
+          <>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                mb: 3,
+              }}
+            >
+              <StatCard
+                label="Total session types"
+                value={sessionTypes.length}
+                icon={<Tag size={18} />}
+                accent="orange"
+                helperText="Categories defined for public booking"
+              />
+              <StatCard
+                label="Active session types"
+                value={active}
+                icon={<Tag size={18} />}
+                accent="green"
+                helperText="Available on the booking portal"
+              />
+              <StatCard
+                label="Inactive session types"
+                value={sessionTypes.length - active}
+                icon={<Tag size={18} />}
+                accent="purple"
+                helperText="Hidden from students"
+              />
+            </Box>
 
-        <SessionTypeTable sessionTypes={sessionTypes} />
+            <SessionTypeTable sessionTypes={sessionTypes} />
+          </>
+        )}
 
         <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create session type">
           <SessionTypeForm
