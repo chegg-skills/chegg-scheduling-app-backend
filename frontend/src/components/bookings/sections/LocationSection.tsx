@@ -1,19 +1,19 @@
 import { Box, Button, Link, Stack, Typography, alpha, useTheme } from '@mui/material'
-import { ExternalLink, Video } from 'lucide-react'
+import { ExternalLink, Video, MapPin } from 'lucide-react'
 import type { Booking } from '@/types'
-import { SectionLabel } from './Common'
+import { BookingSection } from './Common'
+import { getBookingMeetingJoinUrl } from '../BookingDetailsPanel'
 
-interface MeetingSectionProps {
+interface LocationSectionProps {
   booking: Booking
-  meetingJoinUrl: string | null
 }
 
-export function MeetingSection({ booking, meetingJoinUrl }: MeetingSectionProps) {
+export function LocationSection({ booking }: LocationSectionProps) {
   const theme = useTheme()
+  const meetingJoinUrl = getBookingMeetingJoinUrl(booking)
 
   return (
-    <Box>
-      <SectionLabel label="Location" />
+    <BookingSection label="Location" icon={<MapPin size={16} />}>
       {meetingJoinUrl ? (
         <Box
           sx={{
@@ -83,6 +83,6 @@ export function MeetingSection({ booking, meetingJoinUrl }: MeetingSectionProps)
           {booking.event?.locationValue || 'Pending setup'}
         </Typography>
       )}
-    </Box>
+    </BookingSection>
   )
 }

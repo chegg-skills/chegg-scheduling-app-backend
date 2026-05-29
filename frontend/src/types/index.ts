@@ -239,7 +239,7 @@ export interface Event {
   createdAt: string
   updatedAt: string
   eventType: EventType
-  sessionType?: { id: string; slug: string; name: string } | null
+  sessionType?: { id: string; slug: string; name: string; description?: string | null } | null
   coaches: EventCoach[]
   weeklyAvailability: EventWeeklyAvailability[]
   team?: {

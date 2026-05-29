@@ -96,7 +96,7 @@ export function BookingLogDialog({ isOpen, onClose, booking }: BookingLogDialogP
             p: 2,
             bgcolor: '#FFF6F0',
             border: '1px solid #DEE3ED',
-            borderRadius: 2,
+            borderRadius: 1.5,
           }}
         >
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>

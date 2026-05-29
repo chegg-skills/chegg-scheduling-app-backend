@@ -1,6 +1,7 @@
-import { Box, Typography } from '@mui/material'
+import { Typography } from '@mui/material'
+import { Clock } from 'lucide-react'
 import type { Booking } from '@/types'
-import { SectionLabel } from './Common'
+import { BookingSection } from './Common'
 import React from 'react'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
@@ -37,15 +38,14 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
   )
 
   return (
-    <Box>
-      <SectionLabel label="Session Date & Time (Your Local Time)" />
+    <BookingSection label="Date & Time" icon={<Clock size={16} />}>
       <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
         {dateFormatter.format(start)}
       </Typography>
       <Typography
         variant="body2"
         color="text.secondary"
-        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
       >
         <span>
           {timeFormatter.format(start)} – {timeFormatter.format(end)}
@@ -59,14 +59,9 @@ export function ScheduleSection({ booking }: ScheduleSectionProps) {
           </Typography>
         )}
       </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
         <strong>Your Timezone:</strong> {formatTimezoneLabel(localTz, timezones)}
       </Typography>
-      {booking.timezone && booking.timezone !== localTz && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-          <strong>Student Booked In:</strong> {formatTimezoneLabel(booking.timezone, timezones)}
-        </Typography>
-      )}
-    </Box>
+    </BookingSection>
   )
 }
