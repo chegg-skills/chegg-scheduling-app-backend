@@ -5,6 +5,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import { safeUserSelect, type CallerContext } from "../../shared/utils/userUtils";
 import { queueTeamMemberAddedNotification } from "./teamMember.notification";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 
 const teamMemberInclude = Prisma.validator<Prisma.TeamMemberInclude>()({
   user: { select: safeUserSelect },
@@ -86,8 +87,6 @@ const addTeamMembers = async (
     });
 
     if (existingMembership?.isActive) {
-      // Skip if already active, or we could collect these as errors?
-      // For bulk, let's just skip or return the existing one.
       results.push(existingMembership);
       continue;
     }
@@ -99,17 +98,14 @@ const addTeamMembers = async (
         data: { isActive: true },
         include: teamMemberInclude,
       });
-
+      getRequestLogger().info("Team member reactivated.", { teamId, userId, addedBy: caller.id });
       void queueTeamMemberAddedNotification({ teamId, userId });
     } else {
       member = await prisma.teamMember.create({
-        data: {
-          teamId,
-          userId,
-        },
+        data: { teamId, userId },
         include: teamMemberInclude,
       });
-
+      getRequestLogger().info("Team member added.", { teamId, userId, addedBy: caller.id });
       void queueTeamMemberAddedNotification({ teamId, userId });
     }
     results.push(member);
@@ -195,11 +191,15 @@ const removeTeamMember = async (
     );
   }
 
-  return prisma.teamMember.update({
+  const removed = await prisma.teamMember.update({
     where: { id: membership.id },
     data: { isActive: false },
     include: teamMemberInclude,
   });
+
+  getRequestLogger().info("Team member removed.", { teamId, userId, removedBy: caller.id });
+
+  return removed;
 };
 
 export { addTeamMember, addTeamMembers, listTeamMembers, removeTeamMember, type SafeTeamMember };

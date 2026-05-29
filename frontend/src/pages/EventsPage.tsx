@@ -110,7 +110,7 @@ export function EventsPage() {
     <Box>
       <PageHeader
         title={selectedTeam ? toTitleCase(selectedTeam.name) : 'Events'}
-        subtitle={selectedTeam ? (selectedTeam.description ?? undefined) : 'View events by team'}
+        subtitle={selectedTeam ? undefined : 'View events by team'}
         breadcrumbs={selectedTeam ? [{ label: 'Teams', to: '/teams' }] : undefined}
         actions={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">

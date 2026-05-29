@@ -9,6 +9,7 @@ import { getManagedTeam } from "../../shared/utils/teamAccess";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import type { Team } from "@prisma/client";
 import { CreateTeamSchema, UpdateTeamSchema, ListTeamsSchema } from "./team.schema";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 
 export type SafeTeam = Team;
 
@@ -92,6 +93,12 @@ const createTeam = async (payload: CreateTeamInput, caller: CallerContext): Prom
       await upsertTeamLeadMembership(tx, newTeam.id, validated.teamLeadId);
 
       return newTeam;
+    });
+
+    getRequestLogger().info("Team created.", {
+      teamId: team.id,
+      teamLeadId: validated.teamLeadId,
+      createdBy: caller.id,
     });
 
     return team;
@@ -224,6 +231,15 @@ const updateTeam = async (teamId: string, payload: UpdateTeamInput): Promise<Saf
       return updatedTeam;
     });
 
+    if (validated.isActive !== undefined) {
+      getRequestLogger().info("Team active status changed.", {
+        teamId,
+        isActive: validated.isActive,
+      });
+    } else {
+      getRequestLogger().info("Team updated.", { teamId });
+    }
+
     return team;
   } catch (error) {
     return rethrowPrismaError(error, {
@@ -258,9 +274,9 @@ const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
   }
 
   try {
-    return await prisma.team.delete({
-      where: { id: teamId },
-    });
+    const deleted = await prisma.team.delete({ where: { id: teamId } });
+    getRequestLogger().warn("Team deleted.", { teamId });
+    return deleted;
   } catch (error) {
     return rethrowPrismaError(error, {
       P2025: { status: StatusCodes.NOT_FOUND, message: "Team not found." },

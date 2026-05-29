@@ -17,6 +17,7 @@ import {
 } from "../../shared/utils/userUtils";
 import { ListUsersSchema, UpdateUserSchema, UpdateMyProfileSchema } from "./user.schema";
 import { queueZoomIsvLinkExpiryReminder } from "./user.notification";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 
 type ListUsersOptions = {
   page?: number;
@@ -283,6 +284,27 @@ const updateUser = async (
       data: updateData,
     });
 
+    const log = getRequestLogger();
+    // Role and deactivation changes are security-sensitive — log at warn so they surface in ops dashboards.
+    if (validated.role !== undefined) {
+      log.warn("User role changed.", {
+        userId,
+        newRole: validated.role,
+        changedBy: caller.id,
+      });
+    }
+    if (validated.isActive === false) {
+      log.warn("User account deactivated.", { userId, deactivatedBy: caller.id });
+    } else if (validated.isActive === true) {
+      log.info("User account reactivated.", { userId, reactivatedBy: caller.id });
+    }
+    if (validated.password !== undefined) {
+      log.warn("User password changed by admin.", { userId, changedBy: caller.id });
+    }
+    if (validated.role === undefined && validated.isActive === undefined && validated.password === undefined) {
+      log.info("User profile updated.", { userId, updatedBy: caller.id });
+    }
+
     const safeUser = toSafeUser(updatedUser);
     void queueZoomIsvLinkExpiryReminder(safeUser);
     return safeUser;
@@ -339,6 +361,12 @@ const deleteUser = async (userId: string, caller: CallerContext): Promise<SafeUs
   const deactivatedUser = await prisma.user.update({
     where: { id: userId },
     data: { isActive: false },
+  });
+
+  getRequestLogger().warn("User account deactivated.", {
+    userId,
+    role: targetUser.role,
+    deactivatedBy: caller.id,
   });
 
   return toSafeUser(deactivatedUser);

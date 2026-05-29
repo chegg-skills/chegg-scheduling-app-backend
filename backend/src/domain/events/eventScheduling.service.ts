@@ -21,6 +21,7 @@ import { queueBookingStatusNotifications } from "../bookings/booking.notificatio
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
 import { logger } from "../../shared/logging/logger";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import { BookingStatus } from "@prisma/client";
 
 type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
@@ -297,20 +298,21 @@ const createEventScheduleSlot = async (
     });
 
     // Return the first instance created
-    return prisma.eventScheduleSlot.findFirstOrThrow({
+    const firstSlot = await prisma.eventScheduleSlot.findFirstOrThrow({
       where: { eventId, startTime: validated.startTime },
       include: {
         assignedCoach: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-            email: true,
-          },
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
         },
       },
     });
+    getRequestLogger().info("Recurring schedule slots created.", {
+      eventId,
+      slotCount: slotsData.length,
+      recurrenceGroupId,
+      createdBy: caller.id,
+    });
+    return firstSlot;
   }
 
   await assertSlotWithinAvailability(eventId, validated.startTime, validated.endTime, caller);
@@ -323,7 +325,7 @@ const createEventScheduleSlot = async (
     );
   }
 
-  return prisma.eventScheduleSlot.create({
+  const newSlot = await prisma.eventScheduleSlot.create({
     data: {
       eventId,
       startTime: validated.startTime,
@@ -335,16 +337,19 @@ const createEventScheduleSlot = async (
     },
     include: {
       assignedCoach: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatarUrl: true,
-          email: true,
-        },
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
       },
     },
   });
+
+  getRequestLogger().info("Schedule slot created.", {
+    eventId,
+    slotId: newSlot.id,
+    startTime: newSlot.startTime,
+    createdBy: caller.id,
+  });
+
+  return newSlot;
 };
 
 const updateEventScheduleSlot = async (
@@ -373,21 +378,19 @@ const updateEventScheduleSlot = async (
     );
   }
 
-  return prisma.eventScheduleSlot.update({
+  const updated = await prisma.eventScheduleSlot.update({
     where: { id: slotId },
     data: validated,
     include: {
       assignedCoach: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatarUrl: true,
-          email: true,
-        },
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
       },
     },
   });
+
+  getRequestLogger().info("Schedule slot updated.", { eventId, slotId, updatedBy: caller.id });
+
+  return updated;
 };
 
 const deleteEventScheduleSlot = async (
@@ -414,9 +417,9 @@ const deleteEventScheduleSlot = async (
     );
   }
 
-  return prisma.eventScheduleSlot.delete({
-    where: { id: slotId },
-  });
+  const deleted = await prisma.eventScheduleSlot.delete({ where: { id: slotId } });
+  getRequestLogger().warn("Schedule slot deleted.", { eventId, slotId, deletedBy: caller.id });
+  return deleted;
 };
 
 const listSlotBookings = async (eventId: string, slotId: string, caller: CallerContext) => {
@@ -474,6 +477,12 @@ const cancelEventScheduleSlot = async (
     });
 
     return s;
+  });
+
+  getRequestLogger().warn("Schedule slot cancelled.", {
+    eventId,
+    slotId,
+    cancelledBy: caller.id,
   });
 
   // 3. Trigger notifications (outside transaction for reliability)
@@ -589,6 +598,14 @@ const revealCoachForSlot = async (
       data: { coachUserId: finalCoachId },
     }),
   ]);
+
+  getRequestLogger().info("Coach revealed for slot.", {
+    eventId,
+    slotId,
+    coachUserId: finalCoachId,
+    participantCount: slot.bookings.length,
+    revealedBy: caller.id,
+  });
 
   void queueCoachRevealNotifications({
     slot: updatedSlot,

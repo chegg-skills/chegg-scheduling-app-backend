@@ -93,7 +93,6 @@ export function TeamDetailPage() {
     <Stack spacing={4}>
       <PageHeader
         title={toTitleCase(team.name)}
-        subtitle={team.description ?? undefined}
         breadcrumbs={[{ label: 'Teams', to: '/teams' }]}
         tags={
           <Badge

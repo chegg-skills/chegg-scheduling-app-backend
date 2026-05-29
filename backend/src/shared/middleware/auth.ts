@@ -6,6 +6,7 @@ import { ErrorHandler } from "../error/errorhandler";
 import { prisma } from "../db/prisma";
 import { canReadUser } from "../auth/permissions";
 import { getJwtSecret } from "../utils/jwtUtils";
+import { getRequestLogger } from "../logging/requestContext";
 
 const AUTH_COOKIE_NAME = "auth_token";
 
@@ -79,10 +80,22 @@ const authenticate = (req: Request, res: Response, next: NextFunction): Promise<
         select: { id: true, email: true, role: true, isActive: true },
       });
 
-      if (!user || !user.isActive) {
-        next(
-          new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."),
-        );
+      if (!user) {
+        // User was deleted from DB after token was issued — rare but possible.
+        getRequestLogger().warn("Authenticated user no longer exists in database.", {
+          userId: parsed.id,
+        });
+        next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
+        return;
+      }
+
+      if (!user.isActive) {
+        // Account was deactivated while the session was still live — security event.
+        getRequestLogger().warn("Access rejected: account deactivated mid-session.", {
+          userId: user.id,
+          role: user.role,
+        });
+        next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
         return;
       }
 
@@ -90,6 +103,8 @@ const authenticate = (req: Request, res: Response, next: NextFunction): Promise<
       res.locals.authUser = { id: user.id, email: user.email, role: user.role };
       next();
     } catch {
+      // JWT is present but fails verification — could be tampered, malformed, or expired.
+      getRequestLogger().warn("JWT verification failed — token present but invalid.");
       next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
     }
   })();

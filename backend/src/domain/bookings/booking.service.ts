@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { randomUUID } from "crypto";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { logger } from "../../shared/logging/logger";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import {
   assertBookingNoticeSatisfied,
   assertBookingAvailabilityAllowed,
@@ -123,7 +123,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   const activeCoaches = event.coaches as CoachCandidate[];
 
   if (activeCoaches.length === 0) {
-    logger.warn("Booking blocked because no active coaches are available for the event.", {
+    getRequestLogger().warn("Booking blocked because no active coaches are available for the event.", {
       eventId,
       teamId,
     });
@@ -205,7 +205,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     { timeout: 15000 },
   );
 
-  logger.info("Booking created successfully.", {
+  getRequestLogger().info("Booking created.", {
     bookingId: booking.id,
     eventId: booking.eventId,
     teamId: booking.teamId,
@@ -234,6 +234,11 @@ const updateBooking = async (
   const booking = await updateBookingById(id, data);
 
   if (data.status && data.status !== oldBooking.status) {
+    getRequestLogger().info("Booking status updated.", {
+      bookingId: booking.id,
+      previousStatus: oldBooking.status,
+      newStatus: booking.status,
+    });
     void queueBookingStatusNotifications(booking);
   }
   void queueBookingUpdatedNotifications(oldBooking, booking);
@@ -317,7 +322,7 @@ const rescheduleBooking = async (
     { timeout: 15000 },
   );
 
-  logger.info("Booking rescheduled successfully.", {
+  getRequestLogger().info("Booking rescheduled.", {
     bookingId: updatedBooking.id,
     eventId: updatedBooking.eventId,
     teamId: updatedBooking.teamId,
@@ -364,6 +369,12 @@ const cancelBooking = async (
     },
     { timeout: 15000 },
   );
+
+  getRequestLogger().info("Booking cancelled.", {
+    bookingId: updatedBooking.id,
+    eventId: updatedBooking.eventId,
+    teamId: updatedBooking.teamId,
+  });
 
   void queueBookingStatusNotifications(updatedBooking);
 

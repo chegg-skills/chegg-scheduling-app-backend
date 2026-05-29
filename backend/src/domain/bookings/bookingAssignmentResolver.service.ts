@@ -11,6 +11,7 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { isCoachAvailable } from "../availability/availability.service";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import {
   type AssignmentContext,
   getAssignmentStrategy,
@@ -293,11 +294,12 @@ const resolveCollaborativeCoHosts = async ({
   // Graceful degradation logic remains unchanged...
   const coHostPoolSize = candidatesCount - 1;
   if (coHostPoolSize > 0 && availableCoHosts.length === 0) {
-    console.warn(
-      `[booking] No co-hosts available for event ${event.id} at ${start.toISOString()}. ` +
-        `Candidates checked: ${coHostPoolSize}. ` +
-        `Session will proceed with lead coach ${leadCoachId} only.`,
-    );
+    getRequestLogger().warn("No co-hosts available for session — proceeding with lead only.", {
+      eventId: event.id,
+      startTime: start.toISOString(),
+      candidatesChecked: coHostPoolSize,
+      leadCoachId,
+    });
   }
 
   return availableCoHosts;

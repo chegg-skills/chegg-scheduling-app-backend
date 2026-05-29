@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 
 export type UpsertSessionLogInput = {
   topicsDiscussed?: string | null;
@@ -35,6 +36,7 @@ export const assertSlotLogAccess = async (slotId: string, caller: CallerContext)
 
   if (coCoachBooking) return;
 
+  getRequestLogger().warn("Session log access denied.", { slotId, callerId: caller.id });
   throw new ErrorHandler(StatusCodes.FORBIDDEN, "You do not have permission to log this session.");
 };
 
@@ -138,7 +140,7 @@ export const upsertSessionLog = async (
       }
     }
 
-    return tx.sessionLog.findUnique({
+    const result = await tx.sessionLog.findUnique({
       where: { id: log.id },
       include: {
         attendance: {
@@ -149,5 +151,17 @@ export const upsertSessionLog = async (
         },
       },
     });
+
+    const attended = payload.attendance.filter((a) => a.attended).length;
+    const absent = payload.attendance.length - attended;
+    getRequestLogger().info("Session log saved.", {
+      slotId,
+      eventId,
+      attended,
+      absent,
+      loggedBy: caller.id,
+    });
+
+    return result;
   });
 };

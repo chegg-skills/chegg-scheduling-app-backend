@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
+import { logger } from "../logging/logger";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -87,7 +88,7 @@ export const parseBoundedDateRange = ({
 
 export const formatNotificationDate = (date: Date, timezone?: string | null): string => {
   if (!timezone) {
-    console.warn("[formatNotificationDate] No timezone provided, falling back to UTC.");
+    logger.warn("formatNotificationDate called without timezone — falling back to UTC.");
   }
   try {
     return new Intl.DateTimeFormat("en-US", {
@@ -101,7 +102,7 @@ export const formatNotificationDate = (date: Date, timezone?: string | null): st
       timeZone: timezone || "UTC",
     }).format(date);
   } catch {
-    console.warn(`[formatNotificationDate] Invalid timezone "${timezone}", falling back to UTC.`);
+    logger.warn("formatNotificationDate received invalid timezone — falling back to UTC.", { timezone });
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
       month: "long",

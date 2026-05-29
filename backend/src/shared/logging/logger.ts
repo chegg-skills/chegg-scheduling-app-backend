@@ -1,58 +1,40 @@
-type LogLevel = "debug" | "info" | "warn" | "error";
+import pino from "pino";
+
+const isDev = process.env.NODE_ENV !== "production";
+const level = (process.env.LOG_LEVEL ?? "info").toLowerCase();
+
+const transport = isDev
+  ? pino.transport({
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "SYS:standard",
+        ignore: "pid,hostname",
+      },
+    })
+  : undefined;
+
+export const pinoLogger = pino(
+  {
+    level,
+    timestamp: pino.stdTimeFunctions.isoTime,
+    serializers: {
+      // Maps the existing { error: err } call pattern to pino's standard error serializer
+      error: pino.stdSerializers.err,
+    },
+  },
+  transport,
+);
 
 type LogMeta = Record<string, unknown>;
 
-const severityRank: Record<LogLevel, number> = {
-  debug: 10,
-  info: 20,
-  warn: 30,
-  error: 40,
-};
-
-const configuredLevel = (process.env.LOG_LEVEL?.toLowerCase() as LogLevel | undefined) ?? "info";
-const activeSeverity = severityRank[configuredLevel] ?? severityRank.info;
-
-const serializeError = (value: unknown) => {
-  if (value instanceof Error) {
-    return {
-      name: value.name,
-      message: value.message,
-      stack: value.stack,
-    };
-  }
-  return value;
-};
-
-const writeLog = (level: LogLevel, message: string, meta?: LogMeta) => {
-  if (severityRank[level] < activeSeverity) {
-    return;
-  }
-
-  const payload = {
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-    ...(meta ?? {}),
-  };
-
-  const line = JSON.stringify(payload, (_key, value) => serializeError(value));
-
-  if (level === "error") {
-    console.error(line);
-    return;
-  }
-
-  if (level === "warn") {
-    console.warn(line);
-    return;
-  }
-
-  console.log(line);
-};
-
+// Wraps pinoLogger to preserve the existing call signature used throughout the codebase:
+//   logger.info("message", { key: value })
+// Pino's native order is (mergeObject, message) — the wrapper inverts it so no consumers change.
 export const logger = {
-  debug: (message: string, meta?: LogMeta) => writeLog("debug", message, meta),
-  info: (message: string, meta?: LogMeta) => writeLog("info", message, meta),
-  warn: (message: string, meta?: LogMeta) => writeLog("warn", message, meta),
-  error: (message: string, meta?: LogMeta) => writeLog("error", message, meta),
+  debug: (message: string, meta?: LogMeta) => pinoLogger.debug(meta ?? {}, message),
+  info: (message: string, meta?: LogMeta) => pinoLogger.info(meta ?? {}, message),
+  warn: (message: string, meta?: LogMeta) => pinoLogger.warn(meta ?? {}, message),
+  error: (message: string, meta?: LogMeta) => pinoLogger.error(meta ?? {}, message),
+  fatal: (message: string, meta?: LogMeta) => pinoLogger.fatal(meta ?? {}, message),
 };

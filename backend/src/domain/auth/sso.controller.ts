@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
-import { logger } from "../../shared/logging/logger";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
 import { setAuthCookie } from "../../shared/utils/cookie";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
@@ -158,7 +158,7 @@ export const handleCallback = async (
       await handleExistingUserLogin(res, normalizedEmail, userInfo.sub, provider);
     }
   } catch (error) {
-    logger.error("SSO callback failed.", { error });
+    getRequestLogger().error("SSO callback failed.", { error });
     next(error);
   }
 };
@@ -186,7 +186,7 @@ async function handleInviteAcceptance(
   }
 
   if (normalizeEmail(invite.email) !== normalizedEmail) {
-    logger.warn("SSO email does not match invite email.", {
+    getRequestLogger().warn("SSO email does not match invite email.", {
       inviteEmail: invite.email,
       ssoEmail: normalizedEmail,
     });
@@ -196,7 +196,7 @@ async function handleInviteAcceptance(
 
   // SUPER_ADMIN can never be created via SSO
   if (invite.role === UserRole.SUPER_ADMIN) {
-    logger.warn("SSO invite acceptance rejected: SUPER_ADMIN role not allowed via SSO.", {
+    getRequestLogger().warn("SSO invite acceptance rejected: SUPER_ADMIN role not allowed via SSO.", {
       inviteId: invite.id,
     });
     redirectError(res, "forbidden");
@@ -243,7 +243,7 @@ async function handleInviteAcceptance(
 
   const safeUser = toSafeUser(createdUser);
 
-  logger.info("SSO invite accepted and user provisioned.", {
+  getRequestLogger().info("SSO invite accepted and user provisioned.", {
     userId: safeUser.id,
     role: safeUser.role,
     provider,
@@ -273,7 +273,7 @@ async function handleExistingUserLogin(
   });
 
   if (!user) {
-    logger.warn("SSO login rejected: no account found for identity.", {
+    getRequestLogger().warn("SSO login rejected: no account found for identity.", {
       email: normalizedEmail,
       provider,
     });
@@ -282,7 +282,7 @@ async function handleExistingUserLogin(
   }
 
   if (!user.isActive) {
-    logger.warn("SSO login rejected: account inactive.", { userId: user.id });
+    getRequestLogger().warn("SSO login rejected: account inactive.", { userId: user.id });
     redirectError(res, "inactive");
     return;
   }
@@ -294,7 +294,7 @@ async function handleExistingUserLogin(
 
   const safeUser = toSafeUser(user);
 
-  logger.info("SSO login successful.", { userId: safeUser.id, role: safeUser.role, provider });
+  getRequestLogger().info("SSO login successful.", { userId: safeUser.id, role: safeUser.role, provider });
 
   const token = buildAuthToken(safeUser);
   setAuthCookie(res, token);

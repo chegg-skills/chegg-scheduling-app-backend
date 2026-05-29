@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
-import { logger } from "../../shared/logging/logger";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import { buildAuthToken } from "../../shared/utils/jwtUtils";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
@@ -76,7 +76,7 @@ const register = async (payload: RegisterUserInput): Promise<{ user: SafeUser; t
 
     const safeUser = toSafeUser(createdUser);
 
-    logger.info("User registered successfully.", {
+    getRequestLogger().info("User registered successfully.", {
       userId: safeUser.id,
       role: safeUser.role,
     });
@@ -109,7 +109,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
   }
 
   if (!user.isActive) {
-    logger.warn("Inactive account login attempt blocked.", {
+    getRequestLogger().warn("Inactive account login attempt blocked.", {
       userId: user.id,
       role: user.role,
     });
@@ -120,7 +120,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
   }
 
   if (user.lockedUntil && user.lockedUntil > new Date()) {
-    logger.warn("Locked account login attempt blocked.", {
+    getRequestLogger().warn("Locked account login attempt blocked.", {
       userId: user.id,
       lockedUntil: user.lockedUntil.toISOString(),
     });
@@ -153,7 +153,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
     });
 
     if (shouldLockAccount) {
-      logger.warn("User account locked after repeated failed login attempts.", {
+      getRequestLogger().warn("User account locked after repeated failed login attempts.", {
         userId: user.id,
         attempts: nextFailedAttempts,
         lockedUntil: lockedUntil?.toISOString(),
@@ -164,7 +164,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
       );
     }
 
-    logger.warn("Invalid password attempt recorded.", {
+    getRequestLogger().warn("Invalid password attempt recorded.", {
       userId: user.id,
       failedLoginAttempts: nextFailedAttempts,
     });
@@ -183,7 +183,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
 
   const safeUser = toSafeUser(updatedUser);
 
-  logger.info("User logged in successfully.", {
+  getRequestLogger().info("User logged in successfully.", {
     userId: safeUser.id,
     role: safeUser.role,
   });
@@ -215,7 +215,7 @@ type BootstrapInput = {
 const bootstrap = async (payload: BootstrapInput): Promise<{ user: SafeUser; token: string }> => {
   const secret = process.env.BOOTSTRAP_SECRET;
   if (!secret) {
-    logger.warn("Bootstrap attempted while BOOTSTRAP_SECRET is not configured.");
+    getRequestLogger().warn("Bootstrap attempted while BOOTSTRAP_SECRET is not configured.");
     throw new ErrorHandler(StatusCodes.FORBIDDEN, "Bootstrap is not enabled on this server.");
   }
 
@@ -241,7 +241,7 @@ const bootstrap = async (payload: BootstrapInput): Promise<{ user: SafeUser; tok
     role: UserRole.SUPER_ADMIN,
   });
 
-  logger.info("Bootstrap super admin provisioned.", {
+  getRequestLogger().info("Bootstrap super admin provisioned.", {
     userId: result.user.id,
   });
 
