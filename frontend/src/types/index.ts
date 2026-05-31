@@ -37,6 +37,17 @@ export type StatsTimeframe =
 
 // ─── Core Models ──────────────────────────────────────────────────────────────
 
+/**
+ * Public-safe user shape returned by all authenticated API endpoints.
+ * The raw `password`, `ssoSub`, and `ssoProvider` fields are stripped
+ * server-side by `toSafeUser()` and are never present on this type.
+ *
+ * `timezone` is an IANA string (e.g. `"Asia/Kolkata"`) used to localise
+ * notification emails for coaches and admins.
+ *
+ * `ssoLinkedAt` is non-null when the account has been linked to an SSO
+ * provider (Okta). It is safe to expose — it is just a timestamp.
+ */
 export interface SafeUser {
   id: string
   publicBookingSlug: string | null
@@ -85,6 +96,12 @@ export interface UserWithDetails extends SafeUser {
   availabilityExceptions: UserAvailabilityException[]
 }
 
+/**
+ * Per-team notification preferences. A team always has exactly one config
+ * record (upserted on first save). `reminderOffsets` is an array of minutes
+ * before the session start at which reminder emails are queued
+ * (e.g. `[1440, 60]` → 24 h and 1 h reminders).
+ */
 export interface TeamNotificationConfig {
   teamId: string
   reminderOffsets: number[]
@@ -144,6 +161,12 @@ export interface EventType {
   updatedAt: string
 }
 
+/**
+ * Capability flags for an interaction type. Sourced from the
+ * `GET /event-interaction-types` endpoint which returns the hardcoded
+ * `INTERACTION_TYPE_CAPS` map from the backend — not stored in the DB.
+ * See `backend/src/shared/constants/interactionType.ts` for flag semantics.
+ */
 export interface InteractionTypeCaps {
   multipleCoaches: boolean
   multipleParticipants: boolean
@@ -167,12 +190,29 @@ export interface EventCoach {
   coachUser: SafeUser
 }
 
+/**
+ * Availability status for a single coach within an event's pool, returned by
+ * `GET /events/:eventId/schedule-slots/:slotId/coach-availability`.
+ * Used in `RevealCoachDialog` to show Available / Conflict chips before
+ * the admin selects a coach for the deferred reveal.
+ */
 export interface CoachAvailabilityEntry {
   coachUserId: string
   coachUser: SafeUser
   isAvailable: boolean
 }
 
+/**
+ * A pre-created time slot for `FIXED_SLOTS` events. Multiple students may book
+ * into the same slot (up to `maxParticipantCount`), all sharing the same coach.
+ *
+ * `coachRevealSentAt` is set when the admin triggers a deferred coach reveal
+ * (`deferCoachReveal = true` events only). Once set the reveal endpoint returns
+ * 409 to prevent double-sends.
+ *
+ * `recurrenceGroupId` links slots that were created as part of a recurring
+ * series, allowing them to be displayed and managed together.
+ */
 export interface EventScheduleSlot {
   id: string
   eventId: string
@@ -204,6 +244,24 @@ export interface EventWeeklyAvailability {
   updatedAt: string
 }
 
+/**
+ * Full event record returned by authenticated admin/coach endpoints.
+ *
+ * Key scheduling fields:
+ * - `bookingMode` — `COACH_AVAILABILITY` (students pick any open slot) or
+ *   `FIXED_SLOTS` (students book into admin-created slots). Group interaction
+ *   types always use `FIXED_SLOTS`.
+ * - `deferCoachReveal` — ONE_TO_MANY only. When `true`, confirmation emails
+ *   omit the coach name/join URL until the admin sends the reveal.
+ *   **Immutable once any booking exists.**
+ * - `targetCoHostCount` — max co-hosts per session for multi-coach types
+ *   (`null` = all available coaches join as co-hosts).
+ * - `maxBookingWindowDays` — prevents bookings further than N days from today
+ *   (`null` = no limit). Enforced by both the availability service and the
+ *   public booking UI's `SlotStep`.
+ * - `showDescription` — when `true`, renders `description` in the
+ *   `SessionIntroduction` component on the public booking page.
+ */
 export interface Event {
   id: string
   publicBookingSlug: string | null
@@ -596,6 +654,20 @@ export interface StudentSessionLogEntry {
 
 // ─── Booking Models ───────────────────────────────────────────────────────────
 
+/**
+ * Full booking record returned by authenticated admin/coach endpoints.
+ *
+ * `timezone` stores the **student's** IANA timezone at booking time (captured
+ * from the browser). Notification emails for the student use this value;
+ * coach and admin emails use their own `User.timezone` instead.
+ *
+ * `coCoachUserIds` lists co-hosts assigned to the session in addition to the
+ * primary `coachUserId`. For group events, this set is the same across all
+ * bookings in the same slot.
+ *
+ * `rescheduleToken` is a single-use token included in the student's
+ * confirmation email link. It is cleared after use or expiry.
+ */
 export interface Booking {
   id: string
   studentId: string | null
@@ -627,8 +699,11 @@ export interface Booking {
   sessionLog?: SessionLog | null
 }
 
-// Booking shape returned by public-facing endpoints (cancel / reschedule pages).
-// event and coach carry only the public-safe subset of fields.
+/**
+ * Booking shape returned by public-facing endpoints (cancel / reschedule pages).
+ * `event` and `coach` carry only the public-safe subset of fields — no internal
+ * IDs or admin-only data. Used by `PublicReschedulePage` and the cancellation flow.
+ */
 export interface PublicBooking extends Omit<Booking, 'event' | 'coach'> {
   event?: PublicEventSummary | null
   coach?: PublicCoachSummary | null

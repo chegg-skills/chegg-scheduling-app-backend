@@ -6,6 +6,15 @@ import { sendErrorResponse } from "../utils/helper/responseHelper";
 import { MethodNotAllowedError } from "./methodNotAllowed";
 import { PathNotFoundError } from "./pathNotFound";
 
+/**
+ * Standard application error class. Throw this anywhere in the service or
+ * controller layer to produce a structured JSON error response with the given
+ * HTTP status code. The global `errorHandler` middleware catches it and calls
+ * `sendErrorResponse` — no additional try/catch is needed in controllers.
+ *
+ * @example
+ * throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event not found.");
+ */
 export class ErrorHandler extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) {

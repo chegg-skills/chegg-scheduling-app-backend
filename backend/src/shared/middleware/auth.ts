@@ -10,6 +10,11 @@ import { getRequestLogger } from "../logging/requestContext";
 
 const AUTH_COOKIE_NAME = "auth_token";
 
+/**
+ * Minimal user fields attached to `res.locals.authUser` after successful
+ * authentication. The role is always sourced from the database, never from
+ * the JWT claim, so it reflects the current state of the account.
+ */
 type AuthUser = {
   id: string;
   email: string;
@@ -60,6 +65,19 @@ const parseJwtPayload = (payload: string | JwtPayload): AuthUser => {
   };
 };
 
+/**
+ * Express middleware that verifies the session JWT and sets `res.locals.authUser`.
+ *
+ * The user record is re-fetched from the database on every request so that
+ * account deactivations and role changes take effect immediately, without
+ * waiting for the token to expire.
+ *
+ * Accepts the token from either the `auth_token` cookie (browser sessions) or
+ * the `Authorization: Bearer <token>` header (API clients / public reschedule flow).
+ *
+ * @throws {ErrorHandler} 401 — no token present, token fails verification,
+ *   user no longer exists in the database, or the account has been deactivated.
+ */
 const authenticate = (req: Request, res: Response, next: NextFunction): Promise<void> => {
   return (async () => {
     const token = getTokenFromRequest(req);
@@ -105,9 +123,15 @@ const authenticate = (req: Request, res: Response, next: NextFunction): Promise<
   })();
 };
 
-// Like authenticate, but does not block if no token is present or the token is invalid.
-// Sets res.locals.authUser only when a valid, active session exists.
-// Used on routes that accept both session auth and alternative auth (e.g. reschedule tokens).
+/**
+ * Like `authenticate`, but non-blocking: sets `res.locals.authUser` only when
+ * a valid, active session token is present and silently continues otherwise.
+ *
+ * Use on routes that accept both JWT session auth and an alternative auth
+ * mechanism (e.g. single-use reschedule tokens). Controllers on these routes
+ * must check `res.locals.authUser` themselves and fall back to their alternative
+ * auth path when it is absent.
+ */
 const optionalAuthenticate = (req: Request, res: Response, next: NextFunction): Promise<void> => {
   return (async () => {
     const token = getTokenFromRequest(req);
@@ -132,6 +156,14 @@ const optionalAuthenticate = (req: Request, res: Response, next: NextFunction): 
   })();
 };
 
+/**
+ * Factory that returns a middleware enforcing role-based access control.
+ * Must be applied after `authenticate` (which sets `res.locals.authUser`).
+ *
+ * @param allowedRoles - One or more roles permitted to access the route.
+ * @throws {ErrorHandler} 401 if `authUser` is absent, 403 if the caller's
+ *   role is not in `allowedRoles`.
+ */
 const authorize = (...allowedRoles: UserRole[]) => {
   return (_req: Request, res: Response, next: NextFunction): void => {
     const authUser = res.locals.authUser as AuthUser | undefined;
@@ -155,6 +187,14 @@ const authorize = (...allowedRoles: UserRole[]) => {
   };
 };
 
+/**
+ * Middleware that allows a user to read their own profile or delegates the
+ * decision to `canReadUser` for elevated roles (SUPER_ADMIN, TEAM_ADMIN).
+ * Reads the target user ID from `req.params.userId`.
+ *
+ * @throws {ErrorHandler} 401 if unauthenticated, 403 if the caller lacks
+ *   read permission for the target user.
+ */
 const authorizeUserRead = (req: Request, res: Response, next: NextFunction): void => {
   const authUser = res.locals.authUser as AuthUser | undefined;
 
