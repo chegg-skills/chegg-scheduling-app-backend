@@ -6,11 +6,7 @@ const level = (process.env.LOG_LEVEL ?? "info").toLowerCase();
 const transport = isDev
   ? pino.transport({
       target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "SYS:standard",
-        ignore: "pid,hostname",
-      },
+      options: { colorize: true, translateTime: "SYS:standard", ignore: "pid,hostname" },
     })
   : undefined;
 

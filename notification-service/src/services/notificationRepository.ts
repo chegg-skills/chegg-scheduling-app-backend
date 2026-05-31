@@ -1,5 +1,6 @@
 import { NotificationStatus, Prisma, type Notification } from "@prisma/client";
 import { prisma } from "../db/prisma";
+import { logger } from "../logger";
 
 type NotificationRecordData = Prisma.NotificationUncheckedCreateInput;
 
@@ -28,17 +29,17 @@ export async function createOrUpsertNotification(
         },
       });
 
-      console.log("Notification record upserted:", record.id);
+      logger.debug({ notificationId: record.id }, "Notification record persisted.");
       return record;
     }
 
     const record = await prisma.notification.create({ data });
-    console.log("Notification record created:", record.id);
+    logger.debug({ notificationId: record.id }, "Notification record persisted.");
     return record;
   } catch (error) {
-    console.warn(
-      "Could not persist notification record in database:",
-      error instanceof Error ? error.message : String(error),
+    logger.warn(
+      { error, notificationType: data.notificationType },
+      "Could not persist notification record.",
     );
     return null;
   }
@@ -58,10 +59,7 @@ export async function markNotificationAsSent(id: number | null | undefined): Pro
       },
     });
   } catch (error) {
-    console.warn(
-      "Could not update notification record after send:",
-      error instanceof Error ? error.message : String(error),
-    );
+    logger.warn({ error, notificationId: id }, "Could not update notification record after send.");
   }
 }
 
@@ -83,7 +81,7 @@ export async function markNotificationAsFailed(
       },
     });
   } catch (updateError) {
-    console.error("Failed to update notification failure status:", updateError);
+    logger.error({ error: updateError, notificationId: id }, "Failed to update notification failure status.");
   }
 }
 
@@ -114,7 +112,7 @@ export async function cancelNotificationsByEntity(
   });
 
   if (result.count > 0) {
-    console.log(`Cancelled ${result.count} notification(s) for ${entityType}:${entityId}`);
+    logger.info({ count: result.count, entityType, entityId }, "Scheduled notifications cancelled.");
   }
 
   return result.count;

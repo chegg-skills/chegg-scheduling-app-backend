@@ -2,6 +2,7 @@ import { QUEUE_CONFIG } from "../config/queues";
 import { getRabbitConnection } from "../queues/rabbitmq";
 import type { NotificationPayload } from "../types/notification";
 import { processNotification } from "./processNotification";
+import { logger } from "../logger";
 
 const PREFETCH_COUNT = Number(process.env.RABBITMQ_PREFETCH ?? 10);
 
@@ -28,34 +29,32 @@ async function startNotificationConsumer(): Promise<void> {
     await channel.assertQueue(dlqQueue, { durable: true });
     await channel.bindQueue(dlqQueue, dlqExchange, dlqRoutingKey);
 
-    console.log("Waiting for messages in queue:", queue);
+    logger.info({ queue }, "[NotificationConsumer] Subscribed and waiting for messages.");
 
     channel.consume(queue, async (msg: Parameters<typeof channel.ack>[0] | null) => {
       if (!msg) return;
 
       try {
-        console.log(
-          `[${new Date().toISOString()}] Incoming notification message detected on queue: "${queue}"`,
-        );
         const payload = JSON.parse(msg.content.toString()) as NotificationPayload;
 
-        console.log("+-----------------------------------------------------------------+");
-        console.log("Received notification data:", {
-          ...payload,
-          recipients: typeof payload.recipients === "string" ? "***" : ["***"],
-          variables: { ...payload.variables, studentEmail: "***", studentName: "***" },
-        });
-        console.log("+-----------------------------------------------------------------+");
+        logger.info(
+          {
+            type: payload.type,
+            entityId: payload.entityId,
+            recipientEmail: typeof payload.recipients === "string" ? "***" : ["***"],
+          },
+          "Notification message received.",
+        );
 
         await processNotification(payload);
         channel.ack(msg);
       } catch (error) {
-        console.error("Failed to process notification job:", error);
+        logger.error({ error }, "Failed to process notification job.");
         channel.nack(msg, false, false);
       }
     });
   } catch (error) {
-    console.error("Error starting notification consumer:", error);
+    logger.error({ error }, "Error starting notification consumer.");
     throw new Error("Failed to start notification consumer");
   }
 }

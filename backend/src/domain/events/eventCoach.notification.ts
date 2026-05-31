@@ -40,11 +40,7 @@ const queueEventCoachAddedNotification = async (input: EventCoachAddedNotificati
       },
     });
   } catch (error) {
-    logger.error("Failed to queue event coach added notification.", {
-      eventId: input.eventId,
-      coachUserId: input.coachUserId,
-      error,
-    });
+    logger.error({ eventId: input.eventId, coachUserId: input.coachUserId, error }, "Failed to queue event coach added notification.");
   }
 };
 

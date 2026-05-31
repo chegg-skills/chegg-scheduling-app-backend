@@ -215,10 +215,7 @@ const isCoachAvailable = async (
     startLocal = toLocalAvailabilityInfo(startTime, user.timezone);
     endLocal = toLocalAvailabilityInfo(effectiveEndTime, user.timezone);
   } catch {
-    logger.warn("Invalid coach timezone — treating as unavailable.", {
-      userId,
-      timezone: user.timezone,
-    });
+    logger.warn({ userId, timezone: user.timezone }, "Invalid coach timezone — treating as unavailable.");
     return false;
   }
 

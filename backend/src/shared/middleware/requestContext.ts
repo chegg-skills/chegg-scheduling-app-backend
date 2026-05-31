@@ -15,5 +15,6 @@ export const attachRequestContext = (req: Request, res: Response, next: NextFunc
   res.locals.requestId = requestId;
   res.setHeader(REQUEST_ID_HEADER, requestId);
 
+  //sets the request ID into Node's AsyncLocalStorage context.
   runWithRequestContext(requestId, () => next());
 };

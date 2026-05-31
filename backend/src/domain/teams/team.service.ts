@@ -95,11 +95,7 @@ const createTeam = async (payload: CreateTeamInput, caller: CallerContext): Prom
       return newTeam;
     });
 
-    getRequestLogger().info("Team created.", {
-      teamId: team.id,
-      teamLeadId: validated.teamLeadId,
-      createdBy: caller.id,
-    });
+    getRequestLogger().info({ teamId: team.id, teamLeadId: validated.teamLeadId, createdBy: caller.id }, "Team created.");
 
     return team;
   } catch (error) {
@@ -232,12 +228,9 @@ const updateTeam = async (teamId: string, payload: UpdateTeamInput): Promise<Saf
     });
 
     if (validated.isActive !== undefined) {
-      getRequestLogger().info("Team active status changed.", {
-        teamId,
-        isActive: validated.isActive,
-      });
+      getRequestLogger().info({ teamId, isActive: validated.isActive }, "Team active status changed.");
     } else {
-      getRequestLogger().info("Team updated.", { teamId });
+      getRequestLogger().info({ teamId }, "Team updated.");
     }
 
     return team;
@@ -275,7 +268,7 @@ const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
 
   try {
     const deleted = await prisma.team.delete({ where: { id: teamId } });
-    getRequestLogger().warn("Team deleted.", { teamId });
+    getRequestLogger().warn({ teamId }, "Team deleted.");
     return deleted;
   } catch (error) {
     return rethrowPrismaError(error, {

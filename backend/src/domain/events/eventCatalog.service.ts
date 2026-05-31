@@ -44,11 +44,7 @@ const createEventType = async (
         updatedById: caller.id,
       },
     });
-    getRequestLogger().info("Event type created.", {
-      eventTypeId: eventType.id,
-      key: eventType.key,
-      createdBy: caller.id,
-    });
+    getRequestLogger().info({ eventTypeId: eventType.id, key: eventType.key, createdBy: caller.id }, "Event type created.");
     return eventType;
   } catch (error) {
     return rethrowPrismaError(error, {
@@ -95,7 +91,7 @@ const updateEventType = async (
       where: { id: eventTypeId },
       data,
     });
-    getRequestLogger().info("Event type updated.", { eventTypeId, updatedBy: caller.id });
+    getRequestLogger().info({ eventTypeId, updatedBy: caller.id }, "Event type updated.");
     return eventType;
   } catch (error) {
     return rethrowPrismaError(error, {
@@ -153,7 +149,7 @@ const deleteEventType = async (
 
   try {
     const deleted = await prisma.eventType.delete({ where: { id: eventTypeId } });
-    getRequestLogger().warn("Event type deleted.", { eventTypeId, deletedBy: caller.id });
+    getRequestLogger().warn({ eventTypeId, deletedBy: caller.id }, "Event type deleted.");
     return deleted;
   } catch (error) {
     return rethrowPrismaError(error, {

@@ -250,12 +250,7 @@ const replaceEventCoaches = async (
     await syncRoutingState(tx, eventId, event.assignmentStrategy, normalizedCoaches.length);
   });
 
-  getRequestLogger().info("Event coach pool updated.", {
-    eventId,
-    coachCount: normalizedCoaches.length,
-    newlyAddedCoachUserIds,
-    updatedBy: caller.id,
-  });
+  getRequestLogger().info({ eventId, coachCount: normalizedCoaches.length, newlyAddedCoachUserIds, updatedBy: caller.id }, "Event coach pool updated.");
 
   if (event.isActive) {
     for (const userId of newlyAddedCoachUserIds) {
@@ -316,12 +311,7 @@ const removeEventCoach = async (
     await syncRoutingState(tx, eventId, event.assignmentStrategy, remainingCoaches.length);
   });
 
-  getRequestLogger().info("Coach removed from event pool.", {
-    eventId,
-    removedCoachUserId: userId,
-    remainingCoachCount: remainingCoaches.length,
-    updatedBy: caller.id,
-  });
+  getRequestLogger().info({ eventId, removedCoachUserId: userId, remainingCoachCount: remainingCoaches.length, updatedBy: caller.id }, "Coach removed from event pool.");
 
   const refreshedEvent = await prisma.event.findUniqueOrThrow({
     where: { id: eventId },

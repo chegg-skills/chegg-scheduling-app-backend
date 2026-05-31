@@ -102,7 +102,7 @@ export const formatNotificationDate = (date: Date, timezone?: string | null): st
       timeZone: timezone || "UTC",
     }).format(date);
   } catch {
-    logger.warn("formatNotificationDate received invalid timezone — falling back to UTC.", { timezone });
+    logger.warn({ timezone }, "formatNotificationDate received invalid timezone — falling back to UTC.");
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
       month: "long",

@@ -123,10 +123,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   const activeCoaches = event.coaches as CoachCandidate[];
 
   if (activeCoaches.length === 0) {
-    getRequestLogger().warn("Booking blocked because no active coaches are available for the event.", {
-      eventId,
-      teamId,
-    });
+    getRequestLogger().warn({ eventId, teamId }, "Booking blocked because no active coaches are available for the event.");
     throw new ErrorHandler(
       StatusCodes.SERVICE_UNAVAILABLE,
       "No active coaches available for this event.",
@@ -205,13 +202,10 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     { timeout: 15000 },
   );
 
-  getRequestLogger().info("Booking created.", {
-    bookingId: booking.id,
-    eventId: booking.eventId,
-    teamId: booking.teamId,
-    coachUserId: booking.coachUserId,
-    status: booking.status,
-  });
+  getRequestLogger().info(
+    { bookingId: booking.id, eventId: booking.eventId, teamId: booking.teamId, coachUserId: booking.coachUserId, status: booking.status },
+    "Booking created.",
+  );
 
   void queueBookingCreatedNotifications(booking);
 
@@ -234,11 +228,7 @@ const updateBooking = async (
   const booking = await updateBookingById(id, data);
 
   if (data.status && data.status !== oldBooking.status) {
-    getRequestLogger().info("Booking status updated.", {
-      bookingId: booking.id,
-      previousStatus: oldBooking.status,
-      newStatus: booking.status,
-    });
+    getRequestLogger().info({ bookingId: booking.id, previousStatus: oldBooking.status, newStatus: booking.status }, "Booking status updated.");
     void queueBookingStatusNotifications(booking);
   }
   void queueBookingUpdatedNotifications(oldBooking, booking);
@@ -322,13 +312,10 @@ const rescheduleBooking = async (
     { timeout: 15000 },
   );
 
-  getRequestLogger().info("Booking rescheduled.", {
-    bookingId: updatedBooking.id,
-    eventId: updatedBooking.eventId,
-    teamId: updatedBooking.teamId,
-    coachUserId: updatedBooking.coachUserId,
-    startTime: updatedBooking.startTime,
-  });
+  getRequestLogger().info(
+    { bookingId: updatedBooking.id, eventId: updatedBooking.eventId, teamId: updatedBooking.teamId, coachUserId: updatedBooking.coachUserId, startTime: updatedBooking.startTime },
+    "Booking rescheduled.",
+  );
 
   void queueBookingUpdatedNotifications(updatedBooking, updatedBooking);
 
@@ -370,11 +357,7 @@ const cancelBooking = async (
     { timeout: 15000 },
   );
 
-  getRequestLogger().info("Booking cancelled.", {
-    bookingId: updatedBooking.id,
-    eventId: updatedBooking.eventId,
-    teamId: updatedBooking.teamId,
-  });
+  getRequestLogger().info({ bookingId: updatedBooking.id, eventId: updatedBooking.eventId, teamId: updatedBooking.teamId }, "Booking cancelled.");
 
   void queueBookingStatusNotifications(updatedBooking);
 

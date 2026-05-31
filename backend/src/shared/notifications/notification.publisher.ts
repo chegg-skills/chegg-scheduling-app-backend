@@ -137,12 +137,10 @@ const publishNotificationSafely = async (payload: NotificationPayload): Promise<
   try {
     return await publishNotification(payload);
   } catch (error) {
-    logger.error("Failed to publish notification job.", {
-      type: payload.type,
-      entityType: payload.entityType,
-      entityId: payload.entityId,
-      error,
-    });
+    logger.error(
+      { type: payload.type, entityType: payload.entityType, entityId: payload.entityId, error },
+      "Failed to publish notification job.",
+    );
     return false;
   }
 };

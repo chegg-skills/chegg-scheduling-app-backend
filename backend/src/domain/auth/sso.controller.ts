@@ -158,7 +158,7 @@ export const handleCallback = async (
       await handleExistingUserLogin(res, normalizedEmail, userInfo.sub, provider);
     }
   } catch (error) {
-    getRequestLogger().error("SSO callback failed.", { error });
+    getRequestLogger().error({ error }, "SSO callback failed.");
     next(error);
   }
 };
@@ -186,19 +186,14 @@ async function handleInviteAcceptance(
   }
 
   if (normalizeEmail(invite.email) !== normalizedEmail) {
-    getRequestLogger().warn("SSO email does not match invite email.", {
-      inviteEmail: invite.email,
-      ssoEmail: normalizedEmail,
-    });
+    getRequestLogger().warn({ inviteEmail: invite.email, ssoEmail: normalizedEmail }, "SSO email does not match invite email.");
     redirectError(res, "email_mismatch");
     return;
   }
 
   // SUPER_ADMIN can never be created via SSO
   if (invite.role === UserRole.SUPER_ADMIN) {
-    getRequestLogger().warn("SSO invite acceptance rejected: SUPER_ADMIN role not allowed via SSO.", {
-      inviteId: invite.id,
-    });
+    getRequestLogger().warn({ inviteId: invite.id }, "SSO invite acceptance rejected: SUPER_ADMIN role not allowed via SSO.");
     redirectError(res, "forbidden");
     return;
   }
@@ -243,11 +238,7 @@ async function handleInviteAcceptance(
 
   const safeUser = toSafeUser(createdUser);
 
-  getRequestLogger().info("SSO invite accepted and user provisioned.", {
-    userId: safeUser.id,
-    role: safeUser.role,
-    provider,
-  });
+  getRequestLogger().info({ userId: safeUser.id, role: safeUser.role, provider }, "SSO invite accepted and user provisioned.");
 
   void queueInviteAcceptedNotification({
     invitedById: invite.createdBy,
@@ -273,16 +264,13 @@ async function handleExistingUserLogin(
   });
 
   if (!user) {
-    getRequestLogger().warn("SSO login rejected: no account found for identity.", {
-      email: normalizedEmail,
-      provider,
-    });
+    getRequestLogger().warn({ email: normalizedEmail, provider }, "SSO login rejected: no account found for identity.");
     redirectError(res, "no_account");
     return;
   }
 
   if (!user.isActive) {
-    getRequestLogger().warn("SSO login rejected: account inactive.", { userId: user.id });
+    getRequestLogger().warn({ userId: user.id }, "SSO login rejected: account inactive.");
     redirectError(res, "inactive");
     return;
   }
@@ -294,7 +282,7 @@ async function handleExistingUserLogin(
 
   const safeUser = toSafeUser(user);
 
-  getRequestLogger().info("SSO login successful.", { userId: safeUser.id, role: safeUser.role, provider });
+  getRequestLogger().info({ userId: safeUser.id, role: safeUser.role, provider }, "SSO login successful.");
 
   const token = buildAuthToken(safeUser);
   setAuthCookie(res, token);

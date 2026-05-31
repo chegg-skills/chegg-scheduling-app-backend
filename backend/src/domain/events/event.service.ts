@@ -115,12 +115,7 @@ const createEvent = async (
     include: eventInclude,
   });
 
-  getRequestLogger().info("Event created.", {
-    eventId: event.id,
-    teamId,
-    interactionType: event.interactionType,
-    createdBy: caller.id,
-  });
+  getRequestLogger().info({ eventId: event.id, teamId, interactionType: event.interactionType, createdBy: caller.id }, "Event created.");
 
   return event;
 };
@@ -199,7 +194,7 @@ const updateEvent = async (
       });
     });
   } catch (error) {
-    getRequestLogger().error("Event update transaction failed.", { eventId, error });
+    getRequestLogger().error({ eventId, error }, "Event update transaction failed.");
     throw error;
   }
 
@@ -215,11 +210,7 @@ const updateEvent = async (
   });
 
   if (payload.isActive !== undefined && payload.isActive !== existingEvent.isActive) {
-    getRequestLogger().info("Event active status changed.", {
-      eventId,
-      isActive: updatedEvent.isActive,
-      updatedBy: caller.id,
-    });
+    getRequestLogger().info({ eventId, isActive: updatedEvent.isActive, updatedBy: caller.id }, "Event active status changed.");
     void queueEventStatusChangedNotification({
       eventId,
       eventName: updatedEvent.name,
@@ -227,7 +218,7 @@ const updateEvent = async (
       callerId: caller.id,
     });
   } else {
-    getRequestLogger().info("Event updated.", { eventId, updatedBy: caller.id });
+    getRequestLogger().info({ eventId, updatedBy: caller.id }, "Event updated.");
   }
 
   return prisma.event.findUniqueOrThrow({
@@ -250,11 +241,7 @@ const deleteEvent = async (eventId: string, caller: CallerContext): Promise<Safe
     );
   }
 
-  getRequestLogger().warn("Event deleted.", {
-    eventId,
-    teamId: event.teamId,
-    deletedBy: caller.id,
-  });
+  getRequestLogger().warn({ eventId, teamId: event.teamId, deletedBy: caller.id }, "Event deleted.");
 
   // Manually cleanup relations that don't have cascade delete in the schema
   await prisma.$transaction(async (tx) => {
@@ -314,12 +301,7 @@ const duplicateEvent = async (eventId: string, caller: CallerContext): Promise<S
       include: eventInclude,
     });
 
-    getRequestLogger().info("Event duplicated.", {
-      sourceEventId: eventId,
-      newEventId: newEvent.id,
-      coachCount: sourceEvent.coaches.length,
-      duplicatedBy: caller.id,
-    });
+    getRequestLogger().info({ sourceEventId: eventId, newEventId: newEvent.id, coachCount: sourceEvent.coaches.length, duplicatedBy: caller.id }, "Event duplicated.");
 
     return duplicated;
   });

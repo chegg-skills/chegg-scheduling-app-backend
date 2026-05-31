@@ -287,22 +287,18 @@ const updateUser = async (
     const log = getRequestLogger();
     // Role and deactivation changes are security-sensitive — log at warn so they surface in ops dashboards.
     if (validated.role !== undefined) {
-      log.warn("User role changed.", {
-        userId,
-        newRole: validated.role,
-        changedBy: caller.id,
-      });
+      log.warn({ userId, newRole: validated.role, changedBy: caller.id }, "User role changed.");
     }
     if (validated.isActive === false) {
-      log.warn("User account deactivated.", { userId, deactivatedBy: caller.id });
+      log.warn({ userId, deactivatedBy: caller.id }, "User account deactivated.");
     } else if (validated.isActive === true) {
-      log.info("User account reactivated.", { userId, reactivatedBy: caller.id });
+      log.info({ userId, reactivatedBy: caller.id }, "User account reactivated.");
     }
     if (validated.password !== undefined) {
-      log.warn("User password changed by admin.", { userId, changedBy: caller.id });
+      log.warn({ userId, changedBy: caller.id }, "User password changed by admin.");
     }
     if (validated.role === undefined && validated.isActive === undefined && validated.password === undefined) {
-      log.info("User profile updated.", { userId, updatedBy: caller.id });
+      log.info({ userId, updatedBy: caller.id }, "User profile updated.");
     }
 
     const safeUser = toSafeUser(updatedUser);
@@ -363,11 +359,7 @@ const deleteUser = async (userId: string, caller: CallerContext): Promise<SafeUs
     data: { isActive: false },
   });
 
-  getRequestLogger().warn("User account deactivated.", {
-    userId,
-    role: targetUser.role,
-    deactivatedBy: caller.id,
-  });
+  getRequestLogger().warn({ userId, role: targetUser.role, deactivatedBy: caller.id }, "User account deactivated.");
 
   return toSafeUser(deactivatedUser);
 };

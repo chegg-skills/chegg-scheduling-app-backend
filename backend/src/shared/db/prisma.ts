@@ -39,7 +39,7 @@ const createPgPool = (): Pool => {
   // Without this handler, an error on an idle pool client becomes an unhandled
   // EventEmitter error that crashes the process. Log it and let the pool recover.
   pool.on("error", (err) => {
-    logger.error("Idle pg pool client encountered an error.", { error: err });
+    logger.error({ error: err }, "Idle pg pool client encountered an error.");
   });
 
   pool.on("connect", () => {
@@ -65,11 +65,11 @@ const createPrismaClient = (pool: Pool): PrismaClient => {
   // Route Prisma's internal warn/error events through our logger so they appear
   // in the same structured stream as application logs.
   client.$on("warn", (e) => {
-    logger.warn("Prisma warning.", { message: e.message });
+    logger.warn({ message: e.message }, "Prisma warning.");
   });
 
   client.$on("error", (e) => {
-    logger.error("Prisma error.", { message: e.message });
+    logger.error({ message: e.message }, "Prisma error.");
   });
 
   return client;

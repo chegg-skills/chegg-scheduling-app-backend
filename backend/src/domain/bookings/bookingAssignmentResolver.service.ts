@@ -294,12 +294,10 @@ const resolveCollaborativeCoHosts = async ({
   // Graceful degradation logic remains unchanged...
   const coHostPoolSize = candidatesCount - 1;
   if (coHostPoolSize > 0 && availableCoHosts.length === 0) {
-    getRequestLogger().warn("No co-hosts available for session — proceeding with lead only.", {
-      eventId: event.id,
-      startTime: start.toISOString(),
-      candidatesChecked: coHostPoolSize,
-      leadCoachId,
-    });
+    getRequestLogger().warn(
+      { eventId: event.id, startTime: start.toISOString(), candidatesChecked: coHostPoolSize, leadCoachId },
+      "No co-hosts available for session — proceeding with lead only.",
+    );
   }
 
   return availableCoHosts;

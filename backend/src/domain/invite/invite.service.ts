@@ -95,12 +95,7 @@ const createInvite = async (
     },
   });
 
-  logger.info("User invite created successfully.", {
-    inviteId: invite.id,
-    createdByAdminId: payload.createdByAdminId,
-    role: invite.role,
-    requiresSso: invite.requiresSso,
-  });
+  logger.info({ inviteId: invite.id, createdByAdminId: payload.createdByAdminId, role: invite.role, requiresSso: invite.requiresSso }, "User invite created successfully.");
 
   return {
     id: invite.id,
@@ -186,11 +181,7 @@ const acceptInvite = async (
 
   const safeUser = toSafeUser(createdUser);
 
-  logger.info("Invite accepted and user account provisioned.", {
-    inviteId: invite.id,
-    userId: safeUser.id,
-    role: safeUser.role,
-  });
+  logger.info({ inviteId: invite.id, userId: safeUser.id, role: safeUser.role }, "Invite accepted and user account provisioned.");
 
   return {
     user: safeUser,

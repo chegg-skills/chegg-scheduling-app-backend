@@ -76,10 +76,7 @@ const register = async (payload: RegisterUserInput): Promise<{ user: SafeUser; t
 
     const safeUser = toSafeUser(createdUser);
 
-    getRequestLogger().info("User registered successfully.", {
-      userId: safeUser.id,
-      role: safeUser.role,
-    });
+    getRequestLogger().info({ userId: safeUser.id, role: safeUser.role }, "User registered successfully.");
 
     return {
       user: safeUser,
@@ -109,10 +106,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
   }
 
   if (!user.isActive) {
-    getRequestLogger().warn("Inactive account login attempt blocked.", {
-      userId: user.id,
-      role: user.role,
-    });
+    getRequestLogger().warn({ userId: user.id, role: user.role }, "Inactive account login attempt blocked.");
     throw new ErrorHandler(
       StatusCodes.FORBIDDEN,
       "This account is inactive. Please contact an administrator.",
@@ -120,10 +114,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
   }
 
   if (user.lockedUntil && user.lockedUntil > new Date()) {
-    getRequestLogger().warn("Locked account login attempt blocked.", {
-      userId: user.id,
-      lockedUntil: user.lockedUntil.toISOString(),
-    });
+    getRequestLogger().warn({ userId: user.id, lockedUntil: user.lockedUntil.toISOString() }, "Locked account login attempt blocked.");
     throw new ErrorHandler(
       StatusCodes.LOCKED,
       "Too many failed attempts. Account is temporarily locked.",
@@ -153,21 +144,14 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
     });
 
     if (shouldLockAccount) {
-      getRequestLogger().warn("User account locked after repeated failed login attempts.", {
-        userId: user.id,
-        attempts: nextFailedAttempts,
-        lockedUntil: lockedUntil?.toISOString(),
-      });
+      getRequestLogger().warn({ userId: user.id, attempts: nextFailedAttempts, lockedUntil: lockedUntil?.toISOString() }, "User account locked after repeated failed login attempts.");
       throw new ErrorHandler(
         StatusCodes.LOCKED,
         "Too many failed attempts. Account is temporarily locked.",
       );
     }
 
-    getRequestLogger().warn("Invalid password attempt recorded.", {
-      userId: user.id,
-      failedLoginAttempts: nextFailedAttempts,
-    });
+    getRequestLogger().warn({ userId: user.id, failedLoginAttempts: nextFailedAttempts }, "Invalid password attempt recorded.");
 
     throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid email or password.");
   }
@@ -183,10 +167,7 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
 
   const safeUser = toSafeUser(updatedUser);
 
-  getRequestLogger().info("User logged in successfully.", {
-    userId: safeUser.id,
-    role: safeUser.role,
-  });
+  getRequestLogger().info({ userId: safeUser.id, role: safeUser.role }, "User logged in successfully.");
 
   return {
     user: safeUser,
@@ -241,9 +222,7 @@ const bootstrap = async (payload: BootstrapInput): Promise<{ user: SafeUser; tok
     role: UserRole.SUPER_ADMIN,
   });
 
-  getRequestLogger().info("Bootstrap super admin provisioned.", {
-    userId: result.user.id,
-  });
+  getRequestLogger().info({ userId: result.user.id }, "Bootstrap super admin provisioned.");
 
   return result;
 };

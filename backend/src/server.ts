@@ -51,18 +51,18 @@ const start = async (): Promise<void> => {
     await prisma.$queryRaw`SELECT 1`;
     logger.info("Database connection verified.");
   } catch (error) {
-    logger.fatal("Database connection failed on startup — cannot serve requests.", { error });
+    logger.fatal({ error }, "Database connection failed on startup — cannot serve requests.");
     process.exit(1);
   }
 
   const port = Number(process.env.PORT) || 4000;
 
   const server = app.listen(port, () => {
-    logger.info("Server listening", { port });
+    logger.info({ port }, "Server listening.");
   });
 
   const shutdown = (signal: string) => {
-    logger.info("Shutdown signal received.", { signal });
+    logger.info({ signal }, "Shutdown signal received.");
     server.close(async () => {
       logger.info("HTTP server closed. Disconnecting database...");
       await prisma.$disconnect();
@@ -76,34 +76,34 @@ const start = async (): Promise<void> => {
 };
 
 start().catch((error) => {
-  logger.fatal("Server startup failed.", { error });
+  logger.fatal({ error }, "Server startup failed.");
   process.exit(1);
 });
 
 // Catch synchronous throws that escape all try/catch blocks.
 // Log at fatal because the process is in an unknown state and will exit.
 process.on("uncaughtException", (error) => {
-  logger.fatal("Uncaught exception — process will exit.", { error });
+  logger.fatal({ error }, "Uncaught exception — process will exit.");
   process.exit(1);
 });
 
 // Catch Promise rejections that were never .catch()-ed.
 // Treat as fatal: unhandled rejections indicate a programming error.
 process.on("unhandledRejection", (reason) => {
-  logger.fatal("Unhandled promise rejection — process will exit.", {
-    reason: reason instanceof Error ? reason : { value: String(reason) },
-  });
+  logger.fatal(
+    { reason: reason instanceof Error ? reason : { value: String(reason) } },
+    "Unhandled promise rejection — process will exit.",
+  );
   process.exit(1);
 });
 
 // Route Node.js process warnings (DeprecationWarning, ExperimentalWarning, etc.)
 // through pino so they appear in the structured log stream rather than raw stderr.
 process.on("warning", (warning) => {
-  logger.warn("Node.js process warning.", {
-    name: warning.name,
-    message: warning.message,
-    stack: warning.stack,
-  });
+  logger.warn(
+    { name: warning.name, message: warning.message, stack: warning.stack },
+    "Node.js process warning.",
+  );
 });
 
 // Force hot-reload to load fresh Prisma Client with updated database schema (Reloaded: 2026-05-28)

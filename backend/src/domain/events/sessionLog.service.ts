@@ -36,7 +36,7 @@ export const assertSlotLogAccess = async (slotId: string, caller: CallerContext)
 
   if (coCoachBooking) return;
 
-  getRequestLogger().warn("Session log access denied.", { slotId, callerId: caller.id });
+  getRequestLogger().warn({ slotId, callerId: caller.id }, "Session log access denied.");
   throw new ErrorHandler(StatusCodes.FORBIDDEN, "You do not have permission to log this session.");
 };
 
@@ -154,13 +154,7 @@ export const upsertSessionLog = async (
 
     const attended = payload.attendance.filter((a) => a.attended).length;
     const absent = payload.attendance.length - attended;
-    getRequestLogger().info("Session log saved.", {
-      slotId,
-      eventId,
-      attended,
-      absent,
-      loggedBy: caller.id,
-    });
+    getRequestLogger().info({ slotId, eventId, attended, absent, loggedBy: caller.id }, "Session log saved.");
 
     return result;
   });

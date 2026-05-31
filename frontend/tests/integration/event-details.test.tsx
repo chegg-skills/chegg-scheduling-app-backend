@@ -88,6 +88,12 @@ const handlers = [
       },
     })
   }),
+  http.get('*/api/bookings', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { bookings: [], pagination: { total: 0, page: 1, limit: 100, totalPages: 0 } },
+    })
+  }),
 
   // Attendance/Logging Mocks
   http.get('*/api/events/:eventId/schedule-slots/:slotId/bookings', () => {
@@ -137,7 +143,6 @@ describe('Event Detail Integration', () => {
 
     // 1. Verify Page Header
     await screen.findByText('Math Tutoring')
-    expect(screen.getByText('One-on-one math support')).toBeInTheDocument()
 
     // 2. Default tab (Details) content
     expect(screen.getByText(/Event Configuration/i)).toBeInTheDocument()

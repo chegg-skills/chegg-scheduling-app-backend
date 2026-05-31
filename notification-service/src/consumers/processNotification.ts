@@ -1,11 +1,12 @@
 import { getChannel } from "../channels/registry";
 import { cancelNotificationsByEntity } from "../services/notificationRepository";
 import type { NotificationPayload } from "../types/notification";
+import { logger } from "../logger";
 
 export async function processNotification(notification: NotificationPayload): Promise<void> {
   if (notification.type === "CANCEL_BOOKING_REMINDERS") {
     if (!notification.entityId) {
-      console.warn("CANCEL_BOOKING_REMINDERS received without entityId — skipping.");
+      logger.warn("CANCEL_BOOKING_REMINDERS received without entityId — skipping.");
       return;
     }
 

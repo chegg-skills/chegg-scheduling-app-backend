@@ -82,19 +82,14 @@ const authenticate = (req: Request, res: Response, next: NextFunction): Promise<
 
       if (!user) {
         // User was deleted from DB after token was issued — rare but possible.
-        getRequestLogger().warn("Authenticated user no longer exists in database.", {
-          userId: parsed.id,
-        });
+        getRequestLogger().warn({ userId: parsed.id }, "Authenticated user no longer exists in database.");
         next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
         return;
       }
 
       if (!user.isActive) {
         // Account was deactivated while the session was still live — security event.
-        getRequestLogger().warn("Access rejected: account deactivated mid-session.", {
-          userId: user.id,
-          role: user.role,
-        });
+        getRequestLogger().warn({ userId: user.id, role: user.role }, "Access rejected: account deactivated mid-session.");
         next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
         return;
       }

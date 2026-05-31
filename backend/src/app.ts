@@ -7,7 +7,7 @@ import pinoHttp from "pino-http";
 import { randomUUID } from "node:crypto";
 import { pathNotFound } from "./shared/error/pathNotFound";
 import { errorHandler } from "./shared/error/errorhandler";
-import { logger, pinoLogger } from "./shared/logging/logger";
+import { logger } from "./shared/logging/logger";
 import { csrfProtection } from "./shared/middleware/csrf";
 import { attachRequestContext } from "./shared/middleware/requestContext";
 import routes from "./routes/index";
@@ -43,7 +43,7 @@ const corsOptions: cors.CorsOptions = {
 };
 
 const httpLogger = pinoHttp({
-  logger: pinoLogger,
+  logger: logger,
   // Reuse the request ID already set by attachRequestContext
   genReqId: (req) => (req as Request).requestId ?? randomUUID(),
   customLogLevel: (_req, res, err) => {
@@ -73,6 +73,7 @@ app.use(csrfProtection);
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(httpLogger);
+
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });

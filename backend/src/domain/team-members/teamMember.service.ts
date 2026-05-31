@@ -98,14 +98,14 @@ const addTeamMembers = async (
         data: { isActive: true },
         include: teamMemberInclude,
       });
-      getRequestLogger().info("Team member reactivated.", { teamId, userId, addedBy: caller.id });
+      getRequestLogger().info({ teamId, userId, addedBy: caller.id }, "Team member reactivated.");
       void queueTeamMemberAddedNotification({ teamId, userId });
     } else {
       member = await prisma.teamMember.create({
         data: { teamId, userId },
         include: teamMemberInclude,
       });
-      getRequestLogger().info("Team member added.", { teamId, userId, addedBy: caller.id });
+      getRequestLogger().info({ teamId, userId, addedBy: caller.id }, "Team member added.");
       void queueTeamMemberAddedNotification({ teamId, userId });
     }
     results.push(member);
@@ -197,7 +197,7 @@ const removeTeamMember = async (
     include: teamMemberInclude,
   });
 
-  getRequestLogger().info("Team member removed.", { teamId, userId, removedBy: caller.id });
+  getRequestLogger().info({ teamId, userId, removedBy: caller.id }, "Team member removed.");
 
   return removed;
 };

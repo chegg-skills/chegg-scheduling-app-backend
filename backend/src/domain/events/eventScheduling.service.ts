@@ -306,12 +306,7 @@ const createEventScheduleSlot = async (
         },
       },
     });
-    getRequestLogger().info("Recurring schedule slots created.", {
-      eventId,
-      slotCount: slotsData.length,
-      recurrenceGroupId,
-      createdBy: caller.id,
-    });
+    getRequestLogger().info({ eventId, slotCount: slotsData.length, recurrenceGroupId, createdBy: caller.id }, "Recurring schedule slots created.");
     return firstSlot;
   }
 
@@ -342,12 +337,7 @@ const createEventScheduleSlot = async (
     },
   });
 
-  getRequestLogger().info("Schedule slot created.", {
-    eventId,
-    slotId: newSlot.id,
-    startTime: newSlot.startTime,
-    createdBy: caller.id,
-  });
+  getRequestLogger().info({ eventId, slotId: newSlot.id, startTime: newSlot.startTime, createdBy: caller.id }, "Schedule slot created.");
 
   return newSlot;
 };
@@ -388,7 +378,7 @@ const updateEventScheduleSlot = async (
     },
   });
 
-  getRequestLogger().info("Schedule slot updated.", { eventId, slotId, updatedBy: caller.id });
+  getRequestLogger().info({ eventId, slotId, updatedBy: caller.id }, "Schedule slot updated.");
 
   return updated;
 };
@@ -418,7 +408,7 @@ const deleteEventScheduleSlot = async (
   }
 
   const deleted = await prisma.eventScheduleSlot.delete({ where: { id: slotId } });
-  getRequestLogger().warn("Schedule slot deleted.", { eventId, slotId, deletedBy: caller.id });
+  getRequestLogger().warn({ eventId, slotId, deletedBy: caller.id }, "Schedule slot deleted.");
   return deleted;
 };
 
@@ -479,11 +469,7 @@ const cancelEventScheduleSlot = async (
     return s;
   });
 
-  getRequestLogger().warn("Schedule slot cancelled.", {
-    eventId,
-    slotId,
-    cancelledBy: caller.id,
-  });
+  getRequestLogger().warn({ eventId, slotId, cancelledBy: caller.id }, "Schedule slot cancelled.");
 
   // 3. Trigger notifications (outside transaction for reliability)
   try {
@@ -500,7 +486,7 @@ const cancelEventScheduleSlot = async (
     }
   } catch (error) {
     // Log but don't fail the cancellation if notifications fail
-    logger.error("Failed to queue notifications for cancelled slot", { slotId, error });
+    logger.error({ slotId, error }, "Failed to queue notifications for cancelled slot.");
   }
 
   return updatedSlot;
@@ -599,13 +585,7 @@ const revealCoachForSlot = async (
     }),
   ]);
 
-  getRequestLogger().info("Coach revealed for slot.", {
-    eventId,
-    slotId,
-    coachUserId: finalCoachId,
-    participantCount: slot.bookings.length,
-    revealedBy: caller.id,
-  });
+  getRequestLogger().info({ eventId, slotId, coachUserId: finalCoachId, participantCount: slot.bookings.length, revealedBy: caller.id }, "Coach revealed for slot.");
 
   void queueCoachRevealNotifications({
     slot: updatedSlot,
