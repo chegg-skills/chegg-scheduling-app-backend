@@ -14,6 +14,28 @@ interface UserCoachedEventsTabProps {
 }
 
 export function UserCoachedEventsTab({ user }: UserCoachedEventsTabProps) {
+  const eventsByTeam = React.useMemo(() => {
+    const groups: Record<
+      string,
+      { teamId: string; teamName: string; events: typeof user.coachedEvents }
+    > = {}
+
+    user.coachedEvents.forEach((coachEvent) => {
+      const teamId = coachEvent.event.team?.id || coachEvent.event.teamId || 'no-team'
+      const teamName =
+        coachEvent.event.team?.name ||
+        user.teamMemberships.find((m) => m.team.id === coachEvent.event.teamId)?.team.name ||
+        'Unassigned Team'
+
+      if (!groups[teamId]) {
+        groups[teamId] = { teamId, teamName, events: [] }
+      }
+      groups[teamId].events.push(coachEvent)
+    })
+
+    return Object.values(groups)
+  }, [user])
+
   if (user.coachedEvents.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -24,36 +46,6 @@ export function UserCoachedEventsTab({ user }: UserCoachedEventsTabProps) {
       </Box>
     )
   }
-
-  // Group coached events by team
-  const eventsByTeam = React.useMemo(() => {
-    const groups: Record<
-      string,
-      { teamId: string; teamName: string; events: typeof user.coachedEvents }
-    > = {}
-
-    user.coachedEvents.forEach((coachEvent) => {
-      const teamId = coachEvent.event.team?.id || coachEvent.event.teamId || 'no-team'
-
-      // Attempt to get the team name from the event's team relation,
-      // and fall back to the user's teamMemberships if not populated.
-      const teamName =
-        coachEvent.event.team?.name ||
-        user.teamMemberships.find((m) => m.team.id === coachEvent.event.teamId)?.team.name ||
-        'Unassigned Team'
-
-      if (!groups[teamId]) {
-        groups[teamId] = {
-          teamId,
-          teamName,
-          events: [],
-        }
-      }
-      groups[teamId].events.push(coachEvent)
-    })
-
-    return Object.values(groups)
-  }, [user.coachedEvents, user.teamMemberships])
 
   return (
     <Box>

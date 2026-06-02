@@ -53,7 +53,6 @@ export function BookingDirectorySectionEditor({
 
   // Fetch all events to display actual counts on team cards
   const { data: eventsData } = useEvents({ page: 1, pageSize: 500 })
-  const allEvents = eventsData?.events ?? []
 
   const activeSessionTypes = allSessionTypes.filter((st) => st.isActive)
   const activeTeams = allTeams.filter((t) => t.isActive)
@@ -65,8 +64,9 @@ export function BookingDirectorySectionEditor({
     }
   }, [activeSessionTypes, selectedSessionTypeId])
 
-  // Pre-compute grouped events once per allEvents change instead of filtering on every render.
+  // Pre-compute grouped events once per eventsData change instead of filtering on every render.
   const eventsByKey = useMemo(() => {
+    const allEvents = eventsData?.events ?? []
     const map = new Map<string, typeof allEvents>()
     for (const e of allEvents) {
       if (!e.isActive || !e.sessionTypeId) continue
@@ -76,7 +76,7 @@ export function BookingDirectorySectionEditor({
       map.set(key, bucket)
     }
     return map
-  }, [allEvents])
+  }, [eventsData])
 
   const getEventCount = (sessionTypeId: string, teamId: string) =>
     eventsByKey.get(`${teamId}:${sessionTypeId}`)?.length ?? 0

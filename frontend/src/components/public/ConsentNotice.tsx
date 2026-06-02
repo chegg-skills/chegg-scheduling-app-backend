@@ -19,7 +19,7 @@ export function ConsentNotice() {
       if (dismissed !== 'true') {
         setVisible(true)
       }
-    } catch (e) {
+    } catch {
       // In private browsing mode where localStorage is restricted,
       // fallback to showing the notice every visit.
       setVisible(true)
@@ -29,7 +29,7 @@ export function ConsentNotice() {
   const handleDismiss = () => {
     try {
       localStorage.setItem('storage_notice_dismissed', 'true')
-    } catch (e) {
+    } catch {
       // Ignore storage write failures in private browsing
     }
     setVisible(false)

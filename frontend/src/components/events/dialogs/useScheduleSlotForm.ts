@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { format } from 'date-fns'
 import {
   isWeekdayAllowed,
@@ -24,7 +24,7 @@ export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotForm
   const [recurrence, setRecurrence] = useState<RecurrenceConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const validate = (dateValue: string) => {
+  const validate = useCallback((dateValue: string) => {
     if (!dateValue) {
       setError(null)
       return true
@@ -46,7 +46,7 @@ export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotForm
 
     setError(null)
     return true
-  }
+  }, [allowedDays, event.weeklyAvailability, event.durationSeconds])
 
   // Sync state when slot changes or modal opens
   useEffect(() => {
@@ -67,7 +67,7 @@ export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotForm
         validate(initialDate)
       }
     }
-  }, [isOpen, slot, allowedDays, event.weeklyAvailability, event.durationSeconds])
+  }, [isOpen, slot, validate])
 
   const handleDateChange = (value: string) => {
     setNewSlotDate(value)
