@@ -62,6 +62,7 @@ export function PublicBookingPage() {
     isLoadingDates,
     handleMonthChange,
     selectedCoachId,
+    setSelectedCoachId,
     handleCoachSelect,
     showCoachPicker,
     selectedTimezone,
@@ -220,6 +221,7 @@ export function PublicBookingPage() {
               onCoachSelect={handleCoachSelect}
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
+              eventDetailsName={eventDetails?.name}
             />
           </Box>
 
@@ -236,7 +238,7 @@ export function PublicBookingPage() {
               (currentStepKey === 'team' && !selectedTeam) ||
               (currentStepKey === 'event' && !selectedEvent) ||
               (currentStepKey === 'preferred-coach' && !selectedCoachId) ||
-              (currentStepKey === 'schedule' && (!selectedSlot || (showCoachPicker && !selectedCoachId))) ||
+              (currentStepKey === 'schedule' && !selectedSlot) ||
               (currentStepKey === 'confirm' && (!studentInfo.name || !studentInfo.email))
             }
             isSubmitting={isSubmitting}
