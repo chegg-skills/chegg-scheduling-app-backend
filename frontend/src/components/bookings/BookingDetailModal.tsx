@@ -3,15 +3,12 @@ import Box from '@mui/material/Box'
 import { toTitleCase } from '@/utils/toTitleCase'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
-import { Clock, XCircle, Calendar, ClipboardCheck } from 'lucide-react'
+import { Clock, XCircle, Calendar } from 'lucide-react'
 import type { Booking } from '@/types'
 import { Modal } from '@/components/shared/ui/Modal'
 import { BookingDetailsPanel } from './BookingDetailsPanel'
-import { BookingLogDialog } from './BookingLogDialog'
 import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
 import { CancelBookingDialog } from './CancelBookingDialog'
-import { usePermissions } from '@/hooks/usePermissions'
-import { useBookingSessionLog } from '@/hooks/queries/useBookingLog'
 
 interface BookingDetailModalProps {
   booking: Booking | null
@@ -28,21 +25,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
     isPending,
   } = useBookingStatusUpdate()
 
-  const { isCoach, isAdmin } = usePermissions()
-  const [isLogDialogOpen, setIsLogDialogOpen] = useState(false)
-
-  // Fetch the log lazily — the modal may be opened from a list that doesn't
-  // include the log on the booking object.
-  const { data: fetchedLog } = useBookingSessionLog(booking?.id ?? '', {
-    enabled: !!booking,
-  })
-
   if (!booking) return null
-
-  const isOneOnOne = !booking.scheduleSlotId
-  const sessionStarted = new Date(booking.startTime).getTime() <= Date.now()
-  const canLog = (isCoach || isAdmin) && isOneOnOne && sessionStarted
-  const existingLog = fetchedLog ?? booking.sessionLog ?? null
 
   return (
     <Modal
@@ -125,19 +108,6 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
             </Button>
           )}
 
-          {canLog && (
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              startIcon={<ClipboardCheck size={16} />}
-              onClick={() => setIsLogDialogOpen(true)}
-              sx={{ fontWeight: 600, borderRadius: 1.5 }}
-            >
-              {existingLog ? 'Edit log / notes' : 'Log session'}
-            </Button>
-          )}
-
           <Button variant="contained" onClick={onClose} sx={{ fontWeight: 600, borderRadius: 1.5 }}>
             Close
           </Button>
@@ -153,11 +123,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
         }}
         isLoading={isPending}
       />
-      <BookingLogDialog
-        isOpen={isLogDialogOpen}
-        onClose={() => setIsLogDialogOpen(false)}
-        booking={booking}
-      />
     </Modal>
   )
 }
+
