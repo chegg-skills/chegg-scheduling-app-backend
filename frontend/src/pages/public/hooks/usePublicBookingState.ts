@@ -243,12 +243,17 @@ export function usePublicBookingState() {
   }, [scope, eventDetailsFromSlug, selectedEvent, visibleEvents])
 
   const showCoachPicker = React.useMemo(() => {
+    // For scope === 'event', eventDetailsFromSlug arrives before selectedEvent is
+    // initialized via useEffect. Hold off until selectedEvent is set so stepKeys
+    // does not shift to 'preferred-coach' before the event is fully ready.
+    if (scope === 'event' && !selectedEvent) return false
+
     return (
       scope !== 'coach' &&
       !!eventDetails?.allowStudentCoachChoice &&
       (eventDetails?.coaches?.length ?? 0) > 0
     )
-  }, [scope, eventDetails])
+  }, [scope, selectedEvent, eventDetails])
 
   const stepKeys = React.useMemo<BookingStepKey[]>(() => {
     let keys: BookingStepKey[] = []
