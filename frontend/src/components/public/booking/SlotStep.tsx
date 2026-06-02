@@ -31,7 +31,6 @@ interface SlotStepProps {
   onMonthChange?: (date: Date) => void
   selectedTimezone: string
   setSelectedTimezone: (tz: string) => void
-  eventDetailsName?: string
 }
 
 function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
@@ -72,7 +71,6 @@ export function SlotStep({
   onMonthChange,
   selectedTimezone,
   setSelectedTimezone,
-  eventDetailsName,
 }: SlotStepProps) {
 
   const timeFormat = React.useMemo(

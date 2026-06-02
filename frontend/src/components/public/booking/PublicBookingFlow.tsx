@@ -236,7 +236,7 @@ export function PublicBookingFlow({
       return (
         <PreferredCoachStep
           coaches={eventCoaches ?? []}
-          selectedCoachId={selectedCoachId}
+          selectedCoachId={selectedCoachId ?? null}
           onSelect={onCoachSelect ?? (() => {})}
         />
       )
