@@ -126,30 +126,42 @@ export function PublicTimezoneSelect({ value, onChange }: PublicTimezoneSelectPr
           alignItems: 'center',
           textTransform: 'none',
           color: 'text.secondary',
-          p: 0.5,
-          px: 1,
-          ml: -1,
+          p: 1.5,
+          px: 2,
           borderRadius: 1.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          textAlign: 'left',
+          width: '100%',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+          transition: 'all 0.2s ease',
           '&:hover': {
+            borderColor: 'primary.main',
             bgcolor: 'action.hover',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
           },
         }}
       >
-        <PublicIcon sx={{ fontSize: '1.125rem', mr: 0.75, color: 'text.secondary' }} />
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 600, mr: 0.5, display: { xs: 'none', sm: 'inline' } }}
-        >
-          Viewing slots in:
-        </Typography>
-        <Typography
-          className="timezone-text"
-          variant="caption"
-          sx={{ fontWeight: 700, color: 'primary.main' }}
-        >
-          {selectedOption ? `${selectedOption.label} - ${selectedOption.time}` : 'Loading...'}
-        </Typography>
-        <KeyboardArrowDownIcon sx={{ fontSize: '1rem', ml: 0.5, color: 'primary.main' }} />
+        <PublicIcon sx={{ fontSize: '1.25rem', mr: 1.5, color: 'text.secondary', flexShrink: 0 }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flexGrow: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.75rem', lineHeight: 1.2 }}
+          >
+            Viewing slots in:
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.75 }}>
+            <Typography
+              className="timezone-text"
+              variant="caption"
+              sx={{ fontWeight: 600, color: 'primary.main', fontSize: '0.8125rem', lineHeight: 1.2 }}
+            >
+              {selectedOption ? `${selectedOption.label} - ${selectedOption.time}` : 'Loading...'}
+            </Typography>
+          </Box>
+        </Box>
+        <KeyboardArrowDownIcon sx={{ fontSize: '1.25rem', ml: 1, color: 'text.secondary' }} />
       </Button>
 
       <Popover

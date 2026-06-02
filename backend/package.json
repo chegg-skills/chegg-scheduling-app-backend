@@ -17,6 +17,7 @@
     "seed:demo": "tsx src/scripts/populate-data.ts",
     "seed:demo:reset": "RESET_DEMO_DATA=true tsx src/scripts/populate-data.ts",
     "sync:enums": "tsx src/scripts/sync-shared-enums.ts",
+    "db:update-session-descriptions": "tsx src/scripts/update-session-type-descriptions.ts",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:unit": "jest --runInBand --testPathPattern=tests/unit",

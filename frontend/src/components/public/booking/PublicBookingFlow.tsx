@@ -4,6 +4,7 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { extractApiError } from '@/utils/apiError'
 import { TeamStep } from '@/components/public/booking/TeamStep'
 import { EventStep } from '@/components/public/booking/EventStep'
+import { PreferredCoachStep } from '@/components/public/booking/PreferredCoachStep'
 import { SlotStep } from '@/components/public/booking/SlotStep'
 import { ConfirmationForm } from '@/components/public/booking/ConfirmationForm'
 import type { BookingScope } from '@/pages/public/hooks/usePublicBookingState'
@@ -226,6 +227,14 @@ export function PublicBookingFlow({
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
           eventDetailsName={eventDetailsName}
+        />
+      )
+    case 'preferred-coach':
+      return (
+        <PreferredCoachStep
+          coaches={eventCoaches ?? []}
+          selectedCoachId={selectedCoachId}
+          onSelect={onCoachSelect ?? (() => {})}
         />
       )
     case 'confirm':

@@ -22,7 +22,6 @@ import { SuccessStep } from '@/components/public/booking/SuccessStep'
 import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHeader'
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { SlotStep } from '@/components/public/booking/SlotStep'
-import { PublicTimezoneSelect } from '@/components/public/booking/PublicTimezoneSelect'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
@@ -327,7 +326,6 @@ export function PublicReschedulePage() {
             onTroubleshoot={() => setTroubleshootOpen(true)}
             extraAccessory={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <PublicTimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
                 <Button
                   color="error"
                   variant="text"

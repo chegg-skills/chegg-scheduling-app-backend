@@ -15,6 +15,7 @@ import type { AvailableSlot } from '@/api/public'
 import type { PublicEventCoach } from '@/types'
 import { SlotGroup } from './SlotGroup'
 import { startOfDayInTimezone } from '@/utils/dateTimezone'
+import { PublicTimezoneSelect } from './PublicTimezoneSelect'
 
 interface SlotStepProps {
   slots: AvailableSlot[]
@@ -76,7 +77,7 @@ export function SlotStep({
   selectedCoachId,
   onCoachSelect,
   selectedTimezone,
-  setSelectedTimezone: _,
+  setSelectedTimezone,
   eventDetailsName,
 }: SlotStepProps) {
   const theme = useTheme()
@@ -151,8 +152,8 @@ export function SlotStep({
     return { amSlots: am, pmSlots: pm }
   }, [slots, hourExtractor])
 
-  const hasCoachPicker = !!coaches && coaches.length > 0
-  const coachNotYetChosen = hasCoachPicker && !selectedCoachId
+  const hasCoachPicker = false
+  const coachNotYetChosen = false
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
@@ -293,6 +294,9 @@ export function SlotStep({
                 }}
               />
             </Paper>
+            <Box sx={{ mt: 1.5, width: '100%' }}>
+              <PublicTimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
+            </Box>
           </Box>
 
           {/* Column 2: Slot Selection */}

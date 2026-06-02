@@ -12,7 +12,6 @@ import { PublicBookingSummary } from '@/components/public/booking/PublicBookingS
 import { PublicBookingFlow } from '@/components/public/booking/PublicBookingFlow'
 import { SessionIntroduction } from '@/components/public/booking/SessionIntroduction'
 import { TroubleshootDialog } from '@/components/public/booking/TroubleshootDialog'
-import { PublicTimezoneSelect } from '@/components/public/booking/PublicTimezoneSelect'
 
 import { PublicBaseLayout } from '@/components/public/layout/PublicBaseLayout'
 import { PublicSidePanel } from '@/components/public/layout/PublicSidePanel'
@@ -64,14 +63,12 @@ export function PublicBookingPage() {
     handleMonthChange,
     selectedCoachId,
     setSelectedCoachId,
+    handleCoachSelect,
+    showCoachPicker,
     selectedTimezone,
     setSelectedTimezone,
   } = usePublicBookingState()
 
-  const showCoachPicker =
-    scope !== 'coach' &&
-    !!eventDetails?.allowStudentCoachChoice &&
-    (eventDetails.coaches?.length ?? 0) > 0
   const eventCoaches = showCoachPicker ? (eventDetails?.coaches ?? []) : []
 
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
@@ -146,7 +143,11 @@ export function PublicBookingPage() {
           <PublicBookingSummary
             teamDetails={teamDetails}
             eventDetails={eventDetails}
-            coachDetails={selectedSlotCoach || coachDetails}
+            coachDetails={
+              selectedSlotCoach ||
+              (selectedCoachId && eventCoaches.find((c) => c.coachUserId === selectedCoachId)?.coachUser) ||
+              coachDetails
+            }
             selectedDate={selectedDate}
             selectedSlot={selectedSlot}
             selectedTimezone={selectedTimezone}
@@ -217,7 +218,7 @@ export function PublicBookingPage() {
               onMonthChange={handleMonthChange}
               eventCoaches={eventCoaches}
               selectedCoachId={selectedCoachId}
-              onCoachSelect={setSelectedCoachId}
+              onCoachSelect={handleCoachSelect}
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
               eventDetailsName={eventDetails?.name}
@@ -236,19 +237,14 @@ export function PublicBookingPage() {
             nextDisabled={
               (currentStepKey === 'team' && !selectedTeam) ||
               (currentStepKey === 'event' && !selectedEvent) ||
-              (currentStepKey === 'schedule' &&
-                (!selectedSlot || (showCoachPicker && !selectedCoachId))) ||
+              (currentStepKey === 'preferred-coach' && !selectedCoachId) ||
+              (currentStepKey === 'schedule' && !selectedSlot) ||
               (currentStepKey === 'confirm' && (!studentInfo.name || !studentInfo.email))
             }
             isSubmitting={isSubmitting}
             nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
             onTroubleshoot={() => setTroubleshootOpen(true)}
-            extraAccessory={
-              currentStepKey === 'schedule' ? (
-                <PublicTimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
-              ) : undefined
-            }
           />
         </PublicMainContent>
       </PublicBaseLayout>
