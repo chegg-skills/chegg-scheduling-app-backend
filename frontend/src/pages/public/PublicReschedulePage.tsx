@@ -307,7 +307,7 @@ export function PublicReschedulePage() {
               onSelect={setSelectedSlot}
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
-              eventDetailsName={bookingData.event?.name}
+
             />
           </Box>
 

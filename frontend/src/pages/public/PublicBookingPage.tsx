@@ -62,7 +62,6 @@ export function PublicBookingPage() {
     isLoadingDates,
     handleMonthChange,
     selectedCoachId,
-    setSelectedCoachId,
     handleCoachSelect,
     showCoachPicker,
     selectedTimezone,

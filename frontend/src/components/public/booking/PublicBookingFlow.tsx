@@ -87,7 +87,6 @@ interface PublicBookingFlowProps {
   onCoachSelect?: (coachId: string) => void
   selectedTimezone: string
   setSelectedTimezone: (tz: string) => void
-  eventDetailsName?: string
 }
 
 /**
@@ -125,7 +124,6 @@ export function PublicBookingFlow({
   onCoachSelect,
   selectedTimezone,
   setSelectedTimezone,
-  eventDetailsName,
 }: PublicBookingFlowProps) {
   switch (currentStepKey) {
     case 'team':
@@ -223,14 +221,14 @@ export function PublicBookingFlow({
           onMonthChange={onMonthChange}
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
-          eventDetailsName={eventDetailsName}
+
         />
       )
     case 'preferred-coach':
       return (
         <PreferredCoachStep
           coaches={eventCoaches ?? []}
-          selectedCoachId={selectedCoachId}
+          selectedCoachId={selectedCoachId ?? null}
           onSelect={onCoachSelect ?? (() => {})}
         />
       )
