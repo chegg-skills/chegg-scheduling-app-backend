@@ -51,14 +51,34 @@ export function TeamStep({
             sx={{
               borderColor: selectedTeamId === team.id ? 'primary.main' : 'divider',
               borderWidth: selectedTeamId === team.id ? 2 : 1,
-              borderRadius: 1,
+              borderRadius: 1.5,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                borderColor: 'primary.main',
+                boxShadow: '0 8px 24px -8px rgba(0,0,0,0.08)',
+                transform: 'translateY(-2px)',
+                '& .team-icon': {
+                  bgcolor: selectedTeamId === team.id ? 'primary.main' : 'primary.light',
+                  color: selectedTeamId === team.id ? 'white' : 'primary.main',
+                },
+              },
             }}
           >
             <CardActionArea onClick={() => onSelect(team.id)}>
               <CardContent>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Box
-                    sx={{ p: 1, borderRadius: 1, bgcolor: 'primary.light', color: 'primary.main' }}
+                    className="team-icon"
+                    sx={{
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: selectedTeamId === team.id ? 'primary.main' : 'action.hover',
+                      color: selectedTeamId === team.id ? 'white' : 'text.secondary',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease',
+                    }}
                   >
                     <Users size={24} />
                   </Box>

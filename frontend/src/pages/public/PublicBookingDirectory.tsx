@@ -529,6 +529,11 @@ export function PublicBookingDirectory() {
                           color: 'white',
                           transform: 'translateX(4px)',
                         },
+                        '& .team-icon': {
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          boxShadow: '0 2px 8px rgba(232, 113, 0, 0.08)',
+                        },
                       },
                     }}
                   >
@@ -539,17 +544,19 @@ export function PublicBookingDirectory() {
                       sx={{ flexGrow: 1, minWidth: 0 }}
                     >
                       <Box
+                        className="team-icon"
                         sx={{
                           width: 48,
                           height: 48,
                           borderRadius: 2,
-                          bgcolor: 'secondary.light',
-                          color: 'secondary.main',
+                          bgcolor: 'action.hover',
+                          color: 'text.secondary',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
-                          boxShadow: '0 2px 8px rgba(58, 44, 65, 0.08)',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                          transition: 'all 0.25s ease',
                         }}
                       >
                         <Users size={24} />
@@ -710,6 +717,11 @@ export function PublicBookingDirectory() {
                           color: 'white',
                           transform: 'translateX(4px)',
                         },
+                        '& .category-icon': {
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          boxShadow: '0 2px 8px rgba(232, 113, 0, 0.08)',
+                        },
                       },
                     }}
                   >
@@ -720,17 +732,19 @@ export function PublicBookingDirectory() {
                       sx={{ flexGrow: 1, minWidth: 0 }}
                     >
                       <Box
+                        className="category-icon"
                         sx={{
                           width: 48,
                           height: 48,
                           borderRadius: 2,
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
+                          bgcolor: 'action.hover',
+                          color: 'text.secondary',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
-                          boxShadow: '0 2px 8px rgba(232, 113, 0, 0.08)',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                          transition: 'all 0.25s ease',
                         }}
                       >
                         <Tag size={24} />
