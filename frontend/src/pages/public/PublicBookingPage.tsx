@@ -238,7 +238,7 @@ export function PublicBookingPage() {
               (currentStepKey === 'team' && !selectedTeam) ||
               (currentStepKey === 'event' && !selectedEvent) ||
               (currentStepKey === 'preferred-coach' && !selectedCoachId) ||
-              (currentStepKey === 'schedule' && !selectedSlot) ||
+              (currentStepKey === 'schedule' && (!selectedSlot || (showCoachPicker && !selectedCoachId))) ||
               (currentStepKey === 'confirm' && (!studentInfo.name || !studentInfo.email))
             }
             isSubmitting={isSubmitting}
