@@ -12,6 +12,15 @@ export function escapeHtml(text: string): string {
 }
 
 /**
+ * Strips all HTML tags from a string, returning plain text only.
+ * Use this for fields that must be plain text (e.g. student booking inputs).
+ */
+export function stripHtml(input: string): string {
+  if (!input) return "";
+  return sanitizeHtmlLib(input, { allowedTags: [], allowedAttributes: {} });
+}
+
+/**
  * A secure HTML sanitizer for custom email inputs.
  * Uses an allowlist approach via the sanitize-html library to ensure
  * only safe rich-text formatting tags and attributes are permitted.
