@@ -20,6 +20,8 @@ interface ConfirmationFormProps {
   onUpdate: (info: StudentInfo) => void
 }
 
+const MAX_CHARS = 500
+
 export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProps) {
   const handleChange =
     (field: keyof StudentInfo) =>
@@ -98,6 +100,20 @@ export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProp
               value={studentInfo.specificQuestion}
               onChange={handleChange('specificQuestion')}
               placeholder="e.g., I'm having trouble with the calculus chain rule..."
+              inputProps={{ maxLength: MAX_CHARS }}
+              helperText={
+                studentInfo.specificQuestion.length >= MAX_CHARS
+                  ? `Maximum character limit of ${MAX_CHARS} reached`
+                  : `${studentInfo.specificQuestion.length} / ${MAX_CHARS}`
+              }
+              FormHelperTextProps={{
+                sx: {
+                  textAlign: 'right',
+                  color: studentInfo.specificQuestion.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
+                  fontWeight: studentInfo.specificQuestion.length >= MAX_CHARS ? 600 : 400,
+                }
+              }}
+              error={studentInfo.specificQuestion.length >= MAX_CHARS}
             />
             <TextField
               label="What have you already tried?"
@@ -110,6 +126,20 @@ export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProp
               value={studentInfo.triedSolutions}
               onChange={handleChange('triedSolutions')}
               placeholder="e.g., I tried these practice problems but got stuck..."
+              inputProps={{ maxLength: MAX_CHARS }}
+              helperText={
+                studentInfo.triedSolutions.length >= MAX_CHARS
+                  ? `Maximum character limit of ${MAX_CHARS} reached`
+                  : `${studentInfo.triedSolutions.length} / ${MAX_CHARS}`
+              }
+              FormHelperTextProps={{
+                sx: {
+                  textAlign: 'right',
+                  color: studentInfo.triedSolutions.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
+                  fontWeight: studentInfo.triedSolutions.length >= MAX_CHARS ? 600 : 400,
+                }
+              }}
+              error={studentInfo.triedSolutions.length >= MAX_CHARS}
             />
             <TextField
               label="Resources used so far?"
@@ -122,6 +152,20 @@ export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProp
               value={studentInfo.usedResources}
               onChange={handleChange('usedResources')}
               placeholder="e.g., Textbook chapter 4..."
+              inputProps={{ maxLength: MAX_CHARS }}
+              helperText={
+                studentInfo.usedResources.length >= MAX_CHARS
+                  ? `Maximum character limit of ${MAX_CHARS} reached`
+                  : `${studentInfo.usedResources.length} / ${MAX_CHARS}`
+              }
+              FormHelperTextProps={{
+                sx: {
+                  textAlign: 'right',
+                  color: studentInfo.usedResources.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
+                  fontWeight: studentInfo.usedResources.length >= MAX_CHARS ? 600 : 400,
+                }
+              }}
+              error={studentInfo.usedResources.length >= MAX_CHARS}
             />
             <TextField
               label="Session objectives"
@@ -134,6 +178,20 @@ export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProp
               value={studentInfo.sessionObjectives}
               onChange={handleChange('sessionObjectives')}
               placeholder="e.g., I want to be able to solve these types of problems..."
+              inputProps={{ maxLength: MAX_CHARS }}
+              helperText={
+                studentInfo.sessionObjectives.length >= MAX_CHARS
+                  ? `Maximum character limit of ${MAX_CHARS} reached`
+                  : `${studentInfo.sessionObjectives.length} / ${MAX_CHARS}`
+              }
+              FormHelperTextProps={{
+                sx: {
+                  textAlign: 'right',
+                  color: studentInfo.sessionObjectives.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
+                  fontWeight: studentInfo.sessionObjectives.length >= MAX_CHARS ? 600 : 400,
+                }
+              }}
+              error={studentInfo.sessionObjectives.length >= MAX_CHARS}
             />
           </Box>
 
@@ -145,6 +203,20 @@ export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProp
             variant="outlined"
             value={studentInfo.notes}
             onChange={handleChange('notes')}
+            inputProps={{ maxLength: MAX_CHARS }}
+            helperText={
+              studentInfo.notes.length >= MAX_CHARS
+                ? `Maximum character limit of ${MAX_CHARS} reached`
+                : `${studentInfo.notes.length} / ${MAX_CHARS}`
+            }
+            FormHelperTextProps={{
+              sx: {
+                textAlign: 'right',
+                color: studentInfo.notes.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
+                fontWeight: studentInfo.notes.length >= MAX_CHARS ? 600 : 400,
+              }
+            }}
+            error={studentInfo.notes.length >= MAX_CHARS}
           />
         </Stack>
       </Box>

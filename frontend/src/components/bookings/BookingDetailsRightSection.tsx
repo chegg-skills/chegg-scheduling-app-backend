@@ -417,3 +417,4 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
   )
 }
 
+
