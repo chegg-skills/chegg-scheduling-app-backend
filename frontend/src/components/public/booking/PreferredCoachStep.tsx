@@ -13,12 +13,14 @@ interface PreferredCoachStepProps {
   coaches: PublicEventCoach[]
   selectedCoachId: string | null
   onSelect: (coachId: string) => void
+  eventName?: string
 }
 
 export function PreferredCoachStep({
   coaches,
   selectedCoachId,
   onSelect,
+  eventName,
 }: PreferredCoachStepProps) {
   const theme = useTheme()
 
@@ -31,96 +33,102 @@ export function PreferredCoachStep({
   }
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: '1fr',
-          sm: '1fr 1fr',
-        },
-        gap: 2,
-        p: 1.5,
-      }}
-    >
-      {coaches.map((c) => {
-        const coach = c.coachUser
-        const isSelected = selectedCoachId === c.coachUserId
-        return (
-          <Card
-            key={c.coachUserId}
-            variant="outlined"
-            sx={{
-              borderColor: isSelected ? 'primary.main' : 'divider',
-              borderWidth: isSelected ? 2 : 1,
-              borderRadius: 1.5,
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              bgcolor: isSelected
-                ? alpha(theme.palette.primary.main, 0.03)
-                : 'background.paper',
-              '&:hover': {
-                borderColor: 'primary.main',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 6px 16px -4px rgba(0,0,0,0.06)',
-              },
-            }}
-          >
-            <CardActionArea onClick={() => onSelect(c.coachUserId)}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ p: 2, px: 2.5 }}
-              >
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <Avatar
-                    src={(coach as any).avatarUrl ?? undefined}
+    <Box sx={{ width: '100%', p: 1.5 }}>
+      {eventName && (
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2.5, fontWeight: 500 }}>
+          Select a coach for this {eventName}
+        </Typography>
+      )}
+      <Box
+        sx={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: '1fr 1fr',
+          },
+          gap: 2,
+        }}
+      >
+        {coaches.map((c) => {
+          const coach = c.coachUser
+          const isSelected = selectedCoachId === c.coachUserId
+          return (
+            <Card
+              key={c.coachUserId}
+              variant="outlined"
+              sx={{
+                borderColor: isSelected ? 'primary.main' : 'divider',
+                borderWidth: isSelected ? 2 : 1,
+                borderRadius: 1.5,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                bgcolor: isSelected
+                  ? alpha(theme.palette.primary.main, 0.03)
+                  : 'background.paper',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 16px -4px rgba(0,0,0,0.06)',
+                },
+              }}
+            >
+              <CardActionArea onClick={() => onSelect(c.coachUserId)}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ p: 2, px: 2.5 }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <Avatar
+                      src={(coach as any).avatarUrl ?? undefined}
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        fontSize: '1.125rem',
+                        bgcolor: isSelected
+                          ? 'primary.main'
+                          : alpha(theme.palette.secondary.main, 0.08),
+                        color: isSelected ? 'white' : 'secondary.main',
+                        fontWeight: 700,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {coach.firstName[0]}
+                      {coach.lastName[0]}
+                    </Avatar>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={600}
+                      sx={{ letterSpacing: -0.3, color: 'text.primary' }}
+                    >
+                      {toTitleCase(coach.firstName)} {toTitleCase(coach.lastName)}
+                    </Typography>
+                  </Stack>
+
+                  <Box
                     sx={{
-                      width: 44,
-                      height: 44,
-                      fontSize: '1.125rem',
-                      bgcolor: isSelected
-                        ? 'primary.main'
-                        : alpha(theme.palette.secondary.main, 0.08),
-                      color: isSelected ? 'white' : 'secondary.main',
-                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      bgcolor: isSelected ? 'primary.main' : 'action.hover',
+                      color: isSelected ? 'white' : 'text.secondary',
+                      border: '1px solid',
+                      borderColor: isSelected ? 'primary.main' : 'divider',
                       transition: 'all 0.2s ease',
                     }}
                   >
-                    {coach.firstName[0]}
-                    {coach.lastName[0]}
-                  </Avatar>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    sx={{ letterSpacing: -0.3, color: 'text.primary' }}
-                  >
-                    {toTitleCase(coach.firstName)} {toTitleCase(coach.lastName)}
-                  </Typography>
+                    <ChevronRight size={16} />
+                  </Box>
                 </Stack>
-
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    bgcolor: isSelected ? 'primary.main' : 'action.hover',
-                    color: isSelected ? 'white' : 'text.secondary',
-                    border: '1px solid',
-                    borderColor: isSelected ? 'primary.main' : 'divider',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <ChevronRight size={16} />
-                </Box>
-              </Stack>
-            </CardActionArea>
-          </Card>
-        )
-      })}
+              </CardActionArea>
+            </Card>
+          )
+        })}
+      </Box>
     </Box>
   )
 }

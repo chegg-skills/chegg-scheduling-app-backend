@@ -194,8 +194,7 @@ export function PublicBookingPage() {
               p: currentStepKey === 'schedule' ? 0 : 2,
               minHeight: 0,
             }}
-          >
-            <PublicBookingFlow
+          >            <PublicBookingFlow
               currentStepKey={currentStepKey}
               scope={scope}
               teams={teams}
@@ -227,9 +226,9 @@ export function PublicBookingPage() {
               onCoachSelect={handleCoachSelect}
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
+              eventName={eventDetails?.name}
             />
           </Box>
-
           {bookError && (
             <Box sx={{ px: 2, pb: 1 }}>
               <ErrorAlert message={bookError} />
