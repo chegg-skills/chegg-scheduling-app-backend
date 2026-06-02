@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Box, Stack, Typography, alpha, Tabs, Tab, Checkbox, FormControlLabel } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Lock, Edit, ClipboardCheck } from 'lucide-react'
+import { Lock, Edit } from 'lucide-react'
 import type { Booking } from '@/types'
 import { Button } from '@/components/shared/ui/Button'
 import { FormField } from '@/components/shared/form/FormField'
