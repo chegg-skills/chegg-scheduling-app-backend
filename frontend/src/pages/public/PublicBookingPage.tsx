@@ -21,6 +21,8 @@ import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeade
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
 
+import { PageSpinner } from '@/components/shared/ui/Spinner'
+
 import { usePublicBookingState } from './hooks/usePublicBookingState'
 
 export function PublicBookingPage() {
@@ -89,6 +91,11 @@ export function PublicBookingPage() {
     setFramed(!isSuccess)
     return () => setFramed(true)
   }, [isSuccess, setFramed])
+
+  // Show a full-page loading spinner while loading event details in direct event booking scope
+  if (scope === 'event' && !eventDetails && !eventDetailsError) {
+    return <PageSpinner />
+  }
 
   // Handle successful booking (no layout needed)
   if (isSuccess) {
