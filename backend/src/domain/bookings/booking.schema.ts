@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { BookingStatus } from "@prisma/client";
+import { stripHtml } from "../../shared/utils/htmlSanitizer";
 
 export const CreateBookingSchema = {
   body: z
@@ -13,11 +14,11 @@ export const CreateBookingSchema = {
         return arg;
       }, z.date()),
       timezone: z.string().trim().optional(),
-      notes: z.string().trim().optional(),
-      specificQuestion: z.string().trim().optional(),
-      triedSolutions: z.string().trim().optional(),
-      usedResources: z.string().trim().optional(),
-      sessionObjectives: z.string().trim().optional(),
+      notes: z.string().trim().max(500, "Notes must be 500 characters or less").transform(stripHtml).optional(),
+      specificQuestion: z.string().trim().max(500, "Specific question must be 500 characters or less").transform(stripHtml).optional(),
+      triedSolutions: z.string().trim().max(500, "Tried solutions must be 500 characters or less").transform(stripHtml).optional(),
+      usedResources: z.string().trim().max(500, "Used resources must be 500 characters or less").transform(stripHtml).optional(),
+      sessionObjectives: z.string().trim().max(500, "Session objectives must be 500 characters or less").transform(stripHtml).optional(),
       preferredCoachId: z.uuid().optional(),
     })
     .strip(),
