@@ -65,12 +65,17 @@ export function EventStep({
               borderColor: 'primary.main',
               transform: 'translateY(-4px)',
               boxShadow: '0 12px 24px -8px rgba(0,0,0,0.1)',
+              '& .event-icon': {
+                bgcolor: selectedEventId === event.id ? 'primary.main' : 'primary.light',
+                color: selectedEventId === event.id ? 'white' : 'primary.main',
+              },
             },
           }}
         >
           <CardActionArea onClick={() => onSelect(event.id)} sx={{ height: '100%' }}>
             <CardContent sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Box
+                className="event-icon"
                 sx={{
                   mb: 2,
                   p: 1,
@@ -79,8 +84,8 @@ export function EventStep({
                   bgcolor:
                     selectedEventId === event.id
                       ? 'primary.main'
-                      : (theme) => alpha(theme.palette.secondary.main, 0.08),
-                  color: selectedEventId === event.id ? 'white' : 'secondary.main',
+                      : 'action.hover',
+                  color: selectedEventId === event.id ? 'white' : 'text.secondary',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

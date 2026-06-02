@@ -6,6 +6,7 @@ import type { BookingStepKey } from '@/pages/public/hooks/usePublicBookingState'
 const stepLabels: Record<BookingStepKey, string> = {
   team: 'Team',
   event: 'Session',
+  'preferred-coach': 'Preferred Coach',
   schedule: 'Schedule',
   confirm: 'Confirm',
 }

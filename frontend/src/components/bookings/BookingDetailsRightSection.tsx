@@ -323,7 +323,10 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
                           >
                             Topics discussed
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary', lineHeight: 1.5 }}
+                          >
                             {log.topicsDiscussed}
                           </Typography>
                         </Box>

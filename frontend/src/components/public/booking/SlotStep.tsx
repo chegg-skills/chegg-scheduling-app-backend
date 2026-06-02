@@ -4,17 +4,18 @@ import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
-import Avatar from '@mui/material/Avatar'
+
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
 import { PickersDay } from '@mui/x-date-pickers/PickersDay'
 import type { PickersDayProps } from '@mui/x-date-pickers/PickersDay'
 import { format } from 'date-fns'
-import { alpha, useTheme } from '@mui/material/styles'
+
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import type { AvailableSlot } from '@/api/public'
-import type { PublicEventCoach } from '@/types'
+
 import { SlotGroup } from './SlotGroup'
 import { startOfDayInTimezone } from '@/utils/dateTimezone'
+import { PublicTimezoneSelect } from './PublicTimezoneSelect'
 
 interface SlotStepProps {
   slots: AvailableSlot[]
@@ -28,12 +29,8 @@ interface SlotStepProps {
   availableDates?: Set<string>
   isLoadingDates?: boolean
   onMonthChange?: (date: Date) => void
-  coaches?: PublicEventCoach[]
-  selectedCoachId?: string | null
-  onCoachSelect?: (coachId: string) => void
   selectedTimezone: string
   setSelectedTimezone: (tz: string) => void
-  eventDetailsName?: string
 }
 
 function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
@@ -72,14 +69,9 @@ export function SlotStep({
   availableDates,
   isLoadingDates,
   onMonthChange,
-  coaches,
-  selectedCoachId,
-  onCoachSelect,
   selectedTimezone,
-  setSelectedTimezone: _,
-  eventDetailsName,
+  setSelectedTimezone,
 }: SlotStepProps) {
-  const theme = useTheme()
 
   const timeFormat = React.useMemo(
     () =>
@@ -151,99 +143,9 @@ export function SlotStep({
     return { amSlots: am, pmSlots: pm }
   }, [slots, hourExtractor])
 
-  const hasCoachPicker = !!coaches && coaches.length > 0
-  const coachNotYetChosen = hasCoachPicker && !selectedCoachId
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
-      {hasCoachPicker && (
-        <Box sx={{ px: 3, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            fontWeight={700}
-            sx={{
-              display: 'block',
-              mb: 1,
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              fontSize: '0.625rem',
-            }}
-          >
-            {eventDetailsName ? `Select a coach for this ${eventDetailsName}` : 'Select a coach'}
-          </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              overflowX: 'auto',
-              scrollbarWidth: 'none',
-              '&::-webkit-scrollbar': { display: 'none' },
-              mx: -0.5,
-              px: 0.5,
-            }}
-          >
-            {coaches!.map((c) => {
-              const isSelected = selectedCoachId === c.coachUserId
-              return (
-                <Box
-                  key={c.coachUserId}
-                  onClick={() => onCoachSelect?.(c.coachUserId)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 1.25,
-                    py: 0.75,
-                    cursor: 'pointer',
-                    borderRadius: 1.5,
-                    border: 1,
-                    borderColor: isSelected ? 'primary.main' : 'divider',
-                    bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.04) : 'transparent',
-                    transition: 'all 0.1s ease',
-                    whiteSpace: 'nowrap',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.06) : 'grey.50',
-                    },
-                  }}
-                >
-                  <Avatar
-                    src={(c.coachUser as any).avatarUrl ?? undefined}
-                    sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
-                  >
-                    {c.coachUser.firstName[0]}
-                    {c.coachUser.lastName[0]}
-                  </Avatar>
-                  <Typography variant="caption" fontWeight={isSelected ? 700 : 500}>
-                    {c.coachUser.firstName} {c.coachUser.lastName}
-                  </Typography>
-                </Box>
-              )
-            })}
-          </Box>
-        </Box>
-      )}
-
-      {coachNotYetChosen ? (
-        <Box
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            flexGrow: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            {eventDetailsName
-              ? `Select a coach for this ${eventDetailsName} above to see available times.`
-              : 'Select a coach above to see available times.'}
-          </Typography>
-        </Box>
-      ) : (
-        <Stack
+      <Stack
           direction={{ xs: 'column', lg: 'row' }}
           alignItems="stretch"
           sx={{ flexGrow: 1, minHeight: 0 }}
@@ -293,6 +195,9 @@ export function SlotStep({
                 }}
               />
             </Paper>
+            <Box sx={{ mt: 1.5, width: '100%' }}>
+              <PublicTimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
+            </Box>
           </Box>
 
           {/* Column 2: Slot Selection */}
@@ -360,7 +265,6 @@ export function SlotStep({
             </Box>
           </Box>
         </Stack>
-      )}
     </Box>
   )
 }

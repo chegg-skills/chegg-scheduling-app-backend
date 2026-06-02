@@ -18,7 +18,7 @@ import type { PublicEventSummary } from '@/types'
 import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
 export type BookingScope = 'directory' | 'team' | 'event' | 'coach' | 'group'
-export type BookingStepKey = 'team' | 'event' | 'schedule' | 'confirm'
+export type BookingStepKey = 'team' | 'event' | 'preferred-coach' | 'schedule' | 'confirm'
 
 const getBookingScope = (
   teamSlug?: string,
@@ -170,40 +170,7 @@ export function usePublicBookingState() {
     groupEventsResult?.events,
   ])
 
-  const stepKeys = React.useMemo<BookingStepKey[]>(() => {
-    switch (scope) {
-      case 'coach':
-        if (coachTeamsCount > 1) {
-          if (selectedTeam) {
-            const teamEvents = (coachEventsResult?.events ?? []).filter(
-              (e) => e.teamId === selectedTeam
-            )
-            if (teamEvents.length === 1) {
-              return ['team', 'schedule', 'confirm']
-            }
-          }
-          return ['team', 'event', 'schedule', 'confirm']
-        } else {
-          const coachEvents = coachEventsResult?.events ?? []
-          return coachEvents.length === 1
-            ? ['schedule', 'confirm']
-            : ['event', 'schedule', 'confirm']
-        }
-      case 'team':
-      case 'group':
-        return visibleEvents.length === 1
-          ? ['schedule', 'confirm']
-          : ['event', 'schedule', 'confirm']
-      case 'event':
-        return ['schedule', 'confirm']
-      case 'directory':
-      default:
-        return ['team', 'event', 'schedule', 'confirm']
-    }
-  }, [scope, coachTeamsCount, selectedTeam, coachEventsResult?.events, visibleEvents.length])
 
-  const completionStep = stepKeys.length
-  const currentStepKey = activeStep < completionStep ? stepKeys[activeStep] : null
 
   const teamDetails = React.useMemo(() => {
     if (scope === 'team') return teamDetailsFromSlug
@@ -274,6 +241,66 @@ export function usePublicBookingState() {
     }
     return null
   }, [scope, eventDetailsFromSlug, selectedEvent, visibleEvents])
+
+  const showCoachPicker = React.useMemo(() => {
+    return (
+      scope !== 'coach' &&
+      !!eventDetails?.allowStudentCoachChoice &&
+      (eventDetails?.coaches?.length ?? 0) > 0
+    )
+  }, [scope, eventDetails])
+
+  const stepKeys = React.useMemo<BookingStepKey[]>(() => {
+    let keys: BookingStepKey[] = []
+    switch (scope) {
+      case 'coach':
+        if (coachTeamsCount > 1) {
+          if (selectedTeam) {
+            const teamEvents = (coachEventsResult?.events ?? []).filter(
+              (e) => e.teamId === selectedTeam
+            )
+            if (teamEvents.length === 1) {
+              keys = ['team', 'schedule', 'confirm']
+            } else {
+              keys = ['team', 'event', 'schedule', 'confirm']
+            }
+          } else {
+            keys = ['team', 'event', 'schedule', 'confirm']
+          }
+        } else {
+          const coachEvents = coachEventsResult?.events ?? []
+          keys = coachEvents.length === 1
+            ? ['schedule', 'confirm']
+            : ['event', 'schedule', 'confirm']
+        }
+        break
+      case 'team':
+      case 'group':
+        keys = visibleEvents.length === 1
+          ? ['schedule', 'confirm']
+          : ['event', 'schedule', 'confirm']
+        break
+      case 'event':
+        keys = ['schedule', 'confirm']
+        break
+      case 'directory':
+      default:
+        keys = ['team', 'event', 'schedule', 'confirm']
+        break
+    }
+
+    if (showCoachPicker) {
+      const idx = keys.indexOf('schedule')
+      if (idx !== -1) {
+        keys = [...keys.slice(0, idx), 'preferred-coach', ...keys.slice(idx)]
+      }
+    }
+
+    return keys
+  }, [scope, coachTeamsCount, selectedTeam, coachEventsResult?.events, visibleEvents.length, showCoachPicker])
+
+  const completionStep = stepKeys.length
+  const currentStepKey = activeStep < completionStep ? stepKeys[activeStep] : null
 
   const eventsError =
     scope === 'team'
@@ -351,6 +378,12 @@ export function usePublicBookingState() {
   const handleTeamSelect = (teamId: string) => {
     setSelectedTeam(teamId)
     setSelectedEvent(null)
+    setSelectedSlot(null)
+    handleNext()
+  }
+
+  const handleCoachSelect = (coachId: string) => {
+    setSelectedCoachId(coachId)
     setSelectedSlot(null)
     handleNext()
   }
@@ -437,6 +470,8 @@ export function usePublicBookingState() {
     handleMonthChange,
     selectedCoachId,
     setSelectedCoachId,
+    handleCoachSelect,
+    showCoachPicker,
     selectedTimezone,
     setSelectedTimezone,
   }

@@ -1,12 +1,14 @@
-import { Avatar, Box, Stack, Typography, alpha, useTheme } from '@mui/material'
+import { Avatar, Box, Stack, Typography, alpha, useTheme, IconButton, Tooltip } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { Link as RouterLink } from 'react-router-dom'
-import { User } from 'lucide-react'
+import { User, Mail } from 'lucide-react'
 import type { Booking } from '@/types'
 import { BookingSection } from './Common'
-import React from 'react'
+import React, { useState } from 'react'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
+import { usePermissions } from '@/hooks/usePermissions'
+import { SendEmailDialog } from '@/components/students/dialogs/SendEmailDialog'
 
 // Stable reference — timezone never changes during the session
 const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -65,6 +67,8 @@ function StudentLocalTime({ startTime, timezone, formatter }: StudentLocalTimePr
 
 export function InviteeSection({ booking }: InviteeSectionProps) {
   const theme = useTheme()
+  const { isCoach, isAdmin } = usePermissions()
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
   const studentFormatter = React.useMemo(() => {
     if (!booking.timezone) return null
@@ -85,9 +89,37 @@ export function InviteeSection({ booking }: InviteeSectionProps) {
   }, [booking.timezone])
 
   const showStudentTime = booking.timezone && booking.timezone !== LOCAL_TZ && studentFormatter
+  const canSendEmail = (isCoach || isAdmin) && !!booking.studentId
+
+  const action = canSendEmail ? (
+    <>
+      <Tooltip title="Send Email">
+        <IconButton
+          size="small"
+          onClick={() => setEmailDialogOpen(true)}
+          sx={{
+            color: 'primary.main',
+            bgcolor: alpha(theme.palette.primary.main, 0.08),
+            '&:hover': {
+              bgcolor: alpha(theme.palette.primary.main, 0.15),
+            },
+          }}
+        >
+          <Mail size={15} />
+        </IconButton>
+      </Tooltip>
+      <SendEmailDialog
+        open={emailDialogOpen}
+        onClose={() => setEmailDialogOpen(false)}
+        studentId={booking.studentId!}
+        studentName={booking.studentName}
+        studentEmail={booking.studentEmail}
+      />
+    </>
+  ) : null
 
   return (
-    <BookingSection label="Invitee" icon={<User size={16} />}>
+    <BookingSection label="Invitee" icon={<User size={16} />} action={action}>
       <Stack direction="row" spacing={2} alignItems="center">
         <Avatar
           sx={{

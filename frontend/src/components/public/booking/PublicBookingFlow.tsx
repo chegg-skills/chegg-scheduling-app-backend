@@ -4,6 +4,7 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { extractApiError } from '@/utils/apiError'
 import { TeamStep } from '@/components/public/booking/TeamStep'
 import { EventStep } from '@/components/public/booking/EventStep'
+import { PreferredCoachStep } from '@/components/public/booking/PreferredCoachStep'
 import { SlotStep } from '@/components/public/booking/SlotStep'
 import { ConfirmationForm } from '@/components/public/booking/ConfirmationForm'
 import type { BookingScope } from '@/pages/public/hooks/usePublicBookingState'
@@ -86,7 +87,6 @@ interface PublicBookingFlowProps {
   onCoachSelect?: (coachId: string) => void
   selectedTimezone: string
   setSelectedTimezone: (tz: string) => void
-  eventDetailsName?: string
 }
 
 /**
@@ -124,7 +124,6 @@ export function PublicBookingFlow({
   onCoachSelect,
   selectedTimezone,
   setSelectedTimezone,
-  eventDetailsName,
 }: PublicBookingFlowProps) {
   switch (currentStepKey) {
     case 'team':
@@ -220,12 +219,17 @@ export function PublicBookingFlow({
           availableDates={availableDates}
           isLoadingDates={isLoadingDates}
           onMonthChange={onMonthChange}
-          coaches={eventCoaches}
-          selectedCoachId={selectedCoachId}
-          onCoachSelect={onCoachSelect}
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
-          eventDetailsName={eventDetailsName}
+
+        />
+      )
+    case 'preferred-coach':
+      return (
+        <PreferredCoachStep
+          coaches={eventCoaches ?? []}
+          selectedCoachId={selectedCoachId ?? null}
+          onSelect={onCoachSelect ?? (() => {})}
         />
       )
     case 'confirm':

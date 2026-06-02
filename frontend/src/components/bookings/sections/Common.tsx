@@ -26,9 +26,10 @@ interface BookingSectionProps {
   label: string
   icon?: React.ReactNode
   children: React.ReactNode
+  action?: React.ReactNode
 }
 
-export function BookingSection({ label, icon, children }: BookingSectionProps) {
+export function BookingSection({ label, icon, children, action }: BookingSectionProps) {
   const theme = useTheme()
   return (
     <Box
@@ -46,21 +47,24 @@ export function BookingSection({ label, icon, children }: BookingSectionProps) {
         },
       }}
     >
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-        {icon && (
-          <Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center' }}>{icon}</Box>
-        )}
-        <Typography
-          variant="caption"
-          sx={{
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            color: 'text.secondary',
-            letterSpacing: '0.05em',
-          }}
-        >
-          {label}
-        </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          {icon && (
+            <Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center' }}>{icon}</Box>
+          )}
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              color: 'text.secondary',
+              letterSpacing: '0.05em',
+            }}
+          >
+            {label}
+          </Typography>
+        </Stack>
+        {action && <Box>{action}</Box>}
       </Stack>
       <Box>{children}</Box>
     </Box>
