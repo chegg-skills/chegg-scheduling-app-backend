@@ -220,7 +220,6 @@ export function PublicBookingPage() {
               onCoachSelect={handleCoachSelect}
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
-              eventDetailsName={eventDetails?.name}
             />
           </Box>
 
