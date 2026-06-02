@@ -127,6 +127,16 @@ describe("renderTemplate — cancelUrl placement and escaping", () => {
     expect(result.html).toContain(CANCEL_URL);
   });
 
+  it("renders cancelUrl in SESSION_REMINDER_12H html", () => {
+    const result = renderTemplate("SESSION_REMINDER_12H", { cancelUrl: CANCEL_URL });
+    expect(result.html).toContain(CANCEL_URL);
+  });
+
+  it("renders cancelUrl in SESSION_REMINDER_6H html", () => {
+    const result = renderTemplate("SESSION_REMINDER_6H", { cancelUrl: CANCEL_URL });
+    expect(result.html).toContain(CANCEL_URL);
+  });
+
   it("renders cancelUrl in SESSION_REMINDER_1H html", () => {
     const result = renderTemplate("SESSION_REMINDER_1H", { cancelUrl: CANCEL_URL });
     expect(result.html).toContain(CANCEL_URL);

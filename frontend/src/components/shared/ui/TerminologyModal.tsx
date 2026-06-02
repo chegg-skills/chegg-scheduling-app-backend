@@ -438,9 +438,13 @@ export function TerminologyModal({ open, onClose }: TerminologyModalProps) {
                   borderRadius: '6px',
                   borderColor: alpha(getCategoryColor(category), 0.3),
                   color: selectedCategory === category ? '#fff' : getCategoryColor(category),
-                  bgcolor: selectedCategory === category ? getCategoryColor(category) : 'transparent',
+                  bgcolor:
+                    selectedCategory === category ? getCategoryColor(category) : 'transparent',
                   '&:hover': {
-                    bgcolor: selectedCategory === category ? getCategoryColor(category) : alpha(getCategoryColor(category), 0.05),
+                    bgcolor:
+                      selectedCategory === category
+                        ? getCategoryColor(category)
+                        : alpha(getCategoryColor(category), 0.05),
                   },
                 }}
               />
@@ -475,7 +479,12 @@ export function TerminologyModal({ open, onClose }: TerminologyModalProps) {
                         },
                       }}
                     >
-                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                        sx={{ mb: 1 }}
+                      >
                         <Typography variant="subtitle2" fontWeight={700} color="text.primary">
                           {item.term}
                         </Typography>

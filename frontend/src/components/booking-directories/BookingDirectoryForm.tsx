@@ -9,7 +9,10 @@ import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { Button } from '@/components/shared/ui/Button'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { useCreateBookingDirectory, useUpdateBookingDirectory } from '@/hooks/queries/useBookingDirectories'
+import {
+  useCreateBookingDirectory,
+  useUpdateBookingDirectory,
+} from '@/hooks/queries/useBookingDirectories'
 import { extractApiError } from '@/utils/apiError'
 import type { BookingDirectory } from '@/types'
 
@@ -30,7 +33,11 @@ interface BookingDirectoryFormProps {
   onCancel?: () => void
 }
 
-export function BookingDirectoryForm({ bookingDirectory, onSuccess, onCancel }: BookingDirectoryFormProps) {
+export function BookingDirectoryForm({
+  bookingDirectory,
+  onSuccess,
+  onCancel,
+}: BookingDirectoryFormProps) {
   const isEdit = !!bookingDirectory
   const { mutate: create, isPending: creating, error: createError } = useCreateBookingDirectory()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateBookingDirectory()

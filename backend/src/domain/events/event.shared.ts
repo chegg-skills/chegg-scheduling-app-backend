@@ -20,7 +20,12 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
     where: { isActive: true },
     orderBy: { coachOrder: "asc" },
     include: {
-      coachUser: { select: safeUserSelect },
+      coachUser: {
+        select: {
+          ...safeUserSelect,
+          weeklyAvailability: true,
+        },
+      },
     },
   },
   weeklyAvailability: true,

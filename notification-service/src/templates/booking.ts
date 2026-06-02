@@ -16,12 +16,10 @@ export const bookingTemplates: EmailTemplateMap = {
          ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Team", "{{teamName}}")}
          {{coHostDetailsHtml}}
-       </p>
-       <p style="margin-top: 16px; font-size: 13px;">
-         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session is confirmed for {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
     ),
   },
 
@@ -38,12 +36,10 @@ export const bookingTemplates: EmailTemplateMap = {
          ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Coach", "{{coachName}}")}
          {{coHostDetailsHtml}}
-       </p>
-       <p style="margin-top: 16px; font-size: 13px;">
-         Need to change it again? ${inlineLink("Reschedule again", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
        </p>`,
       "Your session has been rescheduled to {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+      `Need to change it again? ${inlineLink("Reschedule again", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
     ),
   },
 
@@ -121,12 +117,10 @@ export const bookingTemplates: EmailTemplateMap = {
          ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Team", "{{teamName}}")}
        </p>
-       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>
-       <p style="margin-top: 16px; font-size: 13px;">
-         Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}
-       </p>`,
+       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>`,
       "Your session is confirmed. Coach details coming soon.",
       { text: "View Booking", url: "{{frontendUrl}}" },
+      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
     ),
   },
 

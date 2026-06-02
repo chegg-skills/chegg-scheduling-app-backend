@@ -10,7 +10,9 @@ export function usePublicBookingDirectoryBySlug(slug: string) {
   return useQuery({
     queryKey: publicBookingDirectoryKeys.bySlug(slug),
     queryFn: ({ signal }) =>
-      publicApi.getBookingDirectoryBySlug(slug, signal).then((r) => r.data.data?.bookingDirectory ?? null),
+      publicApi
+        .getBookingDirectoryBySlug(slug, signal)
+        .then((r) => r.data.data?.bookingDirectory ?? null),
     enabled: !!slug,
     retry: false,
     staleTime: 5 * 60 * 1000,

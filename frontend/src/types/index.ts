@@ -187,7 +187,9 @@ export interface EventCoach {
   isActive: boolean
   createdAt: string
   updatedAt: string
-  coachUser: SafeUser
+  coachUser: SafeUser & {
+    weeklyAvailability?: UserWeeklyAvailability[]
+  }
 }
 
 /**

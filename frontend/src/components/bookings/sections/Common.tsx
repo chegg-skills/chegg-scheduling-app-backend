@@ -48,9 +48,7 @@ export function BookingSection({ label, icon, children }: BookingSectionProps) {
     >
       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
         {icon && (
-          <Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center' }}>
-            {icon}
-          </Box>
+          <Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center' }}>{icon}</Box>
         )}
         <Typography
           variant="caption"

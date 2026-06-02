@@ -216,8 +216,9 @@ export function ConsentNotice() {
                   color="text.secondary"
                   sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}
                 >
-                  Stores your name and email address after a successful booking to auto-fill the form
-                  for your convenience during future scheduling requests. This is stored strictly locally on your browser.
+                  Stores your name and email address after a successful booking to auto-fill the
+                  form for your convenience during future scheduling requests. This is stored
+                  strictly locally on your browser.
                 </Typography>
               </Box>
             </Stack>

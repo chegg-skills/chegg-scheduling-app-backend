@@ -7,14 +7,7 @@ import {
   useOutletContext,
 } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  CircularProgress,
-  Radio,
-} from '@mui/material'
+import { Box, Typography, TextField, Button, CircularProgress, Radio } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { publicApi } from '@/api/public'
 import { bookingsApi } from '@/api/bookings'
@@ -92,7 +85,9 @@ export function PublicCancelPage() {
   } = useQuery({
     queryKey: ['public', 'cancel', bookingId, token],
     queryFn: ({ signal }) =>
-      publicApi.getBooking(bookingId, token, { signal }).then((r) => r.data.data?.booking as PublicBooking | undefined),
+      publicApi
+        .getBooking(bookingId, token, { signal })
+        .then((r) => r.data.data?.booking as PublicBooking | undefined),
     enabled: !!bookingId && !!token,
     retry: false,
   })
@@ -423,4 +418,3 @@ export function PublicCancelPage() {
     </PublicBaseLayout>
   )
 }
-

@@ -163,7 +163,9 @@ describe('PublicBookingDirectory Integration', () => {
     // 1. Step 1: Wait for category to render on the landing page
     await screen.findByText('1-to-1 Tutoring Session')
     expect(screen.getByText('1 discipline available')).toBeInTheDocument()
-    expect(screen.getByTestId('location-display').textContent).toContain('/book/directory/eng-academy')
+    expect(screen.getByTestId('location-display').textContent).toContain(
+      '/book/directory/eng-academy'
+    )
 
     // Verify team and events are NOT visible initially
     expect(screen.queryByText('Cyber Security Team')).toBeNull()
@@ -296,7 +298,11 @@ describe('PublicBookingDirectory Integration', () => {
           }
         />
       </Routes>,
-      { initialEntries: ['/book/directory/eng-academy?category=77777777-8888-9999-0000-aaaaaaaaaaaa'] }
+      {
+        initialEntries: [
+          '/book/directory/eng-academy?category=77777777-8888-9999-0000-aaaaaaaaaaaa',
+        ],
+      }
     )
 
     // Verify empty state shows up

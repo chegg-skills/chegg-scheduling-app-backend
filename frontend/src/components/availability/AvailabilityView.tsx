@@ -40,6 +40,7 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
 
   const [weeklyError, setWeeklyError] = useState<string | null>(null)
   const [exceptionError, setExceptionError] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const isAdmin = authUser?.role === 'SUPER_ADMIN' || authUser?.role === 'TEAM_ADMIN'
   const isTargetSelf = authUser?.id === userId
@@ -79,13 +80,24 @@ export function AvailabilityView({ userId }: AvailabilityViewProps) {
                   indefinitely.
                 </Typography>
                 {weeklyError && <ErrorAlert message={weeklyError} />}
+                {showSuccess && (
+                  <Alert severity="success" variant="filled" sx={{ mb: 3 }}>
+                    Weekly availability saved successfully.
+                  </Alert>
+                )}
                 <WeeklyAvailabilityPicker
                   value={weekly || []}
                   onChange={(data) => {
                     setWeeklyError(null)
                     updateWeekly.mutate(
                       { userId, data },
-                      { onError: (error) => setWeeklyError(extractApiError(error)) }
+                      {
+                        onSuccess: () => {
+                          setShowSuccess(true)
+                          setTimeout(() => setShowSuccess(false), 3000)
+                        },
+                        onError: (error) => setWeeklyError(extractApiError(error)),
+                      }
                     )
                   }}
                   disabled={updateWeekly.isPending}

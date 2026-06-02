@@ -165,17 +165,20 @@ const handlers = [
       })
     }
   ),
-  http.delete('*/api/booking-directories/:directoryId/sections/:sectionId/teams/:teamId', ({ params }) => {
-    apiCalls.removeTeamFromSection.push({
-      directoryId: params.directoryId,
-      sectionId: params.sectionId,
-      teamId: params.teamId,
-    })
-    return HttpResponse.json({
-      success: true,
-      data: { bookingDirectory: mockBookingDirectories[0] },
-    })
-  }),
+  http.delete(
+    '*/api/booking-directories/:directoryId/sections/:sectionId/teams/:teamId',
+    ({ params }) => {
+      apiCalls.removeTeamFromSection.push({
+        directoryId: params.directoryId,
+        sectionId: params.sectionId,
+        teamId: params.teamId,
+      })
+      return HttpResponse.json({
+        success: true,
+        data: { bookingDirectory: mockBookingDirectories[0] },
+      })
+    }
+  ),
 ]
 
 describe('Booking Directories Admin Config integration', () => {

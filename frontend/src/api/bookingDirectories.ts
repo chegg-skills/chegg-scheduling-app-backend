@@ -14,20 +14,30 @@ export interface ListBookingDirectoriesResponse {
 
 export const bookingDirectoriesApi = {
   create: (data: CreateBookingDirectoryDto) =>
-    apiClient.post<ApiResponse<{ bookingDirectory: BookingDirectory }>>('/booking-directories', data),
+    apiClient.post<ApiResponse<{ bookingDirectory: BookingDirectory }>>(
+      '/booking-directories',
+      data
+    ),
 
   list: (signal?: AbortSignal) =>
     apiClient.get<ApiResponse<ListBookingDirectoriesResponse>>('/booking-directories', { signal }),
 
   getById: (directoryId: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<{ bookingDirectory: BookingDirectory }>>(`/booking-directories/${directoryId}`, {
-      signal,
-    }),
+    apiClient.get<ApiResponse<{ bookingDirectory: BookingDirectory }>>(
+      `/booking-directories/${directoryId}`,
+      {
+        signal,
+      }
+    ),
 
   update: (directoryId: string, data: UpdateBookingDirectoryDto) =>
-    apiClient.patch<ApiResponse<{ bookingDirectory: BookingDirectory }>>(`/booking-directories/${directoryId}`, data),
+    apiClient.patch<ApiResponse<{ bookingDirectory: BookingDirectory }>>(
+      `/booking-directories/${directoryId}`,
+      data
+    ),
 
-  delete: (directoryId: string) => apiClient.delete<ApiResponse<void>>(`/booking-directories/${directoryId}`),
+  delete: (directoryId: string) =>
+    apiClient.delete<ApiResponse<void>>(`/booking-directories/${directoryId}`),
 
   addSection: (directoryId: string, data: AddBookingDirectorySectionDto) =>
     apiClient.post<ApiResponse<{ bookingDirectory: BookingDirectory }>>(

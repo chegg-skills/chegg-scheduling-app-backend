@@ -7,7 +7,10 @@ import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { BookingDirectoryTable, type BookingDirectoryTableRef } from '@/components/booking-directories/BookingDirectoryTable'
+import {
+  BookingDirectoryTable,
+  type BookingDirectoryTableRef,
+} from '@/components/booking-directories/BookingDirectoryTable'
 import { BookingDirectoryForm } from '@/components/booking-directories/BookingDirectoryForm'
 import Alert from '@mui/material/Alert'
 import Typography from '@mui/material/Typography'
@@ -89,13 +92,20 @@ export function BookingDirectoriesPage() {
                 No booking directory with slug <strong>default</strong> exists. The main{' '}
                 <Typography component="span" sx={{ fontFamily: 'monospace', fontSize: 'inherit' }}>
                   /book
-                 </Typography>{' '}
+                </Typography>{' '}
                 landing page will show an empty state until you create one.
               </Alert>
             )}
 
             {!isEditing && (
-              <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', mb: 3 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                  mb: 3,
+                }}
+              >
                 <StatCard
                   label="Total booking directories"
                   value={bookingDirectories.length}
@@ -121,8 +131,15 @@ export function BookingDirectoriesPage() {
           </>
         )}
 
-        <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create booking directory">
-          <BookingDirectoryForm onSuccess={() => setShowCreate(false)} onCancel={() => setShowCreate(false)} />
+        <Modal
+          isOpen={showCreate}
+          onClose={() => setShowCreate(false)}
+          title="Create booking directory"
+        >
+          <BookingDirectoryForm
+            onSuccess={() => setShowCreate(false)}
+            onCancel={() => setShowCreate(false)}
+          />
         </Modal>
       </Box>
     </Box>

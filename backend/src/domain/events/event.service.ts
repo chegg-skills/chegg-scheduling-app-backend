@@ -58,7 +58,7 @@ const listEventsByQuery = async (
   where: Prisma.EventWhereInput,
   options: ListEventsOptions = {},
 ) => {
-  const { page, pageSize, skip } = resolvePagination(options);
+  const { page, pageSize, skip } = resolvePagination(options, { maxPageSize: 1000 });
 
   const [events, total] = await prisma.$transaction([
     prisma.event.findMany({

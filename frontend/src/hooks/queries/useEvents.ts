@@ -28,7 +28,7 @@ export const eventKeys = {
 export function useEvents(params?: ListEventsParams) {
   return useQuery({
     queryKey: eventKeys.list(params),
-    queryFn: ({ signal }) => eventsApi.listAll(signal).then((r) => r.data.data),
+    queryFn: ({ signal }) => eventsApi.listAll(params, signal).then((r) => r.data.data),
   })
 }
 

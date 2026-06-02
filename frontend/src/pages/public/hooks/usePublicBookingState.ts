@@ -33,7 +33,6 @@ const getBookingScope = (
   return 'directory'
 }
 
-
 export function usePublicBookingState() {
   const { teamSlug = '', eventSlug = '', coachSlug = '', groupSlug = '' } = useParams()
   const scope = getBookingScope(teamSlug, eventSlug, coachSlug, groupSlug)
@@ -176,7 +175,9 @@ export function usePublicBookingState() {
       case 'coach':
         if (coachTeamsCount > 1) {
           if (selectedTeam) {
-            const teamEvents = (coachEventsResult?.events ?? []).filter((e) => e.teamId === selectedTeam)
+            const teamEvents = (coachEventsResult?.events ?? []).filter(
+              (e) => e.teamId === selectedTeam
+            )
             if (teamEvents.length === 1) {
               return ['team', 'schedule', 'confirm']
             }

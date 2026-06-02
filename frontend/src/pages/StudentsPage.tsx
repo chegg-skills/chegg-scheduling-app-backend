@@ -44,8 +44,8 @@ export function StudentsPage() {
           showLoading
             ? 'Loading students...'
             : error
-            ? 'Failed to load students'
-            : `${pagination?.total ?? 0} total students`
+              ? 'Failed to load students'
+              : `${pagination?.total ?? 0} total students`
         }
         actions={
           <Box

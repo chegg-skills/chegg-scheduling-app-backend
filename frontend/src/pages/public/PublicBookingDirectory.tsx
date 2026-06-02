@@ -40,8 +40,8 @@ export function PublicBookingDirectory() {
       if (!categoryParam) return null
       if (!UUID_RE.test(categoryParam)) return categoryParam
       return (
-        bookingDirectory.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType.slug ??
-        null
+        bookingDirectory.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType
+          .slug ?? null
       )
     }
     const resolvedCategory = resolveCategory()

@@ -289,10 +289,7 @@ export function TeamDetailPage() {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2} prefix="team">
-          <TeamNotificationsTab
-            teamId={teamId}
-            canEdit={isAdmin}
-          />
+          <TeamNotificationsTab teamId={teamId} canEdit={isAdmin} />
         </TabPanel>
       </Box>
 

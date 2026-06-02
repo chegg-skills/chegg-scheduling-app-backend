@@ -16,7 +16,11 @@ export function EventTeamSection({ booking }: EventTeamSectionProps) {
         {booking.event?.name || 'Unknown Event'}
       </Typography>
       {booking.team && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: sessionType ? 0.5 : 0 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', mb: sessionType ? 0.5 : 0 }}
+        >
           <strong>Team:</strong> {booking.team.name}
         </Typography>
       )}

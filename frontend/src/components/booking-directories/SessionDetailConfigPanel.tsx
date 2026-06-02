@@ -48,7 +48,9 @@ export function SessionDetailConfigPanel({
     if (typeof window === 'undefined' || !selectedSessionType) return ''
     const origin = window.location.origin
     const base =
-      bookingDirectory.slug === 'default' ? `${origin}/book` : `${origin}/book/directory/${bookingDirectory.slug}`
+      bookingDirectory.slug === 'default'
+        ? `${origin}/book`
+        : `${origin}/book/directory/${bookingDirectory.slug}`
     return `${base}?category=${selectedSessionType.id}`
   }, [bookingDirectory.slug, selectedSessionType])
 
@@ -200,7 +202,8 @@ export function SessionDetailConfigPanel({
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-            ⚠️ Session and all team mappings will be permanently removed from this directory on save.
+            ⚠️ Session and all team mappings will be permanently removed from this directory on
+            save.
           </Typography>
         </Box>
       )}

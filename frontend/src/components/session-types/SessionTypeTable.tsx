@@ -216,7 +216,6 @@ export function SessionTypeTable({ sessionTypes }: SessionTypeTableProps) {
                 </TableCell>
               </TableRow>
             ))}
-
           </TableBody>
         </Table>
       </TableContainer>

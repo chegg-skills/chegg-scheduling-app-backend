@@ -3,6 +3,7 @@ import { usersApi, type ListUsersParams } from '@/api/users'
 import type { UpdateUserDto, UserWithDetails } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
+import { eventKeys } from './useEvents'
 
 export const userKeys = {
   all: ['users'] as const,
@@ -34,7 +35,7 @@ export function useUpdateUser() {
     mutationFn: ({ userId, data }: { userId: string; data: UpdateUserDto }) =>
       usersApi.update(userId, data),
     onSuccess: (_, { userId }) =>
-      invalidateQueryKeys(qc, [userKeys.all, userKeys.detail(userId), statsKeys.all]),
+      invalidateQueryKeys(qc, [userKeys.all, userKeys.detail(userId), statsKeys.all, eventKeys.all]),
   })
 }
 
@@ -44,7 +45,7 @@ export function useUpdateMyProfile() {
     mutationFn: (data: Partial<UpdateUserDto>) => usersApi.updateMe(data),
     onSuccess: async (response) => {
       const updatedUser = response.data.data
-      await invalidateQueryKeys(qc, [userKeys.all, userKeys.me(), statsKeys.all])
+      await invalidateQueryKeys(qc, [userKeys.all, userKeys.me(), statsKeys.all, eventKeys.all])
 
       if (updatedUser?.id) {
         await invalidateQueryKeys(qc, [userKeys.detail(updatedUser.id)])
@@ -57,7 +58,7 @@ export function useDeactivateUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (userId: string) => usersApi.deactivate(userId),
-    onSuccess: () => invalidateQueryKeys(qc, [userKeys.all, statsKeys.all]),
+    onSuccess: () => invalidateQueryKeys(qc, [userKeys.all, statsKeys.all, eventKeys.all]),
   })
 }
 
@@ -67,6 +68,6 @@ export function useReplaceUser() {
     mutationFn: ({ userId, data }: { userId: string; data: UpdateUserDto }) =>
       usersApi.replace(userId, data),
     onSuccess: (_, { userId }) =>
-      invalidateQueryKeys(qc, [userKeys.all, userKeys.detail(userId), statsKeys.all]),
+      invalidateQueryKeys(qc, [userKeys.all, userKeys.detail(userId), statsKeys.all, eventKeys.all]),
   })
 }

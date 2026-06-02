@@ -27,11 +27,14 @@ export function UserCoachedEventsTab({ user }: UserCoachedEventsTabProps) {
 
   // Group coached events by team
   const eventsByTeam = React.useMemo(() => {
-    const groups: Record<string, { teamId: string; teamName: string; events: typeof user.coachedEvents }> = {}
+    const groups: Record<
+      string,
+      { teamId: string; teamName: string; events: typeof user.coachedEvents }
+    > = {}
 
     user.coachedEvents.forEach((coachEvent) => {
       const teamId = coachEvent.event.team?.id || coachEvent.event.teamId || 'no-team'
-      
+
       // Attempt to get the team name from the event's team relation,
       // and fall back to the user's teamMemberships if not populated.
       const teamName =
@@ -79,8 +82,19 @@ export function UserCoachedEventsTab({ user }: UserCoachedEventsTabProps) {
                   }}
                 >
                   <Box>
-                    <Stack direction="row" spacing={1.5} alignItems="flex-start" justifyContent="space-between" sx={{ mb: 1 }}>
-                      <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ lineHeight: 1.3 }}>
+                    <Stack
+                      direction="row"
+                      spacing={1.5}
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      sx={{ mb: 1 }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={700}
+                        color="text.primary"
+                        sx={{ lineHeight: 1.3 }}
+                      >
                         {toTitleCase(coachEvent.event.name)}
                       </Typography>
                       <Box sx={{ flexShrink: 0 }}>
@@ -109,4 +123,3 @@ function formatEnumLabel(val: string) {
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
     .join(' ')
 }
-

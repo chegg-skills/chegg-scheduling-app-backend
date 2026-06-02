@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
@@ -183,13 +182,17 @@ export function BookingDirectorySectionEditor({
 
       // 2. Process sections to add & their teams
       for (const sessionTypeId of sectionsToAdd) {
-        const response = await bookingDirectoriesApi.addSection(bookingDirectory.id, { sessionTypeId })
+        const response = await bookingDirectoriesApi.addSection(bookingDirectory.id, {
+          sessionTypeId,
+        })
         const updatedDirectory = response.data.data?.bookingDirectory
         const newSection = updatedDirectory?.sections.find((s) => s.sessionTypeId === sessionTypeId)
         if (newSection) {
           const draftTeamIds = draftCategories.get(sessionTypeId) ?? new Set()
           for (const teamId of draftTeamIds) {
-            await bookingDirectoriesApi.addTeamToSection(bookingDirectory.id, newSection.id, { teamId })
+            await bookingDirectoriesApi.addTeamToSection(bookingDirectory.id, newSection.id, {
+              teamId,
+            })
           }
         }
       }
@@ -203,14 +206,20 @@ export function BookingDirectorySectionEditor({
           // Teams to add
           for (const teamId of draftTeamIds) {
             if (!origTeamIds.has(teamId)) {
-              await bookingDirectoriesApi.addTeamToSection(bookingDirectory.id, section.id, { teamId })
+              await bookingDirectoriesApi.addTeamToSection(bookingDirectory.id, section.id, {
+                teamId,
+              })
             }
           }
 
           // Teams to remove
           for (const teamId of origTeamIds) {
             if (!draftTeamIds.has(teamId)) {
-              await bookingDirectoriesApi.removeTeamFromSection(bookingDirectory.id, section.id, teamId)
+              await bookingDirectoriesApi.removeTeamFromSection(
+                bookingDirectory.id,
+                section.id,
+                teamId
+              )
             }
           }
         }

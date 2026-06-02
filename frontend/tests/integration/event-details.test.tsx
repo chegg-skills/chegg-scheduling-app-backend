@@ -38,7 +38,23 @@ const mockEvent = {
     {
       id: 'coach-1',
       coachUserId: 'coach-1',
-      coachUser: { id: 'coach-1', firstName: 'John', lastName: 'Coach', timezone: 'UTC' },
+      coachUser: {
+        id: 'coach-1',
+        firstName: 'John',
+        lastName: 'Coach',
+        timezone: 'UTC',
+        weeklyAvailability: [
+          {
+            id: 'avail-1',
+            userId: 'coach-1',
+            dayOfWeek: 1,
+            startTime: '09:00',
+            endTime: '17:00',
+            createdAt: '2026-05-26T00:00:00Z',
+            updatedAt: '2026-05-26T00:00:00Z'
+          }
+        ]
+      },
     },
   ],
   _count: {
@@ -151,6 +167,7 @@ describe('Event Detail Integration', () => {
     const coachesTab = screen.getByRole('tab', { name: /Coaches/i })
     fireEvent.click(coachesTab)
     expect(await screen.findByText('John Coach')).toBeInTheDocument()
+    expect(screen.getByText('Mon: 09:00–17:00')).toBeInTheDocument()
 
     // 4. Switch to Schedule tab
     const scheduleTab = screen.getByRole('tab', { name: /Schedule/i })

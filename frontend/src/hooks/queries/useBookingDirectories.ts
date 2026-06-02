@@ -59,8 +59,13 @@ export function useDeleteBookingDirectory() {
 export function useAddBookingDirectorySection() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ directoryId, data }: { directoryId: string; data: AddBookingDirectorySectionDto }) =>
-      bookingDirectoriesApi.addSection(directoryId, data),
+    mutationFn: ({
+      directoryId,
+      data,
+    }: {
+      directoryId: string
+      data: AddBookingDirectorySectionDto
+    }) => bookingDirectoriesApi.addSection(directoryId, data),
     onSuccess: () => invalidateQueryKeys(qc, [bookingDirectoryKeys.all]),
   })
 }

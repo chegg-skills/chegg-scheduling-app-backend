@@ -13,6 +13,7 @@ export function wrapLayout(
   content: string,
   preheader?: string,
   cta?: CtaOptions,
+  postCta?: string,
   year = new Date().getFullYear(),
 ): string {
   const logoUrl = config.email.logoUrl;
@@ -54,7 +55,17 @@ export function wrapLayout(
               : ""
           }
 
-          <div style="margin-top: 40px; padding-top: 20px;">
+          ${
+            postCta
+              ? `
+            <div style="margin-top: 24px; font-size: 13px; color: ${TEXT_SECONDARY}; text-align: left; font-weight: 500;">
+              ${postCta}
+            </div>
+          `
+              : ""
+          }
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid ${DIVIDER};">
             <img src="${logoUrl}" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
             <p style="font-size: 12px; color: ${TEXT_SECONDARY}; margin: 0; text-align: left;">
               Automated priority message from Chegg Scheduling.
