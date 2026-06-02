@@ -27,7 +27,6 @@ export function EventTeamSection({ booking }: EventTeamSectionProps) {
       {sessionType && (
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
           <strong>Session Type:</strong> {sessionType.name}
-          {sessionType.description && ` — ${sessionType.description}`}
         </Typography>
       )}
     </BookingSection>
