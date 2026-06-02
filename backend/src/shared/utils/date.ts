@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
+import { logger } from "../logging/logger";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -7,18 +8,31 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+/**
+ * Returns a new Date set to midnight in the **server's local timezone**.
+ * Used for reporting/display comparisons — not for slot generation, which
+ * uses UTC or `startOfDayInTimezone` from the frontend utility.
+ */
 export const getStartOfDate = (date: Date): Date => {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
   return result;
 };
 
+/**
+ * Returns a new Date set to 23:59:59.999 in the **server's local timezone**.
+ * Pair with `getStartOfDate` for inclusive same-day range queries in reporting.
+ */
 export const getEndOfDate = (date: Date): Date => {
   const result = new Date(date);
   result.setHours(23, 59, 59, 999);
   return result;
 };
 
+/**
+ * Formats a date range as "Mon D, YYYY – Mon D, YYYY" for display.
+ * Returns "All time" when either bound is null (unbounded range).
+ */
 export const formatDateRangeLabel = (start: Date | null, end: Date | null): string => {
   if (!start || !end) {
     return "All time";
@@ -27,8 +41,16 @@ export const formatDateRangeLabel = (start: Date | null, end: Date | null): stri
   return `${DATE_FORMATTER.format(start)} – ${DATE_FORMATTER.format(end)}`;
 };
 
+/** Extracts the `YYYY-MM-DD` portion of an ISO 8601 UTC timestamp. */
 export const toDateOnlyString = (date: Date): string => date.toISOString().split("T")[0];
 
+/**
+ * Parses a date string or Date object, throwing a 400 if the value is invalid.
+ *
+ * @param value - ISO string or existing Date object to parse.
+ * @param fieldName - Field label used in the error message (default `"date"`).
+ * @throws {ErrorHandler} 400 — value does not parse to a valid date.
+ */
 export const parseDateInput = (value: Date | string, fieldName = "date"): Date => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -47,6 +69,19 @@ export const parseDateInput = (value: Date | string, fieldName = "date"): Date =
 const isDateOnlyString = (value: string | Date): boolean =>
   typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 
+/**
+ * Parses and validates a date range from query parameters, returning UTC Date
+ * objects ready for Prisma comparisons.
+ *
+ * Date-only `endDate` strings (e.g. `"2026-12-07"`) are extended to
+ * `23:59:59.999 UTC` so that a same-day query covers the full 24-hour window
+ * rather than the zero-length interval `[midnight, midnight)`.
+ *
+ * @param startDate - Inclusive range start (ISO string or Date).
+ * @param endDate   - Inclusive range end (ISO string or Date).
+ * @param maxRangeDays - Optional cap on the allowed range width.
+ * @throws {ErrorHandler} 400 — invalid date, start after end, or range exceeds cap.
+ */
 export const parseBoundedDateRange = ({
   startDate,
   endDate,
@@ -85,9 +120,24 @@ export const parseBoundedDateRange = ({
   return { start, end };
 };
 
+/**
+ * Formats a UTC Date into a human-readable string for notification emails,
+ * localised to the **recipient's** IANA timezone.
+ *
+ * Always pass a per-recipient timezone — never a single `booking.timezone`
+ * for all recipients. Student, coach, and admin emails each use different
+ * timezones (see `getBookingNotificationVariables` in `booking.notification.ts`).
+ *
+ * Falls back to UTC with a `console.warn` when `timezone` is absent or invalid
+ * so that misconfigured notifications degrade gracefully instead of crashing.
+ *
+ * @param date     - The UTC Date to format.
+ * @param timezone - IANA timezone string for the intended recipient.
+ * @returns Formatted string such as "Monday, June 1, 2026 at 2:30 PM".
+ */
 export const formatNotificationDate = (date: Date, timezone?: string | null): string => {
   if (!timezone) {
-    console.warn("[formatNotificationDate] No timezone provided, falling back to UTC.");
+    logger.warn("formatNotificationDate called without timezone — falling back to UTC.");
   }
   try {
     return new Intl.DateTimeFormat("en-US", {
@@ -101,7 +151,7 @@ export const formatNotificationDate = (date: Date, timezone?: string | null): st
       timeZone: timezone || "UTC",
     }).format(date);
   } catch {
-    console.warn(`[formatNotificationDate] Invalid timezone "${timezone}", falling back to UTC.`);
+    logger.warn({ timezone }, "formatNotificationDate received invalid timezone — falling back to UTC.");
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
       month: "long",
@@ -115,6 +165,16 @@ export const formatNotificationDate = (date: Date, timezone?: string | null): st
   }
 };
 
+/**
+ * Maps an IANA timezone string to a user-friendly display name for email
+ * footers (e.g. `"Asia/Kolkata"` → `"India Standard Time"`).
+ *
+ * For unmapped zones, falls back to the city portion of the IANA key with
+ * underscores replaced by spaces (e.g. `"America/Buenos_Aires"` → `"Buenos Aires"`).
+ * Returns `"UTC Time"` when the input is null or undefined.
+ *
+ * @param ianaZone - IANA timezone identifier from `Booking.timezone` or `User.timezone`.
+ */
 export const getFriendlyTimezoneLabel = (ianaZone: string | null | undefined): string => {
   if (!ianaZone) return "UTC Time";
   const mapping: Record<string, string> = {

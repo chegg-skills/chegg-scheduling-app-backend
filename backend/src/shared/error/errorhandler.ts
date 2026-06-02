@@ -6,6 +6,15 @@ import { sendErrorResponse } from "../utils/helper/responseHelper";
 import { MethodNotAllowedError } from "./methodNotAllowed";
 import { PathNotFoundError } from "./pathNotFound";
 
+/**
+ * Standard application error class. Throw this anywhere in the service or
+ * controller layer to produce a structured JSON error response with the given
+ * HTTP status code. The global `errorHandler` middleware catches it and calls
+ * `sendErrorResponse` — no additional try/catch is needed in controllers.
+ *
+ * @example
+ * throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event not found.");
+ */
 export class ErrorHandler extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) {
@@ -23,7 +32,7 @@ const shouldLogClientErrors =
 
 const logClientError = (err: Error, requestId?: string): void => {
   if (shouldLogClientErrors) {
-    logger.warn("Client request error", { requestId, error: err });
+    logger.warn({ requestId, error: err }, "Client request error.");
   }
 };
 
@@ -68,7 +77,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     if (err.statusCode >= 400 && err.statusCode < 500) {
       logClientError(err, requestId);
     } else {
-      logger.error("Unhandled application error", { requestId, error: err });
+      logger.error({ requestId, error: err }, "Unhandled application error.");
     }
     return sendErrorResponse(res, err.statusCode, err.message);
   }
@@ -76,13 +85,13 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   const frameworkStatus = resolveFrameworkStatus(err as FrameworkError);
   if (frameworkStatus !== undefined) {
     if (frameworkStatus >= 500) {
-      logger.error("Framework request error", { requestId, error: err });
+      logger.error({ requestId, error: err }, "Framework request error.");
     } else {
       logClientError(err as Error, requestId);
     }
     return sendErrorResponse(res, frameworkStatus, err.message ?? "Bad request.");
   }
 
-  logger.error("Unexpected server error", { requestId, error: err });
+  logger.error({ requestId, error: err }, "Unexpected server error.");
   return sendErrorResponse(res, StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error");
 };

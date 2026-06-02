@@ -7,7 +7,9 @@ export const config = {
       process.env.SMTP_USER ??
       process.env.EMAIL_USERNAME ??
       "no-reply@example.com",
-    logoUrl: process.env.EMAIL_LOGO_URL ?? "https://img.logokit.com/chegg.com",
+    logoUrl:
+      process.env.EMAIL_LOGO_URL ??
+      "http://localhost:3000/chegg-logo.png",
   },
   scheduler: {
     enabled: process.env.REMINDER_SCHEDULER_ENABLED !== "false",

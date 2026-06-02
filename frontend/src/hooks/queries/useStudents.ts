@@ -61,8 +61,15 @@ export function useStudentCommunications(
 export function useSendStudentEmail() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ studentId, subject, body }: { studentId: string; subject: string; body: string }) =>
-      studentsApi.sendEmail(studentId, { subject, body }).then((r) => r.data.data?.log),
+    mutationFn: ({
+      studentId,
+      subject,
+      body,
+    }: {
+      studentId: string
+      subject: string
+      body: string
+    }) => studentsApi.sendEmail(studentId, { subject, body }).then((r) => r.data.data?.log),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: studentKeys.communications(variables.studentId) })
     },
@@ -72,8 +79,7 @@ export function useSendStudentEmail() {
 export function useRetryStudentEmail() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (logId: string) =>
-      studentsApi.retryEmail(logId).then((r) => r.data.data?.log),
+    mutationFn: (logId: string) => studentsApi.retryEmail(logId).then((r) => r.data.data?.log),
     onSuccess: (newLog) => {
       if (newLog) {
         queryClient.invalidateQueries({ queryKey: studentKeys.communications(newLog.studentId) })

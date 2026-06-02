@@ -8,6 +8,18 @@ interface EventScheduleTabProps {
   canManage?: boolean
 }
 
-export function EventScheduleTab({ event, slots, isLoading, canManage = true }: EventScheduleTabProps) {
-  return <EventScheduleSlotManager event={event} slots={slots} isLoading={isLoading} canManage={canManage} />
+export function EventScheduleTab({
+  event,
+  slots,
+  isLoading,
+  canManage = true,
+}: EventScheduleTabProps) {
+  return (
+    <EventScheduleSlotManager
+      event={event}
+      slots={slots}
+      isLoading={isLoading}
+      canManage={canManage}
+    />
+  )
 }

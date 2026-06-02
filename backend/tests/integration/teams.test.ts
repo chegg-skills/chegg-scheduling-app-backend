@@ -207,9 +207,7 @@ describe("GET /api/teams", () => {
       },
     });
 
-    const res = await request(app)
-      .get("/api/teams")
-      .set("Authorization", `Bearer ${coachToken}`);
+    const res = await request(app).get("/api/teams").set("Authorization", `Bearer ${coachToken}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -623,7 +621,10 @@ describe("DELETE /api/teams/:teamId", () => {
       const createRes = await request(app)
         .post("/api/teams")
         .set("Authorization", `Bearer ${superAdminToken}`)
-        .send({ name: "Notif Config Team " + Math.random().toString(36).substring(7), teamLeadId: teamAdminId });
+        .send({
+          name: "Notif Config Team " + Math.random().toString(36).substring(7),
+          teamLeadId: teamAdminId,
+        });
       teamId = createRes.body.data.id as string;
     });
 
@@ -673,7 +674,10 @@ describe("DELETE /api/teams/:teamId", () => {
       const createRes = await request(app)
         .post("/api/teams")
         .set("Authorization", `Bearer ${superAdminToken}`)
-        .send({ name: "Notif Config Write Team " + Math.random().toString(36).substring(7), teamLeadId: teamAdminId });
+        .send({
+          name: "Notif Config Write Team " + Math.random().toString(36).substring(7),
+          teamLeadId: teamAdminId,
+        });
       teamId = createRes.body.data.id as string;
     });
 

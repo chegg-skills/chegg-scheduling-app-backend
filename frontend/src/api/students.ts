@@ -57,15 +57,23 @@ export const studentsApi = {
     ),
 
   sendEmail: (id: string, data: { subject: string; body: string }) =>
-    apiClient.post<ApiResponse<{ log: StudentCommunicationLog }>>(`/students/${id}/send-email`, data),
+    apiClient.post<ApiResponse<{ log: StudentCommunicationLog }>>(
+      `/students/${id}/send-email`,
+      data
+    ),
 
   listCommunications: (id: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<{ logs: StudentCommunicationLog[] }>>(`/students/${id}/communications`, {
-      signal,
-    }),
+    apiClient.get<ApiResponse<{ logs: StudentCommunicationLog[] }>>(
+      `/students/${id}/communications`,
+      {
+        signal,
+      }
+    ),
 
   retryEmail: (logId: string) =>
-    apiClient.post<ApiResponse<{ log: StudentCommunicationLog }>>(`/students/communications/${logId}/retry`),
+    apiClient.post<ApiResponse<{ log: StudentCommunicationLog }>>(
+      `/students/communications/${logId}/retry`
+    ),
 }
 
 // StudentCommunicationLog is defined in @/types and re-exported above

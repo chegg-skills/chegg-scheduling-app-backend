@@ -8,10 +8,10 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import { MoreVertical, ListFilter } from 'lucide-react'
+import { MoreVertical, ListFilter, Calendar } from 'lucide-react'
 import EventRepeatIcon from '@mui/icons-material/EventRepeat'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
-import { Stack, Typography } from '@mui/material'
+import { Stack, Typography, Card, CardContent } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TablePagination } from '@/components/shared/table/TablePagination'
 import type { EventScheduleSlot } from '@/types'
@@ -44,12 +44,31 @@ export function ScheduleSeriesTable({
 
   if (groups.length === 0) {
     return (
-      <Paper
-        variant="outlined"
-        sx={{ p: 8, textAlign: 'center', borderRadius: 1, borderStyle: 'dashed' }}
-      >
-        <Typography color="text.secondary">No sessions scheduled yet.</Typography>
-      </Paper>
+      <Card variant="outlined" sx={{ borderRadius: 1.5, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 4, textAlign: 'center' }}>
+          <Stack spacing={2} alignItems="center" justifyContent="center">
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '50%',
+                bgcolor: 'action.hover',
+                color: 'text.secondary',
+                display: 'flex',
+              }}
+            >
+              <Calendar size={32} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                No sessions scheduled yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Configure and publish scheduling slots to let students book sessions.
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
     )
   }
 

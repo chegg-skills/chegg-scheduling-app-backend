@@ -60,7 +60,11 @@ export function useTeamStats(timeframe: StatsParams['timeframe'], options?: { en
   )
 }
 
-export function useEventStats(timeframe: StatsParams['timeframe'], teamId?: string, options?: { enabled?: boolean }) {
+export function useEventStats(
+  timeframe: StatsParams['timeframe'],
+  teamId?: string,
+  options?: { enabled?: boolean }
+) {
   const params = { timeframe, teamId }
   return useStatsQuery(
     statsKeys.events(params),
@@ -90,7 +94,10 @@ export function useBookingTrends(timeframe: StatsParams['timeframe']) {
   )
 }
 
-export function useTeamPerformance(timeframe: StatsParams['timeframe'], options?: { enabled?: boolean }) {
+export function useTeamPerformance(
+  timeframe: StatsParams['timeframe'],
+  options?: { enabled?: boolean }
+) {
   const params = { timeframe }
   return useStatsQuery(
     statsKeys.teamPerformance(params),

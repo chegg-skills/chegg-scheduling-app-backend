@@ -8,7 +8,12 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Card,
+  CardContent,
+  Stack,
+  Box,
 } from '@mui/material'
+import { CalendarDays } from 'lucide-react'
 import type { Booking, Pagination } from '@/types'
 import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
@@ -76,20 +81,31 @@ export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPage
 
   if (bookings.length === 0 && !pagination?.total) {
     return (
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 8,
-          textAlign: 'center',
-          borderRadius: 1.5,
-          borderStyle: 'dashed',
-          bgcolor: 'transparent',
-        }}
-      >
-        <Typography color="text.secondary" sx={{ fontWeight: 500 }}>
-          No bookings scheduled yet.
-        </Typography>
-      </Paper>
+      <Card variant="outlined" sx={{ borderRadius: 1.5, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 4, textAlign: 'center' }}>
+          <Stack spacing={2} alignItems="center" justifyContent="center">
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '50%',
+                bgcolor: 'action.hover',
+                color: 'text.secondary',
+                display: 'flex',
+              }}
+            >
+              <CalendarDays size={32} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                No bookings scheduled yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Bookings will appear here once students schedule sessions.
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
     )
   }
 

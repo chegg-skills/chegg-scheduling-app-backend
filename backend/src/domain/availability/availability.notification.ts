@@ -110,12 +110,7 @@ const queueExceptionNotification = async (
       await notifyAdminRecipients(input.userId, variables, type);
     }
   } catch (error) {
-    logger.error("Failed to queue availability exception notification.", {
-      userId: input.userId,
-      date: input.date,
-      type,
-      error,
-    });
+    logger.error({ userId: input.userId, date: input.date, type, error }, "Failed to queue availability exception notification.");
   }
 };
 

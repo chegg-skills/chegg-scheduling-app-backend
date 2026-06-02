@@ -33,20 +33,6 @@ const getBookingScope = (
   return 'directory'
 }
 
-const getStepKeysForScope = (scope: BookingScope): BookingStepKey[] => {
-  switch (scope) {
-    case 'team':
-    case 'coach':
-    case 'group':
-      return ['event', 'schedule', 'confirm']
-    case 'event':
-      return ['schedule', 'confirm']
-    case 'directory':
-    default:
-      return ['team', 'event', 'schedule', 'confirm']
-  }
-}
-
 export function usePublicBookingState() {
   const { teamSlug = '', eventSlug = '', coachSlug = '', groupSlug = '' } = useParams()
   const scope = getBookingScope(teamSlug, eventSlug, coachSlug, groupSlug)
@@ -62,14 +48,33 @@ export function usePublicBookingState() {
   const [selectedTimezone, setSelectedTimezone] = React.useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   )
-  const [studentInfo, setStudentInfo] = React.useState({
-    name: '',
-    email: '',
-    notes: '',
-    specificQuestion: '',
-    triedSolutions: '',
-    usedResources: '',
-    sessionObjectives: '',
+  const [studentInfo, setStudentInfo] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem('chegg_student_info')
+      if (saved) {
+        const { name, email } = JSON.parse(saved)
+        return {
+          name: typeof name === 'string' ? name : '',
+          email: typeof email === 'string' ? email : '',
+          notes: '',
+          specificQuestion: '',
+          triedSolutions: '',
+          usedResources: '',
+          sessionObjectives: '',
+        }
+      }
+    } catch {
+      // corrupted storage — fall through to defaults
+    }
+    return {
+      name: '',
+      email: '',
+      notes: '',
+      specificQuestion: '',
+      triedSolutions: '',
+      usedResources: '',
+      sessionObjectives: '',
+    }
   })
 
   const { data: teams = [], isLoading: loadingTeams, error: teamsError } = usePublicTeams()
@@ -121,7 +126,82 @@ export function usePublicBookingState() {
     error: groupEventsError,
   } = usePublicGroupEventsBySlug(groupSlug)
 
-  const stepKeys = React.useMemo(() => getStepKeysForScope(scope), [scope])
+  const coachTeams = React.useMemo(() => {
+    if (scope !== 'coach') return []
+    const seen = new Set<string>()
+    return (coachEventsResult?.events ?? [])
+      .map((e) => e.team)
+      .filter((t) => {
+        if (seen.has(t.id)) return false
+        seen.add(t.id)
+        return true
+      })
+  }, [scope, coachEventsResult?.events])
+
+  const coachTeamsCount = coachTeams.length
+
+  const visibleEvents = React.useMemo<PublicEventSummary[]>(() => {
+    switch (scope) {
+      case 'team':
+        return teamEventsResult?.events ?? []
+      case 'group':
+        return groupEventsResult?.events ?? []
+      case 'event':
+        return eventDetailsFromSlug ? [eventDetailsFromSlug] : []
+      case 'coach':
+        if (coachTeamsCount > 1) {
+          return selectedTeam
+            ? (coachEventsResult?.events ?? []).filter((e) => e.teamId === selectedTeam)
+            : []
+        }
+        return coachEventsResult?.events ?? []
+      case 'directory':
+      default:
+        return directoryEvents
+    }
+  }, [
+    coachEventsResult?.events,
+    coachTeamsCount,
+    directoryEvents,
+    eventDetailsFromSlug,
+    scope,
+    selectedTeam,
+    teamEventsResult?.events,
+    groupEventsResult?.events,
+  ])
+
+  const stepKeys = React.useMemo<BookingStepKey[]>(() => {
+    switch (scope) {
+      case 'coach':
+        if (coachTeamsCount > 1) {
+          if (selectedTeam) {
+            const teamEvents = (coachEventsResult?.events ?? []).filter(
+              (e) => e.teamId === selectedTeam
+            )
+            if (teamEvents.length === 1) {
+              return ['team', 'schedule', 'confirm']
+            }
+          }
+          return ['team', 'event', 'schedule', 'confirm']
+        } else {
+          const coachEvents = coachEventsResult?.events ?? []
+          return coachEvents.length === 1
+            ? ['schedule', 'confirm']
+            : ['event', 'schedule', 'confirm']
+        }
+      case 'team':
+      case 'group':
+        return visibleEvents.length === 1
+          ? ['schedule', 'confirm']
+          : ['event', 'schedule', 'confirm']
+      case 'event':
+        return ['schedule', 'confirm']
+      case 'directory':
+      default:
+        return ['team', 'event', 'schedule', 'confirm']
+    }
+  }, [scope, coachTeamsCount, selectedTeam, coachEventsResult?.events, visibleEvents.length])
+
   const completionStep = stepKeys.length
   const currentStepKey = activeStep < completionStep ? stepKeys[activeStep] : null
 
@@ -129,10 +209,11 @@ export function usePublicBookingState() {
     if (scope === 'team') return teamDetailsFromSlug
     if (scope === 'group') return groupDetailsFromSlug?.team || null
     if (selectedTeam) {
-      return teams.find((t) => t.id === selectedTeam) || null
+      const pool = scope === 'coach' ? coachTeams : teams
+      return pool.find((t) => t.id === selectedTeam) || null
     }
     return null
-  }, [scope, teamDetailsFromSlug, groupDetailsFromSlug?.team, selectedTeam, teams])
+  }, [scope, teamDetailsFromSlug, groupDetailsFromSlug?.team, selectedTeam, teams, coachTeams])
 
   React.useEffect(() => {
     if (scope === 'team' && teamDetailsFromSlug?.id) {
@@ -159,36 +240,21 @@ export function usePublicBookingState() {
   }, [scope, eventDetailsFromSlug?.id, eventDetailsFromSlug?.teamId])
 
   React.useEffect(() => {
-    if (scope === 'coach' && coachEventsResult?.events.length === 1) {
-      const [singleEvent] = coachEventsResult.events
-      setSelectedTeam(singleEvent.teamId)
+    if (scope === 'coach' && coachTeamsCount === 1 && !selectedTeam) {
+      setSelectedTeam(coachTeams[0].id)
+    }
+  }, [scope, coachTeamsCount, coachTeams, selectedTeam])
+
+  React.useEffect(() => {
+    if (visibleEvents.length === 1 && !selectedEvent) {
+      const [singleEvent] = visibleEvents
       setSelectedEvent(singleEvent.id)
+      if (!selectedTeam) {
+        setSelectedTeam(singleEvent.teamId)
+      }
       setSelectedSlot(null)
     }
-  }, [scope, coachEventsResult?.events])
-
-  const visibleEvents = React.useMemo<PublicEventSummary[]>(() => {
-    switch (scope) {
-      case 'team':
-        return teamEventsResult?.events ?? []
-      case 'group':
-        return groupEventsResult?.events ?? []
-      case 'event':
-        return eventDetailsFromSlug ? [eventDetailsFromSlug] : []
-      case 'coach':
-        return coachEventsResult?.events ?? []
-      case 'directory':
-      default:
-        return directoryEvents
-    }
-  }, [
-    coachEventsResult?.events,
-    directoryEvents,
-    eventDetailsFromSlug,
-    scope,
-    teamEventsResult?.events,
-    groupEventsResult?.events,
-  ])
+  }, [visibleEvents, selectedEvent, selectedTeam])
 
   const eventsLoading =
     scope === 'team'
@@ -316,6 +382,14 @@ export function usePublicBookingState() {
         sessionObjectives: studentInfo.sessionObjectives,
         preferredCoachId,
       })
+      try {
+        localStorage.setItem(
+          'chegg_student_info',
+          JSON.stringify({ name: studentInfo.name, email: studentInfo.email })
+        )
+      } catch {
+        // storage unavailable (private mode, quota exceeded) — silently ignore
+      }
       handleNext()
     } catch (error) {
       throw error
@@ -339,9 +413,9 @@ export function usePublicBookingState() {
     setStudentInfo,
     setSelectedDate,
     setSelectedSlot,
-    teams,
-    loadingTeams,
-    teamsError,
+    teams: scope === 'coach' ? coachTeams : teams,
+    loadingTeams: scope === 'coach' ? loadingCoachEvents : loadingTeams,
+    teamsError: scope === 'coach' ? coachEventsError : teamsError,
     visibleEvents,
     eventsLoading,
     eventsError,

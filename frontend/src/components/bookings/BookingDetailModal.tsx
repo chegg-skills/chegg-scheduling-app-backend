@@ -84,7 +84,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                 size="small"
                 startIcon={<XCircle size={16} />}
                 onClick={() => handleStatusUpdate(booking, 'CANCELLED', 'Cancel')}
-                sx={{ fontWeight: 600, borderRadius: 2 }}
+                sx={{ fontWeight: 600, borderRadius: 1.5 }}
               >
                 Cancel booking
               </Button>
@@ -97,7 +97,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                 startIcon={<Calendar size={16} />}
                 sx={{
                   fontWeight: 600,
-                  borderRadius: 2,
+                  borderRadius: 1.5,
                   borderColor: 'divider',
                   color: 'text.secondary',
                   '&:hover': {
@@ -119,7 +119,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
               size="small"
               startIcon={<Clock size={16} />}
               onClick={() => handleStatusUpdate(booking, 'NO_SHOW', 'No show')}
-              sx={{ fontWeight: 600, borderRadius: 2 }}
+              sx={{ fontWeight: 600, borderRadius: 1.5 }}
             >
               Mark as no show
             </Button>
@@ -132,13 +132,13 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
               size="small"
               startIcon={<ClipboardCheck size={16} />}
               onClick={() => setIsLogDialogOpen(true)}
-              sx={{ fontWeight: 600, borderRadius: 2 }}
+              sx={{ fontWeight: 600, borderRadius: 1.5 }}
             >
               {existingLog ? 'Edit log / notes' : 'Log session'}
             </Button>
           )}
 
-          <Button variant="contained" onClick={onClose} sx={{ fontWeight: 600, borderRadius: 2 }}>
+          <Button variant="contained" onClick={onClose} sx={{ fontWeight: 600, borderRadius: 1.5 }}>
             Close
           </Button>
         </Box>

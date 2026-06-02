@@ -28,14 +28,14 @@ export async function startFeedbackConsumer(): Promise<void> {
 
     await channel.bindQueue(FEEDBACK_QUEUE, FEEDBACK_EXCHANGE, FEEDBACK_ROUTING_KEY);
 
-    logger.info(`[FeedbackConsumer] Subscribed and waiting for messages in queue: ${FEEDBACK_QUEUE}`);
+    logger.info({ queue: FEEDBACK_QUEUE }, "[FeedbackConsumer] Subscribed and waiting for messages.");
 
     await channel.consume(FEEDBACK_QUEUE, async (msg) => {
       if (!msg) return;
 
       try {
         const payload = JSON.parse(msg.content.toString());
-        logger.info(`[FeedbackConsumer] Received delivery feedback:`, payload);
+        logger.info(payload, "[FeedbackConsumer] Received delivery feedback.");
 
         if (payload.type === "STUDENT_CUSTOM_EMAIL_FEEDBACK" && payload.communicationLogId) {
           const { communicationLogId, status, errorMessage } = payload;
@@ -48,17 +48,20 @@ export async function startFeedbackConsumer(): Promise<void> {
             },
           });
 
-          logger.info(`[FeedbackConsumer] Successfully updated database status to ${status} for log: ${communicationLogId}`);
+          logger.info(
+            { status, communicationLogId },
+            "[FeedbackConsumer] Successfully updated database status.",
+          );
         }
 
         channel.ack(msg);
       } catch (error) {
-        logger.error("[FeedbackConsumer] Error processing feedback message:", { error });
+        logger.error({ error }, "[FeedbackConsumer] Error processing feedback message.");
         // Nack but do not requeue to avoid infinite loop on malformed payloads
         channel.nack(msg, false, false);
       }
     });
   } catch (error) {
-    logger.error("[FeedbackConsumer] Failed to start feedback consumer:", { error });
+    logger.error({ error }, "[FeedbackConsumer] Failed to start feedback consumer.");
   }
 }

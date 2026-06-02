@@ -17,6 +17,7 @@ import {
 } from "../../shared/utils/userUtils";
 import { ListUsersSchema, UpdateUserSchema, UpdateMyProfileSchema } from "./user.schema";
 import { queueZoomIsvLinkExpiryReminder } from "./user.notification";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 
 type ListUsersOptions = {
   page?: number;
@@ -156,6 +157,7 @@ const readUser = async (userId: string): Promise<SafeUser> => {
           event: {
             include: {
               eventType: true,
+              team: true,
             },
           },
         },
@@ -282,6 +284,23 @@ const updateUser = async (
       data: updateData,
     });
 
+    const log = getRequestLogger();
+    // Role and deactivation changes are security-sensitive — log at warn so they surface in ops dashboards.
+    if (validated.role !== undefined) {
+      log.warn({ userId, newRole: validated.role, changedBy: caller.id }, "User role changed.");
+    }
+    if (validated.isActive === false) {
+      log.warn({ userId, deactivatedBy: caller.id }, "User account deactivated.");
+    } else if (validated.isActive === true) {
+      log.info({ userId, reactivatedBy: caller.id }, "User account reactivated.");
+    }
+    if (validated.password !== undefined) {
+      log.warn({ userId, changedBy: caller.id }, "User password changed by admin.");
+    }
+    if (validated.role === undefined && validated.isActive === undefined && validated.password === undefined) {
+      log.info({ userId, updatedBy: caller.id }, "User profile updated.");
+    }
+
     const safeUser = toSafeUser(updatedUser);
     void queueZoomIsvLinkExpiryReminder(safeUser);
     return safeUser;
@@ -339,6 +358,8 @@ const deleteUser = async (userId: string, caller: CallerContext): Promise<SafeUs
     where: { id: userId },
     data: { isActive: false },
   });
+
+  getRequestLogger().warn({ userId, role: targetUser.role, deactivatedBy: caller.id }, "User account deactivated.");
 
   return toSafeUser(deactivatedUser);
 };

@@ -21,6 +21,7 @@ import { queueBookingStatusNotifications } from "../bookings/booking.notificatio
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
 import { logger } from "../../shared/logging/logger";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import { BookingStatus } from "@prisma/client";
 
 type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
@@ -297,20 +298,16 @@ const createEventScheduleSlot = async (
     });
 
     // Return the first instance created
-    return prisma.eventScheduleSlot.findFirstOrThrow({
+    const firstSlot = await prisma.eventScheduleSlot.findFirstOrThrow({
       where: { eventId, startTime: validated.startTime },
       include: {
         assignedCoach: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-            email: true,
-          },
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
         },
       },
     });
+    getRequestLogger().info({ eventId, slotCount: slotsData.length, recurrenceGroupId, createdBy: caller.id }, "Recurring schedule slots created.");
+    return firstSlot;
   }
 
   await assertSlotWithinAvailability(eventId, validated.startTime, validated.endTime, caller);
@@ -323,7 +320,7 @@ const createEventScheduleSlot = async (
     );
   }
 
-  return prisma.eventScheduleSlot.create({
+  const newSlot = await prisma.eventScheduleSlot.create({
     data: {
       eventId,
       startTime: validated.startTime,
@@ -335,16 +332,14 @@ const createEventScheduleSlot = async (
     },
     include: {
       assignedCoach: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatarUrl: true,
-          email: true,
-        },
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
       },
     },
   });
+
+  getRequestLogger().info({ eventId, slotId: newSlot.id, startTime: newSlot.startTime, createdBy: caller.id }, "Schedule slot created.");
+
+  return newSlot;
 };
 
 const updateEventScheduleSlot = async (
@@ -373,21 +368,19 @@ const updateEventScheduleSlot = async (
     );
   }
 
-  return prisma.eventScheduleSlot.update({
+  const updated = await prisma.eventScheduleSlot.update({
     where: { id: slotId },
     data: validated,
     include: {
       assignedCoach: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatarUrl: true,
-          email: true,
-        },
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
       },
     },
   });
+
+  getRequestLogger().info({ eventId, slotId, updatedBy: caller.id }, "Schedule slot updated.");
+
+  return updated;
 };
 
 const deleteEventScheduleSlot = async (
@@ -414,9 +407,9 @@ const deleteEventScheduleSlot = async (
     );
   }
 
-  return prisma.eventScheduleSlot.delete({
-    where: { id: slotId },
-  });
+  const deleted = await prisma.eventScheduleSlot.delete({ where: { id: slotId } });
+  getRequestLogger().warn({ eventId, slotId, deletedBy: caller.id }, "Schedule slot deleted.");
+  return deleted;
 };
 
 const listSlotBookings = async (eventId: string, slotId: string, caller: CallerContext) => {
@@ -476,6 +469,8 @@ const cancelEventScheduleSlot = async (
     return s;
   });
 
+  getRequestLogger().warn({ eventId, slotId, cancelledBy: caller.id }, "Schedule slot cancelled.");
+
   // 3. Trigger notifications (outside transaction for reliability)
   try {
     const cancelledBookings = await prisma.booking.findMany({
@@ -491,7 +486,7 @@ const cancelEventScheduleSlot = async (
     }
   } catch (error) {
     // Log but don't fail the cancellation if notifications fail
-    logger.error("Failed to queue notifications for cancelled slot", { slotId, error });
+    logger.error({ slotId, error }, "Failed to queue notifications for cancelled slot.");
   }
 
   return updatedSlot;
@@ -503,7 +498,9 @@ const revealCoachForSlot = async (
   payload: { coachUserId?: string; sessionJoinUrl?: string | null },
   caller: CallerContext,
 ): Promise<EventScheduleSlot> => {
-  const event = await getManagedEvent(eventId, caller, { allowCoachMember: caller.role === UserRole.COACH });
+  const event = await getManagedEvent(eventId, caller, {
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
 
   if (!event.deferCoachReveal) {
     throw new ErrorHandler(
@@ -541,10 +538,7 @@ const revealCoachForSlot = async (
   }
 
   if (caller.role === UserRole.COACH && finalCoachId !== caller.id) {
-    throw new ErrorHandler(
-      StatusCodes.FORBIDDEN,
-      "Coaches may only reveal themselves for a slot.",
-    );
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "Coaches may only reveal themselves for a slot.");
   }
 
   const coachInPool = event.coaches.some((ec) => ec.coachUserId === finalCoachId);
@@ -591,6 +585,8 @@ const revealCoachForSlot = async (
     }),
   ]);
 
+  getRequestLogger().info({ eventId, slotId, coachUserId: finalCoachId, participantCount: slot.bookings.length, revealedBy: caller.id }, "Coach revealed for slot.");
+
   void queueCoachRevealNotifications({
     slot: updatedSlot,
     event: { name: event.name, locationValue: event.locationValue },
@@ -613,7 +609,9 @@ const getCoachAvailabilityForSlot = async (
   slotId: string,
   caller: CallerContext,
 ) => {
-  const event = await getManagedEvent(eventId, caller, { allowCoachMember: caller.role === UserRole.COACH });
+  const event = await getManagedEvent(eventId, caller, {
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
 
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId, eventId },

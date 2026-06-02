@@ -3,7 +3,11 @@ import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { assertCancelTokenValid, assertRescheduleTokenValid, bookingInclude } from "../bookings/booking.shared";
+import {
+  assertCancelTokenValid,
+  assertRescheduleTokenValid,
+  bookingInclude,
+} from "../bookings/booking.shared";
 
 const slugSchema = z.string().trim().min(1, "Slug is required");
 
@@ -12,6 +16,7 @@ const publicTeamSelect = {
   name: true,
   description: true,
   publicBookingSlug: true,
+  isActive: true,
 } as const;
 
 const publicEventSelect = {
@@ -132,12 +137,8 @@ export const getEventBySlug = async (slug: string) => {
   const normalizedSlug = normalizeSlug(slug);
 
   const event = await prisma.event.findFirst({
-    where: {
-      publicBookingSlug: normalizedSlug,
-    },
-    include: {
-      team: true,
-    },
+    where: { publicBookingSlug: normalizedSlug },
+    select: { ...publicEventSelect, isActive: true },
   });
 
   if (!event) {
@@ -154,13 +155,8 @@ export const getEventBySlug = async (slug: string) => {
     );
   }
 
-  // Retrieve the full event with public selected fields
-  const fullEvent = await prisma.event.findUnique({
-    where: { id: event.id },
-    select: publicEventSelect,
-  });
-
-  return fullEvent;
+  const { isActive: _isActive, ...publicEvent } = event;
+  return publicEvent;
 };
 
 export const getCoachBySlug = async (slug: string) => {
@@ -235,6 +231,73 @@ export const listGroupEventsBySlug = async (slug: string) => {
   });
 
   return { group, team: group.team, events };
+};
+
+export const getPublicBookingDirectory = async (slug: string) => {
+  const normalizedSlug = normalizeSlug(slug);
+
+  const directory = await prisma.bookingDirectory.findUnique({
+    where: { slug: normalizedSlug },
+    include: {
+      sections: {
+        orderBy: { sortOrder: "asc" },
+        include: {
+          sessionType: true,
+          teams: {
+            orderBy: { sortOrder: "asc" },
+            include: { team: { select: publicTeamSelect } },
+          },
+        },
+      },
+    },
+  });
+
+  if (!directory || !directory.isActive) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking directory not found.");
+  }
+
+  // Collect all active (teamId, sessionTypeId) pairs to load events in one query.
+  const activePairs: { teamId: string; sessionTypeId: string }[] = [];
+  for (const section of directory.sections) {
+    if (!section.sessionType.isActive) continue;
+    for (const entry of section.teams) {
+      if (!entry.team.isActive) continue;
+      activePairs.push({ teamId: entry.teamId, sessionTypeId: section.sessionTypeId });
+    }
+  }
+
+  const allEvents =
+    activePairs.length > 0
+      ? await prisma.event.findMany({
+          where: { isActive: true, OR: activePairs },
+          select: { ...publicEventSelect, sessionTypeId: true },
+          orderBy: { name: "asc" },
+        })
+      : [];
+
+  const eventsByKey = new Map<string, Array<Omit<(typeof allEvents)[number], "sessionTypeId">>>();
+  for (const { sessionTypeId, ...event } of allEvents) {
+    const key = `${event.teamId}:${sessionTypeId}`;
+    const bucket = eventsByKey.get(key) ?? [];
+    bucket.push(event);
+    eventsByKey.set(key, bucket);
+  }
+
+  const sections = [];
+  for (const section of directory.sections) {
+    if (!section.sessionType.isActive) continue;
+
+    const teamsWithEvents = [];
+    for (const entry of section.teams) {
+      if (!entry.team.isActive) continue;
+      const key = `${entry.teamId}:${section.sessionTypeId}`;
+      teamsWithEvents.push({ team: entry.team, events: eventsByKey.get(key) ?? [] });
+    }
+
+    sections.push({ sessionType: section.sessionType, teams: teamsWithEvents });
+  }
+
+  return { id: directory.id, slug: directory.slug, name: directory.name, description: directory.description, sections };
 };
 
 export const getPublicBooking = async (id: string, token: string, mode?: string) => {

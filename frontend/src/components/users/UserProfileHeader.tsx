@@ -128,7 +128,10 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
               {user.role === 'COACH' && (
                 <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
                   <Link2 size={16} />
-                  <Typography variant="body2" sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}
+                  >
                     Booking link:{' '}
                     <PublicBookingLinkCell
                       type="coach"

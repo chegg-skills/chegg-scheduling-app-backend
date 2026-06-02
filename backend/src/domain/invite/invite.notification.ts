@@ -44,11 +44,7 @@ const queueInviteCreatedNotification = async (input: InviteCreatedNotificationIn
       },
     });
   } catch (error) {
-    logger.error("Failed to queue invite created notification.", {
-      email: input.email,
-      createdByAdminId: input.createdByAdminId,
-      error,
-    });
+    logger.error({ email: input.email, createdByAdminId: input.createdByAdminId, error }, "Failed to queue invite created notification.");
   }
 };
 
@@ -74,11 +70,7 @@ const queueInviteAcceptedNotification = async (input: InviteAcceptedNotification
       },
     });
   } catch (error) {
-    logger.error("Failed to queue invite accepted notification.", {
-      invitedById: input.invitedById,
-      inviteeEmail: input.inviteeEmail,
-      error,
-    });
+    logger.error({ invitedById: input.invitedById, inviteeEmail: input.inviteeEmail, error }, "Failed to queue invite accepted notification.");
   }
 };
 

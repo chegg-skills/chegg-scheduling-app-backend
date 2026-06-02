@@ -15,14 +15,39 @@ import {
   SetWeeklyAvailabilitySchema,
 } from "./availability.schema";
 
+/** Prisma client or transaction client — availability helpers accept either. */
 export type AvailabilityClient = Prisma.TransactionClient | PrismaClient;
 
+/**
+ * Local-timezone representation of a point in time, produced by
+ * `toLocalAvailabilityInfo`. All availability comparisons use these
+ * localised values rather than raw UTC to correctly handle coaches in
+ * half-hour-offset timezones (IST, Nepal) and cross-midnight sessions.
+ */
 export type LocalAvailabilityInfo = {
+  /** Local time as `"HH:mm"` in 24-hour format (hourCycle h23). */
   hhmm: string;
+  /** Local day of week (0 = Sunday … 6 = Saturday). */
   dayOfWeek: number;
+  /** Local calendar date as `"YYYY-MM-DD"`, used to detect cross-midnight sessions. */
   dateString: string;
 };
 
+/**
+ * Enforces availability management permissions, throwing 403 on any violation.
+ *
+ * Rules:
+ * - SUPER_ADMIN and TEAM_ADMIN may always read and write any user's availability.
+ * - A COACH may read their own availability but **cannot write their own weekly
+ *   schedule** — only admins can set recurring weekly windows for coaches.
+ * - No user may manage another user's availability unless they are an admin.
+ *
+ * @param targetUserId - The user whose availability is being accessed.
+ * @param caller       - The authenticated requester.
+ * @param mode         - `"weekly"` (recurring windows) or `"exceptions"` (one-off overrides).
+ * @param action       - `"read"` or `"write"` (default `"write"`).
+ * @throws {ErrorHandler} 403 — caller lacks permission.
+ */
 export const assertCanManageAvailability = (
   targetUserId: string,
   caller: CallerContext,
@@ -72,6 +97,20 @@ export const validateAvailabilityExceptionInput = (payload: {
   AvailabilitySchemas.exception.partial.parse(payload);
 };
 
+/**
+ * Builds a Prisma `NOT` filter that excludes bookings belonging to the current
+ * session when checking for coach conflicts. This prevents a slot's own
+ * bookings from appearing as conflicts against the coach assigned to that slot.
+ *
+ * - For `FIXED_SLOTS` bookings: excludes by `scheduleSlotId` (all bookings in
+ *   the same group slot are part of the same session).
+ * - For `COACH_AVAILABILITY` bookings: excludes by `eventId + startTime + endTime`.
+ * - Returns `undefined` when no `eventId` is provided (no exclusion applied).
+ *
+ * @param startTime - UTC start of the session being checked.
+ * @param endTime   - UTC end of the session being checked.
+ * @param options   - Event and slot identifiers for the exclusion scope.
+ */
 export const buildSameSessionExclusion = (
   startTime: Date,
   endTime: Date,
@@ -95,11 +134,32 @@ export const buildSameSessionExclusion = (
   };
 };
 
+/**
+ * Converts an `"HH:mm"` string to a total-minutes integer for numeric
+ * comparison. Must be used instead of lexicographic string comparison because
+ * `"09:30" >= "09:00"` would silently misclassify times for coaches in
+ * half-hour-offset timezones (e.g. IST `"05:30"`, Nepal `"05:45"`).
+ *
+ * @param hhmm - 24-hour time string in `"HH:mm"` format.
+ */
 export const hhmmToMinutes = (hhmm: string): number => {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 };
 
+/**
+ * Converts a UTC Date to its local representation in the given IANA timezone,
+ * returning the components needed for availability window comparisons.
+ *
+ * Uses `Intl.DateTimeFormat` with `hourCycle: "h23"` so that midnight is
+ * represented as `"00:00"` rather than `"24:00"`, which matters for
+ * cross-midnight session detection (`startLocal.dateString !== endLocal.dateString`).
+ *
+ * @param date     - The UTC instant to localise.
+ * @param timeZone - A valid IANA timezone string (e.g. `"Asia/Kolkata"`).
+ * @throws {Error} If `timeZone` is not a valid IANA timezone string. Callers
+ *   (e.g. `isCoachAvailable`) should catch this and treat the coach as unavailable.
+ */
 export const toLocalAvailabilityInfo = (date: Date, timeZone: string): LocalAvailabilityInfo => {
   let parts: Intl.DateTimeFormatPart[];
   try {
@@ -152,6 +212,25 @@ export const findAvailabilityException = (
   });
 };
 
+/**
+ * Determines whether a session falls within or conflicts with a one-off
+ * availability exception, returning a three-state result:
+ *
+ * - `false`  — the exception explicitly blocks this time (unavailable).
+ * - `true`   — the exception explicitly grants availability for this time.
+ * - `null`   — no exception applies; fall back to the weekly availability windows.
+ *
+ * Exception semantics:
+ * - All-day block (`isUnavailable: true`, no time range) → always `false`.
+ * - Partial block (`isUnavailable: true`, with time range) → `false` if the
+ *   session overlaps the blocked window, otherwise `null` (defer to weekly).
+ * - Availability grant (`isUnavailable: false`, with time range) → `true` if
+ *   the session is fully contained within the granted window, otherwise `null`.
+ *
+ * @param dayException - The exception record for the session's local date, if any.
+ * @param startLocal   - Localised start of the session.
+ * @param endLocal     - Localised end of the session.
+ */
 export const resolveAvailabilityFromException = (
   dayException: UserAvailabilityException | undefined,
   startLocal: LocalAvailabilityInfo,
@@ -183,6 +262,19 @@ export const resolveAvailabilityFromException = (
   return null;
 };
 
+/**
+ * Returns `true` if the session is fully contained within at least one of the
+ * coach's weekly availability windows for the session's local day of week.
+ *
+ * A session spanning multiple windows (e.g. 08:50–09:10 across two adjacent
+ * slots) will return `false` — each window is checked independently and the
+ * session must fit entirely within a single window. Callers that need to
+ * support multi-window spans should split the session before calling.
+ *
+ * @param weekly     - All weekly availability records for the coach.
+ * @param startLocal - Localised start of the session.
+ * @param endLocal   - Localised end of the session.
+ */
 export const isWithinWeeklyAvailability = (
   weekly: UserWeeklyAvailability[],
   startLocal: LocalAvailabilityInfo,

@@ -83,6 +83,21 @@ const PublicBookingPage = lazy(() =>
     default: module.PublicBookingPage,
   }))
 )
+const PublicBookingDirectory = lazy(() =>
+  import('@/pages/public/PublicBookingDirectory').then((module) => ({
+    default: module.PublicBookingDirectory,
+  }))
+)
+const SessionTypesPage = lazy(() =>
+  import('@/pages/SessionTypesPage').then((module) => ({
+    default: module.SessionTypesPage,
+  }))
+)
+const BookingDirectoriesPage = lazy(() =>
+  import('@/pages/BookingDirectoriesPage').then((module) => ({
+    default: module.BookingDirectoriesPage,
+  }))
+)
 const StudentsPage = lazy(() =>
   import('@/pages/StudentsPage').then((module) => ({
     default: module.StudentsPage,
@@ -164,7 +179,14 @@ export const router = createBrowserRouter([
     path: '/book',
     element: <PublicLayout maxWidth="lg" />,
     children: [
-      { path: '', element: renderLazyPage(PublicBookingPage) },
+      { path: '', element: renderLazyPage(PublicBookingDirectory) },
+      { path: 'directory/:directorySlug', element: renderLazyPage(PublicBookingDirectory) },
+      { path: 'sessions', element: renderLazyPage(PublicBookingDirectory) },
+      { path: 'sessions/:sessionTypeSlug', element: renderLazyPage(PublicBookingDirectory) },
+      {
+        path: 'sessions/:sessionTypeSlug/:teamSlug',
+        element: renderLazyPage(PublicBookingDirectory),
+      },
       { path: 'team/:teamSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'event/:eventSlug', element: renderLazyPage(PublicBookingPage) },
       { path: 'coach/:coachSlug', element: renderLazyPage(PublicBookingPage) },
@@ -213,6 +235,8 @@ export const router = createBrowserRouter([
           { path: '/students', element: renderLazyPage(StudentsPage) },
 
           { path: '/students/:studentId', element: renderLazyPage(StudentDetailPage) },
+          { path: '/session-types', element: renderLazyPage(SessionTypesPage) },
+          { path: '/booking-directories', element: renderLazyPage(BookingDirectoriesPage) },
         ],
       },
     ],

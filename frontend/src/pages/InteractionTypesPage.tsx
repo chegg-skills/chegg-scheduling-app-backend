@@ -9,9 +9,6 @@ export function InteractionTypesPage() {
   const { data, isLoading, error } = useInteractionTypes()
   const interactionTypes = data?.interactionTypes ?? []
 
-  if (isLoading) return <PageSpinner />
-  if (error) return <ErrorAlert message="Failed to load interaction types." />
-
   return (
     <Box>
       <PageHeader
@@ -20,7 +17,13 @@ export function InteractionTypesPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <InteractionTypeTable interactionTypes={interactionTypes} />
+        {isLoading ? (
+          <PageSpinner />
+        ) : error ? (
+          <ErrorAlert message="Failed to load interaction types." />
+        ) : (
+          <InteractionTypeTable interactionTypes={interactionTypes} />
+        )}
       </Box>
     </Box>
   )

@@ -3,8 +3,7 @@ import type { CallerContext } from "../utils/userUtils";
 
 export const isCoach = (caller: CallerContext): boolean => caller.role === UserRole.COACH;
 
-export const isTeamAdmin = (caller: CallerContext): boolean =>
-  caller.role === UserRole.TEAM_ADMIN;
+export const isTeamAdmin = (caller: CallerContext): boolean => caller.role === UserRole.TEAM_ADMIN;
 
 export const isSuperAdmin = (caller: CallerContext): boolean =>
   caller.role === UserRole.SUPER_ADMIN;

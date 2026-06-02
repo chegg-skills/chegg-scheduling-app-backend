@@ -88,7 +88,10 @@ describe('PublicCancelPage', () => {
     server.use(
       http.post('*/api/bookings/:id/cancel', async ({ request }) => {
         capturedBody = await request.json()
-        return HttpResponse.json({ success: true, data: { booking: { ...mockBooking, status: 'CANCELLED' } } })
+        return HttpResponse.json({
+          success: true,
+          data: { booking: { ...mockBooking, status: 'CANCELLED' } },
+        })
       })
     )
 
@@ -102,9 +105,9 @@ describe('PublicCancelPage', () => {
     fireEvent.click(radioOption)
 
     // Click confirm button in footer
-    const confirmButton = screen.getAllByRole('button').find(
-      (btn) => btn.textContent?.toLowerCase() === 'confirm cancellation'
-    )
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.toLowerCase() === 'confirm cancellation')
     expect(confirmButton).toBeTruthy()
     fireEvent.click(confirmButton!)
 
@@ -125,7 +128,10 @@ describe('PublicCancelPage', () => {
     server.use(
       http.post('*/api/bookings/:id/cancel', async ({ request }) => {
         capturedBody = await request.json()
-        return HttpResponse.json({ success: true, data: { booking: { ...mockBooking, status: 'CANCELLED' } } })
+        return HttpResponse.json({
+          success: true,
+          data: { booking: { ...mockBooking, status: 'CANCELLED' } },
+        })
       })
     )
 
@@ -146,9 +152,9 @@ describe('PublicCancelPage', () => {
     fireEvent.change(reasonInput, { target: { value: 'Unexpected emergency' } })
 
     // Click cancel button
-    const confirmButton = screen.getAllByRole('button').find(
-      (btn) => btn.textContent?.toLowerCase() === 'confirm cancellation'
-    )
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.toLowerCase() === 'confirm cancellation')
     expect(confirmButton).toBeTruthy()
     fireEvent.click(confirmButton!)
 
@@ -189,7 +195,9 @@ describe('PublicCancelPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/link no longer valid/i)).toBeTruthy()
-      expect(screen.getByText(/this cancellation link is no longer valid or has expired/i)).toBeTruthy()
+      expect(
+        screen.getByText(/this cancellation link is no longer valid or has expired/i)
+      ).toBeTruthy()
     })
   })
 

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { availabilityApi, type GetExceptionsParams } from '@/api/availability'
 import type { SetWeeklyAvailabilityDto, CreateAvailabilityExceptionDto } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
+import { eventKeys } from './useEvents'
 
 export const availabilityKeys = {
   all: ['availability'] as const,
@@ -31,6 +32,7 @@ export function useUpdateWeeklyAvailability() {
       invalidateQueryKeys(qc, [
         availabilityKeys.weekly(userId),
         availabilityKeys.effectiveRoot(userId),
+        eventKeys.all,
       ]),
   })
 }

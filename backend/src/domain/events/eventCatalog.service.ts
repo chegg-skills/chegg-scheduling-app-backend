@@ -4,6 +4,7 @@ import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
 import type { CallerContext } from "../../shared/utils/userUtils";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import {
   INTERACTION_TYPE_CAPS,
   INTERACTION_TYPE_KEYS,
@@ -32,7 +33,7 @@ const createEventType = async (
   const validated = EventTypeSchema.body.parse(payload);
 
   try {
-    return await prisma.eventType.create({
+    const eventType = await prisma.eventType.create({
       data: {
         key: validated.key!,
         name: validated.name!,
@@ -43,6 +44,8 @@ const createEventType = async (
         updatedById: caller.id,
       },
     });
+    getRequestLogger().info({ eventTypeId: eventType.id, key: eventType.key, createdBy: caller.id }, "Event type created.");
+    return eventType;
   } catch (error) {
     return rethrowPrismaError(error, {
       P2002: {
@@ -84,10 +87,12 @@ const updateEventType = async (
   };
 
   try {
-    return await prisma.eventType.update({
+    const eventType = await prisma.eventType.update({
       where: { id: eventTypeId },
       data,
     });
+    getRequestLogger().info({ eventTypeId, updatedBy: caller.id }, "Event type updated.");
+    return eventType;
   } catch (error) {
     return rethrowPrismaError(error, {
       P2025: {
@@ -143,9 +148,9 @@ const deleteEventType = async (
   }
 
   try {
-    return await prisma.eventType.delete({
-      where: { id: eventTypeId },
-    });
+    const deleted = await prisma.eventType.delete({ where: { id: eventTypeId } });
+    getRequestLogger().warn({ eventTypeId, deletedBy: caller.id }, "Event type deleted.");
+    return deleted;
   } catch (error) {
     return rethrowPrismaError(error, {
       P2025: {

@@ -38,7 +38,23 @@ const mockEvent = {
     {
       id: 'coach-1',
       coachUserId: 'coach-1',
-      coachUser: { id: 'coach-1', firstName: 'John', lastName: 'Coach', timezone: 'UTC' },
+      coachUser: {
+        id: 'coach-1',
+        firstName: 'John',
+        lastName: 'Coach',
+        timezone: 'UTC',
+        weeklyAvailability: [
+          {
+            id: 'avail-1',
+            userId: 'coach-1',
+            dayOfWeek: 1,
+            startTime: '09:00',
+            endTime: '17:00',
+            createdAt: '2026-05-26T00:00:00Z',
+            updatedAt: '2026-05-26T00:00:00Z'
+          }
+        ]
+      },
     },
   ],
   _count: {
@@ -86,6 +102,12 @@ const handlers = [
           { id: 'admin-1', user: { firstName: 'Admin', lastName: 'User' }, role: 'TEAM_ADMIN' },
         ],
       },
+    })
+  }),
+  http.get('*/api/bookings', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { bookings: [], pagination: { total: 0, page: 1, limit: 100, totalPages: 0 } },
     })
   }),
 
@@ -137,7 +159,6 @@ describe('Event Detail Integration', () => {
 
     // 1. Verify Page Header
     await screen.findByText('Math Tutoring')
-    expect(screen.getByText('One-on-one math support')).toBeInTheDocument()
 
     // 2. Default tab (Details) content
     expect(screen.getByText(/Event Configuration/i)).toBeInTheDocument()
@@ -146,6 +167,7 @@ describe('Event Detail Integration', () => {
     const coachesTab = screen.getByRole('tab', { name: /Coaches/i })
     fireEvent.click(coachesTab)
     expect(await screen.findByText('John Coach')).toBeInTheDocument()
+    expect(screen.getByText('Mon: 09:00–17:00')).toBeInTheDocument()
 
     // 4. Switch to Schedule tab
     const scheduleTab = screen.getByRole('tab', { name: /Schedule/i })

@@ -58,7 +58,7 @@ const listTeamEventGroups = async (
   teamId: string,
   caller: CallerContext,
 ): Promise<SafeEventGroup[]> => {
-  await getManagedTeam(teamId, caller, { 
+  await getManagedTeam(teamId, caller, {
     allowInactive: true,
     allowCoachMember: caller.role === UserRole.COACH,
   });
@@ -72,7 +72,7 @@ const listTeamEventGroups = async (
 
 const readEventGroup = async (groupId: string, caller: CallerContext): Promise<SafeEventGroup> => {
   const group = await loadGroupOrThrow(groupId);
-  await getManagedTeam(group.teamId, caller, { 
+  await getManagedTeam(group.teamId, caller, {
     allowInactive: true,
     allowCoachMember: caller.role === UserRole.COACH,
   });

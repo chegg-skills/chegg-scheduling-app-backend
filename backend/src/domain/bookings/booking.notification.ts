@@ -9,6 +9,7 @@ import {
 import type { SafeBooking } from "./booking.service";
 
 import { formatNotificationDate, getFriendlyTimezoneLabel } from "../../shared/utils/date";
+import { escapeHtml } from "../../shared/utils/htmlSanitizer";
 import {
   getTeamNotificationConfig,
   type ResolvedNotificationConfig,
@@ -54,7 +55,7 @@ const getBookingNotificationVariables = async (
       ? `\nReason: ${booking.cancellationReason}`
       : "",
     cancellationDetailsHtml: booking.cancellationReason
-      ? `<br/><strong>Reason:</strong> ${booking.cancellationReason}`
+      ? `<br/><strong>Reason:</strong> ${escapeHtml(booking.cancellationReason)}`
       : "",
   };
 
@@ -167,10 +168,7 @@ const queueBookingReminderNotifications = async (
       config.reminderOffsets.map((offset) => queueStudentReminderByOffset(booking, offset)),
     );
   } catch (error) {
-    logger.error("Failed to queue booking reminders.", {
-      bookingId: booking.id,
-      error,
-    });
+    logger.error({ bookingId: booking.id, error }, "Failed to queue booking reminders.");
   }
 };
 
@@ -188,10 +186,7 @@ const cancelScheduledBookingReminders = async (booking: SafeBooking): Promise<vo
       },
     });
   } catch (error) {
-    logger.error("Failed to cancel scheduled booking reminders.", {
-      bookingId: booking.id,
-      error,
-    });
+    logger.error({ bookingId: booking.id, error }, "Failed to cancel scheduled booking reminders.");
   }
 };
 
@@ -275,11 +270,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
       await queueBookingReminderNotifications(booking, config);
     }
   } catch (error) {
-    logger.error("Failed to queue booking creation notifications.", {
-      bookingId: booking.id,
-      eventId: booking.eventId,
-      error,
-    });
+    logger.error({ bookingId: booking.id, eventId: booking.eventId, error }, "Failed to queue booking creation notifications.");
   }
 };
 
@@ -409,11 +400,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
       await Promise.all(publishTasks);
     }
   } catch (error) {
-    logger.error("Failed to queue booking status notifications.", {
-      bookingId: booking.id,
-      status: booking.status,
-      error,
-    });
+    logger.error({ bookingId: booking.id, status: booking.status, error }, "Failed to queue booking status notifications.");
   }
 };
 
@@ -455,10 +442,7 @@ const queueBookingUpdatedNotifications = async (
 
     await Promise.all(publishTasks);
   } catch (error) {
-    logger.error("Failed to queue booking update notifications.", {
-      bookingId: newBooking.id,
-      error,
-    });
+    logger.error({ bookingId: newBooking.id, error }, "Failed to queue booking update notifications.");
   }
 };
 
@@ -519,11 +503,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
     await cancelScheduledBookingReminders(booking);
     await queueBookingReminderNotifications(booking, config);
   } catch (error) {
-    logger.error("Failed to queue booking rescheduled notifications.", {
-      bookingId: booking.id,
-      eventId: booking.eventId,
-      error,
-    });
+    logger.error({ bookingId: booking.id, eventId: booking.eventId, error }, "Failed to queue booking rescheduled notifications.");
   }
 };
 

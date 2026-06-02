@@ -31,6 +31,7 @@ import {
   getEffectiveAvailabilityData as getEffectiveAvailability,
 } from "./availabilityCalendar.service";
 import { getCoachConflicts } from "./availabilityConflict.service";
+import { logger } from "../../shared/logging/logger";
 
 /**
  * Facade service for availability lookups.
@@ -214,9 +215,7 @@ const isCoachAvailable = async (
     startLocal = toLocalAvailabilityInfo(startTime, user.timezone);
     endLocal = toLocalAvailabilityInfo(effectiveEndTime, user.timezone);
   } catch {
-    console.warn(
-      `[isCoachAvailable] Invalid timezone "${user.timezone}" for user ${userId}. Treating as unavailable.`,
-    );
+    logger.warn({ userId, timezone: user.timezone }, "Invalid coach timezone — treating as unavailable.");
     return false;
   }
 

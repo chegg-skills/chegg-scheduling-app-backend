@@ -1,5 +1,6 @@
 import { config } from "../config/env";
 import { processScheduledNotifications } from "../services/scheduledNotificationService";
+import { logger } from "../logger";
 
 let reminderTimer: NodeJS.Timeout | null = null;
 let sweepInProgress = false;
@@ -12,10 +13,10 @@ const runReminderSweep = async (): Promise<void> => {
   try {
     const processedCount = await processScheduledNotifications();
     if (processedCount > 0) {
-      console.log(`Processed ${processedCount} due scheduled notification(s).`);
+      logger.info({ processedCount }, "Reminder scheduler sweep completed.");
     }
   } catch (error) {
-    console.error("Reminder scheduler sweep failed:", error);
+    logger.error({ error }, "Reminder scheduler sweep failed.");
   } finally {
     sweepInProgress = false;
   }
@@ -23,7 +24,7 @@ const runReminderSweep = async (): Promise<void> => {
 
 function startReminderScheduler(): () => void {
   if (!config.scheduler.enabled) {
-    console.log("Reminder scheduler is disabled by configuration.");
+    logger.info("Reminder scheduler is disabled by configuration.");
     return () => {};
   }
 
@@ -37,7 +38,7 @@ function startReminderScheduler(): () => void {
 
   reminderTimer.unref?.();
 
-  console.log(`Reminder scheduler started. Polling every ${intervalMs}ms.`);
+  logger.info({ intervalMs }, "Reminder scheduler started.");
 
   return () => {
     if (reminderTimer) {

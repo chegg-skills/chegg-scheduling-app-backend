@@ -93,7 +93,6 @@ export function TeamDetailPage() {
     <Stack spacing={4}>
       <PageHeader
         title={toTitleCase(team.name)}
-        subtitle={team.description ?? undefined}
         breadcrumbs={[{ label: 'Teams', to: '/teams' }]}
         tags={
           <Badge
@@ -290,10 +289,7 @@ export function TeamDetailPage() {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2} prefix="team">
-          <TeamNotificationsTab
-            teamId={teamId}
-            canEdit={isAdmin}
-          />
+          <TeamNotificationsTab teamId={teamId} canEdit={isAdmin} />
         </TabPanel>
       </Box>
 

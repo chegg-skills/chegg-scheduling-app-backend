@@ -3,7 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import express, { type Request } from "express";
 import helmet from "helmet";
-import morgan from "morgan";
+import pinoHttp from "pino-http";
+import { randomUUID } from "node:crypto";
 import { pathNotFound } from "./shared/error/pathNotFound";
 import { errorHandler } from "./shared/error/errorhandler";
 import { logger } from "./shared/logging/logger";
@@ -41,11 +42,26 @@ const corsOptions: cors.CorsOptions = {
   credentials: true,
 };
 
-morgan.token("request-id", (req) => (req as Request).requestId ?? "-");
-
-const requestLogFormat = isProduction
-  ? ":remote-addr :method :url :status :res[content-length] - :response-time ms reqId=:request-id"
-  : ":method :url :status :response-time ms reqId=:request-id";
+const httpLogger = pinoHttp({
+  logger: logger,
+  // Reuse the request ID already set by attachRequestContext
+  genReqId: (req) => (req as Request).requestId ?? randomUUID(),
+  customLogLevel: (_req, res, err) => {
+    if (err || res.statusCode >= 500) return "error";
+    if (res.statusCode >= 400) return "warn";
+    return "info";
+  },
+  customSuccessMessage: (req, res) =>
+    `${(req as Request).method} ${(req as Request).url} ${res.statusCode}`,
+  customErrorMessage: (_req, res, err) =>
+    `${res.statusCode} ${(err as Error)?.message ?? "Request failed"}`,
+  serializers: {
+    req: (req) => ({ method: req.method, url: req.url }),
+    res: (res) => ({ statusCode: res.statusCode }),
+  },
+  // Suppress health check endpoint to avoid log noise
+  autoLogging: { ignore: (req) => (req as Request).url === "/health" },
+});
 
 const app = express();
 
@@ -56,7 +72,8 @@ app.use(cookieParser());
 app.use(csrfProtection);
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-app.use(morgan(requestLogFormat));
+app.use(httpLogger);
+
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });

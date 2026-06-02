@@ -1,7 +1,8 @@
 import "dotenv/config";
 import { bootstrap } from "./app/bootstrap";
+import { logger } from "./logger";
 
 bootstrap().catch((err: unknown) => {
-  console.error("Fatal startup error:", err);
+  logger.fatal({ error: err }, "Fatal startup error.");
   process.exit(1);
 });

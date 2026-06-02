@@ -50,7 +50,7 @@ export function WeeklyAvailabilityPicker({
         ))}
       </Stack>
 
-      {showFooter !== false && !disabled && (
+      {showFooter !== false && (
         <Box
           sx={{
             mt: 4,
@@ -65,7 +65,13 @@ export function WeeklyAvailabilityPicker({
           <Button variant="secondary" onClick={handleReset} disabled={disabled}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSave} disabled={disabled} sx={{ minWidth: 160 }}>
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            isLoading={disabled}
+            disabled={disabled}
+            sx={{ minWidth: 160 }}
+          >
             Save changes
           </Button>
         </Box>

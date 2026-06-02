@@ -21,7 +21,7 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
       sx={{
         bgcolor: alpha(theme.palette.secondary.main, 0.03),
         p: 2.5,
-        borderRadius: 2,
+        borderRadius: 1.5,
         border: `1px solid ${alpha(theme.palette.secondary.main, 0.05)}`,
       }}
     >

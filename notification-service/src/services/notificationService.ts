@@ -8,6 +8,7 @@ import {
   markNotificationAsSent,
 } from "./notificationRepository";
 import { publishFeedback } from "./feedbackPublisher";
+import { logger } from "../logger";
 
 type NotificationSendResult =
   | SentMessageInfo
@@ -54,7 +55,7 @@ export async function sendStoredNotification(
 
   try {
     const info = await sendEmailWithRetry(buildMailOptions(record));
-    console.log("Email sent successfully:", info.messageId ?? info.response ?? info);
+    logger.info({ notificationId: record.id, messageId: info.messageId }, "Email sent successfully.");
     await markNotificationAsSent(record.id);
 
     // If this is a custom student email, report success back to RabbitMQ
@@ -65,7 +66,7 @@ export async function sendStoredNotification(
     return info;
   } catch (error) {
     await markNotificationAsFailed(record.id, error);
-    console.error("Error sending notification:", error);
+    logger.error({ error, notificationType: record.notificationType }, "Error sending notification.");
 
     // If this is a custom student email, report failure back to RabbitMQ
     if (record.notificationType === "STUDENT_CUSTOM_EMAIL" && record.notificationKey) {
@@ -134,7 +135,10 @@ export async function sendNotification(
     if (!record) {
       throw new Error("Could not persist scheduled notification for later delivery.");
     }
-    console.log(`Notification ${record.id} scheduled for ${scheduledFor.toISOString()}`);
+    logger.info(
+      { notificationId: record.id, scheduledFor: scheduledFor.toISOString() },
+      "Notification scheduled.",
+    );
     return { scheduled: true, notificationId: record.id, sendAt: scheduledFor.toISOString() };
   }
 

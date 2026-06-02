@@ -5,6 +5,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { resolvePagination } from "../../shared/utils/pagination";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import type { CallerContext } from "../../shared/utils/userUtils";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import {
   assertGroupBelongsToTeam,
   eventInclude,
@@ -57,7 +58,7 @@ const listEventsByQuery = async (
   where: Prisma.EventWhereInput,
   options: ListEventsOptions = {},
 ) => {
-  const { page, pageSize, skip } = resolvePagination(options);
+  const { page, pageSize, skip } = resolvePagination(options, { maxPageSize: 1000 });
 
   const [events, total] = await prisma.$transaction([
     prisma.event.findMany({
@@ -109,15 +110,14 @@ const createEvent = async (
 
   const context = await resolveCreateEventContext(payload, caller.id);
 
-  return prisma.event.create({
-    data: buildEventCreateData({
-      payload,
-      callerId: caller.id,
-      teamId,
-      context,
-    }),
+  const event = await prisma.event.create({
+    data: buildEventCreateData({ payload, callerId: caller.id, teamId, context }),
     include: eventInclude,
   });
+
+  getRequestLogger().info({ eventId: event.id, teamId, interactionType: event.interactionType, createdBy: caller.id }, "Event created.");
+
+  return event;
 };
 
 const listTeamEvents = async (
@@ -194,7 +194,7 @@ const updateEvent = async (
       });
     });
   } catch (error) {
-    console.error("Failed to update event:", error);
+    getRequestLogger().error({ eventId, error }, "Event update transaction failed.");
     throw error;
   }
 
@@ -210,12 +210,15 @@ const updateEvent = async (
   });
 
   if (payload.isActive !== undefined && payload.isActive !== existingEvent.isActive) {
+    getRequestLogger().info({ eventId, isActive: updatedEvent.isActive, updatedBy: caller.id }, "Event active status changed.");
     void queueEventStatusChangedNotification({
       eventId,
       eventName: updatedEvent.name,
       isActive: updatedEvent.isActive,
       callerId: caller.id,
     });
+  } else {
+    getRequestLogger().info({ eventId, updatedBy: caller.id }, "Event updated.");
   }
 
   return prisma.event.findUniqueOrThrow({
@@ -237,6 +240,8 @@ const deleteEvent = async (eventId: string, caller: CallerContext): Promise<Safe
       `Cannot delete an event that has active booking(s). Please deactivate it instead.`,
     );
   }
+
+  getRequestLogger().warn({ eventId, teamId: event.teamId, deletedBy: caller.id }, "Event deleted.");
 
   // Manually cleanup relations that don't have cascade delete in the schema
   await prisma.$transaction(async (tx) => {
@@ -291,10 +296,14 @@ const duplicateEvent = async (eventId: string, caller: CallerContext): Promise<S
       sourceEvent.coaches.length,
     );
 
-    return tx.event.findUniqueOrThrow({
+    const duplicated = await tx.event.findUniqueOrThrow({
       where: { id: newEvent.id },
       include: eventInclude,
     });
+
+    getRequestLogger().info({ sourceEventId: eventId, newEventId: newEvent.id, coachCount: sourceEvent.coaches.length, duplicatedBy: caller.id }, "Event duplicated.");
+
+    return duplicated;
   });
 };
 

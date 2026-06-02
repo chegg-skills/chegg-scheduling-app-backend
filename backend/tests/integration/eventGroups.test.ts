@@ -363,4 +363,3 @@ describe("Event group Coach visibility validations", () => {
     expect(res.status).toBe(403);
   });
 });
-

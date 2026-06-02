@@ -5,7 +5,11 @@ import type { EmailTemplate, TemplateVariables } from "../types/notification";
 // They must NOT be escaped — escaping would render them as visible literal tags.
 // IMPORTANT: values for these keys must always be constructed server-side from
 // trusted DB data, never from user-submitted free text.
-const RAW_HTML_FIELDS = new Set<string>(["coHostDetailsHtml", "cancellationDetailsHtml", "htmlBody"]);
+const RAW_HTML_FIELDS = new Set<string>([
+  "coHostDetailsHtml",
+  "cancellationDetailsHtml",
+  "htmlBody",
+]);
 
 const escapeHtml = (unsafe: string): string =>
   unsafe

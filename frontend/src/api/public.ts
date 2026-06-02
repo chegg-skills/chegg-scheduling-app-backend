@@ -6,6 +6,7 @@ import type {
   PublicEventSummary,
   PublicTeamSummary,
   PublicGroupSummary,
+  PublicBookingDirectoryData,
 } from '@/types'
 
 export interface ListPublicTeamsResponse {
@@ -87,9 +88,12 @@ export const publicApi = {
     apiClient.get<ApiResponse<GetPublicGroupResponse>>(`/public/groups/slug/${slug}`, { signal }),
 
   listGroupEventsBySlug: (slug: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<ListGroupEventsBySlugResponse>>(`/public/groups/slug/${slug}/events`, {
-      signal,
-    }),
+    apiClient.get<ApiResponse<ListGroupEventsBySlugResponse>>(
+      `/public/groups/slug/${slug}/events`,
+      {
+        signal,
+      }
+    ),
 
   getEventBySlug: (slug: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<GetPublicEventResponse>>(`/public/events/slug/${slug}`, { signal }),
@@ -121,4 +125,10 @@ export const publicApi = {
       params: options?.mode ? { mode: options.mode } : undefined,
       signal: options?.signal,
     }),
+
+  getBookingDirectoryBySlug: (slug: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ bookingDirectory: PublicBookingDirectoryData }>>(
+      `/public/booking-directories/slug/${slug}`,
+      { signal }
+    ),
 }

@@ -1,8 +1,8 @@
 import { Avatar, Box, Stack, Typography, alpha, useTheme } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { User } from 'lucide-react'
+import { UserCheck, User } from 'lucide-react'
 import type { Booking } from '@/types'
-import { SectionLabel } from './Common'
+import { BookingSection } from './Common'
 import { useBookingView } from '@/context/bookingView'
 
 interface CoachSectionProps {
@@ -13,20 +13,18 @@ export function CoachSection({ booking }: CoachSectionProps) {
   const theme = useTheme()
   const { onViewCoach } = useBookingView()
 
+  const hasCoCoaches = booking.coCoachUserIds?.length > 0
+  const labelText = hasCoCoaches ? 'Lead Coach & Team' : 'Coach'
+
   return (
-    <Box>
-      <SectionLabel label={booking.coCoachUserIds?.length > 0 ? 'Lead Coach' : 'Coach'} />
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {booking.coCoachUserIds?.length > 0
-          ? 'This coach leads the session'
-          : 'Coach will attend this meeting'}
-      </Typography>
-      <Stack
-        direction="row"
-        spacing={1.5}
-        alignItems="center"
-        sx={{ mb: booking.coCoachUserIds?.length > 0 ? 3 : 0 }}
-      >
+    <BookingSection label={labelText} icon={<UserCheck size={16} />}>
+      {hasCoCoaches && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          This coach leads the session with support from co-coaches
+        </Typography>
+      )}
+
+      <Stack direction="row" spacing={1.5} alignItems="center">
         <Avatar
           src={booking.coach?.avatarUrl ?? undefined}
           sx={{
@@ -73,18 +71,28 @@ export function CoachSection({ booking }: CoachSectionProps) {
             </Typography>
           )}
           {booking.coach?.email && (
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
               {booking.coach.email}
             </Typography>
           )}
         </Box>
       </Stack>
 
-      {booking.coCoachUserIds?.length > 0 && (
-        <Box sx={{ mt: 2 }}>
-          <SectionLabel label="Co-coaches" />
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            Supporting coaches for this session
+      {hasCoCoaches && (
+        <Box sx={{ mt: 2.5, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              color: 'text.secondary',
+              display: 'block',
+              mb: 1.5,
+              fontSize: '0.65rem',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Co-coaches
           </Typography>
           <Stack spacing={1.5}>
             {booking.coCoachUserIds.map((coCoachId) => {
@@ -128,6 +136,6 @@ export function CoachSection({ booking }: CoachSectionProps) {
           </Stack>
         </Box>
       )}
-    </Box>
+    </BookingSection>
   )
 }

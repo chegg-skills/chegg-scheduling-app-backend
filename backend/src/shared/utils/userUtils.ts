@@ -80,3 +80,13 @@ export const toSafeUser = (user: User): SafeUser => {
   const { password: _password, ssoSub: _ssoSub, ssoProvider: _ssoProvider, ...safeUser } = user;
   return safeUser;
 };
+
+// Extracts the authenticated caller from res.locals with a runtime null-guard.
+// Use in controllers instead of bare `res.locals.authUser as CallerContext`.
+export const requireAuthUser = (locals: Record<string, unknown>): CallerContext => {
+  const caller = locals.authUser as CallerContext | undefined;
+  if (!caller) {
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Authentication required.");
+  }
+  return caller;
+};

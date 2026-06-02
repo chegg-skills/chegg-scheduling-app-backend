@@ -19,9 +19,6 @@ export function EventTypesPage() {
   const { data: eventTypes = [], isLoading, error } = useEventTypes()
   const { data: eventTypeStats, isLoading: statsLoading } = useEventTypeStats(timeframe)
 
-  if (isLoading) return <PageSpinner />
-  if (error) return <ErrorAlert message="Failed to load event types." />
-
   const eventTypeStatItems = [
     {
       label: 'New event types',
@@ -59,27 +56,38 @@ export function EventTypesPage() {
         title="Event Types"
         subtitle="Manage available event types."
         actions={
-          <Button size="sm" onClick={() => setShowCreate(true)}>
+          <Button size="sm" onClick={() => setShowCreate(true)} disabled={isLoading || !!error}>
             <Plus size={16} /> New event type
           </Button>
         }
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        <StatsOverview
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-          timeframeInfo={eventTypeStats?.timeframe}
-          items={eventTypeStatItems}
-          isLoading={statsLoading}
-        />
+        {isLoading ? (
+          <PageSpinner />
+        ) : error ? (
+          <ErrorAlert message="Failed to load event types." />
+        ) : (
+          <>
+            <StatsOverview
+              timeframe={timeframe}
+              onTimeframeChange={setTimeframe}
+              timeframeInfo={eventTypeStats?.timeframe}
+              items={eventTypeStatItems}
+              isLoading={statsLoading}
+            />
 
-        <Box sx={{ mt: 3 }}>
-          <EventTypeTable eventTypes={eventTypes} />
-        </Box>
+            <Box sx={{ mt: 3 }}>
+              <EventTypeTable eventTypes={eventTypes} />
+            </Box>
+          </>
+        )}
 
         <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create event type">
-          <EventTypeForm onSuccess={() => setShowCreate(false)} />
+          <EventTypeForm
+            onSuccess={() => setShowCreate(false)}
+            onCancel={() => setShowCreate(false)}
+          />
         </Modal>
       </Box>
     </Box>

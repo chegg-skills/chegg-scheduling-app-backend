@@ -176,7 +176,7 @@ export function CancelBookingDialog({
               }
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
+                  borderRadius: 1.5,
                 },
               }}
             />

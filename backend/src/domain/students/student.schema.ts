@@ -19,8 +19,15 @@ export const SendEmailSchema = {
     studentId: z.uuid("Invalid student ID"),
   }),
   body: z.object({
-    subject: z.string().trim().min(1, "Subject is required").max(200, "Subject cannot exceed 200 characters"),
-    body: z.string().min(1, "Body is required").max(50000, "Email body cannot exceed 50,000 characters"),
+    subject: z
+      .string()
+      .trim()
+      .min(1, "Subject is required")
+      .max(200, "Subject cannot exceed 200 characters"),
+    body: z
+      .string()
+      .min(1, "Body is required")
+      .max(50000, "Email body cannot exceed 50,000 characters"),
   }),
 };
 

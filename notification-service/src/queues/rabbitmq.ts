@@ -1,4 +1,5 @@
 import amqp from "amqplib";
+import { logger } from "../logger";
 
 type RabbitConnection = Awaited<ReturnType<typeof amqp.connect>>;
 
@@ -20,9 +21,7 @@ const scheduleReconnect = (): void => {
   void (async () => {
     for (let attempt = 1; attempt <= MAX_RECONNECT_ATTEMPTS; attempt++) {
       const delayMs = RECONNECT_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-      console.log(
-        `RabbitMQ reconnect attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS} in ${delayMs}ms…`,
-      );
+      logger.warn({ attempt, maxAttempts: MAX_RECONNECT_ATTEMPTS, delayMs }, "RabbitMQ reconnecting...");
       await wait(delayMs);
 
       try {
@@ -31,27 +30,27 @@ const scheduleReconnect = (): void => {
         attachListeners(rabbitConnection);
         connection = rabbitConnection;
         reconnecting = false;
-        console.log("RabbitMQ reconnected successfully.");
+        logger.info("RabbitMQ reconnected successfully.");
         return;
       } catch (error) {
-        console.error(`RabbitMQ reconnect attempt ${attempt} failed:`, error);
+        logger.warn({ attempt, error }, "RabbitMQ reconnect attempt failed.");
       }
     }
 
-    console.error(`RabbitMQ: exhausted ${MAX_RECONNECT_ATTEMPTS} reconnect attempts. Exiting.`);
+    logger.fatal({ maxAttempts: MAX_RECONNECT_ATTEMPTS }, "RabbitMQ: exhausted reconnect attempts — exiting.");
     process.exit(1);
   })();
 };
 
 const attachListeners = (conn: RabbitConnection): void => {
   conn.on("close", () => {
-    console.warn("RabbitMQ connection closed. Scheduling reconnect…");
+    logger.warn("RabbitMQ connection closed — scheduling reconnect.");
     connection = null;
     scheduleReconnect();
   });
 
   conn.on("error", (err: unknown) => {
-    console.error("RabbitMQ connection error:", err);
+    logger.error({ error: err }, "RabbitMQ connection error.");
     connection = null;
     scheduleReconnect();
   });
@@ -69,7 +68,7 @@ const getRabbitConnection = async (): Promise<RabbitConnection> => {
     connection = rabbitConnection;
     return connection;
   } catch (error) {
-    console.error("Error connecting to RabbitMQ:", error);
+    logger.error({ error }, "Error connecting to RabbitMQ.");
     throw error;
   }
 };

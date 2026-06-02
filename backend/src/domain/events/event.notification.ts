@@ -83,12 +83,7 @@ const queueEventStatusChangedNotification = async (
       });
     }
   } catch (error) {
-    logger.error("Failed to queue event status changed notification.", {
-      eventId: input.eventId,
-      callerId: input.callerId,
-      isActive: input.isActive,
-      error,
-    });
+    logger.error({ eventId: input.eventId, callerId: input.callerId, isActive: input.isActive, error }, "Failed to queue event status changed notification.");
   }
 };
 

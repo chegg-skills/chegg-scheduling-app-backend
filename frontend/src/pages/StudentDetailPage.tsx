@@ -37,7 +37,10 @@ export function StudentDetailPage() {
     )
   }
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: 'notes' | 'bookings' | 'communications') => {
+  const handleTabChange = (
+    _: React.SyntheticEvent,
+    newValue: 'notes' | 'bookings' | 'communications'
+  ) => {
     setActiveTab(newValue)
   }
 
@@ -95,9 +98,7 @@ export function StudentDetailPage() {
           </Tabs>
         </Box>
 
-        {activeTab === 'notes' && (
-          <StudentSessionLogTimeline studentId={studentId!} />
-        )}
+        {activeTab === 'notes' && <StudentSessionLogTimeline studentId={studentId!} />}
 
         {activeTab === 'bookings' && (
           <Stack spacing={4}>
@@ -118,9 +119,7 @@ export function StudentDetailPage() {
           </Stack>
         )}
 
-        {activeTab === 'communications' && (
-          <StudentCommunicationsTab studentId={studentId!} />
-        )}
+        {activeTab === 'communications' && <StudentCommunicationsTab studentId={studentId!} />}
       </Stack>
     </Box>
   )

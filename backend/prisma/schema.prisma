@@ -46,6 +46,10 @@ model User {
   availabilityExceptions UserAvailabilityException[]
   weeklyAvailability     UserWeeklyAvailability[]
   communicationsSent     StudentCommunicationLog[]
+  createdSessionTypes    SessionType[]               @relation("SessionTypeCreatedBy")
+  updatedSessionTypes    SessionType[]               @relation("SessionTypeUpdatedBy")
+  createdBookingDirectories BookingDirectory[]          @relation("BookingDirectoryCreatedBy")
+  updatedBookingDirectories BookingDirectory[]          @relation("BookingDirectoryUpdatedBy")
 
   @@unique([ssoProvider, ssoSub])
 }
@@ -67,6 +71,7 @@ model Team {
   teamLead           User                    @relation("TeamLead", fields: [teamLeadId], references: [id])
   members            TeamMember[]
   notificationConfig TeamNotificationConfig?
+  bookingDirectoryTeams BookingDirectoryTeam[]
 }
 
 model UserInvite {
@@ -156,10 +161,12 @@ model Event {
   deferCoachReveal          Boolean                   @default(false)
   allowStudentCoachChoice   Boolean                   @default(false)
   groupId                   String?
+  sessionTypeId             String?
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
   eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
   group                     EventGroup?               @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  sessionType               SessionType?              @relation(fields: [sessionTypeId], references: [id], onDelete: Restrict)
   team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
   coaches                   EventCoach[]
@@ -173,6 +180,7 @@ model Event {
   @@index([assignmentStrategy])
   @@index([bookingMode])
   @@index([groupId])
+  @@index([sessionTypeId])
 }
 
 model EventGroup {
@@ -384,6 +392,68 @@ model TeamNotificationConfig {
   notifyLeadOnAvailability  Boolean  @default(true)
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
+}
+
+model SessionType {
+  id          String               @id @default(uuid())
+  slug        String               @unique
+  name        String
+  description String?
+  isActive    Boolean              @default(true)
+  sortOrder   Int                  @default(0)
+  createdById String
+  updatedById String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  events      Event[]
+  sections    BookingDirectorySection[]
+  createdBy   User                 @relation("SessionTypeCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User                 @relation("SessionTypeUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([isActive, sortOrder])
+}
+
+model BookingDirectory {
+  id          String                    @id @default(uuid())
+  slug        String                    @unique
+  name        String
+  description String?
+  isActive    Boolean                   @default(true)
+  createdById String
+  updatedById String
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  sections    BookingDirectorySection[]
+  createdBy   User                      @relation("BookingDirectoryCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User                      @relation("BookingDirectoryUpdatedBy", fields: [updatedById], references: [id])
+}
+
+model BookingDirectorySection {
+  id                 String                 @id @default(uuid())
+  bookingDirectoryId String
+  sessionTypeId      String
+  sortOrder          Int                    @default(0)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  bookingDirectory   BookingDirectory       @relation(fields: [bookingDirectoryId], references: [id], onDelete: Cascade)
+  sessionType        SessionType            @relation(fields: [sessionTypeId], references: [id], onDelete: Restrict)
+  teams              BookingDirectoryTeam[]
+
+  @@unique([bookingDirectoryId, sessionTypeId])
+  @@index([bookingDirectoryId])
+}
+
+model BookingDirectoryTeam {
+  id        String                  @id @default(uuid())
+  sectionId String
+  teamId    String
+  sortOrder Int                     @default(0)
+  createdAt DateTime                @default(now())
+  section   BookingDirectorySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  team      Team                    @relation(fields: [teamId], references: [id], onDelete: Restrict)
+
+  @@unique([sectionId, teamId])
+  @@index([sectionId])
 }
 
 enum UserRole {

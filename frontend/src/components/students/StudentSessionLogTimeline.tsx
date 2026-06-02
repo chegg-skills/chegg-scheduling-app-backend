@@ -170,7 +170,12 @@ export function StudentSessionLogTimeline({ studentId }: StudentSessionLogTimeli
                       )}
                     </Stack>
 
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary' }}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      sx={{ color: 'text.secondary' }}
+                    >
                       <Calendar size={14} />
                       <Typography variant="caption" sx={{ fontWeight: 600 }}>
                         {format(new Date(entry.sessionDate), 'MMMM d, yyyy · h:mm a')}
@@ -262,12 +267,21 @@ export function StudentSessionLogTimeline({ studentId }: StudentSessionLogTimeli
                           >
                             {initials}
                           </Avatar>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontWeight: 600 }}
+                          >
                             Logged by {loggedByName}
                           </Typography>
                         </Stack>
 
-                        <Stack direction="row" alignItems="center" spacing={0.5} sx={{ color: 'text.secondary' }}>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                          sx={{ color: 'text.secondary' }}
+                        >
                           <User size={12} />
                           <Typography variant="caption">Coach: {entry.coachName}</Typography>
                         </Stack>

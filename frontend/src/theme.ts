@@ -18,6 +18,12 @@ const info100 = '#ECF5FF'
 const softBorder = '#DEE3ED'
 
 declare module '@mui/material/styles' {
+  interface PaletteColor {
+    lighter?: string
+  }
+  interface SimplePaletteColorOptions {
+    lighter?: string
+  }
   interface Palette {
     accent: {
       peach: string
@@ -37,12 +43,14 @@ export const appTheme = createTheme({
     primary: {
       main: cheggOrange,
       light: alpha(cheggOrange, 0.1),
+      lighter: alpha(cheggOrange, 0.05),
       dark: alpha(cheggOrange, 0.8),
       contrastText: white,
     },
     secondary: {
       main: neutral900,
       light: alpha(neutral900, 0.1),
+      lighter: alpha(neutral900, 0.04),
       dark: alpha(neutral900, 0.9),
     },
     info: {

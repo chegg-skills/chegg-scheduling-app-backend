@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { randomUUID } from "crypto";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { logger } from "../../shared/logging/logger";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import {
   assertBookingNoticeSatisfied,
   assertBookingAvailabilityAllowed,
@@ -123,10 +123,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   const activeCoaches = event.coaches as CoachCandidate[];
 
   if (activeCoaches.length === 0) {
-    logger.warn("Booking blocked because no active coaches are available for the event.", {
-      eventId,
-      teamId,
-    });
+    getRequestLogger().warn({ eventId, teamId }, "Booking blocked because no active coaches are available for the event.");
     throw new ErrorHandler(
       StatusCodes.SERVICE_UNAVAILABLE,
       "No active coaches available for this event.",
@@ -205,13 +202,10 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     { timeout: 15000 },
   );
 
-  logger.info("Booking created successfully.", {
-    bookingId: booking.id,
-    eventId: booking.eventId,
-    teamId: booking.teamId,
-    coachUserId: booking.coachUserId,
-    status: booking.status,
-  });
+  getRequestLogger().info(
+    { bookingId: booking.id, eventId: booking.eventId, teamId: booking.teamId, coachUserId: booking.coachUserId, status: booking.status },
+    "Booking created.",
+  );
 
   void queueBookingCreatedNotifications(booking);
 
@@ -234,6 +228,7 @@ const updateBooking = async (
   const booking = await updateBookingById(id, data);
 
   if (data.status && data.status !== oldBooking.status) {
+    getRequestLogger().info({ bookingId: booking.id, previousStatus: oldBooking.status, newStatus: booking.status }, "Booking status updated.");
     void queueBookingStatusNotifications(booking);
   }
   void queueBookingUpdatedNotifications(oldBooking, booking);
@@ -317,13 +312,10 @@ const rescheduleBooking = async (
     { timeout: 15000 },
   );
 
-  logger.info("Booking rescheduled successfully.", {
-    bookingId: updatedBooking.id,
-    eventId: updatedBooking.eventId,
-    teamId: updatedBooking.teamId,
-    coachUserId: updatedBooking.coachUserId,
-    startTime: updatedBooking.startTime,
-  });
+  getRequestLogger().info(
+    { bookingId: updatedBooking.id, eventId: updatedBooking.eventId, teamId: updatedBooking.teamId, coachUserId: updatedBooking.coachUserId, startTime: updatedBooking.startTime },
+    "Booking rescheduled.",
+  );
 
   void queueBookingUpdatedNotifications(updatedBooking, updatedBooking);
 
@@ -336,29 +328,36 @@ const cancelBooking = async (
 ): Promise<SafeBooking> => {
   const { token, cancellationReason } = payload;
 
-  const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
+  const updatedBooking = await prisma.$transaction(
+    async () => {
+      const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
 
-  if (token) {
-    assertCancelTokenValid(booking);
-  } else {
-    // Authenticated path — COACH may only cancel their own sessions
-    if (caller?.role === UserRole.COACH) {
-      const isLead = booking.coachUserId === caller.id;
-      const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
-      if (!isLead && !isCoHost) {
-        throw new ErrorHandler(
-          StatusCodes.FORBIDDEN,
-          "You are not authorized to cancel this booking.",
-        );
+      if (token) {
+        assertCancelTokenValid(booking);
+      } else {
+        // Authenticated path — COACH may only cancel their own sessions
+        if (caller?.role === UserRole.COACH) {
+          const isLead = booking.coachUserId === caller.id;
+          const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
+          if (!isLead && !isCoHost) {
+            throw new ErrorHandler(
+              StatusCodes.FORBIDDEN,
+              "You are not authorized to cancel this booking.",
+            );
+          }
+        }
       }
-    }
-  }
 
-  const updatedBooking = await updateBookingById(id, {
-    status: BookingStatus.CANCELLED,
-    cancellationReason: cancellationReason?.trim() || null,
-    // rescheduleToken is NOT rotated — assertCancelTokenValid blocks reuse via status check
-  });
+      return updateBookingById(id, {
+        status: BookingStatus.CANCELLED,
+        cancellationReason: cancellationReason?.trim() || null,
+        // rescheduleToken is NOT rotated — assertCancelTokenValid blocks reuse via status check
+      });
+    },
+    { timeout: 15000 },
+  );
+
+  getRequestLogger().info({ bookingId: updatedBooking.id, eventId: updatedBooking.eventId, teamId: updatedBooking.teamId }, "Booking cancelled.");
 
   void queueBookingStatusNotifications(updatedBooking);
 

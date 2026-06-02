@@ -2,6 +2,7 @@ import { QUEUE_CONFIG } from "../config/queues";
 import { getRabbitConnection } from "../queues/rabbitmq";
 import type { NotificationPayload } from "../types/notification";
 import { processNotification } from "./processNotification";
+import { logger } from "../logger";
 
 const PREFETCH_COUNT = Number(process.env.RABBITMQ_PREFETCH ?? 10);
 
@@ -18,7 +19,7 @@ async function startDLQConsumer(): Promise<void> {
     await channel.assertQueue(dlqQueue, { durable: true });
     await channel.bindQueue(dlqQueue, dlqExchange, dlqRoutingKey);
 
-    console.log("Waiting for messages in DLQ:", dlqQueue);
+    logger.info({ queue: dlqQueue }, "[DLQConsumer] Subscribed and waiting for messages.");
 
     channel.consume(dlqQueue, async (msg: Parameters<typeof channel.ack>[0] | null) => {
       if (!msg) return;
@@ -26,23 +27,24 @@ async function startDLQConsumer(): Promise<void> {
       try {
         const payload = JSON.parse(msg.content.toString()) as NotificationPayload;
 
-        console.log("+-----------------------------------------------------------------+");
-        console.log("Received notification from DLQ:", {
-          ...payload,
-          recipients: typeof payload.recipients === "string" ? "***" : ["***"],
-          variables: { ...payload.variables, studentEmail: "***", studentName: "***" },
-        });
-        console.log("+-----------------------------------------------------------------+");
+        logger.warn(
+          {
+            type: payload.type,
+            entityId: payload.entityId,
+            recipientEmail: typeof payload.recipients === "string" ? "***" : ["***"],
+          },
+          "DLQ message received.",
+        );
 
         await processNotification(payload);
         channel.ack(msg);
       } catch (error) {
-        console.error("Failed to process notification from DLQ:", error);
+        logger.error({ error }, "Failed to process DLQ notification.");
         channel.nack(msg, false, false);
       }
     });
   } catch (error) {
-    console.error("Error starting DLQ consumer:", error);
+    logger.error({ error }, "Error starting DLQ consumer.");
     throw new Error("Failed to start DLQ consumer");
   }
 }

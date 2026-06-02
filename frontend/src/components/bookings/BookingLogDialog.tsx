@@ -12,10 +12,7 @@ import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { Spinner } from '@/components/shared/ui/Spinner'
 import { useConfirm } from '@/context/confirm'
-import {
-  useBookingSessionLog,
-  useUpsertBookingSessionLog,
-} from '@/hooks/queries/useBookingLog'
+import { useBookingSessionLog, useUpsertBookingSessionLog } from '@/hooks/queries/useBookingLog'
 import { extractApiError } from '@/utils/apiError'
 import type { Booking } from '@/types'
 
@@ -99,7 +96,7 @@ export function BookingLogDialog({ isOpen, onClose, booking }: BookingLogDialogP
             p: 2,
             bgcolor: '#FFF6F0',
             border: '1px solid #DEE3ED',
-            borderRadius: 2,
+            borderRadius: 1.5,
           }}
         >
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>

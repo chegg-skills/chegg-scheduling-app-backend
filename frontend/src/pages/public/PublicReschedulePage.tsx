@@ -12,6 +12,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import { alpha } from '@mui/material/styles'
 
 import { publicApi } from '@/api/public'
 import { bookingsApi } from '@/api/bookings'
@@ -325,7 +326,25 @@ export function PublicReschedulePage() {
             isSubmitting={isSubmitting}
             onTroubleshoot={() => setTroubleshootOpen(true)}
             extraAccessory={
-              <PublicTimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <PublicTimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
+                <Button
+                  color="error"
+                  variant="text"
+                  onClick={() => navigate(`/cancel/${bookingId}?token=${token}`)}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    fontSize: '0.85rem',
+                    whiteSpace: 'nowrap',
+                    '&:hover': {
+                      bgcolor: (theme) => alpha(theme.palette.error.main, 0.04),
+                    },
+                  }}
+                >
+                  Cancel session
+                </Button>
+              </Box>
             }
           />
         </PublicMainContent>

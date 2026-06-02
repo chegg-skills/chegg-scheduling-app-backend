@@ -10,7 +10,16 @@ import Tooltip from '@mui/material/Tooltip'
 import Menu from '@mui/material/Menu'
 import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
-import { Edit, Trash2, Plus, HelpCircle, MoreVertical, ExternalLink, Copy, Check } from 'lucide-react'
+import {
+  Edit,
+  Trash2,
+  Plus,
+  HelpCircle,
+  MoreVertical,
+  ExternalLink,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { useDeleteEventGroup } from '@/hooks/queries/useEventGroups'
 import type { Event, EventGroup } from '@/types'
@@ -410,7 +419,11 @@ export function EventGroupSections({
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip title={copied ? 'Copied!' : 'Copy group booking link'} arrow placement="top">
+                <Tooltip
+                  title={copied ? 'Copied!' : 'Copy group booking link'}
+                  arrow
+                  placement="top"
+                >
                   <IconButton
                     disabled={!currentGroup.publicBookingSlug}
                     onClick={handleCopy}
@@ -427,8 +440,7 @@ export function EventGroupSections({
                         bgcolor: (theme) =>
                           copied ? alpha(theme.palette.success.main, 0.1) : alpha(themeColor, 0.08),
                         color: (theme) => (copied ? theme.palette.success.main : themeColor),
-                        borderColor: (theme) =>
-                          copied ? theme.palette.success.main : themeColor,
+                        borderColor: (theme) => (copied ? theme.palette.success.main : themeColor),
                         transform: 'scale(1.05)',
                       },
                       '&.Mui-disabled': {

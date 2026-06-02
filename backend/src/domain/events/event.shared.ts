@@ -20,7 +20,12 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
     where: { isActive: true },
     orderBy: { coachOrder: "asc" },
     include: {
-      coachUser: { select: safeUserSelect },
+      coachUser: {
+        select: {
+          ...safeUserSelect,
+          weeklyAvailability: true,
+        },
+      },
     },
   },
   weeklyAvailability: true,
@@ -35,6 +40,13 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
       id: true,
       name: true,
       color: true,
+    },
+  },
+  sessionType: {
+    select: {
+      id: true,
+      slug: true,
+      name: true,
     },
   },
   _count: {
@@ -82,6 +94,7 @@ export type CreateEventInput = {
   deferCoachReveal?: boolean;
   allowStudentCoachChoice?: boolean;
   groupId?: string | null;
+  sessionTypeId?: string | null;
   weeklyAvailability?: Array<{
     dayOfWeek: number;
     startTime: string;

@@ -69,11 +69,14 @@ export function PublicBookingPage() {
   } = usePublicBookingState()
 
   const showCoachPicker =
-    !!eventDetails?.allowStudentCoachChoice && (eventDetails.coaches?.length ?? 0) > 0
+    scope !== 'coach' &&
+    !!eventDetails?.allowStudentCoachChoice &&
+    (eventDetails.coaches?.length ?? 0) > 0
   const eventCoaches = showCoachPicker ? (eventDetails?.coaches ?? []) : []
 
   const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
+
   const [bookError, setBookError] = useState<string | null>(null)
   const [troubleshootOpen, setTroubleshootOpen] = useState(false)
 

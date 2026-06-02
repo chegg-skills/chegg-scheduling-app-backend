@@ -122,7 +122,6 @@ export function EventDetailPage() {
     <Stack spacing={4}>
       <PageHeader
         title={toTitleCase(event.name)}
-        subtitle={event.description ?? undefined}
         breadcrumbs={[
           { label: 'Teams', to: '/teams' },
           { label: toTitleCase(event.team?.name || 'Team'), to: `/teams/${event.teamId}` },

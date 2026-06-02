@@ -24,8 +24,8 @@ export interface ListEventsResponse {
 }
 
 export const eventsApi = {
-  listAll: (signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<ListEventsResponse>>('/events', { signal }),
+  listAll: (params?: ListEventsParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<ListEventsResponse>>('/events', { params, signal }),
   create: (teamId: string, data: CreateEventDto) =>
     apiClient.post<ApiResponse<Event>>(`/teams/${teamId}/events`, data),
   listByTeam: (teamId: string, params?: ListEventsParams, signal?: AbortSignal) =>

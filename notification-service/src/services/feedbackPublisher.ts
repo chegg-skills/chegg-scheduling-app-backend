@@ -1,5 +1,6 @@
 import type amqp from "amqplib";
 import { getRabbitConnection } from "../queues/rabbitmq";
+import { logger } from "../logger";
 
 const FEEDBACK_EXCHANGE = "notificationExchange";
 const FEEDBACK_ROUTING_KEY = "notification.feedback";
@@ -16,8 +17,12 @@ async function getFeedbackChannel(): Promise<amqp.Channel> {
   await _channel.assertExchange(FEEDBACK_EXCHANGE, "direct", { durable: true });
 
   // Reset on error/close so we re-create on the next call
-  _channel.on("error", () => { _channel = null; });
-  _channel.on("close", () => { _channel = null; });
+  _channel.on("error", () => {
+    _channel = null;
+  });
+  _channel.on("close", () => {
+    _channel = null;
+  });
 
   return _channel;
 }
@@ -37,7 +42,7 @@ export async function publishFeedback(
       errorMessage: errorMessage ?? null,
     };
 
-    console.log(`[FeedbackPublisher] Publishing status ${status} for log ${logId} to ${FEEDBACK_ROUTING_KEY}`);
+    logger.debug({ logId, status }, "[FeedbackPublisher] Publishing status.");
 
     return channel.publish(
       FEEDBACK_EXCHANGE,
@@ -46,13 +51,12 @@ export async function publishFeedback(
       {
         persistent: true,
         contentType: "application/json",
-      }
+      },
     );
   } catch (error) {
-    console.error("Failed to publish email feedback status to RabbitMQ:", error);
+    logger.error({ error, logId, status }, "Failed to publish email feedback status to RabbitMQ.");
     // Reset channel so the next attempt gets a fresh one
     _channel = null;
     return false;
   }
 }
-

@@ -297,7 +297,11 @@ export function ScheduleSlotDetailModal({
 
           <Divider />
 
-          <Stack direction="row" justifyContent={canManage ? "space-between" : "flex-end"} alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent={canManage ? 'space-between' : 'flex-end'}
+            alignItems="center"
+          >
             {canManage && (
               <Button
                 size="small"

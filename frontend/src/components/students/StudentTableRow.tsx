@@ -1,4 +1,14 @@
-import { TableRow, TableCell, Typography, Box, Avatar, alpha, Link as MuiLink, IconButton, Tooltip } from '@mui/material'
+import {
+  TableRow,
+  TableCell,
+  Typography,
+  Box,
+  Avatar,
+  alpha,
+  Link as MuiLink,
+  IconButton,
+  Tooltip,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { Link, useNavigate } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
@@ -19,8 +29,6 @@ const getRelativeTime = (startTime: string) => {
   if (days > 1) return `${days} days ago`
   return `in ${Math.abs(days)} days`
 }
-
-
 
 export function StudentTableRow({ student, onSendEmail }: StudentTableRowProps) {
   const theme = useTheme()

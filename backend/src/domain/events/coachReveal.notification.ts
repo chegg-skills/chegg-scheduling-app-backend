@@ -80,10 +80,7 @@ const queueCoachRevealNotifications = async (input: QueueCoachRevealNotification
 
     await Promise.all(publishTasks);
   } catch (error) {
-    logger.error("Failed to queue coach reveal notifications.", {
-      slotId: input.slot.id,
-      error,
-    });
+    logger.error({ slotId: input.slot.id, error }, "Failed to queue coach reveal notifications.");
   }
 };
 

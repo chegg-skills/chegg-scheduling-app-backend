@@ -40,11 +40,7 @@ const queueTeamMemberAddedNotification = async (input: TeamMemberAddedNotificati
       },
     });
   } catch (error) {
-    logger.error("Failed to queue team member added notification.", {
-      teamId: input.teamId,
-      userId: input.userId,
-      error,
-    });
+    logger.error({ teamId: input.teamId, userId: input.userId, error }, "Failed to queue team member added notification.");
   }
 };
 

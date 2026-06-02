@@ -46,7 +46,7 @@ export function UserTable({
     if (!editingUser) return
     const fresh = users.find((u) => u.id === editingUser.id)
     if (fresh && fresh !== editingUser) setEditingUser(fresh)
-  }, [users])
+  }, [users, editingUser])
   const { mutate: deactivate } = useDeactivateUser()
   const { confirm, alert } = useConfirm()
   const {

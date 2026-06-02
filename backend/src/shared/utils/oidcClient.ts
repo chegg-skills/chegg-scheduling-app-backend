@@ -27,7 +27,7 @@ export const getOidcClient = async (): Promise<Client> => {
     response_types: ["code"],
   });
 
-  logger.info("OIDC client initialized.", { issuer: issuer.issuer });
+  logger.info({ issuer: issuer.issuer }, "OIDC client initialized.");
 
   return cachedClient;
 };

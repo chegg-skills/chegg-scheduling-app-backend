@@ -2,6 +2,7 @@ import { AssignmentStrategy, Prisma, SessionLeadershipStrategy, UserRole } from 
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { getRequestLogger } from "../../shared/logging/requestContext";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import {
   INTERACTION_TYPE_CAPS,
@@ -249,6 +250,8 @@ const replaceEventCoaches = async (
     await syncRoutingState(tx, eventId, event.assignmentStrategy, normalizedCoaches.length);
   });
 
+  getRequestLogger().info({ eventId, coachCount: normalizedCoaches.length, newlyAddedCoachUserIds, updatedBy: caller.id }, "Event coach pool updated.");
+
   if (event.isActive) {
     for (const userId of newlyAddedCoachUserIds) {
       void queueEventCoachAddedNotification({ eventId, coachUserId: userId });
@@ -307,6 +310,8 @@ const removeEventCoach = async (
 
     await syncRoutingState(tx, eventId, event.assignmentStrategy, remainingCoaches.length);
   });
+
+  getRequestLogger().info({ eventId, removedCoachUserId: userId, remainingCoachCount: remainingCoaches.length, updatedBy: caller.id }, "Coach removed from event pool.");
 
   const refreshedEvent = await prisma.event.findUniqueOrThrow({
     where: { id: eventId },

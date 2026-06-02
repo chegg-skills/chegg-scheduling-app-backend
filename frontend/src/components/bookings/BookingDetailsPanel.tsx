@@ -6,6 +6,7 @@ import { BookingDetailsLeftSection } from './BookingDetailsLeftSection'
 import { BookingDetailsRightSection } from './BookingDetailsRightSection'
 import { useBookingSessionLog } from '@/hooks/queries/useBookingLog'
 import { usePermissions } from '@/hooks/usePermissions'
+import { toTitleCase } from '@/utils/toTitleCase'
 
 interface BookingDetailsPanelProps {
   booking: Booking
@@ -44,7 +45,7 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
             bgcolor: 'error.lighter',
             border: '1px solid',
             borderColor: 'error.light',
-            borderRadius: 2,
+            borderRadius: 1.5,
             display: 'flex',
             alignItems: 'flex-start',
             gap: 1.5,
@@ -106,7 +107,7 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
               p: 2.5,
               border: '1px solid',
               borderColor: 'divider',
-              borderRadius: 2,
+              borderRadius: 1.5,
               bgcolor: 'action.hover',
             }}
           >
@@ -116,7 +117,7 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
                   Logged by{' '}
                   <strong>
                     {log.loggedBy
-                      ? `${log.loggedBy.firstName} ${log.loggedBy.lastName}`.trim()
+                      ? `${toTitleCase(log.loggedBy.firstName)} ${toTitleCase(log.loggedBy.lastName)}`.trim()
                       : 'Unknown'}
                   </strong>
                 </Typography>
@@ -154,7 +155,10 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
                   >
                     Session summary
                   </Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: 'pre-wrap', color: 'text.secondary' }}
+                  >
                     {log.summary}
                   </Typography>
                 </Box>
@@ -176,7 +180,10 @@ export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {
                       Coach notes (private)
                     </Typography>
                   </Stack>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: 'warning.dark' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: 'pre-wrap', color: 'warning.dark' }}
+                  >
                     {log.coachNotes}
                   </Typography>
                 </Box>

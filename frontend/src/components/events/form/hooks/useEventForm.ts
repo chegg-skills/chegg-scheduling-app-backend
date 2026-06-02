@@ -35,8 +35,10 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
     ? INTERACTION_TYPE_CAPS[selectedInteractionTypeKey]
     : null
 
+  const watchedAssignmentStrategy = watch('assignmentStrategy')
+  const watchedAllowStudentCoachChoice = watch('allowStudentCoachChoice')
   const selectedAssignmentStrategy =
-    watch('assignmentStrategy') || getDefaultEventAssignmentStrategy(caps)
+    watchedAssignmentStrategy || getDefaultEventAssignmentStrategy(caps)
   const bookingModeSelection = watch('bookingMode')
   const requiredCoachCount = getRequiredEventCoachCount(caps, selectedAssignmentStrategy)
 
@@ -118,7 +120,7 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
         setValue('assignmentStrategy', 'DIRECT', { shouldDirty: false })
       }
     }
-  }, [caps, getValues, setValue, watch('assignmentStrategy'), watch('allowStudentCoachChoice')])
+  }, [caps, getValues, setValue, watchedAssignmentStrategy, watchedAllowStudentCoachChoice])
 
   function onSubmit(values: EventFormValues) {
     const apiPayload = {

@@ -12,7 +12,11 @@ import { navItems } from './sidebar/navConfig'
 import { ExpandedSidebarContent } from './sidebar/ExpandedSidebarContent'
 import { CollapsedSidebarContent } from './sidebar/CollapsedSidebarContent'
 
-export function Sidebar() {
+interface SidebarProps {
+  onTerminologyClick: () => void
+}
+
+export function Sidebar({ onTerminologyClick }: SidebarProps) {
   const location = useLocation()
   const { user, logout } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -142,10 +146,16 @@ export function Sidebar() {
             items={visibleItems}
             pathname={location.pathname}
             logout={logout}
+            onTerminologyClick={onTerminologyClick}
           />
         </>
       ) : (
-        <ExpandedSidebarContent items={visibleItems} pathname={location.pathname} logout={logout} />
+        <ExpandedSidebarContent
+          items={visibleItems}
+          pathname={location.pathname}
+          logout={logout}
+          onTerminologyClick={onTerminologyClick}
+        />
       )}
     </Drawer>
   )

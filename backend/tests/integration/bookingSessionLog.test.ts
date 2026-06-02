@@ -414,4 +414,3 @@ describe("Booking Session Logs API", () => {
     });
   });
 });
-
