@@ -232,14 +232,6 @@ export function PublicBookingFlow({
           onSelect={onCoachSelect ?? (() => {})}
         />
       )
-    case 'preferred-coach':
-      return (
-        <PreferredCoachStep
-          coaches={eventCoaches ?? []}
-          selectedCoachId={selectedCoachId ?? null}
-          onSelect={onCoachSelect ?? (() => {})}
-        />
-      )
     case 'confirm':
       return <ConfirmationForm studentInfo={studentInfo} onUpdate={setStudentInfo} />
     default:
