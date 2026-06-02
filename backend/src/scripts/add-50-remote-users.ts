@@ -5,7 +5,11 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const remoteUrl = "postgresql://chegg_scheduling_app_db2_user:eX0snWnp6bAT8R4TsQMcNXEQfogEpEsP@dpg-d7tdtf3rjlhs73apd4s0-a.oregon-postgres.render.com/chegg_scheduling_app_db2";
+if (!process.env.REMOTE_DB_URL) {
+  console.error("❌ REMOTE_DB_URL env var is not set. Exiting.");
+  process.exit(1);
+}
+const remoteUrl: string = process.env.REMOTE_DB_URL;
 const writeMode = process.argv.includes("--write");
 
 const firstNames = [

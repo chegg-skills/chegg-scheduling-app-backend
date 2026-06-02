@@ -292,7 +292,7 @@ export function usePublicBookingState() {
     if (showCoachPicker) {
       const idx = keys.indexOf('schedule')
       if (idx !== -1) {
-        keys.splice(idx, 0, 'preferred-coach')
+        keys = [...keys.slice(0, idx), 'preferred-coach', ...keys.slice(idx)]
       }
     }
 

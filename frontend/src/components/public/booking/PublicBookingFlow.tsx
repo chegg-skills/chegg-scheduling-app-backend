@@ -221,9 +221,6 @@ export function PublicBookingFlow({
           availableDates={availableDates}
           isLoadingDates={isLoadingDates}
           onMonthChange={onMonthChange}
-          coaches={eventCoaches}
-          selectedCoachId={selectedCoachId}
-          onCoachSelect={onCoachSelect}
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
           eventDetailsName={eventDetailsName}
