@@ -313,6 +313,8 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
         </Stack>
       </Box>
 
+      <Divider />
+
       {/* Post-Session Feedback */}
       <Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>

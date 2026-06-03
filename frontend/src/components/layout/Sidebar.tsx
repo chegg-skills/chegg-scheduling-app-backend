@@ -147,6 +147,7 @@ export function Sidebar({ onTerminologyClick }: SidebarProps) {
             pathname={location.pathname}
             logout={logout}
             onTerminologyClick={onTerminologyClick}
+            showSystemSettings={user.role === 'SUPER_ADMIN'}
           />
         </>
       ) : (
@@ -155,6 +156,7 @@ export function Sidebar({ onTerminologyClick }: SidebarProps) {
           pathname={location.pathname}
           logout={logout}
           onTerminologyClick={onTerminologyClick}
+          showSystemSettings={user.role === 'SUPER_ADMIN'}
         />
       )}
     </Drawer>

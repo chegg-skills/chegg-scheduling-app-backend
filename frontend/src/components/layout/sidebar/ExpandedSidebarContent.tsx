@@ -7,7 +7,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut, Settings } from 'lucide-react'
 import type { NavItem } from './navConfig'
 
 interface ExpandedSidebarContentProps {
@@ -15,6 +15,7 @@ interface ExpandedSidebarContentProps {
   pathname: string
   logout: () => void
   onTerminologyClick: () => void
+  showSystemSettings?: boolean
 }
 
 export function ExpandedSidebarContent({
@@ -22,6 +23,7 @@ export function ExpandedSidebarContent({
   pathname,
   logout,
   onTerminologyClick,
+  showSystemSettings = false,
 }: ExpandedSidebarContentProps) {
   return (
     <>
@@ -55,6 +57,17 @@ export function ExpandedSidebarContent({
       </List>
       <Divider />
       <Box sx={{ p: 2 }}>
+        {showSystemSettings && (
+          <ListItemButton component={NavLink} to="/system-settings" sx={{ borderRadius: 2, mb: 0.5 }}>
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <Settings size={18} />
+            </ListItemIcon>
+            <ListItemText
+              primary="System Settings"
+              primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+            />
+          </ListItemButton>
+        )}
         <ListItemButton component={NavLink} to="/profile" sx={{ borderRadius: 2, mb: 0.5 }}>
           <ListItemIcon sx={{ minWidth: 36 }}>
             <User size={18} />
