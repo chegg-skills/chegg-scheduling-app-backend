@@ -67,8 +67,23 @@ export function PreferredCoachStep({
                   : 'background.paper',
                 '&:hover': {
                   borderColor: 'primary.main',
+                  bgcolor: isSelected
+                    ? alpha(theme.palette.primary.main, 0.06)
+                    : alpha(theme.palette.primary.main, 0.03),
                   transform: 'translateY(-2px)',
                   boxShadow: '0 6px 16px -4px rgba(0,0,0,0.06)',
+                  '& .coach-avatar': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.12),
+                    color: 'primary.main',
+                  },
+                  '& .coach-name': {
+                    color: 'primary.main',
+                  },
+                  '& .coach-arrow': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    borderColor: 'primary.main',
+                  },
                 },
               }}
             >
@@ -81,6 +96,7 @@ export function PreferredCoachStep({
                 >
                   <Stack direction="row" alignItems="center" spacing={2}>
                     <Avatar
+                      className="coach-avatar"
                       src={(coach as any).avatarUrl ?? undefined}
                       sx={{
                         width: 44,
@@ -98,15 +114,21 @@ export function PreferredCoachStep({
                       {coach.lastName[0]}
                     </Avatar>
                     <Typography
+                      className="coach-name"
                       variant="subtitle1"
                       fontWeight={600}
-                      sx={{ letterSpacing: -0.3, color: 'text.primary' }}
+                      sx={{
+                        letterSpacing: -0.3,
+                        color: 'text.primary',
+                        transition: 'color 0.2s ease',
+                      }}
                     >
                       {toTitleCase(coach.firstName)} {toTitleCase(coach.lastName)}
                     </Typography>
                   </Stack>
 
                   <Box
+                    className="coach-arrow"
                     sx={{
                       display: 'flex',
                       alignItems: 'center',

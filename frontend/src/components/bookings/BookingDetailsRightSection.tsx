@@ -99,6 +99,9 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
   return (
     <Box
       sx={{
+        position: 'relative',
+        height: '100%',
+        minHeight: { md: '360px', xs: 'auto' },
         bgcolor: 'background.paper',
         p: 2.5,
         borderRadius: 1.5,
@@ -112,6 +115,17 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
         },
       }}
     >
+      <Box
+        sx={{
+          position: { md: 'absolute', xs: 'static' },
+          top: { md: 20, xs: 'auto' },
+          bottom: { md: 20, xs: 'auto' },
+          left: { md: 20, xs: 'auto' },
+          right: { md: 20, xs: 'auto' },
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2.5 }}>
         <Tabs
           value={activeTab}
@@ -144,60 +158,113 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
       </Box>
 
       {activeTab === 0 && (
-        <Box sx={{ position: 'relative', overflow: 'hidden' }}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 8,
-              bottom: 8,
-              left: 4,
-              width: '2px',
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              borderRadius: 1,
-            }}
-          />
+        <Box
+          sx={{
+            flexGrow: 1,
+            minHeight: 0,
+            maxHeight: { xs: '380px', md: 'none' },
+            overflowY: 'auto',
+            pr: 1.5,
+            mr: -1.5,
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: alpha(theme.palette.text.secondary, 0.2),
+              borderRadius: '3px',
+              '&:hover': {
+                background: alpha(theme.palette.text.secondary, 0.4),
+              },
+            },
+          }}
+        >
+          <Box sx={{ position: 'relative' }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 8,
+                bottom: 8,
+                left: 4,
+                width: '2px',
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                borderRadius: 1,
+              }}
+            />
 
-          <Stack spacing={3}>
-            {contextItems.map((item, index) => (
-              <Box key={index} sx={{ position: 'relative', pl: 3.5 }}>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 6,
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    bgcolor: 'primary.main',
-                    border: `2px solid ${theme.palette.background.paper}`,
-                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
-                    zIndex: 1,
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700,
-                    color: theme.palette.primary.main,
-                    display: 'block',
-                    textTransform: 'uppercase',
-                    fontSize: '0.65rem',
-                    mb: 0.5,
-                  }}
-                >
-                  {item.label}
-                </Typography>
-                <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                  {booking[item.field] || 'None provided'}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
+            <Stack spacing={3}>
+              {contextItems.map((item, index) => (
+                <Box key={index} sx={{ position: 'relative', pl: 3.5 }}>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 6,
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      bgcolor: 'primary.main',
+                      border: `2px solid ${theme.palette.background.paper}`,
+                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
+                      zIndex: 1,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      color: theme.palette.primary.main,
+                      display: 'block',
+                      textTransform: 'uppercase',
+                      fontSize: '0.65rem',
+                      mb: 0.5,
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      lineHeight: 1.5,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {booking[item.field] || 'None provided'}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
         </Box>
       )}
 
       {activeTab === 1 && (
-        <Box>
+        <Box
+          sx={{
+            flexGrow: 1,
+            minHeight: 0,
+            maxHeight: { xs: '380px', md: 'none' },
+            overflowY: 'auto',
+            pr: 1.5,
+            mr: -1.5,
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: alpha(theme.palette.text.secondary, 0.2),
+              borderRadius: '3px',
+              '&:hover': {
+                background: alpha(theme.palette.text.secondary, 0.4),
+              },
+            },
+          }}
+        >
           {isLoading ? (
             <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
               <Spinner />
@@ -232,11 +299,17 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
                 </Typography>
               </Box>
 
-              <FormField label="Topics discussed" htmlFor="booking-topics">
+              <FormField
+                label="Topics discussed"
+                htmlFor="booking-topics"
+                charCount={topicsDiscussed.length}
+                charLimit={200}
+              >
                 <Input
                   id="booking-topics"
                   value={topicsDiscussed}
-                  onChange={(e) => setTopicsDiscussed(e.target.value)}
+                  onChange={(e) => setTopicsDiscussed(e.target.value.slice(0, 200))}
+                  inputProps={{ maxLength: 200 }}
                   placeholder="e.g. Code reviews, database design..."
                 />
               </FormField>
@@ -245,31 +318,37 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
                 label="Session summary"
                 htmlFor="booking-summary"
                 hint="Recap covered material. Visible to coaches/admins."
+                charCount={summary.length}
+                charLimit={800}
               >
                 <Textarea
                   id="booking-summary"
                   value={summary}
-                  onChange={(e) => setSummary(e.target.value)}
+                  onChange={(e) => setSummary(e.target.value.slice(0, 800))}
+                  inputProps={{ maxLength: 800 }}
                   rows={4}
                   placeholder="Topics covered, next steps..."
                 />
               </FormField>
 
-              {canSeePrivateNotes && (
-                <FormField
-                  label="Coach notes (private)"
-                  htmlFor="booking-coach-notes"
-                  hint="Only visible to coaches and admins."
-                >
-                  <Textarea
-                    id="booking-coach-notes"
-                    value={coachNotes}
-                    onChange={(e) => setCoachNotes(e.target.value)}
-                    rows={3}
-                    placeholder="Private observations, next steps..."
-                  />
-                </FormField>
-              )}
+               {canSeePrivateNotes && (
+                 <FormField
+                   label="Coach notes (private)"
+                   htmlFor="booking-coach-notes"
+                   hint="Only visible to coaches and admins."
+                   charCount={coachNotes.length}
+                   charLimit={500}
+                 >
+                   <Textarea
+                     id="booking-coach-notes"
+                     value={coachNotes}
+                     onChange={(e) => setCoachNotes(e.target.value.slice(0, 500))}
+                     inputProps={{ maxLength: 500 }}
+                     rows={3}
+                     placeholder="Private observations, next steps..."
+                   />
+                 </FormField>
+               )}
 
               <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ mt: 1 }}>
                 {log && (
@@ -413,6 +492,7 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
           )}
         </Box>
       )}
+      </Box>
     </Box>
   )
 }

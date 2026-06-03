@@ -109,9 +109,24 @@ export const UpsertBookingSessionLogSchema = {
     .strip(),
   body: z
     .object({
-      topicsDiscussed: z.string().trim().nullable().optional(),
-      summary: z.string().trim().nullable().optional(),
-      coachNotes: z.string().trim().nullable().optional(),
+      topicsDiscussed: z
+        .string()
+        .trim()
+        .max(200, "Topics discussed must be 200 characters or less")
+        .nullable()
+        .optional(),
+      summary: z
+        .string()
+        .trim()
+        .max(800, "Session summary must be 800 characters or less")
+        .nullable()
+        .optional(),
+      coachNotes: z
+        .string()
+        .trim()
+        .max(500, "Coach notes must be 500 characters or less")
+        .nullable()
+        .optional(),
       attended: z.boolean().optional(),
     })
     .strip(),
