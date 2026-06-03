@@ -7,7 +7,7 @@ import {
   useOutletContext,
 } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Box, Typography, TextField, Button, CircularProgress, Radio } from '@mui/material'
+import { Box, Typography, TextField, CircularProgress, Radio } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { publicApi } from '@/api/public'
 import { bookingsApi } from '@/api/bookings'
@@ -22,6 +22,7 @@ import { PublicBookingHeader } from '@/components/public/booking/PublicBookingHe
 import { PublicBookingSummary } from '@/components/public/booking/PublicBookingSummary'
 import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeader'
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
+import { PublicNavigationFooter } from '@/components/public/layout/PublicNavigationFooter'
 import { SuccessView } from '@/components/public/cancel/SuccessView'
 import { AlreadyCancelledView } from '@/components/public/cancel/AlreadyCancelledView'
 import { InvalidLinkView } from '@/components/public/cancel/InvalidLinkView'
@@ -260,7 +261,7 @@ export function PublicCancelPage() {
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-              gap: 2,
+              gap: { xs: 1.5, sm: 2 },
             }}
           >
             {cancellationOptions.map((opt) => {
@@ -346,74 +347,34 @@ export function PublicCancelPage() {
           )}
         </Box>
 
-        {/* Footer Area */}
-        <Box
-          sx={{
-            py: 2,
-            px: { xs: 2, md: 4 },
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexShrink: 0,
+        <PublicNavigationFooter
+          backLabel="Keep Booking and Return"
+          onBack={() =>
+            navigate(
+              booking?.event?.publicBookingSlug
+                ? `/book/event/${booking.event.publicBookingSlug}`
+                : '/'
+            )
+          }
+          showBack
+          nextLabel="Confirm cancellation"
+          onNext={() => confirmCancel()}
+          nextDisabled={isConfirmDisabled}
+          isSubmitting={isSubmitting}
+          submittingLabel="Cancelling..."
+          nextButtonSx={{
+            bgcolor: 'error.main',
+            boxShadow: (theme) => `0 8px 16px -4px ${alpha(theme.palette.error.main, 0.3)}`,
+            '&:hover': {
+              bgcolor: 'error.dark',
+              boxShadow: (theme) => `0 12px 20px -4px ${alpha(theme.palette.error.main, 0.4)}`,
+            },
+            '&.Mui-disabled': {
+              bgcolor: 'action.disabledBackground',
+              color: 'action.disabled',
+            },
           }}
-        >
-          {/* Left Action: Keep Booking and Return */}
-          <Button
-            variant="text"
-            disabled={isSubmitting}
-            onClick={() =>
-              navigate(
-                booking?.event?.publicBookingSlug
-                  ? `/book/event/${booking.event.publicBookingSlug}`
-                  : '/'
-              )
-            }
-            sx={{
-              fontWeight: 700,
-              textTransform: 'none',
-              color: 'text.secondary',
-              fontSize: '0.9rem',
-              '&:hover': {
-                color: 'primary.main',
-                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            Keep Booking and Return
-          </Button>
-
-          {/* Right Action: Confirm cancellation */}
-          <Button
-            variant="contained"
-            color="error"
-            disabled={isConfirmDisabled || isSubmitting}
-            onClick={() => confirmCancel()}
-            startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-            sx={{
-              px: 4,
-              py: 1.25,
-              minWidth: 200,
-              fontWeight: 800,
-              borderRadius: 3,
-              backgroundColor: 'error.main',
-              boxShadow: (theme) => `0 8px 16px -4px ${alpha(theme.palette.error.main, 0.3)}`,
-              textTransform: 'none',
-              '&:hover': {
-                backgroundColor: 'error.dark',
-                boxShadow: (theme) => `0 12px 20px -4px ${alpha(theme.palette.error.main, 0.4)}`,
-              },
-              '&.Mui-disabled': {
-                backgroundColor: 'action.disabledBackground',
-                color: 'action.disabled',
-              },
-            }}
-          >
-            {isSubmitting ? 'Cancelling...' : 'Confirm cancellation'}
-          </Button>
-        </Box>
+        />
       </PublicMainContent>
     </PublicBaseLayout>
   )

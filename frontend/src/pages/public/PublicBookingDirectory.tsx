@@ -237,9 +237,9 @@ export function PublicBookingDirectory() {
       {/* Header */}
       <Box
         sx={{
-          px: { xs: 3, sm: 4 },
-          pt: { xs: 4, sm: 5 },
-          pb: { xs: 3, sm: 4 },
+          px: { xs: 2, sm: 4 },
+          pt: { xs: 3, sm: 5 },
+          pb: { xs: 2, sm: 4 },
           borderBottom: '1px solid',
           borderColor: 'divider',
           bgcolor: 'accent.peach',
@@ -289,7 +289,7 @@ export function PublicBookingDirectory() {
       </Box>
 
       {/* Content */}
-      <Box sx={{ px: { xs: 3, sm: 4 }, py: 4 }}>
+      <Box sx={{ px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 4 } }}>
         {selectedSection && selectedTeamEntry ? (
           /* Step 3: Event List View */
           <Box>
@@ -384,7 +384,7 @@ export function PublicBookingDirectory() {
               <Box
                 sx={{
                   display: 'grid',
-                  gap: 3,
+                  gap: { xs: 2, sm: 3 },
                   gridTemplateColumns: {
                     xs: '1fr',
                     md: '1fr 1fr',
@@ -488,7 +488,7 @@ export function PublicBookingDirectory() {
               <Box
                 sx={{
                   display: 'grid',
-                  gap: 3,
+                  gap: { xs: 2, sm: 3 },
                   gridTemplateColumns: {
                     xs: '1fr',
                     md: '1fr 1fr',
@@ -509,7 +509,7 @@ export function PublicBookingDirectory() {
                       }
                     }}
                     sx={{
-                      p: 3,
+                      p: { xs: 2, sm: 3 },
                       borderRadius: 1.5,
                       cursor: 'pointer',
                       transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -680,7 +680,7 @@ export function PublicBookingDirectory() {
             <Box
               sx={{
                 display: 'grid',
-                gap: 3,
+                gap: { xs: 2, sm: 3 },
                 gridTemplateColumns: {
                   xs: '1fr',
                   md: '1fr 1fr',
@@ -697,7 +697,7 @@ export function PublicBookingDirectory() {
                     variant="outlined"
                     onClick={() => navigate(`/book/sessions/${section.sessionType.slug}`)}
                     sx={{
-                      p: 3,
+                      p: { xs: 2, sm: 3 },
                       borderRadius: 1.5,
                       cursor: 'pointer',
                       transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',

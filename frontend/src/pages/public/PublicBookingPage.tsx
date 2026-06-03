@@ -188,10 +188,10 @@ export function PublicBookingPage() {
           <Box
             sx={{
               flexGrow: 1,
-              overflowY: currentStepKey === 'schedule' ? 'hidden' : 'auto',
-              display: currentStepKey === 'schedule' ? 'flex' : 'block',
+              overflowY: { xs: 'visible', lg: currentStepKey === 'schedule' ? 'hidden' : 'auto' },
+              display: 'flex',
               flexDirection: 'column',
-              p: currentStepKey === 'schedule' ? 0 : 2,
+              p: currentStepKey === 'schedule' ? 0 : { xs: 1.5, sm: 2 },
               minHeight: 0,
             }}
           >            <PublicBookingFlow

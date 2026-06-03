@@ -16,8 +16,8 @@ export function PublicMainContent({ children }: PublicMainContentProps) {
         flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
+        height: { xs: 'auto', lg: '100%' },
+        overflow: { xs: 'visible', lg: 'hidden' },
         bgcolor: 'background.paper',
       }}
     >

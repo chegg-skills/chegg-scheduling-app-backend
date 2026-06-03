@@ -25,20 +25,24 @@ export function PublicLayout({ maxWidth = 'md' }: PublicLayoutProps) {
       sx={{
         minHeight: '100vh',
         bgcolor: 'background.default',
-        py: { xs: 2, sm: 4 },
-        px: { xs: 1, sm: 2 },
+        py: { xs: 0, sm: 4 },
+        px: { xs: 0, sm: 2 },
       }}
     >
       <Container maxWidth={maxWidth} disableGutters>
         <Box
           sx={{
             bgcolor: isFramed ? 'background.paper' : 'transparent',
-            borderRadius: 2,
-            border: isFramed ? '1px solid' : 'none',
+            borderRadius: { xs: 0, sm: 2 },
+            borderWidth: { xs: 0, sm: isFramed ? 1 : 0 },
+            borderStyle: { xs: 'none', sm: isFramed ? 'solid' : 'none' },
             borderColor: isFramed ? 'divider' : 'transparent',
-            boxShadow: isFramed
-              ? '0 16px 36px -24px rgb(15 23 42 / 0.42), 0 3px 10px -4px rgb(15 23 42 / 0.2)'
-              : 'none',
+            boxShadow: {
+              xs: 'none',
+              sm: isFramed
+                ? '0 16px 36px -24px rgb(15 23 42 / 0.42), 0 3px 10px -4px rgb(15 23 42 / 0.2)'
+                : 'none',
+            },
             overflow: 'hidden',
           }}
         >

@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import { alpha } from '@mui/material/styles'
+import type { SxProps, Theme } from '@mui/material/styles'
 import { ChevronLeft } from 'lucide-react'
 
 interface PublicNavigationFooterProps {
@@ -15,6 +16,7 @@ interface PublicNavigationFooterProps {
   showBack?: boolean
   onTroubleshoot?: () => void
   extraAccessory?: React.ReactNode
+  nextButtonSx?: SxProps<Theme>
 }
 
 /**
@@ -33,7 +35,9 @@ export function PublicNavigationFooter({
   showBack = true,
   onTroubleshoot,
   extraAccessory,
+  nextButtonSx,
 }: PublicNavigationFooterProps) {
+  const lowerLabel = nextLabel.toLowerCase()
   return (
     <Box
       sx={{
@@ -43,6 +47,8 @@ export function PublicNavigationFooter({
         borderColor: 'divider',
         bgcolor: 'background.paper',
         display: 'flex',
+        flexDirection: { xs: 'column-reverse', sm: 'row' },
+        gap: 2,
         justifyContent: 'space-between',
         alignItems: 'center',
         flexShrink: 0,
@@ -50,9 +56,10 @@ export function PublicNavigationFooter({
     >
       <Box
         sx={{
-          minWidth: 100,
+          minWidth: { xs: '100%', sm: 100 },
           display: 'flex',
           alignItems: 'center',
+          justifyContent: { xs: 'space-between', sm: 'flex-start' },
           gap: { xs: 1, sm: 2 },
           flexWrap: 'wrap',
         }}
@@ -95,24 +102,20 @@ export function PublicNavigationFooter({
         {extraAccessory}
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: { xs: '100%', sm: 'auto' } }}>
         <Button
           variant="contained"
           size="large"
           disabled={nextDisabled || isSubmitting}
           onClick={onNext}
           sx={{
-            px:
-              nextLabel.toLowerCase().includes('confirm') ||
-              nextLabel.toLowerCase().includes('reschedule')
-                ? 4
-                : 6,
+            width: { xs: '100%', sm: 'auto' },
+            px: lowerLabel.includes('confirm') || lowerLabel.includes('reschedule') ? 4 : 6,
             py: 1.25,
-            minWidth:
-              nextLabel.toLowerCase().includes('confirm') ||
-              nextLabel.toLowerCase().includes('reschedule')
-                ? 220
-                : 140,
+            minWidth: {
+              xs: 'unset',
+              sm: lowerLabel.includes('confirm') || lowerLabel.includes('reschedule') ? 220 : 140,
+            },
             fontWeight: 800,
             borderRadius: 3,
             bgcolor: 'primary.main',
@@ -122,6 +125,7 @@ export function PublicNavigationFooter({
               bgcolor: 'primary.dark',
               boxShadow: (theme) => `0 16px 32px -8px ${alpha(theme.palette.primary.main, 0.5)}`,
             },
+            ...nextButtonSx,
           }}
         >
           {isSubmitting ? submittingLabel : nextLabel}
