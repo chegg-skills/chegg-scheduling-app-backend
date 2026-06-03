@@ -4,6 +4,8 @@ import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { getRequestLogger } from "../../shared/logging/requestContext";
+import { queueStudentFeedbackNotification } from "../bookings/booking.notification";
+import { bookingInclude } from "../bookings/booking.shared";
 
 export type UpsertSessionLogInput = {
   topicsDiscussed?: string | null;
@@ -100,7 +102,21 @@ export const upsertSessionLog = async (
     );
   }
 
-  return prisma.$transaction(async (tx) => {
+  // Track which bookings are transitioning to COMPLETED before the transaction
+  // so we can fire feedback emails after it commits — without N+1 queries.
+  const transitioningToCompletedIds = payload.attendance
+    .filter((a) => {
+      const booking = bookingMap[a.bookingId];
+      return (
+        a.attended === true &&
+        booking.status !== BookingStatus.COMPLETED &&
+        booking.status !== BookingStatus.CANCELLED &&
+        booking.status !== BookingStatus.PENDING
+      );
+    })
+    .map((a) => a.bookingId);
+
+  const result = await prisma.$transaction(async (tx) => {
     const log = await tx.sessionLog.upsert({
       where: { scheduleSlotId: slotId },
       create: {
@@ -140,7 +156,7 @@ export const upsertSessionLog = async (
       }
     }
 
-    const result = await tx.sessionLog.findUnique({
+    const logResult = await tx.sessionLog.findUnique({
       where: { id: log.id },
       include: {
         attendance: {
@@ -156,6 +172,20 @@ export const upsertSessionLog = async (
     const absent = payload.attendance.length - attended;
     getRequestLogger().info({ slotId, eventId, attended, absent, loggedBy: caller.id }, "Session log saved.");
 
-    return result;
+    return logResult;
   });
+
+  // Fire feedback emails after transaction commits — single batch query, not N+1.
+  if (transitioningToCompletedIds.length > 0) {
+    const completedBookings = await prisma.booking.findMany({
+      where: { id: { in: transitioningToCompletedIds } },
+      include: bookingInclude,
+    });
+
+    await Promise.allSettled(
+      completedBookings.map((b) => queueStudentFeedbackNotification(b as any)),
+    );
+  }
+
+  return result;
 };

@@ -21,5 +21,6 @@ export const UpsertNotificationConfigSchema = {
     coachNotifyOnCancellation: z.boolean(),
     coachNotifyOnNoShow: z.boolean(),
     notifyLeadOnAvailability: z.boolean(),
+    sendFeedbackLink: z.boolean(),
   }),
 };

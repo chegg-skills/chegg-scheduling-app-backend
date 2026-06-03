@@ -93,6 +93,11 @@ const SessionTypesPage = lazy(() =>
     default: module.SessionTypesPage,
   }))
 )
+const SystemSettingsPage = lazy(() =>
+  import('@/pages/SystemSettingsPage').then((module) => ({
+    default: module.SystemSettingsPage,
+  }))
+)
 const BookingDirectoriesPage = lazy(() =>
   import('@/pages/BookingDirectoriesPage').then((module) => ({
     default: module.BookingDirectoriesPage,
@@ -236,6 +241,7 @@ export const router = createBrowserRouter([
 
           { path: '/students/:studentId', element: renderLazyPage(StudentDetailPage) },
           { path: '/session-types', element: renderLazyPage(SessionTypesPage) },
+          { path: '/system-settings', element: renderLazyPage(SystemSettingsPage) },
           { path: '/booking-directories', element: renderLazyPage(BookingDirectoriesPage) },
         ],
       },

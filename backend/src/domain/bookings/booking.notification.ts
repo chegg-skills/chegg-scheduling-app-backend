@@ -14,6 +14,7 @@ import {
   getTeamNotificationConfig,
   type ResolvedNotificationConfig,
 } from "../../shared/notifications/notificationConfig";
+import { getSystemSettingByKey } from "../systemSettings/systemSetting.service";
 
 const getCoachName = (booking: SafeBooking): string => {
   const coachName = [booking.coach?.firstName, booking.coach?.lastName]
@@ -507,9 +508,44 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
   }
 };
 
+/**
+ * Sends a post-session feedback email to the student when:
+ * - The team has `sendFeedbackLink` enabled in their notification config, AND
+ * - A global `feedbackFormLink` system setting is configured and non-empty.
+ *
+ * Call this after a booking transitions to COMPLETED (session logged as attended).
+ * Treats an empty string link the same as absent — no email is sent.
+ */
+const queueStudentFeedbackNotification = async (booking: SafeBooking): Promise<void> => {
+  try {
+    const config = await getTeamNotificationConfig(booking.teamId);
+    if (!config.sendFeedbackLink) return;
+
+    const feedbackFormLink = await getSystemSettingByKey("feedbackFormLink");
+    if (!feedbackFormLink) return;
+
+    await publishNotificationSafely({
+      type: "STUDENT_SESSION_FEEDBACK",
+      recipients: booking.studentEmail,
+      userId: booking.coachUserId ?? undefined,
+      variables: {
+        ...(await getBookingNotificationVariables(booking, booking.timezone)),
+        feedbackFormLink,
+      },
+      notificationKey: `booking:${booking.id}:STUDENT_SESSION_FEEDBACK`,
+      entityType: "BOOKING",
+      entityId: booking.id,
+      recipientRole: "STUDENT",
+    });
+  } catch (error) {
+    logger.error({ bookingId: booking.id, error }, "Failed to queue student feedback notification.");
+  }
+};
+
 export {
   queueBookingCreatedNotifications,
   queueBookingStatusNotifications,
   queueBookingUpdatedNotifications,
   queueBookingRescheduledNotifications,
+  queueStudentFeedbackNotification,
 };

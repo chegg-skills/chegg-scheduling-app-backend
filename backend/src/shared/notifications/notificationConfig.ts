@@ -9,6 +9,7 @@ export type ResolvedNotificationConfig = {
   coachNotifyOnCancellation: boolean;
   coachNotifyOnNoShow: boolean;
   notifyLeadOnAvailability: boolean;
+  sendFeedbackLink: boolean;
 };
 
 export const DEFAULT_NOTIFICATION_CONFIG: ResolvedNotificationConfig = {
@@ -20,6 +21,7 @@ export const DEFAULT_NOTIFICATION_CONFIG: ResolvedNotificationConfig = {
   coachNotifyOnCancellation: true,
   coachNotifyOnNoShow: true,
   notifyLeadOnAvailability: true,
+  sendFeedbackLink: false,
 };
 
 /**
@@ -40,6 +42,7 @@ export async function getTeamNotificationConfig(
       coachNotifyOnCancellation: true,
       coachNotifyOnNoShow: true,
       notifyLeadOnAvailability: true,
+      sendFeedbackLink: true,
     },
   });
 
@@ -56,5 +59,6 @@ export async function getTeamNotificationConfig(
     coachNotifyOnCancellation: row.coachNotifyOnCancellation,
     coachNotifyOnNoShow: row.coachNotifyOnNoShow,
     notifyLeadOnAvailability: row.notifyLeadOnAvailability,
+    sendFeedbackLink: row.sendFeedbackLink,
   };
 }

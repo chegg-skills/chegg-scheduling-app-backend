@@ -10,6 +10,7 @@ import {
   BarChart3,
   Tag,
   Globe,
+  Settings,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '@/types'
@@ -86,6 +87,12 @@ export const navItems: NavItem[] = [
     to: '/booking-directories',
     label: 'Booking Directories',
     Icon: Globe,
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    to: '/system-settings',
+    label: 'System Settings',
+    Icon: Settings,
     allowedRoles: ['SUPER_ADMIN'],
   },
 ]

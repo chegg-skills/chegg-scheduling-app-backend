@@ -35,7 +35,8 @@ export type NotificationType =
   | "ZOOM_ISV_LINK_EXPIRY_REMINDER"
   | "EVENT_ACTIVATED"
   | "EVENT_DEACTIVATED"
-  | "STUDENT_CUSTOM_EMAIL";
+  | "STUDENT_CUSTOM_EMAIL"
+  | "STUDENT_SESSION_FEEDBACK";
 
 export type NotificationPayload = {
   type: NotificationType;
