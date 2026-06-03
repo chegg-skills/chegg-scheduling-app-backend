@@ -341,7 +341,7 @@ export interface EventGroup {
 export interface PublicTeamSummary extends Pick<
   Team,
   'id' | 'name' | 'description' | 'publicBookingSlug'
-> {}
+> { }
 
 export interface PublicGroupSummary extends Pick<
   EventGroup,
@@ -551,7 +551,7 @@ export interface CreateEventDto {
   }>
 }
 
-export interface UpdateEventDto extends Partial<CreateEventDto> {}
+export interface UpdateEventDto extends Partial<CreateEventDto> { }
 
 export interface SetEventCoachesDto {
   coaches: Array<{ userId: string; coachOrder?: number }>
@@ -565,7 +565,7 @@ export interface CreateEventTypeDto {
   isActive?: boolean
 }
 
-export interface UpdateEventTypeDto extends Partial<CreateEventTypeDto> {}
+export interface UpdateEventTypeDto extends Partial<CreateEventTypeDto> { }
 
 // Deleted CreateInteractionTypeDto and UpdateInteractionTypeDto manually elsewhere
 
@@ -800,7 +800,7 @@ export interface CreateSessionTypeDto {
   isActive?: boolean
 }
 
-export interface UpdateSessionTypeDto extends Partial<CreateSessionTypeDto> {}
+export interface UpdateSessionTypeDto extends Partial<CreateSessionTypeDto> { }
 
 // ─── Booking Directory Models ──────────────────────────────────────────────────
 
@@ -850,7 +850,7 @@ export interface CreateBookingDirectoryDto {
   isActive?: boolean
 }
 
-export interface UpdateBookingDirectoryDto extends Partial<CreateBookingDirectoryDto> {}
+export interface UpdateBookingDirectoryDto extends Partial<CreateBookingDirectoryDto> { }
 
 export interface AddBookingDirectorySectionDto {
   sessionTypeId: string
