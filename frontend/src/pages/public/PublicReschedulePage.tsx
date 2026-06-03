@@ -288,7 +288,7 @@ export function PublicReschedulePage() {
           <Box
             sx={{
               flexGrow: 1,
-              overflowY: 'hidden',
+              overflowY: { xs: 'visible', lg: 'hidden' },
               display: 'flex',
               flexDirection: 'column',
               p: 0,

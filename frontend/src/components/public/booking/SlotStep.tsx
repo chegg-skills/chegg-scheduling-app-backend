@@ -158,7 +158,7 @@ export function SlotStep({
           }
         >
           {/* Column 1: Calendar Picker */}
-          <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, p: 3 }}>
+          <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, p: { xs: 2, lg: 3 } }}>
             <Box
               sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
             >
@@ -204,7 +204,7 @@ export function SlotStep({
           <Box
             sx={{
               flexGrow: 1,
-              p: 3,
+              p: { xs: 2, lg: 3 },
               display: 'flex',
               flexDirection: 'column',
               minHeight: 0,
@@ -228,7 +228,7 @@ export function SlotStep({
             {/* Scrollable area for slots */}
             <Box
               sx={{
-                overflowY: 'auto',
+                overflowY: { xs: 'visible', lg: 'auto' },
                 flexGrow: 1,
                 pr: 1,
                 mt: 1,

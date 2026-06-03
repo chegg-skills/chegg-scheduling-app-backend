@@ -37,9 +37,8 @@ export function SuccessStep({
       elevation={0}
       sx={{
         maxWidth: 480,
-        width: '100%',
-        mx: 'auto',
-        my: { xs: 2, sm: 4 },
+        mx: { xs: 2, sm: 'auto' },
+        my: { xs: 3, sm: 4 },
         p: { xs: 3, sm: 4 },
         textAlign: 'center',
         borderRadius: 1.5,

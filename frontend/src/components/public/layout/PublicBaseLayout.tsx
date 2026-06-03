@@ -13,9 +13,9 @@ export function PublicBaseLayout({ children }: PublicBaseLayoutProps) {
   return (
     <Box
       sx={{
-        height: { xs: '100vh', lg: '92vh' },
+        height: { xs: 'auto', lg: '92vh' },
         display: 'flex',
-        overflow: 'hidden',
+        overflow: { xs: 'visible', lg: 'hidden' },
         bgcolor: 'background.paper',
       }}
     >
