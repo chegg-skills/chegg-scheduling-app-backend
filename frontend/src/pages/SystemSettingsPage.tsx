@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
 import Alert from '@mui/material/Alert'
+import { Textarea } from '@/components/shared/form/Textarea'
 import Divider from '@mui/material/Divider'
 import { MessageSquare } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -84,21 +84,19 @@ export function SystemSettingsPage() {
           <Divider sx={{ my: 2.5 }} />
 
           <Stack spacing={2}>
-            <TextField
+            <Textarea
               label="Feedback Form Link"
               placeholder="https://forms.example.com/feedback"
-              fullWidth
               value={feedbackFormLink}
               onChange={(e) => {
                 setFeedbackFormLink(e.target.value)
                 setValidationError(null)
               }}
-              error={!!validationError}
+              hasError={!!validationError}
               helperText={
                 validationError ||
                 'Leave blank to disable feedback emails even when teams have opted in.'
               }
-              size="small"
             />
           </Stack>
         </Box>
