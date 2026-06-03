@@ -12,6 +12,8 @@ interface FormFieldProps {
   hint?: string
   info?: string
   required?: boolean
+  charCount?: number
+  charLimit?: number
   children: ReactNode
   className?: string
 }
@@ -23,6 +25,8 @@ export function FormField({
   hint,
   info,
   required,
+  charCount,
+  charLimit,
   children,
   className,
 }: FormFieldProps) {
@@ -49,18 +53,37 @@ export function FormField({
         {info && <InfoTooltip title={info} />}
       </Typography>
       {children}
-      {error ? (
-        <Typography variant="caption" sx={{ color: 'error.main', mt: 0.25, display: 'block' }}>
-          {error}
-        </Typography>
-      ) : hint ? (
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.secondary', mt: 0.25, display: 'block', opacity: 0.8 }}
-        >
-          {hint}
-        </Typography>
-      ) : null}
+      {(error || hint || (charLimit !== undefined && charCount !== undefined)) && (
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mt: 0.25 }}>
+          <Box sx={{ flexGrow: 1 }}>
+            {error ? (
+              <Typography variant="caption" sx={{ color: 'error.main', display: 'block' }}>
+                {error}
+              </Typography>
+            ) : hint ? (
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', display: 'block', opacity: 0.8 }}
+              >
+                {hint}
+              </Typography>
+            ) : null}
+          </Box>
+          {charLimit !== undefined && charCount !== undefined && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: charCount >= charLimit ? 'error.main' : 'text.secondary',
+                fontWeight: charCount >= charLimit ? 600 : 400,
+                ml: 2,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {charCount} / {charLimit}
+            </Typography>
+          )}
+        </Stack>
+      )}
     </Stack>
   )
 }

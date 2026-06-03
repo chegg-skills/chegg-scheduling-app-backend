@@ -291,9 +291,24 @@ export const UpsertSessionLogSchema = {
     slotId: z.uuid("Invalid slot ID"),
   }),
   body: z.object({
-    topicsDiscussed: z.string().trim().optional().nullable(),
-    summary: z.string().trim().optional().nullable(),
-    coachNotes: z.string().trim().optional().nullable(),
+    topicsDiscussed: z
+      .string()
+      .trim()
+      .max(200, "Topics discussed must be 200 characters or less")
+      .optional()
+      .nullable(),
+    summary: z
+      .string()
+      .trim()
+      .max(800, "Session summary must be 800 characters or less")
+      .optional()
+      .nullable(),
+    coachNotes: z
+      .string()
+      .trim()
+      .max(500, "Coach notes must be 500 characters or less")
+      .optional()
+      .nullable(),
     attendance: z.array(
       z.object({
         bookingId: z.uuid("Invalid booking ID"),

@@ -189,11 +189,17 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         </Box>
 
         {/* Topics Discussed */}
-        <FormField label="Topics Discussed" htmlFor="log-topics">
+        <FormField
+          label="Topics Discussed"
+          htmlFor="log-topics"
+          charCount={topicsDiscussed.length}
+          charLimit={200}
+        >
           <Input
             id="log-topics"
             value={topicsDiscussed}
-            onChange={(e) => setTopicsDiscussed(e.target.value)}
+            onChange={(e) => setTopicsDiscussed(e.target.value.slice(0, 200))}
+            inputProps={{ maxLength: 200 }}
             placeholder="e.g. React hooks, async/await patterns, system design..."
           />
         </FormField>
@@ -203,11 +209,14 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
           label="Session Summary"
           htmlFor="log-summary"
           hint="Visible context for future reference."
+          charCount={summary.length}
+          charLimit={800}
         >
           <Textarea
             id="log-summary"
             value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+            onChange={(e) => setSummary(e.target.value.slice(0, 800))}
+            inputProps={{ maxLength: 800 }}
             rows={3}
             placeholder="Describe what was covered, outcomes achieved, areas of progress..."
           />
@@ -218,11 +227,14 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
           label="Coach Notes"
           htmlFor="log-coach-notes"
           info="Private — only visible to coaches and admins."
+          charCount={coachNotes.length}
+          charLimit={500}
         >
           <Textarea
             id="log-coach-notes"
             value={coachNotes}
-            onChange={(e) => setCoachNotes(e.target.value)}
+            onChange={(e) => setCoachNotes(e.target.value.slice(0, 500))}
+            inputProps={{ maxLength: 500 }}
             rows={2}
             placeholder="Any private observations, follow-up actions, or concerns..."
           />

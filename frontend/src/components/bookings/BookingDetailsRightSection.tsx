@@ -299,11 +299,17 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
                 </Typography>
               </Box>
 
-              <FormField label="Topics discussed" htmlFor="booking-topics">
+              <FormField
+                label="Topics discussed"
+                htmlFor="booking-topics"
+                charCount={topicsDiscussed.length}
+                charLimit={200}
+              >
                 <Input
                   id="booking-topics"
                   value={topicsDiscussed}
-                  onChange={(e) => setTopicsDiscussed(e.target.value)}
+                  onChange={(e) => setTopicsDiscussed(e.target.value.slice(0, 200))}
+                  inputProps={{ maxLength: 200 }}
                   placeholder="e.g. Code reviews, database design..."
                 />
               </FormField>
@@ -312,31 +318,37 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
                 label="Session summary"
                 htmlFor="booking-summary"
                 hint="Recap covered material. Visible to coaches/admins."
+                charCount={summary.length}
+                charLimit={800}
               >
                 <Textarea
                   id="booking-summary"
                   value={summary}
-                  onChange={(e) => setSummary(e.target.value)}
+                  onChange={(e) => setSummary(e.target.value.slice(0, 800))}
+                  inputProps={{ maxLength: 800 }}
                   rows={4}
                   placeholder="Topics covered, next steps..."
                 />
               </FormField>
 
-              {canSeePrivateNotes && (
-                <FormField
-                  label="Coach notes (private)"
-                  htmlFor="booking-coach-notes"
-                  hint="Only visible to coaches and admins."
-                >
-                  <Textarea
-                    id="booking-coach-notes"
-                    value={coachNotes}
-                    onChange={(e) => setCoachNotes(e.target.value)}
-                    rows={3}
-                    placeholder="Private observations, next steps..."
-                  />
-                </FormField>
-              )}
+               {canSeePrivateNotes && (
+                 <FormField
+                   label="Coach notes (private)"
+                   htmlFor="booking-coach-notes"
+                   hint="Only visible to coaches and admins."
+                   charCount={coachNotes.length}
+                   charLimit={500}
+                 >
+                   <Textarea
+                     id="booking-coach-notes"
+                     value={coachNotes}
+                     onChange={(e) => setCoachNotes(e.target.value.slice(0, 500))}
+                     inputProps={{ maxLength: 500 }}
+                     rows={3}
+                     placeholder="Private observations, next steps..."
+                   />
+                 </FormField>
+               )}
 
               <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ mt: 1 }}>
                 {log && (
