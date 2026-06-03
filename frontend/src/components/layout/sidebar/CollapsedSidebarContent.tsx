@@ -7,7 +7,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut, Settings } from 'lucide-react'
 import type { NavItem } from './navConfig'
 
 interface CollapsedSidebarContentProps {
@@ -15,6 +15,7 @@ interface CollapsedSidebarContentProps {
   pathname: string
   logout: () => void
   onTerminologyClick: () => void
+  showSystemSettings?: boolean
 }
 
 export function CollapsedSidebarContent({
@@ -22,6 +23,7 @@ export function CollapsedSidebarContent({
   pathname,
   logout,
   onTerminologyClick,
+  showSystemSettings = false,
 }: CollapsedSidebarContentProps) {
   return (
     <>
@@ -76,6 +78,32 @@ export function CollapsedSidebarContent({
       </List>
       <Divider />
       <Box sx={{ p: 1 }}>
+        {showSystemSettings && (
+          <ListItemButton
+            component={NavLink}
+            to="/system-settings"
+            sx={{
+              borderRadius: 1,
+              mb: 0.5,
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 1.5,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mb: 0.5, justifyContent: 'center' }}>
+              <Settings size={18} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Settings"
+              primaryTypographyProps={{
+                variant: 'caption',
+                fontWeight: 600,
+                sx: { fontSize: '0.65rem' },
+              }}
+            />
+          </ListItemButton>
+        )}
         <ListItemButton
           component={NavLink}
           to="/profile"

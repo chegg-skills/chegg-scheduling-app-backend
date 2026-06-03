@@ -4,6 +4,8 @@ import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { assertSlotLogAccess } from "../events/sessionLog.service";
+import { queueStudentFeedbackNotification } from "./booking.notification";
+import { findBookingById } from "./booking.repository";
 
 export type UpsertBookingSessionLogInput = {
   topicsDiscussed?: string | null;
@@ -96,7 +98,15 @@ export const upsertBookingSessionLog = async (
 
   assertBookingLogAccess(booking, caller);
 
-  return prisma.$transaction(async (tx) => {
+  // Determine whether this call will transition the booking to COMPLETED
+  // before the transaction, so we can fire the feedback email after it commits.
+  const isTransitioningToCompleted =
+    payload.attended === true &&
+    booking.status !== BookingStatus.COMPLETED &&
+    booking.status !== BookingStatus.CANCELLED &&
+    booking.status !== BookingStatus.PENDING;
+
+  const result = await prisma.$transaction(async (tx) => {
     const log = await tx.sessionLog.upsert({
       where: { bookingId },
       create: {
@@ -140,4 +150,11 @@ export const upsertBookingSessionLog = async (
       include: sessionLogReadInclude,
     });
   });
+
+  if (isTransitioningToCompleted) {
+    const fullBooking = await findBookingById(bookingId);
+    await queueStudentFeedbackNotification(fullBooking);
+  }
+
+  return result;
 };

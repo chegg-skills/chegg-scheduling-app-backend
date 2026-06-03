@@ -89,3 +89,4 @@ export const navItems: NavItem[] = [
     allowedRoles: ['SUPER_ADMIN'],
   },
 ]
+

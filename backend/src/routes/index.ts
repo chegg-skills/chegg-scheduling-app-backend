@@ -13,6 +13,7 @@ import publicRoutes from "../domain/public/public.router";
 import studentRoutes from "../domain/students/student.router";
 import sessionTypeRoutes from "../domain/sessionTypes/sessionType.router";
 import bookingDirectoryRoutes from "../domain/bookingDirectories/bookingDirectory.router";
+import systemSettingRoutes from "../domain/systemSettings/systemSetting.router";
 import v1routes from "./v1/index";
 import { authenticate } from "../shared/middleware/auth";
 
@@ -32,6 +33,7 @@ router.use(eventRoutes);
 router.use(eventGroupRoutes);
 router.use(sessionTypeRoutes);
 router.use(bookingDirectoryRoutes);
+router.use(systemSettingRoutes);
 
 router.use("/v1", authenticate, v1routes);
 

@@ -6,7 +6,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Checkbox from '@mui/material/Checkbox'
 import Alert from '@mui/material/Alert'
 import Divider from '@mui/material/Divider'
-import { Bell, Clock, ShieldCheck, UserCog, GraduationCap } from 'lucide-react'
+import { Bell, Clock, ShieldCheck, UserCog, GraduationCap, MessageSquare } from 'lucide-react'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
@@ -36,6 +36,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
   const [coachNotifyOnNoShow, setCoachNotifyOnNoShow] = useState(true)
 
   const [notifyLeadOnAvailability, setNotifyLeadOnAvailability] = useState(true)
+  const [sendFeedbackLink, setSendFeedbackLink] = useState(false)
 
   const [showSuccess, setShowSuccess] = useState(false)
 
@@ -49,6 +50,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
       setCoachNotifyOnCancellation(config.coachNotifyOnCancellation)
       setCoachNotifyOnNoShow(config.coachNotifyOnNoShow)
       setNotifyLeadOnAvailability(config.notifyLeadOnAvailability)
+      setSendFeedbackLink(config.sendFeedbackLink ?? false)
     }
   }, [config])
 
@@ -76,6 +78,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
         coachNotifyOnCancellation,
         coachNotifyOnNoShow,
         notifyLeadOnAvailability,
+        sendFeedbackLink,
       },
       {
         onSuccess: () => {
@@ -308,6 +311,41 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
             </Box>
           </Stack>
         </Stack>
+      </Box>
+
+      <Divider />
+
+      {/* Post-Session Feedback */}
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+          <MessageSquare size={22} className="text-primary-600" />
+          <Typography variant="h6" fontWeight={600}>
+            Post-Session Feedback
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          When enabled, students receive a feedback email after their session is marked as
+          completed. The feedback form link is configured globally in System Settings.
+        </Typography>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={sendFeedbackLink}
+              onChange={(e) => setSendFeedbackLink(e.target.checked)}
+              disabled={!canEdit || mutation.isPending}
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2" fontWeight={500}>
+                Send feedback link after completed sessions
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Students receive a feedback email once a session is logged as attended.
+              </Typography>
+            </Box>
+          }
+        />
       </Box>
 
       {canEdit && (

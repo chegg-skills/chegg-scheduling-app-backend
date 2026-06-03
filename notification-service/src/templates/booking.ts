@@ -124,6 +124,26 @@ export const bookingTemplates: EmailTemplateMap = {
     ),
   },
 
+  STUDENT_SESSION_FEEDBACK: {
+    subject: "How was your {{eventName}} session?",
+    preheader: "We'd love to hear your feedback on your recent session.",
+    text: "Hi {{studentName}}, thank you for attending your {{eventName}} session with {{coachName}} on {{startTime}} ({{timezone}}). Please take a moment to share your feedback: {{feedbackFormLink}}",
+    html: wrapLayout(
+      "Share Your Feedback",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Thank you for attending your recent session. We'd love to hear how it went!</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Session", "{{eventName}}")}
+         ${detailRow("Coach", "{{coachName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+       </p>
+       <p style="margin-top: 8px;">Your feedback helps us improve the experience for everyone.</p>`,
+      "Share your feedback on your recent {{eventName}} session.",
+      { text: "Give Feedback", url: "{{feedbackFormLink}}" },
+    ),
+  },
+
   COACH_REVEAL_SENT: {
     subject: "Session Details Ready: {{eventName}} on {{startTime}}",
     preheader: "Your coach and session join details are now available.",
