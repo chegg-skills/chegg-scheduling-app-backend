@@ -23,6 +23,7 @@ type ListUsersOptions = {
   page?: number;
   pageSize?: number;
   search?: string;
+  role?: string;
 };
 
 type UpdateUserInput = {
@@ -95,32 +96,17 @@ const listUsers = async (
   const { page, pageSize, skip } = resolvePagination(validatedOptions);
   const searchTerms = validatedOptions.search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
-  const where: Prisma.UserWhereInput = searchTerms.length
-    ? {
-        AND: searchTerms.map((term) => ({
-          OR: [
-            {
-              firstName: {
-                contains: term,
-                mode: "insensitive",
-              },
-            },
-            {
-              lastName: {
-                contains: term,
-                mode: "insensitive",
-              },
-            },
-            {
-              email: {
-                contains: term,
-                mode: "insensitive",
-              },
-            },
-          ],
-        })),
-      }
-    : {};
+  const where: Prisma.UserWhereInput = {};
+  if (validatedOptions.role) where.role = validatedOptions.role;
+  if (searchTerms.length) {
+    where.AND = searchTerms.map((term) => ({
+      OR: [
+        { firstName: { contains: term, mode: "insensitive" } },
+        { lastName: { contains: term, mode: "insensitive" } },
+        { email: { contains: term, mode: "insensitive" } },
+      ],
+    }));
+  }
 
   const [users, total] = await prisma.$transaction([
     prisma.user.findMany({

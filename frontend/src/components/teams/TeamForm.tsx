@@ -26,10 +26,8 @@ export function TeamForm({ team, onSuccess, onCancel }: TeamFormProps) {
   const { mutate: create, isPending: creating, error: createError } = useCreateTeam()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateTeam()
 
-  const { data: usersData } = useUsers({ pageSize: 200 })
-  const teamLeadOptions = (usersData?.users ?? []).filter(
-    (user) => user.role === 'TEAM_ADMIN' && user.isActive
-  )
+  const { data: usersData } = useUsers({ role: 'TEAM_ADMIN', pageSize: 200 })
+  const teamLeadOptions = (usersData?.users ?? []).filter((user) => user.isActive)
 
   const {
     register,
