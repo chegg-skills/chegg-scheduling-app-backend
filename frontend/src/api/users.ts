@@ -5,6 +5,7 @@ export interface ListUsersParams {
   page?: number
   pageSize?: number
   search?: string
+  role?: string
 }
 
 export interface ListUsersResponse {

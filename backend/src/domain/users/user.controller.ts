@@ -11,6 +11,7 @@ const listUsers = async (req: Request, res: Response, next: NextFunction): Promi
       page: req.query.page ? Number(req.query.page) : undefined,
       pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
       search: typeof req.query.search === "string" ? req.query.search : undefined,
+      role: typeof req.query.role === "string" ? req.query.role : undefined,
     });
 
     sendSuccessResponse(res, StatusCodes.OK, result, "Users fetched successfully.");
