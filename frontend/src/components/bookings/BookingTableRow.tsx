@@ -1,7 +1,16 @@
-
-import { Box, Button, Collapse, Divider, TableCell, TableRow } from '@mui/material'
+import { useState } from 'react'
+import {
+  Box,
+  Button,
+  Collapse,
+  Divider,
+  TableCell,
+  TableRow,
+  Stack,
+  Typography,
+} from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { ChevronDown, ChevronUp, Clock, XCircle, Calendar } from 'lucide-react'
+import { ChevronDown, ChevronUp, Clock, XCircle, Calendar, CalendarPlus } from 'lucide-react'
 import type { Booking } from '@/types'
 import { useBookingStatusUpdate } from '@/hooks/useBookingStatusUpdate'
 import { BookingStatusBadge } from './BookingStatusBadge'
@@ -10,6 +19,8 @@ import { BookingDetailsPanel } from './BookingDetailsPanel'
 import { BookingStudentCell } from './cells/BookingStudentCell'
 import { BookingTimeCell } from './cells/BookingTimeCell'
 import { BookingCoachInfo } from './cells/BookingCoachInfo'
+import { useAuth } from '@/context/auth/useAuth'
+import { BookFollowUpDialog } from './BookFollowUpDialog'
 
 interface BookingTableRowProps {
   booking: Booking
@@ -18,6 +29,8 @@ interface BookingTableRowProps {
 }
 
 export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableRowProps) {
+  const { user } = useAuth()
+  const [isFollowUpOpen, setIsFollowUpOpen] = useState(false)
   const {
     handleStatusUpdate,
     canMarkNoShow,
@@ -62,18 +75,69 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
           <BookingStatusBadge status={booking.status} />
         </TableCell>
 
-        <TableCell align="right" width={110}>
-          <Button
-            size="small"
-            onClick={onToggle}
-            endIcon={isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            sx={{
-              color: isExpanded ? 'primary.main' : 'text.secondary',
-              fontWeight: 600,
-            }}
-          >
-            Details
-          </Button>
+        <TableCell align="right" sx={{ pr: 3 }}>
+          <Stack direction="row" spacing={2.5} justifyContent="flex-end" alignItems="center">
+            {booking.status === 'COMPLETED' &&
+              user &&
+              ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'].includes(user.role) && (
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    alignSelf: 'center',
+                    cursor: 'pointer',
+                    color: 'text.secondary',
+                    bgcolor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'grey.300',
+                    borderRadius: 1.5,
+                    height: 28,
+                    px: 1.25,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: 'primary.lighter',
+                      borderColor: 'primary.main',
+                      transform: 'scale(1.03)',
+                    },
+                    '&:active': {
+                      transform: 'scale(0.97)',
+                    },
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsFollowUpOpen(true)
+                  }}
+                >
+                  <CalendarPlus size={14} style={{ flexShrink: 0 }} />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: 'inherit',
+                      letterSpacing: '0.02em',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Follow-Up
+                  </Typography>
+                </Box>
+              )}
+            <Button
+              size="small"
+              onClick={onToggle}
+              endIcon={isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              sx={{
+                color: isExpanded ? 'primary.main' : 'text.secondary',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Details
+            </Button>
+          </Stack>
         </TableCell>
       </TableRow>
 
@@ -181,7 +245,11 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
         onConfirm={handleCancelConfirm}
         isLoading={isPending}
       />
+      <BookFollowUpDialog
+        isOpen={isFollowUpOpen}
+        booking={booking}
+        onClose={() => setIsFollowUpOpen(false)}
+      />
     </>
   )
 }
-

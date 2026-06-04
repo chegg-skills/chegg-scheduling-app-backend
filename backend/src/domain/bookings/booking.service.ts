@@ -123,7 +123,10 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   const activeCoaches = event.coaches as CoachCandidate[];
 
   if (activeCoaches.length === 0) {
-    getRequestLogger().warn({ eventId, teamId }, "Booking blocked because no active coaches are available for the event.");
+    getRequestLogger().warn(
+      { eventId, teamId },
+      "Booking blocked because no active coaches are available for the event.",
+    );
     throw new ErrorHandler(
       StatusCodes.SERVICE_UNAVAILABLE,
       "No active coaches available for this event.",
@@ -203,7 +206,13 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   );
 
   getRequestLogger().info(
-    { bookingId: booking.id, eventId: booking.eventId, teamId: booking.teamId, coachUserId: booking.coachUserId, status: booking.status },
+    {
+      bookingId: booking.id,
+      eventId: booking.eventId,
+      teamId: booking.teamId,
+      coachUserId: booking.coachUserId,
+      status: booking.status,
+    },
     "Booking created.",
   );
 
@@ -228,7 +237,10 @@ const updateBooking = async (
   const booking = await updateBookingById(id, data);
 
   if (data.status && data.status !== oldBooking.status) {
-    getRequestLogger().info({ bookingId: booking.id, previousStatus: oldBooking.status, newStatus: booking.status }, "Booking status updated.");
+    getRequestLogger().info(
+      { bookingId: booking.id, previousStatus: oldBooking.status, newStatus: booking.status },
+      "Booking status updated.",
+    );
     void queueBookingStatusNotifications(booking);
   }
   void queueBookingUpdatedNotifications(oldBooking, booking);
@@ -313,7 +325,13 @@ const rescheduleBooking = async (
   );
 
   getRequestLogger().info(
-    { bookingId: updatedBooking.id, eventId: updatedBooking.eventId, teamId: updatedBooking.teamId, coachUserId: updatedBooking.coachUserId, startTime: updatedBooking.startTime },
+    {
+      bookingId: updatedBooking.id,
+      eventId: updatedBooking.eventId,
+      teamId: updatedBooking.teamId,
+      coachUserId: updatedBooking.coachUserId,
+      startTime: updatedBooking.startTime,
+    },
     "Booking rescheduled.",
   );
 
@@ -357,11 +375,258 @@ const cancelBooking = async (
     { timeout: 15000 },
   );
 
-  getRequestLogger().info({ bookingId: updatedBooking.id, eventId: updatedBooking.eventId, teamId: updatedBooking.teamId }, "Booking cancelled.");
+  getRequestLogger().info(
+    {
+      bookingId: updatedBooking.id,
+      eventId: updatedBooking.eventId,
+      teamId: updatedBooking.teamId,
+    },
+    "Booking cancelled.",
+  );
 
   void queueBookingStatusNotifications(updatedBooking);
 
   return updatedBooking;
 };
 
-export { createBooking, getBooking, listBookings, updateBooking, rescheduleBooking, cancelBooking };
+const bookFollowUpSession = async (
+  bookingId: string,
+  payload: {
+    startTime: string | Date;
+    timezone?: string;
+    notes?: string;
+    specificQuestion?: string;
+    triedSolutions?: string;
+    usedResources?: string;
+    sessionObjectives?: string;
+  },
+  caller: CallerContext,
+): Promise<SafeBooking> => {
+  // 1. Fetch original booking details
+  const originalBooking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      student: true,
+      team: true,
+      event: {
+        include: {
+          coaches: {
+            where: { isActive: true },
+          },
+        },
+      },
+      coach: true,
+    },
+  });
+
+  if (!originalBooking) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Original booking not found.");
+  }
+
+  // 2. Enforce Completed Booking constraint
+  if (originalBooking.status !== BookingStatus.COMPLETED) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "A follow-up session can only be booked for completed bookings.",
+    );
+  }
+
+  // 3. Permissions Check
+  if (caller.role === UserRole.COACH) {
+    const isLead = originalBooking.coachUserId === caller.id;
+    const isCoHost = (originalBooking.coCoachUserIds ?? []).includes(caller.id);
+    if (!isLead && !isCoHost) {
+      throw new ErrorHandler(
+        StatusCodes.FORBIDDEN,
+        "You do not have permission to book a follow-up for this booking.",
+      );
+    }
+  } else if (caller.role === UserRole.TEAM_ADMIN) {
+    if (originalBooking.team.teamLeadId !== caller.id) {
+      throw new ErrorHandler(
+        StatusCodes.FORBIDDEN,
+        "You do not have permission to manage this team.",
+      );
+    }
+  } else if (caller.role !== UserRole.SUPER_ADMIN) {
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "Unauthorized role.");
+  }
+
+  // 4. Verify entities are still active/exist
+  if (!originalBooking.team || !originalBooking.team.isActive) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "The team associated with the original booking is deleted or inactive.",
+    );
+  }
+
+  if (!originalBooking.event || !originalBooking.event.isActive) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "The event associated with the original booking is deleted or inactive.",
+    );
+  }
+
+  if (originalBooking.event.sessionTypeId) {
+    const sessionType = await prisma.sessionType.findUnique({
+      where: { id: originalBooking.event.sessionTypeId },
+    });
+    if (!sessionType || !sessionType.isActive) {
+      throw new ErrorHandler(
+        StatusCodes.BAD_REQUEST,
+        "The session type associated with this event is deleted or inactive.",
+      );
+    }
+  }
+
+  const coachUser = await prisma.user.findUnique({
+    where: { id: originalBooking.coachUserId },
+  });
+  if (!coachUser || !coachUser.isActive) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "The assigned coach is no longer active or exists.",
+    );
+  }
+
+  const eventCoach = await prisma.eventCoach.findUnique({
+    where: {
+      eventId_coachUserId: {
+        eventId: originalBooking.eventId,
+        coachUserId: originalBooking.coachUserId,
+      },
+    },
+  });
+  if (!eventCoach || !eventCoach.isActive) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "The assigned coach is no longer assigned to this event.",
+    );
+  }
+
+  // 5. Parse time and resolve booking window/slot constraints
+  const start = parseBookingStartTime(payload.startTime);
+  const event = await getBookableEvent(originalBooking.teamId, originalBooking.eventId);
+  const { end, schedulingContext } = resolveBookingWindow(event, start);
+  const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
+
+  const activeCoaches = event.coaches as CoachCandidate[];
+
+  // 6. Database Transaction & Pessimistic Locks
+  const followUpBooking = await prisma.$transaction(
+    async (tx) => {
+      if (matchedScheduleSlot) {
+        await lockScheduleSlot(tx, matchedScheduleSlot.id);
+      } else {
+        await lockEvent(tx, event.id);
+      }
+
+      // Check coach selection and assignment logic inside transaction
+      const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
+        await resolveBookingCoachSelection({
+          preferredCoachId: originalBooking.coachUserId,
+          activeCoaches,
+          event,
+          start,
+          end,
+          allowSharedSessionOverlap,
+          matchedScheduleSlotId: matchedScheduleSlot?.id,
+          tx,
+        });
+
+      await lockCoach(tx, assignedCoachId);
+
+      // Re-verify coach is still active after acquiring the row lock (closes TOCTOU window)
+      const lockedCoachUser = await tx.user.findUnique({ where: { id: assignedCoachId } });
+      if (!lockedCoachUser?.isActive) {
+        throw new ErrorHandler(
+          StatusCodes.CONFLICT,
+          "The assigned coach is no longer active.",
+        );
+      }
+      const lockedEventCoach = await tx.eventCoach.findUnique({
+        where: {
+          eventId_coachUserId: { eventId: originalBooking.eventId, coachUserId: assignedCoachId },
+        },
+      });
+      if (!lockedEventCoach?.isActive) {
+        throw new ErrorHandler(
+          StatusCodes.CONFLICT,
+          "The assigned coach is no longer assigned to this event.",
+        );
+      }
+
+      const scheduleSlot =
+        matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
+
+      // Capacity check
+      const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+      const currentParticipantCount = await countActiveParticipantsForTime(tx, event.id, start);
+      assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+
+      // Prevent overlapping booking for the same student
+      const duplicateBooking = await tx.booking.findFirst({
+        where: {
+          studentEmail: originalBooking.studentEmail,
+          status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+          OR: [
+            { startTime: { lte: start }, endTime: { gt: start } },
+            { startTime: { lt: end }, endTime: { gte: end } },
+            { startTime: { gte: start }, endTime: { lte: end } },
+          ],
+        },
+      });
+      if (duplicateBooking) {
+        throw new ErrorHandler(
+          StatusCodes.CONFLICT,
+          "This student already has a booking overlapping with the selected time.",
+        );
+      }
+
+      // Upsert student profile
+      const student = await upsertStudentForBooking(
+        tx,
+        originalBooking.studentName,
+        originalBooking.studentEmail,
+        start,
+      );
+
+      return createBookingRecord(tx, {
+        studentId: student.id,
+        scheduleSlotId: scheduleSlot?.id ?? null,
+        studentName: originalBooking.studentName,
+        studentEmail: originalBooking.studentEmail,
+        teamId: originalBooking.teamId,
+        eventId: originalBooking.eventId,
+        coachUserId: assignedCoachId,
+        coCoachUserIds,
+        startTime: start,
+        endTime: end,
+        timezone: payload.timezone || originalBooking.timezone || "UTC",
+        notes:
+          payload.notes ?? `Follow-up to booking ${originalBooking.id.slice(0, 8).toUpperCase()}`,
+        specificQuestion: payload.specificQuestion || null,
+        triedSolutions: payload.triedSolutions || null,
+        usedResources: payload.usedResources || null,
+        sessionObjectives: payload.sessionObjectives || null,
+        meetingJoinUrl,
+        status: BookingStatus.CONFIRMED,
+      });
+    },
+    { timeout: 15000 },
+  );
+
+  void queueBookingCreatedNotifications(followUpBooking);
+
+  return followUpBooking;
+};
+
+export {
+  createBooking,
+  getBooking,
+  listBookings,
+  updateBooking,
+  rescheduleBooking,
+  cancelBooking,
+  bookFollowUpSession,
+};

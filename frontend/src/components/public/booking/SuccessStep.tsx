@@ -17,6 +17,7 @@ interface SuccessStepProps {
   newTime?: string | null
   mentorName?: string | null
   selectedTimezone?: string
+  buttonLabel?: string
 }
 
 export function SuccessStep({
@@ -28,6 +29,7 @@ export function SuccessStep({
   newTime,
   mentorName,
   selectedTimezone: _,
+  buttonLabel,
 }: SuccessStepProps) {
   const isReschedule = mode === 'reschedule'
   const theme = useTheme()
@@ -172,7 +174,7 @@ export function SuccessStep({
           },
         }}
       >
-        {isReschedule ? 'Return to dashboard' : 'Book another session'}
+        {buttonLabel || (isReschedule ? 'Return to dashboard' : 'Book another session')}
       </Button>
     </Paper>
   )

@@ -17,6 +17,7 @@ import {
   RescheduleBookingSchema,
   UpdateBookingStatusSchema,
   UpsertBookingSessionLogSchema,
+  BookFollowUpSchema,
 } from "./booking.schema";
 
 const router = Router();
@@ -63,6 +64,17 @@ router
     optionalAuthenticate,
     validate(CancelBookingSchema),
     BookingController.cancelBooking,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/:bookingId/follow-up")
+  .post(
+    standardLimiter,
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    validate(BookFollowUpSchema),
+    BookingController.bookFollowUpSession,
   )
   .all(methodNotAllowed);
 

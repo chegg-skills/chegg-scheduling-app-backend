@@ -3,6 +3,7 @@ import { bookingsApi } from '@/api/bookings'
 import type { ListBookingsFilters, BookingStatus } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
+import { studentKeys } from './useStudents'
 
 export const bookingKeys = {
   all: ['bookings'] as const,
@@ -44,5 +45,34 @@ export function useUpdateBookingStatus() {
     }) => bookingsApi.updateStatus(id, { status, cancellationReason }),
     onSuccess: (_, { id }) =>
       invalidateQueryKeys(qc, [bookingKeys.all, bookingKeys.detail(id), statsKeys.all]),
+  })
+}
+
+export function useBookFollowUpSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      bookingId,
+      data,
+    }: {
+      bookingId: string
+      data: {
+        startTime: string | Date
+        timezone?: string
+        notes?: string
+        specificQuestion?: string
+        triedSolutions?: string
+        usedResources?: string
+        sessionObjectives?: string
+      }
+    }) => bookingsApi.bookFollowUp(bookingId, data),
+    onSuccess: (_, { bookingId }) => {
+      invalidateQueryKeys(qc, [
+        bookingKeys.all,
+        bookingKeys.detail(bookingId),
+        statsKeys.all,
+        studentKeys.all,
+      ])
+    },
   })
 }

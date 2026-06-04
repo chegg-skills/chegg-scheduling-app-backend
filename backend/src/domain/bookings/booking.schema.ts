@@ -14,11 +14,36 @@ export const CreateBookingSchema = {
         return arg;
       }, z.date()),
       timezone: z.string().trim().optional(),
-      notes: z.string().trim().max(500, "Notes must be 500 characters or less").transform(stripHtml).optional(),
-      specificQuestion: z.string().trim().max(500, "Specific question must be 500 characters or less").transform(stripHtml).optional(),
-      triedSolutions: z.string().trim().max(500, "Tried solutions must be 500 characters or less").transform(stripHtml).optional(),
-      usedResources: z.string().trim().max(500, "Used resources must be 500 characters or less").transform(stripHtml).optional(),
-      sessionObjectives: z.string().trim().max(500, "Session objectives must be 500 characters or less").transform(stripHtml).optional(),
+      notes: z
+        .string()
+        .trim()
+        .max(500, "Notes must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      specificQuestion: z
+        .string()
+        .trim()
+        .max(500, "Specific question must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      triedSolutions: z
+        .string()
+        .trim()
+        .max(500, "Tried solutions must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      usedResources: z
+        .string()
+        .trim()
+        .max(500, "Used resources must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      sessionObjectives: z
+        .string()
+        .trim()
+        .max(500, "Session objectives must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
       preferredCoachId: z.uuid().optional(),
     })
     .strip(),
@@ -128,6 +153,53 @@ export const UpsertBookingSessionLogSchema = {
         .nullable()
         .optional(),
       attended: z.boolean().optional(),
+    })
+    .strip(),
+};
+
+export const BookFollowUpSchema = {
+  params: z
+    .object({
+      bookingId: z.uuid("Invalid booking ID"),
+    })
+    .strip(),
+  body: z
+    .object({
+      startTime: z.preprocess((arg) => {
+        if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
+        return arg;
+      }, z.date()),
+      timezone: z.string().trim().optional(),
+      notes: z
+        .string()
+        .trim()
+        .max(500, "Notes must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      specificQuestion: z
+        .string()
+        .trim()
+        .max(500, "Specific question must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      triedSolutions: z
+        .string()
+        .trim()
+        .max(500, "Tried solutions must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      usedResources: z
+        .string()
+        .trim()
+        .max(500, "Used resources must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
+      sessionObjectives: z
+        .string()
+        .trim()
+        .max(500, "Session objectives must be 500 characters or less")
+        .transform(stripHtml)
+        .optional(),
     })
     .strip(),
 };
