@@ -41,7 +41,6 @@ import {
 import { resolveBookingCoachSelection } from "./bookingAssignmentResolver.service";
 import type { CoachCandidate } from "./assignment.service";
 import type { CallerContext } from "../../shared/utils/userUtils";
-import { getManagedTeam } from "../../shared/utils/teamAccess";
 import {
   queueBookingCreatedNotifications,
   queueBookingStatusNotifications,
