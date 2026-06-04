@@ -156,3 +156,17 @@ export const cancelBooking = async (req: Request, res: Response) => {
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking cancelled successfully.");
 };
+
+export const bookFollowUpSession = async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+  const caller = res.locals.authUser as CallerContext;
+
+  const booking = await BookingService.bookFollowUpSession(bookingId, req.body, caller);
+
+  return sendSuccessResponse(
+    res,
+    StatusCodes.CREATED,
+    { booking },
+    "Follow-up booking confirmed successfully.",
+  );
+};

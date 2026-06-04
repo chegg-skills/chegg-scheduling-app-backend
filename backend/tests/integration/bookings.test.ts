@@ -953,7 +953,286 @@ describe("Booking Domain Integration Tests", () => {
       // coach2 is not lead or co-host → 403
       expect(res.status).toBe(403);
       void coach2; // silence unused var
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // POST /api/bookings/:bookingId/follow-up
+  // ─────────────────────────────────────────────────────────────
+  describe("POST /api/bookings/:bookingId/follow-up", () => {
+    let bookingId: string;
+
+    beforeEach(async () => {
+      // Set Coach Availability: Monday 09:00 - 17:00
+      await prisma.userWeeklyAvailability.create({
+        data: {
+          userId: coachId,
+          dayOfWeek: 1,
+          startTime: "09:00",
+          endTime: "17:00",
+        },
+      });
+
+      const startTime = getNextUtcWeekdayAt(1, 10, 0); // Monday 10:00 UTC
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Followup Student",
+          studentEmail: "followup@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 3600 * 1000),
+          status: "COMPLETED",
+        },
+      });
+      bookingId = booking.id;
+    });
+
+    it("books a follow-up session successfully for an authorized admin (201)", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 11, 0); // Monday 11:00 UTC
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: newStartTime.toISOString(),
+          timezone: "UTC",
+          notes: "Need more practice on chain rule.",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.studentName).toBe("Followup Student");
+      expect(res.body.data.booking.studentEmail).toBe("followup@example.com");
+      expect(res.body.data.booking.coachUserId).toBe(coachId);
+      expect(res.body.data.booking.notes).toBe("Need more practice on chain rule.");
+      expect(new Date(res.body.data.booking.startTime).getTime()).toBe(newStartTime.getTime());
+    });
+
+    it("books a follow-up session successfully for the assigned coach (201)", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 11, 0);
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${coachToken}`)
+        .send({
+          startTime: newStartTime.toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(201);
+    });
+
+    it("returns 403 when a coach is not assigned to the booking and not in team", async () => {
+      const coach2TokenRes = await request(app)
+        .post("/api/auth/login")
+        .send({ email: "coach2@test.com", password: "Coach1234" });
+      const coach2Token = coach2TokenRes.body.data?.token;
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${coach2Token}`)
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(403);
       void coach2Token;
+    });
+
+    it("returns 400 when original booking is not completed", async () => {
+      const pendingBooking = await prisma.booking.create({
+        data: {
+          studentName: "Pending Student",
+          studentEmail: "pending@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime: getNextUtcWeekdayAt(1, 14, 0),
+          endTime: getNextUtcWeekdayAt(1, 15, 0),
+          status: "CONFIRMED",
+        },
+      });
+
+      const res = await request(app)
+        .post(`/api/bookings/${pendingBooking.id}/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 16, 0).toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain("only be booked for completed bookings");
+    });
+
+    it("returns 409 conflict when student has overlapping bookings", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 11, 0);
+
+      // Create a second event to avoid ONE_TO_ONE event capacity limit on the same event
+      const event2 = await prisma.event.create({
+        data: {
+          name: "Test Direct Event 2",
+          teamId,
+          eventTypeId: eventTypeId,
+          interactionType: "ONE_TO_ONE",
+          assignmentStrategy: AssignmentStrategy.DIRECT,
+          durationSeconds: 3600,
+          locationType: EventLocationType.VIRTUAL,
+          locationValue: "Zoom",
+          createdById: coachId,
+          updatedById: coachId,
+          publicBookingSlug: `test-direct-event-2-${Date.now()}`,
+          coaches: {
+            create: {
+              coachUserId: coach2Id,
+              coachOrder: 1,
+            },
+          },
+        },
+      });
+
+      // Create an existing overlapping booking for the same student (with a different coach so the first coach is still free)
+      await prisma.booking.create({
+        data: {
+          studentName: "Followup Student",
+          studentEmail: "followup@example.com",
+          teamId,
+          eventId: event2.id,
+          coachUserId: coach2Id,
+          startTime: newStartTime,
+          endTime: new Date(newStartTime.getTime() + 3600 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: newStartTime.toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toContain("overlapping");
+    });
+
+    it("returns 400 when coach is no longer active", async () => {
+      await prisma.user.update({
+        where: { id: coachId },
+        data: { isActive: false },
+      });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain("coach is no longer active");
+
+      // Reset coach state for subsequent tests
+      await prisma.user.update({
+        where: { id: coachId },
+        data: { isActive: true },
+      });
+    });
+
+    it("returns 404 when original booking is not found", async () => {
+      const res = await request(app)
+        .post(`/api/bookings/00000000-0000-0000-0000-000000000000/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("stores empty string notes as-is, not replaced by auto-generated note", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 11, 0);
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: newStartTime.toISOString(),
+          timezone: "UTC",
+          notes: "",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.notes).toBe("");
+    });
+
+    it("returns 400 when the event is inactive", async () => {
+      await prisma.event.update({ where: { id: eventId }, data: { isActive: false } });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(/event.*inactive|inactive.*event/i);
+
+      await prisma.event.update({ where: { id: eventId }, data: { isActive: true } });
+    });
+
+    it("returns 400 when the coach is no longer assigned to the event", async () => {
+      await prisma.eventCoach.update({
+        where: { eventId_coachUserId: { eventId, coachUserId: coachId } },
+        data: { isActive: false },
+      });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(/no longer assigned/i);
+
+      await prisma.eventCoach.update({
+        where: { eventId_coachUserId: { eventId, coachUserId: coachId } },
+        data: { isActive: true },
+      });
+    });
+
+    it("returns 403 when a TEAM_ADMIN is not the team lead for the booking's team", async () => {
+      const otherAdmin = await request(app)
+        .post("/api/auth/register")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          firstName: "Other",
+          lastName: "Admin",
+          email: "other-admin@test.com",
+          password: "Admin1234",
+          role: "TEAM_ADMIN",
+        });
+      const otherAdminToken = otherAdmin.body.data?.token;
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/follow-up`)
+        .set("Authorization", `Bearer ${otherAdminToken}`)
+        .send({
+          startTime: getNextUtcWeekdayAt(1, 11, 0).toISOString(),
+          timezone: "UTC",
+        });
+
+      expect(res.status).toBe(403);
     });
   });
 });

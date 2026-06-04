@@ -54,4 +54,17 @@ export const bookingsApi = {
 
   upsertSessionLog: (bookingId: string, data: UpsertBookingSessionLogDto) =>
     apiClient.post<ApiResponse<SessionLog>>(`/bookings/${bookingId}/log`, data),
+
+  bookFollowUp: (
+    bookingId: string,
+    data: {
+      startTime: string | Date
+      timezone?: string
+      notes?: string
+      specificQuestion?: string
+      triedSolutions?: string
+      usedResources?: string
+      sessionObjectives?: string
+    }
+  ) => apiClient.post<ApiResponse<{ booking: Booking }>>(`/bookings/${bookingId}/follow-up`, data),
 }
