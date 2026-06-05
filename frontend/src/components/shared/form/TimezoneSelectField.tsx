@@ -1,17 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import ListSubheader from '@mui/material/ListSubheader'
-import MenuItem from '@mui/material/MenuItem'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
 import { Controller, useWatch, type Control, type FieldPath, type FieldValues } from 'react-hook-form'
 import { FormField } from './FormField'
-import { Select } from './Select'
+import { TimezoneSelect } from './TimezoneSelect'
 import { useTimezones } from '@/hooks/queries/useConfig'
-import {
-  getTimezoneInfo,
-  groupTimezonesByRegion,
-  GROUP_ORDER,
-} from '@/components/users/userSystemFieldUtils'
+import { getTimezoneInfo } from '@/components/users/userSystemFieldUtils'
 
 interface TimezoneSelectFieldProps<T extends FieldValues> {
   control: Control<T>
@@ -31,7 +23,6 @@ export function TimezoneSelectField<T extends FieldValues>({
   const { data: timezones = [] } = useTimezones()
   const selectedTimezone = useWatch({ control, name }) as string | undefined
   const [currentTime, setCurrentTime] = useState('')
-  const [now, setNow] = useState(new Date())
 
   useEffect(() => {
     if (!selectedTimezone) {
@@ -56,19 +47,17 @@ export function TimezoneSelectField<T extends FieldValues>({
     return () => clearInterval(timer)
   }, [selectedTimezone])
 
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const groupedTimezones = useMemo(() => groupTimezonesByRegion(timezones), [timezones])
-
+  // Resolve a human-readable label for the currently selected timezone.
+  // The label comes from the API list for known zones; for any unlisted zone
+  // (e.g. a deprecated alias not yet normalised) we fall back to getTimezoneInfo.
+  // 'now' is NOT a dependency — the label doesn't change over time, only when
+  // the selected timezone changes.
   const selectedLabel = useMemo(() => {
     const match = timezones.find((tz) => tz.iana === selectedTimezone)
     if (match) return match.label
-    if (selectedTimezone) return getTimezoneInfo(selectedTimezone, now).name
+    if (selectedTimezone) return getTimezoneInfo(selectedTimezone, new Date()).name
     return null
-  }, [timezones, selectedTimezone, now])
+  }, [timezones, selectedTimezone])
 
   const resolvedHint =
     hint ??
@@ -82,58 +71,12 @@ export function TimezoneSelectField<T extends FieldValues>({
         name={name}
         control={control}
         render={({ field }) => (
-          <Select
-            {...field}
+          <TimezoneSelect
             id={`tz-field-${name}`}
+            value={field.value || ''}
+            onChange={field.onChange}
             hasError={!!error}
-            displayEmpty
-            renderValue={(selected) => {
-              if (!selected) return <em>Choose a timezone...</em>
-              return selectedLabel ?? (selected as string).replace(/_/g, ' ')
-            }}
-          >
-            <MenuItem value="">
-              <em>Choose a timezone...</em>
-            </MenuItem>
-            {GROUP_ORDER.filter((region) => groupedTimezones[region]?.length).map((region) => [
-              <ListSubheader
-                key={region}
-                sx={{
-                  fontWeight: 800,
-                  bgcolor: 'background.paper',
-                  color: 'text.primary',
-                  textTransform: 'uppercase',
-                  lineHeight: '48px',
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                {region}
-              </ListSubheader>,
-              groupedTimezones[region].map((tz) => {
-                const { time } = getTimezoneInfo(tz.iana, now)
-                return (
-                  <MenuItem key={tz.iana} value={tz.iana} sx={{ py: 1.5, px: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {tz.label}
-                      </Typography>
-                      <Typography variant="body2" sx={{ ml: 2, color: 'text.secondary', fontWeight: 400 }}>
-                        {time}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                )
-              }),
-            ])}
-          </Select>
+          />
         )}
       />
     </FormField>

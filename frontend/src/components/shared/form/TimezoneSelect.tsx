@@ -1,0 +1,375 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import Popover from '@mui/material/Popover'
+import IconButton from '@mui/material/IconButton'
+import OutlinedInput from '@mui/material/OutlinedInput'
+import InputAdornment from '@mui/material/InputAdornment'
+import PublicIcon from '@mui/icons-material/Public'
+import SearchIcon from '@mui/icons-material/Search'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import ClearIcon from '@mui/icons-material/Clear'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { getTimezoneInfo, GROUP_ORDER } from '@/components/users/userSystemFieldUtils'
+
+export interface TimezoneSelectProps {
+  value: string
+  onChange: (value: string) => void
+  variant?: 'standard' | 'public'
+  hasError?: boolean
+  disabled?: boolean
+  id?: string
+}
+
+type TimezoneOption = { iana: string; label: string; group: string; time: string }
+
+const filterOptions = createFilterOptions<TimezoneOption>({
+  stringify: (option) => `${option.label} ${option.iana} ${option.time}`,
+})
+
+const IANA_ALIASES: Record<string, string> = {
+  'Asia/Calcutta': 'Asia/Kolkata',
+  'Asia/Rangoon': 'Asia/Yangon',
+  'Asia/Katmandu': 'Asia/Kathmandu',
+  'America/Buenos_Aires': 'America/Argentina/Buenos_Aires',
+}
+
+export function TimezoneSelect({
+  value,
+  onChange,
+  variant = 'standard',
+  hasError = false,
+  disabled = false,
+  id,
+}: TimezoneSelectProps) {
+  const { data: timezones = [] } = useTimezones()
+  const [now, setNow] = useState(new Date())
+
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const [inputValue, setInputValue] = useState('')
+  const open = Boolean(anchorEl)
+
+  // Timer only runs while the popover is closed; handleOpen() refreshes 'now'
+  // immediately on open, so displayed times are always current when the user enters the picker.
+  useEffect(() => {
+    if (open) return
+
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [open])
+
+  // Normalize deprecated/alias IANA values (e.g. Asia/Calcutta → Asia/Kolkata) once the
+  // curated list loads. Explicit alias map runs first; offset matching is the fallback for
+  // zones not covered by the map, avoiding same-offset collisions (e.g. Colombo vs Kolkata).
+  useEffect(() => {
+    if (!timezones.length || !value) return
+    if (timezones.some((tz) => tz.iana === value)) return
+
+    // 1. Explicit alias map — precise, no offset collision risk
+    const aliasTarget = IANA_ALIASES[value]
+    if (aliasTarget && timezones.some((tz) => tz.iana === aliasTarget)) {
+      onChange(aliasTarget)
+      return
+    }
+
+    // 2. Offset-based fallback for any other unlisted zone
+    try {
+      const ref = new Date()
+      const getOffsetMs = (iana: string) => {
+        const utc = new Date(ref.toLocaleString('en-US', { timeZone: 'UTC' }))
+        const local = new Date(ref.toLocaleString('en-US', { timeZone: iana }))
+        return local.getTime() - utc.getTime()
+      }
+      const targetOffset = getOffsetMs(value)
+      const match = timezones.find((tz) => {
+        try {
+          return getOffsetMs(tz.iana) === targetOffset
+        } catch {
+          return false
+        }
+      })
+      if (match) onChange(match.iana)
+    } catch {
+      // leave value as-is if offset detection fails
+    }
+  }, [timezones, value])
+
+  const options = useMemo(() => {
+    return timezones
+      .filter((tz) => typeof tz === 'object' && tz !== null)
+      .map((tz) => ({
+        ...tz,
+        time: getTimezoneInfo(tz.iana, now).time,
+      }))
+      .sort((a, b) => {
+        const indexA = GROUP_ORDER.indexOf(a.group)
+        const indexB = GROUP_ORDER.indexOf(b.group)
+        const valA = indexA === -1 ? 99 : indexA
+        const valB = indexB === -1 ? 99 : indexB
+        if (valA !== valB) return valA - valB
+        return a.label.localeCompare(b.label)
+      })
+  }, [timezones, now])
+
+  const selectedOption = useMemo(
+    () => options.find((opt) => opt.iana === value) || null,
+    [options, value]
+  )
+
+  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+    if (disabled) return
+    setNow(new Date())
+    setInputValue('')
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+    setInputValue('')
+  }
+
+  const displayValue = selectedOption ? `${selectedOption.label} - ${selectedOption.time}` : ''
+
+  return (
+    <>
+      {variant === 'public' ? (
+        <Button
+          onClick={handleOpen}
+          variant="text"
+          disabled={disabled}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            textTransform: 'none',
+            color: 'text.secondary',
+            p: 1.5,
+            px: 2,
+            borderRadius: 1.5,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            textAlign: 'left',
+            width: '100%',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'action.hover',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            },
+          }}
+        >
+          <PublicIcon sx={{ fontSize: '1.25rem', mr: 1.5, color: 'text.secondary', flexShrink: 0 }} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flexGrow: 1 }}>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.75rem', lineHeight: 1.2 }}
+            >
+              Viewing slots in:
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.75 }}>
+              <Typography
+                className="timezone-text"
+                variant="caption"
+                sx={{ fontWeight: 600, color: 'primary.main', fontSize: '0.8125rem', lineHeight: 1.2 }}
+              >
+                {selectedOption ? `${selectedOption.label} - ${selectedOption.time}` : 'Loading...'}
+              </Typography>
+            </Box>
+          </Box>
+          <KeyboardArrowDownIcon sx={{ fontSize: '1.25rem', ml: 1, color: 'text.secondary' }} />
+        </Button>
+      ) : (
+        <OutlinedInput
+          id={id}
+          value={displayValue}
+          placeholder="Choose a timezone..."
+          readOnly
+          onClick={handleOpen}
+          error={hasError}
+          disabled={disabled}
+          fullWidth
+          size="small"
+          startAdornment={
+            <InputAdornment position="start">
+              <PublicIcon sx={{ fontSize: '1.125rem', color: 'text.secondary' }} />
+            </InputAdornment>
+          }
+          endAdornment={
+            <InputAdornment position="end">
+              <KeyboardArrowDownIcon sx={{ color: 'text.secondary' }} />
+            </InputAdornment>
+          }
+          sx={{
+            cursor: disabled ? 'default' : 'pointer',
+            '& .MuiOutlinedInput-input': {
+              cursor: disabled ? 'default' : 'pointer',
+              textOverflow: 'ellipsis',
+              fontSize: '0.8125rem',
+            },
+            bgcolor: 'background.paper',
+          }}
+        />
+      )}
+
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: variant === 'public' ? 'top' : 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: variant === 'public' ? 'bottom' : 'top',
+          horizontal: 'left',
+        }}
+        sx={{ mt: variant === 'public' ? -1 : 0.5 }}
+        slotProps={{
+          paper: {
+            sx: {
+              width: anchorEl ? Math.max(anchorEl.clientWidth, 320) : 320,
+              borderRadius: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            },
+          },
+        }}
+      >
+        <Autocomplete
+          open={true}
+          value={selectedOption}
+          inputValue={inputValue}
+          onInputChange={(_, newInputValue) => {
+            setInputValue(newInputValue)
+          }}
+          onChange={(_, newValue) => {
+            if (newValue) {
+              onChange(newValue.iana)
+              handleClose()
+            }
+          }}
+          onClose={(_, reason) => {
+            if (reason === 'escape') {
+              handleClose()
+            }
+          }}
+          options={options}
+          filterOptions={filterOptions}
+          groupBy={(option) => option.group}
+          getOptionLabel={(option) => `${option.label} - ${option.time}`}
+          disableClearable
+          disablePortal
+          size="small"
+          slots={{
+            popper: (props: any) => <Box sx={{ width: '100%' }}>{props.children}</Box>,
+            paper: (props: any) => <Box sx={{ m: 0, boxShadow: 'none' }}>{props.children}</Box>,
+          }}
+          slotProps={{
+            listbox: {
+              style: {
+                maxHeight: 300,
+                padding: 0,
+              },
+            },
+          }}
+          renderInput={(params) => (
+            <Box
+              sx={{
+                p: 1,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+              }}
+            >
+              <TextField
+                {...params}
+                variant="outlined"
+                placeholder="Search timezone..."
+                autoFocus
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <SearchIcon
+                      sx={{ fontSize: '1.125rem', color: 'text.secondary', mr: 1, ml: 0.5 }}
+                    />
+                  ),
+                  endAdornment: inputValue ? (
+                    <IconButton
+                      size="small"
+                      onClick={() => setInputValue('')}
+                      sx={{ p: 0.25, mr: 0.5, color: 'text.secondary' }}
+                    >
+                      <ClearIcon sx={{ fontSize: '1.125rem' }} />
+                    </IconButton>
+                  ) : null,
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1.5,
+                    bgcolor: 'action.hover',
+                    '& fieldset': { border: 'none' },
+                  },
+                  '& .MuiInputBase-input': {
+                    fontSize: '0.8125rem',
+                    p: '6px 0 !important',
+                  },
+                }}
+              />
+            </Box>
+          )}
+          renderOption={(props, option) => {
+            const { key, ...otherProps } = props as any
+            return (
+              <Box component="li" key={key} {...otherProps} sx={{ py: 1, px: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    {option.label}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ ml: 2, color: 'primary.main', fontWeight: 600 }}
+                  >
+                    {option.time}
+                  </Typography>
+                </Box>
+              </Box>
+            )
+          }}
+          renderGroup={(params) => (
+            <li key={params.key}>
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  px: 2,
+                  py: 0.5,
+                  bgcolor: 'background.default',
+                  color: 'text.disabled',
+                  fontWeight: 800,
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 1,
+                }}
+              >
+                {params.group}
+              </Typography>
+              <ul style={{ padding: 0 }}>{params.children}</ul>
+            </li>
+          )}
+        />
+      </Popover>
+    </>
+  )
+}
