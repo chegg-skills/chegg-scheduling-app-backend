@@ -48,6 +48,9 @@ export const eventFormSchema = z
     showDescription: z.boolean().default(false),
     deferCoachReveal: z.boolean().default(false),
     allowStudentCoachChoice: z.boolean().default(false),
+    timezone: z.string().default(
+      typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'
+    ),
     isActive: z.boolean().default(true),
     sessionTypeId: z.string().uuid().nullable().optional(),
     groupId: z.string().uuid().nullable().optional(),
@@ -156,6 +159,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       showDescription: event.showDescription,
       deferCoachReveal: event.deferCoachReveal ?? false,
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
+      timezone: event.timezone ?? (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'),
       isActive: event.isActive,
       sessionTypeId: event.sessionTypeId ?? null,
       groupId: event.groupId ?? null,
@@ -191,6 +195,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     showDescription: false,
     deferCoachReveal: false,
     allowStudentCoachChoice: false,
+    timezone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC',
     isActive: true,
     sessionTypeId: null,
     groupId: null,

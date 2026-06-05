@@ -296,6 +296,7 @@ export interface Event {
   deferCoachReveal: boolean
   allowStudentCoachChoice: boolean
   maxBookingWindowDays: number | null
+  timezone: string
   teamId: string
   sessionTypeId: string | null
   groupId: string | null

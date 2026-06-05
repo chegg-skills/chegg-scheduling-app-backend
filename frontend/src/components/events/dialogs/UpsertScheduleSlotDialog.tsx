@@ -14,6 +14,8 @@ import type { Event, EventScheduleSlot, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { useScheduleSlotForm } from './useScheduleSlotForm'
 import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 
 interface UpsertScheduleSlotDialogProps {
   isOpen: boolean
@@ -41,6 +43,8 @@ export function UpsertScheduleSlotDialog({
   const mode = slot ? 'Edit' : 'Add'
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
   const supportsMultipleParticipants = caps.multipleParticipants
+  const { data: timezones = [] } = useTimezones()
+  const timezoneLabel = formatTimezoneLabel(event.timezone, timezones)
 
   const {
     newSlotDate,
@@ -125,6 +129,19 @@ export function UpsertScheduleSlotDialog({
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
               Session ends at:{' '}
               {format(addSeconds(new Date(newSlotDate), event.durationSeconds), 'h:mm a')}
+            </Typography>
+          )}
+          {event.weeklyAvailability.length > 0 && (
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+              Availability is defined in <strong>{timezoneLabel}</strong>. Allowed times:{' '}
+              {Array.from(new Set(event.weeklyAvailability.map((a) => a.dayOfWeek)))
+                .sort()
+                .map((day) => {
+                  const ranges = event.weeklyAvailability.filter((a) => a.dayOfWeek === day)
+                  const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]
+                  return `${dayName} ${ranges.map((r) => `${r.startTime}–${r.endTime}`).join(', ')}`
+                })
+                .join(' | ')}
             </Typography>
           )}
         </Box>

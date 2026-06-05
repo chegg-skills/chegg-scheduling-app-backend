@@ -78,61 +78,69 @@ export const WEEKDAY_NAMES = [
   'Saturday',
 ]
 
+function getLocalPartsInTimezone(date: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hourCycle: 'h23',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(date)
+
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  const weekdayMap: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  }
+  return {
+    dayOfWeek: weekdayMap[get('weekday')] ?? 0,
+    totalMinutes: parseInt(get('hour')) * 60 + parseInt(get('minute')),
+  }
+}
+
 /**
  * Checks if a specific date (ISO string or Date object) is allowed based on the event's weekday configuration.
+ * Uses the event's timezone so day-of-week boundaries are correct regardless of server or browser timezone.
  */
 export function isWeekdayAllowed(
   date: string | Date,
   allowedWeekdays: number[],
-  weeklyAvailability?: Array<{ dayOfWeek: number }>
+  weeklyAvailability?: Array<{ dayOfWeek: number }>,
+  timezone = 'UTC',
 ): boolean {
-  // If we have granular weekly availability, that takes precedence
-  if (weeklyAvailability && weeklyAvailability.length > 0) {
-    const d = typeof date === 'string' ? new Date(date) : date
-    const day = d.getDay()
-    return weeklyAvailability.some((a) => a.dayOfWeek === day)
-  }
-
-  // Fallback to simple allowedWeekdays
-  if (allowedWeekdays.length === 0) return true
   const d = typeof date === 'string' ? new Date(date) : date
-  return allowedWeekdays.includes(d.getDay())
+  if (weeklyAvailability && weeklyAvailability.length > 0) {
+    const { dayOfWeek } = getLocalPartsInTimezone(d, timezone)
+    return weeklyAvailability.some((a) => a.dayOfWeek === dayOfWeek)
+  }
+  if (allowedWeekdays.length === 0) return true
+  const { dayOfWeek } = getLocalPartsInTimezone(d, timezone)
+  return allowedWeekdays.includes(dayOfWeek)
 }
 
 /**
  * Checks if a specific date and time range is within the event's weekly availability.
+ * Uses the event's timezone so HH:mm window boundaries are interpreted correctly.
  */
 export function isSlotWithinAvailability(
   date: string | Date,
   durationSeconds: number,
-  weeklyAvailability?: Array<{ dayOfWeek: number; startTime: string; endTime: string }>
+  weeklyAvailability?: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
+  timezone = 'UTC',
 ): boolean {
   if (!weeklyAvailability || weeklyAvailability.length === 0) return true
 
   const startTime = typeof date === 'string' ? new Date(date) : date
-  const day = startTime.getDay()
-  const dayRanges = weeklyAvailability.filter((a) => a.dayOfWeek === day)
+  const endTime = new Date(startTime.getTime() + durationSeconds * 1000)
+  const startLocal = getLocalPartsInTimezone(startTime, timezone)
+  const endLocal = getLocalPartsInTimezone(endTime, timezone)
+  const dayRanges = weeklyAvailability.filter((a) => a.dayOfWeek === startLocal.dayOfWeek)
 
   if (dayRanges.length === 0) return false
-
-  const startHour = startTime.getHours()
-  const startMin = startTime.getMinutes()
-
-  // Calculate end time
-  const endTime = new Date(startTime.getTime() + durationSeconds * 1000)
-  const endHour = endTime.getHours()
-  const endMin = endTime.getMinutes()
-
-  const slotStartTotalMins = startHour * 60 + startMin
-  const slotEndTotalMins = endHour * 60 + endMin
 
   return dayRanges.some((range) => {
     const [rsh, rsm] = range.startTime.split(':').map(Number)
     const [reh, rem] = range.endTime.split(':').map(Number)
-    const rangeStartTotalMins = rsh * 60 + rsm
-    const rangeEndTotalMins = reh * 60 + rem
-
-    return slotStartTotalMins >= rangeStartTotalMins && slotEndTotalMins <= rangeEndTotalMins
+    return startLocal.totalMinutes >= rsh * 60 + rsm && endLocal.totalMinutes <= reh * 60 + rem
   })
 }
 
@@ -154,16 +162,18 @@ export function formatAllowedWeekdays(
 
 /**
  * Returns a human-readable list of allowed time ranges for a specific day.
+ * Uses the event's timezone so day-of-week lookup is correct.
  */
 export function formatAvailabilityRanges(
   date: string | Date,
-  weeklyAvailability?: Array<{ dayOfWeek: number; startTime: string; endTime: string }>
+  weeklyAvailability?: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
+  timezone = 'UTC',
 ): string {
   if (!weeklyAvailability || weeklyAvailability.length === 0) return 'Any time'
 
   const d = typeof date === 'string' ? new Date(date) : date
-  const day = d.getDay()
-  const dayRanges = weeklyAvailability.filter((a) => a.dayOfWeek === day)
+  const { dayOfWeek } = getLocalPartsInTimezone(d, timezone)
+  const dayRanges = weeklyAvailability.filter((a) => a.dayOfWeek === dayOfWeek)
 
   if (dayRanges.length === 0) return 'No availability defined for this day'
 
