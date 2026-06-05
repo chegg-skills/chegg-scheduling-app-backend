@@ -74,6 +74,7 @@ const resolveBookingWindow = (event: BookableEvent, start: Date) => {
     schedulingContext.weeklyAvailability as any,
     start,
     end,
+    schedulingContext.timezone as string | undefined,
   );
   assertBookingNoticeSatisfied(schedulingContext.minimumNoticeMinutes, start);
 
