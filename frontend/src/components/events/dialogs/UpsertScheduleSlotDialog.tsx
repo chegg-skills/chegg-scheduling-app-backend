@@ -131,7 +131,7 @@ export function UpsertScheduleSlotDialog({
               {format(addSeconds(new Date(newSlotDate), event.durationSeconds), 'h:mm a')}
             </Typography>
           )}
-          {event.weeklyAvailability.length > 0 && (
+          {(event.weeklyAvailability?.length ?? 0) > 0 && (
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
               Availability is defined in <strong>{timezoneLabel}</strong>. Allowed times:{' '}
               {Array.from(new Set(event.weeklyAvailability.map((a) => a.dayOfWeek)))
