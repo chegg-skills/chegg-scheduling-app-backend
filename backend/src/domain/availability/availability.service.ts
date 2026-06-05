@@ -21,6 +21,7 @@ import {
   assertBookingNoticeSatisfied,
   assertBookingAvailabilityAllowed,
   getEffectiveParticipantPolicy,
+  replenishContinuousSlots,
 } from "../events/eventScheduling.service";
 import {
   getWeeklyAvailability,
@@ -260,6 +261,9 @@ const getAvailableSlots = async (
   preferredCoachId?: string,
   studentTimezone?: string,
 ): Promise<AvailableSlot[]> => {
+  // Replenish continuous slots first
+  await replenishContinuousSlots(eventId);
+
   const eventResult = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
@@ -434,9 +438,52 @@ const getAvailableSlots = async (
 
   // Mode based resolution
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
+    let allowedSlotIds: Set<string> | null = null;
+
+    if (event.recurrenceVisibilityLimit != null) {
+      const recurrenceGroupIds = Array.from(
+        new Set(
+          event.scheduleSlots
+            .map((s: any) => s.recurrenceGroupId)
+            .filter((id: any): id is string => id != null)
+        )
+      ) as string[];
+
+      if (recurrenceGroupIds.length > 0) {
+        allowedSlotIds = new Set<string>();
+        const now = new Date();
+
+        for (const groupId of recurrenceGroupIds) {
+          const upcomingSlots = await prisma.eventScheduleSlot.findMany({
+            where: {
+              recurrenceGroupId: groupId,
+              startTime: { gte: now },
+              isCancelled: false,
+              isActive: true,
+            },
+            orderBy: { startTime: "asc" },
+            take: event.recurrenceVisibilityLimit,
+            select: { id: true },
+          });
+
+          for (const s of upcomingSlots) {
+            allowedSlotIds.add(s.id);
+          }
+        }
+      }
+    }
+
     for (const scheduleSlot of event.scheduleSlots) {
       // Also filter fixed slots by window
       if (scheduleSlot.startTime >= finalEnd) continue;
+
+      if (
+        scheduleSlot.recurrenceGroupId &&
+        allowedSlotIds &&
+        !allowedSlotIds.has(scheduleSlot.id)
+      ) {
+        continue;
+      }
 
       const availableSlot = await getSlotAvailability(
         scheduleSlot.startTime,

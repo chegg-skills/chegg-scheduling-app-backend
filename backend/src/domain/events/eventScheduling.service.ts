@@ -1,5 +1,6 @@
 import { EventBookingMode, Prisma, type EventScheduleSlot, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import { addWeeks, addMonths, addDays } from "date-fns";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import {
@@ -44,6 +45,13 @@ type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
     sessionLog: {
       select: {
         id: true;
+      };
+    };
+    recurrenceGroup: {
+      select: {
+        id: true;
+        isContinuous: true;
+        isActive: true;
       };
     };
   };
@@ -202,6 +210,9 @@ const listEventScheduleSlots = async (
 ): Promise<{ slots: EventScheduleSlotWithBookingCount[] }> => {
   await getManagedEvent(eventId, caller, { allowCoachMember: true });
 
+  // Replenish continuous slots before querying
+  await replenishContinuousSlots(eventId);
+
   const slots = await prisma.eventScheduleSlot.findMany({
     where: { eventId },
     include: {
@@ -224,6 +235,13 @@ const listEventScheduleSlots = async (
       sessionLog: {
         select: {
           id: true,
+        },
+      },
+      recurrenceGroup: {
+        select: {
+          id: true,
+          isContinuous: true,
+          isActive: true,
         },
       },
     },
@@ -261,10 +279,26 @@ const createEventScheduleSlot = async (
 
   const validated = EventScheduleSlotSchema.body.parse(payload);
 
-  const recurrenceGroupId = validated.recurrence ? crypto.randomUUID() : null;
-
   if (validated.recurrence) {
-    const startDates = generateRecurrenceDates(validated.startTime, validated.recurrence);
+    // Create RecurrenceGroup in DB
+    const group = await prisma.recurrenceGroup.create({
+      data: {
+        eventId,
+        frequency: validated.recurrence.frequency,
+        isContinuous: validated.recurrence.isContinuous ?? false,
+        isActive: true,
+      },
+    });
+    const recurrenceGroupId = group.id;
+
+    const occurrences = validated.recurrence.isContinuous
+      ? 12
+      : (validated.recurrence.occurrences ?? 1);
+
+    const startDates = generateRecurrenceDates(validated.startTime, {
+      frequency: validated.recurrence.frequency,
+      occurrences,
+    });
     const durationMs = validated.endTime.getTime() - validated.startTime.getTime();
 
     // Validate all slots before performing any inserts (All or Nothing)
@@ -322,7 +356,7 @@ const createEventScheduleSlot = async (
       capacity: validated.capacity,
       assignedCoachId: validated.assignedCoachId,
       isActive: validated.isActive,
-      recurrenceGroupId,
+      recurrenceGroupId: null,
     },
     include: {
       assignedCoach: {
@@ -401,6 +435,18 @@ const deleteEventScheduleSlot = async (
   }
 
   const deleted = await prisma.eventScheduleSlot.delete({ where: { id: slotId } });
+  
+  if (deleted.recurrenceGroupId) {
+    const remainingSlotsCount = await prisma.eventScheduleSlot.count({
+      where: { recurrenceGroupId: deleted.recurrenceGroupId },
+    });
+    if (remainingSlotsCount === 0) {
+      await prisma.recurrenceGroup.deleteMany({
+        where: { id: deleted.recurrenceGroupId },
+      });
+    }
+  }
+
   getRequestLogger().warn({ eventId, slotId, deletedBy: caller.id }, "Schedule slot deleted.");
   return deleted;
 };
@@ -633,6 +679,169 @@ const getCoachAvailabilityForSlot = async (
   return results.sort((a, b) => Number(b.isAvailable) - Number(a.isAvailable));
 };
 
+const replenishContinuousSlots = async (
+  eventId: string,
+  tx?: Prisma.TransactionClient,
+): Promise<void> => {
+  const client = tx ?? prisma;
+
+  try {
+    const activeGroups = await client.recurrenceGroup.findMany({
+      where: {
+        eventId,
+        isContinuous: true,
+        isActive: true,
+      },
+      include: {
+        slots: {
+          orderBy: { startTime: "desc" },
+          take: 1,
+        },
+      },
+    });
+
+    const now = new Date();
+    const horizon = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+    for (const group of activeGroups) {
+      if (group.slots.length === 0) {
+        await client.recurrenceGroup.update({
+          where: { id: group.id },
+          data: { isActive: false },
+        });
+        continue;
+      }
+
+      const latestSlot = group.slots[0];
+      if (latestSlot.startTime >= horizon) {
+        continue;
+      }
+
+      const durationMs = latestSlot.endTime.getTime() - latestSlot.startTime.getTime();
+      const newSlotsData = [];
+      let nextStart = new Date(latestSlot.startTime);
+      let iterations = 0;
+
+      while (nextStart < horizon && iterations < 100) {
+        iterations++;
+
+        switch (group.frequency) {
+          case "WEEKLY":
+            nextStart = addWeeks(nextStart, 1);
+            break;
+          case "BI_WEEKLY":
+            nextStart = addWeeks(nextStart, 2);
+            break;
+          case "MONTHLY":
+            nextStart = addMonths(nextStart, 1);
+            break;
+          case "TWICE_A_MONTH":
+            nextStart = addDays(nextStart, 14);
+            break;
+          case "THRICE_A_WEEK":
+            const existingCount = await client.eventScheduleSlot.count({
+              where: { recurrenceGroupId: group.id },
+            });
+            const currentIndex = existingCount + newSlotsData.length;
+            const diff = currentIndex % 3 === 2 ? 3 : 2;
+            nextStart = addDays(nextStart, diff);
+            break;
+          default:
+            nextStart = horizon;
+            break;
+        }
+
+        if (nextStart >= horizon) {
+          break;
+        }
+
+        const slotEnd = new Date(nextStart.getTime() + durationMs);
+
+        let isValid = true;
+        try {
+          await assertSlotWithinAvailability(eventId, nextStart, slotEnd);
+        } catch {
+          isValid = false;
+        }
+
+        if (isValid) {
+          newSlotsData.push({
+            eventId,
+            startTime: nextStart,
+            endTime: slotEnd,
+            capacity: latestSlot.capacity,
+            assignedCoachId: latestSlot.assignedCoachId,
+            isActive: latestSlot.isActive,
+            recurrenceGroupId: group.id,
+          });
+        }
+      }
+
+      if (newSlotsData.length > 0) {
+        await client.eventScheduleSlot.createMany({
+          data: newSlotsData,
+          skipDuplicates: true,
+        });
+        getRequestLogger().info(
+          { eventId, groupId: group.id, count: newSlotsData.length },
+          "Replenished continuous recurrence slots."
+        );
+      }
+    }
+  } catch (error) {
+    logger.error({ eventId, error }, "Failed to replenish continuous slots. Proceeding anyway.");
+  }
+};
+
+const stopRecurrenceGroup = async (
+  eventId: string,
+  groupId: string,
+  caller: CallerContext,
+): Promise<{ message: string }> => {
+  await getManagedEvent(eventId, caller);
+
+  const group = await prisma.recurrenceGroup.findFirst({
+    where: { id: groupId, eventId },
+  });
+
+  if (!group) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Recurrence series not found for this event.");
+  }
+
+  await prisma.recurrenceGroup.update({
+    where: { id: groupId },
+    data: { isActive: false },
+  });
+
+  return { message: "Recurrence series stopped successfully." };
+};
+
+const resumeRecurrenceGroup = async (
+  eventId: string,
+  groupId: string,
+  caller: CallerContext,
+): Promise<{ message: string }> => {
+  await getManagedEvent(eventId, caller);
+
+  const group = await prisma.recurrenceGroup.findFirst({
+    where: { id: groupId, eventId },
+  });
+
+  if (!group) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Recurrence series not found for this event.");
+  }
+
+  await prisma.recurrenceGroup.update({
+    where: { id: groupId },
+    data: { isActive: true },
+  });
+
+  // Trigger replenishment immediately
+  await replenishContinuousSlots(eventId);
+
+  return { message: "Recurrence series resumed successfully." };
+};
+
 export {
   resolveEventSchedulingConfig,
   assertBookingNoticeSatisfied,
@@ -648,4 +857,7 @@ export {
   listSlotBookings,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  replenishContinuousSlots,
+  stopRecurrenceGroup,
+  resumeRecurrenceGroup,
 };

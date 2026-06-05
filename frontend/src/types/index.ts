@@ -239,6 +239,11 @@ export interface EventScheduleSlot {
     bookings: number
   }
   sessionLog?: SessionLog | null
+  recurrenceGroup?: {
+    id: string
+    isContinuous: boolean
+    isActive: boolean
+  } | null
 }
 
 export interface EventWeeklyAvailability {
@@ -296,6 +301,7 @@ export interface Event {
   deferCoachReveal: boolean
   allowStudentCoachChoice: boolean
   maxBookingWindowDays: number | null
+  recurrenceVisibilityLimit?: number | null
   timezone: string
   teamId: string
   sessionTypeId: string | null
@@ -384,6 +390,7 @@ export interface PublicEventSummary extends Pick<
   | 'allowStudentCoachChoice'
   | 'bookingMode'
   | 'maxBookingWindowDays'
+  | 'recurrenceVisibilityLimit'
 > {
   team: PublicTeamSummary
   coaches: PublicEventCoach[]
@@ -541,6 +548,7 @@ export interface CreateEventDto {
   minParticipantCount?: number | null
   maxParticipantCount?: number | null
   bufferAfterMinutes?: number
+  recurrenceVisibilityLimit?: number | null
   description?: string
   isActive?: boolean
   timezone?: string

@@ -54,6 +54,12 @@ export const eventFormSchema = z
     isActive: z.boolean().default(true),
     sessionTypeId: z.string().uuid().nullable().optional(),
     groupId: z.string().uuid().nullable().optional(),
+    recurrenceVisibilityLimit: z
+      .number()
+      .int()
+      .min(1, 'Visibility limit must be at least 1')
+      .nullable()
+      .optional(),
     weeklyAvailability: z
       .array(
         z.object({
@@ -163,6 +169,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       isActive: event.isActive,
       sessionTypeId: event.sessionTypeId ?? null,
       groupId: event.groupId ?? null,
+      recurrenceVisibilityLimit: event.recurrenceVisibilityLimit ?? null,
       weeklyAvailability: (event.weeklyAvailability || []).map((a) => ({
         dayOfWeek: a.dayOfWeek,
         startTime: a.startTime,
@@ -199,6 +206,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     isActive: true,
     sessionTypeId: null,
     groupId: null,
+    recurrenceVisibilityLimit: null,
     weeklyAvailability: [],
   }
 }

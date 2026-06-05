@@ -24,12 +24,16 @@ export interface ScheduleSeriesGroup {
   isRecurring: boolean
   occurrenceCount: number
   slots: EventScheduleSlot[]
+  isContinuous?: boolean
+  isStopped?: boolean
 }
 
 interface Props {
   groups: ScheduleSeriesGroup[]
   onViewTracker: (group: ScheduleSeriesGroup) => void
   onRemoveSeries: (group: ScheduleSeriesGroup) => void
+  onStopSeries?: (group: ScheduleSeriesGroup) => void
+  onResumeSeries?: (group: ScheduleSeriesGroup) => void
   canManage?: boolean
 }
 
@@ -37,6 +41,8 @@ export function ScheduleSeriesTable({
   groups,
   onViewTracker,
   onRemoveSeries,
+  onStopSeries,
+  onResumeSeries,
   canManage = true,
 }: Props) {
   const [page, setPage] = useState(1)
@@ -151,7 +157,19 @@ export function ScheduleSeriesTable({
                       fontWeight: 700,
                     }}
                   >
-                    {group.occurrenceCount}
+                    {group.isContinuous ? (
+                      group.isStopped ? (
+                        <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 700 }}>
+                          Stopped
+                        </Typography>
+                      ) : (
+                        <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 700 }}>
+                          Continuous
+                        </Typography>
+                      )
+                    ) : (
+                      group.occurrenceCount
+                    )}
                   </Box>
                 </TableCell>
                 <TableCell align="right">
@@ -162,6 +180,26 @@ export function ScheduleSeriesTable({
                         icon: <ListFilter size={16} />,
                         onClick: () => onViewTracker(group),
                       },
+                      ...(canManage && group.isContinuous && !group.isStopped && onStopSeries
+                        ? [
+                            {
+                              label: 'Stop Recurrence',
+                              icon: <EventRepeatIcon sx={{ fontSize: 16 }} />,
+                              color: 'warning.main',
+                              onClick: () => onStopSeries(group),
+                            },
+                          ]
+                        : []),
+                      ...(canManage && group.isContinuous && group.isStopped && onResumeSeries
+                        ? [
+                            {
+                              label: 'Resume Recurrence',
+                              icon: <EventRepeatIcon sx={{ fontSize: 16 }} />,
+                              color: 'success.main',
+                              onClick: () => onResumeSeries(group),
+                            },
+                          ]
+                        : []),
                       ...(canManage
                         ? [
                             {

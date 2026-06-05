@@ -250,6 +250,7 @@ export const buildEventCreateData = ({
     maxCoachCount: validated.maxCoachCount ?? undefined,
     targetCoHostCount: validated.targetCoHostCount ?? undefined,
     maxBookingWindowDays: validated.maxBookingWindowDays ?? undefined,
+    recurrenceVisibilityLimit: validated.recurrenceVisibilityLimit ?? undefined,
     showDescription: validated.showDescription ?? false,
     deferCoachReveal: validated.deferCoachReveal ?? false,
     allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
@@ -359,6 +360,10 @@ export const buildEventUpdateData = ({
     updateData.maxBookingWindowDays = validated.maxBookingWindowDays;
   }
 
+  if (validated.recurrenceVisibilityLimit !== undefined) {
+    updateData.recurrenceVisibilityLimit = validated.recurrenceVisibilityLimit;
+  }
+
   if (validated.deferCoachReveal !== undefined) {
     updateData.deferCoachReveal = validated.deferCoachReveal;
   }
@@ -425,6 +430,7 @@ export const buildDuplicateEventData = ({
     maxCoachCount: sourceEvent.maxCoachCount ?? undefined,
     targetCoHostCount: (sourceEvent as any).targetCoHostCount ?? undefined,
     maxBookingWindowDays: (sourceEvent as any).maxBookingWindowDays ?? undefined,
+    recurrenceVisibilityLimit: (sourceEvent as any).recurrenceVisibilityLimit ?? undefined,
     showDescription: (sourceEvent as any).showDescription,
     deferCoachReveal: (sourceEvent as any).deferCoachReveal ?? false,
     allowStudentCoachChoice: (sourceEvent as any).allowStudentCoachChoice ?? false,

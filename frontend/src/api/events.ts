@@ -61,6 +61,14 @@ export const eventsApi = {
     apiClient.post<ApiResponse<EventScheduleSlot>>(
       `/events/${eventId}/schedule-slots/${slotId}/cancel`
     ),
+  stopRecurrenceGroup: (eventId: string, groupId: string) =>
+    apiClient.post<ApiResponse<{ message: string }>>(
+      `/events/${eventId}/recurrence-groups/${groupId}/stop`
+    ),
+  resumeRecurrenceGroup: (eventId: string, groupId: string) =>
+    apiClient.post<ApiResponse<{ message: string }>>(
+      `/events/${eventId}/recurrence-groups/${groupId}/resume`
+    ),
   listSlotBookings: (eventId: string, slotId: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<any>>(`/events/${eventId}/schedule-slots/${slotId}/bookings`, {
       signal,

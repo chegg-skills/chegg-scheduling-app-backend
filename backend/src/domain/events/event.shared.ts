@@ -90,6 +90,7 @@ export type CreateEventInput = {
   fixedLeadCoachId?: string | null;
   bufferAfterMinutes?: number;
   maxBookingWindowDays?: number | null;
+  recurrenceVisibilityLimit?: number | null;
   showDescription?: boolean;
   deferCoachReveal?: boolean;
   allowStudentCoachChoice?: boolean;
@@ -131,7 +132,8 @@ export type UpsertEventScheduleSlotInput = {
   assignedCoachId?: string | null;
   recurrence?: {
     frequency: "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "TWICE_A_MONTH" | "THRICE_A_WEEK";
-    occurrences: number;
+    occurrences?: number | null;
+    isContinuous?: boolean;
   } | null;
 };
 
