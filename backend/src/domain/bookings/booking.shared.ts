@@ -203,6 +203,7 @@ export type BookingSchedulingContext = Pick<
   | "fixedLeadCoachId"
   | "targetCoHostCount"
   | "weeklyAvailability"
+  | "timezone"
 >;
 
 export const normalizeStudentName = (studentName: string): string => {
@@ -262,6 +263,7 @@ export const buildSchedulingContext = (event: BookableEvent): BookingSchedulingC
   fixedLeadCoachId: event.fixedLeadCoachId,
   targetCoHostCount: event.targetCoHostCount,
   weeklyAvailability: event.weeklyAvailability,
+  timezone: event.timezone,
 });
 
 export const buildBookingListWhere = (filters: ListBookingsFilters): Prisma.BookingWhereInput => {
