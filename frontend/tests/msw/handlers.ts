@@ -2,7 +2,13 @@ import { http, HttpResponse } from 'msw'
 
 import type { ApiResponse, StatsSummary } from '@/types'
 
-type TimezonesBody = { timezones: string[] }
+type TimezonesBody = {
+  timezones: Array<{
+    iana: string
+    label: string
+    group: string
+  }>
+}
 
 /** Minimal `StatsSummary` matching `useDashboardStats` / dashboard card shape. */
 const dashboardThisMonth: StatsSummary = {
@@ -25,7 +31,12 @@ const dashboardThisMonth: StatsSummary = {
 const timezonesPayload: ApiResponse<TimezonesBody> = {
   success: true,
   message: 'Timezones fetched successfully.',
-  data: { timezones: ['UTC', 'America/New_York'] },
+  data: {
+    timezones: [
+      { iana: 'UTC', label: 'Coordinated Universal Time', group: 'UTC' },
+      { iana: 'America/New_York', label: 'Eastern Time (US & Canada)', group: 'US/Canada' },
+    ],
+  },
 }
 
 const dashboardPayload: ApiResponse<StatsSummary> = {

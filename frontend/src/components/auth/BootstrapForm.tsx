@@ -2,16 +2,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import MenuItem from '@mui/material/MenuItem'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
-import { Select } from '@/components/shared/form/Select'
 import { Button } from '@/components/shared/ui/Button'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useBootstrap } from '@/hooks/queries/useAuthMutations'
-import { useTimezones } from '@/hooks/queries/useConfig'
+import { TimezoneSelectField } from '@/components/shared/form/TimezoneSelectField'
 import { extractApiError } from '@/utils/apiError'
 
 const schema = z.object({
@@ -32,6 +30,7 @@ export function BootstrapForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -39,8 +38,6 @@ export function BootstrapForm() {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   })
-
-  const { data: timezones = [] } = useTimezones()
 
   function onSubmit(values: FormValues) {
     mutate(values, {
@@ -114,23 +111,11 @@ export function BootstrapForm() {
         />
       </FormField>
 
-      <FormField
-        label="Timezone"
-        htmlFor="timezone"
+      <TimezoneSelectField
+        control={control}
+        name="timezone"
         error={errors.timezone?.message}
-        hint="Select your preferred timezone. Defaults to system timezone."
-      >
-        <Select id="timezone" hasError={!!errors.timezone} {...register('timezone')} displayEmpty>
-          <MenuItem value="">
-            <em>Choose a timezone...</em>
-          </MenuItem>
-          {timezones.map((tz) => (
-            <MenuItem key={tz.iana} value={tz.iana}>
-              {tz.label}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormField>
+      />
 
       <Button type="submit" isLoading={isPending} fullWidth>
         Create admin account

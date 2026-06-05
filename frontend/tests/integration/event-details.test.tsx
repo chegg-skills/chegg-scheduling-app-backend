@@ -132,6 +132,24 @@ const handlers = [
   http.post('*/api/events/:eventId/schedule-slots/:slotId/log', () => {
     return HttpResponse.json({ success: true })
   }),
+  http.get('*/api/session-types', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { sessionTypes: [] },
+    })
+  }),
+  http.get('*/api/event-types', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { eventTypes: [{ id: 'type-1', name: 'Tutoring', isActive: true }] },
+    })
+  }),
+  http.get('*/api/teams/team-1/event-groups', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { groups: [] },
+    })
+  }),
 ]
 
 describe('Event Detail Integration', () => {
@@ -254,5 +272,70 @@ describe('Event Detail Integration', () => {
     await waitFor(() => {
       expect(screen.queryByText(/Save Log/i)).not.toBeInTheDocument()
     })
+  }, 15000)
+
+  it('should allow editing and persisting event timezone', async () => {
+    let currentEvent = {
+      ...mockEvent,
+      eventTypeId: 'type-1',
+      timezone: 'UTC',
+      assignmentStrategy: 'DIRECT' as any,
+      sessionLeadershipStrategy: 'SINGLE_COACH' as any,
+    }
+
+    server.use(
+      http.get('*/api/events/event-1', () => {
+        return HttpResponse.json({
+          success: true,
+          data: currentEvent,
+        })
+      }),
+      http.patch('*/api/events/event-1', async ({ request }) => {
+        const body = (await request.json()) as any
+        currentEvent = { ...currentEvent, ...body }
+        return HttpResponse.json({
+          success: true,
+          data: currentEvent,
+        })
+      }),
+      http.get('*/api/users/me', () =>
+        HttpResponse.json({
+          success: true,
+          data: { id: 'admin-1', role: 'SUPER_ADMIN' },
+        })
+      )
+    )
+
+    renderWithProviders(<EventDetailPage />)
+
+    // Open Edit modal
+    const moreBtn = await screen.findByRole('button', { name: /more/i })
+    fireEvent.click(moreBtn)
+
+    const editMenuItem = await screen.findByText('Edit event details')
+    fireEvent.click(editMenuItem)
+
+    // Verify Modal is open and timezone is shown
+    expect(await screen.findByRole('heading', { name: 'Edit event' })).toBeInTheDocument()
+
+    // Find the timezone autocomplete field
+    const tzSelect = await screen.findByPlaceholderText('Choose a timezone...')
+    fireEvent.click(tzSelect)
+
+    // Select 'America/New_York' from the popover list
+    const nyOption = await screen.findByText('Eastern Time (US & Canada)')
+    fireEvent.click(nyOption)
+
+    // Click 'Save changes'
+    const saveBtn = screen.getByRole('button', { name: 'Save changes' })
+    fireEvent.click(saveBtn)
+
+    // Verify Modal closes
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Edit event' })).not.toBeInTheDocument()
+    })
+
+    // Verify timezone was updated in the event state
+    expect(currentEvent.timezone).toBe('America/New_York')
   }, 15000)
 })

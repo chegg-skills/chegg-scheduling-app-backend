@@ -543,6 +543,7 @@ export interface CreateEventDto {
   bufferAfterMinutes?: number
   description?: string
   isActive?: boolean
+  timezone?: string
   sessionTypeId?: string | null
   groupId?: string | null
   weeklyAvailability?: Array<{
