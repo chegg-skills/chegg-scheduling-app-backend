@@ -242,7 +242,7 @@ export function TimezoneSelect({
       >
         <Autocomplete
           open={true}
-          value={selectedOption}
+          value={selectedOption ?? undefined}
           inputValue={inputValue}
           onInputChange={(_, newInputValue) => {
             setInputValue(newInputValue)

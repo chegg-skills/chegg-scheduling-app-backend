@@ -16,6 +16,8 @@ import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 import { zonedStringToUTC } from '@/utils/dateTimezone'
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
+import { format } from 'date-fns'
 
 interface UpsertScheduleSlotDialogProps {
   isOpen: boolean
@@ -91,11 +93,24 @@ export function UpsertScheduleSlotDialog({
           required
           error={error || undefined}
         >
-          <Input
-            id="slot-start"
-            type="datetime-local"
-            value={newSlotDate}
-            onChange={(e) => handleDateChange(e.target.value)}
+          <DateTimePicker
+            value={newSlotDate ? new Date(newSlotDate) : null}
+            onChange={(newValue) => {
+              if (newValue && !isNaN(newValue.getTime())) {
+                handleDateChange(format(newValue, "yyyy-MM-dd'T'HH:mm"))
+              } else {
+                handleDateChange('')
+              }
+            }}
+            disabled={isPending}
+            slotProps={{
+              textField: {
+                size: 'small',
+                fullWidth: true,
+                error: !!error,
+                id: 'slot-start',
+              },
+            }}
           />
         </FormField>
 

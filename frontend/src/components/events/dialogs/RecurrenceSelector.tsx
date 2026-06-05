@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { addWeeks, addMonths, addDays, format } from 'date-fns'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
@@ -61,11 +62,50 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
 }) => {
   const isEnabled = !!value
 
+  const [localOccurrences, setLocalOccurrences] = useState(
+    value ? value.occurrences.toString() : '4'
+  )
+
+  useEffect(() => {
+    if (value) {
+      const parsedLocal = parseInt(localOccurrences, 10)
+      if (value.occurrences !== parsedLocal) {
+        setLocalOccurrences(value.occurrences.toString())
+      }
+    }
+  }, [value?.occurrences])
+
   const handleToggle = (enabled: boolean) => {
     if (enabled) {
       onChange({ frequency: 'WEEKLY', occurrences: 4 })
+      setLocalOccurrences('4')
     } else {
       onChange(null)
+    }
+  }
+
+  const handleOccurrencesChange = (val: string) => {
+    const cleaned = val.replace(/[^0-9]/g, '')
+    setLocalOccurrences(cleaned)
+
+    const parsed = parseInt(cleaned, 10)
+    if (!isNaN(parsed) && parsed >= 1 && value) {
+      onChange({ ...value, occurrences: parsed })
+    }
+  }
+
+  const handleBlur = () => {
+    if (!value) return
+
+    const parsed = parseInt(localOccurrences, 10)
+    if (isNaN(parsed) || parsed < 1) {
+      setLocalOccurrences('1')
+      onChange({ ...value, occurrences: 1 })
+    } else if (parsed > 50) {
+      setLocalOccurrences('50')
+      onChange({ ...value, occurrences: 50 })
+    } else {
+      setLocalOccurrences(parsed.toString())
     }
   }
 
@@ -118,13 +158,10 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                 info="How many sessions to create in total, including the first one."
               >
                 <Input
-                  type="number"
-                  value={value.occurrences}
-                  onChange={(e) =>
-                    onChange({ ...value, occurrences: parseInt(e.target.value) || 1 })
-                  }
-                  min={1}
-                  max={50}
+                  type="text"
+                  value={localOccurrences}
+                  onChange={(e) => handleOccurrencesChange(e.target.value)}
+                  onBlur={handleBlur}
                   disabled={disabled}
                 />
               </FormField>
