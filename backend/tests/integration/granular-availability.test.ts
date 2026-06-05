@@ -13,16 +13,16 @@ type TestContext = {
 
 let context: TestContext;
 
-// Returns the next occurrence of `targetDay` (0=Sun..6=Sat) at the given LOCAL hour/minute.
-// Using local time is essential because assertBookingAvailabilityAllowed uses Date.getHours()
-// (local time) when comparing against HH:mm range strings.
+// Returns the next occurrence of `targetDay` (0=Sun..6=Sat) at the given UTC hour/minute.
+// Using UTC ensures tests behave identically on any machine timezone (local dev IST, CI UTC, etc.).
+// Event timezone in these tests is always "UTC", so availability windows are UTC HH:mm strings.
 const getNextLocalWeekdayAt = (targetDay: number, hour: number, minute = 0): Date => {
   const now = new Date();
-  const currentDay = now.getDay(); // local day
+  const currentDay = now.getUTCDay();
   const daysAhead = (targetDay - currentDay + 7) % 7 || 7;
   const target = new Date();
-  target.setDate(now.getDate() + daysAhead);
-  target.setHours(hour, minute, 0, 0); // local time
+  target.setUTCDate(now.getUTCDate() + daysAhead);
+  target.setUTCHours(hour, minute, 0, 0);
   return target;
 };
 
@@ -110,6 +110,7 @@ describe("weeklyAvailability — persistence on events", () => {
   it("creates an event with weeklyAvailability and reads it back", async () => {
     const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "17:00" }],
+      timezone: "UTC",
     });
 
     expect(res.status).toBe(201);
@@ -128,6 +129,7 @@ describe("weeklyAvailability — persistence on events", () => {
       context.eventTypeId,
       {
         weeklyAvailability: [{ dayOfWeek: 2, startTime: "08:00", endTime: "12:00" }],
+        timezone: "UTC",
       },
     );
     const eventId = created.body.data.id;
@@ -162,6 +164,7 @@ describe("Slot creation — strict mode (weeklyAvailability range defined for th
   beforeAll(async () => {
     const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       weeklyAvailability: [{ dayOfWeek: MONDAY, startTime: "09:00", endTime: "17:00" }],
+      timezone: "UTC",
     });
     eventId = res.body.data.id;
   });
@@ -211,6 +214,7 @@ describe("Slot creation — strict mode (weeklyAvailability range defined for th
     // Create a fresh event for boundary test to avoid 409 unique constraint.
     const fresh = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       weeklyAvailability: [{ dayOfWeek: MONDAY, startTime: "09:00", endTime: "17:00" }],
+      timezone: "UTC",
     });
 
     const res = await createSlot(fresh.body.data.id, context.teamAdmin.token, start, end);
@@ -265,6 +269,7 @@ describe("Slot creation — weeklyAvailability takes strict precedence over allo
     const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       allowedWeekdays: [1],
       weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "12:00" }],
+      timezone: "UTC",
     });
     const eventId = res.body.data.id;
 
@@ -282,6 +287,7 @@ describe("Slot creation — weeklyAvailability takes strict precedence over allo
     const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       allowedWeekdays: [1],
       weeklyAvailability: [{ dayOfWeek: 3, startTime: "09:00", endTime: "17:00" }],
+      timezone: "UTC",
     });
     const eventId = res.body.data.id;
 
@@ -301,6 +307,7 @@ describe("Slot update — weeklyAvailability enforced on PATCH", () => {
   it("rejects a PATCH that moves the slot outside the event range", async () => {
     const res = await createEvent(context.teamId, context.teamAdmin.token, context.eventTypeId, {
       weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "11:00" }],
+      timezone: "UTC",
     });
     const eventId = res.body.data.id;
 

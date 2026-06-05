@@ -6,8 +6,10 @@ import {
   isSlotWithinAvailability,
   formatAvailabilityRanges,
 } from '../form/eventCapabilityRules'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 import type { Event, EventScheduleSlot } from '@/types'
 import type { RecurrenceConfig } from './RecurrenceSelector'
+import { useTimezones } from '@/hooks/queries/useConfig'
 
 interface UseScheduleSlotFormProps {
   event: Event
@@ -17,6 +19,11 @@ interface UseScheduleSlotFormProps {
 
 export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotFormProps) {
   const allowedDays = useMemo(() => event.allowedWeekdays ?? [], [event.allowedWeekdays])
+  const { data: timezones = [] } = useTimezones()
+  const timezoneLabel = useMemo(
+    () => formatTimezoneLabel(event.timezone, timezones),
+    [event.timezone, timezones],
+  )
 
   const [newSlotDate, setNewSlotDate] = useState('')
   const [newSlotCapacity, setNewSlotCapacity] = useState<number | ''>('')
@@ -30,23 +37,23 @@ export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotForm
       return true
     }
 
-    if (!isWeekdayAllowed(dateValue, allowedDays, event.weeklyAvailability)) {
+    if (!isWeekdayAllowed(dateValue, allowedDays, event.weeklyAvailability, event.timezone)) {
       setError(
         `Selected date must be one of the allowed weekdays: ${formatAllowedWeekdays(allowedDays, event.weeklyAvailability)}`
       )
       return false
     }
 
-    if (!isSlotWithinAvailability(dateValue, event.durationSeconds, event.weeklyAvailability)) {
+    if (!isSlotWithinAvailability(dateValue, event.durationSeconds, event.weeklyAvailability, event.timezone)) {
       setError(
-        `Session must be within allowed time ranges for this day: ${formatAvailabilityRanges(dateValue, event.weeklyAvailability)}`
+        `Session must be within allowed time ranges for this day: ${formatAvailabilityRanges(dateValue, event.weeklyAvailability, event.timezone)} (${timezoneLabel})`
       )
       return false
     }
 
     setError(null)
     return true
-  }, [allowedDays, event.weeklyAvailability, event.durationSeconds])
+  }, [allowedDays, event.weeklyAvailability, event.durationSeconds, event.timezone, timezoneLabel])
 
   // Sync state when slot changes or modal opens
   useEffect(() => {

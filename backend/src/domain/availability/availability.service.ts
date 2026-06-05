@@ -341,6 +341,7 @@ const getAvailableSlots = async (
           event.weeklyAvailability,
           slotStart,
           slotEnd,
+          event.timezone,
         );
       }
       assertBookingNoticeSatisfied(event.minimumNoticeMinutes, slotStart);
