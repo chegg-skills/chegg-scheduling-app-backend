@@ -17,7 +17,7 @@ function TimezonesProbe() {
   if (isError) {
     return <p role="alert">Error</p>
   }
-  return <p role="status">{data?.timezones.join(',')}</p>
+  return <p role="status">{data?.timezones.map((tz) => tz.iana).join(',')}</p>
 }
 
 describe('GET /api/config/timezones (MSW)', () => {

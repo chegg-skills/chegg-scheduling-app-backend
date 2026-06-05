@@ -93,6 +93,7 @@ export type CreateEventInput = {
   showDescription?: boolean;
   deferCoachReveal?: boolean;
   allowStudentCoachChoice?: boolean;
+  timezone?: string;
   groupId?: string | null;
   sessionTypeId?: string | null;
   weeklyAvailability?: Array<{

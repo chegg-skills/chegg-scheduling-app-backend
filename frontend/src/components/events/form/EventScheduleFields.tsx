@@ -218,8 +218,8 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
               inputProps={{ 'aria-label': 'Default Event Host' }}
               {...register('fixedLeadCoachId')}
             >
-              <MenuItem value="" disabled>
-                Select a coach
+              <MenuItem value="">
+                <em>No default host</em>
               </MenuItem>
               {leadSelectionOptions.map((option, index) => (
                 <MenuItem key={`${option.value}-${index}`} value={option.value}>
@@ -284,8 +284,8 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
                 hasError={!!errors.fixedLeadCoachId}
                 {...register('fixedLeadCoachId')}
               >
-                <MenuItem value="" disabled>
-                  Select a lead coach
+                <MenuItem value="">
+                  <em>Select a lead coach</em>
                 </MenuItem>
                 {leadSelectionOptions.map((option, index) => (
                   <MenuItem key={`${option.value}-${index}`} value={option.value}>

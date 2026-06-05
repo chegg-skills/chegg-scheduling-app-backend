@@ -415,12 +415,14 @@ describe("Event CRUD routes", () => {
         name: "Updated Event Name",
         description: "Updated event description",
         locationValue: "https://meet.example.com/updated",
+        timezone: "America/New_York",
       });
 
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.data.name).toBe("Updated Event Name");
     expect(updateRes.body.data.description).toBe("Updated event description");
     expect(updateRes.body.data.locationValue).toBe("https://meet.example.com/updated");
+    expect(updateRes.body.data.timezone).toBe("America/New_York");
   });
 
   it("updates general details on a ONE_TO_MANY event without breaking fixed-slot enforcement", async () => {

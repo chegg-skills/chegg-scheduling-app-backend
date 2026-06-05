@@ -15,6 +15,8 @@ import { Globe, Calendar, Video, User, Copy, Check, ShieldCheck, Info, Mail } fr
 import { format } from 'date-fns'
 import type { StudentSummary, Booking } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 
 interface StudentProfileCardProps {
   student: StudentSummary
@@ -46,8 +48,10 @@ export function StudentProfileCard({ student, bookings, onSendEmail }: StudentPr
   }
 
   // 1. Timezone (Extracted from latest booking, default to system)
+  const { data: timezones = [] } = useTimezones()
   const latestBooking = bookings[0]
   const studentTimezone = latestBooking?.timezone || 'UTC'
+  const formattedTimezone = formatTimezoneLabel(studentTimezone, timezones)
 
   // 2. Preferred Learning Mode
   const locationTypes = bookings.map((b) => b.event?.locationType).filter(Boolean)
@@ -85,7 +89,7 @@ export function StudentProfileCard({ student, bookings, onSendEmail }: StudentPr
   const profileDetails = [
     {
       label: 'Timezone',
-      value: studentTimezone,
+      value: formattedTimezone,
       icon: <Globe size={18} />,
       color: theme.palette.primary.main,
       tooltip: "Derived from the timezone selected during this student's latest booking.",

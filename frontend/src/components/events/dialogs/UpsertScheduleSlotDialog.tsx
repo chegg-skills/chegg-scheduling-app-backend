@@ -1,4 +1,3 @@
-import { addSeconds, format } from 'date-fns'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Alert from '@mui/material/Alert'
@@ -16,6 +15,9 @@ import { useScheduleSlotForm } from './useScheduleSlotForm'
 import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
+import { zonedStringToUTC } from '@/utils/dateTimezone'
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
+import { format } from 'date-fns'
 
 interface UpsertScheduleSlotDialogProps {
   isOpen: boolean
@@ -59,11 +61,17 @@ export function UpsertScheduleSlotDialog({
     isValid,
   } = useScheduleSlotForm({ event, slot, isOpen })
 
+  // Interpret the datetime-local value as wall-clock time in the event's timezone
+  const previewEndTime = newSlotDate
+    ? new Date(zonedStringToUTC(newSlotDate, event.timezone).getTime() + event.durationSeconds * 1000)
+    : null
+
   function handleAdd() {
     if (!isValid) return
 
-    const startTime = new Date(newSlotDate)
-    const endTime = addSeconds(startTime, event.durationSeconds)
+    // Convert the admin's entered time from event timezone to UTC before storing
+    const startTime = zonedStringToUTC(newSlotDate, event.timezone)
+    const endTime = new Date(startTime.getTime() + event.durationSeconds * 1000)
 
     onSave({
       startTime: startTime.toISOString(),
@@ -85,11 +93,24 @@ export function UpsertScheduleSlotDialog({
           required
           error={error || undefined}
         >
-          <Input
-            id="slot-start"
-            type="datetime-local"
-            value={newSlotDate}
-            onChange={(e) => handleDateChange(e.target.value)}
+          <DateTimePicker
+            value={newSlotDate ? new Date(newSlotDate) : null}
+            onChange={(newValue) => {
+              if (newValue && !isNaN(newValue.getTime())) {
+                handleDateChange(format(newValue, "yyyy-MM-dd'T'HH:mm"))
+              } else {
+                handleDateChange('')
+              }
+            }}
+            disabled={isPending}
+            slotProps={{
+              textField: {
+                size: 'small',
+                fullWidth: true,
+                error: !!error,
+                id: 'slot-start',
+              },
+            }}
           />
         </FormField>
 
@@ -125,10 +146,16 @@ export function UpsertScheduleSlotDialog({
             Note: The session will last {event.durationSeconds / 60} minutes based on the event
             configuration.
           </Typography>
-          {newSlotDate && (
+          {newSlotDate && previewEndTime && (
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
               Session ends at:{' '}
-              {format(addSeconds(new Date(newSlotDate), event.durationSeconds), 'h:mm a')}
+              {new Intl.DateTimeFormat('en-US', {
+                timeZone: event.timezone,
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true,
+              }).format(previewEndTime)}{' '}
+              ({timezoneLabel})
             </Typography>
           )}
           {(event.weeklyAvailability?.length ?? 0) > 0 && (
@@ -167,8 +194,8 @@ export function UpsertScheduleSlotDialog({
                     src={coach.coachUser.avatarUrl ?? undefined}
                     sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
                   >
-                    {coach.coachUser.firstName[0]}
-                    {coach.coachUser.lastName[0]}
+                    {coach.coachUser.firstName?.[0] ?? '?'}
+                    {coach.coachUser.lastName?.[0] ?? ''}
                   </Avatar>
                   <Typography variant="body2">
                     {coach.coachUser.firstName} {coach.coachUser.lastName}

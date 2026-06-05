@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { StudentProfileCard } from '@/components/students/StudentProfileCard'
 import type { StudentSummary, Booking, SafeUser, Event } from '@/types'
 import { renderWithProviders } from '../utils/renderWithProviders'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 
 const mockStudent: StudentSummary = {
   id: 'student-123',
@@ -115,7 +116,7 @@ describe('StudentProfileCard', () => {
     renderWithProviders(<StudentProfileCard student={mockStudent} bookings={[]} />)
 
     // Timezone should default to UTC
-    expect(screen.getAllByText('UTC')[0]).toBeInTheDocument()
+    expect(screen.getAllByText(formatTimezoneLabel('UTC'))[0]).toBeInTheDocument()
 
     // Preferred Learning Mode should show empty message
     expect(screen.getAllByText('No bookings yet')[0]).toBeInTheDocument()
@@ -285,6 +286,6 @@ describe('StudentProfileCard', () => {
     renderWithProviders(<StudentProfileCard student={mockStudent} bookings={bookings} />)
 
     // Should display America/New_York (timezone of first/latest booking in history)
-    expect(screen.getAllByText('America/New_York')[0]).toBeInTheDocument()
+    expect(screen.getAllByText(formatTimezoneLabel('America/New_York'))[0]).toBeInTheDocument()
   })
 })
