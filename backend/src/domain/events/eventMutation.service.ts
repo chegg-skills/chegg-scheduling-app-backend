@@ -253,6 +253,7 @@ export const buildEventCreateData = ({
     showDescription: validated.showDescription ?? false,
     deferCoachReveal: validated.deferCoachReveal ?? false,
     allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
+    timezone: validated.timezone ?? "UTC",
     team: { connect: { id: teamId } },
     group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
     sessionType: validated.sessionTypeId ? { connect: { id: validated.sessionTypeId } } : undefined,
@@ -364,6 +365,10 @@ export const buildEventUpdateData = ({
 
   if (validated.allowStudentCoachChoice !== undefined) {
     updateData.allowStudentCoachChoice = validated.allowStudentCoachChoice;
+  }
+
+  if (validated.timezone !== undefined) {
+    updateData.timezone = validated.timezone;
   }
 
   if (validated.groupId !== undefined) {
