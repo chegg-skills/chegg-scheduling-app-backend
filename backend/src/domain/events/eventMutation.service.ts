@@ -428,6 +428,7 @@ export const buildDuplicateEventData = ({
     showDescription: (sourceEvent as any).showDescription,
     deferCoachReveal: (sourceEvent as any).deferCoachReveal ?? false,
     allowStudentCoachChoice: (sourceEvent as any).allowStudentCoachChoice ?? false,
+    timezone: (sourceEvent as any).timezone ?? "UTC",
     group: sourceEvent.groupId ? { connect: { id: sourceEvent.groupId } } : undefined,
     sessionType: sourceEvent.sessionTypeId
       ? { connect: { id: sourceEvent.sessionTypeId } }
