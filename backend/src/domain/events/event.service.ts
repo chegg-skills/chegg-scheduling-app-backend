@@ -44,6 +44,8 @@ import {
   cancelEventScheduleSlot,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  stopRecurrenceGroup,
+  resumeRecurrenceGroup,
 } from "./eventScheduling.service";
 import {
   buildDuplicateEventData,
@@ -356,5 +358,7 @@ export {
   cancelEventScheduleSlot,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  stopRecurrenceGroup,
+  resumeRecurrenceGroup,
   type SafeEvent,
 };

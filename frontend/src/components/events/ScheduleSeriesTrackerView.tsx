@@ -12,6 +12,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import { format } from 'date-fns'
 import type { Event, EventScheduleSlot } from '@/types'
 import { ScheduleSlotList } from './ScheduleSlotList'
+import { Button } from '@/components/shared/ui/Button'
 
 interface Props {
   event: Event
@@ -20,6 +21,8 @@ interface Props {
     isRecurring: boolean
     slots: EventScheduleSlot[]
     startTime: string
+    isContinuous?: boolean
+    isStopped?: boolean
   }
   onBack: () => void
   onEditSlot: (slot: EventScheduleSlot) => void
@@ -27,6 +30,8 @@ interface Props {
   onViewAttendees: (slot: EventScheduleSlot) => void
   onLogSession: (slot: EventScheduleSlot) => void
   onCancelSlot: (slot: EventScheduleSlot, info: string) => void
+  onStopSeries?: (group: any) => void
+  onResumeSeries?: (group: any) => void
   canManage?: boolean
 }
 
@@ -41,6 +46,8 @@ export function ScheduleSeriesTrackerView({
   onViewAttendees,
   onLogSession,
   onCancelSlot,
+  onStopSeries,
+  onResumeSeries,
   canManage = true,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabValue>('upcoming')
@@ -118,15 +125,38 @@ export function ScheduleSeriesTrackerView({
               <CalendarTodayIcon sx={{ fontSize: 28 }} />
             )}
           </Box>
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               {group.isRecurring ? 'Weekly Recurring Series' : 'Individual Session Detail'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {format(new Date(group.startTime), 'EEEE')}s at{' '}
-              {format(new Date(group.startTime), 'h:mm a')} • {group.slots.length} occurrences
+              {format(new Date(group.startTime), 'h:mm a')} •{' '}
+              {group.isContinuous
+                ? group.isStopped
+                  ? 'Stopped (Continuous)'
+                  : 'Continuous'
+                : `${group.slots.length} occurrences`}
             </Typography>
           </Box>
+          {group.isContinuous && !group.isStopped && canManage && onStopSeries && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onStopSeries(group)}
+            >
+              Stop Recurrence
+            </Button>
+          )}
+          {group.isContinuous && group.isStopped && canManage && onResumeSeries && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onResumeSeries(group)}
+            >
+              Resume Recurrence
+            </Button>
+          )}
         </Stack>
       </Box>
 

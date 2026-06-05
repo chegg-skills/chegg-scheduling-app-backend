@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Select } from '@/components/shared/form/Select'
 import { Input } from '@/components/shared/form/Input'
+import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 
 export type RecurrenceFrequency =
   | 'WEEKLY'
@@ -17,7 +18,8 @@ export type RecurrenceFrequency =
 
 export interface RecurrenceConfig {
   frequency: RecurrenceFrequency
-  occurrences: number
+  occurrences: number | null
+  isContinuous?: boolean
 }
 
 interface RecurrenceSelectorProps {
@@ -30,7 +32,8 @@ interface RecurrenceSelectorProps {
 function generatePreviewDates(startDate: string, config: RecurrenceConfig): Date[] {
   const dates: Date[] = []
   let current = new Date(startDate)
-  for (let i = 0; i < config.occurrences; i++) {
+  const count = config.isContinuous ? 5 : (config.occurrences ?? 1)
+  for (let i = 0; i < count; i++) {
     dates.push(new Date(current))
     switch (config.frequency) {
       case 'WEEKLY':
@@ -63,28 +66,57 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
   const isEnabled = !!value
 
   const [localOccurrences, setLocalOccurrences] = useState(
-    value ? value.occurrences.toString() : '4'
+    value && value.occurrences != null ? value.occurrences.toString() : '4'
   )
 
   useEffect(() => {
     if (value) {
-      const parsedLocal = parseInt(localOccurrences, 10)
-      if (value.occurrences !== parsedLocal) {
-        setLocalOccurrences(value.occurrences.toString())
+      if (value.isContinuous) {
+        setLocalOccurrences('')
+      } else if (value.occurrences != null) {
+        const parsedLocal = parseInt(localOccurrences, 10)
+        if (value.occurrences !== parsedLocal) {
+          setLocalOccurrences(value.occurrences.toString())
+        }
       }
     }
-  }, [value?.occurrences])
+  }, [value?.occurrences, value?.isContinuous])
 
   const handleToggle = (enabled: boolean) => {
     if (enabled) {
-      onChange({ frequency: 'WEEKLY', occurrences: 4 })
+      onChange({ frequency: 'WEEKLY', occurrences: 4, isContinuous: false })
       setLocalOccurrences('4')
     } else {
       onChange(null)
     }
   }
 
+  const handleIndefiniteToggle = (continuous: boolean) => {
+    if (!value) return
+    if (continuous) {
+      // Preserve the current count in localOccurrences so it can be restored if the user toggles back
+      const parsed = parseInt(localOccurrences, 10)
+      const savedOcc = !isNaN(parsed) && parsed >= 1 ? parsed : (value.occurrences ?? 4)
+      setLocalOccurrences(savedOcc.toString())
+      onChange({
+        ...value,
+        occurrences: null,
+        isContinuous: true,
+      })
+    } else {
+      const parsed = parseInt(localOccurrences, 10)
+      const occ = !isNaN(parsed) && parsed >= 1 ? parsed : 4
+      onChange({
+        ...value,
+        occurrences: occ,
+        isContinuous: false,
+      })
+      setLocalOccurrences(occ.toString())
+    }
+  }
+
   const handleOccurrencesChange = (val: string) => {
+    if (value?.isContinuous) return
     const cleaned = val.replace(/[^0-9]/g, '')
     setLocalOccurrences(cleaned)
 
@@ -95,7 +127,7 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
   }
 
   const handleBlur = () => {
-    if (!value) return
+    if (!value || value.isContinuous) return
 
     const parsed = parseInt(localOccurrences, 10)
     if (isNaN(parsed) || parsed < 1) {
@@ -162,10 +194,30 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                   value={localOccurrences}
                   onChange={(e) => handleOccurrencesChange(e.target.value)}
                   onBlur={handleBlur}
-                  disabled={disabled}
+                  disabled={disabled || value.isContinuous}
                 />
               </FormField>
             </Box>
+          </Stack>
+
+          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
+            <input
+              type="checkbox"
+              id="indefinite-recurrence"
+              checked={!!value.isContinuous}
+              onChange={(e) => handleIndefiniteToggle(e.target.checked)}
+              disabled={disabled}
+              style={{ width: 16, height: 16, cursor: 'pointer' }}
+            />
+            <Typography
+              component="label"
+              htmlFor="indefinite-recurrence"
+              variant="body2"
+              sx={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              Repeat indefinitely (continuous series)
+            </Typography>
+            <InfoTooltip title="Continuous series automatically pre-generate slots up to 90 days in advance. As time passes, new slots are dynamically added to maintain the rolling window indefinitely until manually stopped." />
           </Stack>
 
           {startDate && (
@@ -183,6 +235,11 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                   {i + 1}. {format(date, 'EEE, MMM d, yyyy @ h:mm a')}
                 </Typography>
               ))}
+              {value.isContinuous && (
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontStyle: 'italic', mt: 0.5 }}>
+                  ...repeats indefinitely
+                </Typography>
+              )}
             </Box>
           )}
         </>

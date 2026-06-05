@@ -88,6 +88,28 @@ export function useCancelEventScheduleSlot(eventId: string) {
   })
 }
 
+export function useStopRecurrenceGroup(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (groupId: string) => eventsApi.stopRecurrenceGroup(eventId, groupId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+    },
+  })
+}
+
+export function useResumeRecurrenceGroup(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (groupId: string) => eventsApi.resumeRecurrenceGroup(eventId, groupId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
+    },
+  })
+}
+
 export function useTeamEvents(teamId: string, params?: ListEventsParams) {
   return useQuery({
     queryKey: eventKeys.byTeam(teamId, params),

@@ -210,4 +210,22 @@ router
   )
   .all(methodNotAllowed);
 
+router
+  .route("/events/:eventId/recurrence-groups/:groupId/stop")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.stopRecurrenceGroup,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/events/:eventId/recurrence-groups/:groupId/resume")
+  .post(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.resumeRecurrenceGroup,
+  )
+  .all(methodNotAllowed);
+
 export default router;

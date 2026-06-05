@@ -812,6 +812,147 @@ describe("Event scheduling routes", () => {
     expect(deleteRes.body.message).toMatch(/deleted/i);
   });
 
+  it("supports continuous recurring slots and stopping them", async () => {
+    const eventType = await createEventType(context.superAdminToken, {
+      key: uniqueValue("continuous-offering"),
+      name: "Continuous Offering",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Continuous Slot Event",
+      eventTypeId: eventType.body.data.id,
+      bookingMode: "FIXED_SLOTS",
+    });
+    const eventId = event.body.data.id as string;
+
+    const startTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    startTime.setUTCMinutes(0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    const createRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        capacity: 5,
+        recurrence: {
+          frequency: "WEEKLY",
+          isContinuous: true,
+        },
+      });
+
+    expect(createRes.status).toBe(201);
+    const recurrenceGroupId = createRes.body.data.recurrenceGroupId;
+    expect(recurrenceGroupId).toBeDefined();
+
+    // Query internal slots - triggers replenishment
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(listRes.status).toBe(200);
+    // Since it's continuous, it should have replenished many weekly slots
+    expect(listRes.body.data.slots.length).toBeGreaterThan(1);
+    expect(listRes.body.data.slots[0].recurrenceGroup.isContinuous).toBe(true);
+    expect(listRes.body.data.slots[0].recurrenceGroup.isActive).toBe(true);
+
+    // Stop the recurrence group
+    const stopRes = await request(app)
+      .post(`/api/events/${eventId}/recurrence-groups/${recurrenceGroupId}/stop`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(stopRes.status).toBe(200);
+    expect(stopRes.body.message).toMatch(/stopped successfully/i);
+
+    // Query again and verify it is stopped
+    const listResAfter = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(listResAfter.body.data.slots[0].recurrenceGroup.isActive).toBe(false);
+
+    // Resume the recurrence group
+    const resumeRes = await request(app)
+      .post(`/api/events/${eventId}/recurrence-groups/${recurrenceGroupId}/resume`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(resumeRes.status).toBe(200);
+    expect(resumeRes.body.message).toMatch(/resumed successfully/i);
+
+    // Query again and verify it is active again
+    const listResAfterResume = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(listResAfterResume.body.data.slots[0].recurrenceGroup.isActive).toBe(true);
+  });
+
+  it("respects recurrenceVisibilityLimit on public booking slots", async () => {
+    const eventType = await createEventType(context.superAdminToken, {
+      key: uniqueValue("visibility-offering"),
+      name: "Visibility Offering",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Visibility Limited Event",
+      eventTypeId: eventType.body.data.id,
+      bookingMode: "FIXED_SLOTS",
+      recurrenceVisibilityLimit: 2,
+    });
+    const eventId = event.body.data.id as string;
+
+    // Assign coach to event so public availability endpoint returns slots
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coaches: [{ userId: context.coachOneId }] });
+
+    const sunday = getNextUtcWeekdayAt(0, 10);
+
+    // Add weekly availability for Sundays 09:00 - 17:00
+    await request(app)
+      .patch(`/api/teams/${context.teamId}/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        weeklyAvailability: [
+          { dayOfWeek: 0, startTime: "09:00", endTime: "17:00" }
+        ],
+        allowedWeekdays: [0]
+      });
+
+    // Create 5 occurrences starting on Sunday
+    const createRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: sunday.toISOString(),
+        endTime: new Date(sunday.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+        recurrence: {
+          frequency: "WEEKLY",
+          occurrences: 5,
+        },
+      });
+
+    expect(createRes.status).toBe(201);
+
+    // Fetch internal slots to verify all 5 exist
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(listRes.body.data.slots).toHaveLength(5);
+
+    // Query public availability
+    const startDate = new Date();
+    const endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const availRes = await request(app)
+      .get(`/api/public/events/${eventId}/slots`)
+      .query({ startDate: startDate.toISOString(), endDate: endDate.toISOString() });
+
+    expect(availRes.status).toBe(200);
+    // Should be capped to the recurrenceVisibilityLimit (2)
+    expect(availRes.body.data.slots).toHaveLength(2);
+  });
+
   it("blocks deletion of a schedule slot with active bookings", async () => {
     const eventType = await createEventType(context.superAdminToken);
     const event = await createEvent(context.teamId, context.teamAdminToken, {

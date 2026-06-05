@@ -114,6 +114,24 @@ export function EventSchedulingPolicyFields({ caps, isLocked }: EventSchedulingP
         />
       </FormField>
 
+      <FormField
+        label="Recurrence Visibility Limit"
+        htmlFor="recurrenceVisibilityLimit"
+        error={errors.recurrenceVisibilityLimit?.message}
+        info="Limit how many upcoming slots in a recurring series are shown on the public booking page. Leave empty to show all."
+      >
+        <Input
+          id="recurrenceVisibilityLimit"
+          type="number"
+          min="1"
+          placeholder="e.g. 2"
+          {...register('recurrenceVisibilityLimit', {
+            valueAsNumber: true,
+            setValueAs: (v: string) => (v === '' ? null : Number(v)),
+          })}
+        />
+      </FormField>
+
       {caps?.multipleParticipants && <ParticipantCapacityFields />}
 
       {caps?.multipleParticipants && !caps?.multipleCoaches && (

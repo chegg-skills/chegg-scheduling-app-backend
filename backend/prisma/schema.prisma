@@ -158,6 +158,7 @@ model Event {
   showDescription           Boolean                   @default(false)
   targetCoHostCount         Int?
   maxBookingWindowDays      Int?
+  recurrenceVisibilityLimit Int?
   deferCoachReveal          Boolean                   @default(false)
   allowStudentCoachChoice   Boolean                   @default(false)
   timezone                  String                    @default("UTC")
@@ -174,6 +175,7 @@ model Event {
   routingState              EventRoutingState?
   scheduleSlots             EventScheduleSlot[]
   weeklyAvailability        EventWeeklyAvailability[]
+  recurrenceGroups          RecurrenceGroup[]
 
   @@index([teamId, isActive])
   @@index([eventTypeId])
@@ -244,12 +246,27 @@ model EventScheduleSlot {
   bookings          Booking[]
   assignedCoach     User?       @relation("SlotCoach", fields: [assignedCoachId], references: [id])
   event             Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  recurrenceGroup   RecurrenceGroup? @relation(fields: [recurrenceGroupId], references: [id], onDelete: SetNull)
   sessionLog        SessionLog?
 
   @@unique([eventId, startTime])
   @@index([eventId, startTime, isActive])
   @@index([assignedCoachId])
   @@index([recurrenceGroupId])
+}
+
+model RecurrenceGroup {
+  id           String              @id @default(uuid())
+  eventId      String
+  frequency    String
+  isContinuous Boolean             @default(false)
+  isActive     Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  event        Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  slots        EventScheduleSlot[]
+
+  @@index([eventId])
 }
 
 model SessionLog {

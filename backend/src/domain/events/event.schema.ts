@@ -52,6 +52,10 @@ const EventBaseObjectCore = z.looseObject({
   ),
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
+  recurrenceVisibilityLimit: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.coerce.number().int().min(1).optional().nullable(),
+  ),
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
@@ -230,10 +234,15 @@ const EventScheduleSlotBase = z.looseObject({
   recurrence: z
     .object({
       frequency: z.enum(["WEEKLY", "BI_WEEKLY", "MONTHLY", "TWICE_A_MONTH", "THRICE_A_WEEK"]),
-      occurrences: z.coerce.number().int().min(1).max(50),
+      occurrences: z.coerce.number().int().min(1).max(50).optional().nullable(),
+      isContinuous: z.boolean().optional().default(false),
     })
     .optional()
-    .nullable(),
+    .nullable()
+    .refine(
+      (data) => !data || data.occurrences != null || data.isContinuous === true,
+      { message: "Either occurrences or isContinuous must be specified", path: ["occurrences"] }
+    ),
 });
 
 // --- Exported Schemas with Refinements ---

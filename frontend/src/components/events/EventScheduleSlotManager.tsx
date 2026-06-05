@@ -12,6 +12,8 @@ import {
   useUpdateEventScheduleSlot,
   useDeleteEventScheduleSlot,
   useCancelEventScheduleSlot,
+  useStopRecurrenceGroup,
+  useResumeRecurrenceGroup,
 } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { useScheduleSeriesGroups } from '@/hooks/useScheduleSeriesGroups'
@@ -39,6 +41,8 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
   const { mutate: update, isPending: updating } = useUpdateEventScheduleSlot(event.id)
   const { mutate: remove } = useDeleteEventScheduleSlot(event.id)
   const { mutate: cancel } = useCancelEventScheduleSlot(event.id)
+  const { mutate: stopRecurrence } = useStopRecurrenceGroup(event.id)
+  const { mutate: resumeRecurrence } = useResumeRecurrenceGroup(event.id)
   const { alert } = useConfirm()
   const { handleAction } = useAsyncAction()
 
@@ -142,6 +146,22 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
     )
   }
 
+  function handleStopSeries(group: ScheduleSeriesGroup) {
+    handleAction(stopRecurrence, group.id, {
+      title: 'Stop Recurrence',
+      message: `Are you sure you want to stop this recurring series?\n\nNo further slots will be automatically generated. Existing slots will remain.`,
+      actionName: 'Stop Recurrence',
+    })
+  }
+
+  function handleResumeSeries(group: ScheduleSeriesGroup) {
+    handleAction(resumeRecurrence, group.id, {
+      title: 'Resume Recurrence',
+      message: `Are you sure you want to resume this recurring series?\n\nDynamic slot replenishment will resume generating future slots.`,
+      actionName: 'Resume Recurrence',
+    })
+  }
+
   function handleCancelSlot(slot: EventScheduleSlot, info: string) {
     const bookingCount = slot._count?.bookings ?? 0
     const message =
@@ -215,6 +235,8 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
               groups={seriesGroups}
               onViewTracker={(group) => setActiveSeriesId(group.id)}
               onRemoveSeries={handleRemoveSeries}
+              onStopSeries={handleStopSeries}
+              onResumeSeries={handleResumeSeries}
               canManage={canManage}
             />
           ) : (
@@ -231,6 +253,8 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
           onViewAttendees={handleOpenAttendees}
           onLogSession={handleOpenLogSession}
           onCancelSlot={handleCancelSlot}
+          onStopSeries={handleStopSeries}
+          onResumeSeries={handleResumeSeries}
           canManage={canManage}
         />
       )}

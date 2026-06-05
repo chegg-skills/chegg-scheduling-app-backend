@@ -383,6 +383,8 @@ export {
   listSlotBookings,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  stopRecurrenceGroup,
+  resumeRecurrenceGroup,
   getSessionLog,
   upsertSessionLog,
 };
@@ -411,6 +413,34 @@ async function upsertSessionLog(req: Request, res: Response, next: NextFunction)
       caller,
     );
     sendSuccessResponse(res, StatusCodes.OK, result, "Session log saved successfully.");
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function stopRecurrenceGroup(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.stopRecurrenceGroup(
+      req.params.eventId as string,
+      req.params.groupId as string,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Recurrence series stopped successfully.");
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function resumeRecurrenceGroup(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.resumeRecurrenceGroup(
+      req.params.eventId as string,
+      req.params.groupId as string,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Recurrence series resumed successfully.");
   } catch (error) {
     next(error);
   }
