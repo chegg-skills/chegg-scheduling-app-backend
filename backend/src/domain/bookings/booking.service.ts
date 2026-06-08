@@ -320,9 +320,12 @@ const rescheduleBooking = async (
         scheduleSlotId: scheduleSlot?.id ?? null,
         status: BookingStatus.CONFIRMED,
         ...(token && { rescheduleToken: randomUUID() }), // rotate token to invalidate the old link
-      });
+      }, tx);
     },
-    { timeout: 15000 },
+    // Reschedule re-evaluates coach availability via sequential per-coach DB queries, which takes
+    // longer than the initial booking creation path. 30s gives enough headroom without risking
+    // indefinite deadlock holds.
+    { timeout: 30000 },
   );
 
   getRequestLogger().info(
@@ -348,8 +351,8 @@ const cancelBooking = async (
   const { token, cancellationReason } = payload;
 
   const updatedBooking = await prisma.$transaction(
-    async () => {
-      const booking = token ? await findBookingByToken(id, token) : await findBookingById(id);
+    async (tx) => {
+      const booking = token ? await findBookingByToken(id, token, tx) : await findBookingById(id, tx);
 
       if (token) {
         assertCancelTokenValid(booking);
@@ -371,7 +374,7 @@ const cancelBooking = async (
         status: BookingStatus.CANCELLED,
         cancellationReason: cancellationReason?.trim() || null,
         // rescheduleToken is NOT rotated — assertCancelTokenValid blocks reuse via status check
-      });
+      }, tx);
     },
     { timeout: 15000 },
   );
