@@ -52,6 +52,7 @@ export const upsertNotificationConfig = async (
     coachNotifyOnNoShow: boolean;
     notifyLeadOnAvailability: boolean;
     sendFeedbackLink: boolean;
+    feedbackFormLink?: string | null;
   },
   caller: CallerContext,
 ) => {

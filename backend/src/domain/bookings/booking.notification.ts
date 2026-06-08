@@ -511,7 +511,8 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
 /**
  * Sends a post-session feedback email to the student when:
  * - The team has `sendFeedbackLink` enabled in their notification config, AND
- * - A global `feedbackFormLink` system setting is configured and non-empty.
+ * - A feedback form link is available: the team-level `feedbackFormLink` takes priority,
+ *   falling back to the global `feedbackFormLink` system setting if the team value is null.
  *
  * Call this after a booking transitions to COMPLETED (session logged as attended).
  * Treats an empty string link the same as absent — no email is sent.
@@ -521,7 +522,7 @@ const queueStudentFeedbackNotification = async (booking: SafeBooking): Promise<v
     const config = await getTeamNotificationConfig(booking.teamId);
     if (!config.sendFeedbackLink) return;
 
-    const feedbackFormLink = await getSystemSettingByKey("feedbackFormLink");
+    const feedbackFormLink = config.feedbackFormLink ?? (await getSystemSettingByKey("feedbackFormLink"));
     if (!feedbackFormLink) return;
 
     await publishNotificationSafely({

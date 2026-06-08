@@ -22,5 +22,9 @@ export const UpsertNotificationConfigSchema = {
     coachNotifyOnNoShow: z.boolean(),
     notifyLeadOnAvailability: z.boolean(),
     sendFeedbackLink: z.boolean().default(false),
+    feedbackFormLink: z.preprocess(
+      (v) => (v === "" ? null : v),
+      z.string().url({ message: "Invalid feedback form link URL" }).optional().nullable(),
+    ),
   }),
 };
