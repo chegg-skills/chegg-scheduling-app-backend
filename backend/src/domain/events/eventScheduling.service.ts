@@ -397,6 +397,9 @@ const updateEventScheduleSlot = async (
     );
   }
 
+  // Remove recurrence if it exists, since it is not part of the EventScheduleSlot model
+  delete (validated as any).recurrence;
+
   const updated = await prisma.eventScheduleSlot.update({
     where: { id: slotId },
     data: validated,
