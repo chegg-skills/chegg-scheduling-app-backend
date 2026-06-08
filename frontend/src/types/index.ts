@@ -207,6 +207,7 @@ export interface CoachAvailabilityEntry {
   coachUserId: string
   coachUser: SafeUser
   isAvailable: boolean
+  conflicts?: Array<{ eventName?: string; startTime?: string; endTime?: string }>
 }
 
 /**
@@ -241,6 +242,7 @@ export interface EventScheduleSlot {
   sessionLog?: SessionLog | null
   recurrenceGroup?: {
     id: string
+    frequency: string
     isContinuous: boolean
     isActive: boolean
   } | null

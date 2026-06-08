@@ -88,6 +88,12 @@ const handlers = [
             endTime: new Date(Date.now() + 3 * 3600000).toISOString(),
             coachId: 'coach-1',
             recurrenceGroupId: 'series-1',
+            recurrenceGroup: {
+              id: 'series-1',
+              frequency: 'WEEKLY',
+              isContinuous: false,
+              isActive: true,
+            },
           },
         ],
       },

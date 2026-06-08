@@ -1,6 +1,7 @@
 import { useFormContext, Controller } from 'react-hook-form'
 import Alert from '@mui/material/Alert'
 import MenuItem from '@mui/material/MenuItem'
+import Avatar from '@mui/material/Avatar'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -8,17 +9,66 @@ import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
 import { Switch } from '@/components/shared/form/Switch'
+import { Autocomplete } from '@/components/shared/form/Autocomplete'
 import type { EventFormValues } from './eventFormSchema'
 import {
   getAllowedAssignmentStrategies,
   getDefaultEventAssignmentStrategy,
 } from './eventCapabilityRules'
-import type { Event, InteractionTypeCaps, TeamMember } from '@/types'
+import type { Event, InteractionTypeCaps, SafeUser, TeamMember } from '@/types'
 
 interface EventScheduleFieldsProps {
   caps?: InteractionTypeCaps | null
   event?: Event
   teamMembers?: TeamMember[]
+}
+
+function HostOptionLabel({ user, isCompact = false }: { user: SafeUser; isCompact?: boolean }) {
+  return (
+    <Stack direction="row" spacing={isCompact ? 1 : 1.5} alignItems="center">
+      <Avatar
+        src={user.avatarUrl ?? undefined}
+        sx={{
+          width: isCompact ? 24 : 28,
+          height: isCompact ? 24 : 28,
+          fontSize: isCompact ? '0.7rem' : '0.8rem',
+          bgcolor: 'primary.light',
+          color: 'primary.dark',
+        }}
+      >
+        {user.firstName?.[0] ?? '?'}
+        {user.lastName?.[0] ?? ''}
+      </Avatar>
+
+      <Box sx={{ minWidth: 0, textAlign: 'left' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: isCompact ? 500 : 600,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {user.firstName} {user.lastName}
+        </Typography>
+        {!isCompact && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: 'block',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {user.email}
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+  )
 }
 
 /**
@@ -42,16 +92,10 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
   const leadershipStrategy = watch('sessionLeadershipStrategy')
   const minCoachCount = watch('minCoachCount')
   const eventCoaches = event?.coaches ?? []
-  const leadSelectionOptions =
+  const leadSelectionOptions: SafeUser[] =
     eventCoaches.length > 0
-      ? eventCoaches.map((coach) => ({
-          value: coach.coachUserId,
-          label: `${coach.coachUser.firstName} ${coach.coachUser.lastName}`,
-        }))
-      : (teamMembers ?? []).map((member) => ({
-          value: member.userId,
-          label: `${member.user.firstName} ${member.user.lastName}`,
-        }))
+      ? eventCoaches.map((coach) => coach.coachUser)
+      : (teamMembers ?? []).map((member) => member.user)
 
   return (
     <Stack spacing={2}>
@@ -211,22 +255,48 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
             error={errors.fixedLeadCoachId?.message}
             info="This coach will be the default host for all sessions unless overridden per-slot."
           >
-            <Select
-              id="fixedLeadCoachId"
-              value={watch('fixedLeadCoachId') || ''}
-              hasError={!!errors.fixedLeadCoachId}
-              inputProps={{ 'aria-label': 'Default Event Host' }}
-              {...register('fixedLeadCoachId')}
-            >
-              <MenuItem value="">
-                <em>No default host</em>
-              </MenuItem>
-              {leadSelectionOptions.map((option, index) => (
-                <MenuItem key={`${option.value}-${index}`} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
+            <Controller
+              name="fixedLeadCoachId"
+              control={control}
+              render={({ field }) => {
+                const selectedCoach = leadSelectionOptions.find((c) => c.id === field.value)
+
+                return (
+                  <Autocomplete<SafeUser, false, false, false>
+                    id="fixedLeadCoachId"
+                    options={leadSelectionOptions}
+                    value={selectedCoach ?? null}
+                    onChange={(_event, newValue) => {
+                      field.onChange(newValue ? newValue.id : null)
+                    }}
+                    getOptionLabel={(option) => `${option.firstName} ${option.lastName}`}
+                    isOptionEqualToValue={(option, val) => option.id === val.id}
+                    placeholder="Search and select default host…"
+                    error={!!errors.fixedLeadCoachId}
+                    renderOption={(props, option) => {
+                      const { key, ...otherProps } = props as any
+                      return (
+                        <Box component="li" key={key} {...otherProps} sx={{ py: 0.75, px: 1.5 }}>
+                          <HostOptionLabel user={option} />
+                        </Box>
+                      )
+                    }}
+                    slotProps={{
+                      popper: {
+                        modifiers: [
+                          {
+                            name: 'offset',
+                            options: {
+                              offset: [0, 6],
+                            },
+                          },
+                        ],
+                      },
+                    }}
+                  />
+                )
+              }}
+            />
             {leadSelectionOptions.length === 0 && (
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 Add coaches to this event first, or assign a team member here to auto-add them.
@@ -278,21 +348,48 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
               info="Select the coach who will always lead sessions for this event."
               required
             >
-              <Select
-                id="fixedLeadCoachId"
-                value={watch('fixedLeadCoachId') || ''}
-                hasError={!!errors.fixedLeadCoachId}
-                {...register('fixedLeadCoachId')}
-              >
-                <MenuItem value="">
-                  <em>Select a lead coach</em>
-                </MenuItem>
-                {leadSelectionOptions.map((option, index) => (
-                  <MenuItem key={`${option.value}-${index}`} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
+              <Controller
+                name="fixedLeadCoachId"
+                control={control}
+                render={({ field }) => {
+                  const selectedCoach = leadSelectionOptions.find((c) => c.id === field.value)
+
+                  return (
+                    <Autocomplete<SafeUser, false, false, false>
+                      id="fixedLeadCoachId"
+                      options={leadSelectionOptions}
+                      value={selectedCoach ?? null}
+                      onChange={(_event, newValue) => {
+                        field.onChange(newValue ? newValue.id : null)
+                      }}
+                      getOptionLabel={(option) => `${option.firstName} ${option.lastName}`}
+                      isOptionEqualToValue={(option, val) => option.id === val.id}
+                      placeholder="Search and select lead coach…"
+                      error={!!errors.fixedLeadCoachId}
+                      renderOption={(props, option) => {
+                        const { key, ...otherProps } = props as any
+                        return (
+                          <Box component="li" key={key} {...otherProps} sx={{ py: 0.75, px: 1.5 }}>
+                            <HostOptionLabel user={option} />
+                          </Box>
+                        )
+                      }}
+                      slotProps={{
+                        popper: {
+                          modifiers: [
+                            {
+                              name: 'offset',
+                              options: {
+                                offset: [0, 6],
+                              },
+                            },
+                          ],
+                        },
+                      }}
+                    />
+                  )
+                }}
+              />
               {eventCoaches.length === 0 && !event && (
                 <Typography
                   variant="caption"

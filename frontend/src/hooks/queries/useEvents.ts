@@ -5,6 +5,7 @@ import type {
   UpdateEventDto,
   SetEventCoachesDto,
   UpsertSessionLogDto,
+  EventScheduleSlot,
 } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
@@ -52,7 +53,7 @@ export function useSlotBookings(eventId: string, slotId: string) {
 export function useCreateEventScheduleSlot(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: any) => eventsApi.createScheduleSlot(eventId, data),
+    mutationFn: (data: Partial<EventScheduleSlot>) => eventsApi.createScheduleSlot(eventId, data),
     onSuccess: () =>
       invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
   })
@@ -61,7 +62,7 @@ export function useCreateEventScheduleSlot(eventId: string) {
 export function useUpdateEventScheduleSlot(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ slotId, data }: { slotId: string; data: any }) =>
+    mutationFn: ({ slotId, data }: { slotId: string; data: Partial<EventScheduleSlot> }) =>
       eventsApi.updateScheduleSlot(eventId, slotId, data),
     onSuccess: () =>
       invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
@@ -81,10 +82,8 @@ export function useCancelEventScheduleSlot(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (slotId: string) => eventsApi.cancelScheduleSlot(eventId, slotId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: eventKeys.all })
-      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
-    },
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.all, eventKeys.scheduleSlots(eventId)]),
   })
 }
 
@@ -92,10 +91,8 @@ export function useStopRecurrenceGroup(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (groupId: string) => eventsApi.stopRecurrenceGroup(eventId, groupId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: eventKeys.all })
-      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
-    },
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.all, eventKeys.scheduleSlots(eventId)]),
   })
 }
 
@@ -103,10 +100,8 @@ export function useResumeRecurrenceGroup(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (groupId: string) => eventsApi.resumeRecurrenceGroup(eventId, groupId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: eventKeys.all })
-      qc.invalidateQueries({ queryKey: eventKeys.scheduleSlots(eventId) })
-    },
+    onSuccess: () =>
+      invalidateQueryKeys(qc, [eventKeys.all, eventKeys.scheduleSlots(eventId)]),
   })
 }
 
