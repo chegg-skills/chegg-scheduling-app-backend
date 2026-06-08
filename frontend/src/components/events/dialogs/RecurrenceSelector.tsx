@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
 import { Select } from '@/components/shared/form/Select'
 import { Input } from '@/components/shared/form/Input'
+import { Switch } from '@/components/shared/form/Switch'
 import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
 
 export type RecurrenceFrequency =
@@ -143,24 +144,12 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
 
   return (
     <Stack spacing={2} sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-      <Stack direction="row" alignItems="center" spacing={1}>
-        <input
-          type="checkbox"
-          id="enable-recurrence"
-          checked={isEnabled}
-          onChange={(e) => handleToggle(e.target.checked)}
-          disabled={disabled}
-          style={{ width: 18, height: 18, cursor: 'pointer' }}
-        />
-        <Typography
-          component="label"
-          htmlFor="enable-recurrence"
-          variant="subtitle2"
-          sx={{ cursor: 'pointer', fontWeight: 600 }}
-        >
-          Repeat this session
-        </Typography>
-      </Stack>
+      <Switch
+        label="Repeat this session"
+        checked={isEnabled}
+        onChange={handleToggle}
+        disabled={disabled}
+      />
 
       {isEnabled && (
         <>
@@ -200,23 +189,13 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
             </Box>
           </Stack>
 
-          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
-            <input
-              type="checkbox"
-              id="indefinite-recurrence"
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
+            <Switch
+              label="Repeat indefinitely (continuous series)"
               checked={!!value.isContinuous}
-              onChange={(e) => handleIndefiniteToggle(e.target.checked)}
+              onChange={handleIndefiniteToggle}
               disabled={disabled}
-              style={{ width: 16, height: 16, cursor: 'pointer' }}
             />
-            <Typography
-              component="label"
-              htmlFor="indefinite-recurrence"
-              variant="body2"
-              sx={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              Repeat indefinitely (continuous series)
-            </Typography>
             <InfoTooltip title="Continuous series automatically pre-generate slots up to 90 days in advance. As time passes, new slots are dynamically added to maintain the rolling window indefinitely until manually stopped." />
           </Stack>
 

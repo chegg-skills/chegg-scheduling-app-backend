@@ -9,7 +9,6 @@ import Tab from '@mui/material/Tab'
 import { ChevronRight } from 'lucide-react'
 import EventRepeatIcon from '@mui/icons-material/EventRepeat'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
-import { format } from 'date-fns'
 import type { Event, EventScheduleSlot } from '@/types'
 import { ScheduleSlotList } from './ScheduleSlotList'
 import { Button } from '@/components/shared/ui/Button'
@@ -130,8 +129,8 @@ export function ScheduleSeriesTrackerView({
               {group.isRecurring ? 'Weekly Recurring Series' : 'Individual Session Detail'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {format(new Date(group.startTime), 'EEEE')}s at{' '}
-              {format(new Date(group.startTime), 'h:mm a')} •{' '}
+              {new Intl.DateTimeFormat('en-US', { timeZone: event.timezone, weekday: 'long' }).format(new Date(group.startTime))}s at{' '}
+              {new Intl.DateTimeFormat('en-US', { timeZone: event.timezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(group.startTime))} •{' '}
               {group.isContinuous
                 ? group.isStopped
                   ? 'Stopped (Continuous)'

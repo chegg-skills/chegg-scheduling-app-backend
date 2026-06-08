@@ -25,6 +25,7 @@ export function useScheduleSeriesGroups(
           isRecurring: !!slot.recurrenceGroupId,
           occurrenceCount: 0,
           slots: [],
+          frequency: slot.recurrenceGroup?.frequency ?? null,
           isContinuous: slot.recurrenceGroup?.isContinuous ?? false,
           isStopped: slot.recurrenceGroup ? !slot.recurrenceGroup.isActive : false,
         }

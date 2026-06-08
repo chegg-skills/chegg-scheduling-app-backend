@@ -50,6 +50,7 @@ type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
     recurrenceGroup: {
       select: {
         id: true;
+        frequency: true;
         isContinuous: true;
         isActive: true;
       };
@@ -240,6 +241,7 @@ const listEventScheduleSlots = async (
       recurrenceGroup: {
         select: {
           id: true,
+          frequency: true,
           isContinuous: true,
           isActive: true,
         },

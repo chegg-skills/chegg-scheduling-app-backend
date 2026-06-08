@@ -1,14 +1,8 @@
-import { useFormContext, Controller } from 'react-hook-form'
-import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
-import Tooltip from '@mui/material/Tooltip'
-import Typography from '@mui/material/Typography'
-import { FormField } from '@/components/shared/form/FormField'
-import { Input } from '@/components/shared/form/Input'
-import { Select } from '@/components/shared/form/Select'
-import { Switch } from '@/components/shared/form/Switch'
-import type { EventFormValues } from './eventFormSchema'
 import type { InteractionTypeCaps } from '@/types'
+import { BookingModeField } from './BookingModeField'
+import { BookingWindowFields } from './BookingWindowFields'
+import { DeferCoachRevealField } from './DeferCoachRevealField'
 import { ParticipantCapacityFields } from './ParticipantCapacityFields'
 import { EventAvailabilityPicker } from './EventAvailabilityPicker'
 
@@ -18,157 +12,18 @@ interface EventSchedulingPolicyFieldsProps {
 }
 
 /**
- * Handles booking mode, weekdays, notice, buffer, and capacity fields.
- * Consumes the EventForm context.
+ * Handles booking mode, weekdays, notice, buffer, capacity, and coach-reveal fields.
+ * Consumes the EventForm context — all sub-components read from it directly.
  */
 export function EventSchedulingPolicyFields({ caps, isLocked }: EventSchedulingPolicyFieldsProps) {
-  const {
-    register,
-    watch,
-    control,
-    formState: { errors },
-  } = useFormContext<EventFormValues>()
-  const bookingMode = watch('bookingMode')
-
-  const isGroupSession = !!caps?.multipleParticipants
-
   return (
     <Stack spacing={3}>
-      {isGroupSession ? (
-        <FormField
-          label="Booking mode"
-          htmlFor="bookingModeLocked"
-          info="Group sessions require students to book into pre-created slots so everyone joins the same coached session."
-        >
-          <Input id="bookingModeLocked" value="Fixed — predefined session slots only" disabled />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Flexible availability is not supported for group sessions — all participants must book
-            into the same slot.
-          </Typography>
-        </FormField>
-      ) : (
-        <FormField
-          label="Booking mode"
-          htmlFor="bookingMode"
-          error={errors.bookingMode?.message}
-          info="Flexible: users can book any time based on coach availability. Fixed Slots: users can only book predefined sessions."
-        >
-          <Select
-            id="bookingMode"
-            value={bookingMode || 'COACH_AVAILABILITY'}
-            {...register('bookingMode')}
-          >
-            <MenuItem value="COACH_AVAILABILITY">Flexible — based on coach availability</MenuItem>
-            <MenuItem value="FIXED_SLOTS">Fixed — predefined session slots only</MenuItem>
-          </Select>
-        </FormField>
-      )}
-
+      <BookingModeField caps={caps} />
       <EventAvailabilityPicker />
-
-      <FormField
-        label="Minimum Notice (hours)"
-        htmlFor="minimumNoticeMinutes"
-        error={errors.minimumNoticeMinutes?.message}
-        info="How much time in advance must a booking be made? (e.g., 3 for 3 hours)."
-      >
-        <Input
-          id="minimumNoticeMinutes"
-          type="number"
-          min="0"
-          step="0.5"
-          {...register('minimumNoticeMinutes', { valueAsNumber: true })}
-        />
-      </FormField>
-
-      <FormField
-        label="Buffer After Session (minutes)"
-        htmlFor="bufferAfterMinutes"
-        error={errors.bufferAfterMinutes?.message}
-        info="Mandatory cooldown period added after each session (e.g., 15 for a 15-minute break)."
-      >
-        <Input
-          id="bufferAfterMinutes"
-          type="number"
-          min="0"
-          {...register('bufferAfterMinutes', { valueAsNumber: true })}
-        />
-      </FormField>
-
-      <FormField
-        label="Maximum Booking Window (days)"
-        htmlFor="maxBookingWindowDays"
-        error={errors.maxBookingWindowDays?.message}
-        info="Limit how far in advance a student can book this session. Leave empty for no limit."
-      >
-        <Input
-          id="maxBookingWindowDays"
-          type="number"
-          min="1"
-          max="365"
-          placeholder="e.g. 30"
-          {...register('maxBookingWindowDays', {
-            valueAsNumber: true,
-            setValueAs: (v: string) => (v === '' ? null : Number(v)),
-          })}
-        />
-      </FormField>
-
-      <FormField
-        label="Recurrence Visibility Limit"
-        htmlFor="recurrenceVisibilityLimit"
-        error={errors.recurrenceVisibilityLimit?.message}
-        info="Limit how many upcoming slots in a recurring series are shown on the public booking page. Leave empty to show all."
-      >
-        <Input
-          id="recurrenceVisibilityLimit"
-          type="number"
-          min="1"
-          placeholder="e.g. 2"
-          {...register('recurrenceVisibilityLimit', {
-            valueAsNumber: true,
-            setValueAs: (v: string) => (v === '' ? null : Number(v)),
-          })}
-        />
-      </FormField>
-
+      <BookingWindowFields />
       {caps?.multipleParticipants && <ParticipantCapacityFields />}
-
       {caps?.multipleParticipants && !caps?.multipleCoaches && (
-        <Stack spacing={0.5}>
-          <Tooltip
-            title={
-              isLocked
-                ? 'Cannot be changed after students have booked sessions for this event.'
-                : ''
-            }
-            placement="top"
-          >
-            <span>
-              <Controller
-                name="deferCoachReveal"
-                control={control}
-                render={({ field }) => (
-                  <Switch
-                    label="Defer coach reveal"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    disabled={isLocked}
-                  />
-                )}
-              />
-            </span>
-          </Tooltip>
-          <Typography
-            variant="caption"
-            color={isLocked ? 'text.disabled' : 'text.secondary'}
-            sx={{ pl: 0.5 }}
-          >
-            {isLocked
-              ? 'Locked — sessions have been booked under this setting.'
-              : 'Students receive a booking confirmation without the coach name and join URL. Admin sends the reveal manually before the session starts.'}
-          </Typography>
-        </Stack>
+        <DeferCoachRevealField isLocked={isLocked} />
       )}
     </Stack>
   )

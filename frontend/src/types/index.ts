@@ -241,6 +241,7 @@ export interface EventScheduleSlot {
   sessionLog?: SessionLog | null
   recurrenceGroup?: {
     id: string
+    frequency: string
     isContinuous: boolean
     isActive: boolean
   } | null

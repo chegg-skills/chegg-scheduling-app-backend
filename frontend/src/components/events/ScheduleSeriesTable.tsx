@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { format } from 'date-fns'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
@@ -24,12 +23,22 @@ export interface ScheduleSeriesGroup {
   isRecurring: boolean
   occurrenceCount: number
   slots: EventScheduleSlot[]
+  frequency: string | null
   isContinuous?: boolean
   isStopped?: boolean
 }
 
+const FREQUENCY_LABELS: Record<string, string> = {
+  WEEKLY: 'Weekly',
+  BI_WEEKLY: 'Bi-weekly',
+  MONTHLY: 'Monthly',
+  TWICE_A_MONTH: 'Twice a month',
+  THRICE_A_WEEK: '3× a week',
+}
+
 interface Props {
   groups: ScheduleSeriesGroup[]
+  eventTimezone: string
   onViewTracker: (group: ScheduleSeriesGroup) => void
   onRemoveSeries: (group: ScheduleSeriesGroup) => void
   onStopSeries?: (group: ScheduleSeriesGroup) => void
@@ -39,6 +48,7 @@ interface Props {
 
 export function ScheduleSeriesTable({
   groups,
+  eventTimezone,
   onViewTracker,
   onRemoveSeries,
   onStopSeries,
@@ -96,7 +106,16 @@ export function ScheduleSeriesTable({
         </TableHead>
         <TableBody>
           {paginatedGroups.map((group) => {
-            const timeRange = `${format(new Date(group.startTime), 'h:mm a')} - ${format(new Date(group.endTime), 'h:mm a')}`
+            const fmt = new Intl.DateTimeFormat('en-US', {
+              timeZone: eventTimezone,
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            })
+            const timeRange = `${fmt.format(new Date(group.startTime))} – ${fmt.format(new Date(group.endTime))}`
+            const seriesLabel = group.frequency
+              ? `${FREQUENCY_LABELS[group.frequency] ?? group.frequency} Series`
+              : 'Recurring Series'
 
             return (
               <TableRow
@@ -123,7 +142,7 @@ export function ScheduleSeriesTable({
                     </Box>
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
-                        {group.isRecurring ? 'Recurring Weekly Series' : 'Individual Session'}
+                        {group.isRecurring ? seriesLabel : 'Individual Session'}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {group.isRecurring ? 'Multiple dates' : 'One-time session'}
@@ -134,7 +153,12 @@ export function ScheduleSeriesTable({
                 <TableCell>
                   {group.nextInstanceTime ? (
                     <Typography variant="body2" fontWeight={500}>
-                      {format(new Date(group.nextInstanceTime), 'EEE, MMM d')}
+                      {new Intl.DateTimeFormat('en-US', {
+                        timeZone: eventTimezone,
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      }).format(new Date(group.nextInstanceTime))}
                     </Typography>
                   ) : (
                     <Typography variant="body2" color="text.disabled">
