@@ -16,14 +16,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import ClickAwayListener from '@mui/material/ClickAwayListener'
 import { Input } from '@/components/shared/form/Input'
-import type { SafeUser } from '@/types'
-
-interface CoachAvailabilityEntry {
-  coachUserId: string
-  coachUser: SafeUser
-  isAvailable: boolean
-  conflicts: any[]
-}
+import type { CoachAvailabilityEntry } from '@/types'
 
 interface SearchableCoachAvailabilityListProps {
   id?: string
@@ -208,7 +201,7 @@ export function SearchableCoachAvailabilityList({
                           sx={{ minWidth: 0, flexGrow: 1 }}
                         >
                           <Avatar
-                            src={c.coachUser.avatarUrl}
+                            src={c.coachUser.avatarUrl ?? undefined}
                             sx={{ width: 32, height: 32, fontSize: '0.875rem' }}
                           >
                             {c.coachUser.firstName[0]}
@@ -249,16 +242,21 @@ export function SearchableCoachAvailabilityList({
                             >
                               {c.coachUser.email}
                             </Typography>
-                            {!c.isAvailable && (c.conflicts?.length ?? 0) > 0 && (
-                              <Typography
-                                variant="caption"
-                                color="error.main"
-                                sx={{ display: 'block', fontWeight: 500, mt: 0.5 }}
-                              >
-                                Conflict: {c.conflicts[0]?.eventName} (
-                                {format(new Date(c.conflicts[0]?.startTime), 'h:mm a')})
-                              </Typography>
-                            )}
+                            {!c.isAvailable && (c.conflicts?.length ?? 0) > 0 && (() => {
+                              const first = c.conflicts![0]
+                              return (
+                                <Typography
+                                  variant="caption"
+                                  color="error.main"
+                                  sx={{ display: 'block', fontWeight: 500, mt: 0.5 }}
+                                >
+                                  Conflict: {first?.eventName}
+                                  {first?.startTime
+                                    ? ` (${format(new Date(first.startTime), 'h:mm a')})`
+                                    : ''}
+                                </Typography>
+                              )
+                            })()}
                           </Box>
                         </Stack>
 

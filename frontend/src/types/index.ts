@@ -207,6 +207,7 @@ export interface CoachAvailabilityEntry {
   coachUserId: string
   coachUser: SafeUser
   isAvailable: boolean
+  conflicts?: Array<{ eventName?: string; startTime?: string; endTime?: string }>
 }
 
 /**
