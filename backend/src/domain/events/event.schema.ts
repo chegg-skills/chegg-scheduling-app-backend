@@ -352,3 +352,30 @@ export const RevealCoachSchema = {
     sessionJoinUrl: z.string().url("Invalid URL").optional().nullable(),
   }),
 };
+
+const eventCoachAvailabilityParams = z.object({
+  eventId: z.uuid("Invalid event ID"),
+  coachUserId: z.uuid("Invalid coach user ID"),
+});
+
+export const GetEventCoachAvailabilitySchema = {
+  params: eventCoachAvailabilityParams,
+};
+
+export const SetEventCoachAvailabilitySchema = {
+  params: eventCoachAvailabilityParams,
+  body: z
+    .array(
+      z
+        .object({
+          dayOfWeek: z.number().int().min(0).max(6),
+          startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Time must be HH:mm"),
+          endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Time must be HH:mm"),
+        })
+        .refine((s) => s.startTime < s.endTime, {
+          message: "startTime must be before endTime",
+          path: ["endTime"],
+        }),
+    )
+    .min(0),
+};

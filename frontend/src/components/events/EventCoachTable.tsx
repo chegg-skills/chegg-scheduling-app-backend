@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -10,13 +11,14 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Avatar from '@mui/material/Avatar'
 import Typography from '@mui/material/Typography'
-import { Trash2 } from 'lucide-react'
+import { Calendar, Trash2 } from 'lucide-react'
 import type { EventCoach, UserWeeklyAvailability } from '@/types'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TablePagination } from '@/components/shared/table/TablePagination'
 import { useAuth } from '@/context/auth'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
+import { EventCoachAvailabilityDialog } from './dialogs/EventCoachAvailabilityDialog'
 
 const SHORT_WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -77,6 +79,7 @@ function formatCoachAvailability(weeklyAvailability: UserWeeklyAvailability[] | 
 }
 
 interface EventCoachTableProps {
+  eventId: string
   coaches: EventCoach[]
   onRemove: (coachUserId: string, name: string) => void
   onViewUser?: (userId: string) => void
@@ -84,6 +87,7 @@ interface EventCoachTableProps {
 }
 
 export function EventCoachTable({
+  eventId,
   coaches,
   onRemove,
   onViewUser,
@@ -91,6 +95,7 @@ export function EventCoachTable({
 }: EventCoachTableProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [availabilityDialogCoach, setAvailabilityDialogCoach] = useState<EventCoach | null>(null)
   const { user: currentUser } = useAuth()
   const { data: timezones = [] } = useTimezones()
   const isCoach = currentUser?.role === 'COACH'
@@ -98,6 +103,7 @@ export function EventCoachTable({
   const paginatedCoaches = coaches.slice((page - 1) * pageSize, page * pageSize)
 
   return (
+    <>
     <TableContainer component={Paper} variant="outlined">
       <Table>
         <TableHead>
@@ -174,12 +180,25 @@ export function EventCoachTable({
                     {formatTimezoneLabel(coach.coachUser.timezone, timezones) || '—'}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.8125rem' }}>
-                    <Stack spacing={0.25}>
-                      {formatCoachAvailability(coach.coachUser.weeklyAvailability).map((line, idx) => (
+                    <Stack spacing={0.5}>
+                      {coach.weeklyAvailabilityOverride.length > 0 && (
+                        <Chip
+                          label="Custom schedule"
+                          color="primary"
+                          size="small"
+                          variant="outlined"
+                          sx={{ alignSelf: 'flex-start', fontSize: '0.7rem' }}
+                        />
+                      )}
+                      {formatCoachAvailability(
+                        coach.weeklyAvailabilityOverride.length > 0
+                          ? (coach.weeklyAvailabilityOverride as unknown as UserWeeklyAvailability[])
+                          : coach.coachUser.weeklyAvailability
+                      ).map((line, idx) => (
                         <Typography
                           key={idx}
                           variant="caption"
-                          color={line === 'No availability defined' ? 'text.secondary' : 'text.secondary'}
+                          color="text.secondary"
                           sx={{
                             display: 'block',
                             fontSize: '0.75rem',
@@ -198,6 +217,11 @@ export function EventCoachTable({
                     <TableCell align="right">
                       <RowActions
                         actions={[
+                          {
+                            label: 'Edit Schedule',
+                            icon: <Calendar size={16} />,
+                            onClick: () => setAvailabilityDialogCoach(coach),
+                          },
                           {
                             label: 'Remove',
                             icon: <Trash2 size={16} />,
@@ -242,5 +266,13 @@ export function EventCoachTable({
         }}
       />
     </TableContainer>
+
+    <EventCoachAvailabilityDialog
+      isOpen={availabilityDialogCoach !== null}
+      onClose={() => setAvailabilityDialogCoach(null)}
+      eventId={eventId}
+      coach={availabilityDialogCoach}
+    />
+    </>
   )
 }

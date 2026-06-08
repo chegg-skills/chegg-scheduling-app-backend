@@ -6,6 +6,7 @@ import type {
   SetEventCoachesDto,
   UpsertSessionLogDto,
   EventScheduleSlot,
+  WeeklyAvailabilitySlot,
 } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
@@ -24,6 +25,8 @@ export const eventKeys = {
     [...eventKeys.scheduleSlots(eventId), 'log', slotId] as const,
   slotCoachAvailability: (eventId: string, slotId: string) =>
     [...eventKeys.scheduleSlots(eventId), 'coach-availability', slotId] as const,
+  coachAvailability: (eventId: string, coachUserId: string) =>
+    [...eventKeys.coaches(eventId), 'availability', coachUserId] as const,
 }
 
 export function useEvents(params?: ListEventsParams) {
@@ -229,5 +232,31 @@ export function useCoachAvailabilityForSlot(eventId: string, slotId: string, ena
       eventsApi.getCoachAvailabilityForSlot(eventId, slotId, signal).then((r) => r.data.data),
     enabled: enabled && !!eventId && !!slotId,
     staleTime: 30_000,
+  })
+}
+
+export function useEventCoachAvailability(
+  eventId: string,
+  coachUserId: string,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: eventKeys.coachAvailability(eventId, coachUserId),
+    queryFn: ({ signal }) =>
+      eventsApi.getCoachAvailability(eventId, coachUserId, signal).then((r) => r.data.data ?? []),
+    enabled: enabled && !!eventId && !!coachUserId,
+    staleTime: 30_000,
+  })
+}
+
+export function useSetEventCoachAvailability(eventId: string, coachUserId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (slots: WeeklyAvailabilitySlot[]) =>
+      eventsApi.setCoachAvailability(eventId, coachUserId, slots),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.coachAvailability(eventId, coachUserId) })
+      qc.invalidateQueries({ queryKey: eventKeys.coaches(eventId) })
+    },
   })
 }

@@ -30,6 +30,7 @@ import {
   addAvailabilityException,
   removeAvailabilityException,
   getEffectiveAvailabilityData as getEffectiveAvailability,
+  getEventCoachWeeklyAvailability,
 } from "./availabilityCalendar.service";
 import { getCoachConflicts } from "./availabilityConflict.service";
 import { logger } from "../../shared/logging/logger";
@@ -209,7 +210,20 @@ const isCoachAvailable = async (
     return false;
   }
 
-  // 3. Exception Decision (Overrides)
+  // 3. Resolve effective weekly schedule: event-specific override takes priority over global.
+  // Exceptions (vacations/holidays) always apply regardless of which weekly source is used.
+  let effectiveCalendar = calendar;
+  if (!options.ignoreWeeklySchedule && options.eventId) {
+    const overrideSlots = await getEventCoachWeeklyAvailability(options.eventId, userId);
+    if (overrideSlots.length > 0) {
+      effectiveCalendar = {
+        ...calendar,
+        weekly: overrideSlots as unknown as UserWeeklyAvailability[],
+      };
+    }
+  }
+
+  // 4. Exception Decision (Overrides)
   let startLocal: LocalAvailabilityInfo;
   let endLocal: LocalAvailabilityInfo;
   try {
@@ -222,22 +236,22 @@ const isCoachAvailable = async (
 
   if (startLocal.dateString !== endLocal.dateString) {
     if (options.ignoreWeeklySchedule) return true;
-    return isCoachAvailableAcrossMidnight(startTime, effectiveEndTime, calendar, user.timezone);
+    return isCoachAvailableAcrossMidnight(startTime, effectiveEndTime, effectiveCalendar, user.timezone);
   }
 
-  const dayException = findAvailabilityException(calendar.exceptions, startLocal.dateString);
+  const dayException = findAvailabilityException(effectiveCalendar.exceptions, startLocal.dateString);
   const exceptionDecision = resolveAvailabilityFromException(dayException, startLocal, endLocal);
 
   if (exceptionDecision !== null) {
     return exceptionDecision;
   }
 
-  // 4. Weekly Schedule Fallback
+  // 5. Weekly Schedule Fallback
   if (options.ignoreWeeklySchedule) {
     return true;
   }
 
-  return isWithinWeeklyAvailability(calendar.weekly, startLocal, endLocal);
+  return isWithinWeeklyAvailability(effectiveCalendar.weekly, startLocal, endLocal);
 };
 
 export type AvailableSlot = {

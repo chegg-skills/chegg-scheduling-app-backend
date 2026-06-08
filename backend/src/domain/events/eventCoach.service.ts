@@ -11,6 +11,10 @@ import {
 import { eventInclude, getManagedEvent, type SafeEvent } from "./event.shared";
 import { queueEventCoachAddedNotification } from "./eventCoach.notification";
 import { ReplaceEventCoachesSchema } from "./event.schema";
+import {
+  getEventCoachWeeklyAvailability,
+  setEventCoachWeeklyAvailability,
+} from "../availability/availabilityCalendar.service";
 
 type EventConfigValidationInput = {
   interactionType: InteractionType;
@@ -321,10 +325,56 @@ const removeEventCoach = async (
   return { coaches: refreshedEvent.coaches };
 };
 
+/**
+ * Returns the event-specific weekly availability override for a coach.
+ * Empty array means the coach's global profile schedule applies for this event.
+ * Requires SUPER_ADMIN or TEAM_ADMIN (enforced by the underlying service).
+ */
+const getEventCoachAvailability = async (
+  eventId: string,
+  coachUserId: string,
+  caller: CallerContext,
+) => {
+  await getManagedEvent(eventId, caller);
+  return getEventCoachWeeklyAvailability(eventId, coachUserId);
+};
+
+/**
+ * Atomically replaces the event-specific weekly availability for a coach.
+ * Passing an empty array clears the override (global schedule resumes).
+ * Validates that the coach is an active member of this event's pool before saving.
+ *
+ * @throws {ErrorHandler} 404 — coach is not an active member of this event.
+ */
+const setEventCoachAvailability = async (
+  eventId: string,
+  coachUserId: string,
+  slots: { dayOfWeek: number; startTime: string; endTime: string }[],
+  caller: CallerContext,
+) => {
+  await getManagedEvent(eventId, caller);
+
+  const membership = await prisma.eventCoach.findUnique({
+    where: { eventId_coachUserId: { eventId, coachUserId } },
+    select: { isActive: true },
+  });
+
+  if (!membership?.isActive) {
+    throw new ErrorHandler(
+      StatusCodes.NOT_FOUND,
+      "Coach is not an active member of this event's pool.",
+    );
+  }
+
+  return setEventCoachWeeklyAvailability(eventId, coachUserId, slots, caller);
+};
+
 export {
   validateEventConfiguration,
   listEventCoaches,
   replaceEventCoaches,
   removeEventCoach,
   syncRoutingState,
+  getEventCoachAvailability,
+  setEventCoachAvailability,
 };

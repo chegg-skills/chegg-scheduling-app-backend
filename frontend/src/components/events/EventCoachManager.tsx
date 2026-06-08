@@ -129,6 +129,7 @@ export function EventCoachManager({
       )}
 
       <EventCoachTable
+        eventId={eventId}
         coaches={activeCoaches}
         onRemove={handleRemove}
         onViewUser={onViewUser}
