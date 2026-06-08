@@ -113,6 +113,7 @@ export interface TeamNotificationConfig {
   coachNotifyOnNoShow: boolean
   notifyLeadOnAvailability: boolean
   sendFeedbackLink: boolean
+  feedbackFormLink: string | null
   createdAt?: string
   updatedAt?: string
 }

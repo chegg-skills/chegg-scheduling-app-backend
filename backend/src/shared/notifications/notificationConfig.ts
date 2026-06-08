@@ -10,6 +10,7 @@ export type ResolvedNotificationConfig = {
   coachNotifyOnNoShow: boolean;
   notifyLeadOnAvailability: boolean;
   sendFeedbackLink: boolean;
+  feedbackFormLink: string | null;
 };
 
 export const DEFAULT_NOTIFICATION_CONFIG: ResolvedNotificationConfig = {
@@ -22,6 +23,7 @@ export const DEFAULT_NOTIFICATION_CONFIG: ResolvedNotificationConfig = {
   coachNotifyOnNoShow: true,
   notifyLeadOnAvailability: true,
   sendFeedbackLink: false,
+  feedbackFormLink: null,
 };
 
 /**
@@ -43,6 +45,7 @@ export async function getTeamNotificationConfig(
       coachNotifyOnNoShow: true,
       notifyLeadOnAvailability: true,
       sendFeedbackLink: true,
+      feedbackFormLink: true,
     },
   });
 
@@ -60,5 +63,6 @@ export async function getTeamNotificationConfig(
     coachNotifyOnNoShow: row.coachNotifyOnNoShow,
     notifyLeadOnAvailability: row.notifyLeadOnAvailability,
     sendFeedbackLink: row.sendFeedbackLink,
+    feedbackFormLink: row.feedbackFormLink,
   };
 }

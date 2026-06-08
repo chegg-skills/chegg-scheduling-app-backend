@@ -409,6 +409,7 @@ model TeamNotificationConfig {
   coachNotifyOnNoShow       Boolean  @default(true)
   notifyLeadOnAvailability  Boolean  @default(true)
   sendFeedbackLink          Boolean  @default(false)
+  feedbackFormLink          String?
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 }

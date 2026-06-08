@@ -15,6 +15,7 @@ import {
   useTeamNotificationConfig,
   useUpsertTeamNotificationConfig,
 } from '@/hooks/queries/useTeams'
+import { Input } from '@/components/shared/form/Input'
 
 interface TeamNotificationsTabProps {
   teamId: string
@@ -37,6 +38,8 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
 
   const [notifyLeadOnAvailability, setNotifyLeadOnAvailability] = useState(true)
   const [sendFeedbackLink, setSendFeedbackLink] = useState(false)
+  const [customFeedbackFormLink, setCustomFeedbackFormLink] = useState('')
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   const [showSuccess, setShowSuccess] = useState(false)
 
@@ -51,6 +54,8 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
       setCoachNotifyOnNoShow(config.coachNotifyOnNoShow)
       setNotifyLeadOnAvailability(config.notifyLeadOnAvailability)
       setSendFeedbackLink(config.sendFeedbackLink ?? false)
+      setCustomFeedbackFormLink(config.feedbackFormLink ?? '')
+      setValidationError(null)
     }
   }, [config])
 
@@ -68,6 +73,13 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
   }
 
   const handleSave = () => {
+    setValidationError(null)
+
+    if (sendFeedbackLink && customFeedbackFormLink.trim() && !/^https?:\/\/.+/.test(customFeedbackFormLink.trim())) {
+      setValidationError('Please enter a valid URL starting with http:// or https://')
+      return
+    }
+
     mutation.mutate(
       {
         reminderOffsets,
@@ -79,6 +91,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
         coachNotifyOnNoShow,
         notifyLeadOnAvailability,
         sendFeedbackLink,
+        feedbackFormLink: customFeedbackFormLink.trim() || null,
       },
       {
         onSuccess: () => {
@@ -99,6 +112,12 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
       {showSuccess && (
         <Alert severity="success" variant="filled">
           Notification settings saved successfully.
+        </Alert>
+      )}
+
+      {mutation.isError && (
+        <Alert severity="error" variant="filled">
+          {(mutation.error as any)?.response?.data?.message || 'Failed to save notification settings.'}
         </Alert>
       )}
 
@@ -325,27 +344,51 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           When enabled, students receive a feedback email after their session is marked as
-          completed. The feedback form link is configured globally in System Settings.
+          completed. You can provide a custom form link for this team or leave it blank to fall back to the global feedback link configured in System Settings.
         </Typography>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={sendFeedbackLink}
-              onChange={(e) => setSendFeedbackLink(e.target.checked)}
-              disabled={!canEdit || mutation.isPending}
-            />
-          }
-          label={
-            <Box>
-              <Typography variant="body2" fontWeight={500}>
-                Send feedback link after completed sessions
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Students receive a feedback email once a session is logged as attended.
-              </Typography>
+        <Stack spacing={2} alignItems="flex-start">
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={sendFeedbackLink}
+                onChange={(e) => {
+                  setSendFeedbackLink(e.target.checked)
+                  if (!e.target.checked) {
+                    setCustomFeedbackFormLink('')
+                    setValidationError(null)
+                  }
+                }}
+                disabled={!canEdit || mutation.isPending}
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" fontWeight={500}>
+                  Send feedback link after completed sessions
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Students receive a feedback email once a session is logged as attended.
+                </Typography>
+              </Box>
+            }
+          />
+          {sendFeedbackLink && (
+            <Box sx={{ pl: 4, width: '100%', maxWidth: 480 }}>
+              <Input
+                label="Custom Feedback Form Link (Optional)"
+                placeholder="https://forms.example.com/custom-feedback"
+                value={customFeedbackFormLink}
+                onChange={(e) => {
+                  setCustomFeedbackFormLink(e.target.value)
+                  setValidationError(null)
+                }}
+                hasError={!!validationError}
+                helperText={validationError || 'Leave blank to use the global fallback link.'}
+                disabled={!canEdit || mutation.isPending}
+              />
             </Box>
-          }
-        />
+          )}
+        </Stack>
       </Box>
 
       {canEdit && (
