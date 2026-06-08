@@ -114,7 +114,7 @@ export function ScheduleSeriesTable({
             })
             const timeRange = `${fmt.format(new Date(group.startTime))} – ${fmt.format(new Date(group.endTime))}`
             const seriesLabel = group.frequency
-              ? `${FREQUENCY_LABELS[group.frequency] ?? group.frequency} Series`
+              ? `Recurring ${FREQUENCY_LABELS[group.frequency] ?? group.frequency} Series`
               : 'Recurring Series'
 
             return (
