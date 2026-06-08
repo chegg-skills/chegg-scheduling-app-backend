@@ -82,8 +82,9 @@ const createBookingRecord = async (
   });
 };
 
-const findBookingById = async (id: string): Promise<SafeBooking> => {
-  const booking = await prisma.booking.findUnique({
+const findBookingById = async (id: string, tx?: Prisma.TransactionClient): Promise<SafeBooking> => {
+  const client = tx || prisma;
+  const booking = await client.booking.findUnique({
     where: { id },
     include: bookingInclude,
   });
@@ -108,8 +109,9 @@ const findBookingDetailById = async (id: string): Promise<DetailedBooking> => {
   return booking;
 };
 
-const findBookingByToken = async (id: string, token: string): Promise<SafeBooking> => {
-  const booking = await prisma.booking.findFirst({
+const findBookingByToken = async (id: string, token: string, tx?: Prisma.TransactionClient): Promise<SafeBooking> => {
+  const client = tx || prisma;
+  const booking = await client.booking.findFirst({
     where: { id, rescheduleToken: token },
     include: bookingInclude,
   });
@@ -157,9 +159,11 @@ const updateBookingById = async (
     rescheduleToken?: string;
     cancellationReason?: string | null;
   },
+  tx?: Prisma.TransactionClient,
 ): Promise<SafeBooking> => {
+  const client = tx || prisma;
   try {
-    return await prisma.booking.update({
+    return await client.booking.update({
       where: { id },
       data,
       include: bookingInclude,
