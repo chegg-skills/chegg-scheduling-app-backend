@@ -234,6 +234,10 @@ const replaceEventCoaches = async (
   await validateEventCoaches(event.teamId, event, normalizedCoaches);
 
   await prisma.$transaction(async (tx) => {
+    const existingOverrides = await tx.eventCoachWeeklyAvailability.findMany({
+      where: { eventId },
+    });
+
     await tx.eventCoach.deleteMany({ where: { eventId } });
 
     if (normalizedCoaches.length > 0) {
@@ -243,6 +247,14 @@ const replaceEventCoaches = async (
           coachUserId: coach.userId,
           coachOrder: coach.coachOrder,
         })),
+      });
+    }
+
+    const retainedCoachIds = new Set(normalizedCoaches.map((c) => c.userId));
+    const overridesToRestore = existingOverrides.filter((o) => retainedCoachIds.has(o.coachUserId));
+    if (overridesToRestore.length > 0) {
+      await tx.eventCoachWeeklyAvailability.createMany({
+        data: overridesToRestore.map(({ id: _id, createdAt: _c, updatedAt: _u, ...rest }) => rest),
       });
     }
 
@@ -295,6 +307,10 @@ const removeEventCoach = async (
   await validateEventCoaches(event.teamId, event, remainingCoaches);
 
   await prisma.$transaction(async (tx) => {
+    const existingOverrides = await tx.eventCoachWeeklyAvailability.findMany({
+      where: { eventId },
+    });
+
     await tx.eventCoach.deleteMany({ where: { eventId } });
 
     if (remainingCoaches.length > 0) {
@@ -304,6 +320,14 @@ const removeEventCoach = async (
           coachUserId: coach.userId,
           coachOrder: coach.coachOrder,
         })),
+      });
+    }
+
+    const retainedCoachIds = new Set(remainingCoaches.map((c) => c.userId));
+    const overridesToRestore = existingOverrides.filter((o) => retainedCoachIds.has(o.coachUserId));
+    if (overridesToRestore.length > 0) {
+      await tx.eventCoachWeeklyAvailability.createMany({
+        data: overridesToRestore.map(({ id: _id, createdAt: _c, updatedAt: _u, ...rest }) => rest),
       });
     }
 
@@ -336,6 +360,19 @@ const getEventCoachAvailability = async (
   caller: CallerContext,
 ) => {
   await getManagedEvent(eventId, caller);
+
+  const membership = await prisma.eventCoach.findUnique({
+    where: { eventId_coachUserId: { eventId, coachUserId } },
+    select: { isActive: true },
+  });
+
+  if (!membership?.isActive) {
+    throw new ErrorHandler(
+      StatusCodes.NOT_FOUND,
+      "Coach is not an active member of this event's pool.",
+    );
+  }
+
   return getEventCoachWeeklyAvailability(eventId, coachUserId);
 };
 

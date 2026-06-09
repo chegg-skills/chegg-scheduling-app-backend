@@ -211,7 +211,7 @@ export interface EventCoach {
   coachUser: SafeUser & {
     weeklyAvailability?: UserWeeklyAvailability[]
   }
-  weeklyAvailabilityOverride: EventCoachWeeklyAvailability[]
+  weeklyAvailabilityOverride?: EventCoachWeeklyAvailability[]
 }
 
 /**

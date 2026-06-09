@@ -33,10 +33,12 @@ export function EventCoachAvailabilityDialog({
   const [slots, setSlots] = useState<SetWeeklyAvailabilityDto>([])
 
   useEffect(() => {
-    if (savedSlots) {
-      setSlots(savedSlots.map(({ dayOfWeek, startTime, endTime }) => ({ dayOfWeek, startTime, endTime })))
-    }
-  }, [savedSlots])
+    setSlots(
+      savedSlots
+        ? savedSlots.map(({ dayOfWeek, startTime, endTime }) => ({ dayOfWeek, startTime, endTime }))
+        : []
+    )
+  }, [savedSlots, coachUserId])
 
   const handleSave = () => {
     saveAvailability(slots, {
@@ -56,19 +58,22 @@ export function EventCoachAvailabilityDialog({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Event Schedule — ${coachName}`}
-      maxWidth="sm"
+      title={`Event Availability — ${coachName}`}
+      size="sm"
     >
       <Stack spacing={3}>
-        <Stack spacing={1}>
+        <Stack spacing={1.5}>
+          <Alert severity="info">
+            This custom availability will override <strong>{coachName}</strong>'s global profile schedule for this event.
+          </Alert>
           <Typography variant="body2" color="text.secondary">
             Set custom availability for <strong>{coachName}</strong> on this event only. When set,
-            these hours replace their global profile schedule for slot generation. Leave all days
-            empty to clear the override and fall back to their global schedule.
+            these hours replace their global profile availability for slot generation. Leave all days
+            empty to clear the override and fall back to their global availability.
           </Typography>
           {hasOverride && (
             <Chip
-              label="Custom schedule active"
+              label="Custom availability active"
               color="primary"
               size="small"
               variant="outlined"
@@ -77,7 +82,7 @@ export function EventCoachAvailabilityDialog({
           )}
           {!hasOverride && !isLoading && (
             <Chip
-              label="Using global schedule"
+              label="Using global availability"
               size="small"
               variant="outlined"
               sx={{ alignSelf: 'flex-start' }}
@@ -95,16 +100,16 @@ export function EventCoachAvailabilityDialog({
 
         <Stack direction="row" justifyContent="space-between" spacing={2}>
           {hasOverride && (
-            <Button variant="outlined" color="error" onClick={handleClear} isLoading={isPending}>
+            <Button variant="danger" onClick={handleClear} isLoading={isPending}>
               Clear override
             </Button>
           )}
           <Stack direction="row" spacing={2} sx={{ ml: 'auto' }}>
-            <Button variant="outlined" onClick={onClose} disabled={isPending}>
+            <Button variant="secondary" onClick={onClose} disabled={isPending}>
               Cancel
             </Button>
             <Button onClick={handleSave} isLoading={isPending}>
-              Save schedule
+              Save availability
             </Button>
           </Stack>
         </Stack>

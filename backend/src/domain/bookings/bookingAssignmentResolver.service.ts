@@ -92,11 +92,19 @@ const assertHostAvailability = async ({
   tx: Prisma.TransactionClient;
   unavailableMessage: string;
 }): Promise<void> => {
+  const weeklyOverride =
+    event.bookingMode !== "FIXED_SLOTS"
+      ? await tx.eventCoachWeeklyAvailability.findMany({
+          where: { eventId: event.id, coachUserId },
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        })
+      : [];
+
   const available = await isCoachAvailable(
     coachUserId,
     start,
     end,
-    buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }),
+    { ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }), weeklyOverride },
   );
 
   if (!available) {
@@ -276,11 +284,19 @@ const resolveCollaborativeCoHosts = async ({
     // Check if we already have enough co-hosts
     if (targetCount !== null && availableCoHosts.length >= targetCount) break;
 
+    const coHostOverride =
+      event.bookingMode !== "FIXED_SLOTS"
+        ? await tx.eventCoachWeeklyAvailability.findMany({
+            where: { eventId: event.id, coachUserId: candidate.coachUserId },
+            select: { dayOfWeek: true, startTime: true, endTime: true },
+          })
+        : [];
+
     const isAvailable = await isCoachAvailable(
       candidate.coachUserId,
       start,
       end,
-      buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }),
+      { ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }), weeklyOverride: coHostOverride },
     );
 
     if (isAvailable) {

@@ -92,7 +92,7 @@ export function AddAvailabilityExceptionDialog({
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleAdd}>
+        <Button onClick={handleAdd}>
           Add Exception
         </Button>
       </DialogActions>
