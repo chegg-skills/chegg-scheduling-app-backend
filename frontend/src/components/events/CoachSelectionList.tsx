@@ -14,12 +14,16 @@ interface CoachSelectionListProps {
   eligibleCoaches: TeamMember[]
   selectedUserIds: string[]
   onToggle: (userId: string) => void
+  activeCoachId?: string | null
+  onSelectCoach?: (userId: string) => void
 }
 
 export function CoachSelectionList({
   eligibleCoaches,
   selectedUserIds,
   onToggle,
+  activeCoachId,
+  onSelectCoach,
 }: CoachSelectionListProps) {
   return (
     <Box
@@ -40,42 +44,61 @@ export function CoachSelectionList({
             />
           </ListItem>
         ) : (
-          eligibleCoaches.map((option) => (
-            <ListItem key={option.userId} disablePadding>
-              <ListItemButton onClick={() => onToggle(option.userId)} dense>
-                <ListItemIcon sx={{ minWidth: 36 }}>
-                  <Checkbox
-                    edge="start"
-                    checked={selectedUserIds.includes(option.userId)}
-                    tabIndex={-1}
-                    disableRipple
-                    icon={<Square size={20} />}
-                    checkedIcon={<CheckSquare size={20} />}
+          eligibleCoaches.map((option) => {
+            const isSelected = selectedUserIds.includes(option.userId)
+            const isActive = activeCoachId === option.userId
+            return (
+              <ListItem key={option.userId} disablePadding>
+                <ListItemButton
+                  onClick={() => {
+                    if (onSelectCoach) {
+                      onSelectCoach(option.userId)
+                    }
+                    if (!isSelected) {
+                      onToggle(option.userId)
+                    }
+                  }}
+                  selected={isActive}
+                  dense
+                >
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Checkbox
+                      edge="start"
+                      checked={isSelected}
+                      tabIndex={-1}
+                      disableRipple
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onToggle(option.userId)
+                      }}
+                      icon={<Square size={20} />}
+                      checkedIcon={<CheckSquare size={20} />}
+                    />
+                  </ListItemIcon>
+                  <ListItemAvatar sx={{ minWidth: 48 }}>
+                    <Avatar
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        fontSize: '0.75rem',
+                        bgcolor: isActive ? 'primary.main' : 'primary.light',
+                        color: isActive ? 'primary.contrastText' : 'primary.dark',
+                      }}
+                    >
+                      {option.user.firstName[0]}
+                      {option.user.lastName[0]}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={`${option.user.firstName} ${option.user.lastName}`}
+                    primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                    secondary={option.user.email}
+                    secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
                   />
-                </ListItemIcon>
-                <ListItemAvatar sx={{ minWidth: 48 }}>
-                  <Avatar
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      fontSize: '0.75rem',
-                      bgcolor: 'primary.light',
-                      color: 'primary.dark',
-                    }}
-                  >
-                    {option.user.firstName[0]}
-                    {option.user.lastName[0]}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={`${option.user.firstName} ${option.user.lastName}`}
-                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                  secondary={option.user.email}
-                  secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))
+                </ListItemButton>
+              </ListItem>
+            )
+          })
         )}
       </List>
     </Box>

@@ -185,6 +185,21 @@ export interface InteractionTypeInfo {
   caps: InteractionTypeCaps
 }
 
+/** Minimal weekly availability window — dayOfWeek + time range, used for both global and event-specific overrides. */
+export interface WeeklyAvailabilitySlot {
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+}
+
+export interface EventCoachWeeklyAvailability extends WeeklyAvailabilitySlot {
+  id: string
+  eventId: string
+  coachUserId: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface EventCoach {
   id: string
   eventId: string
@@ -196,6 +211,7 @@ export interface EventCoach {
   coachUser: SafeUser & {
     weeklyAvailability?: UserWeeklyAvailability[]
   }
+  weeklyAvailabilityOverride?: EventCoachWeeklyAvailability[]
 }
 
 /**

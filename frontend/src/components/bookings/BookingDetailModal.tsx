@@ -108,7 +108,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
             </Button>
           )}
 
-          <Button variant="contained" onClick={onClose} sx={{ fontWeight: 600, borderRadius: 1.5 }}>
+          <Button onClick={onClose} sx={{ fontWeight: 600, borderRadius: 1.5 }}>
             Close
           </Button>
         </Box>

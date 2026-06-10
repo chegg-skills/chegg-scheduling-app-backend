@@ -29,6 +29,8 @@ import {
   removeEventCoach,
   replaceEventCoaches,
   syncRoutingState,
+  getEventCoachAvailability,
+  setEventCoachAvailability,
 } from "./eventCoach.service";
 import {
   assertBookingNoticeSatisfied,
@@ -360,5 +362,7 @@ export {
   getCoachAvailabilityForSlot,
   stopRecurrenceGroup,
   resumeRecurrenceGroup,
+  getEventCoachAvailability,
+  setEventCoachAvailability,
   type SafeEvent,
 };

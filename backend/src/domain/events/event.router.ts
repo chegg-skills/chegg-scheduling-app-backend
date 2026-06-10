@@ -11,6 +11,8 @@ import {
   UpdateEventSchema,
   UpsertSessionLogSchema,
   RevealCoachSchema,
+  GetEventCoachAvailabilitySchema,
+  SetEventCoachAvailabilitySchema,
 } from "./event.schema";
 
 const router = express.Router();
@@ -207,6 +209,22 @@ router
     authenticate,
     authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
     eventController.removeEventCoach,
+  )
+  .all(methodNotAllowed);
+
+router
+  .route("/events/:eventId/coaches/:coachUserId/availability")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(GetEventCoachAvailabilitySchema),
+    eventController.getEventCoachAvailability,
+  )
+  .put(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    validate(SetEventCoachAvailabilitySchema),
+    eventController.setEventCoachAvailability,
   )
   .all(methodNotAllowed);
 

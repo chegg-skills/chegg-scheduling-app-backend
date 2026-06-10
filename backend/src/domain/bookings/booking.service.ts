@@ -169,11 +169,14 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       const scheduleSlot =
         matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-      const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
-
-      const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
-
-      assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      // Participant capacity is only meaningful for FIXED_SLOTS — those are pre-created shared
+      // slots with a real seat cap. In COACH_AVAILABILITY mode each booking gets its own coach;
+      // the coach conflict detection above already prevents double-booking at the coach level.
+      if (schedulingContext.bookingMode === "FIXED_SLOTS") {
+        const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+        const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
+        assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      }
 
       const student = await upsertStudentForBooking(
         tx,
@@ -296,19 +299,17 @@ const rescheduleBooking = async (
       const scheduleSlot =
         matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-      // Check capacity for the NEW time
+      // Check capacity for the NEW time (FIXED_SLOTS only — see booking creation comment)
       const schedulingContext = buildSchedulingContext(event);
-      const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
-
-      const currentParticipantCount = await countActiveParticipantsForTime(
-        tx,
-        booking.eventId,
-        start,
-      );
-
-      // When rescheduling, the student is ALREADY counted if they are moving within the same slot
-      // but since we are changing the start time, we just check the new start time's capacity.
-      assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      if (schedulingContext.bookingMode === "FIXED_SLOTS") {
+        const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+        const currentParticipantCount = await countActiveParticipantsForTime(
+          tx,
+          booking.eventId,
+          start,
+        );
+        assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      }
 
       return updateBookingById(id, {
         startTime: start,
@@ -563,10 +564,12 @@ const bookFollowUpSession = async (
       const scheduleSlot =
         matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-      // Capacity check
-      const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
-      const currentParticipantCount = await countActiveParticipantsForTime(tx, event.id, start);
-      assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      // Capacity check (FIXED_SLOTS only — see booking creation comment)
+      if (schedulingContext.bookingMode === "FIXED_SLOTS") {
+        const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+        const currentParticipantCount = await countActiveParticipantsForTime(tx, event.id, start);
+        assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+      }
 
       // Prevent overlapping booking for the same student
       const duplicateBooking = await tx.booking.findFirst({

@@ -42,7 +42,7 @@ export function RouteErrorPage() {
           <Typography variant="h4">Something went wrong</Typography>
           <ErrorAlert title={title} message={message} />
           <Stack direction="row" spacing={1.5}>
-            <Button variant="contained" onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate('/dashboard')}>
               Go to dashboard
             </Button>
             <Button variant="outlined" onClick={() => navigate(-1)}>

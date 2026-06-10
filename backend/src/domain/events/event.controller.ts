@@ -195,6 +195,43 @@ const removeEventCoach = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+const getEventCoachAvailability = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.getEventCoachAvailability(
+      req.params.eventId as string,
+      req.params.coachUserId as string,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event coach availability fetched successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const setEventCoachAvailability = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const result = await eventService.setEventCoachAvailability(
+      req.params.eventId as string,
+      req.params.coachUserId as string,
+      req.body,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Event coach availability updated successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 const listEventScheduleSlots = async (
   req: Request,
   res: Response,
@@ -387,6 +424,8 @@ export {
   resumeRecurrenceGroup,
   getSessionLog,
   upsertSessionLog,
+  getEventCoachAvailability,
+  setEventCoachAvailability,
 };
 
 async function getSessionLog(req: Request, res: Response, next: NextFunction): Promise<void> {

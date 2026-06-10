@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
@@ -6,8 +7,18 @@ import type { EventFormValues } from './eventFormSchema'
 export function BookingWindowFields() {
   const {
     register,
+    watch,
+    setValue,
     formState: { errors },
   } = useFormContext<EventFormValues>()
+
+  const bookingMode = watch('bookingMode')
+
+  useEffect(() => {
+    if (bookingMode !== 'FIXED_SLOTS') {
+      setValue('recurrenceVisibilityLimit', null, { shouldDirty: false })
+    }
+  }, [bookingMode, setValue])
 
   return (
     <>
@@ -59,23 +70,25 @@ export function BookingWindowFields() {
         />
       </FormField>
 
-      <FormField
-        label="Recurrence Visibility Limit"
-        htmlFor="recurrenceVisibilityLimit"
-        error={errors.recurrenceVisibilityLimit?.message}
-        info="Limit how many upcoming slots in a recurring series are shown on the public booking page. Leave empty to show all."
-      >
-        <Input
-          id="recurrenceVisibilityLimit"
-          type="number"
-          min="1"
-          placeholder="e.g. 2"
-          {...register('recurrenceVisibilityLimit', {
-            valueAsNumber: true,
-            setValueAs: (v: string) => (v === '' ? null : Number(v)),
-          })}
-        />
-      </FormField>
+      {bookingMode === 'FIXED_SLOTS' && (
+        <FormField
+          label="Recurrence Visibility Limit"
+          htmlFor="recurrenceVisibilityLimit"
+          error={errors.recurrenceVisibilityLimit?.message}
+          info="Limit how many upcoming slots in a recurring series are shown on the public booking page. Leave empty to show all."
+        >
+          <Input
+            id="recurrenceVisibilityLimit"
+            type="number"
+            min="1"
+            placeholder="e.g. 2"
+            {...register('recurrenceVisibilityLimit', {
+              valueAsNumber: true,
+              setValueAs: (v: string) => (v === '' ? null : Number(v)),
+            })}
+          />
+        </FormField>
+      )}
     </>
   )
 }

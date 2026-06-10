@@ -30,8 +30,13 @@ import {
   addAvailabilityException,
   removeAvailabilityException,
   getEffectiveAvailabilityData as getEffectiveAvailability,
+  getEventCoachWeeklyAvailability,
 } from "./availabilityCalendar.service";
-import { getCoachConflicts } from "./availabilityConflict.service";
+import {
+  getCoachConflicts,
+  filterConflictsForSlot,
+  type BookingWithEventBuffer,
+} from "./availabilityConflict.service";
 import { logger } from "../../shared/logging/logger";
 
 /**
@@ -177,31 +182,47 @@ const isCoachAvailable = async (
   options: {
     ignoreWeeklySchedule?: boolean;
     eventId?: string;
+    weeklyOverride?: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
     scheduleSlotId?: string | null;
     tx?: AvailabilityClient;
     bufferAfterMinutes?: number;
+    /** Pre-fetched coach timezone — skips user.findUnique when provided. */
+    timezone?: string;
+    /** Pre-fetched calendar data — skips getEffectiveAvailability when provided. */
+    calendarData?: { weekly: UserWeeklyAvailability[]; exceptions: UserAvailabilityException[] };
+    /** Pre-fetched conflicts already filtered for this slot — skips getCoachConflicts when provided. */
+    prefetchedConflicts?: BookingWithEventBuffer[];
   } = {},
 ): Promise<boolean> => {
   const client: AvailabilityClient = options.tx || prisma;
 
   // 1. Resolve Coach and Calendar Data
-  const user = await client.user.findUnique({
-    where: { id: userId },
-    select: { timezone: true },
-  });
-
-  if (!user) return false;
+  let resolvedTimezone: string;
+  if (options.timezone !== undefined) {
+    resolvedTimezone = options.timezone;
+  } else {
+    const user = await client.user.findUnique({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+    if (!user) return false;
+    resolvedTimezone = user.timezone;
+  }
 
   const effectiveEndTime = options.bufferAfterMinutes
     ? new Date(endTime.getTime() + options.bufferAfterMinutes * 60 * 1000)
     : endTime;
 
   const [calendar, conflicts] = await Promise.all([
-    getEffectiveAvailability(userId, startTime, effectiveEndTime, {
-      id: userId,
-      role: UserRole.COACH,
-    }),
-    getCoachConflicts(userId, startTime, effectiveEndTime, options),
+    options.calendarData
+      ? Promise.resolve(options.calendarData)
+      : getEffectiveAvailability(userId, startTime, effectiveEndTime, {
+          id: userId,
+          role: UserRole.COACH,
+        }),
+    options.prefetchedConflicts
+      ? Promise.resolve(options.prefetchedConflicts)
+      : getCoachConflicts(userId, startTime, effectiveEndTime, options),
   ]);
 
   // 2. Conflict Check (Bookings)
@@ -209,35 +230,59 @@ const isCoachAvailable = async (
     return false;
   }
 
-  // 3. Exception Decision (Overrides)
+  // 3. Resolve effective weekly schedule: event-specific override takes priority over global.
+  // Exceptions (vacations/holidays) always apply regardless of which weekly source is used.
+  // When called from getAvailableSlots, weeklyOverride is pre-fetched once per coach to
+  // avoid N+1 queries across the slot generation loop.
+  let effectiveCalendar = calendar;
+  if (!options.ignoreWeeklySchedule) {
+    const overrideSlots =
+      options.weeklyOverride !== undefined
+        ? options.weeklyOverride
+        : options.eventId
+          ? await getEventCoachWeeklyAvailability(options.eventId, userId)
+          : [];
+    if (overrideSlots.length > 0) {
+      effectiveCalendar = {
+        ...calendar,
+        weekly: overrideSlots.map(({ dayOfWeek, startTime, endTime }) => ({
+          dayOfWeek,
+          startTime,
+          endTime,
+        })) as UserWeeklyAvailability[],
+      };
+    }
+  }
+
+  // 4. Exception Decision (Overrides)
   let startLocal: LocalAvailabilityInfo;
   let endLocal: LocalAvailabilityInfo;
   try {
-    startLocal = toLocalAvailabilityInfo(startTime, user.timezone);
-    endLocal = toLocalAvailabilityInfo(effectiveEndTime, user.timezone);
+    startLocal = toLocalAvailabilityInfo(startTime, resolvedTimezone);
+    endLocal = toLocalAvailabilityInfo(effectiveEndTime, resolvedTimezone);
   } catch {
-    logger.warn({ userId, timezone: user.timezone }, "Invalid coach timezone — treating as unavailable.");
+    logger.warn({ userId, timezone: resolvedTimezone }, "Invalid coach timezone — treating as unavailable.");
     return false;
   }
 
   if (startLocal.dateString !== endLocal.dateString) {
     if (options.ignoreWeeklySchedule) return true;
-    return isCoachAvailableAcrossMidnight(startTime, effectiveEndTime, calendar, user.timezone);
+    return isCoachAvailableAcrossMidnight(startTime, effectiveEndTime, effectiveCalendar, resolvedTimezone);
   }
 
-  const dayException = findAvailabilityException(calendar.exceptions, startLocal.dateString);
+  const dayException = findAvailabilityException(effectiveCalendar.exceptions, startLocal.dateString);
   const exceptionDecision = resolveAvailabilityFromException(dayException, startLocal, endLocal);
 
   if (exceptionDecision !== null) {
     return exceptionDecision;
   }
 
-  // 4. Weekly Schedule Fallback
+  // 5. Weekly Schedule Fallback
   if (options.ignoreWeeklySchedule) {
     return true;
   }
 
-  return isWithinWeeklyAvailability(calendar.weekly, startLocal, endLocal);
+  return isWithinWeeklyAvailability(effectiveCalendar.weekly, startLocal, endLocal);
 };
 
 export type AvailableSlot = {
@@ -323,6 +368,95 @@ const getAvailableSlots = async (
 
   if (eligibleCoaches.length === 0) return [];
 
+  const coachIds: string[] = eligibleCoaches.map((c: any) => c.coachUserId);
+  const isCoachAvailabilityMode = event.bookingMode !== EventBookingMode.FIXED_SLOTS;
+
+  // Pre-fetch all event-coach weekly overrides in one query so the slot loop
+  // does not fire a DB round-trip per coach per slot (N+1).
+  // Skipped for FIXED_SLOTS events because isCoachAvailable uses ignoreWeeklySchedule:true there.
+  const overrideMap = new Map<string, Array<{ dayOfWeek: number; startTime: string; endTime: string }>>();
+  if (isCoachAvailabilityMode) {
+    const allOverrides = await prisma.eventCoachWeeklyAvailability.findMany({
+      where: { eventId, coachUserId: { in: coachIds } },
+    });
+    for (const o of allOverrides) {
+      const list = overrideMap.get(o.coachUserId) ?? [];
+      list.push({ dayOfWeek: o.dayOfWeek, startTime: o.startTime, endTime: o.endTime });
+      overrideMap.set(o.coachUserId, list);
+    }
+  }
+
+  // Batch pre-fetch stable per-coach data so the slot generation loop runs
+  // entirely in-memory without N+1 DB queries.
+  const timezoneMap = new Map<string, string>();
+  const weeklyMap = new Map<string, UserWeeklyAvailability[]>();
+  const exceptionsMap = new Map<string, UserAvailabilityException[]>();
+  const rawConflictsMap = new Map<string, BookingWithEventBuffer[]>();
+
+  if (isCoachAvailabilityMode) {
+    // Extend the fetch window beyond effectiveMaxDate to cover cross-midnight slots:
+    // a slot starting just before effectiveMaxDate can end durationSeconds + buffer later,
+    // and may need exceptions or conflict bookings from the next calendar day.
+    const batchFetchEnd = new Date(
+      effectiveMaxDate.getTime() +
+        event.durationSeconds * 1000 +
+        (event.bufferAfterMinutes ?? 0) * 60_000,
+    );
+
+    const [users, weeklyRows, exceptionRows] = await Promise.all([
+      prisma.user.findMany({
+        where: { id: { in: coachIds } },
+        select: { id: true, timezone: true },
+      }),
+      prisma.userWeeklyAvailability.findMany({ where: { userId: { in: coachIds } } }),
+      prisma.userAvailabilityException.findMany({
+        where: { userId: { in: coachIds }, date: { gte: startDate, lte: batchFetchEnd } },
+      }),
+    ]);
+
+    for (const u of users) timezoneMap.set(u.id, u.timezone);
+    for (const r of weeklyRows) {
+      const list = weeklyMap.get(r.userId) ?? [];
+      list.push(r);
+      weeklyMap.set(r.userId, list);
+    }
+    for (const r of exceptionRows) {
+      const list = exceptionsMap.get(r.userId) ?? [];
+      list.push(r);
+      exceptionsMap.set(r.userId, list);
+    }
+
+    // Fetch all bookings that could conflict with any slot in the date range.
+    // The 120-min lookback mirrors getCoachConflicts' lookbackStartTime.
+    // Upper bound uses batchFetchEnd so cross-midnight slots at end of range
+    // can detect bookings that start on the next calendar day.
+    const lookbackStart = new Date(startDate.getTime() - 120 * 60 * 1000);
+    const conflictBookings = await prisma.booking.findMany({
+      where: {
+        OR: [{ coachUserId: { in: coachIds } }, { coCoachUserIds: { hasSome: coachIds } }],
+        status: { in: ["CONFIRMED", "PENDING"] },
+        startTime: { lt: batchFetchEnd },
+        endTime: { gt: lookbackStart },
+      },
+      include: { event: true },
+    }) as BookingWithEventBuffer[];
+
+    for (const b of conflictBookings) {
+      if (b.coachUserId && coachIds.includes(b.coachUserId)) {
+        const list = rawConflictsMap.get(b.coachUserId) ?? [];
+        list.push(b);
+        rawConflictsMap.set(b.coachUserId, list);
+      }
+      for (const ccId of (b as any).coCoachUserIds ?? []) {
+        if (coachIds.includes(ccId)) {
+          const list = rawConflictsMap.get(ccId) ?? [];
+          list.push(b);
+          rawConflictsMap.set(ccId, list);
+        }
+      }
+    }
+  }
+
   const slots: AvailableSlot[] = [];
 
   const getSlotAvailability = async (
@@ -353,40 +487,66 @@ const getAvailableSlots = async (
       return null;
     }
 
-    // Capacity Logic
-    const { maxParticipants } = getEffectiveParticipantPolicy(event, scheduleSlot ?? null);
-    const currentBookings = await prisma.booking.count({
-      where: (scheduleSlot
-        ? {
-            scheduleSlotId: scheduleSlot.id,
-            status: { not: "CANCELLED" },
-          }
-        : {
-            eventId,
-            startTime: slotStart,
-            endTime: slotEnd,
-            status: { not: "CANCELLED" },
-          }) as any,
-    });
-
-    if (maxParticipants !== null && currentBookings >= maxParticipants) {
-      return null;
+    // Capacity Logic — only enforced for FIXED_SLOTS (pre-created slots where multiple
+    // students share a seat cap). For COACH_AVAILABILITY events each booking gets its own
+    // coach, so counting cross-coach bookings at the same time would incorrectly hide slots
+    // for free coaches. Coach conflict detection below is the real guard in that mode.
+    let remainingSeats: number | null = null;
+    let maxSeats: number | null = null;
+    if (scheduleSlot) {
+      const { maxParticipants } = getEffectiveParticipantPolicy(event, scheduleSlot);
+      maxSeats = maxParticipants;
+      const currentBookings = await prisma.booking.count({
+        where: { scheduleSlotId: scheduleSlot.id, status: { not: "CANCELLED" } },
+      });
+      if (maxParticipants !== null && currentBookings >= maxParticipants) {
+        return null;
+      }
+      remainingSeats = maxParticipants !== null ? maxParticipants - currentBookings : null;
     }
 
     const allowSharedSessionOverlap = event.bookingMode === EventBookingMode.FIXED_SLOTS;
+
+    // Pre-compute effective slot end (buffer included) for in-memory conflict filtering.
+    const effectiveSlotEnd = event.bufferAfterMinutes
+      ? new Date(slotEnd.getTime() + event.bufferAfterMinutes * 60_000)
+      : slotEnd;
+
+    const buildPrefetch = (coachId: string) =>
+      isCoachAvailabilityMode
+        ? {
+            timezone: timezoneMap.get(coachId),
+            calendarData: {
+              weekly: weeklyMap.get(coachId) ?? [],
+              exceptions: exceptionsMap.get(coachId) ?? [],
+            },
+            prefetchedConflicts: filterConflictsForSlot(
+              rawConflictsMap.get(coachId) ?? [],
+              slotStart,
+              effectiveSlotEnd,
+              {
+                eventId: allowSharedSessionOverlap ? eventId : undefined,
+                scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
+              },
+            ),
+          }
+        : {};
 
     let isAvailable = false;
 
     // Assignment specific availability check
     if (scheduleSlot && (scheduleSlot as any).assignedCoachId) {
       // If a specific coach is assigned to this slot, only check their availability
+      const assignedId = (scheduleSlot as any).assignedCoachId as string;
       if (
-        await isCoachAvailable((scheduleSlot as any).assignedCoachId, slotStart, slotEnd, {
+        await isCoachAvailable(assignedId, slotStart, slotEnd, {
           ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
+          weeklyOverride: overrideMap.get(assignedId) ?? [],
           eventId: allowSharedSessionOverlap ? eventId : undefined,
           scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
           bufferAfterMinutes: event.bufferAfterMinutes,
-          tx: (event as any).tx, // Pass tx if available in context (though getAvailableSlots doesn't usually have it)
+          tx: (event as any).tx,
+          ...buildPrefetch(assignedId),
         })
       ) {
         isAvailable = true;
@@ -397,9 +557,11 @@ const getAvailableSlots = async (
         primaryCoach &&
         (await isCoachAvailable(primaryCoach.coachUserId, slotStart, slotEnd, {
           ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
+          weeklyOverride: overrideMap.get(primaryCoach.coachUserId) ?? [],
           eventId: allowSharedSessionOverlap ? eventId : undefined,
           scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
           bufferAfterMinutes: event.bufferAfterMinutes,
+          ...buildPrefetch(primaryCoach.coachUserId),
         }))
       ) {
         isAvailable = true;
@@ -409,9 +571,11 @@ const getAvailableSlots = async (
         if (
           await isCoachAvailable(coach.coachUserId, slotStart, slotEnd, {
             ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
+            weeklyOverride: overrideMap.get(coach.coachUserId) ?? [],
             eventId: allowSharedSessionOverlap ? eventId : undefined,
             scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
             bufferAfterMinutes: event.bufferAfterMinutes,
+            ...buildPrefetch(coach.coachUserId),
           })
         ) {
           isAvailable = true;
@@ -428,8 +592,8 @@ const getAvailableSlots = async (
       startTime: slotStart.toISOString(),
       endTime: slotEnd.toISOString(),
       scheduleSlotId: scheduleSlot?.id,
-      remainingSeats: maxParticipants !== null ? maxParticipants - currentBookings : null,
-      maxSeats: maxParticipants,
+      remainingSeats,
+      maxSeats,
       assignedCoach,
     };
   };
@@ -508,6 +672,7 @@ const getAvailableSlots = async (
       const slotStart = new Date(currentStart.getTime() + ms);
       const slotEnd = new Date(slotStart.getTime() + durationMs);
 
+      if (slotStart < startDate) continue;
       if (slotStart >= finalEnd) break;
 
       const availableSlot = await getSlotAvailability(slotStart, slotEnd);

@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import Stack from '@mui/material/Stack'
-import { Plus } from 'lucide-react'
+import { Plus, CalendarRange } from 'lucide-react'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
-import type { EventCoach, TeamMember } from '@/types'
+import type { EventCoach, TeamMember, SetWeeklyAvailabilityDto } from '@/types'
 import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { useEventCoaches, useSetEventCoaches, useRemoveEventCoach } from '@/hooks/queries/useEvents'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEventCoaches, useSetEventCoaches, useRemoveEventCoach, eventKeys } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { extractApiError } from '@/utils/apiError'
 import { AddCoachForm } from './form/AddCoachForm'
 import { EventCoachTable } from './EventCoachTable'
 import { EventCoachStatusAlert } from './EventCoachStatusAlert'
+import { BulkCoachAvailabilityDialog } from './dialogs/BulkCoachAvailabilityDialog'
+import { eventsApi } from '@/api/events'
 
 interface EventCoachManagerProps {
   eventId: string
@@ -43,9 +46,12 @@ export function EventCoachManager({
   canManage = true,
 }: EventCoachManagerProps) {
   const [localShowAddModal, setLocalShowAddModal] = useState(false)
+  const [showBulkScheduleDialog, setShowBulkScheduleDialog] = useState(false)
   const [addCoachError, setAddCoachError] = useState<string | null>(null)
+  const [isSavingAvailability, setIsSavingAvailability] = useState(false)
   const showAddModal = showAddModalOverride || localShowAddModal
   const { handleAction } = useAsyncAction()
+  const queryClient = useQueryClient()
 
   const { data: coachesResponse } = useEventCoaches(eventId)
   const { mutate: setCoaches, isPending: setting } = useSetEventCoaches(eventId)
@@ -58,7 +64,12 @@ export function EventCoachManager({
     (m) => m.isActive && m.user.role !== 'SUPER_ADMIN' && !currentCoachUserIds.has(m.userId)
   ).length
 
-  function handleAdd(userIds: string[]) {
+  function handleAdd(
+    userIds: string[],
+    customSchedules?: Record<string, SetWeeklyAvailabilityDto>,
+    hasCustomSchedule?: Record<string, boolean>
+  ) {
+    setIsSavingAvailability(true)
     const newCoaches = [
       ...activeCoaches.map((c, i) => ({
         userId: c.coachUserId,
@@ -72,8 +83,33 @@ export function EventCoachManager({
     setCoaches(
       { coaches: newCoaches },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          if (customSchedules && hasCustomSchedule) {
+            try {
+              const promises = Object.entries(customSchedules).map(([userId, slots]) => {
+                if (userIds.includes(userId)) {
+                  if (hasCustomSchedule[userId]) {
+                    return eventsApi.setCoachAvailability(eventId, userId, slots)
+                  } else {
+                    return eventsApi.setCoachAvailability(eventId, userId, [])
+                  }
+                }
+                return Promise.resolve()
+              })
+              await Promise.all(promises)
+            } catch (error) {
+              console.error('Failed to save coach custom availabilities:', error)
+              setAddCoachError('Coaches were added, but failed to save some custom availabilities.')
+              setIsSavingAvailability(false)
+              return
+            }
+          }
+          setIsSavingAvailability(false)
           setAddCoachError(null)
+
+          // Invalidate coaches query to fetch new availabilities immediately
+          queryClient.invalidateQueries({ queryKey: eventKeys.coaches(eventId) })
+
           if (onCloseAddModal) {
             onCloseAddModal()
           } else {
@@ -81,6 +117,7 @@ export function EventCoachManager({
           }
         },
         onError: (error: Error) => {
+          setIsSavingAvailability(false)
           setAddCoachError(extractApiError(error))
         },
       }
@@ -108,31 +145,52 @@ export function EventCoachManager({
           title={title || 'Assigned Coaches'}
           description="Manage coaches assigned to this event and their participation status."
           action={
-            canManage &&
-            eligibleCount > 0 && (
-              <Button
-                size="sm"
-                startIcon={<Plus size={16} />}
-                onClick={() => {
-                  if (onOpenAddModal) {
-                    onOpenAddModal()
-                  } else {
-                    setLocalShowAddModal(true)
-                  }
-                }}
-              >
-                Add coach
-              </Button>
+            canManage && (
+              <Stack direction="row" spacing={1}>
+                {activeCoaches.length >= 2 && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    startIcon={<CalendarRange size={16} />}
+                    onClick={() => setShowBulkScheduleDialog(true)}
+                  >
+                    Bulk set schedule
+                  </Button>
+                )}
+                {eligibleCount > 0 && (
+                  <Button
+                    size="sm"
+                    startIcon={<Plus size={16} />}
+                    onClick={() => {
+                      if (onOpenAddModal) {
+                        onOpenAddModal()
+                      } else {
+                        setLocalShowAddModal(true)
+                      }
+                    }}
+                  >
+                    Add coach
+                  </Button>
+                )}
+              </Stack>
             )
           }
         />
       )}
 
       <EventCoachTable
+        eventId={eventId}
         coaches={activeCoaches}
         onRemove={handleRemove}
         onViewUser={onViewUser}
         canManage={canManage}
+      />
+
+      <BulkCoachAvailabilityDialog
+        isOpen={showBulkScheduleDialog}
+        onClose={() => setShowBulkScheduleDialog(false)}
+        eventId={eventId}
+        coaches={activeCoaches}
       />
 
       <Modal
@@ -143,7 +201,7 @@ export function EventCoachManager({
           setLocalShowAddModal(false)
         }}
         title="Add coach to event"
-        size="sm"
+        size="lg"
       >
         <Stack spacing={2}>
           {addCoachError && <ErrorAlert message={addCoachError} />}
@@ -151,7 +209,7 @@ export function EventCoachManager({
             activeCoaches={activeCoaches}
             teamMembers={teamMembers}
             assignmentStrategy={assignmentStrategy}
-            isPending={setting}
+            isPending={setting || isSavingAvailability}
             onAdd={handleAdd}
             onCancel={() => {
               setAddCoachError(null)

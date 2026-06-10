@@ -4,6 +4,7 @@ import type {
   CoachAvailabilityEntry,
   Event,
   EventCoach,
+  EventCoachWeeklyAvailability,
   EventScheduleSlot,
   CreateEventDto,
   UpdateEventDto,
@@ -11,6 +12,7 @@ import type {
   Pagination,
   SessionLog,
   UpsertSessionLogDto,
+  WeeklyAvailabilitySlot,
 } from '@/types'
 
 export interface ListEventsParams {
@@ -43,6 +45,16 @@ export const eventsApi = {
     apiClient.put<ApiResponse<{ coaches: EventCoach[] }>>(`/events/${eventId}/coaches`, data),
   removeCoach: (eventId: string, userId: string) =>
     apiClient.delete<ApiResponse<EventCoach>>(`/events/${eventId}/coaches/${userId}`),
+  getCoachAvailability: (eventId: string, coachUserId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<EventCoachWeeklyAvailability[]>>(
+      `/events/${eventId}/coaches/${coachUserId}/availability`,
+      { signal }
+    ),
+  setCoachAvailability: (eventId: string, coachUserId: string, slots: WeeklyAvailabilitySlot[]) =>
+    apiClient.put<ApiResponse<EventCoachWeeklyAvailability[]>>(
+      `/events/${eventId}/coaches/${coachUserId}/availability`,
+      slots
+    ),
   listScheduleSlots: (eventId: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<{ slots: EventScheduleSlot[] }>>(
       `/events/${eventId}/schedule-slots`,

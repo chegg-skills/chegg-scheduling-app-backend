@@ -10,13 +10,15 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Avatar from '@mui/material/Avatar'
 import Typography from '@mui/material/Typography'
-import { Trash2 } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
+import { Trash2, Info } from 'lucide-react'
 import type { EventCoach, UserWeeklyAvailability } from '@/types'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TablePagination } from '@/components/shared/table/TablePagination'
 import { useAuth } from '@/context/auth'
 import { useTimezones } from '@/hooks/queries/useConfig'
 import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
+import { EventCoachAvailabilityDialog } from './dialogs/EventCoachAvailabilityDialog'
 
 const SHORT_WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -77,6 +79,7 @@ function formatCoachAvailability(weeklyAvailability: UserWeeklyAvailability[] | 
 }
 
 interface EventCoachTableProps {
+  eventId: string
   coaches: EventCoach[]
   onRemove: (coachUserId: string, name: string) => void
   onViewUser?: (userId: string) => void
@@ -84,6 +87,7 @@ interface EventCoachTableProps {
 }
 
 export function EventCoachTable({
+  eventId,
   coaches,
   onRemove,
   onViewUser,
@@ -91,6 +95,7 @@ export function EventCoachTable({
 }: EventCoachTableProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [availabilityDialogCoach, setAvailabilityDialogCoach] = useState<EventCoach | null>(null)
   const { user: currentUser } = useAuth()
   const { data: timezones = [] } = useTimezones()
   const isCoach = currentUser?.role === 'COACH'
@@ -98,26 +103,56 @@ export function EventCoachTable({
   const paginatedCoaches = coaches.slice((page - 1) * pageSize, page * pageSize)
 
   return (
+    <>
     <TableContainer component={Paper} variant="outlined">
       <Table>
         <TableHead>
           <TableRow>
             {['Coach', 'Time Zone', 'Availability', 'Language', ...(canManage ? ['Actions'] : [])].map(
-              (col) => (
-                <TableCell
-                  key={col}
-                  sx={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                    letterSpacing: '0.05em',
-                  }}
-                  align={col === 'Actions' ? 'right' : 'left'}
-                >
-                  {col}
-                </TableCell>
-              )
+              (col) => {
+                const isAvailability = col === 'Availability'
+                return (
+                  <TableCell
+                    key={col}
+                    sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      color: 'text.secondary',
+                      letterSpacing: '0.05em',
+                    }}
+                    align={col === 'Actions' ? 'right' : 'left'}
+                  >
+                    {isAvailability ? (
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <span>{col}</span>
+                        <Tooltip
+                          title={
+                            <Box sx={{ p: 0.5 }}>
+                              <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, mb: 0.5 }}>
+                                Availability Types
+                              </Typography>
+                              <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                                • <strong>Global availability:</strong> Default profile hours configured by the coach.
+                              </Typography>
+                              <Typography variant="caption" sx={{ display: 'block' }}>
+                                • <strong>Custom availability:</strong> Event-specific override hours that replace global profile availability.
+                              </Typography>
+                            </Box>
+                          }
+                          arrow
+                        >
+                          <span style={{ display: 'inline-flex', cursor: 'pointer', color: '#9CA3AF' }}>
+                            <Info size={14} />
+                          </span>
+                        </Tooltip>
+                      </Stack>
+                    ) : (
+                      col
+                    )}
+                  </TableCell>
+                )
+              }
             )}
           </TableRow>
         </TableHead>
@@ -174,12 +209,36 @@ export function EventCoachTable({
                     {formatTimezoneLabel(coach.coachUser.timezone, timezones) || '—'}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.8125rem' }}>
-                    <Stack spacing={0.25}>
-                      {formatCoachAvailability(coach.coachUser.weeklyAvailability).map((line, idx) => (
+                    <Stack spacing={0.5}>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Typography
+                          variant="caption"
+                          onClick={canManage ? () => setAvailabilityDialogCoach(coach) : undefined}
+                          sx={{
+                            fontWeight: 600,
+                            color: (coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'primary.main' : 'text.secondary',
+                            fontSize: '0.75rem',
+                            textDecoration: canManage ? 'underline' : 'none',
+                            cursor: canManage ? 'pointer' : 'default',
+                            '&:hover': {
+                              color: canManage
+                                ? ((coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'primary.dark' : 'text.primary')
+                                : 'inherit',
+                            },
+                          }}
+                        >
+                          {(coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'Custom availability' : 'Set Custom Availability'}
+                        </Typography>
+                      </Stack>
+                      {formatCoachAvailability(
+                        (coach.weeklyAvailabilityOverride ?? []).length > 0
+                          ? (coach.weeklyAvailabilityOverride as unknown as UserWeeklyAvailability[])
+                          : coach.coachUser.weeklyAvailability
+                      ).map((line, idx) => (
                         <Typography
                           key={idx}
                           variant="caption"
-                          color={line === 'No availability defined' ? 'text.secondary' : 'text.secondary'}
+                          color="text.secondary"
                           sx={{
                             display: 'block',
                             fontSize: '0.75rem',
@@ -242,5 +301,13 @@ export function EventCoachTable({
         }}
       />
     </TableContainer>
+
+    <EventCoachAvailabilityDialog
+      isOpen={availabilityDialogCoach !== null}
+      onClose={() => setAvailabilityDialogCoach(null)}
+      eventId={eventId}
+      coach={availabilityDialogCoach}
+    />
+    </>
   )
 }
