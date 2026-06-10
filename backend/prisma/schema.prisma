@@ -160,7 +160,6 @@ model Event {
   recurrenceVisibilityLimit Int?
   deferCoachReveal          Boolean                   @default(false)
   allowStudentCoachChoice   Boolean                   @default(false)
-  timezone                  String                    @default("UTC")
   groupId                   String?
   sessionTypeId             String?
   bookings                  Booking[]

@@ -129,8 +129,8 @@ export function ScheduleSeriesTrackerView({
               {group.isRecurring ? 'Weekly Recurring Series' : 'Individual Session Detail'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {new Intl.DateTimeFormat('en-US', { timeZone: event.timezone, weekday: 'long' }).format(new Date(group.startTime))}s at{' '}
-              {new Intl.DateTimeFormat('en-US', { timeZone: event.timezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(group.startTime))} •{' '}
+              {new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(group.startTime))}s at{' '}
+              {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(group.startTime))} •{' '}
               {group.isContinuous
                 ? group.isStopped
                   ? 'Stopped (Continuous)'

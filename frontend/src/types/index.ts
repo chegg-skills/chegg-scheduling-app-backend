@@ -310,7 +310,6 @@ export interface Event {
   allowStudentCoachChoice: boolean
   maxBookingWindowDays: number | null
   recurrenceVisibilityLimit?: number | null
-  timezone: string
   teamId: string
   sessionTypeId: string | null
   groupId: string | null
@@ -557,7 +556,6 @@ export interface CreateEventDto {
   recurrenceVisibilityLimit?: number | null
   description?: string
   isActive?: boolean
-  timezone?: string
   sessionTypeId?: string | null
   groupId?: string | null
 }

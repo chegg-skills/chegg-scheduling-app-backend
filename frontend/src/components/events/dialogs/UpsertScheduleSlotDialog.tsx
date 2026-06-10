@@ -13,9 +13,9 @@ import type { Event, EventScheduleSlot, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { useScheduleSlotForm } from './useScheduleSlotForm'
 import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
-import { useTimezones } from '@/hooks/queries/useConfig'
-import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 import { zonedStringToUTC } from '@/utils/dateTimezone'
+
+const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import { format } from 'date-fns'
 
@@ -45,8 +45,6 @@ export function UpsertScheduleSlotDialog({
   const mode = slot ? 'Edit' : 'Add'
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
   const supportsMultipleParticipants = caps.multipleParticipants
-  const { data: timezones = [] } = useTimezones()
-  const timezoneLabel = formatTimezoneLabel(event.timezone, timezones)
 
   const {
     newSlotDate,
@@ -61,16 +59,14 @@ export function UpsertScheduleSlotDialog({
     isValid,
   } = useScheduleSlotForm({ event, slot, isOpen })
 
-  // Interpret the datetime-local value as wall-clock time in the event's timezone
   const previewEndTime = newSlotDate
-    ? new Date(zonedStringToUTC(newSlotDate, event.timezone).getTime() + event.durationSeconds * 1000)
+    ? new Date(zonedStringToUTC(newSlotDate, browserTimezone).getTime() + event.durationSeconds * 1000)
     : null
 
   function handleAdd() {
     if (!isValid) return
 
-    // Convert the admin's entered time from event timezone to UTC before storing
-    const startTime = zonedStringToUTC(newSlotDate, event.timezone)
+    const startTime = zonedStringToUTC(newSlotDate, browserTimezone)
     const endTime = new Date(startTime.getTime() + event.durationSeconds * 1000)
 
     onSave({
@@ -150,12 +146,11 @@ export function UpsertScheduleSlotDialog({
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
               Session ends at:{' '}
               {new Intl.DateTimeFormat('en-US', {
-                timeZone: event.timezone,
+                timeZone: browserTimezone,
                 hour: 'numeric',
                 minute: 'numeric',
                 hour12: true,
-              }).format(previewEndTime)}{' '}
-              ({timezoneLabel})
+              }).format(previewEndTime)}
             </Typography>
           )}
         </Box>

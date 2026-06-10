@@ -116,7 +116,6 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
           {viewMode === 'list' ? (
             <ScheduleSeriesTable
               groups={seriesGroups}
-              eventTimezone={event.timezone}
               onViewTracker={(group) => setActiveSeriesId(group.id)}
               onRemoveSeries={handleRemoveSeries}
               onStopSeries={handleStopSeries}

@@ -58,21 +58,6 @@ const EventBaseObjectCore = z.looseObject({
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
-  timezone: z
-    .string()
-    .optional()
-    .refine(
-      (tz) => {
-        if (tz === undefined) return true;
-        try {
-          Intl.DateTimeFormat(undefined, { timeZone: tz });
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      { message: "Invalid IANA timezone string" },
-    ),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
   sessionTypeId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
 });

@@ -254,7 +254,6 @@ export const buildEventCreateData = ({
     showDescription: validated.showDescription ?? false,
     deferCoachReveal: validated.deferCoachReveal ?? false,
     allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
-    timezone: validated.timezone ?? "UTC",
     team: { connect: { id: teamId } },
     group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
     sessionType: validated.sessionTypeId ? { connect: { id: validated.sessionTypeId } } : undefined,
@@ -350,10 +349,6 @@ export const buildEventUpdateData = ({
     updateData.allowStudentCoachChoice = validated.allowStudentCoachChoice;
   }
 
-  if (validated.timezone !== undefined) {
-    updateData.timezone = validated.timezone;
-  }
-
   if (validated.groupId !== undefined) {
     updateData.group =
       validated.groupId === null ? { disconnect: true } : { connect: { id: validated.groupId } };
@@ -412,7 +407,6 @@ export const buildDuplicateEventData = ({
     showDescription: (sourceEvent as any).showDescription,
     deferCoachReveal: (sourceEvent as any).deferCoachReveal ?? false,
     allowStudentCoachChoice: (sourceEvent as any).allowStudentCoachChoice ?? false,
-    timezone: (sourceEvent as any).timezone ?? "UTC",
     group: sourceEvent.groupId ? { connect: { id: sourceEvent.groupId } } : undefined,
     sessionType: sourceEvent.sessionTypeId
       ? { connect: { id: sourceEvent.sessionTypeId } }
