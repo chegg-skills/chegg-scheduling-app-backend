@@ -526,7 +526,7 @@ const cancelEventScheduleSlot = async (
     });
 
     for (const booking of cancelledBookings) {
-      await queueBookingStatusNotifications(booking);
+      await queueBookingStatusNotifications(booking, { slotRevealedAt: slot.coachRevealSentAt });
     }
   } catch (error) {
     // Log but don't fail the cancellation if notifications fail

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>1:N Tutoring Session Workflow</title>
+  <!-- Render Mermaid Diagrams dynamically -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 40px;
+      background-color: #f9f9fb;
+      color: #1e1e24;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e1e1e8;
+    }
+    h1 {
+      border-bottom: 2px solid #eaecef;
+      padding-bottom: 12px;
+      margin-top: 0;
+      color: #0f172a;
+    }
+    p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>1:N Tutoring Session Workflow (ONE_TO_MANY)</h1>
+    <p>Open this page locally in your browser to view the interactive flowchart of the 1:N group session lifecycle (Form selection, Event configuration, and Student booking assignment).</p>
+    
+    <div class="mermaid">
+      graph TD
+          %% Admin Creation Flow
+          subgraph Admin_Creation ["1. Admin Event Creation Form"]
+              Start(["Start: Create Event Form"]) --> Basic["Enter Basic Info"]
+              Basic --> LinkSession{"Link to Session Type?<br/>(Selected on form)"}
+              LinkSession -- "Yes" --> SelectSessionType["Choose Session Type"]
+              LinkSession -- "No" --> Location["Choose Location: Virtual / Custom / In-Person"]
+              SelectSessionType --> Location
+              Location --> Interaction["Select Interaction Type: 1:N (One-to-Many)"]
+              
+              %% Auto-locks
+              Interaction --> LockBookingMode["Auto-Lock: Booking Mode = Fixed Slots"]
+              LockBookingMode --> LockStrategy["Auto-Lock: Assignment Strategy = Direct"]
+              
+              %% Capacity & Reveal Policy
+              LockStrategy --> Policy["Set Notice & Buffer Windows"]
+              Policy --> SetCapacity["Define Participant Capacity (Min & Max seats)"]
+              SetCapacity --> DeferChoice{"Enable 'Defer Coach Reveal'?<br/>(Hide Coach & Zoom link)"}
+              
+              DeferChoice -- "Yes" --> CreateEvent(["Create Event"])
+              DeferChoice -- "No" --> CreateEvent
+          end
+
+          %% Post Creation Configuration
+          subgraph Setup_Phase ["2. Setup & Slots Configuration"]
+              CreateEvent --> AddCoaches["Assign Coaches to Event Pool"]
+              AddCoaches --> RouteRouting{"Was Session Type Linked?"}
+              RouteRouting -- "Yes" --> ShowDir["Event appears in public Booking Directory"]
+              RouteRouting -- "No" --> DirectLink["Only accessible via Direct Event Link"]
+              
+              %% Slots Creation (Required for Fixed Slots)
+              ShowDir --> CreateSlots["Admin manually creates predefined slots"]
+              DirectLink --> CreateSlots
+              CreateSlots --> AssignSlotCoach["Assign specific Coach & capacity to each slot"]
+          end
+
+          %% Student Booking Flow
+          subgraph Student_Booking ["3. Student Booking Flow"]
+              AssignSlotCoach --> StudentStart(["Student visits booking page"])
+              StudentStart --> SelectSlot["Student selects an available Fixed Slot"]
+              
+              SelectSlot --> CheckCap{"Is Slot Full?<br/>(maxParticipantCount reached)"}
+              CheckCap -- "Yes" --> DisableBooking["Hide slot or disable booking button"]
+              CheckCap -- "No" --> StudentForm["Student fills out Booking Details form"]
+              
+              StudentForm --> BookSession(["Book Session"])
+          end
+
+          %% Database Assignment & Confirmation
+          subgraph DB_Confirmation ["4. System Processing & Confirmation"]
+              BookSession --> DBTransaction["Acquire Row Lock: ScheduleSlot only - FIXED_SLOTS mode requires no event lock"]
+              DBTransaction --> ValidateCap["Verify Capacity inside transaction to prevent race conditions"]
+              
+              ValidateCap --> StudentRecord["Upsert Student Profile"]
+              StudentRecord --> SaveBooking["Save Booking Record Status: CONFIRMED"]
+              SaveBooking --> CheckReveal{"Is 'Defer Coach Reveal' ON?"}
+              
+              %% Defer Coach Reveal Branch
+              CheckReveal -- "Yes (ON)" --> ConfirmPlaceholder["Send BOOKING_CONFIRMED_DEFERRED email - no coach or URL - suppress all reminders"]
+              CheckReveal -- "No (OFF)" --> ConfirmFull["Send BOOKING_CONFIRMED email with coach and Zoom link + queue reminders: 24H 12H 6H 1H"]
+          end
+
+          %% Coach Reveal Action
+          subgraph Reveal_Action ["5. Coach Reveal Phase (Only if Defer Reveal is ON)"]
+              ConfirmPlaceholder --> PreSession["Prior to session start"]
+              PreSession --> TriggerReveal["Admin triggers Reveal - coaches can only self-reveal"]
+              
+              TriggerReveal --> RegisterReveal["Atomically update slot: assignedCoachId + sessionJoinUrl + coachRevealSentAt; update all active bookings coachUserId"]
+              RegisterReveal --> SendRevealAlert["Queue COACH_REVEAL_SENT to all booked students + COACH_BOOKING_ASSIGNED to the coach"]
+          end
+    </div>
+  </div>
+</body>
+</html>

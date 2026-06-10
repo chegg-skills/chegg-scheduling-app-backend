@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>N:1 Tutoring Session Workflow</title>
+  <!-- Render Mermaid Diagrams dynamically -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 40px;
+      background-color: #f9f9fb;
+      color: #1e1e24;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e1e1e8;
+    }
+    h1 {
+      border-bottom: 2px solid #eaecef;
+      padding-bottom: 12px;
+      margin-top: 0;
+      color: #0f172a;
+    }
+    p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>N:1 Tutoring Session Workflow (MANY_TO_ONE)</h1>
+    <p>Open this page locally in your browser to view the interactive flowchart of the N:1 tutoring session lifecycle (Coach pool assignment, co-host logic, and student booking paths).</p>
+    
+    <div class="mermaid">
+      graph TD
+          %% Admin Creation Flow
+          subgraph Admin_Creation ["1. Admin Event Creation Form"]
+              Start(["Start: Create Event Form"]) --> Basic["Enter Basic Info"]
+              Basic --> LinkSession{"Link to Session Type?<br/>(Selected on form)"}
+              LinkSession -- "Yes" --> SelectSessionType["Choose Session Type"]
+              LinkSession -- "No" --> Location["Choose Location: Virtual / Custom / In-Person"]
+              SelectSessionType --> Location
+              Location --> Interaction["Select Interaction Type: N:1 (MANY_TO_ONE)"]
+              Interaction --> BookingMode{"Choose Booking Mode"}
+              
+              %% Booking Mode branch
+              BookingMode -- "Coach Availability (Dynamic)" --> Policy["Set Notice & Buffer Windows"]
+              BookingMode -- "Fixed Slots (Predefined)" --> Policy
+              
+              %% Config locking & auto-deriving
+              Policy --> SetCoHostCount["Optionally define Target Co-Host Count - null means all available co-coaches join"]
+              SetCoHostCount --> Strategy{"Select Assignment Strategy"}
+              
+              Strategy -- "Direct" --> LockFixedLead["Auto-Lock: Leadership Strategy = Fixed Lead"]
+              LockFixedLead --> SetDefaultHost["Select Default Event Host (Lead Coach)"]
+              SetDefaultHost --> CreateEvent(["Create Event"])
+              
+              Strategy -- "Round Robin" --> LockRotatingLead["Auto-Lock: Leadership Strategy = Rotating Lead"]
+              LockRotatingLead --> SetPool["Define Coach Pool Size (Min >= 2)"]
+              SetPool --> CreateEvent
+          end
+
+          %% Post Creation Configuration
+          subgraph Setup_Phase ["2. Setup & Availability Configuration"]
+              CreateEvent --> AddCoaches["Assign Coaches to Event Pool"]
+              AddCoaches --> RouteRouting{"Was Session Type Linked?"}
+              RouteRouting -- "Yes" --> ShowDir["Event appears in public Booking Directory"]
+              RouteRouting -- "No" --> DirectLink["Only accessible via Direct Event Link"]
+              
+              %% Slots/Availability depending on Booking Mode
+              ShowDir --> CheckMode{"Is Booking Mode Fixed Slots?"}
+              DirectLink --> CheckMode
+              
+              CheckMode -- "Yes" --> AdminSlots["Admin creates predefined slots - respecting min notice window"]
+              CheckMode -- "No" --> CoachAvail["All Pool Coaches define availability weekly"]
+          end
+
+          %% Student Booking Flow
+          subgraph Student_Booking ["3. Student Booking Flow"]
+              AdminSlots --> StudentStart(["Student visits booking page"])
+              CoachAvail --> StudentStart
+              
+              StudentStart --> AutoAssign{"Is Assignment Strategy Direct?"}
+              
+              AutoAssign -- "Yes (Direct)" --> FilterDefaultSlots["System displays times where Default Host is available"]
+              AutoAssign -- "No (Round Robin)" --> FilterAllSlots["System displays times where next Lead Coach in rotation is available"]
+              
+              FilterDefaultSlots --> SelectTime["Student selects a Date & Time"]
+              FilterAllSlots --> SelectTime
+              
+              SelectTime --> StudentForm["Student fills out Booking Details form"]
+              StudentForm --> BookSession(["Book Session"])
+          end
+
+          %% Database Assignment & Confirmation
+          subgraph DB_Confirmation ["4. System Processing & Assignment"]
+              BookSession --> DBTransaction["Acquire Row Locks: Event + Lead Coach (COACH_AVAILABILITY) or ScheduleSlot + Lead Coach (FIXED_SLOTS) - co-coaches not hard-locked"]
+              DBTransaction --> AssignLead{"Resolve Lead Coach Assignment"}
+              
+              AssignLead -- "Direct" --> AssignFixedLead["Assign Default Event Host as Lead Coach"]
+              AssignLead -- "Round Robin" --> AssignRRLead["Assign next Coach in Round-Robin order as Lead Coach"]
+              
+              AssignFixedLead --> AssignCoHosts["Query pool and assign available co-coaches up to Target Co-Host Count (Rotates via nextCoachOrder)"]
+              AssignRRLead --> AssignCoHosts
+              
+              AssignCoHosts --> StudentRecord["Upsert Student Profile"]
+              StudentRecord --> SaveBooking["Save Booking Record Status: CONFIRMED (with Lead & Co-Coaches)"]
+              SaveBooking --> NotificationQueue["Send BOOKING_CONFIRMED to student + COACH_BOOKING_ASSIGNED to lead + COACH_BOOKING_COCOACH_ASSIGNED to each co-coach + queue student reminders: 24H 12H 6H 1H"]
+          end
+    </div>
+  </div>
+</body>
+</html>
