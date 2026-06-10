@@ -21,7 +21,6 @@ import { generateRecurrenceDates } from "./recurrence.service";
 import { queueBookingStatusNotifications } from "../bookings/booking.notification";
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
-import { toLocalAvailabilityInfo } from "../availability/availability.shared";
 import { logger } from "../../shared/logging/logger";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { BookingStatus } from "@prisma/client";
@@ -72,12 +71,10 @@ const resolveEventSchedulingConfig = (
       (payload.bookingMode as EventBookingMode) ??
       existing?.bookingMode ??
       EventBookingMode.COACH_AVAILABILITY,
-    allowedWeekdays: payload.allowedWeekdays ?? existing?.allowedWeekdays ?? [],
     minimumNoticeMinutes: payload.minimumNoticeMinutes ?? existing?.minimumNoticeMinutes ?? 0,
     minParticipantCount: payload.minParticipantCount ?? existing?.minParticipantCount ?? null,
     maxParticipantCount: payload.maxParticipantCount ?? existing?.maxParticipantCount ?? null,
     bufferAfterMinutes: payload.bufferAfterMinutes ?? existing?.bufferAfterMinutes ?? 0,
-    weeklyAvailability: payload.weeklyAvailability ?? existing?.weeklyAvailability ?? [],
   };
 
   // Enforce single-participant rule for OTO / MTO interaction types
@@ -101,49 +98,6 @@ const assertBookingNoticeSatisfied = (minimumNoticeMinutes: number, bookingStart
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       "Booking does not satisfy the minimum notice requirement.",
-    );
-  }
-};
-
-const assertBookingAvailabilityAllowed = (
-  allowedWeekdays: number[],
-  weeklyAvailability: any[],
-  bookingStartTime: Date,
-  bookingEndTime: Date,
-  timezone: string = "UTC",
-) => {
-  const startLocal = toLocalAvailabilityInfo(bookingStartTime, timezone);
-  const endLocal = toLocalAvailabilityInfo(bookingEndTime, timezone);
-  const day = startLocal.dayOfWeek;
-  const dayRanges = weeklyAvailability.filter((a) => a.dayOfWeek === day);
-
-  if (dayRanges.length > 0) {
-    const [sH, sM] = startLocal.hhmm.split(":").map(Number);
-    const [eH, eM] = endLocal.hhmm.split(":").map(Number);
-    const slotStartMins = sH * 60 + sM;
-    const slotEndMins = eH * 60 + eM;
-
-    const isWithinAnyRange = dayRanges.some((range) => {
-      const [rSH, rSM] = range.startTime.split(":").map(Number);
-      const [rEH, rEM] = range.endTime.split(":").map(Number);
-      return slotStartMins >= rSH * 60 + rSM && slotEndMins <= rEH * 60 + rEM;
-    });
-
-    if (!isWithinAnyRange) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        `Booking is outside the allowed time range for this day (${timezone}).`,
-      );
-    }
-    return;
-  }
-
-  // Fallback to allowedWeekdays if no specific ranges are defined
-  if (allowedWeekdays.length === 0) return;
-  if (!allowedWeekdays.includes(day)) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Booking is not allowed on this day of the week.",
     );
   }
 };
@@ -252,26 +206,6 @@ const listEventScheduleSlots = async (
   return { slots };
 };
 
-const assertSlotWithinAvailability = async (
-  eventId: string,
-  startTime: Date,
-  endTime: Date,
-) => {
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    include: { weeklyAvailability: true },
-  });
-  if (!event) throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event not found.");
-
-  assertBookingAvailabilityAllowed(
-    event.allowedWeekdays,
-    event.weeklyAvailability,
-    startTime,
-    endTime,
-    event.timezone,
-  );
-};
-
 const createEventScheduleSlot = async (
   eventId: string,
   payload: UpsertEventScheduleSlotInput,
@@ -303,11 +237,6 @@ const createEventScheduleSlot = async (
     });
     const durationMs = validated.endTime.getTime() - validated.startTime.getTime();
 
-    // Validate all slots before performing any inserts (All or Nothing)
-    for (const startTime of startDates) {
-      const endTime = new Date(startTime.getTime() + durationMs);
-      await assertSlotWithinAvailability(eventId, startTime, endTime);
-    }
 
     const slotsData = startDates.map((startTime) => ({
       eventId,
@@ -340,7 +269,6 @@ const createEventScheduleSlot = async (
     return firstSlot;
   }
 
-  await assertSlotWithinAvailability(eventId, validated.startTime, validated.endTime);
 
   const existingSlot = await resolveMatchingScheduleSlot(eventId, validated.startTime);
   if (existingSlot) {
@@ -389,13 +317,7 @@ const updateEventScheduleSlot = async (
   // Use partial schema for updates to avoid refinement issues
   const validated = EventScheduleSlotSchema.partial.parse(payload);
 
-  if (validated.startTime || validated.endTime) {
-    await assertSlotWithinAvailability(
-      eventId,
-      validated.startTime ?? slot.startTime,
-      validated.endTime ?? slot.endTime,
-    );
-  }
+
 
   // Remove recurrence if it exists, since it is not part of the EventScheduleSlot model
   delete (validated as any).recurrence;
@@ -762,24 +684,15 @@ const replenishContinuousSlots = async (
 
         const slotEnd = new Date(nextStart.getTime() + durationMs);
 
-        let isValid = true;
-        try {
-          await assertSlotWithinAvailability(eventId, nextStart, slotEnd);
-        } catch {
-          isValid = false;
-        }
-
-        if (isValid) {
-          newSlotsData.push({
-            eventId,
-            startTime: nextStart,
-            endTime: slotEnd,
-            capacity: latestSlot.capacity,
-            assignedCoachId: latestSlot.assignedCoachId,
-            isActive: latestSlot.isActive,
-            recurrenceGroupId: group.id,
-          });
-        }
+        newSlotsData.push({
+          eventId,
+          startTime: nextStart,
+          endTime: slotEnd,
+          capacity: latestSlot.capacity,
+          assignedCoachId: latestSlot.assignedCoachId,
+          isActive: latestSlot.isActive,
+          recurrenceGroupId: group.id,
+        });
       }
 
       if (newSlotsData.length > 0) {
@@ -850,7 +763,6 @@ const resumeRecurrenceGroup = async (
 export {
   resolveEventSchedulingConfig,
   assertBookingNoticeSatisfied,
-  assertBookingAvailabilityAllowed,
   getEffectiveParticipantPolicy,
   assertParticipantCapacityAvailable,
   resolveMatchingScheduleSlot,

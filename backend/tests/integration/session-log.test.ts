@@ -116,7 +116,6 @@ beforeAll(async () => {
       createdById: superAdmin.id,
       updatedById: superAdmin.id,
       publicBookingSlug: "session-log-test-event",
-      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
     },
   });
 
@@ -454,7 +453,6 @@ describe("POST /api/events/:eventId/schedule-slots/:slotId/log — business logi
         createdById: context.superAdmin.id,
         updatedById: context.superAdmin.id,
         publicBookingSlug: "other-log-event",
-        allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
       },
     });
     const otherSlotStart = new Date(slotStart.getTime() + 3 * 24 * 60 * 60 * 1000);

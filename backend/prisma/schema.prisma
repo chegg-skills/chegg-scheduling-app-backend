@@ -145,7 +145,6 @@ model Event {
   updatedAt                 DateTime                  @updatedAt
   publicBookingSlug         String                    @unique
   bookingMode               EventBookingMode          @default(COACH_AVAILABILITY)
-  allowedWeekdays           Int[]                     @default([])
   minimumNoticeMinutes      Int                       @default(0)
   minParticipantCount       Int?
   maxParticipantCount       Int?
@@ -174,7 +173,6 @@ model Event {
   coaches                   EventCoach[]
   routingState              EventRoutingState?
   scheduleSlots             EventScheduleSlot[]
-  weeklyAvailability        EventWeeklyAvailability[]
   recurrenceGroups          RecurrenceGroup[]
 
   @@index([teamId, isActive])
@@ -315,19 +313,6 @@ model SessionAttendance {
   sessionLog   SessionLog @relation(fields: [sessionLogId], references: [id], onDelete: Cascade)
 
   @@index([sessionLogId])
-}
-
-model EventWeeklyAvailability {
-  id        String   @id @default(uuid())
-  eventId   String
-  dayOfWeek Int
-  startTime String
-  endTime   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  @@index([eventId, dayOfWeek])
 }
 
 model UserWeeklyAvailability {

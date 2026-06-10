@@ -176,7 +176,6 @@ export const bookableEventInclude = Prisma.validator<Prisma.EventInclude>()({
       },
     },
   },
-  weeklyAvailability: true,
   _count: {
     select: {
       bookings: {
@@ -193,7 +192,6 @@ export type BookingSchedulingContext = Pick<
   | "id"
   | "interactionType"
   | "bookingMode"
-  | "allowedWeekdays"
   | "minimumNoticeMinutes"
   | "minParticipantCount"
   | "maxParticipantCount"
@@ -202,7 +200,6 @@ export type BookingSchedulingContext = Pick<
   | "sessionLeadershipStrategy"
   | "fixedLeadCoachId"
   | "targetCoHostCount"
-  | "weeklyAvailability"
   | "timezone"
 >;
 
@@ -253,7 +250,6 @@ export const buildSchedulingContext = (event: BookableEvent): BookingSchedulingC
   id: event.id,
   interactionType: event.interactionType,
   bookingMode: event.bookingMode,
-  allowedWeekdays: event.allowedWeekdays,
   minimumNoticeMinutes: event.minimumNoticeMinutes,
   minParticipantCount: event.minParticipantCount,
   maxParticipantCount: event.maxParticipantCount,
@@ -262,7 +258,6 @@ export const buildSchedulingContext = (event: BookableEvent): BookingSchedulingC
   sessionLeadershipStrategy: event.sessionLeadershipStrategy,
   fixedLeadCoachId: event.fixedLeadCoachId,
   targetCoHostCount: event.targetCoHostCount,
-  weeklyAvailability: event.weeklyAvailability,
   timezone: event.timezone,
 });
 

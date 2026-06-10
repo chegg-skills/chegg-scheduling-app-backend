@@ -29,7 +29,6 @@ const publicEventSelect = {
   publicBookingSlug: true,
   showDescription: true,
   teamId: true,
-  allowedWeekdays: true,
   minimumNoticeMinutes: true,
   minParticipantCount: true,
   maxParticipantCount: true,

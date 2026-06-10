@@ -435,7 +435,6 @@ describe("Event CRUD routes", () => {
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
-      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
     });
     expect(created.status).toBe(201);
     const eventId = created.body.data.id;
@@ -504,7 +503,6 @@ describe("Event CRUD routes", () => {
       assignmentStrategy: "ROUND_ROBIN",
       minCoachCount: 2,
       bookingMode: "FIXED_SLOTS",
-      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
       minParticipantCount: 1,
       maxParticipantCount: 10,
     });
@@ -562,7 +560,6 @@ describe("Event CRUD routes", () => {
       name: "Event with Booking",
       eventTypeId: eventType.body.data.id,
       bookingMode: "FIXED_SLOTS",
-      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
     });
     const eventId = event.body.data.id;
 
@@ -727,7 +724,6 @@ describe("Event scheduling routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
-      allowedWeekdays: [1, 4],
       minimumNoticeMinutes: 360,
       minParticipantCount: 2,
       maxParticipantCount: 8,
@@ -735,7 +731,6 @@ describe("Event scheduling routes", () => {
 
     expect(created.status).toBe(201);
     expect(created.body.data.bookingMode).toBe("FIXED_SLOTS");
-    expect(created.body.data.allowedWeekdays).toEqual([1, 4]);
     expect(created.body.data.minimumNoticeMinutes).toBe(360);
     expect(created.body.data.minParticipantCount).toBe(2);
     expect(created.body.data.maxParticipantCount).toBe(8);
@@ -744,14 +739,12 @@ describe("Event scheduling routes", () => {
       .patch(`/api/events/${created.body.data.id}`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
-        allowedWeekdays: [],
         minimumNoticeMinutes: 60,
       });
 
     // ONE_TO_MANY events are permanently locked to FIXED_SLOTS — bookingMode cannot be changed.
     expect(updated.status).toBe(200);
     expect(updated.body.data.bookingMode).toBe("FIXED_SLOTS");
-    expect(updated.body.data.allowedWeekdays).toEqual([]);
     expect(updated.body.data.minimumNoticeMinutes).toBe(60);
   });
 
@@ -907,17 +900,6 @@ describe("Event scheduling routes", () => {
       .send({ coaches: [{ userId: context.coachOneId }] });
 
     const sunday = getNextUtcWeekdayAt(0, 10);
-
-    // Add weekly availability for Sundays 09:00 - 17:00
-    await request(app)
-      .patch(`/api/teams/${context.teamId}/events/${eventId}`)
-      .set("Authorization", `Bearer ${context.teamAdminToken}`)
-      .send({
-        weeklyAvailability: [
-          { dayOfWeek: 0, startTime: "09:00", endTime: "17:00" }
-        ],
-        allowedWeekdays: [0]
-      });
 
     // Create 5 occurrences starting on Sunday
     const createRes = await request(app)
@@ -1821,7 +1803,6 @@ describe("Recurrence — slot creation", () => {
       name: "Recurrence Test Event",
       eventTypeId: eventTypeId,
       bookingMode: "FIXED_SLOTS",
-      allowedWeekdays: [0, 1, 2, 3, 4, 5, 6],
     });
     eventId = event.body.data.id;
   });
@@ -1927,38 +1908,6 @@ describe("Recurrence — slot creation", () => {
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
 
     expect(listRes.body.data.slots).toHaveLength(1);
-  });
-
-  it("all-or-nothing: a slot outside weeklyAvailability causes zero slots to be inserted", async () => {
-    // Create a restricted event: Monday 09:00–09:45 only
-    const restrictedEvent = await createEvent(context.teamId, context.teamAdminToken, {
-      name: "Restricted Recurrence Event",
-      eventTypeId: eventTypeId,
-      bookingMode: "FIXED_SLOTS",
-      weeklyAvailability: [{ dayOfWeek: 1, startTime: "09:00", endTime: "09:45" }],
-    });
-    const restrictedEventId = restrictedEvent.body.data.id;
-
-    // This slot runs 09:00–10:00 — endTime overflows the 09:45 range
-    const start = getNextUtcWeekdayAt(1, 9, 0); // Monday 09:00
-    const end = new Date(start.getTime() + 60 * 60 * 1000); // +60 min = 10:00
-
-    const res = await request(app)
-      .post(`/api/events/${restrictedEventId}/schedule-slots`)
-      .set("Authorization", `Bearer ${context.teamAdminToken}`)
-      .send({
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
-        recurrence: { frequency: "WEEKLY", occurrences: 1 },
-      });
-
-    expect(res.status).toBe(400);
-
-    // Verify atomicity: no slots were inserted
-    const count = await prisma.eventScheduleSlot.count({
-      where: { eventId: restrictedEventId },
-    });
-    expect(count).toBe(0);
   });
 
   it("rejects an invalid frequency value (schema validation)", async () => {

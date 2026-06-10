@@ -158,19 +158,6 @@ export function UpsertScheduleSlotDialog({
               ({timezoneLabel})
             </Typography>
           )}
-          {(event.weeklyAvailability?.length ?? 0) > 0 && (
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-              Availability is defined in <strong>{timezoneLabel}</strong>. Allowed times:{' '}
-              {Array.from(new Set(event.weeklyAvailability.map((a) => a.dayOfWeek)))
-                .sort()
-                .map((day) => {
-                  const ranges = event.weeklyAvailability.filter((a) => a.dayOfWeek === day)
-                  const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]
-                  return `${dayName} ${ranges.map((r) => `${r.startTime}–${r.endTime}`).join(', ')}`
-                })
-                .join(' | ')}
-            </Typography>
-          )}
         </Box>
 
         <FormField

@@ -4,8 +4,6 @@ import { BookingModeField } from './BookingModeField'
 import { BookingWindowFields } from './BookingWindowFields'
 import { DeferCoachRevealField } from './DeferCoachRevealField'
 import { ParticipantCapacityFields } from './ParticipantCapacityFields'
-import { EventAvailabilityPicker } from './EventAvailabilityPicker'
-
 interface EventSchedulingPolicyFieldsProps {
   caps?: InteractionTypeCaps | null
   isLocked?: boolean
@@ -19,7 +17,6 @@ export function EventSchedulingPolicyFields({ caps, isLocked }: EventSchedulingP
   return (
     <Stack spacing={3}>
       <BookingModeField caps={caps} />
-      <EventAvailabilityPicker />
       <BookingWindowFields />
       {caps?.multipleParticipants && <ParticipantCapacityFields />}
       {caps?.multipleParticipants && !caps?.multipleCoaches && (

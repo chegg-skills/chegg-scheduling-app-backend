@@ -31,7 +31,6 @@ const mockEvent = {
   locationValue: 'Zoom',
   minimumNoticeMinutes: 60,
   bufferAfterMinutes: 15,
-  allowedWeekdays: [1, 2, 3, 4, 5],
   sessionLeadershipStrategy: 'STUDENT_LED',
   publicBookingSlug: 'math-tutoring',
   coaches: [

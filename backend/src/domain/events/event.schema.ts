@@ -38,7 +38,6 @@ const EventBaseObjectCore = z.looseObject({
   locationValue: z.string(),
   isActive: z.boolean(),
   bookingMode: z.enum(EventBookingMode),
-  allowedWeekdays: z.array(z.number().int().min(0).max(6)).optional(),
   minimumNoticeMinutes: z.coerce.number().int().nonnegative(),
   bufferAfterMinutes: z.coerce.number().int().nonnegative(),
   minParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
@@ -76,15 +75,6 @@ const EventBaseObjectCore = z.looseObject({
     ),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
   sessionTypeId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
-  weeklyAvailability: z
-    .array(
-      z.object({
-        dayOfWeek: z.number().int().min(0).max(6),
-        startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
-        endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)"),
-      }),
-    )
-    .optional(),
 });
 
 /**
