@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react'
 import { utcToZonedString } from '@/utils/dateTimezone'
-import type { Event, EventScheduleSlot } from '@/types'
+import type { EventScheduleSlot } from '@/types'
 import type { RecurrenceConfig } from './RecurrenceSelector'
 
 const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 interface UseScheduleSlotFormProps {
-  event: Event
   slot?: EventScheduleSlot | null
   isOpen: boolean
 }
 
-export function useScheduleSlotForm({ event, slot, isOpen }: UseScheduleSlotFormProps) {
+export function useScheduleSlotForm({ slot, isOpen }: UseScheduleSlotFormProps) {
   const [newSlotDate, setNewSlotDate] = useState('')
   const [newSlotCapacity, setNewSlotCapacity] = useState<number | ''>('')
   const [assignedCoachId, setAssignedCoachId] = useState<string | null>(null)

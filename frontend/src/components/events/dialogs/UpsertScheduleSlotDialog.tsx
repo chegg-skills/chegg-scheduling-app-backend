@@ -57,7 +57,7 @@ export function UpsertScheduleSlotDialog({
     setRecurrence,
     handleDateChange,
     isValid,
-  } = useScheduleSlotForm({ event, slot, isOpen })
+  } = useScheduleSlotForm({ slot, isOpen })
 
   const previewEndTime = newSlotDate
     ? new Date(zonedStringToUTC(newSlotDate, browserTimezone).getTime() + event.durationSeconds * 1000)
