@@ -220,7 +220,18 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     "Booking created.",
   );
 
-  void queueBookingCreatedNotifications(booking);
+  const slotRevealedAt = await (async () => {
+    if (booking.event?.deferCoachReveal && booking.scheduleSlotId) {
+      const slot = await prisma.eventScheduleSlot.findUnique({
+        where: { id: booking.scheduleSlotId },
+        select: { coachRevealSentAt: true },
+      });
+      return slot?.coachRevealSentAt ?? null;
+    }
+    return null;
+  })();
+
+  void queueBookingCreatedNotifications(booking, { slotRevealedAt });
 
   return booking;
 };
@@ -389,7 +400,18 @@ const cancelBooking = async (
     "Booking cancelled.",
   );
 
-  void queueBookingStatusNotifications(updatedBooking);
+  const slotRevealedAt = await (async () => {
+    if (updatedBooking.event?.deferCoachReveal && updatedBooking.scheduleSlotId) {
+      const slot = await prisma.eventScheduleSlot.findUnique({
+        where: { id: updatedBooking.scheduleSlotId },
+        select: { coachRevealSentAt: true },
+      });
+      return slot?.coachRevealSentAt ?? null;
+    }
+    return null;
+  })();
+
+  void queueBookingStatusNotifications(updatedBooking, { slotRevealedAt });
 
   return updatedBooking;
 };

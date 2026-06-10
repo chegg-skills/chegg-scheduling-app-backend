@@ -191,7 +191,14 @@ const cancelScheduledBookingReminders = async (booking: SafeBooking): Promise<vo
   }
 };
 
-const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
+type BookingNotificationOpts = {
+  slotRevealedAt?: Date | null;
+};
+
+const queueBookingCreatedNotifications = async (
+  booking: SafeBooking,
+  opts?: BookingNotificationOpts,
+) => {
   try {
     const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
     const coachVariables = await getBookingNotificationVariables(
@@ -200,7 +207,7 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
     );
 
     const config = await getTeamNotificationConfig(booking.teamId);
-    const isDeferredReveal = booking.event?.deferCoachReveal === true;
+    const isDeferredReveal = booking.event?.deferCoachReveal === true && !opts?.slotRevealedAt;
 
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
@@ -275,7 +282,10 @@ const queueBookingCreatedNotifications = async (booking: SafeBooking) => {
   }
 };
 
-const queueBookingStatusNotifications = async (booking: SafeBooking) => {
+const queueBookingStatusNotifications = async (
+  booking: SafeBooking,
+  opts?: BookingNotificationOpts,
+) => {
   try {
     const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
     const coachVariables = await getBookingNotificationVariables(
@@ -300,7 +310,7 @@ const queueBookingStatusNotifications = async (booking: SafeBooking) => {
     if (booking.status === BookingStatus.CANCELLED) {
       const publishTasks: Array<Promise<boolean>> = [
         publishNotificationSafely({
-          type: booking.event?.deferCoachReveal
+          type: booking.event?.deferCoachReveal && !opts?.slotRevealedAt
             ? "BOOKING_CANCELLED_DEFERRED"
             : "BOOKING_CANCELLED",
           recipients: booking.studentEmail,
