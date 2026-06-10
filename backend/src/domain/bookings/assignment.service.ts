@@ -51,11 +51,18 @@ const isCandidateAvailable = async (
   candidate: CoachCandidate,
   context: AssignmentContext,
 ): Promise<boolean> => {
+  const weeklyOverride =
+    context.bookingMode !== "FIXED_SLOTS"
+      ? await context.prisma.eventCoachWeeklyAvailability.findMany({
+          where: { eventId: context.eventId, coachUserId: candidate.coachUserId },
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        })
+      : [];
   return isCoachAvailable(
     candidate.coachUserId,
     context.start,
     context.end,
-    buildAvailabilityOptions(context),
+    { ...buildAvailabilityOptions(context), weeklyOverride },
   );
 };
 

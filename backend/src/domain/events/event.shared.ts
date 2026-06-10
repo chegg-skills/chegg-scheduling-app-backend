@@ -26,6 +26,9 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
           weeklyAvailability: true,
         },
       },
+      weeklyAvailabilityOverride: {
+        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+      },
     },
   },
   weeklyAvailability: true,

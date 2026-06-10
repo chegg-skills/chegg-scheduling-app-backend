@@ -1,5 +1,10 @@
 import { StatusCodes } from "http-status-codes";
-import { UserAvailabilityException, UserRole, UserWeeklyAvailability } from "@prisma/client";
+import {
+  EventCoachWeeklyAvailability,
+  UserAvailabilityException,
+  UserRole,
+  UserWeeklyAvailability,
+} from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -123,6 +128,51 @@ export const removeAvailabilityException = async (
     endTime: deleted.endTime,
     callerIsAdmin: caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN,
   });
+};
+
+/**
+ * Returns the event-specific weekly availability override for a coach on a given event.
+ * An empty array means no override is set — the coach's global schedule applies.
+ */
+export const getEventCoachWeeklyAvailability = async (
+  eventId: string,
+  coachUserId: string,
+): Promise<EventCoachWeeklyAvailability[]> => {
+  return prisma.eventCoachWeeklyAvailability.findMany({
+    where: { eventId, coachUserId },
+    orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+  });
+};
+
+/**
+ * Atomically replaces the event-specific weekly availability override for a coach.
+ * Passing an empty array clears the override and restores the global fallback.
+ * Only SUPER_ADMIN and TEAM_ADMIN are permitted to call this.
+ *
+ * @throws {ErrorHandler} 403 — caller is not SUPER_ADMIN or TEAM_ADMIN.
+ */
+export const setEventCoachWeeklyAvailability = async (
+  eventId: string,
+  coachUserId: string,
+  slots: { dayOfWeek: number; startTime: string; endTime: string }[],
+  caller: CallerContext,
+): Promise<EventCoachWeeklyAvailability[]> => {
+  if (caller.role !== UserRole.SUPER_ADMIN && caller.role !== UserRole.TEAM_ADMIN) {
+    throw new ErrorHandler(
+      StatusCodes.FORBIDDEN,
+      "Only team administrators can manage event-specific coach schedules.",
+    );
+  }
+  validateWeeklySlots(slots);
+
+  await prisma.$transaction([
+    prisma.eventCoachWeeklyAvailability.deleteMany({ where: { eventId, coachUserId } }),
+    prisma.eventCoachWeeklyAvailability.createMany({
+      data: slots.map((slot) => ({ ...slot, eventId, coachUserId })),
+    }),
+  ]);
+
+  return getEventCoachWeeklyAvailability(eventId, coachUserId);
 };
 
 /**

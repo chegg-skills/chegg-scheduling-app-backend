@@ -428,3 +428,261 @@ describe("Timezone edge cases in slot availability", () => {
     expect(Array.isArray(res.body.data.slots)).toBe(true);
   });
 });
+
+describe("Slot availability — conflict and exception blocking", () => {
+  // Each test creates its own isolated team/event/coach to avoid cross-test pollution.
+
+  // Returns the UTC Date of the next occurrence of day-of-week (0=Sun) at the given UTC hour/min.
+  // Always returns a date at least 24 h in the future so no slot falls within the notice window.
+  const getNextWeekday = (dow: number, hour: number, min = 0): Date => {
+    const now = new Date();
+    const currentDay = now.getUTCDay();
+    const daysAhead = (dow - currentDay + 7) % 7 || 7;
+    return new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysAhead, hour, min),
+    );
+  };
+
+  // Uses the module-level superAdminToken — bootstrapAdmin can only be called once per test run.
+  async function createConflictTestEvent(opts: {
+    durationSeconds: number;
+    bufferAfterMinutes?: number;
+    coachTimezone?: string;
+    weeklySlots: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+    slug: string;
+  }) {
+    const coach = await registerUser(superAdminToken, {
+      firstName: "Conflict",
+      lastName: `Coach-${opts.slug}`,
+      email: `conflict-coach-${opts.slug}@example.com`,
+      password: "Password1234",
+      role: "COACH",
+    });
+    if (opts.coachTimezone) {
+      await prisma.user.update({ where: { id: coach.id }, data: { timezone: opts.coachTimezone } });
+    }
+
+    const teamAdminUser = await registerUser(superAdminToken, {
+      firstName: "Lead",
+      lastName: `Admin-${opts.slug}`,
+      email: `conflict-lead-${opts.slug}@example.com`,
+      password: "Password1234",
+      role: "TEAM_ADMIN",
+    });
+
+    const etRes = await request(app)
+      .post("/api/event-types")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ key: `conflict-et-${opts.slug}`, name: `ET ${opts.slug}`, sortOrder: 1, isActive: true });
+    const eventTypeId = etRes.body.data.id as string;
+
+    const teamRes = await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ name: `Conflict Team ${opts.slug}`, teamLeadId: teamAdminUser.id });
+    const teamId = teamRes.body.data.id as string;
+
+    await request(app)
+      .post(`/api/teams/${teamId}/members`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ userId: coach.id });
+
+    const evRes = await request(app)
+      .post(`/api/teams/${teamId}/events`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({
+        name: `Conflict Event ${opts.slug}`,
+        interactionType: "ONE_TO_ONE",
+        assignmentStrategy: "DIRECT",
+        durationSeconds: opts.durationSeconds,
+        bufferAfterMinutes: opts.bufferAfterMinutes ?? 0,
+        locationType: "VIRTUAL",
+        locationValue: "https://meet.example.com",
+        isActive: true,
+        eventTypeId,
+      });
+    const eventId = evRes.body.data.id as string;
+
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ coaches: [{ userId: coach.id }] });
+
+    await request(app)
+      .post(`/api/users/${coach.id}/availability/weekly`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send(opts.weeklySlots);
+
+    return { coachId: coach.id, eventId, teamId };
+  }
+
+  it("blocks a slot when the coach has a confirmed booking at that time", async () => {
+    const monday10 = getNextWeekday(1, 10, 0); // Monday 10:00 UTC
+    const monday11 = new Date(monday10.getTime() + 60 * 60 * 1000); // 11:00 UTC
+    const mondayStart = getNextWeekday(1, 0, 0);
+    const mondayEnd = new Date(mondayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const { coachId, eventId, teamId } = await createConflictTestEvent({
+      slug: "conflict-basic",
+      durationSeconds: 3600, // 60 min
+      weeklySlots: [{ dayOfWeek: 1, startTime: "09:00", endTime: "17:00" }],
+    });
+
+    // Seed a confirmed booking directly at 10:00–11:00 on Monday
+    await prisma.booking.create({
+      data: {
+        studentName: "Existing Student",
+        studentEmail: "existing@conflict.com",
+        teamId,
+        eventId,
+        coachUserId: coachId,
+        startTime: monday10,
+        endTime: monday11,
+        status: "CONFIRMED",
+      },
+    });
+
+    const res = await request(app)
+      .get(`/api/public/events/${eventId}/slots`)
+      .query({ startDate: mondayStart.toISOString(), endDate: mondayEnd.toISOString() });
+
+    expect(res.status).toBe(200);
+    const slots: Array<{ startTime: string }> = res.body.data.slots;
+
+    // 10:00 slot must be blocked
+    const blockedSlot = slots.find((s) => new Date(s.startTime).getTime() === monday10.getTime());
+    expect(blockedSlot).toBeUndefined();
+
+    // 09:00 and 11:00 slots must be available (coach is free)
+    const slot09 = slots.find((s) => new Date(s.startTime).getUTCHours() === 9);
+    const slot11 = slots.find((s) => new Date(s.startTime).getUTCHours() === 11);
+    expect(slot09).toBeDefined();
+    expect(slot11).toBeDefined();
+  });
+
+  it("returns no slots when the coach has an unavailability exception for that day", async () => {
+    const tuesday = getNextWeekday(2, 0, 0); // Tuesday midnight UTC
+    const wednesdayMidnight = new Date(tuesday.getTime() + 24 * 60 * 60 * 1000);
+
+    const { coachId, eventId } = await createConflictTestEvent({
+      slug: "exception-block",
+      durationSeconds: 1800, // 30 min
+      weeklySlots: [{ dayOfWeek: 2, startTime: "09:00", endTime: "17:00" }],
+    });
+
+    // Add an all-day unavailability exception for Tuesday
+    await prisma.userAvailabilityException.create({
+      data: {
+        userId: coachId,
+        date: tuesday,
+        isUnavailable: true,
+      },
+    });
+
+    const res = await request(app)
+      .get(`/api/public/events/${eventId}/slots`)
+      .query({ startDate: tuesday.toISOString(), endDate: wednesdayMidnight.toISOString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.slots).toHaveLength(0);
+  });
+
+  it("blocks a slot within the buffer window after an existing booking", async () => {
+    // Event: 60-min duration, 15-min buffer. Coach available Mon 09:00–17:00.
+    // Booking at 10:00–11:00. Slot at 11:00 falls within the 15-min buffer → blocked.
+    // Slot at 11:15 is outside the buffer → available.
+    const monday10 = getNextWeekday(1, 10, 0);
+    const monday11 = new Date(monday10.getTime() + 60 * 60 * 1000);
+    const monday1115 = new Date(monday10.getTime() + 75 * 60 * 1000);
+    const mondayStart = getNextWeekday(1, 0, 0);
+    const mondayEnd = new Date(mondayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const { coachId, eventId, teamId } = await createConflictTestEvent({
+      slug: "buffer-block",
+      durationSeconds: 3600,
+      bufferAfterMinutes: 15,
+      weeklySlots: [{ dayOfWeek: 1, startTime: "09:00", endTime: "17:00" }],
+    });
+
+    await prisma.booking.create({
+      data: {
+        studentName: "Buffer Student",
+        studentEmail: "buffer@conflict.com",
+        teamId,
+        eventId,
+        coachUserId: coachId,
+        startTime: monday10,
+        endTime: monday11,
+        status: "CONFIRMED",
+      },
+    });
+
+    const res = await request(app)
+      .get(`/api/public/events/${eventId}/slots`)
+      .query({ startDate: mondayStart.toISOString(), endDate: mondayEnd.toISOString() });
+
+    expect(res.status).toBe(200);
+    const slots: Array<{ startTime: string }> = res.body.data.slots;
+
+    // 11:00 slot must be blocked (within 15-min buffer of the 10:00 booking)
+    const slot11 = slots.find((s) => new Date(s.startTime).getTime() === monday11.getTime());
+    expect(slot11).toBeUndefined();
+
+    // 11:15 slot must be available (outside the buffer)
+    const slot1115 = slots.find((s) => new Date(s.startTime).getTime() === monday1115.getTime());
+    expect(slot1115).toBeDefined();
+  });
+
+  it("blocks a cross-midnight slot when a conflict exists on the next calendar day (validates batchFetchEnd)", async () => {
+    // Coach in Tokyo (UTC+9). Availability: Mon 22:00–23:59 JST + Tue 00:00–02:00 JST.
+    // A 2-hour slot starting Mon 22:30 JST (= Mon 13:30 UTC) ends Tue 00:30 JST (= Mon 15:30 UTC).
+    // A confirmed booking on Tue 00:05 JST (= Mon 15:05 UTC) overlaps this slot.
+    // Without the batchFetchEnd extension the booking would not be fetched and the slot
+    // would incorrectly appear available.
+
+    const { coachId, eventId, teamId } = await createConflictTestEvent({
+      slug: "cross-midnight-conflict",
+      durationSeconds: 7200, // 2 hours
+      coachTimezone: "Asia/Tokyo",
+      weeklySlots: [
+        { dayOfWeek: 1, startTime: "22:00", endTime: "23:59" }, // Monday JST
+        { dayOfWeek: 2, startTime: "00:00", endTime: "02:00" }, // Tuesday JST
+      ],
+    });
+
+    // next Monday 00:00 UTC = the UTC anchor for "next Monday"
+    const mondayUTC = getNextWeekday(1, 0, 0);
+    // Mon 13:30 UTC = Mon 22:30 JST — the cross-midnight slot start
+    const slotStart = new Date(mondayUTC.getTime() + 13 * 60 * 60 * 1000 + 30 * 60 * 1000);
+    // Mon 15:05 UTC = Tue 00:05 JST — the conflicting booking start
+    const conflictStart = new Date(mondayUTC.getTime() + 15 * 60 * 60 * 1000 + 5 * 60 * 1000);
+    const conflictEnd = new Date(conflictStart.getTime() + 60 * 60 * 1000); // 1 hour booking
+
+    await prisma.booking.create({
+      data: {
+        studentName: "Next Day Student",
+        studentEmail: "nextday@conflict.com",
+        teamId,
+        eventId,
+        coachUserId: coachId,
+        startTime: conflictStart,
+        endTime: conflictEnd,
+        status: "CONFIRMED",
+      },
+    });
+
+    const mondayEnd = new Date(mondayUTC.getTime() + 24 * 60 * 60 * 1000);
+    const res = await request(app)
+      .get(`/api/public/events/${eventId}/slots`)
+      .query({ startDate: mondayUTC.toISOString(), endDate: mondayEnd.toISOString() });
+
+    expect(res.status).toBe(200);
+    const slots: Array<{ startTime: string }> = res.body.data.slots;
+
+    // The Mon 22:30 JST (13:30 UTC) slot must be blocked by the Tue 00:05 JST booking
+    const crossMidnightSlot = slots.find(
+      (s) => new Date(s.startTime).getTime() === slotStart.getTime(),
+    );
+    expect(crossMidnightSlot).toBeUndefined();
+  });
+});

@@ -37,7 +37,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const mappedVariant = variantMap[variant]
+    if (import.meta.env.DEV && !(variant in variantMap)) {
+      console.error(`Button: unknown variant "${variant}". Expected one of: ${Object.keys(variantMap).join(', ')}.`)
+    }
+    const mappedVariant = variantMap[variant] ?? variantMap.primary
 
     return (
       <MuiButton
