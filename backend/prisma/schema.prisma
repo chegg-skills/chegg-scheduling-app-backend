@@ -493,7 +493,7 @@ model BookingDirectoryTeam {
   sortOrder Int                     @default(0)
   createdAt DateTime                @default(now())
   section   BookingDirectorySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  team      Team                    @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  team      Team                    @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([sectionId, teamId])
   @@index([sectionId])
