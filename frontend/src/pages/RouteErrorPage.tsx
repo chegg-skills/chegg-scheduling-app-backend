@@ -45,7 +45,7 @@ export function RouteErrorPage() {
             <Button onClick={() => navigate('/dashboard')}>
               Go to dashboard
             </Button>
-            <Button variant="secondary" onClick={() => navigate(-1)}>
+            <Button variant="outlined" onClick={() => navigate(-1)}>
               Go back
             </Button>
           </Stack>
