@@ -244,7 +244,6 @@ describe("Booking Domain Integration Tests", () => {
         where: { id: eventId },
         data: {
           bookingMode: "FIXED_SLOTS",
-          allowedWeekdays: [1],
           minimumNoticeMinutes: 0,
           minParticipantCount: 1,
           maxParticipantCount: 1,
@@ -280,7 +279,6 @@ describe("Booking Domain Integration Tests", () => {
         where: { id: eventId },
         data: {
           bookingMode: "FIXED_SLOTS",
-          allowedWeekdays: [1],
           minimumNoticeMinutes: 0,
           minParticipantCount: 1,
           maxParticipantCount: 1,

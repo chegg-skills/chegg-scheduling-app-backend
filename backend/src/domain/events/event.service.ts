@@ -15,7 +15,6 @@ import {
   type SafeEvent,
   type UpdateEventInput,
 } from "./event.shared";
-import { UpdateEventSchema } from "./event.schema";
 import {
   createEventType,
   listEventTypes,
@@ -34,7 +33,6 @@ import {
 } from "./eventCoach.service";
 import {
   assertBookingNoticeSatisfied,
-  assertBookingAvailabilityAllowed,
   assertParticipantCapacityAvailable,
   createEventScheduleSlot,
   deleteEventScheduleSlot,
@@ -177,15 +175,7 @@ const updateEvent = async (
 
   let updatedEvent: SafeEvent;
   try {
-    const validated = UpdateEventSchema.body.parse(payload);
     updatedEvent = await prisma.$transaction(async (tx) => {
-      if (validated.weeklyAvailability) {
-        await tx.eventWeeklyAvailability.deleteMany({ where: { eventId } });
-        await tx.eventWeeklyAvailability.createMany({
-          data: validated.weeklyAvailability.map((a) => ({ ...a, eventId })),
-        });
-      }
-
       return tx.event.update({
         where: { id: eventId },
         data: buildEventUpdateData({
@@ -353,7 +343,6 @@ export {
   deleteEventScheduleSlot,
   listSlotBookings,
   assertBookingNoticeSatisfied,
-  assertBookingAvailabilityAllowed,
   getEffectiveParticipantPolicy,
   assertParticipantCapacityAvailable,
   resolveMatchingScheduleSlot,

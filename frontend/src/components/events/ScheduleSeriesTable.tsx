@@ -1,4 +1,6 @@
 import { useState } from 'react'
+
+const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
@@ -38,7 +40,6 @@ const FREQUENCY_LABELS: Record<string, string> = {
 
 interface Props {
   groups: ScheduleSeriesGroup[]
-  eventTimezone: string
   onViewTracker: (group: ScheduleSeriesGroup) => void
   onRemoveSeries: (group: ScheduleSeriesGroup) => void
   onStopSeries?: (group: ScheduleSeriesGroup) => void
@@ -48,7 +49,6 @@ interface Props {
 
 export function ScheduleSeriesTable({
   groups,
-  eventTimezone,
   onViewTracker,
   onRemoveSeries,
   onStopSeries,
@@ -107,7 +107,7 @@ export function ScheduleSeriesTable({
         <TableBody>
           {paginatedGroups.map((group) => {
             const fmt = new Intl.DateTimeFormat('en-US', {
-              timeZone: eventTimezone,
+              timeZone: browserTimezone,
               hour: 'numeric',
               minute: '2-digit',
               hour12: true,
@@ -154,7 +154,7 @@ export function ScheduleSeriesTable({
                   {group.nextInstanceTime ? (
                     <Typography variant="body2" fontWeight={500}>
                       {new Intl.DateTimeFormat('en-US', {
-                        timeZone: eventTimezone,
+                        timeZone: browserTimezone,
                         weekday: 'short',
                         month: 'short',
                         day: 'numeric',

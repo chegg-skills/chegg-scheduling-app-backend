@@ -31,7 +31,6 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
       },
     },
   },
-  weeklyAvailability: true,
   team: {
     select: {
       id: true,
@@ -82,7 +81,6 @@ export type CreateEventInput = {
   locationValue?: string;
   isActive?: boolean;
   bookingMode?: string;
-  allowedWeekdays?: number[];
   minimumNoticeMinutes?: number;
   minParticipantCount?: number | null;
   maxParticipantCount?: number | null;
@@ -100,11 +98,6 @@ export type CreateEventInput = {
   timezone?: string;
   groupId?: string | null;
   sessionTypeId?: string | null;
-  weeklyAvailability?: Array<{
-    dayOfWeek: number;
-    startTime: string;
-    endTime: string;
-  }>;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput>;

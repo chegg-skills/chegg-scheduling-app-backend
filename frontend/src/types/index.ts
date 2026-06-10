@@ -265,16 +265,6 @@ export interface EventScheduleSlot {
   } | null
 }
 
-export interface EventWeeklyAvailability {
-  id: string
-  eventId: string
-  dayOfWeek: number
-  startTime: string
-  endTime: string
-  createdAt: string
-  updatedAt: string
-}
-
 /**
  * Full event record returned by authenticated admin/coach endpoints.
  *
@@ -306,7 +296,6 @@ export interface Event {
   durationSeconds: number
   locationType: EventLocationType
   locationValue: string
-  allowedWeekdays: number[]
   minimumNoticeMinutes: number
   sessionLeadershipStrategy: SessionLeadershipStrategy
   fixedLeadCoachId: string | null
@@ -321,7 +310,6 @@ export interface Event {
   allowStudentCoachChoice: boolean
   maxBookingWindowDays: number | null
   recurrenceVisibilityLimit?: number | null
-  timezone: string
   teamId: string
   sessionTypeId: string | null
   groupId: string | null
@@ -332,7 +320,6 @@ export interface Event {
   eventType: EventType
   sessionType?: { id: string; slug: string; name: string; description?: string | null } | null
   coaches: EventCoach[]
-  weeklyAvailability: EventWeeklyAvailability[]
   team?: {
     id: string
     name: string
@@ -559,7 +546,6 @@ export interface CreateEventDto {
   durationSeconds: number
   assignmentStrategy?: AssignmentStrategy
   bookingMode?: EventBookingMode
-  allowedWeekdays?: number[]
   minimumNoticeMinutes?: number
   minCoachCount?: number
   maxCoachCount?: number | null
@@ -570,14 +556,8 @@ export interface CreateEventDto {
   recurrenceVisibilityLimit?: number | null
   description?: string
   isActive?: boolean
-  timezone?: string
   sessionTypeId?: string | null
   groupId?: string | null
-  weeklyAvailability?: Array<{
-    dayOfWeek: number
-    startTime: string
-    endTime: string
-  }>
 }
 
 export interface UpdateEventDto extends Partial<CreateEventDto> { }

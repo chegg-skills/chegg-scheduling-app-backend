@@ -19,7 +19,6 @@ import {
 import { type SafeEvent } from "../events/event.shared";
 import {
   assertBookingNoticeSatisfied,
-  assertBookingAvailabilityAllowed,
   getEffectiveParticipantPolicy,
   replenishContinuousSlots,
 } from "../events/eventScheduling.service";
@@ -172,7 +171,6 @@ const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
     where: { isActive: true },
     orderBy: { coachOrder: "asc" },
   },
-  weeklyAvailability: true,
 });
 
 const isCoachAvailable = async (
@@ -471,17 +469,6 @@ const getAvailableSlots = async (
     }
 
     try {
-      // Fixed slots were explicitly created by an admin on a specific date — skip weekday/time-range
-      // checks. Only apply these checks for auto-generated flexible slots (no pre-existing scheduleSlot).
-      if (!scheduleSlot) {
-        assertBookingAvailabilityAllowed(
-          event.allowedWeekdays,
-          event.weeklyAvailability,
-          slotStart,
-          slotEnd,
-          event.timezone,
-        );
-      }
       assertBookingNoticeSatisfied(event.minimumNoticeMinutes, slotStart);
     } catch {
       return null;

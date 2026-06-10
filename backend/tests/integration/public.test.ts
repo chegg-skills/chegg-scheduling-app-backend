@@ -243,7 +243,6 @@ describe("Public API", () => {
         .set("Authorization", `Bearer ${superAdminToken}`)
         .send({
           bookingMode: "FIXED_SLOTS",
-          allowedWeekdays: [1],
           minimumNoticeMinutes: 180,
           maxParticipantCount: 1,
         });

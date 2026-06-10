@@ -1,7 +1,5 @@
 import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
 import type { Event } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { DataField } from '@/components/shared/ui/DataField'
@@ -77,49 +75,6 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           value={`${event.bufferAfterMinutes} min`}
           tooltip={TOOLTIPS.BUFFER}
         />
-        <DataField
-          label="Allowed weekdays"
-          value={
-            event.weeklyAvailability && event.weeklyAvailability.length > 0
-              ? Array.from(new Set(event.weeklyAvailability.map((a) => a.dayOfWeek)))
-                  .sort()
-                  .map((d) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
-                  .join(', ')
-              : event.allowedWeekdays.length > 0
-                ? event.allowedWeekdays
-                    .map((d) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
-                    .join(', ')
-                : 'All days'
-          }
-        />
-        {event.weeklyAvailability && event.weeklyAvailability.length > 0 && (
-          <Grid size={12}>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Availability Windows
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
-              {Array.from({ length: 7 }, (_, i) => i).map((dayIndex) => {
-                const daySlots = event.weeklyAvailability.filter((a) => a.dayOfWeek === dayIndex)
-                if (daySlots.length === 0) return null
-                return (
-                  <Box
-                    key={dayIndex}
-                    sx={{
-                      px: 1,
-                      py: 0.5,
-                      bgcolor: 'action.selected',
-                      borderRadius: 1,
-                      fontSize: '0.75rem',
-                    }}
-                  >
-                    <strong>{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayIndex]}</strong>:{' '}
-                    {daySlots.map((s) => `${s.startTime}-${s.endTime}`).join(', ')}
-                  </Box>
-                )
-              })}
-            </Box>
-          </Grid>
-        )}
 
         <Spacer />
 

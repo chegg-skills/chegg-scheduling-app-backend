@@ -18,7 +18,6 @@ export const eventFormSchema = z
     bookingMode: z
       .enum(['COACH_AVAILABILITY', 'FIXED_SLOTS'] as const)
       .default('COACH_AVAILABILITY'),
-    allowedWeekdays: z.array(z.number()).default([]),
     minimumNoticeMinutes: z.number().min(0).default(0),
     sessionLeadershipStrategy: z
       .enum(['SINGLE_COACH', 'FIXED_LEAD', 'ROTATING_LEAD'] as const)
@@ -48,9 +47,6 @@ export const eventFormSchema = z
     showDescription: z.boolean().default(false),
     deferCoachReveal: z.boolean().default(false),
     allowStudentCoachChoice: z.boolean().default(false),
-    timezone: z.string().default(
-      typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'
-    ),
     isActive: z.boolean().default(true),
     sessionTypeId: z.string().uuid().nullable().optional(),
     groupId: z.string().uuid().nullable().optional(),
@@ -60,15 +56,6 @@ export const eventFormSchema = z
       .min(1, 'Visibility limit must be at least 1')
       .nullable()
       .optional(),
-    weeklyAvailability: z
-      .array(
-        z.object({
-          dayOfWeek: z.number(),
-          startTime: z.string(),
-          endTime: z.string(),
-        })
-      )
-      .default([]),
   })
   .superRefine((values, ctx) => {
     const caps = values.interactionType ? INTERACTION_TYPE_CAPS[values.interactionType] : null
@@ -151,7 +138,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       durationMinutes: Math.floor(event.durationSeconds / 60),
       assignmentStrategy: event.assignmentStrategy,
       bookingMode: event.bookingMode,
-      allowedWeekdays: event.allowedWeekdays,
       minimumNoticeMinutes: event.minimumNoticeMinutes / 60,
       sessionLeadershipStrategy: event.sessionLeadershipStrategy,
       fixedLeadCoachId: event.fixedLeadCoachId,
@@ -165,16 +151,10 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       showDescription: event.showDescription,
       deferCoachReveal: event.deferCoachReveal ?? false,
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
-      timezone: event.timezone ?? (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'),
       isActive: event.isActive,
       sessionTypeId: event.sessionTypeId ?? null,
       groupId: event.groupId ?? null,
       recurrenceVisibilityLimit: event.recurrenceVisibilityLimit ?? null,
-      weeklyAvailability: (event.weeklyAvailability || []).map((a) => ({
-        dayOfWeek: a.dayOfWeek,
-        startTime: a.startTime,
-        endTime: a.endTime,
-      })),
     }
   }
 
@@ -188,7 +168,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     durationMinutes: 60,
     assignmentStrategy: 'DIRECT',
     bookingMode: 'COACH_AVAILABILITY',
-    allowedWeekdays: [],
     minimumNoticeMinutes: 0,
     sessionLeadershipStrategy: 'SINGLE_COACH',
     fixedLeadCoachId: null,
@@ -202,11 +181,9 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     showDescription: false,
     deferCoachReveal: false,
     allowStudentCoachChoice: false,
-    timezone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC',
     isActive: true,
     sessionTypeId: null,
     groupId: null,
     recurrenceVisibilityLimit: null,
-    weeklyAvailability: [],
   }
 }
