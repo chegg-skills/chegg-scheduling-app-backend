@@ -40,8 +40,7 @@ const EventBaseObjectCore = z.looseObject({
   bookingMode: z.enum(EventBookingMode),
   minimumNoticeMinutes: z.coerce.number().int().nonnegative(),
   bufferAfterMinutes: z.coerce.number().int().nonnegative(),
-  minParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
-  maxParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
+  maxParticipantCount: z.coerce.number().int().positive().optional().nullable(),
   sessionLeadershipStrategy: z.string().optional(),
   fixedLeadCoachId: z.preprocess(
     (val) => (val === "" ? null : val),

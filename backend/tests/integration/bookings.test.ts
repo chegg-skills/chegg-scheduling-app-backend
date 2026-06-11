@@ -245,7 +245,6 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           bookingMode: "FIXED_SLOTS",
           minimumNoticeMinutes: 0,
-          minParticipantCount: 1,
           maxParticipantCount: 1,
         },
       });
@@ -280,7 +279,6 @@ describe("Booking Domain Integration Tests", () => {
         data: {
           bookingMode: "FIXED_SLOTS",
           minimumNoticeMinutes: 0,
-          minParticipantCount: 1,
           maxParticipantCount: 1,
         },
       });
@@ -1256,7 +1254,6 @@ describe("Anonymous booking (allowAnonymousBooking=true)", () => {
           locationType: EventLocationType.VIRTUAL,
           locationValue,
           minimumNoticeMinutes: 0,
-          minParticipantCount: 1,
           maxParticipantCount: 10,
           publicBookingSlug: `anon-event-${Date.now()}`,
           createdById: coachId,

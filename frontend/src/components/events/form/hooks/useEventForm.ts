@@ -87,7 +87,6 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
 
     // Reset participant capacity when switching to a single-participant type
     if (!caps.multipleParticipants) {
-      setValue('minParticipantCount', null, { shouldDirty: false })
       setValue('maxParticipantCount', null, { shouldDirty: false })
     }
 

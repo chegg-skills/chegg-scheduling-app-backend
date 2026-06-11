@@ -341,14 +341,12 @@ describe("Event CRUD routes", () => {
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: undefined,
       bookingMode: "FIXED_SLOTS",
-      minParticipantCount: 2,
       maxParticipantCount: 8,
     });
 
     expect(res.status).toBe(201);
     expect(res.body.data.assignmentStrategy).toBe("DIRECT");
     expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
-    expect(res.body.data.minParticipantCount).toBe(2);
     expect(res.body.data.maxParticipantCount).toBe(8);
   });
 
@@ -499,7 +497,6 @@ describe("Event CRUD routes", () => {
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
-      minParticipantCount: 1,
       maxParticipantCount: 10,
     });
     expect(created.status).toBe(201);
@@ -721,14 +718,12 @@ describe("Event scheduling routes", () => {
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
       minimumNoticeMinutes: 360,
-      minParticipantCount: 2,
       maxParticipantCount: 8,
     });
 
     expect(created.status).toBe(201);
     expect(created.body.data.bookingMode).toBe("FIXED_SLOTS");
     expect(created.body.data.minimumNoticeMinutes).toBe(360);
-    expect(created.body.data.minParticipantCount).toBe(2);
     expect(created.body.data.maxParticipantCount).toBe(8);
 
     const updated = await request(app)
@@ -1177,7 +1172,6 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
       fixedLeadCoachId: context.coachOneId,
-      minParticipantCount: 1,
       maxParticipantCount: 10,
     });
 
@@ -1196,7 +1190,6 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
-      minParticipantCount: 1,
       maxParticipantCount: 10,
     });
 
@@ -1287,7 +1280,6 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
-      minParticipantCount: 1,
       maxParticipantCount: 5,
     });
     expect(created.status).toBe(201);
@@ -1767,7 +1759,6 @@ describe("MANY_TO_MANY event creation", () => {
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
-      minParticipantCount: 2,
       maxParticipantCount: 20,
     });
 
@@ -1775,7 +1766,6 @@ describe("MANY_TO_MANY event creation", () => {
     expect(res.body.data.interactionType).toBe("MANY_TO_MANY");
     expect(res.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD"); // auto-derived from ROUND_ROBIN
     expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
-    expect(res.body.data.minParticipantCount).toBe(2);
     expect(res.body.data.maxParticipantCount).toBe(20);
   });
 
@@ -1790,7 +1780,6 @@ describe("MANY_TO_MANY event creation", () => {
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "COACH_AVAILABILITY", // service will override this
-      minParticipantCount: 1,
       maxParticipantCount: 10,
     });
 
@@ -1809,7 +1798,6 @@ describe("MANY_TO_MANY event creation", () => {
       bookingMode: "FIXED_SLOTS",
       fixedLeadCoachId: context.coachOneId,
       targetCoHostCount: 2,
-      minParticipantCount: 5,
       maxParticipantCount: 30,
     });
 
@@ -1817,7 +1805,6 @@ describe("MANY_TO_MANY event creation", () => {
     expect(res.body.data.sessionLeadershipStrategy).toBe("FIXED_LEAD"); // auto-derived from DIRECT
     expect(res.body.data.fixedLeadCoachId).toBe(context.coachOneId);
     expect(res.body.data.targetCoHostCount).toBe(2);
-    expect(res.body.data.minParticipantCount).toBe(5);
     expect(res.body.data.maxParticipantCount).toBe(30);
   });
 });

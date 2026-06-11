@@ -33,6 +33,7 @@ export function BookingWindowFields() {
           type="number"
           min="0"
           step="0.5"
+          placeholder="e.g. 2"
           {...register('minimumNoticeMinutes', { valueAsNumber: true })}
         />
       </FormField>
@@ -47,6 +48,7 @@ export function BookingWindowFields() {
           id="bufferAfterMinutes"
           type="number"
           min="0"
+          placeholder="e.g. 15"
           {...register('bufferAfterMinutes', { valueAsNumber: true })}
         />
       </FormField>
@@ -72,7 +74,7 @@ export function BookingWindowFields() {
 
       {bookingMode === 'FIXED_SLOTS' && (
         <FormField
-          label="Recurrence Visibility Limit"
+          label="Recurrence Visibility Limit (slots)"
           htmlFor="recurrenceVisibilityLimit"
           error={errors.recurrenceVisibilityLimit?.message}
           info="Limit how many upcoming slots in a recurring series are shown on the public booking page. Leave empty to show all."

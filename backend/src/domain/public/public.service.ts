@@ -30,7 +30,6 @@ const publicEventSelect = {
   showDescription: true,
   teamId: true,
   minimumNoticeMinutes: true,
-  minParticipantCount: true,
   maxParticipantCount: true,
   maxBookingWindowDays: true,
   recurrenceVisibilityLimit: true,

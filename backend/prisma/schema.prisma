@@ -146,7 +146,6 @@ model Event {
   publicBookingSlug         String                    @unique
   bookingMode               EventBookingMode          @default(COACH_AVAILABILITY)
   minimumNoticeMinutes      Int                       @default(0)
-  minParticipantCount       Int?
   maxParticipantCount       Int?
   sessionLeadershipStrategy SessionLeadershipStrategy @default(SINGLE_COACH)
   bufferAfterMinutes        Int                       @default(0)

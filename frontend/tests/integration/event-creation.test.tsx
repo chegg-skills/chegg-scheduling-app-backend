@@ -176,9 +176,7 @@ describe('Event Creation Integration', () => {
     })
 
     // 7. Fill Participant Capacity (shown for One-to-Many)
-    const minInput = screen.getByLabelText(/Minimum participants/i)
-    fireEvent.change(minInput, { target: { value: '5' } })
-    const maxInput = screen.getByLabelText(/Maximum participants/i)
+    const maxInput = screen.getByLabelText(/Participant Capacity/i)
     fireEvent.change(maxInput, { target: { value: '20' } })
 
     // 8. Select Default Event Host

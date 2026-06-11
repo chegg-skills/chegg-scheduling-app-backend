@@ -24,12 +24,6 @@ export const eventFormSchema = z
       .enum(['SINGLE_COACH', 'FIXED_LEAD', 'ROTATING_LEAD'] as const)
       .default('SINGLE_COACH'),
     fixedLeadCoachId: z.string().nullable().optional(),
-    minParticipantCount: z
-      .number()
-      .int()
-      .min(1, 'Minimum participants must be at least 1')
-      .nullable()
-      .optional(),
     maxParticipantCount: z
       .number()
       .int()
@@ -91,18 +85,6 @@ export const eventFormSchema = z
       })
     }
 
-    if (
-      values.minParticipantCount != null &&
-      values.maxParticipantCount != null &&
-      values.maxParticipantCount < values.minParticipantCount
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Maximum participants cannot be less than minimum participants.',
-        path: ['maxParticipantCount'],
-      })
-    }
-
     if (values.allowAnonymousBooking && values.deferCoachReveal) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -146,7 +128,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       sessionLeadershipStrategy: event.sessionLeadershipStrategy,
       fixedLeadCoachId: event.fixedLeadCoachId,
       targetCoHostCount: event.targetCoHostCount,
-      minParticipantCount: event.minParticipantCount,
       maxParticipantCount: event.maxParticipantCount,
       bufferAfterMinutes: event.bufferAfterMinutes,
       maxBookingWindowDays: event.maxBookingWindowDays,
@@ -176,7 +157,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     sessionLeadershipStrategy: 'SINGLE_COACH',
     fixedLeadCoachId: null,
     targetCoHostCount: null,
-    minParticipantCount: null,
     maxParticipantCount: null,
     bufferAfterMinutes: 15,
     maxBookingWindowDays: null,
