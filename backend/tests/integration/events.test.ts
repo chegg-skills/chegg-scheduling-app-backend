@@ -466,7 +466,6 @@ describe("Event CRUD routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
-      minCoachCount: 2,
     });
     expect(created.status).toBe(201);
     expect(created.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
@@ -499,7 +498,6 @@ describe("Event CRUD routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
-      minCoachCount: 2,
       bookingMode: "FIXED_SLOTS",
       minParticipantCount: 1,
       maxParticipantCount: 10,
@@ -1031,7 +1029,6 @@ describe("Event coach routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
-      minCoachCount: 2,
     });
 
     const res = await request(app)
@@ -1042,7 +1039,7 @@ describe("Event coach routes", () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two coaches/i);
+    expect(res.body.message).toMatch(/round-robin requires at least 2 coaches/i);
   });
 
   it("removes an assigned coach", async () => {
@@ -1077,7 +1074,6 @@ describe("Event coach routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
-      minCoachCount: 2,
     });
     const eventId = event.body.data.id as string;
 
@@ -1098,7 +1094,7 @@ describe("Event coach routes", () => {
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two coaches/i);
+    expect(res.body.message).toMatch(/round-robin requires at least 2 coaches/i);
   });
 
   it("rejects updating strategy to ROUND_ROBIN if event has fewer than two coaches", async () => {
@@ -1130,9 +1126,8 @@ describe("Event coach routes", () => {
       });
 
     expect(res.status).toBe(400);
-    // Service-level check fires (schema minCoachCount check doesn't fire when
-    // minCoachCount is omitted from the PATCH body, as there is no default).
-    expect(res.body.message).toMatch(/ROUND_ROBIN events require at least two coaches/i);
+    // Service-level check fires when the coach count is below the ROUND_ROBIN minimum.
+    expect(res.body.message).toMatch(/round-robin requires at least 2 coaches/i);
   });
 });
 
@@ -1164,7 +1159,6 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
       eventTypeId: eventType.body.data.id,
       interactionType: "MANY_TO_ONE",
       assignmentStrategy: "ROUND_ROBIN",
-      minCoachCount: 2,
       // sessionLeadershipStrategy intentionally absent — must be auto-derived
     });
 
@@ -1202,7 +1196,6 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
-      minCoachCount: 2,
       minParticipantCount: 1,
       maxParticipantCount: 10,
     });
@@ -1278,7 +1271,7 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
     const updated = await request(app)
       .patch(`/api/events/${eventId}`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
-      .send({ assignmentStrategy: "ROUND_ROBIN", minCoachCount: 2 });
+      .send({ assignmentStrategy: "ROUND_ROBIN" });
 
     expect(updated.status).toBe(200);
     expect(updated.body.data.sessionLeadershipStrategy).toBe("ROTATING_LEAD");
@@ -1294,7 +1287,6 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
-      minCoachCount: 2,
       minParticipantCount: 1,
       maxParticipantCount: 5,
     });
@@ -1775,7 +1767,6 @@ describe("MANY_TO_MANY event creation", () => {
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "FIXED_SLOTS",
-      minCoachCount: 2,
       minParticipantCount: 2,
       maxParticipantCount: 20,
     });
@@ -1799,7 +1790,6 @@ describe("MANY_TO_MANY event creation", () => {
       interactionType: "MANY_TO_MANY",
       assignmentStrategy: "ROUND_ROBIN",
       bookingMode: "COACH_AVAILABILITY", // service will override this
-      minCoachCount: 2,
       minParticipantCount: 1,
       maxParticipantCount: 10,
     });
@@ -1874,35 +1864,6 @@ describe("Event schema validation rejections", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/only supports 1 participant/i);
-  });
-
-  it("rejects an event where maxCoachCount is less than minCoachCount", async () => {
-    const eventType = await createEventType(context.superAdminToken);
-
-    const res = await createEvent(context.teamId, context.teamAdminToken, {
-      eventTypeId: eventType.body.data.id,
-      interactionType: "MANY_TO_ONE",
-      assignmentStrategy: "ROUND_ROBIN",
-      minCoachCount: 3,
-      maxCoachCount: 2,
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/maxCoachCount cannot be less than minCoachCount/i);
-  });
-
-  it("rejects ROUND_ROBIN assignment when minCoachCount is less than 2", async () => {
-    const eventType = await createEventType(context.superAdminToken);
-
-    const res = await createEvent(context.teamId, context.teamAdminToken, {
-      eventTypeId: eventType.body.data.id,
-      interactionType: "MANY_TO_ONE",
-      assignmentStrategy: "ROUND_ROBIN",
-      minCoachCount: 1,
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/ROUND_ROBIN assignment requires at least 2 coaches/i);
   });
 
   it("rejects FIXED_LEAD sessionLeadershipStrategy without a fixedLeadCoachId (schema-level)", async () => {

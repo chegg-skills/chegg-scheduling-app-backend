@@ -302,8 +302,6 @@ export interface Event {
   minimumNoticeMinutes: number
   sessionLeadershipStrategy: SessionLeadershipStrategy
   fixedLeadCoachId: string | null
-  minCoachCount: number
-  maxCoachCount: number | null
   targetCoHostCount: number | null
   minParticipantCount: number | null
   maxParticipantCount: number | null
@@ -552,8 +550,6 @@ export interface CreateEventDto {
   assignmentStrategy?: AssignmentStrategy
   bookingMode?: EventBookingMode
   minimumNoticeMinutes?: number
-  minCoachCount?: number
-  maxCoachCount?: number | null
   targetCoHostCount?: number | null
   minParticipantCount?: number | null
   maxParticipantCount?: number | null

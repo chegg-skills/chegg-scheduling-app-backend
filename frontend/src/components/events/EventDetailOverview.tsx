@@ -119,10 +119,6 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
 
         {/* Capacity & Limits */}
         <DataField
-          label="Coaches (Min / Max)"
-          value={`${event.minCoachCount} / ${event.maxCoachCount ?? '∞'}`}
-        />
-        <DataField
           label="Participants (Min / Max)"
           value={`${event.minParticipantCount ?? 1} / ${event.maxParticipantCount ?? '∞'}`}
         />

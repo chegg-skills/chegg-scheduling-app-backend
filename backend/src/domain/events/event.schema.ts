@@ -42,8 +42,6 @@ const EventBaseObjectCore = z.looseObject({
   bufferAfterMinutes: z.coerce.number().int().nonnegative(),
   minParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxParticipantCount: z.coerce.number().int().nonnegative().optional().nullable(),
-  minCoachCount: z.coerce.number().int().positive(),
-  maxCoachCount: z.coerce.number().int().positive().optional().nullable(),
   sessionLeadershipStrategy: z.string().optional(),
   fixedLeadCoachId: z.preprocess(
     (val) => (val === "" ? null : val),
@@ -77,7 +75,6 @@ const EventBaseObject = EventBaseObjectCore.extend({
   bookingMode: z.enum(EventBookingMode).default(EventBookingMode.COACH_AVAILABILITY),
   minimumNoticeMinutes: z.coerce.number().int().nonnegative().default(0),
   bufferAfterMinutes: z.coerce.number().int().nonnegative().default(0),
-  minCoachCount: z.coerce.number().int().positive().default(1),
   deferCoachReveal: z.boolean().default(false),
   allowAnonymousBooking: z.boolean().default(false),
   meetingLinkSource: z.nativeEnum(MeetingLinkSource).default(MeetingLinkSource.COACH_ISV),
@@ -133,34 +130,11 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     }
   }
 
-  if (
-    data.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
-    data.minCoachCount !== undefined &&
-    data.minCoachCount < 2
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["minCoachCount"],
-      message: "ROUND_ROBIN assignment requires at least 2 coaches.",
-    });
-  }
-
   if (data.sessionLeadershipStrategy === "FIXED_LEAD" && !data.fixedLeadCoachId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["fixedLeadCoachId"],
       message: "FIXED_LEAD strategy requires a fixed lead coach to be specified.",
-    });
-  }
-
-  if (
-    data.maxCoachCount != null &&
-    data.maxCoachCount < (data.minCoachCount ?? 0) // Handle cases where min may be absent in updates
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["maxCoachCount"],
-      message: "maxCoachCount cannot be less than minCoachCount.",
     });
   }
 

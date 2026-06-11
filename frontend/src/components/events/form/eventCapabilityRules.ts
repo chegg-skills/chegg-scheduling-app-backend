@@ -3,7 +3,6 @@ import type { AssignmentStrategy, InteractionTypeCaps } from '@/types'
 type CoachSetupStatusInput = {
   activeCoachCount: number
   assignmentStrategy?: AssignmentStrategy | null
-  minCoachCount: number
 }
 
 export function getAllowedAssignmentStrategies(
@@ -45,10 +44,8 @@ export function getRequiredEventCoachCount(
 export function getEventCoachSetupStatus({
   activeCoachCount,
   assignmentStrategy,
-  minCoachCount,
 }: CoachSetupStatusInput) {
-  const roundRobinMinimum = assignmentStrategy === 'ROUND_ROBIN' ? 2 : 1
-  const requiredCoaches = Math.max(minCoachCount, roundRobinMinimum)
+  const requiredCoaches = assignmentStrategy === 'ROUND_ROBIN' ? 2 : 1
   const missingCoaches = Math.max(requiredCoaches - activeCoachCount, 0)
   const isReady = missingCoaches === 0
 
@@ -60,7 +57,7 @@ export function getEventCoachSetupStatus({
       ? null
       : assignmentStrategy === 'ROUND_ROBIN'
         ? `This round-robin event needs ${missingCoaches} more coach${missingCoaches === 1 ? '' : 'es'} before bookings can rotate correctly.`
-        : `This event needs ${missingCoaches} more coach${missingCoaches === 1 ? '' : 'es'} to satisfy the minimum requirement of ${requiredCoaches}.`,
+        : `This event needs at least ${requiredCoaches} coach${requiredCoaches === 1 ? '' : 'es'}.`,
   }
 }
 
