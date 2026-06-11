@@ -95,12 +95,15 @@ An administrator (Super Admin or Team Admin) configures a multi-coach session un
   * **Round Robin**: Automatically locked to **Rotating Lead** (`ROTATING_LEAD`). The lead role rotates automatically.
 * **Target Co-Host Count**: Optional. When set (must be `>= 1`), caps the number of co-coaches assigned per session. When left as `null`, all available coaches in the pool (excluding the lead) join each session as co-coaches.
 * **Booking Mode**: Enforces no restriction, so admins can select **Coach Availability** (dynamic booking based on coach schedules) or **Fixed Slots** (pre-created times).
+* **Optional settings**:
+  * `showDescription` — toggle to display the event description on the public booking page side panel.
+  * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit).
 
 ### 2. Setup & Availability Configuration
 Before students can book a session:
 * The admin assigns multiple coaches to the event pool.
 * If using **Fixed Slots**, the admin creates slots and assigns a specific coach.
-* If using **Coach Availability**, the assigned coaches configure their weekly schedules.
+* If using **Coach Availability**, the assigned coaches configure their weekly schedules via their **User Profile → Availability tab**. There is no event-level availability override — coach weekly availability is the sole authority over when slots are generated for that event.
 
 ### 3. Student Booking Flow
 When a student visits the booking page:
@@ -115,3 +118,5 @@ Once the booking is submitted, the backend processes it in a single transaction:
 3. **Co-Host Selection**: The system queries the pool, filters out the Lead Coach, and identifies available co-coaches up to the `targetCoHostCount` parameter. It rotates co-host assignments based on `nextCoachOrder`.
 4. **Graceful Degradation**: If fewer co-coaches than requested are available, the system logs a warning but proceeds with booking the Lead Coach (and any available co-coaches).
 5. **Confirmation**: Upserts the student record, saves the `Booking` with `coachUserId` (Lead) and `coCoachUserIds`, then queues: `BOOKING_CONFIRMED` to the student, `COACH_BOOKING_ASSIGNED` to the lead coach, `COACH_BOOKING_COCOACH_ASSIGNED` to each co-coach, and reminder emails to the student at 24H, 12H, 6H, and 1H before the session.
+
+> **Session Log:** After the session, a Super Admin, Team Admin, or the assigned lead coach (or any assigned co-coach) can open the "Log Session" action on the slot. The log records attendance per student, topics discussed, session summary, and private coach notes. `SessionLog` and `SessionAttendance` records are **not** created at booking time — they are written only when the log is explicitly submitted post-session.
