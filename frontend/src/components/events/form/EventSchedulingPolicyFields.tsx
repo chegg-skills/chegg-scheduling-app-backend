@@ -27,7 +27,7 @@ export function EventSchedulingPolicyFields({ caps, isLocked }: EventSchedulingP
       {isOneToMany && (
         <Stack spacing={1.5}>
           <Typography variant="subtitle2" color="text.secondary">
-            Group booking behaviour
+            Group booking behavior
           </Typography>
           <DeferCoachRevealField isLocked={isLocked} />
           <AllowAnonymousBookingField isLocked={isLocked} />

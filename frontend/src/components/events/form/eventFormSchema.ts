@@ -133,6 +133,22 @@ export const eventFormSchema = z
         message: 'Anonymous booking and deferred coach reveal cannot both be enabled.',
       })
     }
+
+    if (values.allowAnonymousBooking && values.meetingLinkSource !== 'EVENT_LOCATION') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['meetingLinkSource'],
+        message: 'Anonymous booking requires the Event Location URL as the meeting link source.',
+      })
+    }
+
+    if (values.allowAnonymousBooking && !values.locationValue?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationValue'],
+        message: 'Location value is required when anonymous booking is enabled so students receive booking details.',
+      })
+    }
   })
 
 export type EventFormValues = z.infer<typeof eventFormSchema>

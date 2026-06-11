@@ -223,6 +223,15 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     });
   }
 
+  // Anonymous booking requires a location value so students receive a link/details
+  if (data.allowAnonymousBooking === true && data.locationValue !== undefined && data.locationValue.trim() === "") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationValue"],
+      message: "Location is required when anonymous booking is enabled so students receive booking details.",
+    });
+  }
+
   // allowStudentCoachChoice is only valid for ONE_TO_ONE events
   if (data.allowStudentCoachChoice === true && caps) {
     if (caps.multipleParticipants || caps.multipleCoaches) {

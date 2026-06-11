@@ -3,11 +3,9 @@ import { useConfirm } from '@/context/confirm'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import MenuItem from '@mui/material/MenuItem'
-import Select from '@mui/material/Select'
-import InputLabel from '@mui/material/InputLabel'
-import FormControl from '@mui/material/FormControl'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { Select } from '@/components/shared/form/Select'
 import { format } from 'date-fns'
 import { Modal } from '@/components/shared/ui/Modal'
 import { Button } from '@/components/shared/ui/Button'
@@ -187,30 +185,28 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
 
         {/* Coach assignment — only for anonymous events */}
         {isAnonymous && (
-          <FormControl fullWidth size="small">
-            <InputLabel id="log-coach-label">Assign Coach (Optional)</InputLabel>
+          <FormField
+            label="Assign Coach"
+            htmlFor="log-coach"
+            hint="Optional — Assigning a coach updates the slot record and all bookings retroactively."
+          >
             <Select
-              labelId="log-coach-label"
-              label="Assign Coach (Optional)"
+              id="log-coach"
               value={assignedCoachId}
-              onChange={(e) => setAssignedCoachId(e.target.value)}
-              displayEmpty
+              onChange={(e) => setAssignedCoachId(e.target.value as string)}
             >
               <MenuItem value="">
-                <em>Not assigned</em>
+                <em>— Not assigned —</em>
               </MenuItem>
               {(event?.coaches ?? [])
-                .filter((c) => c.isActive)
+                .filter((c) => c.isActive || c.coachUserId === assignedCoachId)
                 .map((c) => (
                   <MenuItem key={c.coachUserId} value={c.coachUserId}>
                     {c.coachUser.firstName} {c.coachUser.lastName}
                   </MenuItem>
                 ))}
             </Select>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-              Assigning a coach updates the slot record and all bookings retroactively.
-            </Typography>
-          </FormControl>
+          </FormField>
         )}
 
         {/* Attendance section */}

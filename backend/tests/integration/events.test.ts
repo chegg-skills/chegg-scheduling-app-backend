@@ -1655,6 +1655,23 @@ describe("allowAnonymousBooking field", () => {
     expect(res.body.message).toMatch(/event location/i);
   });
 
+  it("rejects allowAnonymousBooking=true when locationValue is empty", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "EVENT_LOCATION",
+      allowAnonymousBooking: true,
+      locationValue: "",
+      maxParticipantCount: 5,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Location is required/i);
+  });
+
   it("can be toggled via PATCH (before any bookings exist)", async () => {
     const eventType = await createEventType(context.superAdminToken);
     const created = await createEvent(context.teamId, context.teamAdminToken, {
