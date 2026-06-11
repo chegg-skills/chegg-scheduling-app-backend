@@ -11,9 +11,8 @@ graph TD
         Start(["Start: Create Event Form"]) --> Basic["Enter Basic Info"]
         Basic --> LinkSession{"Link to Session Type?<br/>(Selected on form)"}
         LinkSession -- "Yes" --> SelectSessionType["Choose Session Type"]
-        LinkSession -- "No" --> Location["Choose Location: Virtual / Custom / In-Person"]
-        SelectSessionType --> Location
-        Location --> Interaction["Select Interaction Type: 1:1"]
+        LinkSession -- "No" --> Interaction["Select Interaction Type: 1:1"]
+        SelectSessionType --> Interaction
         Interaction --> BookingMode{"Choose Booking Mode"}
         
         %% Booking Mode branch
@@ -23,15 +22,17 @@ graph TD
         %% Coach Choice branch
         Policy --> CoachChoice{"Let Students Choose Coach?"}
         
-        CoachChoice -- "Yes (allowStudentCoachChoice = true)" --> CreateEvent(["Create Event"])
+        CoachChoice -- "Yes (allowStudentCoachChoice = true)" --> Location["Choose Location: Virtual / Custom / In-Person"]
         
         CoachChoice -- "No" --> Strategy{"Select Assignment Strategy"}
         
         Strategy -- "Direct" --> SetDefaultHost["Select Default Event Host"]
-        SetDefaultHost --> CreateEvent
+        SetDefaultHost --> Location
         
-        Strategy -- "Round Robin" --> SetPool["Define Coach Pool Size: Min/Max"]
-        SetPool --> CreateEvent
+        Strategy -- "Round Robin" --> SetPool["Define Coach Pool Size"]
+        SetPool --> Location
+        
+        Location --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration

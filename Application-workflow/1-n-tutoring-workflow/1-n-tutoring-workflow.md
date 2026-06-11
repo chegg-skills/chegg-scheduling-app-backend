@@ -11,9 +11,8 @@ graph TD
         Start(["Start: Create Event Form"]) --> Basic["Enter Basic Info"]
         Basic --> LinkSession{"Link to Session Type?<br/>(Selected on form)"}
         LinkSession -- "Yes" --> SelectSessionType["Choose Session Type"]
-        LinkSession -- "No" --> Location["Choose Location: Virtual / Custom / In-Person"]
-        SelectSessionType --> Location
-        Location --> Interaction["Select Interaction Type: 1:N (One-to-Many)"]
+        LinkSession -- "No" --> Interaction["Select Interaction Type: 1:N (One-to-Many)"]
+        SelectSessionType --> Interaction
 
         %% Auto-locks
         Interaction --> LockBookingMode["Auto-Lock: Booking Mode = Fixed Slots"]
@@ -21,13 +20,15 @@ graph TD
 
         %% Capacity & Policy
         LockStrategy --> Policy["Set Notice & Buffer Windows"]
-        Policy --> SetCapacity["Define Participant Capacity (Min & Max seats)"]
+        Policy --> SetCapacity["Define Participant Capacity (Max seats)"]
         SetCapacity --> ChooseRevealMode{"Choose Reveal / Anonymity Mode<br/>(Mutually exclusive; locked once bookings exist)"}
 
-        ChooseRevealMode -- "Defer Coach Reveal (ON)" --> CreateEvent(["Create Event"])
+        ChooseRevealMode -- "Defer Coach Reveal (ON)" --> Location["Choose Location: Virtual / Custom / In-Person"]
         ChooseRevealMode -- "Anonymous Booking (ON)" --> NoteAnon["Force meetingLinkSource = EVENT_LOCATION<br/>locationValue required non-empty<br/>coachUserId stays null at booking time"]
-        NoteAnon --> CreateEvent
-        ChooseRevealMode -- "Neither (Standard)" --> CreateEvent
+        NoteAnon --> Location
+        ChooseRevealMode -- "Neither (Standard)" --> Location
+
+        Location --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
@@ -96,7 +97,7 @@ An administrator (Super Admin or Team Admin) defines a group scheduling category
 * **Auto-Locks**:
   * **Booking Mode**: Locked to **Fixed Slots** (`bookingMode = FIXED_SLOTS`). Because multiple participants share the same session, they must register for a pre-created calendar slot.
   * **Assignment Strategy**: Locked to **Direct**. All participants booking into a specific slot are hosted by the coach assigned to that slot.
-* **Participant Capacity**: Admin sets a **Maximum** (strictly enforced; blocks bookings once reached) and a **Minimum** (informational only; does not block bookings).
+* **Participant Capacity**: Admin sets a **Maximum** seat count (strictly enforced; slot disappears from the booking page once reached). Leave empty for no cap — unlimited students can book the slot.
 * **Reveal / Anonymity Mode** — Two mutually exclusive toggles. Both are locked (immutable) once any bookings exist (`_count.bookings > 0`):
   * **Defer Coach Reveal (ON)**: Students register without knowing the coach's identity or seeing the join URL. The coach reveal is triggered manually by an admin at a later time. All student reminder emails are suppressed until the reveal fires.
   * **Anonymous Booking (ON)**: The session is never associated with a named coach from the student's perspective. The event's shared `locationValue` URL is the only join link students receive. Enforces `meetingLinkSource = EVENT_LOCATION` (COACH_ISV option is disabled in the form) and requires a non-empty `locationValue`. A coach can be retroactively assigned only via the **Log Session** dialog post-session.

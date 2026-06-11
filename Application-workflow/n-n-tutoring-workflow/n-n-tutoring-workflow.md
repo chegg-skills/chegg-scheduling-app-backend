@@ -11,23 +11,24 @@ graph TD
         Start(["Start: Create Event Form"]) --> Basic["Enter Basic Info"]
         Basic --> LinkSession{"Link to Session Type?<br/>(Selected on form)"}
         LinkSession -- "Yes" --> SelectSessionType["Choose Session Type"]
-        LinkSession -- "No" --> Location["Choose Location: Virtual / Custom / In-Person"]
-        SelectSessionType --> Location
-        Location --> Interaction["Select Interaction Type: N:N (MANY_TO_MANY)"]
+        LinkSession -- "No" --> Interaction["Select Interaction Type: N:N (MANY_TO_MANY)"]
+        SelectSessionType --> Interaction
         
         %% Auto-locks
         Interaction --> LockBookingMode["Auto-Lock: Booking Mode = Fixed Slots"]
         LockBookingMode --> SetCoHostCount["Optionally define Target Co-Host Count - null means all available co-coaches join"]
-        SetCoHostCount --> SetCapacity["Define Participant Capacity (Min & Max seats)"]
+        SetCoHostCount --> SetCapacity["Define Participant Capacity (Max seats)"]
         SetCapacity --> Strategy{"Select Assignment Strategy"}
         
         Strategy -- "Direct" --> LockFixedLead["Auto-Lock: Leadership Strategy = Fixed Lead"]
         LockFixedLead --> SetDefaultHost["Select Default Event Host (Lead Coach)"]
-        SetDefaultHost --> CreateEvent(["Create Event"])
+        SetDefaultHost --> Location["Choose Location: Virtual / Custom / In-Person"]
         
         Strategy -- "Round Robin" --> LockRotatingLead["Auto-Lock: Leadership Strategy = Rotating Lead"]
         LockRotatingLead --> SetPool["Define Coach Pool Size (Min >= 2)"]
-        SetPool --> CreateEvent
+        SetPool --> Location
+        
+        Location --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
@@ -93,7 +94,7 @@ An administrator defines a collaborative group session under a Team.
   * **Direct**: Automatically locked to **Fixed Lead** (`FIXED_LEAD`). Requires a `fixedLeadCoachId` (the Default Event Host).
   * **Round Robin**: Automatically locked to **Rotating Lead** (`ROTATING_LEAD`).
 * **Target Co-Host Count**: Optional. When set (must be `>= 1`), caps the number of co-coaches assigned per session. When left as `null`, all available coaches in the pool (excluding the lead) join each session as co-coaches.
-* **Participant Capacity**: Defines the seat capacity (Min & Max seats) allowed in each slot.
+* **Participant Capacity**: Defines the maximum seat capacity (`maxParticipantCount`) per slot. Leave empty for no cap.
 * **Optional settings**:
   * `showDescription` — toggle to display the event description on the public booking page side panel.
   * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit).
