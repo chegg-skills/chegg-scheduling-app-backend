@@ -2,6 +2,7 @@ import { prisma } from "../db/prisma";
 
 export type ResolvedNotificationConfig = {
   reminderOffsets: number[];
+  poolReminderOffsets: number[];
   adminNotifyOnBooking: boolean;
   adminNotifyOnCancellation: boolean;
   adminNotifyOnNoShow: boolean;
@@ -15,6 +16,7 @@ export type ResolvedNotificationConfig = {
 
 export const DEFAULT_NOTIFICATION_CONFIG: ResolvedNotificationConfig = {
   reminderOffsets: [1440, 60],
+  poolReminderOffsets: [1440, 360],
   adminNotifyOnBooking: true,
   adminNotifyOnCancellation: true,
   adminNotifyOnNoShow: true,
@@ -37,6 +39,7 @@ export async function getTeamNotificationConfig(
     where: { teamId },
     select: {
       reminderOffsets: true,
+      poolReminderOffsets: true,
       adminNotifyOnBooking: true,
       adminNotifyOnCancellation: true,
       adminNotifyOnNoShow: true,
@@ -55,6 +58,7 @@ export async function getTeamNotificationConfig(
 
   return {
     reminderOffsets: row.reminderOffsets,
+    poolReminderOffsets: row.poolReminderOffsets,
     adminNotifyOnBooking: row.adminNotifyOnBooking,
     adminNotifyOnCancellation: row.adminNotifyOnCancellation,
     adminNotifyOnNoShow: row.adminNotifyOnNoShow,

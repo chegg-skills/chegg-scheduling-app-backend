@@ -107,6 +107,7 @@ export interface UserWithDetails extends SafeUser {
 export interface TeamNotificationConfig {
   teamId: string
   reminderOffsets: number[]
+  poolReminderOffsets: number[]
   adminNotifyOnBooking: boolean
   adminNotifyOnCancellation: boolean
   adminNotifyOnNoShow: boolean
@@ -309,6 +310,7 @@ export interface Event {
   bufferAfterMinutes: number
   showDescription: boolean
   deferCoachReveal: boolean
+  allowAnonymousBooking: boolean
   allowStudentCoachChoice: boolean
   meetingLinkSource: MeetingLinkSource
   maxBookingWindowDays: number | null
@@ -562,6 +564,10 @@ export interface CreateEventDto {
   meetingLinkSource?: MeetingLinkSource
   sessionTypeId?: string | null
   groupId?: string | null
+  deferCoachReveal?: boolean
+  allowAnonymousBooking?: boolean
+  showDescription?: boolean
+  maxBookingWindowDays?: number | null
 }
 
 export interface UpdateEventDto extends Partial<CreateEventDto> { }
@@ -646,6 +652,7 @@ export interface UpsertSessionLogDto {
   topicsDiscussed?: string | null
   summary?: string | null
   coachNotes?: string | null
+  assignedCoachId?: string
   attendance: Array<{ bookingId: string; attended: boolean }>
 }
 
@@ -705,7 +712,7 @@ export interface Booking {
   sessionObjectives: string | null
   teamId: string
   eventId: string
-  coachUserId: string
+  coachUserId: string | null
   coCoachUserIds: string[]
   meetingJoinUrl: string | null
   rescheduleToken: string | null

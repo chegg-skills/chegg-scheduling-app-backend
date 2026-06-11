@@ -47,6 +47,7 @@ export const eventFormSchema = z
     maxBookingWindowDays: z.number().int().min(1).max(365).nullable().optional(),
     showDescription: z.boolean().default(false),
     deferCoachReveal: z.boolean().default(false),
+    allowAnonymousBooking: z.boolean().default(false),
     allowStudentCoachChoice: z.boolean().default(false),
     meetingLinkSource: z.enum(MeetingLinkSourceValues).default('COACH_ISV'),
     isActive: z.boolean().default(true),
@@ -124,6 +125,30 @@ export const eventFormSchema = z
         path: ['maxParticipantCount'],
       })
     }
+
+    if (values.allowAnonymousBooking && values.deferCoachReveal) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['allowAnonymousBooking'],
+        message: 'Anonymous booking and deferred coach reveal cannot both be enabled.',
+      })
+    }
+
+    if (values.allowAnonymousBooking && values.meetingLinkSource !== 'EVENT_LOCATION') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['meetingLinkSource'],
+        message: 'Anonymous booking requires the Event Location URL as the meeting link source.',
+      })
+    }
+
+    if (values.allowAnonymousBooking && !values.locationValue?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationValue'],
+        message: 'Location value is required when anonymous booking is enabled so students receive booking details.',
+      })
+    }
   })
 
 export type EventFormValues = z.infer<typeof eventFormSchema>
@@ -152,6 +177,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       maxBookingWindowDays: event.maxBookingWindowDays,
       showDescription: event.showDescription,
       deferCoachReveal: event.deferCoachReveal ?? false,
+      allowAnonymousBooking: event.allowAnonymousBooking ?? false,
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
       meetingLinkSource: event.meetingLinkSource ?? 'COACH_ISV',
       isActive: event.isActive,
@@ -183,6 +209,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     maxBookingWindowDays: null,
     showDescription: false,
     deferCoachReveal: false,
+    allowAnonymousBooking: false,
     allowStudentCoachChoice: false,
     meetingLinkSource: 'COACH_ISV' as const,
     isActive: true,

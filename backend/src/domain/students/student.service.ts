@@ -179,7 +179,7 @@ const mapLatestBookingSummary = (
     lastName: string;
     email: string;
     avatarUrl: string | null;
-  };
+  } | null;
 } | null => {
   if (!booking) {
     return null;

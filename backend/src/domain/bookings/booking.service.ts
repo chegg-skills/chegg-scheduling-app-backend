@@ -156,7 +156,9 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         });
 
       // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
-      await lockCoach(tx, assignedCoachId);
+      if (assignedCoachId !== null) {
+        await lockCoach(tx, assignedCoachId);
+      }
 
       const scheduleSlot =
         matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
@@ -286,7 +288,7 @@ const rescheduleBooking = async (
 
       const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
         await resolveBookingCoachSelection({
-          preferredCoachId: booking.coachUserId,
+          preferredCoachId: booking.coachUserId ?? undefined,
           activeCoaches,
           event,
           start,
@@ -297,7 +299,9 @@ const rescheduleBooking = async (
         });
 
       // LOCK HOST: Prevent another concurrent transaction from assigning this coach for an overlapping session
-      await lockCoach(tx, assignedCoachId);
+      if (assignedCoachId !== null) {
+        await lockCoach(tx, assignedCoachId);
+      }
 
       const scheduleSlot =
         matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
@@ -363,7 +367,7 @@ const cancelBooking = async (
       } else {
         // Authenticated path — COACH may only cancel their own sessions
         if (caller?.role === UserRole.COACH) {
-          const isLead = booking.coachUserId === caller.id;
+          const isLead = booking.coachUserId != null && booking.coachUserId === caller.id;
           const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
           if (!isLead && !isCoHost) {
             throw new ErrorHandler(
@@ -452,7 +456,7 @@ const bookFollowUpSession = async (
 
   // 3. Permissions Check
   if (caller.role === UserRole.COACH) {
-    const isLead = originalBooking.coachUserId === caller.id;
+    const isLead = originalBooking.coachUserId != null && originalBooking.coachUserId === caller.id;
     const isCoHost = (originalBooking.coCoachUserIds ?? []).includes(caller.id);
     if (!isLead && !isCoHost) {
       throw new ErrorHandler(
@@ -496,6 +500,13 @@ const bookFollowUpSession = async (
         "The session type associated with this event is deleted or inactive.",
       );
     }
+  }
+
+  if (originalBooking.coachUserId === null) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Cannot book a follow-up for an anonymous session without an assigned coach.",
+    );
   }
 
   const coachUser = await prisma.user.findUnique({
@@ -543,7 +554,7 @@ const bookFollowUpSession = async (
       // Check coach selection and assignment logic inside transaction
       const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
         await resolveBookingCoachSelection({
-          preferredCoachId: originalBooking.coachUserId,
+          preferredCoachId: originalBooking.coachUserId ?? undefined,
           activeCoaches,
           event,
           start,
@@ -552,6 +563,13 @@ const bookFollowUpSession = async (
           matchedScheduleSlotId: matchedScheduleSlot?.id,
           tx,
         });
+
+      if (assignedCoachId === null) {
+        throw new ErrorHandler(
+          StatusCodes.CONFLICT,
+          "Cannot book a follow-up for an anonymous session without an assigned coach.",
+        );
+      }
 
       await lockCoach(tx, assignedCoachId);
 

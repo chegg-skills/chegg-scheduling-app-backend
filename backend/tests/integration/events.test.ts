@@ -1577,6 +1577,192 @@ describe("maxBookingWindowDays field", () => {
   });
 });
 
+// ─── allowAnonymousBooking Field ─────────────────────────────────────────────
+
+describe("allowAnonymousBooking field", () => {
+  it("defaults to false when not specified on creation", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      maxParticipantCount: 5,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.allowAnonymousBooking).toBe(false);
+  });
+
+  it("can be set to true for ONE_TO_MANY events", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "EVENT_LOCATION",
+      allowAnonymousBooking: true,
+      maxParticipantCount: 5,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.allowAnonymousBooking).toBe(true);
+  });
+
+  it("rejects allowAnonymousBooking=true for ONE_TO_ONE events", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_ONE",
+      allowAnonymousBooking: true,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/ONE_TO_MANY/);
+  });
+
+  it("rejects allowAnonymousBooking=true alongside deferCoachReveal=true (mutual exclusivity)", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "EVENT_LOCATION",
+      deferCoachReveal: true,
+      allowAnonymousBooking: true,
+      maxParticipantCount: 5,
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects allowAnonymousBooking=true when meetingLinkSource is not EVENT_LOCATION", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "COACH_ISV",
+      allowAnonymousBooking: true,
+      maxParticipantCount: 5,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/event location/i);
+  });
+
+  it("rejects allowAnonymousBooking=true when locationValue is empty", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "EVENT_LOCATION",
+      allowAnonymousBooking: true,
+      locationValue: "",
+      maxParticipantCount: 5,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Location is required/i);
+  });
+
+  it("can be toggled via PATCH (before any bookings exist)", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      maxParticipantCount: 5,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        interactionType: "ONE_TO_MANY",
+        meetingLinkSource: "EVENT_LOCATION",
+        allowAnonymousBooking: true,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.allowAnonymousBooking).toBe(true);
+  });
+
+  it("rejects toggle via PATCH once bookings exist (409)", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "EVENT_LOCATION",
+      allowAnonymousBooking: true,
+      maxParticipantCount: 5,
+      minimumNoticeMinutes: 0,
+    });
+    expect(created.status).toBe(201);
+    const eventId = created.body.data.id as string;
+
+    // Create a slot and a booking directly via Prisma so we skip notification infra
+    const slotStart = getNextUtcWeekdayAt(1, 10, 0);
+    const slot = await prisma.eventScheduleSlot.create({
+      data: {
+        eventId,
+        startTime: slotStart,
+        endTime: new Date(slotStart.getTime() + 1800 * 1000),
+        capacity: 5,
+      },
+    });
+    await prisma.booking.create({
+      data: {
+        studentName: "Anon Student",
+        studentEmail: "anon@example.com",
+        teamId: context.teamId,
+        eventId,
+        coachUserId: null,
+        scheduleSlotId: slot.id,
+        startTime: slotStart,
+        endTime: new Date(slotStart.getTime() + 1800 * 1000),
+        status: "CONFIRMED",
+      },
+    });
+
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ allowAnonymousBooking: false });
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/anonymous/i);
+  });
+
+  it("is preserved when duplicating an event", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "EVENT_LOCATION",
+      allowAnonymousBooking: true,
+      maxParticipantCount: 5,
+    });
+    const eventId = created.body.data.id as string;
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/duplicate`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.allowAnonymousBooking).toBe(true);
+  });
+});
+
 // ─── MANY_TO_MANY Event Creation ──────────────────────────────────────────────
 
 describe("MANY_TO_MANY event creation", () => {

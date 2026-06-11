@@ -1234,3 +1234,76 @@ describe("Booking Domain Integration Tests", () => {
     });
   });
 });
+
+describe("Anonymous booking (allowAnonymousBooking=true)", () => {
+    let anonEventId: string;
+    let anonSlotStart: Date;
+    const locationValue = "https://meet.example.com/anonymous-session";
+
+    beforeAll(async () => {
+      // Build a ONE_TO_MANY anonymous event with a coach in the pool
+      const event = await prisma.event.create({
+        data: {
+          name: `Anonymous Event ${Date.now()}`,
+          teamId,
+          eventTypeId,
+          interactionType: "ONE_TO_MANY",
+          assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
+          bookingMode: "FIXED_SLOTS",
+          meetingLinkSource: "EVENT_LOCATION",
+          allowAnonymousBooking: true,
+          durationSeconds: 1800,
+          locationType: EventLocationType.VIRTUAL,
+          locationValue,
+          minimumNoticeMinutes: 0,
+          minParticipantCount: 1,
+          maxParticipantCount: 10,
+          publicBookingSlug: `anon-event-${Date.now()}`,
+          createdById: coachId,
+          updatedById: coachId,
+          coaches: {
+            create: { coachUserId: coachId, coachOrder: 1 },
+          },
+        },
+      });
+      anonEventId = event.id;
+
+      anonSlotStart = getNextUtcWeekdayAt(2, 14, 0);
+      await prisma.eventScheduleSlot.create({
+        data: {
+          eventId: anonEventId,
+          startTime: anonSlotStart,
+          endTime: new Date(anonSlotStart.getTime() + 1800 * 1000),
+          capacity: 10,
+        },
+      });
+    });
+
+    it("creates a booking with null coachUserId for an anonymous event", async () => {
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Anon Student",
+        studentEmail: `anon-student-${Date.now()}@example.com`,
+        teamId,
+        eventId: anonEventId,
+        startTime: anonSlotStart.toISOString(),
+        timezone: "UTC",
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.coachUserId).toBeNull();
+    });
+
+    it("sets meetingJoinUrl to the event locationValue for an anonymous booking", async () => {
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Anon Student 2",
+        studentEmail: `anon-student2-${Date.now()}@example.com`,
+        teamId,
+        eventId: anonEventId,
+        startTime: anonSlotStart.toISOString(),
+        timezone: "UTC",
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.meetingJoinUrl).toBe(locationValue);
+    });
+});

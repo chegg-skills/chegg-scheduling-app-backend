@@ -18,7 +18,10 @@ import {
 import { bookingInclude, getMeetingJoinUrl } from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
 import { generateRecurrenceDates } from "./recurrence.service";
-import { queueBookingStatusNotifications } from "../bookings/booking.notification";
+import {
+  queueBookingStatusNotifications,
+  notifyPoolOfSlotCancellation,
+} from "../bookings/booking.notification";
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
 import { logger } from "../../shared/logging/logger";
@@ -401,7 +404,7 @@ const cancelEventScheduleSlot = async (
   slotId: string,
   caller: CallerContext,
 ): Promise<EventScheduleSlot> => {
-  await getManagedEvent(eventId, caller);
+  const event = await getManagedEvent(eventId, caller);
 
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
@@ -449,6 +452,9 @@ const cancelEventScheduleSlot = async (
 
     for (const booking of cancelledBookings) {
       await queueBookingStatusNotifications(booking, { slotRevealedAt: slot.coachRevealSentAt });
+    }
+    if (event.allowAnonymousBooking) {
+      await notifyPoolOfSlotCancellation(slotId, eventId, slot.startTime);
     }
   } catch (error) {
     // Log but don't fail the cancellation if notifications fail

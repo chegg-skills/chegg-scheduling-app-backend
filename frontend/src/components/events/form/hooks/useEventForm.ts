@@ -37,6 +37,8 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
 
   const watchedAssignmentStrategy = watch('assignmentStrategy')
   const watchedAllowStudentCoachChoice = watch('allowStudentCoachChoice')
+  const watchedAllowAnonymousBooking = watch('allowAnonymousBooking')
+  const watchedDeferCoachReveal = watch('deferCoachReveal')
   const selectedAssignmentStrategy =
     watchedAssignmentStrategy || getDefaultEventAssignmentStrategy(caps)
   const bookingModeSelection = watch('bookingMode')
@@ -121,6 +123,21 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
       }
     }
   }, [caps, getValues, setValue, watchedAssignmentStrategy, watchedAllowStudentCoachChoice])
+
+  // Mutual exclusivity: enabling one anonymous-mode toggle clears the other.
+  // Also force meetingLinkSource to EVENT_LOCATION when anonymous booking is on.
+  useEffect(() => {
+    if (watchedAllowAnonymousBooking) {
+      setValue('deferCoachReveal', false, { shouldDirty: false })
+      setValue('meetingLinkSource', 'EVENT_LOCATION', { shouldDirty: false })
+    }
+  }, [watchedAllowAnonymousBooking, setValue])
+
+  useEffect(() => {
+    if (watchedDeferCoachReveal) {
+      setValue('allowAnonymousBooking', false, { shouldDirty: false })
+    }
+  }, [watchedDeferCoachReveal, setValue])
 
   function onSubmit(values: EventFormValues) {
     const apiPayload = {

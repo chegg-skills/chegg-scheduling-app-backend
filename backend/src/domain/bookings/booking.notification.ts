@@ -128,11 +128,28 @@ const OFFSET_TO_TYPE: Record<
   60: "SESSION_REMINDER_1H",
 };
 
+const OFFSET_TO_ANONYMOUS_TYPE: Record<
+  number,
+  Extract<
+    NotificationType,
+    | "SESSION_REMINDER_ANONYMOUS_24H"
+    | "SESSION_REMINDER_ANONYMOUS_12H"
+    | "SESSION_REMINDER_ANONYMOUS_6H"
+    | "SESSION_REMINDER_ANONYMOUS_1H"
+  >
+> = {
+  1440: "SESSION_REMINDER_ANONYMOUS_24H",
+  720: "SESSION_REMINDER_ANONYMOUS_12H",
+  360: "SESSION_REMINDER_ANONYMOUS_6H",
+  60: "SESSION_REMINDER_ANONYMOUS_1H",
+};
+
 const queueStudentReminderByOffset = async (
   booking: SafeBooking,
   offsetMinutes: number,
+  isAnonymous = false,
 ): Promise<boolean> => {
-  const type = OFFSET_TO_TYPE[offsetMinutes];
+  const type = isAnonymous ? OFFSET_TO_ANONYMOUS_TYPE[offsetMinutes] : OFFSET_TO_TYPE[offsetMinutes];
   if (!type) return false;
 
   const sendAt = buildReminderSendAt(new Date(booking.startTime), offsetMinutes);
@@ -144,7 +161,7 @@ const queueStudentReminderByOffset = async (
   return publishNotificationSafely({
     type,
     recipients: booking.studentEmail,
-    userId: booking.coachUserId,
+    userId: booking.coachUserId ?? undefined,
     variables: await getBookingNotificationVariables(booking, booking.timezone),
     sendAt,
     notificationKey: `booking:${booking.id}:${type}`,
@@ -156,6 +173,107 @@ const queueStudentReminderByOffset = async (
       reminderOffsetMinutes: offsetMinutes,
     },
   });
+};
+
+const queueCoachPoolRemindersForSlot = async (
+  slotId: string,
+  eventId: string,
+  slotStartTime: Date,
+  config: ResolvedNotificationConfig,
+): Promise<void> => {
+  // Cancel all existing pool reminders for this slot
+  await publishNotificationSafely({
+    type: "CANCEL_BOOKING_REMINDERS",
+    recipients: "",
+    entityType: "scheduleSlot",
+    entityId: slotId,
+    metadata: { slotId },
+  });
+
+  // Count active bookings remaining on this slot
+  const activeCount = await prisma.booking.count({
+    where: {
+      scheduleSlotId: slotId,
+      status: { not: "CANCELLED" },
+    },
+  });
+
+  if (activeCount === 0 || config.poolReminderOffsets.length === 0) return;
+
+  // Fetch the event coach pool
+  const coaches = await prisma.eventCoach.findMany({
+    where: { eventId, isActive: true },
+    select: { coachUserId: true, coachUser: { select: { email: true, timezone: true } } },
+  });
+
+  for (const coach of coaches) {
+    if (!coach.coachUser.email) continue;
+    for (const offsetMinutes of config.poolReminderOffsets) {
+      const sendAt = buildReminderSendAt(slotStartTime, offsetMinutes);
+      if (!sendAt) continue;
+
+      await publishNotificationSafely({
+        type: "ANONYMOUS_BOOKING_POOL_REMINDER",
+        recipients: coach.coachUser.email,
+        userId: coach.coachUserId,
+        variables: {
+          confirmedCount: activeCount,
+          startTime: formatNotificationDate(slotStartTime, coach.coachUser.timezone || "UTC"),
+          timezone: getFriendlyTimezoneLabel(coach.coachUser.timezone || "UTC"),
+        },
+        sendAt,
+        notificationKey: `slot:${slotId}:pool:${coach.coachUserId}:${offsetMinutes}`,
+        entityType: "scheduleSlot",
+        entityId: slotId,
+        recipientRole: "COACH",
+        metadata: { slotId, offsetMinutes, confirmedCount: activeCount },
+      });
+    }
+  }
+};
+
+export const notifyPoolOfSlotCancellation = async (
+  slotId: string,
+  eventId: string,
+  slotStartTime: Date,
+): Promise<void> => {
+  try {
+    // Cancel any pending pool reminders — session is no longer happening
+    await publishNotificationSafely({
+      type: "CANCEL_BOOKING_REMINDERS",
+      recipients: "",
+      entityType: "scheduleSlot",
+      entityId: slotId,
+      metadata: { slotId },
+    });
+
+    const coaches = await prisma.eventCoach.findMany({
+      where: { eventId, isActive: true },
+      select: { coachUserId: true, coachUser: { select: { email: true, timezone: true } } },
+    });
+
+    const publishTasks = coaches
+      .filter((c) => c.coachUser.email)
+      .map((c) =>
+        publishNotificationSafely({
+          type: "ANONYMOUS_SLOT_CANCELLED_POOL",
+          recipients: c.coachUser.email!,
+          userId: c.coachUserId,
+          variables: {
+            startTime: formatNotificationDate(slotStartTime, c.coachUser.timezone || "UTC"),
+            timezone: getFriendlyTimezoneLabel(c.coachUser.timezone || "UTC"),
+          },
+          entityType: "scheduleSlot",
+          entityId: slotId,
+          recipientRole: "COACH",
+          metadata: { slotId },
+        }),
+      );
+
+    await Promise.all(publishTasks);
+  } catch (error) {
+    logger.error({ slotId, eventId, error }, "Failed to notify pool of slot cancellation.");
+  }
 };
 
 const queueBookingReminderNotifications = async (
@@ -178,7 +296,7 @@ const cancelScheduledBookingReminders = async (booking: SafeBooking): Promise<vo
     await publishNotificationSafely({
       type: "CANCEL_BOOKING_REMINDERS",
       recipients: booking.studentEmail,
-      userId: booking.coachUserId,
+      userId: booking.coachUserId ?? undefined,
       entityType: "BOOKING",
       entityId: booking.id,
       metadata: {
@@ -201,19 +319,74 @@ const queueBookingCreatedNotifications = async (
 ) => {
   try {
     const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
+    const config = await getTeamNotificationConfig(booking.teamId);
+    const isAnonymous = booking.event?.allowAnonymousBooking === true;
+    const isDeferredReveal = !isAnonymous && booking.event?.deferCoachReveal === true && !opts?.slotRevealedAt;
+
+    if (isAnonymous) {
+      // Anonymous booking: student gets confirmation without coach details.
+      // No coach assignment email. Pool reminders are slot-level.
+      const publishTasks: Array<Promise<boolean>> = [
+        publishNotificationSafely({
+          type: "BOOKING_CONFIRMED_ANONYMOUS",
+          recipients: booking.studentEmail,
+          variables: {
+            studentName: studentVariables.studentName,
+            eventName: studentVariables.eventName,
+            teamName: studentVariables.teamName,
+            startTime: studentVariables.startTime,
+            timezone: studentVariables.timezone,
+            meetingJoinUrl: studentVariables.meetingJoinUrl,
+            frontendUrl: studentVariables.frontendUrl,
+            rescheduleUrl: studentVariables.rescheduleUrl,
+          },
+        }),
+      ];
+
+      if (config.adminNotifyOnBooking) {
+        const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+        for (const admin of teamAdmins) {
+          publishTasks.push(
+            publishNotificationSafely({
+              type: "TEAM_BOOKING_CONFIRMED",
+              recipients: admin.email,
+              variables: await getBookingNotificationVariables(booking, admin.timezone),
+            }),
+          );
+        }
+      }
+
+      await Promise.all(publishTasks);
+
+      // Queue anonymous student reminders
+      await Promise.all(
+        config.reminderOffsets.map((offset) =>
+          queueStudentReminderByOffset(booking, offset, true),
+        ),
+      );
+
+      // Refresh slot-level pool reminders with updated participant count
+      if (booking.scheduleSlotId) {
+        await queueCoachPoolRemindersForSlot(
+          booking.scheduleSlotId,
+          booking.eventId,
+          new Date(booking.startTime),
+          config,
+        );
+      }
+      return;
+    }
+
     const coachVariables = await getBookingNotificationVariables(
       booking,
       booking.coach?.timezone || "UTC",
     );
 
-    const config = await getTeamNotificationConfig(booking.teamId);
-    const isDeferredReveal = booking.event?.deferCoachReveal === true && !opts?.slotRevealedAt;
-
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
         type: isDeferredReveal ? "BOOKING_CONFIRMED_DEFERRED" : "BOOKING_CONFIRMED",
         recipients: booking.studentEmail,
-        userId: booking.coachUserId,
+        userId: booking.coachUserId ?? undefined,
         variables: isDeferredReveal
           ? {
               studentName: studentVariables.studentName,
@@ -246,7 +419,7 @@ const queueBookingCreatedNotifications = async (
           publishNotificationSafely({
             type: "TEAM_BOOKING_CONFIRMED",
             recipients: admin.email,
-            userId: booking.coachUserId,
+            userId: booking.coachUserId ?? undefined,
             variables: await getBookingNotificationVariables(booking, admin.timezone),
           }),
         );
@@ -308,38 +481,49 @@ const queueBookingStatusNotifications = async (
       : [];
 
     if (booking.status === BookingStatus.CANCELLED) {
+      const isAnonymous = booking.event?.allowAnonymousBooking === true;
+
+      let cancellationType: NotificationType;
+      if (isAnonymous) {
+        cancellationType = "BOOKING_CANCELLED_ANONYMOUS";
+      } else if (booking.event?.deferCoachReveal && !opts?.slotRevealedAt) {
+        cancellationType = "BOOKING_CANCELLED_DEFERRED";
+      } else {
+        cancellationType = "BOOKING_CANCELLED";
+      }
+
       const publishTasks: Array<Promise<boolean>> = [
         publishNotificationSafely({
-          type: booking.event?.deferCoachReveal && !opts?.slotRevealedAt
-            ? "BOOKING_CANCELLED_DEFERRED"
-            : "BOOKING_CANCELLED",
+          type: cancellationType,
           recipients: booking.studentEmail,
-          userId: booking.coachUserId,
+          userId: booking.coachUserId ?? undefined,
           variables: studentVariables,
         }),
       ];
 
-      if (booking.coach?.email && config.coachNotifyOnCancellation) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "COACH_BOOKING_CANCELLED",
-            recipients: booking.coach.email,
-            userId: booking.coach.id,
-            variables: coachVariables,
-          }),
-        );
-      }
-
-      for (const coHost of coHostUsers) {
-        if (coHost.email) {
+      if (!isAnonymous) {
+        if (booking.coach?.email && config.coachNotifyOnCancellation) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COCOACH_CANCELLED",
-              recipients: coHost.email,
-              userId: coHost.id,
-              variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
+              type: "COACH_BOOKING_CANCELLED",
+              recipients: booking.coach.email,
+              userId: booking.coach.id,
+              variables: coachVariables,
             }),
           );
+        }
+
+        for (const coHost of coHostUsers) {
+          if (coHost.email) {
+            publishTasks.push(
+              publishNotificationSafely({
+                type: "COACH_BOOKING_COCOACH_CANCELLED",
+                recipients: coHost.email,
+                userId: coHost.id,
+                variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
+              }),
+            );
+          }
         }
       }
 
@@ -350,7 +534,7 @@ const queueBookingStatusNotifications = async (
             publishNotificationSafely({
               type: "TEAM_BOOKING_CANCELLED",
               recipients: admin.email,
-              userId: booking.coachUserId,
+              userId: booking.coachUserId ?? undefined,
               variables: await getBookingNotificationVariables(booking, admin.timezone),
             }),
           );
@@ -358,6 +542,16 @@ const queueBookingStatusNotifications = async (
       }
 
       await Promise.all(publishTasks);
+
+      // For anonymous slots: refresh pool reminders with updated participant count
+      if (isAnonymous && booking.scheduleSlotId) {
+        await queueCoachPoolRemindersForSlot(
+          booking.scheduleSlotId,
+          booking.eventId,
+          new Date(booking.startTime),
+          config,
+        );
+      }
     }
 
     if (booking.status === BookingStatus.NO_SHOW) {
@@ -365,7 +559,7 @@ const queueBookingStatusNotifications = async (
         publishNotificationSafely({
           type: "BOOKING_NO_SHOW",
           recipients: booking.studentEmail,
-          userId: booking.coachUserId,
+          userId: booking.coachUserId ?? undefined,
           variables: studentVariables,
         }),
       ];
@@ -401,7 +595,7 @@ const queueBookingStatusNotifications = async (
             publishNotificationSafely({
               type: "TEAM_BOOKING_NO_SHOW",
               recipients: admin.email,
-              userId: booking.coachUserId,
+              userId: booking.coachUserId ?? undefined,
               variables: await getBookingNotificationVariables(booking, admin.timezone),
             }),
           );
@@ -471,7 +665,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
       publishNotificationSafely({
         type: "BOOKING_RESCHEDULED",
         recipients: booking.studentEmail,
-        userId: booking.coachUserId,
+        userId: booking.coachUserId ?? undefined,
         variables: studentVariables,
       }),
     ];

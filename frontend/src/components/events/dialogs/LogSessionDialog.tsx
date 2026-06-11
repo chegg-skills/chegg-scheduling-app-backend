@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useConfirm } from '@/context/confirm'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
+import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { Select } from '@/components/shared/form/Select'
 import { format } from 'date-fns'
 import { Modal } from '@/components/shared/ui/Modal'
 import { Button } from '@/components/shared/ui/Button'
@@ -12,13 +14,14 @@ import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { useSlotBookings, useSlotSessionLog, useUpsertSessionLog } from '@/hooks/queries/useEvents'
-import type { EventScheduleSlot, Booking } from '@/types'
+import type { Event, EventScheduleSlot, Booking } from '@/types'
 
 interface LogSessionDialogProps {
   isOpen: boolean
   onClose: () => void
   eventId: string
   slot: EventScheduleSlot | null
+  event?: Event
 }
 
 function getInitials(name: string): string {
@@ -30,8 +33,9 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionDialogProps) {
+export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogSessionDialogProps) {
   const slotId = slot?.id ?? ''
+  const isAnonymous = event?.allowAnonymousBooking === true
 
   const { data: bookings, isLoading: bookingsLoading } = useSlotBookings(eventId, slotId)
   const { data: existingLog, isLoading: logLoading } = useSlotSessionLog(eventId, slotId)
@@ -41,6 +45,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
   const [summary, setSummary] = useState('')
   const [coachNotes, setCoachNotes] = useState('')
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({})
+  const [assignedCoachId, setAssignedCoachId] = useState<string>('')
 
   const activeBookings =
     (bookings as Booking[] | undefined)?.filter((b) => b.status !== 'CANCELLED') ?? []
@@ -57,6 +62,8 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         map[a.bookingId] = a.attended
       })
       setAttendanceMap(map)
+      // Pre-fill assigned coach from the slot's current value
+      setAssignedCoachId(slot?.assignedCoachId ?? '')
     } else if (activeBookings.length > 0) {
       // For a new log, default everyone to present
       setTopicsDiscussed('')
@@ -67,6 +74,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         map[b.id] = true
       })
       setAttendanceMap(map)
+      setAssignedCoachId(slot?.assignedCoachId ?? '')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, existingLog, activeBookings.length])
@@ -88,6 +96,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         summary: summary.trim() || null,
         coachNotes: coachNotes.trim() || null,
         attendance,
+        ...(isAnonymous && assignedCoachId ? { assignedCoachId } : {}),
       },
       {
         onSuccess: () => {
@@ -173,6 +182,32 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
             </Stack>
           </Stack>
         </Box>
+
+        {/* Coach assignment — only for anonymous events */}
+        {isAnonymous && (
+          <FormField
+            label="Assign Coach"
+            htmlFor="log-coach"
+            hint="Optional — Assigning a coach updates the slot record and all bookings retroactively."
+          >
+            <Select
+              id="log-coach"
+              value={assignedCoachId}
+              onChange={(e) => setAssignedCoachId(e.target.value as string)}
+            >
+              <MenuItem value="">
+                <em>— Not assigned —</em>
+              </MenuItem>
+              {(event?.coaches ?? [])
+                .filter((c) => c.isActive || c.coachUserId === assignedCoachId)
+                .map((c) => (
+                  <MenuItem key={c.coachUserId} value={c.coachUserId}>
+                    {c.coachUser.firstName} {c.coachUser.lastName}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormField>
+        )}
 
         {/* Attendance section */}
         <Box>
