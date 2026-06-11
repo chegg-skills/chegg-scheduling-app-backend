@@ -1,6 +1,7 @@
 import {
   AssignmentStrategy,
   EventLocationType,
+  MeetingLinkSource,
   type EventType as EventTypeModel,
   Prisma,
   UserRole,
@@ -95,7 +96,7 @@ export type CreateEventInput = {
   showDescription?: boolean;
   deferCoachReveal?: boolean;
   allowStudentCoachChoice?: boolean;
-  timezone?: string;
+  meetingLinkSource?: MeetingLinkSource;
   groupId?: string | null;
   sessionTypeId?: string | null;
 };

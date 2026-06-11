@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
+import { MeetingLinkSourceValues } from '@/types/generated/enums'
 import type { Event } from '@/types'
 
 export const eventFormSchema = z
@@ -47,6 +48,7 @@ export const eventFormSchema = z
     showDescription: z.boolean().default(false),
     deferCoachReveal: z.boolean().default(false),
     allowStudentCoachChoice: z.boolean().default(false),
+    meetingLinkSource: z.enum(MeetingLinkSourceValues).default('COACH_ISV'),
     isActive: z.boolean().default(true),
     sessionTypeId: z.string().uuid().nullable().optional(),
     groupId: z.string().uuid().nullable().optional(),
@@ -151,6 +153,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       showDescription: event.showDescription,
       deferCoachReveal: event.deferCoachReveal ?? false,
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
+      meetingLinkSource: event.meetingLinkSource ?? 'COACH_ISV',
       isActive: event.isActive,
       sessionTypeId: event.sessionTypeId ?? null,
       groupId: event.groupId ?? null,
@@ -181,6 +184,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     showDescription: false,
     deferCoachReveal: false,
     allowStudentCoachChoice: false,
+    meetingLinkSource: 'COACH_ISV' as const,
     isActive: true,
     sessionTypeId: null,
     groupId: null,

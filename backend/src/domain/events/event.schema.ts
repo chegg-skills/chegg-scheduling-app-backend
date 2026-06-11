@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EventLocationType, EventBookingMode, AssignmentStrategy } from "@prisma/client";
+import { EventLocationType, EventBookingMode, AssignmentStrategy, MeetingLinkSource } from "@prisma/client";
 import {
   INTERACTION_TYPE_CAPS,
   INTERACTION_TYPE_KEYS,
@@ -58,6 +58,7 @@ const EventBaseObjectCore = z.looseObject({
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
+  meetingLinkSource: z.nativeEnum(MeetingLinkSource).optional(),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
   sessionTypeId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
 });
@@ -77,6 +78,7 @@ const EventBaseObject = EventBaseObjectCore.extend({
   bufferAfterMinutes: z.coerce.number().int().nonnegative().default(0),
   minCoachCount: z.coerce.number().int().positive().default(1),
   deferCoachReveal: z.boolean().default(false),
+  meetingLinkSource: z.nativeEnum(MeetingLinkSource).default(MeetingLinkSource.COACH_ISV),
 });
 
 /**

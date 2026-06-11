@@ -15,7 +15,7 @@ import {
   type UpdateEventInput,
   type UpsertEventScheduleSlotInput,
 } from "./event.shared";
-import { bookingInclude } from "../bookings/booking.shared";
+import { bookingInclude, getMeetingJoinUrl } from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
 import { generateRecurrenceDates } from "./recurrence.service";
 import { queueBookingStatusNotifications } from "../bookings/booking.notification";
@@ -533,7 +533,7 @@ const revealCoachForSlot = async (
   const finalJoinUrl =
     payload.sessionJoinUrl !== undefined
       ? payload.sessionJoinUrl
-      : (slot.sessionJoinUrl ?? coach.zoomIsvLink ?? event.locationValue ?? "");
+      : (slot.sessionJoinUrl ?? getMeetingJoinUrl(event, coach.zoomIsvLink) ?? "");
 
   const [updatedSlot] = await prisma.$transaction([
     prisma.eventScheduleSlot.update({

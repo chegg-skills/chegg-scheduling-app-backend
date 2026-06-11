@@ -1,4 +1,4 @@
-import { BookingStatus, Prisma } from "@prisma/client";
+import { BookingStatus, MeetingLinkSource, Prisma } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 
@@ -201,6 +201,21 @@ export type BookingSchedulingContext = Pick<
   | "fixedLeadCoachId"
   | "targetCoHostCount"
 >;
+
+/**
+ * Resolves the meeting join URL for a booking based on the event's configured
+ * meetingLinkSource. Each mode falls back to the other source if the preferred
+ * source is null, ensuring students always receive a usable link.
+ */
+export const getMeetingJoinUrl = (
+  event: { meetingLinkSource: MeetingLinkSource; locationValue: string | null },
+  coachZoomLink: string | null | undefined,
+): string | null => {
+  if (event.meetingLinkSource === MeetingLinkSource.EVENT_LOCATION) {
+    return event.locationValue || coachZoomLink || null;
+  }
+  return coachZoomLink || event.locationValue || null;
+};
 
 export const normalizeStudentName = (studentName: string): string => {
   const normalizedName = studentName?.trim();
