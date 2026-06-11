@@ -107,12 +107,15 @@ An administrator (Super Admin or Team Admin) defines a scheduling category under
   * If toggled **OFF**: The admin defines how coaches are assigned behind the scenes:
     * **Direct**: The admin designates a **Default Event Host**. All sessions are assigned to this coach.
     * **Round Robin**: The system auto-rotates the lead role among a configured pool of coaches using a cursor-based order (requires a minimum pool size of 2).
+* **Optional settings**:
+  * `showDescription` — toggle to display the event description on the public booking page side panel.
+  * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit). Enforced on both the availability endpoint (clips the slot date range) and the booking calendar (disables out-of-window dates).
 
 ### 2. Setup & Slots Configuration
 Before the event is bookable:
 * The admin assigns one or more coaches to the event pool.
 * If using **Fixed Slots**, the admin creates the predefined scheduling blocks.
-* If using **Coach Availability**, the assigned coaches must configure their active times under their weekly availability profile.
+* If using **Coach Availability**, the assigned coaches must configure their active times under their **User Profile → Availability tab**. There is no event-level availability override — coach weekly availability is the sole authority over when bookings can be made for that event.
 
 ### 3. Student Booking Flow
 When a student accesses the booking path:
@@ -131,4 +134,4 @@ Once the student submits the form, the backend processes the request in a databa
 4. **Booking Saved**: The `Booking` is saved with status `CONFIRMED`.
 5. **Notifications**: Email events are queued to send confirmation links to both student and coach.
 
-> **Note:** `SessionLog` and `SessionAttendance` records are **not** created at booking time. They are created post-session when a Super Admin, Team Admin, or the assigned coach opens the "Log Session" action and submits attendance and notes.
+> **Session Log:** After the session, a Super Admin, Team Admin, or the assigned coach can open the "Log Session" action on the slot. The log records attendance per student, topics discussed, session summary, and private coach notes. `SessionLog` and `SessionAttendance` records are **not** created at booking time — they are written only when the log is explicitly submitted post-session.

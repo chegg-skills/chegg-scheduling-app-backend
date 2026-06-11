@@ -724,8 +724,6 @@ async function main() {
           locationType: EventLocationType.VIRTUAL,
           locationValue: "https://zoom.us/j/demo-session-room",
           isActive: true,
-          minCoachCount:
-            eventDefinition.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN ? 2 : 1,
           ...(isGroupEvent && { bookingMode: "FIXED_SLOTS" }),
           ...(needsFixedLead && coaches[0] && { fixedLeadCoachId: coaches[0].id }),
         },

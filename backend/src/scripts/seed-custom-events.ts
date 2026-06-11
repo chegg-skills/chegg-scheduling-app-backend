@@ -199,7 +199,6 @@ async function main() {
     isActive: true,
     bookingMode: EventBookingMode.FIXED_SLOTS,
     sessionLeadershipStrategy: SessionLeadershipStrategy.SINGLE_COACH,
-    minCoachCount: 1, // 1 lead coach
     targetCoHostCount: 2, // 2 co-hosts
     deferCoachReveal: true, // "send the reveal later"
     allowStudentCoachChoice: false,

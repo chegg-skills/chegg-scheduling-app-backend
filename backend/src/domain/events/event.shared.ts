@@ -85,8 +85,6 @@ export type CreateEventInput = {
   minimumNoticeMinutes?: number;
   minParticipantCount?: number | null;
   maxParticipantCount?: number | null;
-  minCoachCount?: number;
-  maxCoachCount?: number | null;
   targetCoHostCount?: number | null;
   sessionLeadershipStrategy?: string;
   fixedLeadCoachId?: string | null;

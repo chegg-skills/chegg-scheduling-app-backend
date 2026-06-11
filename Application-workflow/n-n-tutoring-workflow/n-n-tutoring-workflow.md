@@ -94,6 +94,9 @@ An administrator defines a collaborative group session under a Team.
   * **Round Robin**: Automatically locked to **Rotating Lead** (`ROTATING_LEAD`).
 * **Target Co-Host Count**: Optional. When set (must be `>= 1`), caps the number of co-coaches assigned per session. When left as `null`, all available coaches in the pool (excluding the lead) join each session as co-coaches.
 * **Participant Capacity**: Defines the seat capacity (Min & Max seats) allowed in each slot.
+* **Optional settings**:
+  * `showDescription` — toggle to display the event description on the public booking page side panel.
+  * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit).
 
 ### 2. Setup & Slots Configuration
 Before the event becomes bookable:
@@ -114,3 +117,5 @@ To handle high concurrent traffic and prevent overbooking, the backend does the 
    * **First Booking**: Resolves the Lead Coach (Direct/Round-Robin) and assigns the required co-coaches (up to `targetCoHostCount`) from the active coach pool.
    * **Subsequent Booking**: Instead of running routing again, the system queries the database for the existing active coaching team assigned to the first booking on this slot, and reuses the exact same Lead Coach and co-hosts. This ensures students booking the same slot are assigned to the same team.
 4. **Completion**: Upserts the student record and saves the new `Booking` record. Then queues: `BOOKING_CONFIRMED` + reminder emails (24H/12H/6H/1H) to the student; `COACH_BOOKING_ASSIGNED` to the lead coach; `COACH_BOOKING_COCOACH_ASSIGNED` to each co-coach. These notifications fire **per booking** — if 5 students book the same slot, co-coaches receive 5 separate assignment emails.
+
+> **Session Log:** After the session, a Super Admin, Team Admin, the assigned lead coach, or any assigned co-coach can open the "Log Session" action on the slot. The log records attendance per student, topics discussed, session summary, and private coach notes. `SessionLog` and `SessionAttendance` records are **not** created at booking time — they are written only when the log is explicitly submitted post-session.

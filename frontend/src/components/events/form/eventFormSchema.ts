@@ -24,13 +24,6 @@ export const eventFormSchema = z
       .enum(['SINGLE_COACH', 'FIXED_LEAD', 'ROTATING_LEAD'] as const)
       .default('SINGLE_COACH'),
     fixedLeadCoachId: z.string().nullable().optional(),
-    minCoachCount: z.number().int().min(1, 'Minimum coaches must be at least 1').default(1),
-    maxCoachCount: z
-      .number()
-      .int()
-      .min(1, 'Maximum coaches must be at least 1')
-      .nullable()
-      .optional(),
     minParticipantCount: z
       .number()
       .int()
@@ -90,27 +83,11 @@ export const eventFormSchema = z
 
     // ── Cross-field rules ─────────────────────────────────────────────────────
 
-    if (values.assignmentStrategy === 'ROUND_ROBIN' && (values.minCoachCount ?? 1) < 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['minCoachCount'],
-        message: 'Round-robin assignment requires at least 2 coaches (set Min Coaches ≥ 2).',
-      })
-    }
-
     if (values.sessionLeadershipStrategy === 'FIXED_LEAD' && !values.fixedLeadCoachId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['fixedLeadCoachId'],
         message: 'A fixed lead coach must be selected for this leadership strategy.',
-      })
-    }
-
-    if (values.maxCoachCount != null && values.maxCoachCount < (values.minCoachCount ?? 1)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['maxCoachCount'],
-        message: 'Maximum coaches cannot be less than minimum coaches.',
       })
     }
 
@@ -168,8 +145,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       minimumNoticeMinutes: event.minimumNoticeMinutes / 60,
       sessionLeadershipStrategy: event.sessionLeadershipStrategy,
       fixedLeadCoachId: event.fixedLeadCoachId,
-      minCoachCount: event.minCoachCount,
-      maxCoachCount: event.maxCoachCount,
       targetCoHostCount: event.targetCoHostCount,
       minParticipantCount: event.minParticipantCount,
       maxParticipantCount: event.maxParticipantCount,
@@ -200,8 +175,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     minimumNoticeMinutes: 0,
     sessionLeadershipStrategy: 'SINGLE_COACH',
     fixedLeadCoachId: null,
-    minCoachCount: 1,
-    maxCoachCount: null,
     targetCoHostCount: null,
     minParticipantCount: null,
     maxParticipantCount: null,

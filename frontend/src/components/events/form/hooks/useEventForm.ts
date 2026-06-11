@@ -112,12 +112,9 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
       }
     }
 
-    // Reset coach pool count constraints when student choice is active,
-    // since students select their own coach from all assigned coaches.
+    // Reset assignment strategy when student choice is active
     const allowStudentCoachChoice = getValues('allowStudentCoachChoice')
     if (allowStudentCoachChoice) {
-      setValue('minCoachCount', 1, { shouldDirty: false })
-      setValue('maxCoachCount', null, { shouldDirty: false })
       if (getValues('assignmentStrategy') !== 'DIRECT') {
         setValue('assignmentStrategy', 'DIRECT', { shouldDirty: false })
       }

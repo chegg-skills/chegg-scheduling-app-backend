@@ -19,8 +19,6 @@ import {
 type EventConfigValidationInput = {
   interactionType: InteractionType;
   assignmentStrategy: AssignmentStrategy;
-  minCoachCount: number;
-  maxCoachCount: number | null;
   coachCount: number;
   sessionLeadershipStrategy?: SessionLeadershipStrategy;
   fixedLeadCoachId?: string | null;
@@ -67,32 +65,14 @@ const validateEventConfiguration = (input: EventConfigValidationInput): void => 
     );
   }
 
-  let requiredMinCoaches = input.minCoachCount;
-  if (input.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN) {
-    requiredMinCoaches = Math.max(requiredMinCoaches, 2);
-  } else {
-    // DIRECT events can have 0 coaches for now (assigned later)
-    requiredMinCoaches = 0;
-  }
-
-  if (input.coachCount > 0 && input.coachCount < requiredMinCoaches) {
-    if (input.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && input.coachCount < 2) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        "ROUND_ROBIN events require at least two coaches.",
-      );
-    }
-
+  if (
+    input.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+    input.coachCount > 0 &&
+    input.coachCount < 2
+  ) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
-      `This event requires at least ${requiredMinCoaches} coach(es).`,
-    );
-  }
-
-  if (input.maxCoachCount !== null && input.coachCount > input.maxCoachCount) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      `This event exceeds the maximum coach limit of ${input.maxCoachCount}.`,
+      "Round-robin requires at least 2 coaches. Add another coach first, then remove this one.",
     );
   }
 };
@@ -123,16 +103,12 @@ const validateEventCoaches = async (
   event: {
     interactionType: InteractionType;
     assignmentStrategy: AssignmentStrategy;
-    minCoachCount: number;
-    maxCoachCount: number | null;
   },
   coaches: Array<{ userId: string; coachOrder: number }>,
 ): Promise<void> => {
   validateEventConfiguration({
     interactionType: event.interactionType,
     assignmentStrategy: event.assignmentStrategy,
-    minCoachCount: event.minCoachCount,
-    maxCoachCount: event.maxCoachCount,
     coachCount: coaches.length,
   });
 
@@ -222,7 +198,7 @@ const replaceEventCoaches = async (
   if (event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && normalizedCoaches.length < 2) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
-      "ROUND_ROBIN events require at least two coaches.",
+      "Round-robin requires at least 2 coaches. Add another coach first, then remove this one.",
     );
   }
 

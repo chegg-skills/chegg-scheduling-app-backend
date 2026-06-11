@@ -92,7 +92,6 @@ export function EventDetailPage() {
   const coachSetupStatus = getEventCoachSetupStatus({
     activeCoachCount: event.coaches?.length ?? 0,
     assignmentStrategy: event.assignmentStrategy,
-    minCoachCount: event.minCoachCount,
   })
   const needsScheduleSlots = event.bookingMode === 'FIXED_SLOTS' && slots.length === 0
 

@@ -90,7 +90,6 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
   const isRoundRobin = selectedStrategy === 'ROUND_ROBIN'
 
   const leadershipStrategy = watch('sessionLeadershipStrategy')
-  const minCoachCount = watch('minCoachCount')
   const eventCoaches = event?.coaches ?? []
   const leadSelectionOptions: SafeUser[] =
     eventCoaches.length > 0
@@ -183,64 +182,6 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
           </FormField>
         ))}
 
-      {/* Coach pool size — shown for all types when round-robin is selected, always for multi-coach.
-          Hidden when allowStudentCoachChoice is ON — students pick at booking time. */}
-      {!allowStudentCoachChoice && (isRoundRobin || caps?.multipleCoaches) && (
-        <FormField
-          label="Coach Pool Size"
-          htmlFor="minCoachCount"
-          error={errors.minCoachCount?.message || errors.maxCoachCount?.message}
-          info="Controls how many coaches can be in this event's rotation pool — not how many join each session. ONE_TO_ONE sessions always have exactly one coach per booking regardless of pool size. Round-robin requires Min ≥ 2 so there is always someone to rotate to."
-        >
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            }}
-          >
-            <Controller
-              name="minCoachCount"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  id="minCoachCount"
-                  type="number"
-                  label="Min coaches"
-                  min={1}
-                  value={field.value ?? 1}
-                  hasError={!!errors.minCoachCount}
-                  onChange={(e) => {
-                    const { value } = e.target
-                    field.onChange(value === '' ? 1 : Number(value))
-                  }}
-                  onBlur={field.onBlur}
-                />
-              )}
-            />
-            <Controller
-              name="maxCoachCount"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  id="maxCoachCount"
-                  type="number"
-                  label="Max coaches"
-                  min={minCoachCount ?? 1}
-                  placeholder="No cap"
-                  value={field.value ?? ''}
-                  hasError={!!errors.maxCoachCount}
-                  onChange={(e) => {
-                    const { value } = e.target
-                    field.onChange(value === '' ? null : Number(value))
-                  }}
-                  onBlur={field.onBlur}
-                />
-              )}
-            />
-          </Box>
-        </FormField>
-      )}
 
       {/* DIRECT strategy: pick the always-assigned coach (stored as fixedLeadCoachId).
           Shown for all interaction types when DIRECT is selected, unless the FIXED_LEAD

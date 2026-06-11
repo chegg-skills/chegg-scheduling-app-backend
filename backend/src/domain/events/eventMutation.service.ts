@@ -152,8 +152,6 @@ export const resolveCreateEventContext = async (
   validateEventConfiguration({
     interactionType,
     assignmentStrategy,
-    minCoachCount: validated.minCoachCount ?? 1,
-    maxCoachCount: validated.maxCoachCount ?? null,
     coachCount: 0,
     sessionLeadershipStrategy,
     fixedLeadCoachId,
@@ -201,9 +199,6 @@ export const resolveUpdateEventContext = async ({
   validateEventConfiguration({
     interactionType: nextInteractionType,
     assignmentStrategy,
-    minCoachCount: validated.minCoachCount ?? existingEvent.minCoachCount,
-    maxCoachCount:
-      validated.maxCoachCount !== undefined ? validated.maxCoachCount : existingEvent.maxCoachCount,
     coachCount: existingEvent.coaches.length,
     sessionLeadershipStrategy,
     fixedLeadCoachId,
@@ -246,8 +241,6 @@ export const buildEventCreateData = ({
     isActive: validated.isActive,
     sessionLeadershipStrategy: context.sessionLeadershipStrategy,
     fixedLeadCoachId: context.fixedLeadCoachId ?? undefined,
-    minCoachCount: validated.minCoachCount ?? 1,
-    maxCoachCount: validated.maxCoachCount ?? undefined,
     targetCoHostCount: validated.targetCoHostCount ?? undefined,
     maxBookingWindowDays: validated.maxBookingWindowDays ?? undefined,
     recurrenceVisibilityLimit: validated.recurrenceVisibilityLimit ?? undefined,
@@ -322,12 +315,6 @@ export const buildEventUpdateData = ({
     updateData.isActive = validated.isActive;
   }
 
-  if (validated.minCoachCount !== undefined) {
-    updateData.minCoachCount = validated.minCoachCount;
-  }
-  if (validated.maxCoachCount !== undefined) {
-    updateData.maxCoachCount = validated.maxCoachCount;
-  }
   if (validated.targetCoHostCount !== undefined) {
     updateData.targetCoHostCount = validated.targetCoHostCount;
   }
@@ -409,8 +396,6 @@ export const buildDuplicateEventData = ({
     sessionLeadershipStrategy,
     fixedLeadCoachId: fixedLeadCoachId ?? undefined,
     bufferAfterMinutes: sourceEvent.bufferAfterMinutes,
-    minCoachCount: sourceEvent.minCoachCount,
-    maxCoachCount: sourceEvent.maxCoachCount ?? undefined,
     targetCoHostCount: (sourceEvent as any).targetCoHostCount ?? undefined,
     maxBookingWindowDays: (sourceEvent as any).maxBookingWindowDays ?? undefined,
     recurrenceVisibilityLimit: (sourceEvent as any).recurrenceVisibilityLimit ?? undefined,

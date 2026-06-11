@@ -21,7 +21,6 @@ interface EventCoachManagerProps {
   coaches: EventCoach[]
   teamMembers: TeamMember[]
   assignmentStrategy?: string
-  minCoachCount?: number
   title?: string
   hideHeader?: boolean
   showAddModalOverride?: boolean
@@ -36,7 +35,6 @@ export function EventCoachManager({
   coaches,
   teamMembers,
   assignmentStrategy,
-  minCoachCount = 1,
   title,
   hideHeader,
   showAddModalOverride,
@@ -137,7 +135,6 @@ export function EventCoachManager({
       <EventCoachStatusAlert
         activeCoachCount={activeCoaches.length}
         assignmentStrategy={assignmentStrategy || 'DIRECT'}
-        minCoachCount={minCoachCount}
       />
 
       {!hideHeader && (

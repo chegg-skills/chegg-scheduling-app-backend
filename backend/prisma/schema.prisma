@@ -152,8 +152,6 @@ model Event {
   bufferAfterMinutes        Int                       @default(0)
   interactionType           InteractionType
   fixedLeadCoachId          String?
-  maxCoachCount             Int?
-  minCoachCount             Int                       @default(1)
   showDescription           Boolean                   @default(false)
   targetCoHostCount         Int?
   maxBookingWindowDays      Int?
