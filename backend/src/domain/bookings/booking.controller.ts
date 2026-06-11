@@ -31,7 +31,7 @@ export const getBooking = async (req: Request, res: Response) => {
   const booking = await BookingService.getBooking(bookingId);
 
   if (caller.role === UserRole.COACH) {
-    const isLead = booking.coachUserId === caller.id;
+    const isLead = booking.coachUserId != null && booking.coachUserId === caller.id;
     const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
 
     if (!isLead && !isCoHost) {

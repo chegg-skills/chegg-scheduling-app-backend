@@ -126,6 +126,20 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           label="Participants (Min / Max)"
           value={`${event.minParticipantCount ?? 1} / ${event.maxParticipantCount ?? '∞'}`}
         />
+        {event.deferCoachReveal && (
+          <DataField
+            label="Coach reveal"
+            value="Deferred"
+            tooltip="Students receive no coach name or join URL at booking time. Admin reveals the coach manually before the session."
+          />
+        )}
+        {event.allowAnonymousBooking && (
+          <DataField
+            label="Anonymous booking"
+            value="Enabled"
+            tooltip="Students see no coach name or personal join URL. Any pool coach can log the session and assign themselves retroactively."
+          />
+        )}
       </Grid>
     </Paper>
   )

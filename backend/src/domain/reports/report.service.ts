@@ -41,7 +41,7 @@ export const getBookingsReport = async (
     Team: b.team.name,
     Event: b.event.name,
     "Event Type": b.event.eventType.name,
-    Coach: `${b.coach.firstName} ${b.coach.lastName}`,
+    Coach: b.coach ? `${b.coach.firstName} ${b.coach.lastName}` : "",
     "Student Name": b.studentName,
     "Student Email": b.studentEmail,
     "Duration (Min)": Math.round((b.endTime.getTime() - b.startTime.getTime()) / 60000),

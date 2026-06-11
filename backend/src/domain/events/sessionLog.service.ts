@@ -11,6 +11,7 @@ export type UpsertSessionLogInput = {
   topicsDiscussed?: string | null;
   summary?: string | null;
   coachNotes?: string | null;
+  assignedCoachId?: string;
   attendance: Array<{ bookingId: string; attended: boolean }>;
 };
 
@@ -19,11 +20,25 @@ export const assertSlotLogAccess = async (slotId: string, caller: CallerContext)
 
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
-    select: { assignedCoachId: true },
+    select: {
+      assignedCoachId: true,
+      event: {
+        select: {
+          allowAnonymousBooking: true,
+          coaches: { where: { isActive: true }, select: { coachUserId: true } },
+        },
+      },
+    },
   });
 
   if (!slot) {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found.");
+  }
+
+  // For anonymous events, any active pool coach may log the session
+  if (slot.event.allowAnonymousBooking) {
+    const isPoolCoach = slot.event.coaches.some((c) => c.coachUserId === caller.id);
+    if (isPoolCoach) return;
   }
 
   if (slot.assignedCoachId === caller.id) return;
@@ -133,6 +148,23 @@ export const upsertSessionLog = async (
         updatedAt: new Date(),
       },
     });
+
+    // For anonymous sessions: assign the coach retroactively when logging.
+    // No emails are sent — the session is already over.
+    if (payload.assignedCoachId) {
+      await tx.eventScheduleSlot.update({
+        where: { id: slotId },
+        data: { assignedCoachId: payload.assignedCoachId },
+      });
+
+      await tx.booking.updateMany({
+        where: {
+          scheduleSlotId: slotId,
+          status: { not: BookingStatus.CANCELLED },
+        },
+        data: { coachUserId: payload.assignedCoachId },
+      });
+    }
 
     for (const entry of payload.attendance) {
       await tx.sessionAttendance.upsert({

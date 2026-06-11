@@ -162,4 +162,56 @@ export const bookingTemplates: EmailTemplateMap = {
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
     ),
   },
+
+  BOOKING_CONFIRMED_ANONYMOUS: {
+    subject: "Confirmed: {{eventName}} on {{startTime}}",
+    preheader: "Your session is confirmed for {{startTime}}.",
+    text: "Hi {{studentName}}, your booking for {{eventName}} on {{startTime}} ({{timezone}}) with {{teamName}} is confirmed. Join using the link below. Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
+    html: wrapLayout(
+      "Booking Confirmation",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your session for <strong>{{eventName}}</strong> with the <strong>{{teamName}}</strong> is confirmed.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+       </p>`,
+      "Your session is confirmed for {{startTime}}.",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+    ),
+  },
+
+  BOOKING_CANCELLED_ANONYMOUS: {
+    subject: "Session Cancelled: {{eventName}}",
+    preheader: "Your booking for {{eventName}} has been cancelled.",
+    text: "Hi {{studentName}}, your booking for {{eventName}} with {{teamName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled.{{cancellationDetails}} You can book a new session at any time.",
+    html: wrapLayout(
+      "Session Cancelled",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>This is to inform you that your upcoming booking has been cancelled.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+         {{cancellationDetailsHtml}}
+       </p>
+       <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>`,
+      "Your booking for {{eventName}} has been cancelled.",
+      { text: "Book Again", url: "{{publicBookingUrl}}" },
+    ),
+  },
+
+  ANONYMOUS_SLOT_CANCELLED_POOL: {
+    subject: "Slot Cancelled: {{eventName}} on {{startTime}}",
+    preheader: "The {{startTime}} slot for {{eventName}} has been cancelled by an administrator.",
+    text: "The slot for {{eventName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled by an administrator.",
+    html: wrapLayout(
+      "Slot Cancelled",
+      `<p>The slot for <strong>{{eventName}}</strong> scheduled for <strong>{{startTime}}</strong> ({{timezone}}) has been cancelled by an administrator.</p>
+       <p>No further action is required from you.</p>`,
+      "The {{startTime}} slot for {{eventName}} has been cancelled.",
+    ),
+  },
 };

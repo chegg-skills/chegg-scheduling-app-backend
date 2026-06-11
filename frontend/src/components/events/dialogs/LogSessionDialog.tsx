@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { useConfirm } from '@/context/confirm'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
+import InputLabel from '@mui/material/InputLabel'
+import FormControl from '@mui/material/FormControl'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { format } from 'date-fns'
@@ -12,13 +16,14 @@ import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { useSlotBookings, useSlotSessionLog, useUpsertSessionLog } from '@/hooks/queries/useEvents'
-import type { EventScheduleSlot, Booking } from '@/types'
+import type { Event, EventScheduleSlot, Booking } from '@/types'
 
 interface LogSessionDialogProps {
   isOpen: boolean
   onClose: () => void
   eventId: string
   slot: EventScheduleSlot | null
+  event?: Event
 }
 
 function getInitials(name: string): string {
@@ -30,8 +35,9 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionDialogProps) {
+export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogSessionDialogProps) {
   const slotId = slot?.id ?? ''
+  const isAnonymous = event?.allowAnonymousBooking === true
 
   const { data: bookings, isLoading: bookingsLoading } = useSlotBookings(eventId, slotId)
   const { data: existingLog, isLoading: logLoading } = useSlotSessionLog(eventId, slotId)
@@ -41,6 +47,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
   const [summary, setSummary] = useState('')
   const [coachNotes, setCoachNotes] = useState('')
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({})
+  const [assignedCoachId, setAssignedCoachId] = useState<string>('')
 
   const activeBookings =
     (bookings as Booking[] | undefined)?.filter((b) => b.status !== 'CANCELLED') ?? []
@@ -57,6 +64,8 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         map[a.bookingId] = a.attended
       })
       setAttendanceMap(map)
+      // Pre-fill assigned coach from the slot's current value
+      setAssignedCoachId(slot?.assignedCoachId ?? '')
     } else if (activeBookings.length > 0) {
       // For a new log, default everyone to present
       setTopicsDiscussed('')
@@ -67,6 +76,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         map[b.id] = true
       })
       setAttendanceMap(map)
+      setAssignedCoachId(slot?.assignedCoachId ?? '')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, existingLog, activeBookings.length])
@@ -88,6 +98,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
         summary: summary.trim() || null,
         coachNotes: coachNotes.trim() || null,
         attendance,
+        ...(isAnonymous && assignedCoachId ? { assignedCoachId } : {}),
       },
       {
         onSuccess: () => {
@@ -173,6 +184,34 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot }: LogSessionD
             </Stack>
           </Stack>
         </Box>
+
+        {/* Coach assignment — only for anonymous events */}
+        {isAnonymous && (
+          <FormControl fullWidth size="small">
+            <InputLabel id="log-coach-label">Assign Coach (Optional)</InputLabel>
+            <Select
+              labelId="log-coach-label"
+              label="Assign Coach (Optional)"
+              value={assignedCoachId}
+              onChange={(e) => setAssignedCoachId(e.target.value)}
+              displayEmpty
+            >
+              <MenuItem value="">
+                <em>Not assigned</em>
+              </MenuItem>
+              {(event?.coaches ?? [])
+                .filter((c) => c.isActive)
+                .map((c) => (
+                  <MenuItem key={c.coachUserId} value={c.coachUserId}>
+                    {c.coachUser.firstName} {c.coachUser.lastName}
+                  </MenuItem>
+                ))}
+            </Select>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+              Assigning a coach updates the slot record and all bookings retroactively.
+            </Typography>
+          </FormControl>
+        )}
 
         {/* Attendance section */}
         <Box>

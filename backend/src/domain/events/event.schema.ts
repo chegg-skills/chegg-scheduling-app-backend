@@ -57,6 +57,7 @@ const EventBaseObjectCore = z.looseObject({
   ),
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
+  allowAnonymousBooking: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
   meetingLinkSource: z.nativeEnum(MeetingLinkSource).optional(),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
@@ -78,6 +79,7 @@ const EventBaseObject = EventBaseObjectCore.extend({
   bufferAfterMinutes: z.coerce.number().int().nonnegative().default(0),
   minCoachCount: z.coerce.number().int().positive().default(1),
   deferCoachReveal: z.boolean().default(false),
+  allowAnonymousBooking: z.boolean().default(false),
   meetingLinkSource: z.nativeEnum(MeetingLinkSource).default(MeetingLinkSource.COACH_ISV),
 });
 
@@ -185,6 +187,40 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
         message: "Deferred coach reveal is only supported for ONE_TO_MANY events.",
       });
     }
+  }
+
+  // allowAnonymousBooking is only valid for ONE_TO_MANY events
+  if (data.allowAnonymousBooking === true && caps) {
+    if (caps.multipleCoaches || !caps.multipleParticipants) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["allowAnonymousBooking"],
+        message: "Anonymous booking is only supported for ONE_TO_MANY events.",
+      });
+    }
+  }
+
+  // allowAnonymousBooking and deferCoachReveal are mutually exclusive
+  if (data.allowAnonymousBooking === true && data.deferCoachReveal === true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["allowAnonymousBooking"],
+      message: "Anonymous booking and deferred coach reveal cannot both be enabled.",
+    });
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["deferCoachReveal"],
+      message: "Anonymous booking and deferred coach reveal cannot both be enabled.",
+    });
+  }
+
+  // Anonymous booking requires EVENT_LOCATION as the meeting link source
+  if (data.allowAnonymousBooking === true && data.meetingLinkSource !== undefined && data.meetingLinkSource !== MeetingLinkSource.EVENT_LOCATION) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["meetingLinkSource"],
+      message: "Anonymous booking requires the Event Location URL as the meeting link source.",
+    });
   }
 
   // allowStudentCoachChoice is only valid for ONE_TO_ONE events
@@ -310,6 +346,7 @@ export const UpsertSessionLogSchema = {
       .max(500, "Coach notes must be 500 characters or less")
       .optional()
       .nullable(),
+    assignedCoachId: z.uuid("Invalid coach user ID").optional(),
     attendance: z.array(
       z.object({
         bookingId: z.uuid("Invalid booking ID"),

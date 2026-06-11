@@ -95,6 +95,7 @@ export type CreateEventInput = {
   recurrenceVisibilityLimit?: number | null;
   showDescription?: boolean;
   deferCoachReveal?: boolean;
+  allowAnonymousBooking?: boolean;
   allowStudentCoachChoice?: boolean;
   meetingLinkSource?: MeetingLinkSource;
   groupId?: string | null;

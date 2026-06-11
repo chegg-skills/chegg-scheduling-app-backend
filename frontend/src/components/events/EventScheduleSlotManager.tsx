@@ -175,6 +175,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
         onClose={() => setLoggingSlot(null)}
         eventId={event.id}
         slot={loggingSlot}
+        event={event}
       />
     </Box>
   )

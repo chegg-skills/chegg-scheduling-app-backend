@@ -160,6 +160,7 @@ model Event {
   recurrenceVisibilityLimit Int?
   deferCoachReveal          Boolean                   @default(false)
   allowStudentCoachChoice   Boolean                   @default(false)
+  allowAnonymousBooking     Boolean                   @default(false)
   meetingLinkSource         MeetingLinkSource         @default(COACH_ISV)
   groupId                   String?
   sessionTypeId             String?
@@ -379,8 +380,8 @@ model Booking {
   scheduleSlotId    String?
   rescheduleToken   String?            @unique @default(uuid())
   coCoachUserIds    String[]           @default([])
-  coachUserId       String
-  coach             User               @relation(fields: [coachUserId], references: [id])
+  coachUserId       String?
+  coach             User?              @relation(fields: [coachUserId], references: [id])
   event             Event              @relation(fields: [eventId], references: [id])
   scheduleSlot      EventScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
   student           Student?           @relation(fields: [studentId], references: [id])
@@ -410,6 +411,7 @@ model TeamNotificationConfig {
   notifyLeadOnAvailability  Boolean  @default(true)
   sendFeedbackLink          Boolean  @default(false)
   feedbackFormLink          String?
+  poolReminderOffsets       Int[]    @default([1440, 360])
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 }

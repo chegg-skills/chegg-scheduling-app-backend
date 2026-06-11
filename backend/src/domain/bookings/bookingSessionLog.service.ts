@@ -24,11 +24,11 @@ const sessionLogReadInclude = {
 } as const;
 
 const assertBookingLogAccess = (
-  booking: { coachUserId: string; coCoachUserIds: string[] },
+  booking: { coachUserId: string | null; coCoachUserIds: string[] },
   caller: CallerContext,
 ): void => {
   if (caller.role === UserRole.SUPER_ADMIN || caller.role === UserRole.TEAM_ADMIN) return;
-  if (booking.coachUserId === caller.id) return;
+  if (booking.coachUserId != null && booking.coachUserId === caller.id) return;
   if (booking.coCoachUserIds.includes(caller.id)) return;
   throw new ErrorHandler(
     StatusCodes.FORBIDDEN,

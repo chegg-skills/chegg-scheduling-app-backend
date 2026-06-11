@@ -35,6 +35,14 @@ const EXPECTED_TYPES = [
   "EVENT_DEACTIVATED",
   "STUDENT_CUSTOM_EMAIL",
   "STUDENT_SESSION_FEEDBACK",
+  "BOOKING_CONFIRMED_ANONYMOUS",
+  "BOOKING_CANCELLED_ANONYMOUS",
+  "SESSION_REMINDER_ANONYMOUS_24H",
+  "SESSION_REMINDER_ANONYMOUS_12H",
+  "SESSION_REMINDER_ANONYMOUS_6H",
+  "SESSION_REMINDER_ANONYMOUS_1H",
+  "ANONYMOUS_BOOKING_POOL_REMINDER",
+  "ANONYMOUS_SLOT_CANCELLED_POOL",
 ] as const;
 
 describe("emailTemplates registry", () => {
@@ -48,8 +56,8 @@ describe("emailTemplates registry", () => {
     expect(emailTemplates).not.toHaveProperty("CANCEL_BOOKING_REMINDERS");
   });
 
-  it("has exactly 31 entries", () => {
-    expect(Object.keys(emailTemplates)).toHaveLength(31);
+  it("has exactly 39 entries", () => {
+    expect(Object.keys(emailTemplates)).toHaveLength(39);
   });
 
   it("every entry has non-empty subject, text, and html string fields", () => {

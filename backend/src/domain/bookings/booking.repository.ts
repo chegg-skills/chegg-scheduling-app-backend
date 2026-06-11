@@ -152,7 +152,7 @@ const updateBookingById = async (
     startTime?: Date;
     endTime?: Date;
     timezone?: string;
-    coachUserId?: string;
+    coachUserId?: string | null;
     meetingJoinUrl?: string | null;
     sessionJoinUrl?: string | null;
     scheduleSlotId?: string | null;
@@ -165,7 +165,7 @@ const updateBookingById = async (
   try {
     return await client.booking.update({
       where: { id },
-      data,
+      data: data as Prisma.BookingUncheckedUpdateInput,
       include: bookingInclude,
     });
   } catch (error) {

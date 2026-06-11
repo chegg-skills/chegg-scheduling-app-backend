@@ -167,6 +167,17 @@ const updateEvent = async (
     );
   }
 
+  if (
+    payload.allowAnonymousBooking !== undefined &&
+    payload.allowAnonymousBooking !== existingEvent.allowAnonymousBooking &&
+    existingEvent._count.bookings > 0
+  ) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Anonymous booking cannot be changed after students have booked sessions for this event.",
+    );
+  }
+
   if (payload.groupId) {
     await assertGroupBelongsToTeam(payload.groupId, existingEvent.teamId);
   }

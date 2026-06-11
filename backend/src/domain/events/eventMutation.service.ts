@@ -253,6 +253,7 @@ export const buildEventCreateData = ({
     recurrenceVisibilityLimit: validated.recurrenceVisibilityLimit ?? undefined,
     showDescription: validated.showDescription ?? false,
     deferCoachReveal: validated.deferCoachReveal ?? false,
+    allowAnonymousBooking: validated.allowAnonymousBooking ?? false,
     allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
     meetingLinkSource: validated.meetingLinkSource,
     team: { connect: { id: teamId } },
@@ -346,6 +347,10 @@ export const buildEventUpdateData = ({
     updateData.deferCoachReveal = validated.deferCoachReveal;
   }
 
+  if (validated.allowAnonymousBooking !== undefined) {
+    updateData.allowAnonymousBooking = validated.allowAnonymousBooking;
+  }
+
   if (validated.allowStudentCoachChoice !== undefined) {
     updateData.allowStudentCoachChoice = validated.allowStudentCoachChoice;
   }
@@ -411,6 +416,7 @@ export const buildDuplicateEventData = ({
     recurrenceVisibilityLimit: (sourceEvent as any).recurrenceVisibilityLimit ?? undefined,
     showDescription: (sourceEvent as any).showDescription,
     deferCoachReveal: (sourceEvent as any).deferCoachReveal ?? false,
+    allowAnonymousBooking: (sourceEvent as any).allowAnonymousBooking ?? false,
     allowStudentCoachChoice: (sourceEvent as any).allowStudentCoachChoice ?? false,
     meetingLinkSource: (sourceEvent as any).meetingLinkSource ?? "COACH_ISV",
     group: sourceEvent.groupId ? { connect: { id: sourceEvent.groupId } } : undefined,

@@ -27,6 +27,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
   const mutation = useUpsertTeamNotificationConfig(teamId)
 
   const [reminderOffsets, setReminderOffsets] = useState<number[]>([])
+  const [poolReminderOffsets, setPoolReminderOffsets] = useState<number[]>([1440, 360])
 
   const [adminNotifyOnBooking, setAdminNotifyOnBooking] = useState(true)
   const [adminNotifyOnCancellation, setAdminNotifyOnCancellation] = useState(true)
@@ -46,6 +47,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
   useEffect(() => {
     if (config) {
       setReminderOffsets(config.reminderOffsets)
+      setPoolReminderOffsets(config.poolReminderOffsets ?? [1440, 360])
       setAdminNotifyOnBooking(config.adminNotifyOnBooking)
       setAdminNotifyOnCancellation(config.adminNotifyOnCancellation)
       setAdminNotifyOnNoShow(config.adminNotifyOnNoShow)
@@ -83,6 +85,7 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
     mutation.mutate(
       {
         reminderOffsets,
+        poolReminderOffsets,
         adminNotifyOnBooking,
         adminNotifyOnCancellation,
         adminNotifyOnNoShow,
@@ -183,6 +186,45 @@ export function TeamNotificationsTab({ teamId, canEdit }: TeamNotificationsTabPr
               }
               label="1 hour before session"
             />
+          </Stack>
+
+          <Divider />
+
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <Clock size={22} className="text-primary-600" />
+              <Typography variant="h6" fontWeight={600}>
+                Anonymous Session Pool Alerts
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Pool coaches receive these reminders before anonymous sessions. If no events on this team use anonymous booking, these settings have no effect.
+            </Typography>
+          </Box>
+
+          <Stack spacing={1}>
+            {[
+              { offset: 1440, label: '24 hours before session' },
+              { offset: 720, label: '12 hours before session' },
+              { offset: 360, label: '6 hours before session' },
+              { offset: 60, label: '1 hour before session' },
+            ].map(({ offset, label }) => (
+              <FormControlLabel
+                key={offset}
+                control={
+                  <Checkbox
+                    checked={poolReminderOffsets.includes(offset)}
+                    onChange={() =>
+                      setPoolReminderOffsets((prev) =>
+                        prev.includes(offset) ? prev.filter((o) => o !== offset) : [...prev, offset]
+                      )
+                    }
+                    disabled={!canEdit || mutation.isPending}
+                  />
+                }
+                label={label}
+              />
+            ))}
           </Stack>
 
           <Divider />

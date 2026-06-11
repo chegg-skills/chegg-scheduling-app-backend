@@ -22,7 +22,7 @@ import {
 import { getMeetingJoinUrl, type BookableEvent } from "./booking.shared";
 
 export type ResolvedBookingCoachSelection = {
-  assignedCoachId: string;
+  assignedCoachId: string | null;
   meetingJoinUrl: string | null;
   coCoachUserIds: string[];
 };
@@ -326,6 +326,15 @@ export const resolveBookingCoachSelection = async (
   const isDirect = event.assignmentStrategy === AssignmentStrategy.DIRECT;
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType];
 
+  // Anonymous booking: no coach assigned — use event location URL directly.
+  if (event.allowAnonymousBooking) {
+    return {
+      assignedCoachId: null,
+      meetingJoinUrl: event.locationValue || null,
+      coCoachUserIds: [],
+    };
+  }
+
   // 1. Group Session Consistency: If multiple participants are allowed, check if a session
   // is already established for this slot. Reuse the existing coaching team if so.
   if (caps.multipleParticipants) {
@@ -345,7 +354,7 @@ export const resolveBookingCoachSelection = async (
     if (existingSession) {
       return {
         assignedCoachId: existingSession.coachUserId,
-        meetingJoinUrl: getMeetingJoinUrl(event, existingSession.coach.zoomIsvLink),
+        meetingJoinUrl: getMeetingJoinUrl(event, existingSession.coach?.zoomIsvLink),
         coCoachUserIds: existingSession.coCoachUserIds,
       };
     }
