@@ -83,7 +83,6 @@ export type CreateEventInput = {
   isActive?: boolean;
   bookingMode?: string;
   minimumNoticeMinutes?: number;
-  minParticipantCount?: number | null;
   maxParticipantCount?: number | null;
   targetCoHostCount?: number | null;
   sessionLeadershipStrategy?: string;

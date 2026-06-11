@@ -391,7 +391,6 @@ export const buildDuplicateEventData = ({
     updatedBy: { connect: { id: callerId } },
     bookingMode: sourceEvent.bookingMode,
     minimumNoticeMinutes: sourceEvent.minimumNoticeMinutes,
-    minParticipantCount: sourceEvent.minParticipantCount ?? undefined,
     maxParticipantCount: sourceEvent.maxParticipantCount ?? undefined,
     sessionLeadershipStrategy,
     fixedLeadCoachId: fixedLeadCoachId ?? undefined,

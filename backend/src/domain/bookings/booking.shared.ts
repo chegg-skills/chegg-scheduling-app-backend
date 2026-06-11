@@ -193,7 +193,6 @@ export type BookingSchedulingContext = Pick<
   | "interactionType"
   | "bookingMode"
   | "minimumNoticeMinutes"
-  | "minParticipantCount"
   | "maxParticipantCount"
   | "sessionLeadershipStrategy"
   | "fixedLeadCoachId"
@@ -263,7 +262,6 @@ export const buildSchedulingContext = (event: BookableEvent): BookingSchedulingC
   interactionType: event.interactionType,
   bookingMode: event.bookingMode,
   minimumNoticeMinutes: event.minimumNoticeMinutes,
-  minParticipantCount: event.minParticipantCount,
   maxParticipantCount: event.maxParticipantCount,
   sessionLeadershipStrategy: event.sessionLeadershipStrategy,
   fixedLeadCoachId: event.fixedLeadCoachId,

@@ -75,14 +75,12 @@ const resolveEventSchedulingConfig = (
       existing?.bookingMode ??
       EventBookingMode.COACH_AVAILABILITY,
     minimumNoticeMinutes: payload.minimumNoticeMinutes ?? existing?.minimumNoticeMinutes ?? 0,
-    minParticipantCount: payload.minParticipantCount ?? existing?.minParticipantCount ?? null,
     maxParticipantCount: payload.maxParticipantCount ?? existing?.maxParticipantCount ?? null,
     bufferAfterMinutes: payload.bufferAfterMinutes ?? existing?.bufferAfterMinutes ?? 0,
   };
 
   // Enforce single-participant rule for OTO / MTO interaction types
   if (caps && !caps.multipleParticipants) {
-    config.minParticipantCount = 1;
     config.maxParticipantCount = 1;
   }
 
@@ -109,7 +107,6 @@ const getEffectiveParticipantPolicy = (
   event: {
     interactionType: InteractionType;
     bookingMode: EventBookingMode;
-    minParticipantCount: number | null;
     maxParticipantCount: number | null;
   },
   slot?: { capacity?: number | null } | null,
@@ -117,22 +114,13 @@ const getEffectiveParticipantPolicy = (
   const caps = INTERACTION_TYPE_CAPS[event.interactionType];
 
   if (!caps.multipleParticipants) {
-    return {
-      minParticipants: 1,
-      maxParticipants: 1,
-    };
+    return { maxParticipants: 1 };
   }
 
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
-    return {
-      minParticipants: event.minParticipantCount ?? 1,
-      maxParticipants: slot?.capacity ?? event.maxParticipantCount ?? null,
-    };
+    return { maxParticipants: slot?.capacity ?? event.maxParticipantCount ?? null };
   }
-  return {
-    minParticipants: event.minParticipantCount ?? 1,
-    maxParticipants: event.maxParticipantCount ?? null,
-  };
+  return { maxParticipants: event.maxParticipantCount ?? null };
 };
 
 const assertParticipantCapacityAvailable = (

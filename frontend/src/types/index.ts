@@ -303,7 +303,6 @@ export interface Event {
   sessionLeadershipStrategy: SessionLeadershipStrategy
   fixedLeadCoachId: string | null
   targetCoHostCount: number | null
-  minParticipantCount: number | null
   maxParticipantCount: number | null
   bufferAfterMinutes: number
   showDescription: boolean
@@ -551,7 +550,6 @@ export interface CreateEventDto {
   bookingMode?: EventBookingMode
   minimumNoticeMinutes?: number
   targetCoHostCount?: number | null
-  minParticipantCount?: number | null
   maxParticipantCount?: number | null
   bufferAfterMinutes?: number
   recurrenceVisibilityLimit?: number | null
