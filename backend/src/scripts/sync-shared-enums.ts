@@ -20,6 +20,7 @@ const SHARED_ENUMS = [
   "BookingStatus",
   "SessionLeadershipStrategy",
   "InteractionType",
+  "MeetingLinkSource",
 ] as const;
 
 const SCHEMA_PATH = resolve(__dirname, "../../prisma/schema.prisma");

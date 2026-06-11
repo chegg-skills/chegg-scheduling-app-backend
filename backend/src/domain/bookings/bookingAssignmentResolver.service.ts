@@ -19,7 +19,7 @@ import {
   getRoutingState,
   updateRoutingState,
 } from "./assignment.service";
-import type { BookableEvent } from "./booking.shared";
+import { getMeetingJoinUrl, type BookableEvent } from "./booking.shared";
 
 export type ResolvedBookingCoachSelection = {
   assignedCoachId: string;
@@ -148,7 +148,7 @@ const resolvePreferredSingleHost = async ({
 
   return {
     assignedCoachId: preferredCoachId,
-    meetingJoinUrl: preferredHost.coachUser.zoomIsvLink ?? null,
+    meetingJoinUrl: getMeetingJoinUrl(event, preferredHost.coachUser.zoomIsvLink),
     coCoachUserIds: [],
   };
 };
@@ -195,7 +195,7 @@ const resolveSingleHostSelection = async (
   const result = await resolveStrategyLead(input);
   return {
     assignedCoachId: result.assignedCoachId,
-    meetingJoinUrl: result.meetingJoinUrl,
+    meetingJoinUrl: getMeetingJoinUrl(input.event, result.meetingJoinUrl),
     coCoachUserIds: [],
   };
 };
@@ -235,7 +235,7 @@ const resolveFixedLeadSelection = async (
 
   return {
     assignedCoachId: fixedLeadCoachId,
-    meetingJoinUrl: fixedLeadHost.coachUser.zoomIsvLink ?? null,
+    meetingJoinUrl: getMeetingJoinUrl(input.event, fixedLeadHost.coachUser.zoomIsvLink),
   };
 };
 
@@ -345,7 +345,7 @@ export const resolveBookingCoachSelection = async (
     if (existingSession) {
       return {
         assignedCoachId: existingSession.coachUserId,
-        meetingJoinUrl: existingSession.coach.zoomIsvLink,
+        meetingJoinUrl: getMeetingJoinUrl(event, existingSession.coach.zoomIsvLink),
         coCoachUserIds: existingSession.coCoachUserIds,
       };
     }
@@ -365,7 +365,7 @@ export const resolveBookingCoachSelection = async (
       if (slot?.assignedCoachId) {
         return {
           assignedCoachId: slot.assignedCoachId,
-          meetingJoinUrl: slot.assignedCoach?.zoomIsvLink ?? null,
+          meetingJoinUrl: getMeetingJoinUrl(event, slot.assignedCoach?.zoomIsvLink),
           coCoachUserIds: [],
         };
       }

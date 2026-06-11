@@ -57,6 +57,17 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
         <DataField label="Duration" value={`${event.durationSeconds / 60} min`} />
         <DataField label="Location type" value={formatEnumLabel(event.locationType)} />
         {event.locationValue && <DataField label="Location" value={event.locationValue} />}
+        {(event.locationType === 'VIRTUAL' || event.locationType === 'CUSTOM') && (
+          <DataField
+            label="Meeting link source"
+            value={
+              (event.meetingLinkSource ?? 'COACH_ISV') === 'EVENT_LOCATION'
+                ? 'Event location URL'
+                : "Assigned coach's Zoom link"
+            }
+            tooltip="Determines whether students receive the assigned coach's personal Zoom link or the configured event-level location URL."
+          />
+        )}
 
         <Spacer />
 

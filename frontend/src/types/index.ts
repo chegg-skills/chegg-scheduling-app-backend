@@ -10,6 +10,7 @@ import type {
   BookingStatus,
   SessionLeadershipStrategy,
   InteractionType,
+  MeetingLinkSource,
 } from './generated/enums'
 
 export type {
@@ -20,6 +21,7 @@ export type {
   BookingStatus,
   SessionLeadershipStrategy,
   InteractionType,
+  MeetingLinkSource,
 }
 export type StatsTimeframe =
   | 'today'
@@ -308,6 +310,7 @@ export interface Event {
   showDescription: boolean
   deferCoachReveal: boolean
   allowStudentCoachChoice: boolean
+  meetingLinkSource: MeetingLinkSource
   maxBookingWindowDays: number | null
   recurrenceVisibilityLimit?: number | null
   teamId: string
@@ -556,6 +559,7 @@ export interface CreateEventDto {
   recurrenceVisibilityLimit?: number | null
   description?: string
   isActive?: boolean
+  meetingLinkSource?: MeetingLinkSource
   sessionTypeId?: string | null
   groupId?: string | null
 }

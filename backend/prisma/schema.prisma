@@ -160,6 +160,7 @@ model Event {
   recurrenceVisibilityLimit Int?
   deferCoachReveal          Boolean                   @default(false)
   allowStudentCoachChoice   Boolean                   @default(false)
+  meetingLinkSource         MeetingLinkSource         @default(COACH_ISV)
   groupId                   String?
   sessionTypeId             String?
   bookings                  Booking[]
@@ -524,6 +525,11 @@ enum InteractionType {
   ONE_TO_MANY
   MANY_TO_ONE
   MANY_TO_MANY
+}
+
+enum MeetingLinkSource {
+  COACH_ISV
+  EVENT_LOCATION
 }
 
 enum CommunicationStatus {
