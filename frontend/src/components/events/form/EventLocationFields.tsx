@@ -1,22 +1,22 @@
 import { useFormContext } from 'react-hook-form'
-import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import FormControl from '@mui/material/FormControl'
 import FormLabel from '@mui/material/FormLabel'
 import Radio from '@mui/material/Radio'
 import Typography from '@mui/material/Typography'
+import MenuItem from '@mui/material/MenuItem'
 import { FormField } from '@/components/shared/form/FormField'
-import { Select } from '@/components/shared/form/Select'
 import { Textarea } from '@/components/shared/form/Textarea'
-import { Video, Link2 } from 'lucide-react'
+import { Select } from '@/components/shared/form/Select'
+import { Video, Link2, MapPin, Sliders } from 'lucide-react'
 import type { EventFormValues } from './eventFormSchema'
 import type { EventLocationType } from '@/types'
 
-const LOCATION_TYPES: { value: EventLocationType; label: string }[] = [
-  { value: 'VIRTUAL', label: 'Virtual (URL)' },
-  { value: 'IN_PERSON', label: 'In person (address)' },
-  { value: 'CUSTOM', label: 'Custom' },
+const LOCATION_TYPES: { value: EventLocationType; label: string; description: string; icon: any }[] = [
+  { value: 'VIRTUAL', label: 'Virtual (URL)', description: 'Online meeting room (e.g. Zoom, Meet)', icon: Video },
+  { value: 'IN_PERSON', label: 'In person', description: 'Physical address or location', icon: MapPin },
+  { value: 'CUSTOM', label: 'Custom instruction', description: 'Custom text or instructions', icon: Sliders },
 ]
 
 const locationHint: Record<EventLocationType, string> = {
@@ -41,26 +41,51 @@ export function EventLocationFields() {
   const allowAnonymousBooking = watch('allowAnonymousBooking')
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       <FormField
         label="Location type"
         htmlFor="locationType"
         error={errors.locationType?.message}
-        info="The format of the meeting (Virtual link, Physical address, etc.)."
         required
       >
         <Select
           id="locationType"
-          hasError={!!errors.locationType}
           value={locationType || ''}
-          inputProps={{ 'aria-label': 'Location type' }}
+          hasError={!!errors.locationType}
           {...register('locationType')}
+          inputProps={{ 'aria-label': 'Location type' }}
+          renderValue={(value) => {
+            const opt = LOCATION_TYPES.find((o) => o.value === value)
+            if (!opt) return null
+            const Icon = opt.icon
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Icon size={16} />
+                <span>{opt.label}</span>
+              </Box>
+            )
+          }}
         >
-          {LOCATION_TYPES.map(({ value, label }) => (
-            <MenuItem key={value} value={value}>
-              {label}
-            </MenuItem>
-          ))}
+          {LOCATION_TYPES.map((opt) => {
+            const Icon = opt.icon
+            return (
+              <MenuItem key={opt.value} value={opt.value} sx={{ py: 1, px: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                  <Box sx={{ display: 'flex', color: 'text.secondary', alignItems: 'center' }}>
+                    <Icon size={18} />
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                      {opt.label}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2 }}>
+                      {opt.description}
+                    </Typography>
+                  </Box>
+                </Box>
+              </MenuItem>
+            )
+          })}
         </Select>
       </FormField>
 
@@ -81,7 +106,7 @@ export function EventLocationFields() {
         <FormControl component="fieldset" fullWidth error={!!errors.meetingLinkSource}>
           <FormLabel
             component="legend"
-            sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary', mb: 1 }}
+            sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary', mb: 1.5 }}
           >
             Meeting link sent to students
           </FormLabel>
@@ -112,6 +137,7 @@ export function EventLocationFields() {
                     if (isDisabled) return
                     setValue('meetingLinkSource', opt.value as 'COACH_ISV' | 'EVENT_LOCATION', {
                       shouldDirty: true,
+                      shouldValidate: true,
                     })
                   }}
                   sx={{

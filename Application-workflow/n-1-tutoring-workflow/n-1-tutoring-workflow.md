@@ -11,9 +11,8 @@ graph TD
         Start(["Start: Create Event Form"]) --> Basic["Enter Basic Info"]
         Basic --> LinkSession{"Link to Session Type?<br/>(Selected on form)"}
         LinkSession -- "Yes" --> SelectSessionType["Choose Session Type"]
-        LinkSession -- "No" --> Location["Choose Location: Virtual / Custom / In-Person"]
-        SelectSessionType --> Location
-        Location --> Interaction["Select Interaction Type: N:1 (MANY_TO_ONE)"]
+        LinkSession -- "No" --> Interaction["Select Interaction Type: N:1 (MANY_TO_ONE)"]
+        SelectSessionType --> Interaction
         Interaction --> BookingMode{"Choose Booking Mode"}
         
         %% Booking Mode branch
@@ -26,11 +25,13 @@ graph TD
         
         Strategy -- "Direct" --> LockFixedLead["Auto-Lock: Leadership Strategy = Fixed Lead"]
         LockFixedLead --> SetDefaultHost["Select Default Event Host (Lead Coach)"]
-        SetDefaultHost --> CreateEvent(["Create Event"])
+        SetDefaultHost --> Location["Choose Location: Virtual / Custom / In-Person"]
         
         Strategy -- "Round Robin" --> LockRotatingLead["Auto-Lock: Leadership Strategy = Rotating Lead"]
         LockRotatingLead --> SetPool["Define Coach Pool Size (Min >= 2)"]
-        SetPool --> CreateEvent
+        SetPool --> Location
+        
+        Location --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
