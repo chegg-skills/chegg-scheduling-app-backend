@@ -365,7 +365,7 @@ export const BookingDirectoryTable = forwardRef<
                     {directory.sections.slice(0, 3).map((s) => (
                       <Chip
                         key={s.id}
-                        label={toTitleCase(s.sessionType.name)}
+                        label={toTitleCase(s.eventType.name)}
                         size="small"
                         sx={{ height: 20, fontSize: '0.7rem' }}
                       />

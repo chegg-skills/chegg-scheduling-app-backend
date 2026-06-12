@@ -6,7 +6,7 @@ import Paper from '@mui/material/Paper'
 import Switch from '@mui/material/Switch'
 import { Tag } from 'lucide-react'
 import type { BookingDirectory, Team } from '@/types'
-import { useSessionTypes } from '@/hooks/queries/useSessionTypes'
+import { useEventTypes } from '@/hooks/queries/useEventTypes'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useEvents } from '@/hooks/queries/useEvents'
 import { useQueryClient } from '@tanstack/react-query'
@@ -16,7 +16,7 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { extractApiError } from '@/utils/apiError'
 import { alpha } from '@mui/material/styles'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { SessionDetailConfigPanel } from './SessionDetailConfigPanel'
+import { EventTypeConfigPanel } from './EventTypeConfigPanel'
 
 interface BookingDirectorySectionEditorProps {
   bookingDirectory: BookingDirectory
@@ -35,42 +35,42 @@ export function BookingDirectorySectionEditor({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Local draft state: Map of sessionTypeId -> Set of teamIds
+  // Local draft state: Map of eventTypeId -> Set of teamIds
   const [draftCategories, setDraftCategories] = useState<Map<string, Set<string>>>(() => {
     const map = new Map<string, Set<string>>()
     bookingDirectory.sections.forEach((section) => {
       const teamIds = new Set(section.teams.map((t) => t.teamId))
-      map.set(section.sessionTypeId, teamIds)
+      map.set(section.eventTypeId, teamIds)
     })
     return map
   })
 
-  const [selectedSessionTypeId, setSelectedSessionTypeId] = useState<string | null>(null)
+  const [selectedEventTypeId, setSelectedEventTypeId] = useState<string | null>(null)
 
-  const { data: allSessionTypes = [] } = useSessionTypes()
+  const { data: allEventTypes = [] } = useEventTypes()
   const teamsResult = useTeams({ pageSize: 200 })
   const allTeams: Team[] = teamsResult.data?.teams ?? []
 
   // Fetch all events to display actual counts on team cards
   const { data: eventsData } = useEvents({ page: 1, pageSize: 500 })
 
-  const activeSessionTypes = allSessionTypes.filter((st) => st.isActive)
+  const activeEventTypes = allEventTypes.filter((et) => et.isActive)
   const activeTeams = allTeams.filter((t) => t.isActive)
 
-  // Auto-select first active session type by default when loaded
+  // Auto-select first active event type by default when loaded
   useEffect(() => {
-    if (!selectedSessionTypeId && activeSessionTypes.length > 0) {
-      setSelectedSessionTypeId(activeSessionTypes[0].id)
+    if (!selectedEventTypeId && activeEventTypes.length > 0) {
+      setSelectedEventTypeId(activeEventTypes[0].id)
     }
-  }, [activeSessionTypes, selectedSessionTypeId])
+  }, [activeEventTypes, selectedEventTypeId])
 
   // Pre-compute grouped events once per eventsData change instead of filtering on every render.
   const eventsByKey = useMemo(() => {
     const allEvents = eventsData?.events ?? []
     const map = new Map<string, typeof allEvents>()
     for (const e of allEvents) {
-      if (!e.isActive || !e.sessionTypeId) continue
-      const key = `${e.teamId}:${e.sessionTypeId}`
+      if (!e.isActive || !e.eventTypeId) continue
+      const key = `${e.teamId}:${e.eventTypeId}`
       const bucket = map.get(key) ?? []
       bucket.push(e)
       map.set(key, bucket)
@@ -78,17 +78,17 @@ export function BookingDirectorySectionEditor({
     return map
   }, [eventsData])
 
-  const getEventCount = (sessionTypeId: string, teamId: string) =>
-    eventsByKey.get(`${teamId}:${sessionTypeId}`)?.length ?? 0
+  const getEventCount = (eventTypeId: string, teamId: string) =>
+    eventsByKey.get(`${teamId}:${eventTypeId}`)?.length ?? 0
 
-  const getEventsForTeamAndSessionType = (sessionTypeId: string, teamId: string) =>
-    eventsByKey.get(`${teamId}:${sessionTypeId}`) ?? []
+  const getEventsForTeamAndEventType = (eventTypeId: string, teamId: string) =>
+    eventsByKey.get(`${teamId}:${eventTypeId}`) ?? []
 
   // Calculate if local draft state has changes compared to original bookingDirectory sections
   useEffect(() => {
     const origSectionsMap = new Map<string, Set<string>>()
     bookingDirectory.sections.forEach((s) => {
-      origSectionsMap.set(s.sessionTypeId, new Set(s.teams.map((t) => t.teamId)))
+      origSectionsMap.set(s.eventTypeId, new Set(s.teams.map((t) => t.teamId)))
     })
 
     let isDirty = false
@@ -96,9 +96,8 @@ export function BookingDirectorySectionEditor({
     if (draftCategories.size !== origSectionsMap.size) {
       isDirty = true
     } else {
-      // Compare each category and their teams
-      for (const [sessionTypeId, teamIds] of draftCategories) {
-        const origTeamIds = origSectionsMap.get(sessionTypeId)
+      for (const [eventTypeId, teamIds] of draftCategories) {
+        const origTeamIds = origSectionsMap.get(eventTypeId)
         if (!origTeamIds) {
           isDirty = true
           break
@@ -124,24 +123,24 @@ export function BookingDirectorySectionEditor({
     onSavingChange?.(isSaving)
   }, [isSaving, onSavingChange])
 
-  const handleSectionToggle = (sessionTypeId: string) => {
+  const handleSectionToggle = (eventTypeId: string) => {
     if (isSaving) return
     setDraftCategories((prev) => {
       const next = new Map(prev)
-      if (next.has(sessionTypeId)) {
-        next.delete(sessionTypeId)
+      if (next.has(eventTypeId)) {
+        next.delete(eventTypeId)
       } else {
-        next.set(sessionTypeId, new Set())
+        next.set(eventTypeId, new Set())
       }
       return next
     })
   }
 
-  const handleTeamToggle = (sessionTypeId: string, teamId: string) => {
+  const handleTeamToggle = (eventTypeId: string, teamId: string) => {
     if (isSaving) return
     setDraftCategories((prev) => {
       const next = new Map(prev)
-      const teamIds = next.get(sessionTypeId)
+      const teamIds = next.get(eventTypeId)
       if (teamIds) {
         const nextTeamIds = new Set(teamIds)
         if (nextTeamIds.has(teamId)) {
@@ -149,7 +148,7 @@ export function BookingDirectorySectionEditor({
         } else {
           nextTeamIds.add(teamId)
         }
-        next.set(sessionTypeId, nextTeamIds)
+        next.set(eventTypeId, nextTeamIds)
       }
       return next
     })
@@ -161,16 +160,16 @@ export function BookingDirectorySectionEditor({
 
     // Compute differences
     const sectionsToAdd: string[] = []
-    draftCategories.forEach((_, sessionTypeId) => {
-      if (!bookingDirectory.sections.some((s) => s.sessionTypeId === sessionTypeId)) {
-        sectionsToAdd.push(sessionTypeId)
+    draftCategories.forEach((_, eventTypeId) => {
+      if (!bookingDirectory.sections.some((s) => s.eventTypeId === eventTypeId)) {
+        sectionsToAdd.push(eventTypeId)
       }
     })
 
     const sectionsToRemove: { id: string; name: string }[] = []
     bookingDirectory.sections.forEach((section) => {
-      if (!draftCategories.has(section.sessionTypeId)) {
-        sectionsToRemove.push({ id: section.id, name: section.sessionType.name })
+      if (!draftCategories.has(section.eventTypeId)) {
+        sectionsToRemove.push({ id: section.id, name: section.eventType.name })
       }
     })
 
@@ -181,14 +180,14 @@ export function BookingDirectorySectionEditor({
       }
 
       // 2. Process sections to add & their teams
-      for (const sessionTypeId of sectionsToAdd) {
+      for (const eventTypeId of sectionsToAdd) {
         const response = await bookingDirectoriesApi.addSection(bookingDirectory.id, {
-          sessionTypeId,
+          eventTypeId,
         })
         const updatedDirectory = response.data.data?.bookingDirectory
-        const newSection = updatedDirectory?.sections.find((s) => s.sessionTypeId === sessionTypeId)
+        const newSection = updatedDirectory?.sections.find((s) => s.eventTypeId === eventTypeId)
         if (newSection) {
-          const draftTeamIds = draftCategories.get(sessionTypeId) ?? new Set()
+          const draftTeamIds = draftCategories.get(eventTypeId) ?? new Set()
           for (const teamId of draftTeamIds) {
             await bookingDirectoriesApi.addTeamToSection(bookingDirectory.id, newSection.id, {
               teamId,
@@ -199,8 +198,8 @@ export function BookingDirectorySectionEditor({
 
       // 3. Process existing sections (teams to add & remove)
       for (const section of bookingDirectory.sections) {
-        if (draftCategories.has(section.sessionTypeId)) {
-          const draftTeamIds = draftCategories.get(section.sessionTypeId) ?? new Set()
+        if (draftCategories.has(section.eventTypeId)) {
+          const draftTeamIds = draftCategories.get(section.eventTypeId) ?? new Set()
           const origTeamIds = new Set(section.teams.map((t) => t.teamId))
 
           // Teams to add
@@ -237,7 +236,7 @@ export function BookingDirectorySectionEditor({
     }
   }
 
-  const selectedSessionType = activeSessionTypes.find((st) => st.id === selectedSessionTypeId)
+  const selectedEventType = activeEventTypes.find((et) => et.id === selectedEventTypeId)
 
   return (
     <Box
@@ -260,7 +259,7 @@ export function BookingDirectorySectionEditor({
           spacing={3}
           sx={{ height: '52vh', minHeight: 400 }}
         >
-          {/* Left Column: list of session types (limited width) */}
+          {/* Left Column: list of event types (limited width) */}
           <Box
             sx={{
               width: { xs: '100%', md: 340 },
@@ -270,21 +269,21 @@ export function BookingDirectorySectionEditor({
               overflowY: 'auto',
             }}
           >
-            {activeSessionTypes.map((sessionType) => {
-              const isSelected = selectedSessionTypeId === sessionType.id
-              const isEnabled = draftCategories.has(sessionType.id)
-              const draftTeamIds = draftCategories.get(sessionType.id)
+            {activeEventTypes.map((eventType) => {
+              const isSelected = selectedEventTypeId === eventType.id
+              const isEnabled = draftCategories.has(eventType.id)
+              const draftTeamIds = draftCategories.get(eventType.id)
               const numTeams = isEnabled && draftTeamIds ? draftTeamIds.size : 0
               const isOriginalEnabled = bookingDirectory.sections.some(
-                (s) => s.sessionTypeId === sessionType.id
+                (s) => s.eventTypeId === eventType.id
               )
               const isPendingRemoval = isOriginalEnabled && !isEnabled
 
               return (
                 <Paper
-                  key={sessionType.id}
+                  key={eventType.id}
                   variant="outlined"
-                  onClick={() => setSelectedSessionTypeId(sessionType.id)}
+                  onClick={() => setSelectedEventTypeId(eventType.id)}
                   sx={{
                     p: 2,
                     mb: 1.5,
@@ -355,7 +354,7 @@ export function BookingDirectorySectionEditor({
                             textOverflow: 'ellipsis',
                           }}
                         >
-                          {toTitleCase(sessionType.name)}
+                          {toTitleCase(eventType.name)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {isEnabled ? `${numTeams} team${numTeams !== 1 ? 's' : ''}` : 'Disabled'}
@@ -372,8 +371,8 @@ export function BookingDirectorySectionEditor({
                         size="small"
                         checked={isEnabled}
                         onChange={() => {
-                          handleSectionToggle(sessionType.id)
-                          setSelectedSessionTypeId(sessionType.id)
+                          handleSectionToggle(eventType.id)
+                          setSelectedEventTypeId(eventType.id)
                         }}
                         disabled={isSaving}
                         color="primary"
@@ -384,7 +383,7 @@ export function BookingDirectorySectionEditor({
               )
             })}
 
-            {activeSessionTypes.length === 0 && (
+            {activeEventTypes.length === 0 && (
               <Box
                 sx={{
                   py: 4,
@@ -400,24 +399,24 @@ export function BookingDirectorySectionEditor({
                   variant="caption"
                   sx={{ fontWeight: 600, color: 'text.secondary', display: 'block' }}
                 >
-                  No active sessions
+                  No active event types
                 </Typography>
               </Box>
             )}
           </Box>
 
-          {/* Right Column: details / team configuration for selectedSessionType */}
+          {/* Right Column: details / team configuration for selectedEventType */}
           <Box
             sx={{ flexGrow: 1, overflowY: 'auto', pl: { md: 1 }, pr: { xs: 0.5, md: 1 }, pt: 0.5 }}
           >
-            <SessionDetailConfigPanel
-              selectedSessionType={selectedSessionType}
+            <EventTypeConfigPanel
+              selectedEventType={selectedEventType}
               draftCategories={draftCategories}
               bookingDirectory={bookingDirectory}
               activeTeams={activeTeams}
               isSaving={isSaving}
               getEventCount={getEventCount}
-              getEventsForTeamAndSessionType={getEventsForTeamAndSessionType}
+              getEventsForTeamAndEventType={getEventsForTeamAndEventType}
               handleTeamToggle={handleTeamToggle}
             />
           </Box>

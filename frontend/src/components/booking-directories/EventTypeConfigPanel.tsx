@@ -8,53 +8,53 @@ import Chip from '@mui/material/Chip'
 import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import { Tag, UsersRound, Check, Copy, ExternalLink } from 'lucide-react'
-import type { BookingDirectory, SessionType, Team } from '@/types'
+import type { BookingDirectory, EventType, Team } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { alpha } from '@mui/material/styles'
 
-interface SessionDetailConfigPanelProps {
-  selectedSessionType: SessionType | undefined
+interface EventTypeConfigPanelProps {
+  selectedEventType: EventType | undefined
   draftCategories: Map<string, Set<string>>
   bookingDirectory: BookingDirectory
   activeTeams: Team[]
   isSaving: boolean
-  getEventCount: (sessionTypeId: string, teamId: string) => number
-  getEventsForTeamAndSessionType: (sessionTypeId: string, teamId: string) => any[]
-  handleTeamToggle: (sessionTypeId: string, teamId: string) => void
+  getEventCount: (eventTypeId: string, teamId: string) => number
+  getEventsForTeamAndEventType: (eventTypeId: string, teamId: string) => any[]
+  handleTeamToggle: (eventTypeId: string, teamId: string) => void
 }
 
-export function SessionDetailConfigPanel({
-  selectedSessionType,
+export function EventTypeConfigPanel({
+  selectedEventType,
   draftCategories,
   bookingDirectory,
   activeTeams,
   isSaving,
   getEventCount,
-  getEventsForTeamAndSessionType,
+  getEventsForTeamAndEventType,
   handleTeamToggle,
-}: SessionDetailConfigPanelProps) {
+}: EventTypeConfigPanelProps) {
   const [copied, setCopied] = useState(false)
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     setCopied(false)
-  }, [selectedSessionType])
+  }, [selectedEventType])
 
   useEffect(() => {
     return () => clearTimeout(copiedTimerRef.current)
   }, [])
 
   const sessionShareUrl = useMemo(() => {
-    if (typeof window === 'undefined' || !selectedSessionType) return ''
+    if (typeof window === 'undefined' || !selectedEventType) return ''
     const origin = window.location.origin
     const base =
       bookingDirectory.slug === 'default'
         ? `${origin}/book`
         : `${origin}/book/directory/${bookingDirectory.slug}`
-    return `${base}?category=${selectedSessionType.id}`
-  }, [bookingDirectory.slug, selectedSessionType])
+    return `${base}?category=${selectedEventType.id}`
+  }, [bookingDirectory.slug, selectedEventType])
 
-  if (!selectedSessionType) {
+  if (!selectedEventType) {
     return (
       <Box
         sx={{
@@ -70,28 +70,28 @@ export function SessionDetailConfigPanel({
       >
         <Tag size={48} style={{ opacity: 0.2, marginBottom: 16 }} />
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          No Session Selected
+          No Event Type Selected
         </Typography>
         <Typography variant="body2">
-          Select a session type from the left column to view its team configurations.
+          Select an event type from the left column to view its team configurations.
         </Typography>
       </Box>
     )
   }
 
-  const isEnabled = draftCategories.has(selectedSessionType.id)
-  const draftTeamIds = draftCategories.get(selectedSessionType.id)
+  const isEnabled = draftCategories.has(selectedEventType.id)
+  const draftTeamIds = draftCategories.get(selectedEventType.id)
 
   // UI Warning checks
   const isOriginalEnabled = bookingDirectory.sections.some(
-    (s) => s.sessionTypeId === selectedSessionType.id
+    (s) => s.eventTypeId === selectedEventType.id
   )
   const isPendingRemoval = isOriginalEnabled && !isEnabled
   const hasNoTeams = isEnabled && (!draftTeamIds || draftTeamIds.size === 0)
 
   return (
     <Stack spacing={2.5} sx={{ pt: 0.5 }}>
-      {/* Selected Session Info */}
+      {/* Selected Event Type Info */}
       <Box>
         <Stack
           direction="row"
@@ -102,7 +102,7 @@ export function SessionDetailConfigPanel({
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>
-              {toTitleCase(selectedSessionType.name)}
+              {toTitleCase(selectedEventType.name)}
             </Typography>
             <Chip
               label={isEnabled ? 'Enabled' : 'Disabled'}
@@ -181,15 +181,15 @@ export function SessionDetailConfigPanel({
             </Stack>
           )}
         </Stack>
-        {selectedSessionType.description && (
+        {selectedEventType.description && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {selectedSessionType.description}
+            {selectedEventType.description}
           </Typography>
         )}
       </Box>
       <Divider />
 
-      {/* Warnings for Selected Session */}
+      {/* Warnings for Selected Event Type */}
       {isPendingRemoval && (
         <Box
           sx={{
@@ -202,13 +202,12 @@ export function SessionDetailConfigPanel({
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-            ⚠️ Session and all team mappings will be permanently removed from this directory on
+            ⚠️ Event type and all team mappings will be permanently removed from this directory on
             save.
           </Typography>
         </Box>
       )}
 
-      {/* Warnings for Selected Session */}
       {hasNoTeams && (
         <Box
           sx={{
@@ -221,13 +220,13 @@ export function SessionDetailConfigPanel({
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-            ⚠️ No teams checked. This session will not appear on the student site until you assign
-            at least one team.
+            ⚠️ No teams checked. This event type will not appear on the student site until you
+            assign at least one team.
           </Typography>
         </Box>
       )}
 
-      {/* Teams / Disciplines Grid or Disabled state message */}
+      {/* Teams Grid or Disabled state message */}
       {!isEnabled ? (
         <Paper
           variant="outlined"
@@ -244,7 +243,7 @@ export function SessionDetailConfigPanel({
             Teams Configuration Disabled
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Enable this session type using the switch in the left column to select and assign
+            Enable this event type using the switch in the left column to select and assign
             participating teams.
           </Typography>
         </Paper>
@@ -281,13 +280,13 @@ export function SessionDetailConfigPanel({
             >
               {activeTeams.map((team) => {
                 const isAssigned = draftTeamIds?.has(team.id) ?? false
-                const eventCount = getEventCount(selectedSessionType.id, team.id)
+                const eventCount = getEventCount(selectedEventType.id, team.id)
 
                 return (
                   <Paper
                     key={team.id}
                     variant="outlined"
-                    onClick={() => handleTeamToggle(selectedSessionType.id, team.id)}
+                    onClick={() => handleTeamToggle(selectedEventType.id, team.id)}
                     sx={{
                       display: 'flex',
                       alignItems: 'flex-start',
@@ -366,7 +365,7 @@ export function SessionDetailConfigPanel({
                       </Typography>
                       {eventCount > 0 && (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                          {getEventsForTeamAndSessionType(selectedSessionType.id, team.id).map(
+                          {getEventsForTeamAndEventType(selectedEventType.id, team.id).map(
                             (evt) => (
                               <Chip
                                 key={evt.id}

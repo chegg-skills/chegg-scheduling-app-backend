@@ -313,14 +313,12 @@ export interface Event {
   maxBookingWindowDays: number | null
   recurrenceVisibilityLimit?: number | null
   teamId: string
-  sessionTypeId: string | null
   groupId: string | null
   createdById: string
   updatedById: string
   createdAt: string
   updatedAt: string
   eventType: EventType
-  sessionType?: { id: string; slug: string; name: string; description?: string | null } | null
   coaches: EventCoach[]
   team?: {
     id: string
@@ -556,7 +554,6 @@ export interface CreateEventDto {
   description?: string
   isActive?: boolean
   meetingLinkSource?: MeetingLinkSource
-  sessionTypeId?: string | null
   groupId?: string | null
   deferCoachReveal?: boolean
   allowAnonymousBooking?: boolean
@@ -791,31 +788,6 @@ export interface StudentSummary extends Student {
   } | null
 }
 
-// ─── Session Type Models ──────────────────────────────────────────────────────
-
-export interface SessionType {
-  id: string
-  slug: string
-  name: string
-  description: string | null
-  isActive: boolean
-  sortOrder: number
-  createdById: string
-  updatedById: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateSessionTypeDto {
-  slug: string
-  name: string
-  description?: string
-  sortOrder?: number
-  isActive?: boolean
-}
-
-export interface UpdateSessionTypeDto extends Partial<CreateSessionTypeDto> { }
-
 // ─── Booking Directory Models ──────────────────────────────────────────────────
 
 export interface BookingDirectoryTeamEntry {
@@ -836,11 +808,11 @@ export interface BookingDirectoryTeamEntry {
 export interface BookingDirectorySection {
   id: string
   bookingDirectoryId: string
-  sessionTypeId: string
+  eventTypeId: string
   sortOrder: number
   createdAt: string
   updatedAt: string
-  sessionType: SessionType
+  eventType: EventType
   teams: BookingDirectoryTeamEntry[]
 }
 
@@ -867,7 +839,7 @@ export interface CreateBookingDirectoryDto {
 export interface UpdateBookingDirectoryDto extends Partial<CreateBookingDirectoryDto> { }
 
 export interface AddBookingDirectorySectionDto {
-  sessionTypeId: string
+  eventTypeId: string
   sortOrder?: number
 }
 
@@ -878,21 +850,13 @@ export interface AddBookingDirectoryTeamDto {
 
 // ─── Public Booking Directory Types ──────────────────────────────────────────────
 
-export interface PublicSessionType {
-  id: string
-  slug: string
-  name: string
-  description: string | null
-  sortOrder: number
-}
-
 export interface PublicBookingDirectoryTeam {
   team: PublicTeamSummary
   events: PublicEventSummary[]
 }
 
 export interface PublicBookingDirectorySection {
-  sessionType: PublicSessionType
+  eventType: { id: string; key: string; name: string; description: string | null }
   teams: PublicBookingDirectoryTeam[]
 }
 

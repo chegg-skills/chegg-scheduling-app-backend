@@ -5,6 +5,25 @@ import { renderWithProviders } from '../utils/renderWithProviders'
 import { http, HttpResponse } from 'msw'
 import { server } from '../msw/server'
 
+const mockEventTypes = [
+  {
+    id: 'et-1',
+    key: 'one-to-one',
+    name: '1-to-1 Tutoring Session',
+    description: 'Personalized engineering mentorship.',
+    isActive: true,
+    sortOrder: 0,
+  },
+  {
+    id: 'et-2',
+    key: 'group-workshop',
+    name: 'Group Workshop',
+    description: 'Collaborative learning session.',
+    isActive: true,
+    sortOrder: 1,
+  },
+]
+
 const mockBookingDirectories = [
   {
     id: 'directory-1',
@@ -15,14 +34,8 @@ const mockBookingDirectories = [
     sections: [
       {
         id: 'sec-1',
-        sessionTypeId: 'st-1',
-        sessionType: {
-          id: 'st-1',
-          slug: 'one-to-one',
-          name: '1-to-1 Tutoring Session',
-          description: 'Personalized engineering mentorship.',
-          isActive: true,
-        },
+        eventTypeId: 'et-1',
+        eventType: mockEventTypes[0],
         teams: [
           {
             teamId: 'team-1',
@@ -35,23 +48,6 @@ const mockBookingDirectories = [
         ],
       },
     ],
-  },
-]
-
-const mockSessionTypes = [
-  {
-    id: 'st-1',
-    slug: 'one-to-one',
-    name: '1-to-1 Tutoring Session',
-    description: 'Personalized engineering mentorship.',
-    isActive: true,
-  },
-  {
-    id: 'st-2',
-    slug: 'group-workshop',
-    name: 'Group Workshop',
-    description: 'Collaborative learning session.',
-    isActive: true,
   },
 ]
 
@@ -72,13 +68,13 @@ const mockEvents = [
   {
     id: 'evt-1',
     teamId: 'team-1',
-    sessionTypeId: 'st-1',
+    eventTypeId: 'et-1',
     isActive: true,
   },
   {
     id: 'evt-2',
     teamId: 'team-2',
-    sessionTypeId: 'st-2',
+    eventTypeId: 'et-2',
     isActive: true,
   },
 ]
@@ -98,10 +94,10 @@ const handlers = [
       data: { bookingDirectories: mockBookingDirectories },
     })
   }),
-  http.get('*/api/session-types', () => {
+  http.get('*/api/event-types', () => {
     return HttpResponse.json({
       success: true,
-      data: { sessionTypes: mockSessionTypes },
+      data: { eventTypes: mockEventTypes },
     })
   }),
   http.get('*/api/teams', () => {
@@ -129,8 +125,8 @@ const handlers = [
             ...mockBookingDirectories[0].sections,
             {
               id: 'sec-2',
-              sessionTypeId: body.sessionTypeId,
-              sessionType: mockSessionTypes.find((s) => s.id === body.sessionTypeId)!,
+              eventTypeId: body.eventTypeId,
+              eventType: mockEventTypes.find((et) => et.id === body.eventTypeId)!,
               teams: [],
             },
           ],
@@ -217,7 +213,7 @@ describe('Booking Directories Admin Config integration', () => {
     // Wait for dynamic category list to load inside the modal
     await within(modal).findByText('Group Workshop')
 
-    // Toggle st-2 (Group Workshop) to enable it (making configuration dirty)
+    // Toggle et-2 (Group Workshop) to enable it (making configuration dirty)
     const groupWorkshopContainer = within(modal)
       .getByText('Group Workshop')
       .closest('.MuiPaper-root')
@@ -372,7 +368,7 @@ describe('Booking Directories Admin Config integration', () => {
 
     // Verify calls to backend APIs occurred as expected
     expect(apiCalls.addSection).toHaveLength(1)
-    expect(apiCalls.addSection[0]).toEqual({ directoryId: 'directory-1', sessionTypeId: 'st-2' })
+    expect(apiCalls.addSection[0]).toEqual({ directoryId: 'directory-1', eventTypeId: 'et-2' })
 
     expect(apiCalls.addTeamToSection).toHaveLength(1)
     expect(apiCalls.addTeamToSection[0]).toEqual({

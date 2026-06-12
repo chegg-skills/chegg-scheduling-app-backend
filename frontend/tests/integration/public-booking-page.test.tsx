@@ -24,11 +24,13 @@ const mockBookingDirectory = {
   isActive: true,
   sections: [
     {
-      sessionType: {
+      eventTypeId: '11111111-2222-3333-4444-555555555555',
+      eventType: {
         id: '11111111-2222-3333-4444-555555555555',
-        slug: 'one-to-one',
+        key: 'one-to-one',
         name: '1-to-1 Tutoring Session',
         description: 'Personalized engineering mentorship.',
+        isActive: true,
         sortOrder: 1,
       },
       teams: [
@@ -108,7 +110,7 @@ function renderDirectoryPage(slug = 'eng-academy') {
         }
       />
       <Route
-        path="/book/sessions/:sessionTypeSlug"
+        path="/book/sessions/:eventTypeKey"
         element={
           <>
             <PublicBookingDirectory />
@@ -117,7 +119,7 @@ function renderDirectoryPage(slug = 'eng-academy') {
         }
       />
       <Route
-        path="/book/sessions/:sessionTypeSlug/:teamSlug"
+        path="/book/sessions/:eventTypeKey/:teamSlug"
         element={
           <>
             <PublicBookingDirectory />
@@ -256,11 +258,13 @@ describe('PublicBookingDirectory Integration', () => {
       ...mockBookingDirectory,
       sections: [
         {
-          sessionType: {
+          eventTypeId: '77777777-8888-9999-0000-aaaaaaaaaaaa',
+          eventType: {
             id: '77777777-8888-9999-0000-aaaaaaaaaaaa',
-            slug: 'empty-sessions',
+            key: 'empty-sessions',
             name: 'Empty Session Category',
             description: 'No teams under this.',
+            isActive: true,
             sortOrder: 1,
           },
           teams: [],
@@ -289,7 +293,7 @@ describe('PublicBookingDirectory Integration', () => {
           }
         />
         <Route
-          path="/book/sessions/:sessionTypeSlug"
+          path="/book/sessions/:eventTypeKey"
           element={
             <>
               <PublicBookingDirectory />
@@ -320,11 +324,13 @@ describe('PublicBookingDirectory Integration', () => {
       ...mockBookingDirectory,
       sections: [
         {
-          sessionType: {
+          eventTypeId: '11111111-2222-3333-4444-555555555555',
+          eventType: {
             id: '11111111-2222-3333-4444-555555555555',
-            slug: 'one-to-one',
+            key: 'one-to-one',
             name: '1-to-1 Tutoring Session',
             description: 'Personalized engineering mentorship.',
+            isActive: true,
             sortOrder: 1,
           },
           teams: [
@@ -382,11 +388,13 @@ describe('PublicBookingDirectory Integration', () => {
       ...mockBookingDirectory,
       sections: [
         {
-          sessionType: {
+          eventTypeId: '11111111-2222-3333-4444-555555555555',
+          eventType: {
             id: '11111111-2222-3333-4444-555555555555',
-            slug: 'one-to-one',
+            key: 'one-to-one',
             name: '1-to-1 Tutoring Session',
             description: 'Personalized engineering mentorship.',
+            isActive: true,
             sortOrder: 1,
           },
           teams: [
@@ -426,7 +434,7 @@ describe('PublicBookingDirectory Integration', () => {
     renderWithProviders(
       <Routes>
         <Route
-          path="/book/sessions/:sessionTypeSlug/:teamSlug"
+          path="/book/sessions/:eventTypeKey/:teamSlug"
           element={
             <>
               <PublicBookingDirectory />

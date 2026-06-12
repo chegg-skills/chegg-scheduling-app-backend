@@ -46,8 +46,6 @@ model User {
   availabilityExceptions UserAvailabilityException[]
   weeklyAvailability     UserWeeklyAvailability[]
   communicationsSent     StudentCommunicationLog[]
-  createdSessionTypes    SessionType[]               @relation("SessionTypeCreatedBy")
-  updatedSessionTypes    SessionType[]               @relation("SessionTypeUpdatedBy")
   createdBookingDirectories BookingDirectory[]          @relation("BookingDirectoryCreatedBy")
   updatedBookingDirectories BookingDirectory[]          @relation("BookingDirectoryUpdatedBy")
 
@@ -122,6 +120,7 @@ model EventType {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   events      Event[]
+  bookingDirectorySections BookingDirectorySection[]
   createdBy   User     @relation("EventTypeCreatedBy", fields: [createdById], references: [id])
   updatedBy   User     @relation("EventTypeUpdatedBy", fields: [updatedById], references: [id])
 
@@ -160,12 +159,10 @@ model Event {
   allowAnonymousBooking     Boolean                   @default(false)
   meetingLinkSource         MeetingLinkSource         @default(COACH_ISV)
   groupId                   String?
-  sessionTypeId             String?
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
   eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
   group                     EventGroup?               @relation(fields: [groupId], references: [id], onDelete: Restrict)
-  sessionType               SessionType?              @relation(fields: [sessionTypeId], references: [id], onDelete: Restrict)
   team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
   coaches                   EventCoach[]
@@ -179,7 +176,6 @@ model Event {
   @@index([assignmentStrategy])
   @@index([bookingMode])
   @@index([groupId])
-  @@index([sessionTypeId])
 }
 
 model EventGroup {
@@ -421,25 +417,6 @@ model SystemSetting {
   updatedAt DateTime @updatedAt
 }
 
-model SessionType {
-  id          String               @id @default(uuid())
-  slug        String               @unique
-  name        String
-  description String?
-  isActive    Boolean              @default(true)
-  sortOrder   Int                  @default(0)
-  createdById String
-  updatedById String
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  events      Event[]
-  sections    BookingDirectorySection[]
-  createdBy   User                 @relation("SessionTypeCreatedBy", fields: [createdById], references: [id])
-  updatedBy   User                 @relation("SessionTypeUpdatedBy", fields: [updatedById], references: [id])
-
-  @@index([isActive, sortOrder])
-}
-
 model BookingDirectory {
   id          String                    @id @default(uuid())
   slug        String                    @unique
@@ -458,16 +435,17 @@ model BookingDirectory {
 model BookingDirectorySection {
   id                 String                 @id @default(uuid())
   bookingDirectoryId String
-  sessionTypeId      String
+  eventTypeId        String
   sortOrder          Int                    @default(0)
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
   bookingDirectory   BookingDirectory       @relation(fields: [bookingDirectoryId], references: [id], onDelete: Cascade)
-  sessionType        SessionType            @relation(fields: [sessionTypeId], references: [id], onDelete: Restrict)
+  eventType          EventType              @relation(fields: [eventTypeId], references: [id], onDelete: Restrict)
   teams              BookingDirectoryTeam[]
 
-  @@unique([bookingDirectoryId, sessionTypeId])
+  @@unique([bookingDirectoryId, eventTypeId])
   @@index([bookingDirectoryId])
+  @@index([eventTypeId])
 }
 
 model BookingDirectoryTeam {
