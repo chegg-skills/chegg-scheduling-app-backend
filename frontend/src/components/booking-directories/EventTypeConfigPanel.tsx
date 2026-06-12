@@ -360,8 +360,8 @@ export function EventTypeConfigPanel({
                         }}
                       >
                         {eventCount > 0
-                          ? `${eventCount} session${eventCount !== 1 ? 's' : ''} available`
-                          : '⚠️ 0 sessions (needs setup)'}
+                          ? `${eventCount} event${eventCount !== 1 ? 's' : ''} available`
+                          : '⚠️ 0 events (needs setup)'}
                       </Typography>
                       {eventCount > 0 && (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>

@@ -140,8 +140,8 @@ export const BookingDirectoryTable = forwardRef<
       <Box role="dialog" aria-label="Manage Booking Directory" sx={{ mt: 1 }}>
         {manageState.tab === 'sections' && (
           <SectionHeader
-            title="Manage Booking Directory Sessions & Teams"
-            description='Configure sessions and participating teams. Click a session to view/edit its team mappings. Click "Save Changes" at the bottom to apply, or "Cancel" to discard.'
+            title="Manage Event Types & Teams"
+            description='Configure event types and participating teams. Click an event type to view/edit its team mappings. Click "Save Changes" at the bottom to apply, or "Cancel" to discard.'
           />
         )}
         <Paper
@@ -175,7 +175,7 @@ export const BookingDirectoryTable = forwardRef<
             sx={{ mb: 4, borderBottom: '1px solid', borderColor: 'divider' }}
           >
             <Tab label="Details" value="details" />
-            <Tab label="Sessions & Teams" value="sections" />
+            <Tab label="Event Types & Teams" value="sections" />
           </Tabs>
 
           <Box sx={{ minHeight: '300px' }}>
@@ -257,7 +257,7 @@ export const BookingDirectoryTable = forwardRef<
               {[
                 { label: 'Name', sortKey: 'name' as const },
                 { label: 'Slug', sortKey: 'slug' as const },
-                { label: 'Sessions', sortKey: 'sections' as const },
+                { label: 'Event Types', sortKey: 'sections' as const },
                 { label: 'Status', sortKey: 'status' as const },
               ].map((col) => (
                 <SortableHeaderCell
@@ -379,7 +379,7 @@ export const BookingDirectoryTable = forwardRef<
                     )}
                     {directory.sections.length === 0 && (
                       <Typography variant="caption" color="text.secondary">
-                        No sessions
+                        No event types
                       </Typography>
                     )}
                   </Stack>
@@ -401,7 +401,7 @@ export const BookingDirectoryTable = forwardRef<
                   <RowActions
                     actions={[
                       {
-                        label: 'Configure sessions & teams',
+                        label: 'Configure event types & teams',
                         icon: <Settings size={16} />,
                         onClick: () => handleSetManageState({ directory, tab: 'sections' }),
                       },
