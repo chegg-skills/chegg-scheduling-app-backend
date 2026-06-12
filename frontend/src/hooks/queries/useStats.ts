@@ -9,8 +9,6 @@ export const statsKeys = {
   teams: (params?: StatsParams) => [...statsKeys.all, 'teams', params] as const,
   events: (params?: StatsParams) => [...statsKeys.all, 'events', params] as const,
   eventTypes: (params?: StatsParams) => [...statsKeys.all, 'event-types', params] as const,
-  interactionTypes: (params?: StatsParams) =>
-    [...statsKeys.all, 'interaction-types', params] as const,
   trends: (params?: StatsParams) => [...statsKeys.all, 'trends', params] as const,
   teamPerformance: (params?: StatsParams) =>
     [...statsKeys.all, 'teams-performance', params] as const,
@@ -77,13 +75,6 @@ export function useEventTypeStats(timeframe: StatsParams['timeframe']) {
   const params = { timeframe }
   return useStatsQuery(statsKeys.eventTypes(params), ({ signal }) =>
     statsApi.getEventTypes(params, signal).then((r) => r.data.data)
-  )
-}
-
-export function useInteractionTypeStats(timeframe: StatsParams['timeframe']) {
-  const params = { timeframe }
-  return useStatsQuery(statsKeys.interactionTypes(params), ({ signal }) =>
-    statsApi.getInteractionTypes(params, signal).then((r) => r.data.data)
   )
 }
 
