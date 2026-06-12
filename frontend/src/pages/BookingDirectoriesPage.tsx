@@ -69,7 +69,7 @@ export function BookingDirectoriesPage() {
         subtitle={
           selectedDirectory
             ? undefined
-            : 'Configure the session directory shown to students on the public booking site.'
+            : 'Configure the booking directory shown to students on the public booking site.'
         }
         actions={
           !isEditing ? (

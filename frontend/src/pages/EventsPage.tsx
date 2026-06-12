@@ -30,9 +30,7 @@ import { EventGroupSections } from '@/components/events/groups/EventGroupSection
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Select } from '@/components/shared/form/Select'
 import { StatsOverview } from '@/components/shared/StatsOverview'
-import { TeamQuickSelect } from '@/components/events/TeamQuickSelect'
 import { useEventStats } from '@/hooks/queries/useStats'
-import { useUsers } from '@/hooks/queries/useUsers'
 import type { StatsTimeframe } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 
@@ -54,8 +52,6 @@ export function EventsPage() {
     }
   }
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
-  const { data: usersData } = useUsers({ pageSize: 200 }, { enabled: !isCoach })
-
   const sortedTeams = useMemo(() => {
     if (!teamsData?.teams) return []
     return [...teamsData.teams].sort((a, b) => a.name.localeCompare(b.name))
@@ -292,11 +288,9 @@ export function EventsPage() {
             )}
 
             {selectedTeamId === '' ? (
-              <TeamQuickSelect
-                teams={sortedTeams}
-                users={usersData?.users ?? []}
-                onSelectTeam={setSelectedTeamId}
-              />
+              <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
+                Select a team from the dropdown above to view its events.
+              </Box>
             ) : eventsLoading ? (
               <PageSpinner />
             ) : eventsError ? (

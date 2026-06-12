@@ -201,12 +201,12 @@ describe('Booking Directories Admin Config integration', () => {
     const actionsButton = await screen.findByRole('button', { name: /more/i })
     fireEvent.click(actionsButton)
 
-    // Click "Configure sessions & teams" option
-    const configOption = await screen.findByText('Configure sessions & teams')
+    // Click "Configure event types & teams" option
+    const configOption = await screen.findByText('Configure event types & teams')
     fireEvent.click(configOption)
 
     // Verify modal is open and shows sections & teams tab content
-    await screen.findByText('Manage Booking Directory Sessions & Teams')
+    await screen.findByText('Manage Event Types & Teams')
 
     const modal = screen.getByRole('dialog')
 
@@ -243,7 +243,7 @@ describe('Booking Directories Admin Config integration', () => {
     fireEvent.click(noBtn)
 
     // Confirm that the configuration modal is still open
-    expect(screen.getByText('Manage Booking Directory Sessions & Teams')).toBeInTheDocument()
+    expect(screen.getByText('Manage Event Types & Teams')).toBeInTheDocument()
 
     // Click Cancel again
     fireEvent.click(cancelBtn)
@@ -256,7 +256,7 @@ describe('Booking Directories Admin Config integration', () => {
     // Verify configuration modal is closed
     await waitFor(() => {
       expect(
-        screen.queryByText('Manage Booking Directory Sessions & Teams')
+        screen.queryByText('Manage Event Types & Teams')
       ).not.toBeInTheDocument()
     })
   })
@@ -267,10 +267,10 @@ describe('Booking Directories Admin Config integration', () => {
     await screen.findByText('Default Booking Directory')
     const actionsButton = await screen.findByRole('button', { name: /more/i })
     fireEvent.click(actionsButton)
-    const configOption = await screen.findByText('Configure sessions & teams')
+    const configOption = await screen.findByText('Configure event types & teams')
     fireEvent.click(configOption)
 
-    await screen.findByText('Manage Booking Directory Sessions & Teams')
+    await screen.findByText('Manage Event Types & Teams')
 
     const modal = screen.getByRole('dialog')
 
@@ -301,7 +301,7 @@ describe('Booking Directories Admin Config integration', () => {
     fireEvent.click(noBtn)
 
     // Verify we remain on the Sections & Teams tab
-    expect(screen.getByText('Manage Booking Directory Sessions & Teams')).toBeInTheDocument()
+    expect(screen.getByText('Manage Event Types & Teams')).toBeInTheDocument()
 
     // Click Details tab again
     fireEvent.click(detailsTab)
@@ -313,7 +313,7 @@ describe('Booking Directories Admin Config integration', () => {
 
     // Wait and verify we switched to Details tab (which renders BookingDirectoryForm with a Name label)
     await screen.findByLabelText(/Name/i)
-    expect(screen.queryByText('Manage Booking Directory Sessions & Teams')).not.toBeInTheDocument()
+    expect(screen.queryByText('Manage Event Types & Teams')).not.toBeInTheDocument()
   })
 
   it('successfully saves dirty changes and closes the modal without prompts', async () => {
@@ -322,10 +322,10 @@ describe('Booking Directories Admin Config integration', () => {
     await screen.findByText('Default Booking Directory')
     const actionsButton = await screen.findByRole('button', { name: /more/i })
     fireEvent.click(actionsButton)
-    const configOption = await screen.findByText('Configure sessions & teams')
+    const configOption = await screen.findByText('Configure event types & teams')
     fireEvent.click(configOption)
 
-    await screen.findByText('Manage Booking Directory Sessions & Teams')
+    await screen.findByText('Manage Event Types & Teams')
 
     const modal = screen.getByRole('dialog')
 
@@ -362,7 +362,7 @@ describe('Booking Directories Admin Config integration', () => {
     // Verify saving calls appropriate APIs sequentially and closes without warning
     await waitFor(() => {
       expect(
-        screen.queryByText('Manage Booking Directory Sessions & Teams')
+        screen.queryByText('Manage Event Types & Teams')
       ).not.toBeInTheDocument()
     })
 
