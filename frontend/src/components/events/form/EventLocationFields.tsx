@@ -1,4 +1,6 @@
-import { useFormContext } from 'react-hook-form'
+import { useState, useEffect, useMemo } from 'react'
+import { useFormContext, Controller } from 'react-hook-form'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import FormControl from '@mui/material/FormControl'
@@ -6,9 +8,12 @@ import FormLabel from '@mui/material/FormLabel'
 import Radio from '@mui/material/Radio'
 import Typography from '@mui/material/Typography'
 import MenuItem from '@mui/material/MenuItem'
+import Collapse from '@mui/material/Collapse'
 import { FormField } from '@/components/shared/form/FormField'
 import { Textarea } from '@/components/shared/form/Textarea'
+import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
+import { Switch } from '@/components/shared/form/Switch'
 import { Video, Link2, MapPin, Sliders } from 'lucide-react'
 import type { EventFormValues } from './eventFormSchema'
 import type { EventLocationType } from '@/types'
@@ -34,11 +39,41 @@ export function EventLocationFields() {
     register,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useFormContext<EventFormValues>()
   const locationType = watch('locationType')
   const meetingLinkSource = watch('meetingLinkSource')
   const allowAnonymousBooking = watch('allowAnonymousBooking')
+
+  const expiresAt = watch('locationLinkExpiresAt')
+  const [hasExpiration, setHasExpiration] = useState(() => !!expiresAt)
+
+  useEffect(() => {
+    if (expiresAt) {
+      setHasExpiration(true)
+    }
+  }, [expiresAt])
+
+  const minDate = useMemo(() => new Date(), [])
+
+  const handleToggleExpiration = (checked: boolean) => {
+    setHasExpiration(checked)
+    if (!checked) {
+      setValue('locationLinkExpiresAt', null, { shouldDirty: true, shouldValidate: true })
+      setValue('locationLinkReminderDays', null, { shouldDirty: true, shouldValidate: true })
+    } else {
+      const d = new Date()
+      d.setDate(d.getDate() + 30)
+      const defaultDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      setValue('locationLinkExpiresAt', defaultDateStr, { shouldDirty: true, shouldValidate: true })
+      setValue('locationLinkReminderDays', 7, { shouldDirty: true, shouldValidate: true })
+    }
+  }
+
+  const showLinkExpirationOptions =
+    (locationType === 'VIRTUAL' || locationType === 'CUSTOM') &&
+    meetingLinkSource === 'EVENT_LOCATION'
 
   return (
     <Stack spacing={3}>
@@ -101,6 +136,81 @@ export function EventLocationFields() {
           {...register('locationValue')}
         />
       </FormField>
+
+      {showLinkExpirationOptions && (
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <Switch
+            label="Set link expiration & reminder"
+            checked={hasExpiration}
+            onChange={handleToggleExpiration}
+          />
+          <Collapse in={hasExpiration}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 1.5, mb: 1 }}>
+              <Box sx={{ flex: 1 }}>
+                <FormField
+                  label="Link Expiry Date"
+                  htmlFor="locationLinkExpiresAt"
+                  error={errors.locationLinkExpiresAt?.message}
+                  required
+                >
+                  <Controller
+                    name="locationLinkExpiresAt"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value ? new Date(field.value) : null}
+                        onChange={(date) => field.onChange(date ? date.toISOString() : null)}
+                        minDate={minDate}
+                        slotProps={{
+                          textField: {
+                            id: 'locationLinkExpiresAt',
+                            fullWidth: true,
+                            size: 'small',
+                            error: !!errors.locationLinkExpiresAt,
+                            sx: { '& .MuiOutlinedInput-root': { bgcolor: 'background.paper' } },
+                          },
+                        }}
+                      />
+                    )}
+                  />
+                </FormField>
+              </Box>
+
+              <Box sx={{ flex: 1 }}>
+                <FormField
+                  label="Reminder Days"
+                  htmlFor="locationLinkReminderDays"
+                  error={errors.locationLinkReminderDays?.message}
+                  hint="Days before expiry."
+                  required
+                >
+                  <Controller
+                    name="locationLinkReminderDays"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="locationLinkReminderDays"
+                        type="number"
+                        placeholder="e.g. 7"
+                        disabled={!hasExpiration}
+                        inputProps={{ min: 1, max: 90 }}
+                        value={field.value ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          field.onChange(val === '' ? null : Number(val))
+                        }}
+                        hasError={!!errors.locationLinkReminderDays}
+                        sx={{ bgcolor: 'background.paper' }}
+                      />
+                    )}
+                  />
+                </FormField>
+              </Box>
+            </Stack>
+          </Collapse>
+        </Stack>
+      )}
 
       {(locationType === 'VIRTUAL' || locationType === 'CUSTOM') && (
         <FormControl component="fieldset" fullWidth error={!!errors.meetingLinkSource}>
@@ -208,6 +318,7 @@ export function EventLocationFields() {
           )}
         </FormControl>
       )}
+
     </Stack>
   )
 }

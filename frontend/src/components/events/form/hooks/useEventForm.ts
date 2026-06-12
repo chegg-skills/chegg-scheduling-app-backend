@@ -156,12 +156,18 @@ export function useEventForm({ teamId, event, accessedFromEventsTab, onSuccess }
   }, [watchedDeferCoachReveal, setValue])
 
   function onSubmit(values: EventFormValues) {
+    const isEventLocationLink =
+      (values.locationType === 'VIRTUAL' || values.locationType === 'CUSTOM') &&
+      values.meetingLinkSource === 'EVENT_LOCATION'
+
     const apiPayload = {
       ...values,
       minimumNoticeMinutes: Math.round((values.minimumNoticeMinutes || 0) * 60),
       fixedLeadCoachId: values.fixedLeadCoachId || null,
       assignmentStrategy: values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
       durationSeconds: values.durationMinutes * 60,
+      locationLinkExpiresAt: isEventLocationLink ? values.locationLinkExpiresAt : null,
+      locationLinkReminderDays: isEventLocationLink ? values.locationLinkReminderDays : null,
     }
 
     // @ts-ignore - durationMinutes is not in API but we handled it

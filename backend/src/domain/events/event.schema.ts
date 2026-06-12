@@ -57,6 +57,21 @@ const EventBaseObjectCore = z.looseObject({
   allowAnonymousBooking: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
   meetingLinkSource: z.nativeEnum(MeetingLinkSource).optional(),
+  locationLinkExpiresAt: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.coerce.date()
+      .refine((d) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }, { message: "Link expiry date must be today or in the future." })
+      .optional()
+      .nullable(),
+  ),
+  locationLinkReminderDays: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.coerce.number().int().min(1).max(90).optional().nullable(),
+  ),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
 });
 
@@ -211,6 +226,42 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
         code: z.ZodIssueCode.custom,
         path: ["allowStudentCoachChoice"],
         message: "Student coach choice is only supported for ONE_TO_ONE events.",
+      });
+    }
+  }
+
+  // Link expiration and reminder days cross-field validations.
+  // The two fields are a pair: both must be updated together (neither can be
+  // provided without the other), and when both are present they must either
+  // both carry a value or both be null (clearing the feature).
+  const expiresAtInPayload = data.locationLinkExpiresAt !== undefined;
+  const reminderDaysInPayload = data.locationLinkReminderDays !== undefined;
+
+  if (expiresAtInPayload && !reminderDaysInPayload) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationLinkReminderDays"],
+      message: "Reminder days must be provided when setting or clearing the expiration date.",
+    });
+  } else if (!expiresAtInPayload && reminderDaysInPayload) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationLinkExpiresAt"],
+      message: "Expiration date must be provided when setting or clearing the reminder days.",
+    });
+  } else if (expiresAtInPayload && reminderDaysInPayload) {
+    // Both present in payload — they must agree: both truthy or both null.
+    if (data.locationLinkExpiresAt && !data.locationLinkReminderDays) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locationLinkReminderDays"],
+        message: "Reminder days is required when an expiration date is set.",
+      });
+    } else if (!data.locationLinkExpiresAt && data.locationLinkReminderDays) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locationLinkExpiresAt"],
+        message: "Expiration date is required when reminder days is set.",
       });
     }
   }

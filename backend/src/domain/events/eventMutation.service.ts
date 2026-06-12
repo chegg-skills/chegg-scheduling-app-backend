@@ -1,4 +1,4 @@
-import { AssignmentStrategy, Prisma, SessionLeadershipStrategy } from "@prisma/client";
+import { AssignmentStrategy, Prisma, SessionLeadershipStrategy, MeetingLinkSource, EventLocationType } from "@prisma/client";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   INTERACTION_TYPE_CAPS,
@@ -211,6 +211,9 @@ export const buildEventCreateData = ({
   context: ResolvedEventMutationContext;
 }): Prisma.EventCreateInput => {
   const validated = CreateEventSchema.body.parse(payload);
+  const isEventLocationLink =
+    validated.meetingLinkSource === MeetingLinkSource.EVENT_LOCATION &&
+    (validated.locationType === EventLocationType.VIRTUAL || validated.locationType === EventLocationType.CUSTOM);
 
   const data: Prisma.EventCreateInput = {
     name: validated.name,
@@ -233,6 +236,8 @@ export const buildEventCreateData = ({
     allowAnonymousBooking: validated.allowAnonymousBooking ?? false,
     allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
     meetingLinkSource: validated.meetingLinkSource,
+    locationLinkExpiresAt: isEventLocationLink ? (validated.locationLinkExpiresAt ?? null) : null,
+    locationLinkReminderDays: isEventLocationLink ? (validated.locationLinkReminderDays ?? null) : null,
     team: { connect: { id: teamId } },
     group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
     createdBy: { connect: { id: callerId } },
@@ -329,6 +334,24 @@ export const buildEventUpdateData = ({
     updateData.meetingLinkSource = validated.meetingLinkSource;
   }
 
+  const finalMeetingLinkSource = validated.meetingLinkSource ?? existingEvent.meetingLinkSource;
+  const finalLocationType = validated.locationType ?? existingEvent.locationType;
+  const isEventLocationLink =
+    finalMeetingLinkSource === MeetingLinkSource.EVENT_LOCATION &&
+    (finalLocationType === EventLocationType.VIRTUAL || finalLocationType === EventLocationType.CUSTOM);
+
+  if (isEventLocationLink) {
+    if (validated.locationLinkExpiresAt !== undefined) {
+      updateData.locationLinkExpiresAt = validated.locationLinkExpiresAt;
+    }
+    if (validated.locationLinkReminderDays !== undefined) {
+      updateData.locationLinkReminderDays = validated.locationLinkReminderDays;
+    }
+  } else {
+    updateData.locationLinkExpiresAt = null;
+    updateData.locationLinkReminderDays = null;
+  }
+
   if (validated.groupId !== undefined) {
     updateData.group =
       validated.groupId === null ? { disconnect: true } : { connect: { id: validated.groupId } };
@@ -379,6 +402,8 @@ export const buildDuplicateEventData = ({
     allowAnonymousBooking: (sourceEvent as any).allowAnonymousBooking ?? false,
     allowStudentCoachChoice: (sourceEvent as any).allowStudentCoachChoice ?? false,
     meetingLinkSource: (sourceEvent as any).meetingLinkSource ?? "COACH_ISV",
+    locationLinkExpiresAt: (sourceEvent as any).locationLinkExpiresAt ?? null,
+    locationLinkReminderDays: (sourceEvent as any).locationLinkReminderDays ?? null,
     group: sourceEvent.groupId ? { connect: { id: sourceEvent.groupId } } : undefined,
   } as any;
 };

@@ -158,6 +158,8 @@ model Event {
   allowStudentCoachChoice   Boolean                   @default(false)
   allowAnonymousBooking     Boolean                   @default(false)
   meetingLinkSource         MeetingLinkSource         @default(COACH_ISV)
+  locationLinkExpiresAt     DateTime?
+  locationLinkReminderDays  Int?
   groupId                   String?
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])

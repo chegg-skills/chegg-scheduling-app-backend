@@ -88,6 +88,8 @@ export type CreateEventInput = {
   allowAnonymousBooking?: boolean;
   allowStudentCoachChoice?: boolean;
   meetingLinkSource?: MeetingLinkSource;
+  locationLinkExpiresAt?: Date | null;
+  locationLinkReminderDays?: number | null;
   groupId?: string | null;
 };
 

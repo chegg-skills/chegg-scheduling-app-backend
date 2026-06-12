@@ -87,4 +87,87 @@ const queueEventStatusChangedNotification = async (
   }
 };
 
-export { queueEventStatusChangedNotification };
+/**
+ * Cancels any previously-scheduled EVENT_LOCATION_LINK_EXPIRY_REMINDER for the given
+ * event. Called when the expiry configuration is cleared or when the event is deleted.
+ * Fire-and-forget — errors are logged but not re-thrown.
+ */
+const cancelEventLinkExpiryReminder = async (eventId: string): Promise<void> => {
+  await publishNotificationSafely({
+    type: "CANCEL_EVENT_LINK_EXPIRY_REMINDER",
+    recipients: "",
+    entityType: "Event",
+    entityId: eventId,
+  });
+};
+
+const queueEventLinkExpiryReminder = async (event: any): Promise<void> => {
+  const expiresAt = event.locationLinkExpiresAt as Date | null;
+  const reminderDays = event.locationLinkReminderDays as number | null;
+
+  // If the expiry feature is disabled (or location value is gone), cancel any
+  // previously-scheduled reminder so the old notification doesn't fire.
+  if (!expiresAt || !reminderDays || !event.locationValue) {
+    await cancelEventLinkExpiryReminder(event.id);
+    return;
+  }
+
+  try {
+    // Resolve the Team Lead (Admin) of the parent team
+    const eventWithTeam = await prisma.event.findUnique({
+      where: { id: event.id },
+      select: {
+        team: {
+          select: {
+            teamLead: {
+              select: { id: true, email: true, firstName: true, lastName: true },
+            },
+          },
+        },
+      },
+    });
+
+    const teamLead = eventWithTeam?.team?.teamLead;
+    if (!teamLead?.email) {
+      return;
+    }
+
+    const sendAt = new Date(expiresAt.getTime() - reminderDays * 24 * 60 * 60 * 1000);
+    if (sendAt <= new Date()) {
+      // Reminder window has already passed — cancel any stale scheduled record.
+      await cancelEventLinkExpiryReminder(event.id);
+      return;
+    }
+
+    const expiryDateStr = expiresAt.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+
+    const userName = `${teamLead.firstName} ${teamLead.lastName}`.trim();
+
+    await publishNotificationSafely({
+      type: "EVENT_LOCATION_LINK_EXPIRY_REMINDER",
+      recipients: teamLead.email,
+      userId: teamLead.id,
+      notificationKey: `event-link-expiry:${event.id}`,
+      entityType: "Event",
+      entityId: event.id,
+      sendAt: sendAt.toISOString(),
+      variables: {
+        eventId: event.id,
+        userName,
+        eventName: event.name,
+        expiryDate: expiryDateStr,
+        reminderDays: String(reminderDays),
+        frontendUrl: resolveFrontendUrl(),
+      },
+    });
+  } catch (error) {
+    logger.error({ eventId: event.id, error }, "Failed to queue event link expiry reminder.");
+  }
+};
+
+export { queueEventStatusChangedNotification, queueEventLinkExpiryReminder, cancelEventLinkExpiryReminder };

@@ -54,7 +54,11 @@ import {
   resolveCreateEventContext,
   resolveUpdateEventContext,
 } from "./eventMutation.service";
-import { queueEventStatusChangedNotification } from "./event.notification";
+import {
+  queueEventStatusChangedNotification,
+  queueEventLinkExpiryReminder,
+  cancelEventLinkExpiryReminder,
+} from "./event.notification";
 
 const listEventsByQuery = async (
   where: Prisma.EventWhereInput,
@@ -118,6 +122,8 @@ const createEvent = async (
   });
 
   getRequestLogger().info({ eventId: event.id, teamId, interactionType: event.interactionType, createdBy: caller.id }, "Event created.");
+
+  void queueEventLinkExpiryReminder(event);
 
   return event;
 };
@@ -226,10 +232,14 @@ const updateEvent = async (
     getRequestLogger().info({ eventId, updatedBy: caller.id }, "Event updated.");
   }
 
-  return prisma.event.findUniqueOrThrow({
+  const finalUpdatedEvent = await prisma.event.findUniqueOrThrow({ 
     where: { id: eventId },
     include: eventInclude,
   });
+
+  void queueEventLinkExpiryReminder(finalUpdatedEvent);
+
+  return finalUpdatedEvent;
 };
 
 const deleteEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
@@ -247,6 +257,9 @@ const deleteEvent = async (eventId: string, caller: CallerContext): Promise<Safe
   }
 
   getRequestLogger().warn({ eventId, teamId: event.teamId, deletedBy: caller.id }, "Event deleted.");
+
+  // Cancel any scheduled link-expiry reminder before the event record is gone.
+  void cancelEventLinkExpiryReminder(eventId);
 
   // Manually cleanup relations that don't have cascade delete in the schema
   await prisma.$transaction(async (tx) => {

@@ -14,6 +14,16 @@ export async function processNotification(notification: NotificationPayload): Pr
     return;
   }
 
+  if (notification.type === "CANCEL_EVENT_LINK_EXPIRY_REMINDER") {
+    if (!notification.entityId) {
+      logger.warn("CANCEL_EVENT_LINK_EXPIRY_REMINDER received without entityId — skipping.");
+      return;
+    }
+
+    await cancelNotificationsByEntity("Event", notification.entityId);
+    return;
+  }
+
   const channel = getChannel("email");
   if (!channel) {
     throw new Error("No channel found for type: email");

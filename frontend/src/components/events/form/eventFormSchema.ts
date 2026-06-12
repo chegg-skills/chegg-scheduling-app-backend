@@ -38,6 +38,20 @@ export const eventFormSchema = z
     allowAnonymousBooking: z.boolean().default(false),
     allowStudentCoachChoice: z.boolean().default(false),
     meetingLinkSource: z.enum(MeetingLinkSourceValues).default('COACH_ISV'),
+    locationLinkExpiresAt: z
+      .string()
+      .nullable()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          return new Date(val) >= today
+        },
+        { message: 'Link expiry date must be today or in the future.' }
+      ),
+    locationLinkReminderDays: z.number().int().min(1).max(90).nullable().optional(),
     isActive: z.boolean().default(true),
     groupId: z.string().uuid().nullable().optional(),
     recurrenceVisibilityLimit: z
@@ -108,6 +122,22 @@ export const eventFormSchema = z
         message: 'Location value is required when anonymous booking is enabled so students receive booking details.',
       })
     }
+
+    if (values.locationLinkExpiresAt && !values.locationLinkReminderDays) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationLinkReminderDays'],
+        message: 'Please specify the number of days before expiration to send the reminder.',
+      })
+    }
+
+    if (!values.locationLinkExpiresAt && values.locationLinkReminderDays) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationLinkExpiresAt'],
+        message: 'Please specify the link expiration date.',
+      })
+    }
   })
 
 export type EventFormValues = z.infer<typeof eventFormSchema>
@@ -137,6 +167,10 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       allowAnonymousBooking: event.allowAnonymousBooking ?? false,
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
       meetingLinkSource: event.meetingLinkSource ?? 'COACH_ISV',
+      locationLinkExpiresAt: event.locationLinkExpiresAt
+        ? new Date(event.locationLinkExpiresAt).toISOString()
+        : null,
+      locationLinkReminderDays: event.locationLinkReminderDays ?? null,
       isActive: event.isActive,
       groupId: event.groupId ?? null,
       recurrenceVisibilityLimit: event.recurrenceVisibilityLimit ?? null,
@@ -166,6 +200,8 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     allowAnonymousBooking: false,
     allowStudentCoachChoice: false,
     meetingLinkSource: 'COACH_ISV' as const,
+    locationLinkExpiresAt: null,
+    locationLinkReminderDays: null,
     isActive: true,
     groupId: null,
     recurrenceVisibilityLimit: null,

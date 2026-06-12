@@ -1,8 +1,8 @@
 import { emailTemplates } from "./registry";
 
-// Every NotificationType that maps to an email template (all except CANCEL_BOOKING_REMINDERS).
-// CANCEL_BOOKING_REMINDERS is a control message — the notification service uses it to cancel
-// scheduled notifications, not to send an email, so it intentionally has no template entry.
+// Every NotificationType that maps to an email template (all except control messages).
+// Control messages (CANCEL_BOOKING_REMINDERS, CANCEL_EVENT_LINK_EXPIRY_REMINDER) instruct
+// the service to cancel scheduled notifications — they do not send emails themselves.
 const EXPECTED_TYPES = [
   "USER_INVITED",
   "INVITE_ACCEPTED",
@@ -43,21 +43,23 @@ const EXPECTED_TYPES = [
   "SESSION_REMINDER_ANONYMOUS_1H",
   "ANONYMOUS_BOOKING_POOL_REMINDER",
   "ANONYMOUS_SLOT_CANCELLED_POOL",
+  "EVENT_LOCATION_LINK_EXPIRY_REMINDER",
 ] as const;
 
 describe("emailTemplates registry", () => {
-  it("contains an entry for every NotificationType except CANCEL_BOOKING_REMINDERS", () => {
+  it("contains an entry for every NotificationType except control messages", () => {
     for (const type of EXPECTED_TYPES) {
       expect(emailTemplates).toHaveProperty(type);
     }
   });
 
-  it("does NOT contain CANCEL_BOOKING_REMINDERS (control message, no email)", () => {
+  it("does NOT contain control messages (no email templates for cancellation types)", () => {
     expect(emailTemplates).not.toHaveProperty("CANCEL_BOOKING_REMINDERS");
+    expect(emailTemplates).not.toHaveProperty("CANCEL_EVENT_LINK_EXPIRY_REMINDER");
   });
 
-  it("has exactly 39 entries", () => {
-    expect(Object.keys(emailTemplates)).toHaveLength(39);
+  it("has exactly 40 entries", () => {
+    expect(Object.keys(emailTemplates)).toHaveLength(40);
   });
 
   it("every entry has non-empty subject, text, and html string fields", () => {
