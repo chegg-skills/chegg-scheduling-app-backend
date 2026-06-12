@@ -31,7 +31,6 @@ import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Select } from '@/components/shared/form/Select'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useEventStats } from '@/hooks/queries/useStats'
-import { useUsers } from '@/hooks/queries/useUsers'
 import type { StatsTimeframe } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 
@@ -53,8 +52,6 @@ export function EventsPage() {
     }
   }
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
-  const { data: usersData } = useUsers({ pageSize: 200 }, { enabled: !isCoach })
-
   const sortedTeams = useMemo(() => {
     if (!teamsData?.teams) return []
     return [...teamsData.teams].sort((a, b) => a.name.localeCompare(b.name))
