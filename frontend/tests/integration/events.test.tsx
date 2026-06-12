@@ -66,7 +66,7 @@ describe('Events Domain Integration', () => {
     renderWithProviders(<EventsPage />)
 
     // 1. Wait for teams to load, then verify initial empty-state message
-    await screen.findByText(/Select a Team to View Events/i, {}, { timeout: 8000 })
+    await screen.findByText(/Select a team from the dropdown above/i, {}, { timeout: 8000 })
 
     // 2. Open the MUI Select via its aria-label and pick a team
     const selectEl = screen.getByLabelText('Select team')
@@ -91,7 +91,7 @@ describe('Events Domain Integration', () => {
     })
     renderWithProviders(<EventsPage />)
 
-    await screen.findByText(/Select a Team to View Events/i, {}, { timeout: 8000 })
+    await screen.findByText(/Select a team from the dropdown above/i, {}, { timeout: 8000 })
 
     const selectEl = screen.getByLabelText('Select team')
     fireEvent.mouseDown(selectEl)
@@ -108,7 +108,7 @@ describe('Events Domain Integration', () => {
     })
     renderWithProviders(<EventsPage />)
 
-    await screen.findByText(/Select a Team to View Events/i, {}, { timeout: 8000 })
+    await screen.findByText(/Select a team from the dropdown above/i, {}, { timeout: 8000 })
 
     const selectEl2 = screen.getByLabelText('Select team')
     fireEvent.mouseDown(selectEl2)
