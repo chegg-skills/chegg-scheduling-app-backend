@@ -162,7 +162,7 @@ describe("Event types routes", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.key).toBe("resume_review_offering");
+    expect(res.body.data.key).toBe("resume-review-offering");
     expect(res.body.data.name).toBe("Resume Review Offering");
   });
 
