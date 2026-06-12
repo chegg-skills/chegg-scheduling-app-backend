@@ -22,6 +22,7 @@ import type { Event } from '@/types'
 interface EventFormProps {
   teamId: string
   event?: Event
+  accessedFromEventsTab?: boolean
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -41,9 +42,13 @@ const NAVIGATION_ITEMS = [
   { id: 'section-schedule', label: 'Schedule & host' },
 ]
 
-export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps) {
-  const { data: teamMembersData } = useTeamMembers(teamId)
-  const teamMembers = teamMembersData?.members ?? []
+export function EventForm({
+  teamId,
+  event,
+  accessedFromEventsTab = false,
+  onSuccess,
+  onCancel,
+}: EventFormProps) {
   const {
     form,
     onSubmit,
@@ -54,7 +59,13 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
     bookingModeSelection,
     requiredCoachCount,
     isEdit,
-  } = useEventForm({ teamId, event, onSuccess })
+  } = useEventForm({ teamId, event, accessedFromEventsTab, onSuccess })
+
+  const watchedTeamId = form.watch('teamId')
+  const effectiveTeamId = (accessedFromEventsTab && !isEdit) ? (watchedTeamId || '') : (teamId || '')
+
+  const { data: teamMembersData } = useTeamMembers(effectiveTeamId)
+  const teamMembers = teamMembersData?.members ?? []
 
   const {
     formState: { errors, submitCount },
@@ -191,7 +202,10 @@ export function EventForm({ teamId, event, onSuccess, onCancel }: EventFormProps
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider', lineHeight: 1.3 }}>
                 Configure name, description, and group details.
               </Typography>
-              <EventBasicFields teamId={teamId} />
+              <EventBasicFields
+                teamId={effectiveTeamId}
+                showTeamSelect={accessedFromEventsTab && !isEdit}
+              />
             </Box>
 
             {/* Resources Section */}

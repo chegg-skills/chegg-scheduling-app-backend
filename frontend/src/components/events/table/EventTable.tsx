@@ -176,7 +176,7 @@ export function EventTable({
               <TableRow>
                 <TableCell colSpan={canManage ? 8 : 7} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">
-                    No events found in this team.
+                    No events found.
                   </Typography>
                 </TableCell>
               </TableRow>

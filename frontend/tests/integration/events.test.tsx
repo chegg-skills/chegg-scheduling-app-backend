@@ -31,7 +31,35 @@ const handlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        events: [{ id: 'event-1', name: 'Algebra 101', duration: 30, isActive: true, coaches: [] }],
+        events: [
+          {
+            id: 'event-1',
+            name: 'Algebra 101',
+            duration: 30,
+            isActive: true,
+            coaches: [],
+            eventTypeId: 'type-1',
+          },
+        ],
+      },
+    })
+  }),
+  http.get('*/api/event-types', () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        eventTypes: [
+          { id: 'type-1', key: 'mock-interview', name: 'Mock Interview', isActive: true },
+          { id: 'type-2', key: 'resume-review', name: 'Resume Review', isActive: true },
+        ],
+      },
+    })
+  }),
+  http.get('*/api/teams/:teamId/event-groups', () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        groups: [],
       },
     })
   }),
@@ -65,15 +93,21 @@ describe('Events Domain Integration', () => {
 
     renderWithProviders(<EventsPage />)
 
-    // 1. Wait for teams to load, then verify initial empty-state message
-    await screen.findByText(/Select a team from the dropdown above/i, {}, { timeout: 8000 })
+    // 1. Wait for event types to load, then verify initial empty-state message
+    await screen.findByRole('heading', { name: /Select an Event Type/i, level: 6 }, { timeout: 8000 })
 
-    // 2. Open the MUI Select via its aria-label and pick a team
+    // 2. Select an Event Type from the sidebar
+    fireEvent.click(await screen.findByText('Mock Interview'))
+
+    // 3. Verify it prompts to select a team
+    await screen.findByRole('heading', { name: /Select a Team/i, level: 6 }, { timeout: 8000 })
+
+    // 4. Open the MUI Select via its aria-label and pick a team
     const selectEl = screen.getByLabelText('Select team')
     fireEvent.mouseDown(selectEl)
     fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
-    // 3. Verify events load
+    // 5. Verify events load
     await waitFor(
       () => {
         expect(screen.getByText('Algebra 101')).toBeInTheDocument()
@@ -91,11 +125,7 @@ describe('Events Domain Integration', () => {
     })
     renderWithProviders(<EventsPage />)
 
-    await screen.findByText(/Select a team from the dropdown above/i, {}, { timeout: 8000 })
-
-    const selectEl = screen.getByLabelText('Select team')
-    fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
+    await screen.findByRole('heading', { name: /Select an Event Type/i, level: 6 }, { timeout: 8000 })
 
     expect(screen.getAllByRole('button', { name: /New event/i })[0]).toBeInTheDocument()
 
@@ -108,11 +138,7 @@ describe('Events Domain Integration', () => {
     })
     renderWithProviders(<EventsPage />)
 
-    await screen.findByText(/Select a team from the dropdown above/i, {}, { timeout: 8000 })
-
-    const selectEl2 = screen.getByLabelText('Select team')
-    fireEvent.mouseDown(selectEl2)
-    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
+    await screen.findByRole('heading', { name: /Select an Event Type/i, level: 6 }, { timeout: 8000 })
 
     expect(screen.queryAllByRole('button', { name: /New event/i })).toHaveLength(0)
   }, 15000)

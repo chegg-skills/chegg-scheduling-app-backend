@@ -5,6 +5,7 @@ import type { Event } from '@/types'
 
 export const eventFormSchema = z
   .object({
+    teamId: z.string().optional(),
     name: z.string().min(1, 'Name is required'),
     description: z.string().optional(),
     eventTypeId: z.string().min(1, 'Event Type is required'),
@@ -114,6 +115,7 @@ export type EventFormValues = z.infer<typeof eventFormSchema>
 export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
   if (event) {
     return {
+      teamId: event.teamId,
       name: event.name,
       description: event.description ?? '',
       eventTypeId: event.eventTypeId,
@@ -142,6 +144,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
   }
 
   return {
+    teamId: '',
     name: '',
     description: '',
     eventTypeId: '',

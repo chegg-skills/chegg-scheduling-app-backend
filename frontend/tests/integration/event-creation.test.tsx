@@ -88,17 +88,17 @@ describe('Event Creation Integration', () => {
   it('should allow an admin to create a new one-to-one event', async () => {
     renderWithProviders(<EventsPage />)
 
-    // 1. Select team
-    const selectEl = await screen.findByRole('combobox', { name: /Select team/i })
-    fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
-
-    // 2. Open "New event" modal
+    // 1. Open "New event" modal
     const newEventBtn = await screen.findByRole('button', { name: /New event/i })
     fireEvent.click(newEventBtn)
 
     // Wait for modal to open
     expect(await screen.findByRole('heading', { name: /New event/i })).toBeInTheDocument()
+
+    // 2. Select Team in the form
+    const teamSelect = await screen.findByRole('combobox', { name: /Team/i })
+    fireEvent.mouseDown(teamSelect)
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     // 3. Fill Basic Info
     const nameInput = await screen.findByLabelText(/Event name/i)
@@ -145,14 +145,17 @@ describe('Event Creation Integration', () => {
   it('should allow an admin to create a group workshop (one-to-many)', async () => {
     renderWithProviders(<EventsPage />)
 
-    // 1. Select team
-    const selectEl = await screen.findByRole('combobox', { name: /Select team/i })
-    fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
-
-    // 2. Open "New event" modal
+    // 1. Open "New event" modal
     const newEventBtn = await screen.findByRole('button', { name: /New event/i })
     fireEvent.click(newEventBtn)
+
+    // Wait for modal to open
+    expect(await screen.findByRole('heading', { name: /New event/i })).toBeInTheDocument()
+
+    // 2. Select Team in the form
+    const teamSelect = await screen.findByRole('combobox', { name: /Team/i })
+    fireEvent.mouseDown(teamSelect)
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     // 3. Fill Basic Info
     fireEvent.change(await screen.findByLabelText(/Event name/i), {

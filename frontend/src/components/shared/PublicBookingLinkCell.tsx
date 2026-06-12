@@ -6,7 +6,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { Check, Copy, ExternalLink, Link2 } from 'lucide-react'
 
 interface PublicBookingLinkCellProps {
-  type: 'coach' | 'team' | 'event' | 'directory'
+  type: 'coach' | 'team' | 'event' | 'directory' | 'group'
   slug: string | null | undefined
   isActive?: boolean
 }
