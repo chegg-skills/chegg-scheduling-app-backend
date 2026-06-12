@@ -122,7 +122,7 @@ export function EventTypeForm({ eventType, onSuccess, onCancel }: EventTypeFormP
             {...keyReg}
             onChange={(e) => {
               keyReg.onChange(e)
-              setKeyTouched(true)
+              setKeyTouched(e.target.value !== '')
             }}
           />
         </FormField>

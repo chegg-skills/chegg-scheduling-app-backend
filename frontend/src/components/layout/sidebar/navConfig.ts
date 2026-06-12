@@ -4,7 +4,6 @@ import {
   UsersRound,
   CalendarDays,
   BookOpen,
-  Layers,
   ClipboardList,
   GraduationCap,
   BarChart3,
@@ -67,12 +66,6 @@ export const navItems: NavItem[] = [
     to: '/event-types',
     label: 'Event Types',
     Icon: BookOpen,
-    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
-  },
-  {
-    to: '/interaction-types',
-    label: 'Interaction Types',
-    Icon: Layers,
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
   },
   {

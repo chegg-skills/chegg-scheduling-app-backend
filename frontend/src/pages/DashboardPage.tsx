@@ -5,7 +5,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, UsersRound, CalendarDays, Layers, ArrowLeftRight, Clock3 } from 'lucide-react'
+import { Users, UsersRound, CalendarDays, Layers, Clock3 } from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatsOverview } from '@/components/shared/StatsOverview'
@@ -44,12 +44,6 @@ const QUICK_LINKS: QuickLink[] = [
     label: 'Event Types',
     to: '/event-types',
     icon: <Layers size={24} />,
-    roles: ['SUPER_ADMIN'],
-  },
-  {
-    label: 'Interaction Types',
-    to: '/interaction-types',
-    icon: <ArrowLeftRight size={24} />,
     roles: ['SUPER_ADMIN'],
   },
 ]
