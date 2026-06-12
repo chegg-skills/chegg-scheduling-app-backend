@@ -11,7 +11,6 @@ import configRoutes from "../domain/config/config.router";
 import bookingRoutes from "../domain/bookings/booking.router";
 import publicRoutes from "../domain/public/public.router";
 import studentRoutes from "../domain/students/student.router";
-import sessionTypeRoutes from "../domain/sessionTypes/sessionType.router";
 import bookingDirectoryRoutes from "../domain/bookingDirectories/bookingDirectory.router";
 import systemSettingRoutes from "../domain/systemSettings/systemSetting.router";
 import v1routes from "./v1/index";
@@ -31,7 +30,6 @@ router.use("/students", studentRoutes);
 router.use(teamMemberRoutes);
 router.use(eventRoutes);
 router.use(eventGroupRoutes);
-router.use(sessionTypeRoutes);
 router.use(bookingDirectoryRoutes);
 router.use(systemSettingRoutes);
 

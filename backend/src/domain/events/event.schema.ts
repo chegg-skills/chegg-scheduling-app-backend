@@ -13,7 +13,7 @@ const EventTypeBase = z.looseObject({
     .string()
     .trim()
     .toLowerCase()
-    .transform((v) => v.replace(/[^a-z0-9]+/g, "_"))
+    .transform((v) => v.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""))
     .optional(),
   name: z.string().trim().min(1, "Name is required").optional(),
   description: z.string().trim().optional().nullable(),
@@ -58,7 +58,6 @@ const EventBaseObjectCore = z.looseObject({
   allowStudentCoachChoice: z.boolean().optional(),
   meetingLinkSource: z.nativeEnum(MeetingLinkSource).optional(),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
-  sessionTypeId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
 });
 
 /**

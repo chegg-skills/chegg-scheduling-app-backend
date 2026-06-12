@@ -38,7 +38,6 @@ export const eventFormSchema = z
     allowStudentCoachChoice: z.boolean().default(false),
     meetingLinkSource: z.enum(MeetingLinkSourceValues).default('COACH_ISV'),
     isActive: z.boolean().default(true),
-    sessionTypeId: z.string().uuid().nullable().optional(),
     groupId: z.string().uuid().nullable().optional(),
     recurrenceVisibilityLimit: z
       .number()
@@ -137,7 +136,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
       meetingLinkSource: event.meetingLinkSource ?? 'COACH_ISV',
       isActive: event.isActive,
-      sessionTypeId: event.sessionTypeId ?? null,
       groupId: event.groupId ?? null,
       recurrenceVisibilityLimit: event.recurrenceVisibilityLimit ?? null,
     }
@@ -166,7 +164,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     allowStudentCoachChoice: false,
     meetingLinkSource: 'COACH_ISV' as const,
     isActive: true,
-    sessionTypeId: null,
     groupId: null,
     recurrenceVisibilityLimit: null,
   }

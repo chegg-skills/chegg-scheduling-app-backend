@@ -136,12 +136,6 @@ const handlers = [
   http.post('*/api/events/:eventId/schedule-slots/:slotId/log', () => {
     return HttpResponse.json({ success: true })
   }),
-  http.get('*/api/session-types', () => {
-    return HttpResponse.json({
-      success: true,
-      data: { sessionTypes: [] },
-    })
-  }),
   http.get('*/api/event-types', () => {
     return HttpResponse.json({
       success: true,

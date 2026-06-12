@@ -26,7 +26,7 @@ export const BookingDirectoryParamsSchema = {
 export const AddSectionSchema = {
   params: z.object({ directoryId: z.string().uuid("Invalid booking directory ID.") }),
   body: z.object({
-    sessionTypeId: z.string().uuid("Invalid session type ID."),
+    eventTypeId: z.string().uuid("Invalid event type ID."),
     sortOrder: z.number().int().min(0).optional(),
   }),
 };

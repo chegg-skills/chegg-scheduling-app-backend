@@ -45,13 +45,6 @@ export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
       color: true,
     },
   },
-  sessionType: {
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-    },
-  },
   _count: {
     select: {
       bookings: true,
@@ -96,7 +89,6 @@ export type CreateEventInput = {
   allowStudentCoachChoice?: boolean;
   meetingLinkSource?: MeetingLinkSource;
   groupId?: string | null;
-  sessionTypeId?: string | null;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput>;
@@ -147,7 +139,7 @@ export const normalizeKey = (value: string): string => {
   return value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_");
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 };
 
 export const assertCatalogManagementAllowed = (caller: CallerContext): void => {

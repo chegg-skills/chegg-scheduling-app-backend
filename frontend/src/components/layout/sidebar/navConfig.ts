@@ -8,7 +8,6 @@ import {
   ClipboardList,
   GraduationCap,
   BarChart3,
-  Tag,
   Globe,
   type LucideIcon,
 } from 'lucide-react'
@@ -75,12 +74,6 @@ export const navItems: NavItem[] = [
     label: 'Interaction Types',
     Icon: Layers,
     allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
-  },
-  {
-    to: '/session-types',
-    label: 'Session Types',
-    Icon: Tag,
-    allowedRoles: ['SUPER_ADMIN'],
   },
   {
     to: '/booking-directories',

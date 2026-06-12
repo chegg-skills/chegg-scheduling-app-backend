@@ -1,5 +1,4 @@
 import { AssignmentStrategy, Prisma, SessionLeadershipStrategy } from "@prisma/client";
-import { StatusCodes } from "http-status-codes";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   INTERACTION_TYPE_CAPS,
@@ -17,21 +16,6 @@ import { resolveEventSchedulingConfig } from "./eventScheduling.service";
 import { CreateEventSchema, UpdateEventSchema } from "./event.schema";
 import { normalizeKey } from "./event.shared";
 import { prisma } from "../../shared/db/prisma";
-import { ErrorHandler } from "../../shared/error/errorhandler";
-
-export const resolveSessionTypeConfig = async (
-  sessionTypeId: string | null | undefined,
-): Promise<string | null> => {
-  if (!sessionTypeId) return null;
-  const sessionType = await prisma.sessionType.findUnique({ where: { id: sessionTypeId } });
-  if (!sessionType) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Selected session type does not exist.");
-  }
-  if (!sessionType.isActive) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Selected session type is inactive.");
-  }
-  return sessionType.id;
-};
 
 type ResolvedEventMutationContext = {
   eventType: Awaited<ReturnType<typeof getActiveEventType>>;
@@ -251,7 +235,6 @@ export const buildEventCreateData = ({
     meetingLinkSource: validated.meetingLinkSource,
     team: { connect: { id: teamId } },
     group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
-    sessionType: validated.sessionTypeId ? { connect: { id: validated.sessionTypeId } } : undefined,
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
     ...context.schedulingConfig,
@@ -351,13 +334,6 @@ export const buildEventUpdateData = ({
       validated.groupId === null ? { disconnect: true } : { connect: { id: validated.groupId } };
   }
 
-  if (validated.sessionTypeId !== undefined) {
-    updateData.sessionType =
-      validated.sessionTypeId === null
-        ? { disconnect: true }
-        : { connect: { id: validated.sessionTypeId } };
-  }
-
   return updateData as any;
 };
 
@@ -404,8 +380,5 @@ export const buildDuplicateEventData = ({
     allowStudentCoachChoice: (sourceEvent as any).allowStudentCoachChoice ?? false,
     meetingLinkSource: (sourceEvent as any).meetingLinkSource ?? "COACH_ISV",
     group: sourceEvent.groupId ? { connect: { id: sourceEvent.groupId } } : undefined,
-    sessionType: sourceEvent.sessionTypeId
-      ? { connect: { id: sourceEvent.sessionTypeId } }
-      : undefined,
   } as any;
 };

@@ -16,9 +16,9 @@ import { EventCard } from '@/components/public/booking/EventCard'
 
 export function PublicBookingDirectory() {
   const navigate = useNavigate()
-  const { directorySlug, sessionTypeSlug, teamSlug } = useParams<{
+  const { directorySlug, eventTypeKey, teamSlug } = useParams<{
     directorySlug?: string
-    sessionTypeSlug?: string
+    eventTypeKey?: string
     teamSlug?: string
   }>()
   const outletCtx = useOutletContext<PublicLayoutOutletContext | null>()
@@ -26,8 +26,8 @@ export function PublicBookingDirectory() {
   const slug = directorySlug ?? 'default'
   const { data: bookingDirectory, isLoading, error } = usePublicBookingDirectoryBySlug(slug)
 
-  // Legacy redirect: old query-param URLs (?category=slug&team=slug or ?category=UUID)
-  // are redirected to the path-based equivalent /book/sessions/:sessionTypeSlug/:teamSlug
+  // Legacy redirect: old query-param URLs (?category=key&team=slug or ?category=UUID)
+  // are redirected to the path-based equivalent /book/sessions/:eventTypeKey/:teamSlug
   const [searchParams] = useSearchParams()
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   useEffect(() => {
@@ -39,9 +39,10 @@ export function PublicBookingDirectory() {
     const resolveCategory = () => {
       if (!categoryParam) return null
       if (!UUID_RE.test(categoryParam)) return categoryParam
+      // UUID refers to an EventType.id — resolve to its key
       return (
-        bookingDirectory.sections.find((s) => s.sessionType.id === categoryParam)?.sessionType
-          .slug ?? null
+        bookingDirectory.sections.find((s) => s.eventType.id === categoryParam)?.eventType.key ??
+        null
       )
     }
     const resolvedCategory = resolveCategory()
@@ -53,7 +54,7 @@ export function PublicBookingDirectory() {
     const resolveTeam = () => {
       if (!teamParam) return null
       if (!UUID_RE.test(teamParam)) return teamParam
-      const section = bookingDirectory.sections.find((s) => s.sessionType.slug === resolvedCategory)
+      const section = bookingDirectory.sections.find((s) => s.eventType.key === resolvedCategory)
       return section?.teams.find((t) => t.team.id === teamParam)?.team.publicBookingSlug ?? null
     }
     const resolvedTeam = resolveTeam()
@@ -70,8 +71,8 @@ export function PublicBookingDirectory() {
   }, [outletCtx])
 
   // Find the selected section and team from path params
-  const selectedSection = sessionTypeSlug
-    ? bookingDirectory?.sections.find((s) => s.sessionType.slug === sessionTypeSlug)
+  const selectedSection = eventTypeKey
+    ? bookingDirectory?.sections.find((s) => s.eventType.key === eventTypeKey)
     : undefined
 
   const selectedTeamEntry = teamSlug
@@ -132,7 +133,7 @@ export function PublicBookingDirectory() {
   const visibleSections = bookingDirectory.sections.filter((s) => s.teams.length > 0)
 
   // A slug in the URL that doesn't match any known entity is a 404, not a silent fallback
-  if (sessionTypeSlug && !selectedSection) {
+  if (eventTypeKey && !selectedSection) {
     return (
       <Box
         sx={{
@@ -155,7 +156,7 @@ export function PublicBookingDirectory() {
           Session category not found
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          The session category <strong>{sessionTypeSlug}</strong> doesn't exist or is no longer
+          The session category <strong>{eventTypeKey}</strong> doesn't exist or is no longer
           available.
         </Typography>
         <Box
@@ -211,9 +212,9 @@ export function PublicBookingDirectory() {
         <Box
           role="button"
           tabIndex={0}
-          onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)}
+          onClick={() => navigate(`/book/sessions/${eventTypeKey}`)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') navigate(`/book/sessions/${sessionTypeSlug}`)
+            if (e.key === 'Enter' || e.key === ' ') navigate(`/book/sessions/${eventTypeKey}`)
           }}
           sx={{
             color: 'primary.main',
@@ -296,10 +297,10 @@ export function PublicBookingDirectory() {
             <Box
               role="button"
               tabIndex={0}
-              onClick={() => navigate(`/book/sessions/${sessionTypeSlug}`)}
+              onClick={() => navigate(`/book/sessions/${eventTypeKey}`)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ')
-                  navigate(`/book/sessions/${sessionTypeSlug}`)
+                  navigate(`/book/sessions/${eventTypeKey}`)
               }}
               sx={{
                 mb: 4,
@@ -326,7 +327,7 @@ export function PublicBookingDirectory() {
               sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}
             >
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                {toTitleCase(selectedSection.sessionType.name)} —{' '}
+                {toTitleCase(selectedSection.eventType.name)} —{' '}
                 {toTitleCase(selectedTeamEntry.team.name)}
               </Typography>
               <Chip
@@ -432,7 +433,7 @@ export function PublicBookingDirectory() {
               sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}
             >
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                {toTitleCase(selectedSection.sessionType.name)}
+                {toTitleCase(selectedSection.eventType.name)}
               </Typography>
               <Chip
                 label={`${selectedSection.teams.length} discipline${selectedSection.teams.length !== 1 ? 's' : ''} available`}
@@ -504,7 +505,7 @@ export function PublicBookingDirectory() {
                         handleBook(entry.events[0].publicBookingSlug ?? entry.events[0].id)
                       } else {
                         navigate(
-                          `/book/sessions/${sessionTypeSlug}/${entry.team.publicBookingSlug ?? entry.team.id}`
+                          `/book/sessions/${eventTypeKey}/${entry.team.publicBookingSlug ?? entry.team.id}`
                         )
                       }
                     }}
@@ -689,13 +690,13 @@ export function PublicBookingDirectory() {
             >
               {visibleSections.map((section) => {
                 const teamCount = section.teams.length
-                const sessionType = section.sessionType
+                const eventType = section.eventType
 
                 return (
                   <Paper
-                    key={sessionType.id}
+                    key={eventType.id}
                     variant="outlined"
-                    onClick={() => navigate(`/book/sessions/${section.sessionType.slug}`)}
+                    onClick={() => navigate(`/book/sessions/${eventType.key}`)}
                     sx={{
                       p: { xs: 2, sm: 3 },
                       borderRadius: 1.5,
@@ -760,9 +761,9 @@ export function PublicBookingDirectory() {
                             textTransform: 'none',
                           }}
                         >
-                          {toTitleCase(sessionType.name)}
+                          {toTitleCase(eventType.name)}
                         </Typography>
-                        {sessionType.description ? (
+                        {eventType.description ? (
                           <Typography
                             variant="body2"
                             color="text.secondary"
@@ -777,7 +778,7 @@ export function PublicBookingDirectory() {
                               mb: 1.5,
                             }}
                           >
-                            {sessionType.description}
+                            {eventType.description}
                           </Typography>
                         ) : (
                           <Typography

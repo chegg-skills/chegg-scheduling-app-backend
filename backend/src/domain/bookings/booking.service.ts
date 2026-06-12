@@ -490,18 +490,6 @@ const bookFollowUpSession = async (
     );
   }
 
-  if (originalBooking.event.sessionTypeId) {
-    const sessionType = await prisma.sessionType.findUnique({
-      where: { id: originalBooking.event.sessionTypeId },
-    });
-    if (!sessionType || !sessionType.isActive) {
-      throw new ErrorHandler(
-        StatusCodes.BAD_REQUEST,
-        "The session type associated with this event is deleted or inactive.",
-      );
-    }
-  }
-
   if (originalBooking.coachUserId === null) {
     throw new ErrorHandler(
       StatusCodes.CONFLICT,

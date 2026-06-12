@@ -15,7 +15,7 @@ const bookingDirectoryInclude = Prisma.validator<Prisma.BookingDirectoryInclude>
   sections: {
     orderBy: { sortOrder: "asc" },
     include: {
-      sessionType: true,
+      eventType: true,
       teams: {
         orderBy: { sortOrder: "asc" },
         include: {
@@ -116,29 +116,31 @@ const deleteBookingDirectory = async (directoryId: string, caller: CallerContext
 
 const addSection = async (
   directoryId: string,
-  payload: { sessionTypeId: string; sortOrder?: number },
+  payload: { eventTypeId: string; sortOrder?: number },
   caller: CallerContext,
 ): Promise<SafeBookingDirectory> => {
   assertSuperAdmin(caller);
 
-  const sessionType = await prisma.sessionType.findUnique({ where: { id: payload.sessionTypeId } });
-  if (!sessionType) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Session type not found.");
+  const eventType = await prisma.eventType.findUnique({ where: { id: payload.eventTypeId } });
+  if (!eventType) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event type not found.");
+  }
+  if (!eventType.isActive) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Selected event type is inactive.");
   }
 
   try {
-    await prisma.bookingDirectorySection.create({
-      data: {
-        bookingDirectoryId: directoryId,
-        sessionTypeId: payload.sessionTypeId,
-        sortOrder: payload.sortOrder ?? 0,
-      },
-    });
+    const sectionData: Prisma.BookingDirectorySectionUncheckedCreateInput = {
+      bookingDirectoryId: directoryId,
+      eventTypeId: payload.eventTypeId,
+      sortOrder: payload.sortOrder ?? 0,
+    };
+    await prisma.bookingDirectorySection.create({ data: sectionData });
   } catch (error) {
     rethrowPrismaError(error, {
       P2002: {
         status: StatusCodes.CONFLICT,
-        message: "This session type is already in the booking directory.",
+        message: "This event type is already in the booking directory.",
       },
       P2003: { status: StatusCodes.NOT_FOUND, message: "Booking directory not found." },
     });

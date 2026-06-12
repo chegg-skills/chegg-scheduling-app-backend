@@ -241,7 +241,7 @@ export const getPublicBookingDirectory = async (slug: string) => {
       sections: {
         orderBy: { sortOrder: "asc" },
         include: {
-          sessionType: true,
+          eventType: true,
           teams: {
             orderBy: { sortOrder: "asc" },
             include: { team: { select: publicTeamSelect } },
@@ -255,13 +255,14 @@ export const getPublicBookingDirectory = async (slug: string) => {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Booking directory not found.");
   }
 
-  // Collect all active (teamId, sessionTypeId) pairs to load events in one query.
-  const activePairs: { teamId: string; sessionTypeId: string }[] = [];
+  // Collect all active (teamId, eventTypeId) pairs to load events in one query.
+  // Events appear in a section when their eventTypeId matches the section's eventTypeId.
+  const activePairs: { teamId: string; eventTypeId: string }[] = [];
   for (const section of directory.sections) {
-    if (!section.sessionType.isActive) continue;
+    if (!section.eventType.isActive) continue;
     for (const entry of section.teams) {
       if (!entry.team.isActive) continue;
-      activePairs.push({ teamId: entry.teamId, sessionTypeId: section.sessionTypeId });
+      activePairs.push({ teamId: entry.teamId, eventTypeId: section.eventTypeId });
     }
   }
 
@@ -269,14 +270,14 @@ export const getPublicBookingDirectory = async (slug: string) => {
     activePairs.length > 0
       ? await prisma.event.findMany({
           where: { isActive: true, OR: activePairs },
-          select: { ...publicEventSelect, sessionTypeId: true },
+          select: { ...publicEventSelect, eventTypeId: true },
           orderBy: { name: "asc" },
         })
       : [];
 
-  const eventsByKey = new Map<string, Array<Omit<(typeof allEvents)[number], "sessionTypeId">>>();
-  for (const { sessionTypeId, ...event } of allEvents) {
-    const key = `${event.teamId}:${sessionTypeId}`;
+  const eventsByKey = new Map<string, Array<Omit<(typeof allEvents)[number], "eventTypeId">>>();
+  for (const { eventTypeId, ...event } of allEvents) {
+    const key = `${event.teamId}:${eventTypeId}`;
     const bucket = eventsByKey.get(key) ?? [];
     bucket.push(event);
     eventsByKey.set(key, bucket);
@@ -284,16 +285,16 @@ export const getPublicBookingDirectory = async (slug: string) => {
 
   const sections = [];
   for (const section of directory.sections) {
-    if (!section.sessionType.isActive) continue;
+    if (!section.eventType.isActive) continue;
 
     const teamsWithEvents = [];
     for (const entry of section.teams) {
       if (!entry.team.isActive) continue;
-      const key = `${entry.teamId}:${section.sessionTypeId}`;
+      const key = `${entry.teamId}:${section.eventTypeId}`;
       teamsWithEvents.push({ team: entry.team, events: eventsByKey.get(key) ?? [] });
     }
 
-    sections.push({ sessionType: section.sessionType, teams: teamsWithEvents });
+    sections.push({ eventType: section.eventType, teams: teamsWithEvents });
   }
 
   return { id: directory.id, slug: directory.slug, name: directory.name, description: directory.description, sections };

@@ -88,11 +88,6 @@ const PublicBookingDirectory = lazy(() =>
     default: module.PublicBookingDirectory,
   }))
 )
-const SessionTypesPage = lazy(() =>
-  import('@/pages/SessionTypesPage').then((module) => ({
-    default: module.SessionTypesPage,
-  }))
-)
 const SystemSettingsPage = lazy(() =>
   import('@/pages/SystemSettingsPage').then((module) => ({
     default: module.SystemSettingsPage,
@@ -187,9 +182,9 @@ export const router = createBrowserRouter([
       { path: '', element: renderLazyPage(PublicBookingDirectory) },
       { path: 'directory/:directorySlug', element: renderLazyPage(PublicBookingDirectory) },
       { path: 'sessions', element: renderLazyPage(PublicBookingDirectory) },
-      { path: 'sessions/:sessionTypeSlug', element: renderLazyPage(PublicBookingDirectory) },
+      { path: 'sessions/:eventTypeKey', element: renderLazyPage(PublicBookingDirectory) },
       {
-        path: 'sessions/:sessionTypeSlug/:teamSlug',
+        path: 'sessions/:eventTypeKey/:teamSlug',
         element: renderLazyPage(PublicBookingDirectory),
       },
       { path: 'team/:teamSlug', element: renderLazyPage(PublicBookingPage) },
@@ -240,7 +235,6 @@ export const router = createBrowserRouter([
           { path: '/students', element: renderLazyPage(StudentsPage) },
 
           { path: '/students/:studentId', element: renderLazyPage(StudentDetailPage) },
-          { path: '/session-types', element: renderLazyPage(SessionTypesPage) },
           { path: '/system-settings', element: renderLazyPage(SystemSettingsPage) },
           { path: '/booking-directories', element: renderLazyPage(BookingDirectoriesPage) },
         ],
