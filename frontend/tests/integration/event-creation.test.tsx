@@ -116,11 +116,8 @@ describe('Event Creation Integration', () => {
     fireEvent.click(screen.getByText(/One-to-One/i))
 
     // 6. Fill Location
-    const locationTypeSelect = await screen.findByRole('combobox', { name: /Location type/i })
-    fireEvent.mouseDown(locationTypeSelect)
-    fireEvent.click(await screen.findByRole('option', { name: /Virtual \(URL\)/i }))
-
-    const locationValueInput = screen.getByRole('textbox', { name: /Location/i })
+    fireEvent.click(screen.getByText(/Shared event link/i))
+    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/test' } })
 
     // 7. Fill Scheduling Policy (Duration)
@@ -171,12 +168,9 @@ describe('Event Creation Integration', () => {
     fireEvent.click(screen.getByText(/One-to-Many/i))
 
     // 6. Fill Location
-    const locationTypeSelect = await screen.findByRole('combobox', { name: /Location type/i })
-    fireEvent.mouseDown(locationTypeSelect)
-    fireEvent.click(await screen.findByRole('option', { name: /Virtual \(URL\)/i }))
-    fireEvent.change(screen.getByRole('textbox', { name: /Location/i }), {
-      target: { value: 'https://zoom.us/group' },
-    })
+    fireEvent.click(screen.getByText(/Shared event link/i))
+    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
+    fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/group' } })
 
     // 7. Fill Participant Capacity (shown for One-to-Many)
     const maxInput = screen.getByLabelText(/Participant Capacity/i)

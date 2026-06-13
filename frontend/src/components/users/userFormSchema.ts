@@ -49,7 +49,15 @@ export function getUserFormDefaults(user: SafeUser): UserFormValues {
     role: user.role,
     timezone: user.timezone,
     zoomIsvLink: user.zoomIsvLink ?? '',
-    zoomIsvLinkExpiresAt: user.zoomIsvLinkExpiresAt ?? null,
+    zoomIsvLinkExpiresAt: user.zoomIsvLinkExpiresAt
+      ? (() => {
+          const dt = new Date(user.zoomIsvLinkExpiresAt as string)
+          const y = dt.getUTCFullYear()
+          const m = String(dt.getUTCMonth() + 1).padStart(2, '0')
+          const d = String(dt.getUTCDate()).padStart(2, '0')
+          return `${y}-${m}-${d}`
+        })()
+      : null,
     zoomIsvLinkReminderDays: user.zoomIsvLinkReminderDays ?? null,
     isActive: user.isActive,
   }

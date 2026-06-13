@@ -123,6 +123,33 @@ export const eventFormSchema = z
       })
     }
 
+    if (values.locationType === 'VIRTUAL' && values.locationValue?.trim()) {
+      try {
+        const url = new URL(values.locationValue.trim())
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['locationValue'],
+            message: 'Meeting link must be an http or https URL.',
+          })
+        }
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['locationValue'],
+          message: 'Please enter a valid URL (e.g. https://zoom.us/j/...).',
+        })
+      }
+    }
+
+    if (values.locationLinkExpiresAt && !values.locationValue?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationLinkExpiresAt'],
+        message: 'A meeting link or location is required to set an expiry date.',
+      })
+    }
+
     if (values.locationLinkExpiresAt && !values.locationLinkReminderDays) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -168,7 +195,13 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       allowStudentCoachChoice: event.allowStudentCoachChoice ?? false,
       meetingLinkSource: event.meetingLinkSource ?? 'COACH_ISV',
       locationLinkExpiresAt: event.locationLinkExpiresAt
-        ? new Date(event.locationLinkExpiresAt).toISOString()
+        ? (() => {
+            const dt = new Date(event.locationLinkExpiresAt as string)
+            const y = dt.getUTCFullYear()
+            const m = String(dt.getUTCMonth() + 1).padStart(2, '0')
+            const d = String(dt.getUTCDate()).padStart(2, '0')
+            return `${y}-${m}-${d}`
+          })()
         : null,
       locationLinkReminderDays: event.locationLinkReminderDays ?? null,
       isActive: event.isActive,

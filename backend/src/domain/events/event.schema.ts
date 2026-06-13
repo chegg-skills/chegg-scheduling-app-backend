@@ -230,6 +230,39 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     }
   }
 
+  // Validate locationValue is a real URL for VIRTUAL events. Skip on partial PATCH when absent.
+  if (
+    data.locationType === EventLocationType.VIRTUAL &&
+    data.locationValue !== undefined &&
+    data.locationValue.trim()
+  ) {
+    try {
+      const url = new URL(data.locationValue.trim());
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["locationValue"],
+          message: "Meeting link must be an http or https URL.",
+        });
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locationValue"],
+        message: "Please enter a valid URL (e.g. https://zoom.us/j/...).",
+      });
+    }
+  }
+
+  // Expiry requires a non-empty location URL. Skip on partial PATCH when locationValue is absent.
+  if (data.locationLinkExpiresAt && data.locationValue !== undefined && !data.locationValue?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationLinkExpiresAt"],
+      message: "A meeting link or location is required to set an expiry date.",
+    });
+  }
+
   // Link expiration and reminder days cross-field validations.
   // The two fields are a pair: both must be updated together (neither can be
   // provided without the other), and when both are present they must either

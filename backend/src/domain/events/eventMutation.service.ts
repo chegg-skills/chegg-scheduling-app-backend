@@ -1,4 +1,4 @@
-import { AssignmentStrategy, Prisma, SessionLeadershipStrategy, MeetingLinkSource, EventLocationType } from "@prisma/client";
+import { AssignmentStrategy, Prisma, SessionLeadershipStrategy, EventLocationType } from "@prisma/client";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   INTERACTION_TYPE_CAPS,
@@ -211,9 +211,11 @@ export const buildEventCreateData = ({
   context: ResolvedEventMutationContext;
 }): Prisma.EventCreateInput => {
   const validated = CreateEventSchema.body.parse(payload);
-  const isEventLocationLink =
-    validated.meetingLinkSource === MeetingLinkSource.EVENT_LOCATION &&
-    (validated.locationType === EventLocationType.VIRTUAL || validated.locationType === EventLocationType.CUSTOM);
+  // Preserve expiry fields for any VIRTUAL or CUSTOM location regardless of link source —
+  // both the shared event URL and the coach-zoom fallback URL can expire.
+  const hasExpiryCapableLocation =
+    validated.locationType === EventLocationType.VIRTUAL ||
+    validated.locationType === EventLocationType.CUSTOM;
 
   const data: Prisma.EventCreateInput = {
     name: validated.name,
@@ -236,8 +238,8 @@ export const buildEventCreateData = ({
     allowAnonymousBooking: validated.allowAnonymousBooking ?? false,
     allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
     meetingLinkSource: validated.meetingLinkSource,
-    locationLinkExpiresAt: isEventLocationLink ? (validated.locationLinkExpiresAt ?? null) : null,
-    locationLinkReminderDays: isEventLocationLink ? (validated.locationLinkReminderDays ?? null) : null,
+    locationLinkExpiresAt: hasExpiryCapableLocation ? (validated.locationLinkExpiresAt ?? null) : null,
+    locationLinkReminderDays: hasExpiryCapableLocation ? (validated.locationLinkReminderDays ?? null) : null,
     team: { connect: { id: teamId } },
     group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
     createdBy: { connect: { id: callerId } },
@@ -334,13 +336,13 @@ export const buildEventUpdateData = ({
     updateData.meetingLinkSource = validated.meetingLinkSource;
   }
 
-  const finalMeetingLinkSource = validated.meetingLinkSource ?? existingEvent.meetingLinkSource;
   const finalLocationType = validated.locationType ?? existingEvent.locationType;
-  const isEventLocationLink =
-    finalMeetingLinkSource === MeetingLinkSource.EVENT_LOCATION &&
-    (finalLocationType === EventLocationType.VIRTUAL || finalLocationType === EventLocationType.CUSTOM);
+  // Preserve expiry fields for any VIRTUAL or CUSTOM location regardless of link source
+  const hasExpiryCapableLocation =
+    finalLocationType === EventLocationType.VIRTUAL ||
+    finalLocationType === EventLocationType.CUSTOM;
 
-  if (isEventLocationLink) {
+  if (hasExpiryCapableLocation) {
     if (validated.locationLinkExpiresAt !== undefined) {
       updateData.locationLinkExpiresAt = validated.locationLinkExpiresAt;
     }

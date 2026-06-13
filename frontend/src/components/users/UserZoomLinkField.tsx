@@ -71,8 +71,14 @@ export function UserZoomLinkField({ control, errors }: UserZoomLinkFieldProps) {
               control={control}
               render={({ field }) => (
                 <DatePicker
-                  value={field.value ? new Date(field.value) : null}
-                  onChange={(date) => field.onChange(date ? date.toISOString() : null)}
+                  value={field.value ? new Date(field.value + 'T12:00:00') : null}
+                  onChange={(date) => {
+                    if (!date) { field.onChange(null); return }
+                    const y = date.getFullYear()
+                    const mo = String(date.getMonth() + 1).padStart(2, '0')
+                    const d = String(date.getDate()).padStart(2, '0')
+                    field.onChange(`${y}-${mo}-${d}`)
+                  }}
                   minDate={minDate}
                   maxDate={maxDate}
                   slotProps={{
