@@ -544,7 +544,7 @@ describe("DELETE /api/teams/:teamId", () => {
     expect(res.status).toBe(401);
   });
 
-  it("blocks deletion of a team with active bookings", async () => {
+  it("deletes a team with bookings and preserves booking history", async () => {
     // Create a team
     const teamRes = await request(app)
       .post("/api/teams")
@@ -552,7 +552,7 @@ describe("DELETE /api/teams/:teamId", () => {
       .send({ name: "Booking Protected Team", teamLeadId: teamAdminId });
     const teamId = teamRes.body.data.id;
 
-    // Create a booking for this team (must exist before deletion)
+    // Create an event and booking directly via Prisma
     const offering = await prisma.eventType.create({
       data: {
         key: "protected-offering-team",
@@ -577,7 +577,7 @@ describe("DELETE /api/teams/:teamId", () => {
       },
     });
 
-    await prisma.booking.create({
+    const booking = await prisma.booking.create({
       data: {
         studentName: "Test Student",
         studentEmail: "student@example.com",
@@ -589,13 +589,24 @@ describe("DELETE /api/teams/:teamId", () => {
       },
     });
 
-    // Try to delete the team
+    // Delete the team — should succeed even with bookings
     const res = await request(app)
       .delete(`/api/teams/${teamId}`)
       .set("Authorization", `Bearer ${superAdminToken}`);
 
-    expect(res.status).toBe(409);
-    expect(res.body.message).toContain("booking(s)");
+    expect(res.status).toBe(200);
+
+    // Team is no longer visible
+    const getRes = await request(app)
+      .get(`/api/teams/${teamId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`);
+    expect(getRes.status).toBe(404);
+
+    // Booking record is preserved with teamId and eventId intact
+    const preserved = await prisma.booking.findUnique({ where: { id: booking.id } });
+    expect(preserved).not.toBeNull();
+    expect(preserved!.teamId).toBe(teamId);
+    expect(preserved!.eventId).toBe(event.id);
   });
 
   it("returns 405 for POST on a specific team resource", async () => {

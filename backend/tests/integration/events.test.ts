@@ -544,7 +544,7 @@ describe("Event CRUD routes", () => {
     expect(readRes.status).toBe(404);
   });
 
-  it("blocks hard deletion of an event with bookings", async () => {
+  it("deletes an event with bookings and preserves booking history", async () => {
     const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("delete-booking-offering"),
       name: "Delete Booking Offering",
@@ -596,14 +596,26 @@ describe("Event CRUD routes", () => {
       });
 
     expect(bookingRes.status).toBe(201);
+    const bookingId = bookingRes.body.data.booking.id;
 
-    // Try to delete event
-    const res = await request(app)
+    // Delete the event — should now succeed even with bookings
+    const deleteRes = await request(app)
       .delete(`/api/events/${eventId}`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`);
 
-    expect(res.status).toBe(409);
-    expect(res.body.message).toContain("booking(s)");
+    expect(deleteRes.status).toBe(200);
+
+    // Event is no longer visible in the events list
+    const listRes = await request(app)
+      .get(`/api/events?teamId=${context.teamId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    const eventIds = listRes.body.data.events.map((e: { id: string }) => e.id);
+    expect(eventIds).not.toContain(eventId);
+
+    // Booking record is preserved with its original eventId intact
+    const preserved = await prisma.booking.findUnique({ where: { id: bookingId } });
+    expect(preserved).not.toBeNull();
+    expect(preserved!.eventId).toBe(eventId);
   });
 
   it("deactivates an event via PATCH", async () => {

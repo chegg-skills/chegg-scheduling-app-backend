@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { Calendar, Clock, Globe } from 'lucide-react'
+import { Calendar, Globe } from 'lucide-react'
 import { Modal } from '@/components/shared/ui/Modal'
 import { Button } from '@/components/shared/ui/Button'
 import { WeeklyAvailabilityPicker } from '@/components/availability/WeeklyAvailabilityPicker'
@@ -63,30 +62,8 @@ export function EventCoachAvailabilityDialog({
     >
       <Stack spacing={2.5}>
         <Alert severity="info" sx={{ borderRadius: 1.5 }}>
-          This custom availability will override <strong>{coachName}</strong>'s global profile
-          schedule for this event.
+          Set custom availability for <strong>{coachName}</strong> on this event only. These hours will override their global profile schedule for slot generation. Leave all days empty to fall back to their global availability.
         </Alert>
-
-        {/* Description */}
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: 1.5,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'action.hover',
-            display: 'flex',
-            gap: 1.25,
-            alignItems: 'flex-start',
-          }}
-        >
-          <Clock size={14} style={{ marginTop: 2, opacity: 0.6, flexShrink: 0 }} />
-          <Typography variant="caption" color="text.secondary" lineHeight={1.6}>
-            Set custom availability for <strong>{coachName}</strong> on this event only. When set,
-            these hours replace their global profile availability for slot generation. Leave all days
-            empty to clear the override and fall back to their global availability.
-          </Typography>
-        </Box>
 
         {/* Override status */}
         <Stack direction="row" alignItems="center" spacing={0.75}>

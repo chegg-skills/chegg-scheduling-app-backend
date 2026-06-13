@@ -123,7 +123,7 @@ const listTeams = async (
   const validatedOptions = ListTeamsSchema.query.parse(options);
   const { page, pageSize, skip } = resolvePagination(validatedOptions);
 
-  const whereClause: Prisma.TeamWhereInput = {};
+  const whereClause: Prisma.TeamWhereInput = { deletedAt: null };
   if (caller.role === UserRole.COACH) {
     whereClause.members = { some: { userId: caller.id, isActive: true } };
   }
@@ -166,8 +166,8 @@ const readTeam = async (teamId: string, caller?: CallerContext): Promise<SafeTea
     await getManagedTeam(teamId, caller, { allowCoachMember: true, allowInactive: true });
   }
 
-  const team = await prisma.team.findUnique({
-    where: { id: teamId },
+  const team = await prisma.team.findFirst({
+    where: { id: teamId, deletedAt: null },
     include: {
       teamLead: {
         select: {
@@ -246,35 +246,47 @@ const updateTeam = async (teamId: string, payload: UpdateTeamInput): Promise<Saf
 };
 
 const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
-  const team = await prisma.team.findUnique({
-    where: { id: teamId },
-    include: {
-      _count: {
-        select: { bookings: true },
-      },
-    },
-  });
+  const team = await prisma.team.findFirst({ where: { id: teamId, deletedAt: null } });
 
   if (!team) {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
   }
 
-  if (team._count.bookings > 0) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      `Cannot delete team because it has ${team._count.bookings} booking(s). Please deactivate it instead to preserve historical data.`,
-    );
-  }
+  getRequestLogger().warn({ teamId }, "Team deleted.");
 
-  try {
-    const deleted = await prisma.team.delete({ where: { id: teamId } });
-    getRequestLogger().warn({ teamId }, "Team deleted.");
-    return deleted;
-  } catch (error) {
-    return rethrowPrismaError(error, {
-      P2025: { status: StatusCodes.NOT_FOUND, message: "Team not found." },
+  await prisma.$transaction(async (tx) => {
+    // Gather all event IDs for bulk child cleanup
+    const eventIds = (
+      await tx.event.findMany({ where: { teamId }, select: { id: true } })
+    ).map((e) => e.id);
+
+    if (eventIds.length > 0) {
+      await tx.eventCoach.deleteMany({ where: { eventId: { in: eventIds } } });
+      await tx.eventScheduleSlot.deleteMany({ where: { eventId: { in: eventIds } } });
+      await tx.recurrenceGroup.deleteMany({ where: { eventId: { in: eventIds } } });
+      await tx.eventRoutingState.deleteMany({ where: { eventId: { in: eventIds } } });
+      // Null out groupId before deleting EventGroups (Event→EventGroup FK is Restrict)
+      await tx.event.updateMany({
+        where: { teamId },
+        data: { deletedAt: new Date(), isActive: false, groupId: null },
+      });
+    }
+
+    // Hard-delete EventGroups now that no events reference them
+    await tx.eventGroup.deleteMany({ where: { teamId } });
+
+    // Clean up team-level children
+    await tx.teamMember.deleteMany({ where: { teamId } });
+    await tx.teamNotificationConfig.deleteMany({ where: { teamId } });
+
+    // Soft-delete the team — bookings are intentionally preserved
+    await tx.team.update({
+      where: { id: teamId },
+      data: { deletedAt: new Date(), isActive: false },
     });
-  }
+  });
+
+  return team;
 };
 
 export { createTeam, listTeams, readTeam, updateTeam, deleteTeam };

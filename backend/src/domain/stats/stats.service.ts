@@ -194,10 +194,10 @@ export const getTeamStats = async (
   const createdAt = buildDateFilter(timeframe);
 
   const [newTeams, activeTeams, activeMembers, teamsWithEvents] = await Promise.all([
-    prisma.team.count({ where: createdAt ? { createdAt } : undefined }),
-    prisma.team.count({ where: { isActive: true } }),
+    prisma.team.count({ where: { deletedAt: null, ...(createdAt ? { createdAt } : {}) } }),
+    prisma.team.count({ where: { isActive: true, deletedAt: null } }),
     prisma.teamMember.count({ where: { isActive: true } }),
-    prisma.team.count({ where: { events: { some: {} } } }),
+    prisma.team.count({ where: { events: { some: {} }, deletedAt: null } }),
   ]);
 
   return buildStatsResponse(timeframe, {
@@ -231,12 +231,12 @@ export const getEventStats = async (
   const scopedWhere: Prisma.EventWhereInput = teamId?.trim() ? { teamId } : {};
 
   const [newEvents, activeEvents, roundRobinEvents, coachedEvents] = await Promise.all([
-    prisma.event.count({ where: { ...scopedWhere, ...(createdAt ? { createdAt } : {}) } }),
-    prisma.event.count({ where: { ...scopedWhere, isActive: true } }),
+    prisma.event.count({ where: { ...scopedWhere, deletedAt: null, ...(createdAt ? { createdAt } : {}) } }),
+    prisma.event.count({ where: { ...scopedWhere, isActive: true, deletedAt: null } }),
     prisma.event.count({
-      where: { ...scopedWhere, assignmentStrategy: AssignmentStrategy.ROUND_ROBIN },
+      where: { ...scopedWhere, assignmentStrategy: AssignmentStrategy.ROUND_ROBIN, deletedAt: null },
     }),
-    prisma.event.count({ where: { ...scopedWhere, coaches: { some: { isActive: true } } } }),
+    prisma.event.count({ where: { ...scopedWhere, coaches: { some: { isActive: true } }, deletedAt: null } }),
   ]);
 
   return buildStatsResponse(timeframe, {

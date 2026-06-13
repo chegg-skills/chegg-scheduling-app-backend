@@ -24,8 +24,8 @@ const getManagedTeam = async (
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "teamId is required.");
   }
 
-  const team = await prisma.team.findUnique({
-    where: { id: teamId },
+  const team = await prisma.team.findFirst({
+    where: { id: teamId, deletedAt: null },
     select: { id: true, teamLeadId: true, isActive: true },
   });
 

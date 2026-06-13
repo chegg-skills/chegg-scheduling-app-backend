@@ -143,7 +143,7 @@ const listTeamEvents = async (
 }> => {
   await getManagedTeam(teamId, caller, { allowCoachMember: true, allowInactive: true });
 
-  const whereClause: Prisma.EventWhereInput = { teamId };
+  const whereClause: Prisma.EventWhereInput = { teamId, deletedAt: null };
   if (caller.role === UserRole.COACH) {
     whereClause.coaches = { some: { coachUserId: caller.id, isActive: true } };
   }
@@ -245,37 +245,28 @@ const updateEvent = async (
 const deleteEvent = async (eventId: string, caller: CallerContext): Promise<SafeEvent> => {
   const event = await getManagedEvent(eventId, caller);
 
-  const bookingCount = await prisma.booking.count({
-    where: { eventId, status: { not: "CANCELLED" } },
-  });
-
-  if (bookingCount > 0) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      `Cannot delete an event that has active booking(s). Please deactivate it instead.`,
-    );
-  }
-
   getRequestLogger().warn({ eventId, teamId: event.teamId, deletedBy: caller.id }, "Event deleted.");
 
-  // Cancel any scheduled link-expiry reminder before the event record is gone.
+  // Cancel any scheduled link-expiry reminder before the event is soft-deleted.
   void cancelEventLinkExpiryReminder(eventId);
 
-  // Manually cleanup relations that don't have cascade delete in the schema
+  // Soft-delete the event to preserve all booking history.
+  // Cascades don't fire on update, so child records must be explicitly cleaned up first.
   await prisma.$transaction(async (tx) => {
-    // 1. Delete all bookings (including cancelled ones)
-    await tx.booking.deleteMany({
-      where: { eventId },
-    });
+    // 1. Remove coach assignments
+    await tx.eventCoach.deleteMany({ where: { eventId } });
 
-    // 2. Delete all schedule slots
-    await tx.eventScheduleSlot.deleteMany({
-      where: { eventId },
-    });
+    // 2. Delete schedule slots (SessionLog + SessionAttendance cascade from slots)
+    await tx.eventScheduleSlot.deleteMany({ where: { eventId } });
 
-    // 3. Delete the event (this will cascade to EventCoach and EventRoutingState)
-    await tx.event.delete({
+    // 3. Clean up recurrence groups and routing state
+    await tx.recurrenceGroup.deleteMany({ where: { eventId } });
+    await tx.eventRoutingState.deleteMany({ where: { eventId } });
+
+    // 4. Soft-delete the event — bookings are intentionally preserved
+    await tx.event.update({
       where: { id: eventId },
+      data: { deletedAt: new Date(), isActive: false },
     });
   });
 
@@ -337,7 +328,7 @@ const listAllEvents = async (
     totalPages: number;
   };
 }> => {
-  const where: Prisma.EventWhereInput = {};
+  const where: Prisma.EventWhereInput = { deletedAt: null };
   if (caller.role === UserRole.COACH) {
     where.coaches = { some: { coachUserId: caller.id, isActive: true } };
   }

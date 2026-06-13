@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 import {
   Autocomplete,
@@ -7,14 +8,16 @@ import {
   Stack,
   Box,
   Typography,
+  Collapse,
+  Button,
 } from '@mui/material'
 import { FormField } from '@/components/shared/form/FormField'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { useEventTypes } from '@/hooks/queries/useEventTypes'
-import { User, Users, ArrowRight } from 'lucide-react'
+import { User, Users, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionType } from '@/types'
-
+ 
 const INTERACTION_DETAILS = {
   ONE_TO_ONE: {
     title: 'One-to-One',
@@ -53,15 +56,15 @@ const INTERACTION_DETAILS = {
     definition: 'Many Coaches, many Students per session',
   },
 } as const
-
+ 
 const filter = createFilterOptions<EventTypeOption>()
-
+ 
 interface EventTypeOption {
   id?: string
   name: string
   inputValue?: string
 }
-
+ 
 export function EventResourceFields() {
   const {
     watch,
@@ -69,10 +72,12 @@ export function EventResourceFields() {
     formState: { errors },
   } = useFormContext<EventFormValues>()
   const { data: allEventTypes = [], isLoading } = useEventTypes()
-
+ 
   const eventTypes = allEventTypes.filter((et) => et.isActive)
   const selectedType = watch('interactionType') as InteractionType | undefined
-
+ 
+  const [showExplanation, setShowExplanation] = useState(false)
+ 
   return (
     <Stack spacing={2}>
       <FormField
@@ -102,7 +107,7 @@ export function EventResourceFields() {
               }}
               filterOptions={(options, params) => {
                 const filtered = filter(options, params)
-
+ 
                 const { inputValue } = params
                 // Suggest the creation of a new value
                 const isExisting = options.some((option) => inputValue === option.name)
@@ -112,7 +117,7 @@ export function EventResourceFields() {
                     name: `Add "${inputValue}"`,
                   })
                 }
-
+ 
                 return filtered
               }}
               selectOnFocus
@@ -166,7 +171,7 @@ export function EventResourceFields() {
           )}
         />
       </FormField>
-
+ 
       <FormField
         label="Interaction type"
         htmlFor="interactionType"
@@ -256,35 +261,69 @@ export function EventResourceFields() {
           )}
         />
       </FormField>
-
-      {selectedType && INTERACTION_DETAILS[selectedType] && (
-        <Box
-          sx={{
-            mt: 1,
-            p: 2,
-            borderRadius: 1.5,
-            bgcolor: 'action.hover',
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: 'text.primary' }}>
-            About {INTERACTION_DETAILS[selectedType].title}
-          </Typography>
-          <Stack spacing={1}>
-            <Typography variant="caption" color="text.secondary" display="block">
-              <strong>Definition:</strong> {INTERACTION_DETAILS[selectedType].definition}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block">
-              <strong>Intended for:</strong> {INTERACTION_DETAILS[selectedType].intendedFor}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block">
-              <strong>Key Capabilities:</strong> {INTERACTION_DETAILS[selectedType].capabilities}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block">
-              <strong>Auto-configured Behavior:</strong> {INTERACTION_DETAILS[selectedType].autoConfigured}
-            </Typography>
-          </Stack>
+ 
+      {selectedType && (
+        <Box sx={{ mt: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              size="small"
+              disableRipple
+              onClick={() => setShowExplanation(!showExplanation)}
+              endIcon={showExplanation ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                p: 0,
+                minWidth: 0,
+                color: 'primary.main',
+                bgcolor: 'transparent !important',
+                background: 'none !important',
+                boxShadow: 'none !important',
+                '&:hover': {
+                  bgcolor: 'transparent !important',
+                  background: 'none !important',
+                  textDecoration: 'underline',
+                },
+                '&:active': {
+                  bgcolor: 'transparent !important',
+                  background: 'none !important',
+                },
+              }}
+            >
+              {showExplanation ? 'Hide details' : 'Know more'}
+            </Button>
+          </Box>
+          <Collapse in={showExplanation} sx={{ width: '100%' }}>
+            <Box
+              sx={{
+                mt: 1.5,
+                p: 2,
+                borderRadius: 1.5,
+                bgcolor: 'action.hover',
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: 'text.primary' }}>
+                About {INTERACTION_DETAILS[selectedType].title}
+              </Typography>
+              <Stack spacing={1}>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  <strong>Definition:</strong> {INTERACTION_DETAILS[selectedType].definition}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  <strong>Intended for:</strong> {INTERACTION_DETAILS[selectedType].intendedFor}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  <strong>Key Capabilities:</strong> {INTERACTION_DETAILS[selectedType].capabilities}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  <strong>Auto-configured Behavior:</strong> {INTERACTION_DETAILS[selectedType].autoConfigured}
+                </Typography>
+              </Stack>
+            </Box>
+          </Collapse>
         </Box>
       )}
     </Stack>
