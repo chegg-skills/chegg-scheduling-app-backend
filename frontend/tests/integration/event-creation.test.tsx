@@ -116,7 +116,7 @@ describe('Event Creation Integration', () => {
     fireEvent.click(screen.getByText(/One-to-One/i))
 
     // 6. Fill Location
-    fireEvent.click(screen.getByText(/Shared event link/i))
+    fireEvent.click(screen.getByText('Shared Event Link'))
     const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/test' } })
 
@@ -168,7 +168,7 @@ describe('Event Creation Integration', () => {
     fireEvent.click(screen.getByText(/One-to-Many/i))
 
     // 6. Fill Location
-    fireEvent.click(screen.getByText(/Shared event link/i))
+    fireEvent.click(screen.getByText('Shared Event Link'))
     const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/group' } })
 
