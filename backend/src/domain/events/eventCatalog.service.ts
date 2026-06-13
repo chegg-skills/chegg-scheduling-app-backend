@@ -110,12 +110,14 @@ const updateEventType = async (
 const getEventTypeUsage = async (
   eventTypeId: string,
   _caller: CallerContext,
-): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
+): Promise<{ id: string; name: string; deletedAt: Date | null; team: { id: string; name: string } }[]> => {
+  // Include soft-deleted events — their FK still exists in the DB and blocks deletion.
   const events = await prisma.event.findMany({
-    where: { eventTypeId, deletedAt: null },
+    where: { eventTypeId },
     select: {
       id: true,
       name: true,
+      deletedAt: true,
       team: {
         select: {
           id: true,
@@ -141,9 +143,15 @@ const deleteEventType = async (
   const usage = await getEventTypeUsage(eventTypeId, caller);
 
   if (usage.length > 0) {
+    const activeCount = usage.filter((e) => e.deletedAt === null).length;
+    const deletedCount = usage.length - activeCount;
+    const detail =
+      activeCount > 0
+        ? `${activeCount} active event(s)`
+        : `${deletedCount} deleted event(s) that still hold a reference`;
     throw new ErrorHandler(
       StatusCodes.CONFLICT,
-      `Cannot delete event type as it is currently used by ${usage.length} event(s). Please deactivate it instead.`,
+      `Cannot delete event type as it is referenced by ${detail}. Please deactivate the event type instead.`,
     );
   }
 
