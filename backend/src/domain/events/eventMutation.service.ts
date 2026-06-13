@@ -16,6 +16,8 @@ import { resolveEventSchedulingConfig } from "./eventScheduling.service";
 import { CreateEventSchema, UpdateEventSchema } from "./event.schema";
 import { normalizeKey } from "./event.shared";
 import { prisma } from "../../shared/db/prisma";
+import { ErrorHandler } from "../../shared/error/errorhandler";
+import { StatusCodes } from "http-status-codes";
 
 type ResolvedEventMutationContext = {
   eventType: Awaited<ReturnType<typeof getActiveEventType>>;
@@ -163,10 +165,11 @@ export const resolveUpdateEventContext = async ({
 }): Promise<ResolvedEventMutationContext> => {
   const validated = UpdateEventSchema.body.parse(payload);
 
-  const nextEventTypeId = await ensureEventTypeId(
-    validated.eventTypeId ?? existingEvent.eventTypeId,
-    callerId,
-  );
+  const resolvedEventTypeId = validated.eventTypeId ?? existingEvent.eventTypeId;
+  if (!resolvedEventTypeId) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Event type is required.");
+  }
+  const nextEventTypeId = await ensureEventTypeId(resolvedEventTypeId, callerId);
   const nextInteractionType = (validated.interactionType ??
     existingEvent.interactionType) as InteractionType;
 
@@ -376,7 +379,7 @@ export const buildDuplicateEventData = ({
     name: `Copy of ${sourceEvent.name}`,
     publicBookingSlug: createPublicBookingSlug(`Copy of ${sourceEvent.name}`, "event"),
     description: sourceEvent.description ?? undefined,
-    eventType: { connect: { id: sourceEvent.eventTypeId } },
+    eventType: sourceEvent.eventTypeId ? { connect: { id: sourceEvent.eventTypeId } } : undefined,
     interactionType: sourceEvent.interactionType,
     assignmentStrategy: sourceEvent.assignmentStrategy,
     durationSeconds: sourceEvent.durationSeconds,

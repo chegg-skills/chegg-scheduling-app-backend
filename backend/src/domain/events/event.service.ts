@@ -263,10 +263,11 @@ const deleteEvent = async (eventId: string, caller: CallerContext): Promise<Safe
     await tx.recurrenceGroup.deleteMany({ where: { eventId } });
     await tx.eventRoutingState.deleteMany({ where: { eventId } });
 
-    // 4. Soft-delete the event — bookings are intentionally preserved
+    // 4. Soft-delete the event — bookings are intentionally preserved.
+    // Null out eventTypeId to release the FK so the EventType can be deleted later.
     await tx.event.update({
       where: { id: eventId },
-      data: { deletedAt: new Date(), isActive: false },
+      data: { deletedAt: new Date(), isActive: false, eventTypeId: null },
     });
   });
 

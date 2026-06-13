@@ -292,7 +292,7 @@ export interface Event {
   name: string
   description: string | null
   isActive: boolean
-  eventTypeId: string
+  eventTypeId: string | null
   interactionType: InteractionType
   assignmentStrategy: AssignmentStrategy
   bookingMode: EventBookingMode

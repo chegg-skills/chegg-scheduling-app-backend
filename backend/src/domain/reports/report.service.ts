@@ -40,7 +40,7 @@ export const getBookingsReport = async (
     Status: b.status,
     Team: b.team.name,
     Event: b.event.name,
-    "Event Type": b.event.eventType.name,
+    "Event Type": b.event.eventType?.name ?? "",
     Coach: b.coach ? `${b.coach.firstName} ${b.coach.lastName}` : "",
     "Student Name": b.studentName,
     "Student Email": b.studentEmail,

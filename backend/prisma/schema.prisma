@@ -132,7 +132,7 @@ model Event {
   id                        String                    @id @default(uuid())
   name                      String
   description               String?
-  eventTypeId               String
+  eventTypeId               String?
   assignmentStrategy        AssignmentStrategy        @default(DIRECT)
   durationSeconds           Int
   locationType              EventLocationType
@@ -164,7 +164,7 @@ model Event {
   deletedAt                 DateTime?
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
-  eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])
+  eventType                 EventType?                @relation(fields: [eventTypeId], references: [id], onDelete: SetNull)
   group                     EventGroup?               @relation(fields: [groupId], references: [id], onDelete: Restrict)
   team                      Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   updatedBy                 User                      @relation("EventUpdatedBy", fields: [updatedById], references: [id])
