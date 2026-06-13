@@ -117,7 +117,7 @@ describe('Event Creation Integration', () => {
 
     // 6. Fill Location
     fireEvent.click(screen.getByText('Shared Event Link'))
-    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
+    const locationValueInput = await screen.findByLabelText(/^Event Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/test' } })
 
     // 7. Fill Scheduling Policy (Duration)
@@ -169,7 +169,7 @@ describe('Event Creation Integration', () => {
 
     // 6. Fill Location
     fireEvent.click(screen.getByText('Shared Event Link'))
-    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
+    const locationValueInput = await screen.findByLabelText(/^Event Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/group' } })
 
     // 7. Fill Participant Capacity (shown for One-to-Many)

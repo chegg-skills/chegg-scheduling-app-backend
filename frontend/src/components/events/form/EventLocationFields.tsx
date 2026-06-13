@@ -310,7 +310,7 @@ export function EventLocationFields() {
         {joinMethod === 'COACH_ZOOM' && (
           <Stack spacing={2}>
             <FormField
-              label="Fallback - Shared Event Link (Optional)"
+              label="Event Link (Fallback) (Optional)"
               htmlFor="locationValue"
               error={errors.locationValue?.message}
               info="This is your event's shared meeting URL. Coaches without a personal Zoom link will use this, and it doubles as the fallback for everyone else."
@@ -330,7 +330,7 @@ export function EventLocationFields() {
         {joinMethod === 'EVENT_LINK' && (
           <Stack spacing={2}>
             <FormField
-              label="Meeting Link"
+              label="Event Link"
               htmlFor="locationValue"
               error={errors.locationValue?.message}
               hint="Enter the shared meeting URL all students should join."
