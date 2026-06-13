@@ -113,7 +113,7 @@ describe('Event Creation Integration', () => {
     fireEvent.click(await screen.findByRole('option', { name: /Tutorial/i }))
 
     // 5. Select Interaction Type (Default is ONE_TO_ONE, but let's click it to be sure)
-    fireEvent.click(screen.getByText(/One-to-One/i))
+    fireEvent.click(screen.getByText('One-to-One', { selector: 'p' }))
 
     // 6. Fill Location
     fireEvent.click(screen.getByText('Shared Event Link'))
@@ -165,7 +165,7 @@ describe('Event Creation Integration', () => {
     fireEvent.click(await screen.findByRole('option', { name: /Tutorial/i }))
 
     // 5. Select Interaction Type -> One-to-Many
-    fireEvent.click(screen.getByText(/One-to-Many/i))
+    fireEvent.click(screen.getByText('One-to-Many', { selector: 'p' }))
 
     // 6. Fill Location
     fireEvent.click(screen.getByText('Shared Event Link'))

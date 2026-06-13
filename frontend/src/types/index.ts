@@ -311,7 +311,6 @@ export interface Event {
   allowStudentCoachChoice: boolean
   meetingLinkSource: MeetingLinkSource
   maxBookingWindowDays: number | null
-  recurrenceVisibilityLimit?: number | null
   locationLinkExpiresAt?: string | null
   locationLinkReminderDays?: number | null
   teamId: string
@@ -398,7 +397,6 @@ export interface PublicEventSummary extends Pick<
   | 'allowStudentCoachChoice'
   | 'bookingMode'
   | 'maxBookingWindowDays'
-  | 'recurrenceVisibilityLimit'
 > {
   team: PublicTeamSummary
   coaches: PublicEventCoach[]
@@ -552,7 +550,6 @@ export interface CreateEventDto {
   targetCoHostCount?: number | null
   maxParticipantCount?: number | null
   bufferAfterMinutes?: number
-  recurrenceVisibilityLimit?: number | null
   description?: string
   isActive?: boolean
   meetingLinkSource?: MeetingLinkSource

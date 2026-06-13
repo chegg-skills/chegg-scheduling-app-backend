@@ -16,6 +16,7 @@ import { Badge } from '@/components/shared/ui/Badge'
 import { CoachSelectionList } from '../CoachSelectionList'
 import { WeeklyAvailabilityPicker } from '@/components/availability/WeeklyAvailabilityPicker'
 import { useWeeklyAvailability } from '@/hooks/queries/useAvailability'
+import { Clock, Calendar } from 'lucide-react'
 
 interface AddCoachFormProps {
   activeCoaches: EventCoach[]
@@ -217,71 +218,144 @@ export function AddCoachForm({
                 const coachName = activeMember ? `${activeMember.user.firstName} ${activeMember.user.lastName}` : ''
                 const isOverridden = hasCustomSchedule[activeCoachId] ?? false
                 return (
-                  <Stack spacing={2}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {applyToAll ? 'Custom Availability — All Selected Coaches' : `Custom Availability — ${coachName}`}
-                    </Typography>
+                  <Stack spacing={2.5}>
+                    <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 1.5 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.95rem' }} color="text.primary">
+                        {applyToAll ? 'Custom Availability — All Selected Coaches' : `Custom Availability — ${coachName}`}
+                      </Typography>
+                    </Box>
 
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isOverridden}
-                          onChange={(e) => handleToggleOverride(e.target.checked)}
-                          disabled={isPending}
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper',
+                      }}
+                    >
+                      <Stack spacing={1.5}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={isOverridden}
+                              onChange={(e) => handleToggleOverride(e.target.checked)}
+                              disabled={isPending}
+                              color="primary"
+                              size="small"
+                            />
+                          }
+                          label={
+                            <Typography variant="body2" fontWeight={600} color="text.primary">
+                              Override global weekly availability
+                            </Typography>
+                          }
                         />
-                      }
-                      label="Override global weekly availability"
-                    />
 
-                    {selectedUserIds.length > 1 && (
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={applyToAll}
-                            onChange={(e) => handleToggleApplyToAll(e.target.checked)}
-                            disabled={isPending}
-                            size="small"
-                          />
-                        }
-                        label="Apply this availability override to all selected coaches"
-                        sx={{ mt: -0.5 }}
-                      />
-                    )}
-
-                    {isOverridden && (
-                      <Alert severity="info" sx={{ fontSize: '0.8rem' }}>
-                        {applyToAll
-                          ? "This custom availability will override all selected coaches' global profile availability for this event."
-                          : `This custom availability will override ${coachName}'s global profile availability for this event.`}
-                      </Alert>
-                    )}
+                        {selectedUserIds.length > 1 && (
+                          <Box sx={{ pt: 1.5, borderTop: '1px dashed', borderColor: 'divider' }}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={applyToAll}
+                                  onChange={(e) => handleToggleApplyToAll(e.target.checked)}
+                                  disabled={isPending}
+                                  size="small"
+                                  color="primary"
+                                />
+                              }
+                              label={
+                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                  Apply this availability override to all selected coaches
+                                </Typography>
+                              }
+                            />
+                          </Box>
+                        )}
+                      </Stack>
+                    </Box>
 
                     {isOverridden ? (
-                      isLoadingAvailability && !customSchedules[activeCoachId] ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                          <CircularProgress size={24} />
-                        </Box>
-                      ) : (
-                        <Box sx={{ maxHeight: 280, overflowY: 'auto', pr: 1 }}>
-                          <WeeklyAvailabilityPicker
-                            value={customSchedules[activeCoachId] ?? []}
-                            onChange={handleAvailabilityChange}
-                            disabled={isPending}
-                            showFooter={false}
-                          />
-                        </Box>
-                      )
+                      <Stack spacing={2}>
+                        <Alert severity="info" sx={{ borderRadius: 1.5, fontSize: '0.8rem', py: 0.5 }}>
+                          {applyToAll
+                            ? "This custom availability will override all selected coaches' global profile availability for this event."
+                            : `This custom availability will override ${coachName}'s global profile availability for this event.`}
+                        </Alert>
+
+                        {isLoadingAvailability && !customSchedules[activeCoachId] ? (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                            <CircularProgress size={24} />
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 1.5,
+                              p: 1.25,
+                              bgcolor: 'background.paper',
+                            }}
+                          >
+                            <WeeklyAvailabilityPicker
+                              value={customSchedules[activeCoachId] ?? []}
+                              onChange={handleAvailabilityChange}
+                              disabled={isPending}
+                              showFooter={false}
+                              condensed
+                            />
+                          </Box>
+                        )}
+                      </Stack>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        This coach will use their global weekly schedule. Toggle the option above to customize their schedule for this event only.
-                      </Typography>
+                      <Box
+                        sx={{
+                          p: 2,
+                          borderRadius: 1.5,
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          bgcolor: 'action.hover',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 2,
+                        }}
+                      >
+                        <Box sx={{ color: 'text.secondary', display: 'flex', mt: 0.25 }}>
+                          <Clock size={20} />
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            Using global weekly schedule
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                            This coach will use their global weekly schedule. Toggle the option above to customize their schedule for this event only.
+                          </Typography>
+                        </Box>
+                      </Box>
                     )}
                   </Stack>
                 )
               })()
             ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 200, color: 'text.secondary', px: 2, textAlign: 'center' }}>
-                <Typography variant="body2">
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  minHeight: 250,
+                  color: 'text.secondary',
+                  px: 3,
+                  textAlign: 'center',
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 1.5,
+                  bgcolor: 'action.hover',
+                }}
+              >
+                <Calendar size={32} style={{ opacity: 0.4, marginBottom: 12 }} />
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>
                   Select a coach from the list to view or customize their schedule for this event.
                 </Typography>
               </Box>

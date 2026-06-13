@@ -103,6 +103,9 @@ export function useEventForm({ teamId, event, accessedFromEventsTab, onSuccess }
     const isGroupSession = caps.multipleParticipants
     if (isGroupSession) {
       setValue('bookingMode', 'FIXED_SLOTS', { shouldDirty: false })
+    } else if (!caps.multipleCoaches) {
+      // ONE_TO_ONE: Force COACH_AVAILABILITY.
+      setValue('bookingMode', 'COACH_AVAILABILITY', { shouldDirty: false })
     }
 
     // Reset participant capacity when switching to a single-participant type
@@ -113,6 +116,12 @@ export function useEventForm({ teamId, event, accessedFromEventsTab, onSuccess }
     // Reset student coach choice when switching to an interaction type that doesn't support it
     if (caps.multipleCoaches || caps.multipleParticipants) {
       setValue('allowStudentCoachChoice', false, { shouldDirty: false })
+    }
+
+    // Reset anonymous booking and deferred coach reveal when switching away from ONE_TO_MANY
+    if (currentInteractionType !== 'ONE_TO_MANY') {
+      setValue('allowAnonymousBooking', false, { shouldDirty: false })
+      setValue('deferCoachReveal', false, { shouldDirty: false })
     }
 
     // Ensure multi-coach interaction types (Panels) do not use 'SINGLE_COACH' strategy.

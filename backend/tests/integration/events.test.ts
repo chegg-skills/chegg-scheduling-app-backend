@@ -552,6 +552,7 @@ describe("Event CRUD routes", () => {
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Event with Booking",
       eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
     });
     const eventId = event.body.data.id;
@@ -747,6 +748,7 @@ describe("Event scheduling routes", () => {
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Slot Managed Event",
       eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
     });
     const eventId = event.body.data.id as string;
@@ -804,6 +806,7 @@ describe("Event scheduling routes", () => {
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Continuous Slot Event",
       eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
     });
     const eventId = event.body.data.id as string;
@@ -879,8 +882,9 @@ describe("Event scheduling routes", () => {
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Visibility Limited Event",
       eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
-      recurrenceVisibilityLimit: 2,
+      minimumNoticeMinutes: 0,
     });
     const eventId = event.body.data.id as string;
 
@@ -888,11 +892,11 @@ describe("Event scheduling routes", () => {
     await request(app)
       .put(`/api/events/${eventId}/coaches`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
-      .send({ coaches: [{ userId: context.coachOneId }] });
+      .send({ coaches: [{ userId: context.coachTwoId }] });
 
     const sunday = getNextUtcWeekdayAt(0, 10);
 
-    // Create 5 occurrences starting on Sunday
+    // Create 5 occurrences with recurrenceVisibilityLimit=2 on the recurrence group
     const createRes = await request(app)
       .post(`/api/events/${eventId}/schedule-slots`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
@@ -903,6 +907,7 @@ describe("Event scheduling routes", () => {
         recurrence: {
           frequency: "WEEKLY",
           occurrences: 5,
+          recurrenceVisibilityLimit: 2,
         },
       });
 
@@ -930,6 +935,7 @@ describe("Event scheduling routes", () => {
     const eventType = await createEventType(context.superAdminToken);
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
     });
     const eventId = event.body.data.id as string;
@@ -2112,6 +2118,36 @@ describe("Event schema validation rejections", () => {
     expect(res.body.message).toMatch(/FIXED_SLOTS/i);
   });
 
+  it("rejects ONE_TO_ONE with FIXED_SLOTS booking mode (must use COACH_AVAILABILITY)", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_ONE",
+      bookingMode: "FIXED_SLOTS",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/One-to-one sessions must use coach availability/i);
+  });
+
+  it("rejects PATCH of ONE_TO_ONE event to FIXED_SLOTS booking mode", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_ONE",
+    });
+    expect(created.status).toBe(201);
+
+    const res = await request(app)
+      .patch(`/api/events/${created.body.data.id}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ interactionType: "ONE_TO_ONE", bookingMode: "FIXED_SLOTS" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/One-to-one sessions must use coach availability/i);
+  });
+
   it("rejects ONE_TO_ONE with maxParticipantCount greater than 1", async () => {
     const eventType = await createEventType(context.superAdminToken);
 
@@ -2206,6 +2242,7 @@ describe("Recurrence — slot creation", () => {
     const event = await createEvent(context.teamId, context.teamAdminToken, {
       name: "Recurrence Test Event",
       eventTypeId: eventTypeId,
+      interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
     });
     eventId = event.body.data.id;

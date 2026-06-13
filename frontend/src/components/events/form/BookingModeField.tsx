@@ -1,8 +1,6 @@
 import { useFormContext } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
-import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
-import { Input } from '@/components/shared/form/Input'
 import { Select } from '@/components/shared/form/Select'
 import type { EventFormValues } from './eventFormSchema'
 import type { InteractionTypeCaps } from '@/types'
@@ -19,21 +17,10 @@ export function BookingModeField({ caps }: BookingModeFieldProps) {
   } = useFormContext<EventFormValues>()
   const bookingMode = watch('bookingMode')
   const isGroupSession = !!caps?.multipleParticipants
+  const isOneToOne = caps != null && !caps.multipleParticipants && !caps.multipleCoaches
 
-  if (isGroupSession) {
-    return (
-      <FormField
-        label="Booking mode"
-        htmlFor="bookingModeLocked"
-        info="Group sessions require students to book into pre-created slots so everyone joins the same coached session."
-      >
-        <Input id="bookingModeLocked" value="Fixed — predefined session slots only" disabled />
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          Flexible availability is not supported for group sessions — all participants must book
-          into the same slot.
-        </Typography>
-      </FormField>
-    )
+  if (isGroupSession || isOneToOne || !caps) {
+    return null
   }
 
   return (

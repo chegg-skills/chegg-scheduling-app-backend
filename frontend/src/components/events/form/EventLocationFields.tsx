@@ -41,6 +41,14 @@ export function EventLocationFields() {
     }
   }, [expiresAt])
 
+  // When anonymous booking is enabled, COACH_ISV is schema-invalid. Auto-correct to EVENT_LOCATION
+  // so the filtered-out COACH_ZOOM card doesn't leave the form in an unsubmittable state.
+  useEffect(() => {
+    if (allowAnonymousBooking && meetingLinkSource === 'COACH_ISV') {
+      setValue('meetingLinkSource', 'EVENT_LOCATION', { shouldDirty: true, shouldValidate: true })
+    }
+  }, [allowAnonymousBooking, meetingLinkSource, setValue])
+
   const minDate = useMemo(() => new Date(), [])
 
   // Derive the current join method from backend field states
@@ -55,36 +63,37 @@ export function EventLocationFields() {
   }, [locationType, meetingLinkSource])
 
   const joinMethods = useMemo(() => {
-    return [
+    const methods = [
       {
         value: 'COACH_ZOOM' as const,
         title: "Coach's Zoom Link",
         description: "Each student receives their coach's personal Zoom link. You can optionally set an event-level meeting URL below as a shared fallback, and configure an expiry reminder for it.",
         icon: Video,
-        disabled: allowAnonymousBooking,
       },
       {
         value: 'EVENT_LINK' as const,
         title: "Shared Event Link",
         description: "All students receive the same static meeting URL (e.g. shared Zoom room, Google Meet link). You can optionally configure expiry and reminders for this link.",
         icon: Link2,
-        disabled: false,
       },
       {
         value: 'IN_PERSON' as const,
         title: "In Person",
         description: "Meet face-to-face at a physical address or location.",
         icon: MapPin,
-        disabled: false,
       },
       {
         value: 'CUSTOM_INSTRUCTIONS' as const,
         title: "Custom Instructions",
         description: "Provide text instructions, phone numbers, or custom directions to join the session. Supports optional expiration settings.",
         icon: Sliders,
-        disabled: false,
       },
     ]
+
+    if (allowAnonymousBooking) {
+      return methods.filter((m) => m.value !== 'COACH_ZOOM')
+    }
+    return methods
   }, [allowAnonymousBooking])
 
   const selectedMethodInfo = useMemo(() => {
@@ -221,31 +230,29 @@ export function EventLocationFields() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(2, 150px)', sm: 'repeat(4, 1fr)' },
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
             gap: 1.5,
           }}
         >
           {joinMethods.map((opt) => {
             const isSelected = joinMethod === opt.value
-            const isDisabled = opt.disabled
             const Icon = opt.icon
             return (
               <Box
                 key={opt.value}
                 onClick={() => {
-                  if (isDisabled) return
                   handleJoinMethodChange(opt.value)
                 }}
                 sx={{
                   p: 1.5,
                   borderRadius: 1.5,
                   border: '1px solid',
-                  borderColor: isDisabled ? 'divider' : (isSelected ? 'primary.main' : 'divider'),
-                  boxShadow: !isDisabled && isSelected
+                  borderColor: isSelected ? 'primary.main' : 'divider',
+                  boxShadow: isSelected
                     ? (theme) => `inset 0 0 0 1px ${theme.palette.primary.main}`
                     : 'none',
-                  bgcolor: isDisabled ? 'action.hover' : (isSelected ? '#FFF6F0' : 'background.paper'),
-                  cursor: isDisabled ? 'not-allowed' : 'pointer',
+                  bgcolor: isSelected ? '#FFF6F0' : 'background.paper',
+                  cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   display: 'flex',
                   flexDirection: 'column',
@@ -253,13 +260,10 @@ export function EventLocationFields() {
                   justifyContent: 'center',
                   textAlign: 'center',
                   gap: 1,
-                  opacity: isDisabled ? 0.5 : 1,
-                  ...(!isDisabled && {
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: '#FFF6F0',
-                    },
-                  }),
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: '#FFF6F0',
+                  },
                 }}
               >
                 <Box
@@ -269,8 +273,8 @@ export function EventLocationFields() {
                     justifyContent: 'center',
                     p: 1,
                     borderRadius: '50%',
-                    bgcolor: isDisabled ? 'action.hover' : (isSelected ? 'primary.lighter' : 'action.hover'),
-                    color: isDisabled ? 'text.disabled' : (isSelected ? 'primary.main' : 'text.secondary'),
+                    bgcolor: isSelected ? 'primary.lighter' : 'action.hover',
+                    color: isSelected ? 'primary.main' : 'text.secondary',
                     transition: 'all 0.15s ease',
                   }}
                 >
@@ -279,7 +283,7 @@ export function EventLocationFields() {
                 <Typography
                   variant="body2"
                   fontWeight={600}
-                  color={isDisabled ? 'text.disabled' : (isSelected ? 'primary.main' : 'text.primary')}
+                  color={isSelected ? 'primary.main' : 'text.primary'}
                   sx={{ fontSize: '0.8125rem', lineHeight: 1.2 }}
                 >
                   {opt.title}
@@ -288,11 +292,6 @@ export function EventLocationFields() {
             )
           })}
         </Box>
-        {allowAnonymousBooking && (
-          <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 1, fontWeight: 500 }}>
-            ⚠️ "Coach's Zoom Link" is unavailable when Anonymous Booking is enabled.
-          </Typography>
-        )}
       </FormControl>
 
       <Box sx={{ mt: 1 }}>

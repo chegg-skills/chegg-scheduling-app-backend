@@ -591,20 +591,32 @@ const getAvailableSlots = async (
   if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
     let allowedSlotIds: Set<string> | null = null;
 
-    if (event.recurrenceVisibilityLimit != null) {
-      const recurrenceGroupIds = Array.from(
-        new Set(
-          event.scheduleSlots
-            .map((s: any) => s.recurrenceGroupId)
-            .filter((id: any): id is string => id != null)
-        )
-      ) as string[];
+    const recurrenceGroupIds = Array.from(
+      new Set(
+        event.scheduleSlots
+          .map((s: any) => s.recurrenceGroupId)
+          .filter((id: any): id is string => id != null),
+      ),
+    ) as string[];
 
-      if (recurrenceGroupIds.length > 0) {
+    if (recurrenceGroupIds.length > 0) {
+      const groups = await prisma.recurrenceGroup.findMany({
+        where: { id: { in: recurrenceGroupIds } },
+        select: { id: true, recurrenceVisibilityLimit: true },
+      });
+
+      const groupLimitMap = new Map<string, number>();
+      for (const g of groups) {
+        if (g.recurrenceVisibilityLimit != null) {
+          groupLimitMap.set(g.id, g.recurrenceVisibilityLimit);
+        }
+      }
+
+      if (groupLimitMap.size > 0) {
         allowedSlotIds = new Set<string>();
         const now = new Date();
 
-        for (const groupId of recurrenceGroupIds) {
+        for (const [groupId, limit] of groupLimitMap) {
           const upcomingSlots = await prisma.eventScheduleSlot.findMany({
             where: {
               recurrenceGroupId: groupId,
@@ -613,7 +625,7 @@ const getAvailableSlots = async (
               isActive: true,
             },
             orderBy: { startTime: "asc" },
-            take: event.recurrenceVisibilityLimit,
+            take: limit,
             select: { id: true },
           });
 

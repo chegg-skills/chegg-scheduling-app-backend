@@ -153,7 +153,6 @@ model Event {
   showDescription           Boolean                   @default(false)
   targetCoHostCount         Int?
   maxBookingWindowDays      Int?
-  recurrenceVisibilityLimit Int?
   deferCoachReveal          Boolean                   @default(false)
   allowStudentCoachChoice   Boolean                   @default(false)
   allowAnonymousBooking     Boolean                   @default(false)
@@ -265,15 +264,16 @@ model EventScheduleSlot {
 }
 
 model RecurrenceGroup {
-  id           String              @id @default(uuid())
-  eventId      String
-  frequency    String
-  isContinuous Boolean             @default(false)
-  isActive     Boolean             @default(true)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  event        Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  slots        EventScheduleSlot[]
+  id                        String              @id @default(uuid())
+  eventId                   String
+  frequency                 String
+  isContinuous              Boolean             @default(false)
+  isActive                  Boolean             @default(true)
+  recurrenceVisibilityLimit Int?
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  event                     Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  slots                     EventScheduleSlot[]
 
   @@index([eventId])
 }

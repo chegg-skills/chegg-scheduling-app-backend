@@ -48,10 +48,6 @@ const EventBaseObjectCore = z.looseObject({
   ),
   targetCoHostCount: z.coerce.number().int().nonnegative().optional().nullable(),
   maxBookingWindowDays: z.coerce.number().int().min(1).max(365).optional().nullable(),
-  recurrenceVisibilityLimit: z.preprocess(
-    (val) => (val === "" ? null : val),
-    z.coerce.number().int().min(1).optional().nullable(),
-  ),
   showDescription: z.boolean().optional(),
   deferCoachReveal: z.boolean().optional(),
   allowAnonymousBooking: z.boolean().optional(),
@@ -119,6 +115,19 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
         code: z.ZodIssueCode.custom,
         path: ["maxParticipantCount"],
         message: "This interaction type only supports 1 participant per session.",
+      });
+    }
+  }
+
+  // ONE_TO_ONE sessions must use COACH_AVAILABILITY — pre-creating individual slots per student
+  // is operational overhead with no benefit over dynamic availability. Symmetric to the
+  // FIXED_SLOTS lock applied to group session types below.
+  if (caps && !caps.multipleCoaches && !caps.multipleParticipants) {
+    if (data.bookingMode && data.bookingMode !== EventBookingMode.COACH_AVAILABILITY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["bookingMode"],
+        message: "One-to-one sessions must use coach availability booking mode.",
       });
     }
   }
@@ -342,6 +351,10 @@ const EventScheduleSlotBase = z.looseObject({
       frequency: z.enum(["WEEKLY", "BI_WEEKLY", "MONTHLY", "TWICE_A_MONTH", "THRICE_A_WEEK"]),
       occurrences: z.coerce.number().int().min(1).max(50).optional().nullable(),
       isContinuous: z.boolean().optional().default(false),
+      recurrenceVisibilityLimit: z.preprocess(
+        (val) => (val === "" ? null : val),
+        z.coerce.number().int().min(1).optional().nullable(),
+      ),
     })
     .optional()
     .nullable()

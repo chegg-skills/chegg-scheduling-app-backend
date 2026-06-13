@@ -63,6 +63,7 @@ export function EventGroupFormDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     const trimmed = name.trim()
     if (!trimmed) {
       setValidationError('Group name is required.')

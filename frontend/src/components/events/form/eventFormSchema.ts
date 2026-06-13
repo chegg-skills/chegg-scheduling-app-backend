@@ -54,12 +54,6 @@ export const eventFormSchema = z
     locationLinkReminderDays: z.number().int().min(1).max(90).nullable().optional(),
     isActive: z.boolean().default(true),
     groupId: z.string().uuid().nullable().optional(),
-    recurrenceVisibilityLimit: z
-      .number()
-      .int()
-      .min(1, 'Visibility limit must be at least 1')
-      .nullable()
-      .optional(),
   })
   .superRefine((values, ctx) => {
     const caps = values.interactionType ? INTERACTION_TYPE_CAPS[values.interactionType] : null
@@ -85,6 +79,16 @@ export const eventFormSchema = z
           code: z.ZodIssueCode.custom,
           path: ['maxParticipantCount'],
           message: 'This interaction type only supports 1 participant per session.',
+        })
+      }
+    }
+
+    if (caps && !caps.multipleCoaches && !caps.multipleParticipants) {
+      if (values.bookingMode && values.bookingMode !== 'COACH_AVAILABILITY') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['bookingMode'],
+          message: 'One-to-one sessions must use coach availability booking mode.',
         })
       }
     }
@@ -230,7 +234,6 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       locationLinkReminderDays: event.locationLinkReminderDays ?? null,
       isActive: event.isActive,
       groupId: event.groupId ?? null,
-      recurrenceVisibilityLimit: event.recurrenceVisibilityLimit ?? null,
     }
   }
 
@@ -261,6 +264,5 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     locationLinkReminderDays: null,
     isActive: true,
     groupId: null,
-    recurrenceVisibilityLimit: null,
   }
 }
