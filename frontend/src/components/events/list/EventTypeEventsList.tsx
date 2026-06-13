@@ -17,20 +17,20 @@ interface EventTypeEventsListProps {
   events: Event[]
   eventTypes: EventType[]
   selectedEventTypeId: string
-  teamId: string
   onViewUser?: (userId: string) => void
   canManage?: boolean
   groups?: EventGroup[]
+  isAllTeams?: boolean
 }
 
 export function EventTypeEventsList({
   events,
   eventTypes,
   selectedEventTypeId,
-  teamId,
   onViewUser,
   canManage = false,
   groups = [],
+  isAllTeams = false,
 }: EventTypeEventsListProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
@@ -49,6 +49,22 @@ export function EventTypeEventsList({
 
   const groupedEvents = useMemo<GroupEntry[]>(() => {
     const groupMap = new Map<string, GroupEntry>()
+
+    if (isAllTeams) {
+      events.forEach((event) => {
+        const teamId = event.teamId ?? 'unknown-team'
+        const teamName = event.team?.name ?? 'Unknown Team'
+        const existing = groupMap.get(teamId) ?? {
+          id: teamId,
+          name: toTitleCase(teamName),
+          color: '#6b7280',
+          events: [],
+        }
+        existing.events.push(event)
+        groupMap.set(teamId, existing)
+      })
+      return Array.from(groupMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+    }
 
     events.forEach((event) => {
       const gId = event.groupId ?? 'ungrouped'
@@ -72,7 +88,7 @@ export function EventTypeEventsList({
     if (ungrouped) result.push(ungrouped)
 
     return result.length === 0 && groupMap.size > 0 ? Array.from(groupMap.values()) : result
-  }, [events, groups])
+  }, [events, groups, isAllTeams])
 
   const handleMenuOpen = (e: MouseEvent<HTMLButtonElement>, event: Event) => {
     e.stopPropagation()
@@ -175,7 +191,7 @@ export function EventTypeEventsList({
           title={`Edit "${toTitleCase(editingEvent.name)}"`}
         >
           <EventForm
-            teamId={teamId}
+            teamId={editingEvent.teamId}
             event={editingEvent}
             onSuccess={() => setEditingEvent(null)}
             onCancel={() => setEditingEvent(null)}

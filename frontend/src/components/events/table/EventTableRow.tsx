@@ -68,18 +68,22 @@ export function EventTableRow({
             <Calendar size={18} />
           </Box>
 
-          <Link
-            component={RouterLink}
-            to={`/events/${event.id}`}
-            sx={{
-              fontWeight: 600,
-              color: 'text.primary',
-              textDecoration: 'none',
-              '&:hover': { color: 'primary.main', textDecoration: 'underline' },
-            }}
-          >
-            {toTitleCase(event.name)}
-          </Link>
+          <Stack spacing={0.25}>
+            <Link
+              component={RouterLink}
+              to={`/events/${event.id}`}
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                textDecoration: 'none',
+                '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                alignSelf: 'flex-start',
+                maxWidth: '100%',
+              }}
+            >
+              {toTitleCase(event.name)}
+            </Link>
+          </Stack>
         </Stack>
       </TableCell>
 

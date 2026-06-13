@@ -203,7 +203,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       teamId: event.teamId,
       name: event.name,
       description: event.description ?? '',
-      eventTypeId: event.eventTypeId,
+      eventTypeId: event.eventTypeId ?? '',
       interactionType: event.interactionType,
       locationType: event.locationType,
       locationValue: event.locationValue ?? '',

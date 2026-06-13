@@ -29,10 +29,11 @@ export const eventKeys = {
     [...eventKeys.coaches(eventId), 'availability', coachUserId] as const,
 }
 
-export function useEvents(params?: ListEventsParams) {
+export function useEvents(params?: ListEventsParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: eventKeys.list(params),
     queryFn: ({ signal }) => eventsApi.listAll(params, signal).then((r) => r.data.data),
+    ...options,
   })
 }
 
