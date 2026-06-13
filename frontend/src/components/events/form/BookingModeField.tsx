@@ -19,6 +19,7 @@ export function BookingModeField({ caps }: BookingModeFieldProps) {
   } = useFormContext<EventFormValues>()
   const bookingMode = watch('bookingMode')
   const isGroupSession = !!caps?.multipleParticipants
+  const isOneToOne = caps != null && !caps.multipleParticipants && !caps.multipleCoaches
 
   if (isGroupSession) {
     return (
@@ -31,6 +32,22 @@ export function BookingModeField({ caps }: BookingModeFieldProps) {
         <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
           Flexible availability is not supported for group sessions — all participants must book
           into the same slot.
+        </Typography>
+      </FormField>
+    )
+  }
+
+  if (isOneToOne) {
+    return (
+      <FormField
+        label="Booking mode"
+        htmlFor="bookingModeLocked"
+        info="One-to-one sessions use coach availability so students can book any open time on the coach's schedule."
+      >
+        <Input id="bookingModeLocked" value="Flexible — based on coach availability" disabled />
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+          Fixed slots are not supported for one-to-one sessions — students book directly from the
+          coach&apos;s available schedule.
         </Typography>
       </FormField>
     )

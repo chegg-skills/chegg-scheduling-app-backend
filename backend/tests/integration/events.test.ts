@@ -2112,6 +2112,36 @@ describe("Event schema validation rejections", () => {
     expect(res.body.message).toMatch(/FIXED_SLOTS/i);
   });
 
+  it("rejects ONE_TO_ONE with FIXED_SLOTS booking mode (must use COACH_AVAILABILITY)", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_ONE",
+      bookingMode: "FIXED_SLOTS",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/One-to-one sessions must use coach availability/i);
+  });
+
+  it("rejects PATCH of ONE_TO_ONE event to FIXED_SLOTS booking mode", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_ONE",
+    });
+    expect(created.status).toBe(201);
+
+    const res = await request(app)
+      .patch(`/api/events/${created.body.data.id}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ interactionType: "ONE_TO_ONE", bookingMode: "FIXED_SLOTS" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/One-to-one sessions must use coach availability/i);
+  });
+
   it("rejects ONE_TO_ONE with maxParticipantCount greater than 1", async () => {
     const eventType = await createEventType(context.superAdminToken);
 

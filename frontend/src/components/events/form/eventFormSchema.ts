@@ -89,6 +89,16 @@ export const eventFormSchema = z
       }
     }
 
+    if (caps && !caps.multipleCoaches && !caps.multipleParticipants) {
+      if (values.bookingMode && values.bookingMode !== 'COACH_AVAILABILITY') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['bookingMode'],
+          message: 'One-to-one sessions must use coach availability booking mode.',
+        })
+      }
+    }
+
     // ── Cross-field rules ─────────────────────────────────────────────────────
 
     if (values.sessionLeadershipStrategy === 'FIXED_LEAD' && !values.fixedLeadCoachId) {

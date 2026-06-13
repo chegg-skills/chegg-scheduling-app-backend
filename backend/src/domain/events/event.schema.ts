@@ -123,6 +123,19 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     }
   }
 
+  // ONE_TO_ONE sessions must use COACH_AVAILABILITY — pre-creating individual slots per student
+  // is operational overhead with no benefit over dynamic availability. Symmetric to the
+  // FIXED_SLOTS lock applied to group session types below.
+  if (caps && !caps.multipleCoaches && !caps.multipleParticipants) {
+    if (data.bookingMode && data.bookingMode !== EventBookingMode.COACH_AVAILABILITY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["bookingMode"],
+        message: "One-to-one sessions must use coach availability booking mode.",
+      });
+    }
+  }
+
   // Single-coach group sessions (!multipleCoaches && multipleParticipants) must use
   // DIRECT assignment and FIXED_SLOTS booking mode. This applies to ONE_TO_MANY and any
   // future type with the same capability profile.
