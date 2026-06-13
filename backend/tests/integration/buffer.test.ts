@@ -55,7 +55,7 @@ beforeAll(async () => {
       interactionType: "ONE_TO_ONE", // Use enum directly
       durationSeconds: 3600, // 1 hour
       locationType: "VIRTUAL",
-      locationValue: "Zoom",
+      locationValue: "https://zoom.us/j/test-buffer",
       bufferAfterMinutes: 15, // 15 min buffer!
     });
   eventId = eventRes.body.data.id;

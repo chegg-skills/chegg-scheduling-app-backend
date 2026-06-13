@@ -88,17 +88,17 @@ describe('Event Creation Integration', () => {
   it('should allow an admin to create a new one-to-one event', async () => {
     renderWithProviders(<EventsPage />)
 
-    // 1. Select team
-    const selectEl = await screen.findByRole('combobox', { name: /Select team/i })
-    fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
-
-    // 2. Open "New event" modal
+    // 1. Open "New event" modal
     const newEventBtn = await screen.findByRole('button', { name: /New event/i })
     fireEvent.click(newEventBtn)
 
     // Wait for modal to open
     expect(await screen.findByRole('heading', { name: /New event/i })).toBeInTheDocument()
+
+    // 2. Select Team in the form
+    const teamSelect = await screen.findByRole('combobox', { name: /Team/i })
+    fireEvent.mouseDown(teamSelect)
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     // 3. Fill Basic Info
     const nameInput = await screen.findByLabelText(/Event name/i)
@@ -116,11 +116,8 @@ describe('Event Creation Integration', () => {
     fireEvent.click(screen.getByText(/One-to-One/i))
 
     // 6. Fill Location
-    const locationTypeSelect = await screen.findByRole('combobox', { name: /Location type/i })
-    fireEvent.mouseDown(locationTypeSelect)
-    fireEvent.click(await screen.findByRole('option', { name: /Virtual \(URL\)/i }))
-
-    const locationValueInput = screen.getByRole('textbox', { name: /Location/i })
+    fireEvent.click(screen.getByText('Shared Event Link'))
+    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/test' } })
 
     // 7. Fill Scheduling Policy (Duration)
@@ -145,14 +142,17 @@ describe('Event Creation Integration', () => {
   it('should allow an admin to create a group workshop (one-to-many)', async () => {
     renderWithProviders(<EventsPage />)
 
-    // 1. Select team
-    const selectEl = await screen.findByRole('combobox', { name: /Select team/i })
-    fireEvent.mouseDown(selectEl)
-    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
-
-    // 2. Open "New event" modal
+    // 1. Open "New event" modal
     const newEventBtn = await screen.findByRole('button', { name: /New event/i })
     fireEvent.click(newEventBtn)
+
+    // Wait for modal to open
+    expect(await screen.findByRole('heading', { name: /New event/i })).toBeInTheDocument()
+
+    // 2. Select Team in the form
+    const teamSelect = await screen.findByRole('combobox', { name: /Team/i })
+    fireEvent.mouseDown(teamSelect)
+    fireEvent.click(await screen.findByRole('option', { name: 'Math Team' }))
 
     // 3. Fill Basic Info
     fireEvent.change(await screen.findByLabelText(/Event name/i), {
@@ -168,12 +168,9 @@ describe('Event Creation Integration', () => {
     fireEvent.click(screen.getByText(/One-to-Many/i))
 
     // 6. Fill Location
-    const locationTypeSelect = await screen.findByRole('combobox', { name: /Location type/i })
-    fireEvent.mouseDown(locationTypeSelect)
-    fireEvent.click(await screen.findByRole('option', { name: /Virtual \(URL\)/i }))
-    fireEvent.change(screen.getByRole('textbox', { name: /Location/i }), {
-      target: { value: 'https://zoom.us/group' },
-    })
+    fireEvent.click(screen.getByText('Shared Event Link'))
+    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
+    fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/group' } })
 
     // 7. Fill Participant Capacity (shown for One-to-Many)
     const maxInput = screen.getByLabelText(/Participant Capacity/i)

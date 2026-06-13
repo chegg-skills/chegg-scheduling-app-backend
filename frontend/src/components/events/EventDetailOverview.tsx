@@ -1,8 +1,64 @@
 import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import { alpha } from '@mui/material/styles'
+import { AlertTriangle, Clock } from 'lucide-react'
 import type { Event } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { DataField } from '@/components/shared/ui/DataField'
+
+function LinkExpiryChip({ expiresAt }: { expiresAt: string }) {
+  const expiry = new Date(expiresAt)
+  const daysRemaining = Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+
+  const isExpired = daysRemaining < 0
+  const isCritical = !isExpired && daysRemaining <= 7
+  const isWarning = !isExpired && !isCritical && daysRemaining <= 30
+
+  const color = isExpired || isCritical ? '#DC2626' : isWarning ? '#D97706' : '#16A34A'
+  const Icon = isExpired || isCritical || isWarning ? AlertTriangle : Clock
+
+  const label = isExpired
+    ? 'Link has expired'
+    : daysRemaining === 0
+      ? 'Expires today'
+      : daysRemaining === 1
+        ? 'Expires tomorrow'
+        : `Expires in ${daysRemaining} days`
+
+  const dateStr = expiry.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+        {dateStr}
+      </Typography>
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.5,
+          px: 1,
+          py: 0.25,
+          borderRadius: '10px',
+          bgcolor: alpha(color, 0.08),
+          border: `1px solid ${alpha(color, 0.2)}`,
+          color,
+        }}
+      >
+        <Icon size={11} />
+        <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.7rem' }}>
+          {label}
+        </Typography>
+      </Box>
+    </Box>
+  )
+}
 
 interface EventDetailOverviewProps {
   event: Event
@@ -68,6 +124,22 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
             tooltip="Determines whether students receive the assigned coach's personal Zoom link or the configured event-level location URL."
           />
         )}
+        {(event.meetingLinkSource ?? 'COACH_ISV') === 'EVENT_LOCATION' &&
+          event.locationLinkExpiresAt && (
+            <DataField
+              label="Link expires"
+              value={<LinkExpiryChip expiresAt={event.locationLinkExpiresAt} />}
+              tooltip="The date when the event location URL expires. Update the link before this date to avoid disrupting student sessions."
+            />
+          )}
+        {(event.meetingLinkSource ?? 'COACH_ISV') === 'EVENT_LOCATION' &&
+          event.locationLinkReminderDays && (
+            <DataField
+              label="Expiry reminder"
+              value={`${event.locationLinkReminderDays} day${event.locationLinkReminderDays === 1 ? '' : 's'} before expiry`}
+              tooltip="An email reminder will be sent to the team lead this many days before the link expires."
+            />
+          )}
 
         <Spacer />
 

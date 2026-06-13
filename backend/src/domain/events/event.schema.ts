@@ -57,6 +57,21 @@ const EventBaseObjectCore = z.looseObject({
   allowAnonymousBooking: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
   meetingLinkSource: z.nativeEnum(MeetingLinkSource).optional(),
+  locationLinkExpiresAt: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.coerce.date()
+      .refine((d) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return d >= today;
+      }, { message: "Link expiry date must be today or in the future." })
+      .optional()
+      .nullable(),
+  ),
+  locationLinkReminderDays: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.coerce.number().int().min(1).max(90).optional().nullable(),
+  ),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
 });
 
@@ -211,6 +226,75 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
         code: z.ZodIssueCode.custom,
         path: ["allowStudentCoachChoice"],
         message: "Student coach choice is only supported for ONE_TO_ONE events.",
+      });
+    }
+  }
+
+  // Validate locationValue is a real URL for VIRTUAL events. Skip on partial PATCH when absent.
+  if (
+    data.locationType === EventLocationType.VIRTUAL &&
+    data.locationValue !== undefined &&
+    data.locationValue.trim()
+  ) {
+    try {
+      const url = new URL(data.locationValue.trim());
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["locationValue"],
+          message: "Meeting link must be an http or https URL.",
+        });
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locationValue"],
+        message: "Please enter a valid URL (e.g. https://zoom.us/j/...).",
+      });
+    }
+  }
+
+  // Expiry requires a non-empty location URL. Skip on partial PATCH when locationValue is absent.
+  if (data.locationLinkExpiresAt && data.locationValue !== undefined && !data.locationValue?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationLinkExpiresAt"],
+      message: "A meeting link or location is required to set an expiry date.",
+    });
+  }
+
+  // Link expiration and reminder days cross-field validations.
+  // The two fields are a pair: both must be updated together (neither can be
+  // provided without the other), and when both are present they must either
+  // both carry a value or both be null (clearing the feature).
+  const expiresAtInPayload = data.locationLinkExpiresAt !== undefined;
+  const reminderDaysInPayload = data.locationLinkReminderDays !== undefined;
+
+  if (expiresAtInPayload && !reminderDaysInPayload) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationLinkReminderDays"],
+      message: "Reminder days must be provided when setting or clearing the expiration date.",
+    });
+  } else if (!expiresAtInPayload && reminderDaysInPayload) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationLinkExpiresAt"],
+      message: "Expiration date must be provided when setting or clearing the reminder days.",
+    });
+  } else if (expiresAtInPayload && reminderDaysInPayload) {
+    // Both present in payload — they must agree: both truthy or both null.
+    if (data.locationLinkExpiresAt && !data.locationLinkReminderDays) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locationLinkReminderDays"],
+        message: "Reminder days is required when an expiration date is set.",
+      });
+    } else if (!data.locationLinkExpiresAt && data.locationLinkReminderDays) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["locationLinkExpiresAt"],
+        message: "Expiration date is required when reminder days is set.",
       });
     }
   }

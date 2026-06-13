@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { eventFormSchema, getEventFormDefaults, type EventFormValues } from '../eventFormSchema'
 import {
   getAllowedAssignmentStrategies,
@@ -12,20 +13,39 @@ import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import type { Event, InteractionType, InteractionTypeCaps } from '@/types'
 
 interface UseEventFormProps {
-  teamId: string
+  teamId?: string
   event?: Event
+  accessedFromEventsTab?: boolean
   onSuccess?: () => void
 }
 
-export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
+export function useEventForm({ teamId, event, accessedFromEventsTab, onSuccess }: UseEventFormProps) {
   const isEdit = !!event
-  const { mutate: create, isPending: creating, error: createError } = useCreateEvent(teamId)
+  const { mutate: create, isPending: creating, error: createError } = useCreateEvent()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateEvent()
 
+  const schema = useMemo(() => {
+    return eventFormSchema.superRefine((values, ctx) => {
+      if (!isEdit && accessedFromEventsTab && !values.teamId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['teamId'],
+          message: 'Team is required',
+        })
+      }
+    })
+  }, [isEdit, accessedFromEventsTab])
+
   const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventFormSchema),
-    values: getEventFormDefaults(event) as EventFormValues,
-    defaultValues: getEventFormDefaults(),
+    resolver: zodResolver(schema),
+    values: {
+      ...getEventFormDefaults(event),
+      teamId: event?.teamId ?? teamId ?? '',
+    } as EventFormValues,
+    defaultValues: {
+      ...getEventFormDefaults(),
+      teamId: teamId ?? '',
+    } as EventFormValues,
   })
 
   const { watch, setValue, getValues, reset } = form
@@ -136,16 +156,24 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
   }, [watchedDeferCoachReveal, setValue])
 
   function onSubmit(values: EventFormValues) {
+    const isEventLocationLink =
+      (values.locationType === 'VIRTUAL' || values.locationType === 'CUSTOM') &&
+      values.meetingLinkSource === 'EVENT_LOCATION'
+
     const apiPayload = {
       ...values,
       minimumNoticeMinutes: Math.round((values.minimumNoticeMinutes || 0) * 60),
       fixedLeadCoachId: values.fixedLeadCoachId || null,
       assignmentStrategy: values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
       durationSeconds: values.durationMinutes * 60,
+      locationLinkExpiresAt: isEventLocationLink ? values.locationLinkExpiresAt : null,
+      locationLinkReminderDays: isEventLocationLink ? values.locationLinkReminderDays : null,
     }
 
     // @ts-ignore - durationMinutes is not in API but we handled it
     delete apiPayload.durationMinutes
+    // @ts-ignore - teamId is in form schema but not API payload schema
+    delete apiPayload.teamId
 
     if (isEdit && event) {
       update(
@@ -157,12 +185,19 @@ export function useEventForm({ teamId, event, onSuccess }: UseEventFormProps) {
         }
       )
     } else {
-      create(apiPayload as any, {
-        onSuccess: () => {
-          reset()
-          onSuccess?.()
-        },
-      })
+      const targetTeamId = (accessedFromEventsTab && !isEdit) ? values.teamId : (teamId || values.teamId)
+      if (!targetTeamId) {
+        return
+      }
+      create(
+        { teamId: targetTeamId, data: apiPayload as any },
+        {
+          onSuccess: () => {
+            reset()
+            onSuccess?.()
+          },
+        }
+      )
     }
   }
 

@@ -1,4 +1,4 @@
-import { AssignmentStrategy, Prisma, SessionLeadershipStrategy } from "@prisma/client";
+import { AssignmentStrategy, Prisma, SessionLeadershipStrategy, EventLocationType } from "@prisma/client";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   INTERACTION_TYPE_CAPS,
@@ -211,6 +211,11 @@ export const buildEventCreateData = ({
   context: ResolvedEventMutationContext;
 }): Prisma.EventCreateInput => {
   const validated = CreateEventSchema.body.parse(payload);
+  // Preserve expiry fields for any VIRTUAL or CUSTOM location regardless of link source —
+  // both the shared event URL and the coach-zoom fallback URL can expire.
+  const hasExpiryCapableLocation =
+    validated.locationType === EventLocationType.VIRTUAL ||
+    validated.locationType === EventLocationType.CUSTOM;
 
   const data: Prisma.EventCreateInput = {
     name: validated.name,
@@ -233,6 +238,8 @@ export const buildEventCreateData = ({
     allowAnonymousBooking: validated.allowAnonymousBooking ?? false,
     allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
     meetingLinkSource: validated.meetingLinkSource,
+    locationLinkExpiresAt: hasExpiryCapableLocation ? (validated.locationLinkExpiresAt ?? null) : null,
+    locationLinkReminderDays: hasExpiryCapableLocation ? (validated.locationLinkReminderDays ?? null) : null,
     team: { connect: { id: teamId } },
     group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
     createdBy: { connect: { id: callerId } },
@@ -329,6 +336,24 @@ export const buildEventUpdateData = ({
     updateData.meetingLinkSource = validated.meetingLinkSource;
   }
 
+  const finalLocationType = validated.locationType ?? existingEvent.locationType;
+  // Preserve expiry fields for any VIRTUAL or CUSTOM location regardless of link source
+  const hasExpiryCapableLocation =
+    finalLocationType === EventLocationType.VIRTUAL ||
+    finalLocationType === EventLocationType.CUSTOM;
+
+  if (hasExpiryCapableLocation) {
+    if (validated.locationLinkExpiresAt !== undefined) {
+      updateData.locationLinkExpiresAt = validated.locationLinkExpiresAt;
+    }
+    if (validated.locationLinkReminderDays !== undefined) {
+      updateData.locationLinkReminderDays = validated.locationLinkReminderDays;
+    }
+  } else {
+    updateData.locationLinkExpiresAt = null;
+    updateData.locationLinkReminderDays = null;
+  }
+
   if (validated.groupId !== undefined) {
     updateData.group =
       validated.groupId === null ? { disconnect: true } : { connect: { id: validated.groupId } };
@@ -379,6 +404,8 @@ export const buildDuplicateEventData = ({
     allowAnonymousBooking: (sourceEvent as any).allowAnonymousBooking ?? false,
     allowStudentCoachChoice: (sourceEvent as any).allowStudentCoachChoice ?? false,
     meetingLinkSource: (sourceEvent as any).meetingLinkSource ?? "COACH_ISV",
+    locationLinkExpiresAt: (sourceEvent as any).locationLinkExpiresAt ?? null,
+    locationLinkReminderDays: (sourceEvent as any).locationLinkReminderDays ?? null,
     group: sourceEvent.groupId ? { connect: { id: sourceEvent.groupId } } : undefined,
   } as any;
 };

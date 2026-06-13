@@ -124,10 +124,11 @@ export function useEvent(eventId: string) {
   })
 }
 
-export function useCreateEvent(teamId: string) {
+export function useCreateEvent() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateEventDto) => eventsApi.create(teamId, data),
+    mutationFn: ({ teamId, data }: { teamId: string; data: CreateEventDto }) =>
+      eventsApi.create(teamId, data),
     onSuccess: () => invalidateQueryKeys(qc, [eventKeys.all, statsKeys.all]),
   })
 }

@@ -4,6 +4,8 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
+import Paper from '@mui/material/Paper'
+import InputAdornment from '@mui/material/InputAdornment'
 import { alpha } from '@mui/material/styles'
 import {
   CalendarDays,
@@ -14,11 +16,13 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Info,
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
+import { useEventTypes } from '@/hooks/queries/useEventTypes'
 import { useTeamEventGroups } from '@/hooks/queries/useEventGroups'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/ui/Button'
@@ -26,50 +30,68 @@ import { Modal } from '@/components/shared/ui/Modal'
 import { EventForm } from '@/components/events/form/EventForm'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { EventGroupSections } from '@/components/events/groups/EventGroupSections'
+import { EventTypeEventsList } from '@/components/events/list/EventTypeEventsList'
 import { UserDetailModal } from '@/components/users/UserDetailModal'
 import { Select } from '@/components/shared/form/Select'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useEventStats } from '@/hooks/queries/useStats'
-import type { StatsTimeframe } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
+import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
   const { isCoach, isSuperAdmin } = usePermissions()
   const [selectedTeamId, setSelectedTeamId] = useState<string>('')
+  const [selectedEventTypeId, setSelectedEventTypeId] = useState<string>('')
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
   const canManageTeam = isSuperAdmin
   const [copied, setCopied] = useState(false)
 
-  const handleCopy = async () => {
-    if (selectedTeam?.publicBookingSlug) {
-      const shareUrl = `${window.location.origin}/book/team/${selectedTeam.publicBookingSlug}`
-      await navigator.clipboard.writeText(shareUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
+  const { data: eventTypes = [], isLoading: eventTypesLoading, error: eventTypesError } = useEventTypes()
+
   const sortedTeams = useMemo(() => {
     if (!teamsData?.teams) return []
     return [...teamsData.teams].sort((a, b) => a.name.localeCompare(b.name))
   }, [teamsData?.teams])
 
   const selectedTeam = sortedTeams.find((team) => team.id === selectedTeamId)
+  const selectedEventType = eventTypes.find((et) => et.id === selectedEventTypeId)
+  
   const {
     data: eventsData,
     isLoading: eventsLoading,
     error: eventsError,
-  } = useTeamEvents(selectedTeamId, { page: 1, pageSize: 100 })
+  // pageSize 1000: events are grouped/filtered client-side; no virtualisation needed for typical team sizes
+  } = useTeamEvents(selectedTeamId, { page: 1, pageSize: 1000 })
+
   const { data: groupsData } = useTeamEventGroups(selectedTeamId)
   const groups = useMemo(() => groupsData ?? [], [groupsData])
+
   const { data: eventStats, isLoading: statsLoading } = useEventStats(
     timeframe,
     selectedTeamId || undefined,
     { enabled: !isCoach }
   )
+
+  const handleCopy = async () => {
+    if (selectedTeam?.publicBookingSlug && selectedEventType?.key) {
+      const shareUrl = `${window.location.origin}/book/sessions/${selectedEventType.key}/${selectedTeam.publicBookingSlug}`
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const activeEventTypes = useMemo(() => {
+    return eventTypes.filter((et) => et.isActive)
+  }, [eventTypes])
+
+  const filteredEvents = useMemo(() => {
+    if (!eventsData?.events) return []
+    return eventsData.events.filter((e) => e.eventTypeId === selectedEventTypeId)
+  }, [eventsData?.events, selectedEventTypeId])
 
   const eventStatItems = [
     {
@@ -105,166 +127,18 @@ export function EventsPage() {
   return (
     <Box>
       <PageHeader
-        title={selectedTeam ? toTitleCase(selectedTeam.name) : 'Events'}
-        subtitle={selectedTeam ? undefined : 'View events by team'}
-        breadcrumbs={selectedTeam ? [{ label: 'Teams', to: '/teams' }] : undefined}
+        title="Events"
+        subtitle="View and manage event schedules."
         actions={
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-            {selectedTeam?.publicBookingSlug && (
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Tooltip title="Open booking page" arrow>
-                  <IconButton
-                    onClick={() => {
-                      const shareUrl = `${window.location.origin}/book/team/${selectedTeam.publicBookingSlug}`
-                      window.open(shareUrl, '_blank', 'noopener,noreferrer')
-                    }}
-                    sx={{
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 1.2,
-                      width: 36,
-                      height: 36,
-                      color: 'text.secondary',
-                      bgcolor: 'transparent',
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                        color: 'primary.main',
-                        borderColor: 'primary.main',
-                        transform: 'scale(1.05)',
-                      },
-                      transition: 'all 0.2s ease-in-out',
-                    }}
-                  >
-                    <ExternalLink size={16} />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title={copied ? 'Copied!' : 'Copy booking link'} arrow>
-                  <IconButton
-                    onClick={handleCopy}
-                    sx={{
-                      border: '1px solid',
-                      borderColor: copied ? 'success.main' : 'divider',
-                      borderRadius: 1.2,
-                      width: 36,
-                      height: 36,
-                      bgcolor: (theme) =>
-                        copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
-                      color: (theme) => (copied ? theme.palette.success.main : 'text.secondary'),
-                      '&:hover': {
-                        bgcolor: (theme) =>
-                          copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
-                        color: (theme) => (copied ? theme.palette.success.main : 'primary.main'),
-                        borderColor: (theme) =>
-                          copied ? theme.palette.success.main : 'primary.main',
-                        transform: 'scale(1.05)',
-                      },
-                      transition: 'all 0.2s ease-in-out',
-                    }}
-                  >
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-            )}
-            <Box
-              sx={{
-                width: { xs: '100%', sm: 280 },
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-              }}
+          canManageTeam && (
+            <Button
+              size="sm"
+              onClick={() => setShowCreateEvent(true)}
             >
-              <Box sx={{ position: 'relative', width: '100%' }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    position: 'absolute',
-                    top: -10,
-                    right: 12,
-                    zIndex: 1,
-                    px: 0.75,
-                    backgroundColor: 'background.paper',
-                    color: 'primary.main',
-                    fontWeight: 600,
-                    letterSpacing: '0.02em',
-                    borderRadius: 1,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  Select team
-                </Typography>
-
-                <Select
-                  value={selectedTeamId}
-                  onChange={(e) => setSelectedTeamId(e.target.value as string)}
-                  displayEmpty
-                  inputProps={{ 'aria-label': 'Select team' }}
-                  renderValue={(value) => {
-                    if (!value) {
-                      return (
-                        <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>
-                          Choose a team...
-                        </Box>
-                      )
-                    }
-
-                    return sortedTeams.find((team) => team.id === value)?.name ?? 'Choose a team...'
-                  }}
-                  sx={{
-                    minWidth: { xs: '100%', sm: 280 },
-                    backgroundColor: 'grey.50', // Brand-neutral soft background
-                    borderRadius: 1.5, // 12px
-                    height: 40,
-                    minHeight: 40,
-                    maxHeight: 40,
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      border: 'none', // Borderless like search
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: 'none',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: '1.5px solid',
-                      borderColor: 'primary.main',
-                    },
-                    '& .MuiSelect-select': {
-                      height: 40,
-                      minHeight: 40,
-                      maxHeight: 40,
-                      display: 'flex',
-                      alignItems: 'center',
-                      pl: 2,
-                      py: 0,
-                      fontWeight: 400,
-                    },
-                    '& .MuiSelect-icon': {
-                      color: 'primary.main',
-                      right: 8,
-                    },
-                  }}
-                >
-                  <MenuItem value="">Choose a team...</MenuItem>
-                  {sortedTeams.map((team) => (
-                    <MenuItem key={team.id} value={team.id}>
-                      {team.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Box>
-            </Box>
-            {canManageTeam && (
-              <Button
-                size="sm"
-                onClick={() => setShowCreateEvent(true)}
-                disabled={!selectedTeamId}
-                title={!selectedTeamId ? 'Please select a team first' : ''}
-              >
-                <Plus size={16} />
-                New event
-              </Button>
-            )}
-          </Stack>
+              <Plus size={16} />
+              New event
+            </Button>
+          )
         }
       />
 
@@ -287,27 +161,295 @@ export function EventsPage() {
               />
             )}
 
-            {selectedTeamId === '' ? (
-              <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-                Select a team from the dropdown above to view its events.
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} sx={{ mt: 3, alignItems: 'flex-start' }}>
+              {/* Left Column: Event Types Sidebar */}
+              <Box sx={{ width: { xs: '100%', md: 280 }, flexShrink: 0 }}>
+                {eventTypesLoading ? (
+                  <PageSpinner />
+                ) : eventTypesError ? (
+                  <ErrorAlert message="Failed to load event types." />
+                ) : (
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      borderRadius: 1.5,
+                      overflow: 'hidden',
+                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
+                      p: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        color: 'text.secondary',
+                        letterSpacing: '0.08em',
+                        display: 'block',
+                        mb: 2,
+                        px: 1,
+                      }}
+                    >
+                      Event Types
+                    </Typography>
+                    <Stack spacing={0.5}>
+                      {activeEventTypes.map((item) => {
+                        const isActive = selectedEventTypeId === item.id
+                        const count = eventsData?.events?.filter((e) => e.eventTypeId === item.id).length || 0
+                        return (
+                          <Box
+                            key={item.id}
+                            onClick={() => setSelectedEventTypeId(item.id)}
+                            sx={{
+                              py: 1.5,
+                              px: 2,
+                              borderRadius: 1.5,
+                              cursor: 'pointer',
+                              position: 'relative',
+                              bgcolor: isActive ? 'primary.lighter' : 'transparent',
+                              color: isActive ? 'primary.main' : 'text.secondary',
+                              fontWeight: isActive ? 600 : 500,
+                              fontSize: '0.875rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1.75,
+                              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                              borderLeft: '3px solid',
+                              borderLeftColor: isActive ? 'primary.main' : 'transparent',
+                              pl: isActive ? 1.75 : 2,
+                              '&:hover': {
+                                bgcolor: isActive ? 'primary.lighter' : 'action.hover',
+                                color: isActive ? 'primary.main' : 'text.primary',
+                              },
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: isActive ? 600 : 500,
+                                fontSize: '0.875rem',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {item.name}
+                            </Typography>
+                            {selectedTeamId && (
+                              <Box
+                                sx={{
+                                  ml: 'auto',
+                                  fontSize: '0.725rem',
+                                  fontWeight: 700,
+                                  px: 1,
+                                  py: 0.2,
+                                  borderRadius: 1.5,
+                                  bgcolor: isActive ? 'primary.main' : 'action.hover',
+                                  color: isActive ? 'primary.contrastText' : 'text.secondary',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                {count}
+                              </Box>
+                            )}
+                          </Box>
+                        )
+                      })}
+                    </Stack>
+                  </Paper>
+                )}
               </Box>
-            ) : eventsLoading ? (
-              <PageSpinner />
-            ) : eventsError ? (
-              <Box sx={{ py: 4 }}>
-                <ErrorAlert message="Failed to load events. Please refresh the page." />
+
+              {/* Right Column: Events & Filter Panel */}
+              <Box sx={{ flexGrow: 1, minWidth: 0, width: '100%' }}>
+                {!selectedEventTypeId ? (
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 6,
+                      textAlign: 'center',
+                      color: 'text.secondary',
+                      borderRadius: 1.5,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 2,
+                    }}
+                  >
+                    <Info size={36} style={{ color: alpha('#E87100', 0.5) }} />
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                        Select an Event Type
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Please select an event type from the left sidebar to start viewing and managing events.
+                      </Typography>
+                    </Box>
+                  </Paper>
+                ) : (
+                  <Stack spacing={3}>
+                    {/* Event Type Header & Team Selector Container */}
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 3,
+                        borderRadius: 1.5,
+                        backgroundColor: (theme) => theme.palette.accent.peach,
+                        borderColor: (theme) => alpha(theme.palette.primary.main, 0.15),
+                        boxShadow: '0 2px 12px rgba(232, 113, 0, 0.03)',
+                      }}
+                    >
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }}>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
+                            {eventTypes.find(et => et.id === selectedEventTypeId)?.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {eventTypes.find(et => et.id === selectedEventTypeId)?.description || 'No description provided.'}
+                          </Typography>
+                        </Box>
+
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ alignSelf: { xs: 'flex-start', sm: 'auto' } }}>
+                          {selectedTeam?.publicBookingSlug && selectedEventType?.key && (
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Tooltip title={`Open all ${selectedEventType.name} link for ${toTitleCase(selectedTeam.name)}`} arrow>
+                                <IconButton
+                                  onClick={() => {
+                                    const shareUrl = `${window.location.origin}/book/sessions/${selectedEventType.key}/${selectedTeam.publicBookingSlug}`
+                                    window.open(shareUrl, '_blank', 'noopener,noreferrer')
+                                  }}
+                                  sx={{
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    borderRadius: 1.5,
+                                    width: 38,
+                                    height: 38,
+                                    color: 'text.secondary',
+                                    bgcolor: 'background.paper',
+                                    '&:hover': {
+                                      bgcolor: 'action.hover',
+                                      color: 'primary.main',
+                                      borderColor: 'primary.main',
+                                    },
+                                    transition: 'all 0.2s',
+                                  }}
+                                >
+                                  <ExternalLink size={16} />
+                                </IconButton>
+                              </Tooltip>
+
+                              <Tooltip title={copied ? 'Copied!' : `All ${selectedEventType.name} link for ${toTitleCase(selectedTeam.name)}`} arrow>
+                                <IconButton
+                                  onClick={handleCopy}
+                                  sx={{
+                                    border: '1px solid',
+                                    borderColor: copied ? 'success.main' : 'divider',
+                                    borderRadius: 1.5,
+                                    width: 38,
+                                    height: 38,
+                                    bgcolor: (theme) =>
+                                      copied ? alpha(theme.palette.success.main, 0.1) : 'background.paper',
+                                    color: (theme) => (copied ? theme.palette.success.main : 'text.secondary'),
+                                    '&:hover': {
+                                      bgcolor: (theme) =>
+                                        copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
+                                      color: (theme) => (copied ? theme.palette.success.main : 'primary.main'),
+                                      borderColor: (theme) =>
+                                        copied ? theme.palette.success.main : 'primary.main',
+                                    },
+                                    transition: 'all 0.2s',
+                                  }}
+                                >
+                                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          )}
+
+                          <Box sx={{ width: 320 }}>
+                            <Select
+                              value={selectedTeamId}
+                              onChange={(e) => setSelectedTeamId(e.target.value as string)}
+                              displayEmpty
+                              inputProps={{ 'aria-label': 'Select team' }}
+                              startAdornment={
+                                <InputAdornment position="start" sx={{ color: 'text.secondary', ml: 0.5 }}>
+                                  <Users size={18} />
+                                </InputAdornment>
+                              }
+                              renderValue={(value) => {
+                                if (!value) {
+                                  return <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>Choose a team...</Box>
+                                }
+                                const team = sortedTeams.find((t) => t.id === value)
+                                return team ? toTitleCase(team.name) : 'Choose a team...'
+                              }}
+                              MenuProps={{
+                                PaperProps: {
+                                  style: {
+                                    width: 320,
+                                  },
+                                },
+                              }}
+                            >
+                              <MenuItem value="" disabled>Choose a team...</MenuItem>
+                              {sortedTeams.map((team) => (
+                                <MenuItem key={team.id} value={team.id}>
+                                  {toTitleCase(team.name)}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Box>
+                        </Stack>
+                      </Stack>
+                    </Paper>
+
+                     {!selectedTeamId ? (
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          p: 6,
+                          textAlign: 'center',
+                          color: 'text.secondary',
+                          borderRadius: 1.5,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 2,
+                        }}
+                      >
+                        <Users size={36} style={{ color: alpha('#E87100', 0.5) }} />
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                            Select a Team
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Please select a team from the dropdown to load the events configured for this event type.
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    ) : eventsLoading ? (
+                      <PageSpinner />
+                    ) : eventsError ? (
+                      <Box sx={{ py: 4 }}>
+                        <ErrorAlert message="Failed to load events. Please refresh the page." />
+                      </Box>
+                    ) : (
+                      <EventTypeEventsList
+                        events={filteredEvents}
+                        eventTypes={eventTypes}
+                        selectedEventTypeId={selectedEventTypeId}
+                        teamId={selectedTeamId}
+                        onViewUser={setViewingUserId}
+                        canManage={canManageTeam}
+                        groups={groups}
+                      />
+                    )}
+                  </Stack>
+                )}
               </Box>
-            ) : (
-              <Box sx={{ mt: 3 }}>
-                <EventGroupSections
-                  groups={groups}
-                  events={eventsData?.events ?? []}
-                  teamId={selectedTeamId}
-                  onViewUser={setViewingUserId}
-                  canManage={canManageTeam}
-                />
-              </Box>
-            )}
+            </Stack>
           </>
         )}
 
@@ -320,6 +462,7 @@ export function EventsPage() {
           >
             <EventForm
               teamId={selectedTeamId}
+              accessedFromEventsTab={true}
               onSuccess={() => setShowCreateEvent(false)}
               onCancel={() => setShowCreateEvent(false)}
             />

@@ -29,6 +29,8 @@ type NotificationType =
   | "AVAILABILITY_EXCEPTION_REMOVED"
   | "COACH_REVEAL_SENT"
   | "ZOOM_ISV_LINK_EXPIRY_REMINDER"
+  | "EVENT_LOCATION_LINK_EXPIRY_REMINDER"
+  | "CANCEL_EVENT_LINK_EXPIRY_REMINDER"
   | "EVENT_ACTIVATED"
   | "EVENT_DEACTIVATED"
   | "STUDENT_CUSTOM_EMAIL"
@@ -54,6 +56,13 @@ type NotificationPayload = {
   recipientRole?: string;
   metadata?: Record<string, unknown>;
 };
+
+// Control messages carry no recipients — they instruct the notification-service to
+// cancel previously-scheduled notifications rather than send a new one.
+const CONTROL_MESSAGE_TYPES = new Set<NotificationType>([
+  "CANCEL_BOOKING_REMINDERS",
+  "CANCEL_EVENT_LINK_EXPIRY_REMINDER",
+]);
 
 const NOTIFICATION_EXCHANGE = process.env.NOTIFICATION_EXCHANGE ?? "notificationExchange";
 const NOTIFICATION_ROUTING_KEY = process.env.NOTIFICATION_ROUTING_KEY ?? "notification.send";
@@ -118,8 +127,9 @@ const normalizeRecipients = (recipients: string | string[]): string => {
 
 const publishNotification = async (payload: NotificationPayload): Promise<boolean> => {
   const recipients = normalizeRecipients(payload.recipients);
+  const isControlMessage = CONTROL_MESSAGE_TYPES.has(payload.type);
 
-  if (!notificationsEnabled() || !recipients) {
+  if (!notificationsEnabled() || (!recipients && !isControlMessage)) {
     return false;
   }
 

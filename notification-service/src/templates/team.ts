@@ -158,4 +158,18 @@ export const teamTemplates: EmailTemplateMap = {
       { text: "Update Profile", url: "{{frontendUrl}}/profile" },
     ),
   },
+
+  EVENT_LOCATION_LINK_EXPIRY_REMINDER: {
+    subject: "Action Required: Event link for {{eventName}} expires on {{expiryDate}}",
+    preheader: "Your event joining link expires in {{reminderDays}} days — update it before it breaks bookings.",
+    text: "Hi {{userName}}, the joining link for event {{eventName}} is set to expire on {{expiryDate}}. Please update it in the Event settings before it expires to avoid disrupting student sessions.",
+    html: wrapLayout(
+      "Event Link Expiring Soon",
+      `<p>Hi <strong>{{userName}}</strong>,</p>
+       <p>The joining link for the event <strong>{{eventName}}</strong> is set to expire on <strong>{{expiryDate}}</strong>.</p>
+       <p style="margin-top: 16px;">Please update the link under the Event settings in the dashboard to prevent students from receiving an expired link during booking.</p>`,
+      "Event link for {{eventName}} expires on {{expiryDate}}.",
+      { text: "Update Event Location", url: "{{frontendUrl}}/events/{{eventId}}" },
+    ),
+  },
 };

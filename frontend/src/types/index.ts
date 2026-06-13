@@ -312,6 +312,8 @@ export interface Event {
   meetingLinkSource: MeetingLinkSource
   maxBookingWindowDays: number | null
   recurrenceVisibilityLimit?: number | null
+  locationLinkExpiresAt?: string | null
+  locationLinkReminderDays?: number | null
   teamId: string
   groupId: string | null
   createdById: string
