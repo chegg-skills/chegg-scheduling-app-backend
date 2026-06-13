@@ -23,6 +23,7 @@ interface AvailabilityDayRowProps {
     value: string
   ) => void
   onCopyDay: (dayIndex: number) => void
+  condensed?: boolean
 }
 
 const timeInputStyle = {
@@ -44,15 +45,16 @@ export function AvailabilityDayRow({
   onRemoveSlot,
   onTimeChange,
   onCopyDay,
+  condensed,
 }: AvailabilityDayRowProps) {
   return (
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
-      spacing={2}
-      alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
-      sx={{ py: 1 }}
+      spacing={condensed ? 2 : 2.5}
+      alignItems={{ xs: 'flex-start', sm: 'center' }}
+      sx={{ py: condensed ? 0.4 : 1 }}
     >
-      <Box sx={{ width: 120, display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ width: condensed ? 130 : 140, display: 'flex', alignItems: 'center' }}>
         {!disabled && (
           <Switch
             checked={day.enabled}
@@ -61,20 +63,37 @@ export function AvailabilityDayRow({
             size="small"
           />
         )}
-        <Typography variant="body2" sx={{ fontWeight: 600, ml: !disabled ? 1 : 0, minWidth: 80 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 600,
+            ml: !disabled ? 1 : 0,
+            minWidth: condensed ? 75 : 80,
+            fontSize: condensed ? '0.875rem' : '0.875rem',
+          }}
+        >
           {dayLabel}
         </Typography>
       </Box>
 
       <Box sx={{ flexGrow: 1 }}>
         {!day.enabled ? (
-          <Typography variant="body2" color="text.disabled" sx={{ py: 1 }}>
+          <Typography
+            variant="body2"
+            color="text.disabled"
+            sx={{ py: condensed ? 0.25 : 1, display: 'block' }}
+          >
             Unavailable
           </Typography>
         ) : (
-          <Stack spacing={1}>
+          <Stack spacing={condensed ? 0.75 : 1}>
             {day.slots.map((slot, slotIndex) => (
-              <Stack key={slotIndex} direction="row" spacing={1} alignItems="center">
+              <Stack
+                key={slotIndex}
+                direction="row"
+                spacing={condensed ? 1 : 1.25}
+                alignItems="center"
+              >
                 <input
                   type="time"
                   value={slot.startTime}
@@ -84,6 +103,9 @@ export function AvailabilityDayRow({
                   disabled={disabled}
                   style={{
                     ...timeInputStyle,
+                    ...(condensed
+                      ? { padding: '4px 8px', fontSize: '0.875rem', width: '125px' }
+                      : {}),
                     ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {}),
                   }}
                 />
@@ -99,6 +121,9 @@ export function AvailabilityDayRow({
                   disabled={disabled}
                   style={{
                     ...timeInputStyle,
+                    ...(condensed
+                      ? { padding: '4px 8px', fontSize: '0.875rem', width: '125px' }
+                      : {}),
                     ...(disabled ? { border: 'none', padding: 0, width: 'auto' } : {}),
                   }}
                 />
@@ -108,6 +133,7 @@ export function AvailabilityDayRow({
                     color="error"
                     onClick={() => onRemoveSlot(dayIndex, slotIndex)}
                     disabled={disabled}
+                    sx={condensed ? { p: 0.35 } : undefined}
                   >
                     <Trash2 size={16} />
                   </IconButton>
@@ -119,19 +145,25 @@ export function AvailabilityDayRow({
       </Box>
 
       {day.enabled && !disabled && (
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={condensed ? 0.5 : 1}>
           <Tooltip title="Add slot">
             <IconButton
               size="small"
               color="primary"
               onClick={() => onAddSlot(dayIndex)}
               disabled={disabled}
+              sx={condensed ? { p: 0.35 } : undefined}
             >
               <Plus size={16} />
             </IconButton>
           </Tooltip>
           <Tooltip title="Apply to other days">
-            <IconButton size="small" onClick={() => onCopyDay(dayIndex)} disabled={disabled}>
+            <IconButton
+              size="small"
+              onClick={() => onCopyDay(dayIndex)}
+              disabled={disabled}
+              sx={condensed ? { p: 0.35 } : undefined}
+            >
               <Copy size={16} />
             </IconButton>
           </Tooltip>
@@ -140,3 +172,4 @@ export function AvailabilityDayRow({
     </Stack>
   )
 }
+

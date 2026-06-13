@@ -12,6 +12,7 @@ interface WeeklyAvailabilityPickerProps {
   onChange: (value: SetWeeklyAvailabilityDto) => void
   disabled?: boolean
   showFooter?: boolean
+  condensed?: boolean
 }
 
 export function WeeklyAvailabilityPicker({
@@ -19,6 +20,7 @@ export function WeeklyAvailabilityPicker({
   onChange,
   disabled,
   showFooter,
+  condensed,
 }: WeeklyAvailabilityPickerProps) {
   const {
     days,
@@ -33,7 +35,10 @@ export function WeeklyAvailabilityPicker({
 
   return (
     <Box>
-      <Stack spacing={2} divider={<Divider />}>
+      <Stack
+        spacing={condensed ? 0.75 : 2}
+        divider={<Divider sx={condensed ? { my: 0.3, opacity: 0.8 } : undefined} />}
+      >
         {days.map((day, index) => (
           <AvailabilityDayRow
             key={DAYS[index]}
@@ -46,6 +51,7 @@ export function WeeklyAvailabilityPicker({
             onRemoveSlot={handleRemoveSlot}
             onTimeChange={handleTimeChange}
             onCopyDay={handleCopyDay}
+            condensed={condensed}
           />
         ))}
       </Stack>

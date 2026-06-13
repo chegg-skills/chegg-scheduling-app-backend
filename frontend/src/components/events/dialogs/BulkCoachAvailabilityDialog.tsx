@@ -2,7 +2,6 @@ import { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useQueryClient } from '@tanstack/react-query'
@@ -12,6 +11,7 @@ import { WeeklyAvailabilityPicker } from '@/components/availability/WeeklyAvaila
 import { eventsApi } from '@/api/events'
 import { eventKeys } from '@/hooks/queries/useEvents'
 import type { EventCoach, SetWeeklyAvailabilityDto } from '@/types'
+import { Users } from 'lucide-react'
 
 interface BulkCoachAvailabilityDialogProps {
   isOpen: boolean
@@ -69,83 +69,163 @@ export function BulkCoachAvailabilityDialog({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Set bulk schedule" size="md">
-      <Stack spacing={3}>
+      <Stack spacing={2} sx={{ mt: 1 }}>
         <Stack spacing={1.5}>
           <Typography variant="body2" color="text.secondary">
             Apply the same custom availability to multiple coaches on this event.
           </Typography>
 
-          <Stack direction="row" spacing={1}>
-            <Chip
-              label={`New coaches only (${unsetCoaches.length})`}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <Box
               onClick={() => setMode('unset')}
-              color={mode === 'unset' ? 'primary' : 'default'}
-              variant={mode === 'unset' ? 'filled' : 'outlined'}
-              size="small"
-              clickable
-            />
-            <Chip
-              label={`All coaches (${coaches.length})`}
+              sx={{
+                flex: 1,
+                p: 1.5,
+                borderRadius: 1.5,
+                border: '1px solid',
+                borderColor: mode === 'unset' ? 'primary.main' : 'divider',
+                boxShadow: mode === 'unset'
+                  ? (theme) => `inset 0 0 0 1px ${theme.palette.primary.main}`
+                  : 'none',
+                bgcolor: mode === 'unset' ? '#FFF6F0' : 'background.paper',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0.5,
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: '#FFF6F0',
+                },
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} color={mode === 'unset' ? 'primary.main' : 'text.primary'}>
+                New coaches only ({unsetCoaches.length})
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Apply only to coaches who do not have any custom schedules configured.
+              </Typography>
+            </Box>
+
+            <Box
               onClick={() => setMode('all')}
-              color={mode === 'all' ? 'primary' : 'default'}
-              variant={mode === 'all' ? 'filled' : 'outlined'}
-              size="small"
-              clickable
-            />
+              sx={{
+                flex: 1,
+                p: 1.5,
+                borderRadius: 1.5,
+                border: '1px solid',
+                borderColor: mode === 'all' ? 'primary.main' : 'divider',
+                boxShadow: mode === 'all'
+                  ? (theme) => `inset 0 0 0 1px ${theme.palette.primary.main}`
+                  : 'none',
+                bgcolor: mode === 'all' ? '#FFF6F0' : 'background.paper',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0.5,
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: '#FFF6F0',
+                },
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} color={mode === 'all' ? 'primary.main' : 'text.primary'}>
+                All coaches ({coaches.length})
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Apply to all assigned coaches, overwriting any event-specific overrides.
+              </Typography>
+            </Box>
           </Stack>
 
           {mode === 'all' && unsetCoaches.length < coaches.length && (
-            <Alert severity="warning" sx={{ py: 0.5 }}>
+            <Alert severity="warning" sx={{ borderRadius: 1.5, py: 0.5, fontSize: '0.8rem' }}>
               This will overwrite existing custom schedules for{' '}
               {coaches.length - unsetCoaches.length} coach
               {coaches.length - unsetCoaches.length > 1 ? 'es' : ''}.
             </Alert>
           )}
 
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.75, display: 'block' }}>
-              Applying to {targetCoaches.length} coach{targetCoaches.length !== 1 ? 'es' : ''}:
-            </Typography>
-            <Stack direction="row" flexWrap="wrap" gap={0.75}>
+          <Box
+            sx={{
+              p: 1.25,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1.5,
+              bgcolor: 'action.hover',
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, color: 'text.secondary' }}>
+              <Users size={16} />
+              <Typography variant="caption" fontWeight={600}>
+                Applying to {targetCoaches.length} coach{targetCoaches.length !== 1 ? 'es' : ''}:
+              </Typography>
+            </Stack>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {targetCoaches.length === 0 ? (
                 <Typography variant="caption" color="text.disabled">
                   All coaches already have a custom schedule. Switch to "All coaches" to overwrite.
                 </Typography>
               ) : (
                 targetCoaches.map((c) => (
-                  <Stack key={c.coachUserId} direction="row" spacing={0.5} alignItems="center">
-                    <Avatar sx={{ width: 20, height: 20, fontSize: '0.625rem', bgcolor: 'primary.light', color: 'primary.dark' }}>
+                  <Box
+                    key={c.coachUserId}
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Avatar sx={{ width: 18, height: 18, fontSize: '0.625rem', bgcolor: 'primary.light', color: 'primary.dark' }}>
                       {c.coachUser.firstName[0]}{c.coachUser.lastName[0]}
                     </Avatar>
-                    <Typography variant="caption">
+                    <Typography variant="caption" fontWeight={500} color="text.primary">
                       {c.coachUser.firstName} {c.coachUser.lastName}
                     </Typography>
-                  </Stack>
+                  </Box>
                 ))
               )}
-            </Stack>
+            </Box>
           </Box>
         </Stack>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity="error" sx={{ borderRadius: 1.5, py: 0.5, fontSize: '0.8rem' }}>{error}</Alert>}
 
-        <WeeklyAvailabilityPicker value={slots} onChange={setSlots} disabled={isPending} showFooter={false} />
+        <Box
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1.5,
+            p: 1.25,
+            bgcolor: 'background.paper',
+          }}
+        >
+          <WeeklyAvailabilityPicker value={slots} onChange={setSlots} disabled={isPending} showFooter={false} condensed />
+        </Box>
 
         {slots.length === 0 && targetCoaches.length > 0 && (
-          <Alert severity="info" sx={{ py: 0.5 }}>
+          <Alert severity="info" sx={{ borderRadius: 1.5, py: 0.5, fontSize: '0.8rem' }}>
             Saving with no days selected will clear the custom schedule for the coaches below,
             reverting them to their global profile availability.
           </Alert>
         )}
 
-        <Stack direction="row" justifyContent="flex-end" spacing={2}>
-          <Button variant="secondary" onClick={handleClose} disabled={isPending}>
+        <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 1 }}>
+          <Button variant="secondary" onClick={handleClose} disabled={isPending} sx={{ borderRadius: 1.5 }}>
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             isLoading={isPending}
             disabled={targetCoaches.length === 0}
+            sx={{ borderRadius: 1.5 }}
           >
             {slots.length === 0
               ? `Clear override for ${targetCoaches.length} coach${targetCoaches.length !== 1 ? 'es' : ''}`
