@@ -147,6 +147,17 @@ const deleteEventType = async (
     );
   }
 
+  const directorySectionCount = await prisma.bookingDirectorySection.count({
+    where: { eventTypeId },
+  });
+
+  if (directorySectionCount > 0) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      `Cannot delete event type as it is referenced in ${directorySectionCount} booking directory section(s). Remove it from the booking directory first.`,
+    );
+  }
+
   try {
     const deleted = await prisma.eventType.delete({ where: { id: eventTypeId } });
     getRequestLogger().warn({ eventTypeId, deletedBy: caller.id }, "Event type deleted.");
@@ -156,6 +167,10 @@ const deleteEventType = async (
       P2025: {
         status: StatusCodes.NOT_FOUND,
         message: "Event type not found.",
+      },
+      P2003: {
+        status: StatusCodes.CONFLICT,
+        message: "Cannot delete event type: it is still referenced by another record.",
       },
     });
   }

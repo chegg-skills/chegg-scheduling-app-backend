@@ -101,7 +101,7 @@ export function EventTypeTable({ eventTypes }: EventTypeTableProps) {
   const handleDelete = (eventType: EventType) => {
     handleAction(deleteEventType, eventType.id, {
       title: 'Delete event type',
-      message: `Are you sure you want to PERMANENTLY delete event type "${toTitleCase(eventType.name)}"?\n\nThis action will only succeed if no events are currently using this event type.`,
+      message: `Are you sure you want to PERMANENTLY delete event type "${toTitleCase(eventType.name)}"?\n\nThis will only succeed if no events or booking directory sections reference this event type.`,
       actionName: 'Delete',
     })
   }
