@@ -123,23 +123,47 @@ export const eventFormSchema = z
       })
     }
 
-    if (values.locationType === 'VIRTUAL' && values.locationValue?.trim()) {
-      try {
-        const url = new URL(values.locationValue.trim())
-        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['locationValue'],
-            message: 'Meeting link must be an http or https URL.',
-          })
-        }
-      } catch {
+    if (values.locationType === 'VIRTUAL') {
+      if (values.meetingLinkSource === 'EVENT_LOCATION' && !values.locationValue?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['locationValue'],
-          message: 'Please enter a valid URL (e.g. https://zoom.us/j/...).',
+          message: 'Event Link is required.',
         })
+      } else if (values.locationValue?.trim()) {
+        try {
+          const url = new URL(values.locationValue.trim())
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ['locationValue'],
+              message: 'Meeting link must be an http or https URL.',
+            })
+          }
+        } catch {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['locationValue'],
+            message: 'Please enter a valid URL (e.g. https://zoom.us/j/...).',
+          })
+        }
       }
+    }
+
+    if (values.locationType === 'IN_PERSON' && !values.locationValue?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationValue'],
+        message: 'In-person address is required.',
+      })
+    }
+
+    if (values.locationType === 'CUSTOM' && !values.locationValue?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationValue'],
+        message: 'Custom instructions are required.',
+      })
     }
 
     if (values.locationLinkExpiresAt && !values.locationValue?.trim()) {
@@ -196,12 +220,12 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       meetingLinkSource: event.meetingLinkSource ?? 'COACH_ISV',
       locationLinkExpiresAt: event.locationLinkExpiresAt
         ? (() => {
-            const dt = new Date(event.locationLinkExpiresAt as string)
-            const y = dt.getUTCFullYear()
-            const m = String(dt.getUTCMonth() + 1).padStart(2, '0')
-            const d = String(dt.getUTCDate()).padStart(2, '0')
-            return `${y}-${m}-${d}`
-          })()
+          const dt = new Date(event.locationLinkExpiresAt as string)
+          const y = dt.getUTCFullYear()
+          const m = String(dt.getUTCMonth() + 1).padStart(2, '0')
+          const d = String(dt.getUTCDate()).padStart(2, '0')
+          return `${y}-${m}-${d}`
+        })()
         : null,
       locationLinkReminderDays: event.locationLinkReminderDays ?? null,
       isActive: event.isActive,

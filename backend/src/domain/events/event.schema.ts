@@ -231,27 +231,55 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   }
 
   // Validate locationValue is a real URL for VIRTUAL events. Skip on partial PATCH when absent.
-  if (
-    data.locationType === EventLocationType.VIRTUAL &&
-    data.locationValue !== undefined &&
-    data.locationValue.trim()
-  ) {
-    try {
-      const url = new URL(data.locationValue.trim());
-      if (url.protocol !== "http:" && url.protocol !== "https:") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["locationValue"],
-          message: "Meeting link must be an http or https URL.",
-        });
-      }
-    } catch {
+  if (data.locationType === EventLocationType.VIRTUAL && data.locationValue !== undefined) {
+    if (data.meetingLinkSource === MeetingLinkSource.EVENT_LOCATION && data.locationValue.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["locationValue"],
-        message: "Please enter a valid URL (e.g. https://zoom.us/j/...).",
+        message: "Event Link is required.",
       });
+    } else if (data.locationValue.trim()) {
+      try {
+        const url = new URL(data.locationValue.trim());
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["locationValue"],
+            message: "Meeting link must be an http or https URL.",
+          });
+        }
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["locationValue"],
+          message: "Please enter a valid URL (e.g. https://zoom.us/j/...).",
+        });
+      }
     }
+  }
+
+  if (
+    data.locationType === EventLocationType.IN_PERSON &&
+    data.locationValue !== undefined &&
+    data.locationValue.trim() === ""
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationValue"],
+      message: "In-person address is required.",
+    });
+  }
+
+  if (
+    data.locationType === EventLocationType.CUSTOM &&
+    data.locationValue !== undefined &&
+    data.locationValue.trim() === ""
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["locationValue"],
+      message: "Custom instructions are required.",
+    });
   }
 
   // Expiry requires a non-empty location URL. Skip on partial PATCH when locationValue is absent.
