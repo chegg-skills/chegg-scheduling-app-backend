@@ -113,11 +113,11 @@ describe('Event Creation Integration', () => {
     fireEvent.click(await screen.findByRole('option', { name: /Tutorial/i }))
 
     // 5. Select Interaction Type (Default is ONE_TO_ONE, but let's click it to be sure)
-    fireEvent.click(screen.getByText(/One-to-One/i))
+    fireEvent.click(screen.getByText('One-to-One', { selector: 'p' }))
 
     // 6. Fill Location
     fireEvent.click(screen.getByText('Shared Event Link'))
-    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
+    const locationValueInput = await screen.findByLabelText(/^Event Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/test' } })
 
     // 7. Fill Scheduling Policy (Duration)
@@ -165,11 +165,11 @@ describe('Event Creation Integration', () => {
     fireEvent.click(await screen.findByRole('option', { name: /Tutorial/i }))
 
     // 5. Select Interaction Type -> One-to-Many
-    fireEvent.click(screen.getByText(/One-to-Many/i))
+    fireEvent.click(screen.getByText('One-to-Many', { selector: 'p' }))
 
     // 6. Fill Location
     fireEvent.click(screen.getByText('Shared Event Link'))
-    const locationValueInput = await screen.findByLabelText(/Meeting Link/i)
+    const locationValueInput = await screen.findByLabelText(/^Event Link/i)
     fireEvent.change(locationValueInput, { target: { value: 'https://zoom.us/group' } })
 
     // 7. Fill Participant Capacity (shown for One-to-Many)

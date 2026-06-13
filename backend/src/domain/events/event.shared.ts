@@ -82,7 +82,6 @@ export type CreateEventInput = {
   fixedLeadCoachId?: string | null;
   bufferAfterMinutes?: number;
   maxBookingWindowDays?: number | null;
-  recurrenceVisibilityLimit?: number | null;
   showDescription?: boolean;
   deferCoachReveal?: boolean;
   allowAnonymousBooking?: boolean;

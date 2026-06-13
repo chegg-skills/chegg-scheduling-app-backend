@@ -135,52 +135,32 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
         </Stack>
       )}
 
-      {!allowStudentCoachChoice &&
-        (canChooseStrategy ? (
-          <FormField
-            label="Assignment Strategy"
-            htmlFor="assignmentStrategy"
-            error={errors.assignmentStrategy?.message}
-            info="The selected interaction type supports both direct and round-robin assignment, so choose the behavior for this event."
+      {!allowStudentCoachChoice && canChooseStrategy && (
+        <FormField
+          label="Assignment Strategy"
+          htmlFor="assignmentStrategy"
+          error={errors.assignmentStrategy?.message}
+          info="The selected interaction type supports both direct and round-robin assignment, so choose the behavior for this event."
+        >
+          <Select
+            id="assignmentStrategy"
+            value={selectedStrategy}
+            hasError={!!errors.assignmentStrategy}
+            {...register('assignmentStrategy')}
           >
-            <Select
-              id="assignmentStrategy"
-              value={selectedStrategy}
-              hasError={!!errors.assignmentStrategy}
-              {...register('assignmentStrategy')}
-            >
-              <MenuItem value="DIRECT">
-                Direct — pick from this event&apos;s assigned coaches
-              </MenuItem>
-              <MenuItem value="ROUND_ROBIN">Round Robin — rotate across the coach pool</MenuItem>
-            </Select>
-            {isRoundRobin && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                Round-robin rotates across all coaches in the pool. At least 2 coaches must be in
-                the pool — a single coach has nothing to rotate to.
-              </Typography>
-            )}
-          </FormField>
-        ) : (
-          <FormField
-            label="Assignment Strategy"
-            htmlFor="assignmentStrategyLocked"
-            info="This interaction type only supports direct assignment for events."
-          >
-            <Input
-              id="assignmentStrategyLocked"
-              value={caps ? 'Direct' : 'Select an interaction type first'}
-              disabled
-            />
+            <MenuItem value="DIRECT">
+              Direct — pick from this event&apos;s assigned coaches
+            </MenuItem>
+            <MenuItem value="ROUND_ROBIN">Round Robin — rotate across the coach pool</MenuItem>
+          </Select>
+          {isRoundRobin && (
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              {!caps
-                ? 'Choose an interaction type to see the assignment options available for this event.'
-                : !caps.multipleCoaches && caps.multipleParticipants
-                  ? 'Group sessions always use Direct assignment — all students in the same slot share the same coach.'
-                  : 'Switch to a multi-coach interaction type if this event should rotate between coaches.'}
+              Round-robin rotates across all coaches in the pool. At least 2 coaches must be in
+              the pool — a single coach has nothing to rotate to.
             </Typography>
-          </FormField>
-        ))}
+          )}
+        </FormField>
+      )}
 
 
       {/* DIRECT strategy: pick the always-assigned coach (stored as fixedLeadCoachId).

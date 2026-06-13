@@ -214,6 +214,7 @@ const createEventScheduleSlot = async (
         frequency: validated.recurrence.frequency,
         isContinuous: validated.recurrence.isContinuous ?? false,
         isActive: true,
+        recurrenceVisibilityLimit: validated.recurrence.recurrenceVisibilityLimit ?? null,
       },
     });
     const recurrenceGroupId = group.id;

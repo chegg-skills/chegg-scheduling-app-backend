@@ -21,6 +21,7 @@ export interface RecurrenceConfig {
   frequency: RecurrenceFrequency
   occurrences: number | null
   isContinuous?: boolean
+  recurrenceVisibilityLimit?: number | null
 }
 
 interface RecurrenceSelectorProps {
@@ -188,6 +189,30 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
               </FormField>
             </Box>
           </Stack>
+
+          <Box sx={{ width: { sm: 160 } }}>
+            <FormField
+              label="Visibility Limit (slots)"
+              htmlFor="recurrence-visibility-limit"
+              info="Limit how many upcoming slots in this series are shown on the public booking page. Leave empty to show all."
+            >
+              <Input
+                id="recurrence-visibility-limit"
+                type="number"
+                min="1"
+                placeholder="e.g. 2"
+                value={value.recurrenceVisibilityLimit ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value
+                  onChange({
+                    ...value,
+                    recurrenceVisibilityLimit: v === '' ? null : Math.max(1, parseInt(v, 10)),
+                  })
+                }}
+                disabled={disabled}
+              />
+            </FormField>
+          </Box>
 
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
             <Switch

@@ -32,7 +32,6 @@ const publicEventSelect = {
   minimumNoticeMinutes: true,
   maxParticipantCount: true,
   maxBookingWindowDays: true,
-  recurrenceVisibilityLimit: true,
   interactionType: true,
   assignmentStrategy: true,
   allowStudentCoachChoice: true,
