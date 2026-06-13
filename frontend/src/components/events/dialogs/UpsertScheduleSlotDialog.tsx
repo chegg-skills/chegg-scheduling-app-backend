@@ -9,6 +9,7 @@ import { Input } from '@/components/shared/form/Input'
 import MenuItem from '@mui/material/MenuItem'
 import { Select } from '@/components/shared/form/Select'
 import Avatar from '@mui/material/Avatar'
+import { Clock } from 'lucide-react'
 import type { Event, EventScheduleSlot, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { useScheduleSlotForm } from './useScheduleSlotForm'
@@ -82,77 +83,110 @@ export function UpsertScheduleSlotDialog({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`${mode} Scheduled Session`}>
-      <Stack spacing={3} sx={{ mt: 1 }}>
-        <FormField
-          label="Start Date & Time"
-          htmlFor="slot-start"
-          required
-          error={error || undefined}
-        >
-          <DateTimePicker
-            value={newSlotDate ? new Date(newSlotDate) : null}
-            onChange={(newValue) => {
-              if (newValue && !isNaN(newValue.getTime())) {
-                handleDateChange(format(newValue, "yyyy-MM-dd'T'HH:mm"))
-              } else {
-                handleDateChange('')
-              }
-            }}
-            disabled={isPending}
-            slotProps={{
-              textField: {
-                size: 'small',
-                fullWidth: true,
-                error: !!error,
-                id: 'slot-start',
-              },
-            }}
-          />
-        </FormField>
+      <Stack spacing={2.5} sx={{ mt: 1 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <Box sx={{ flex: supportsMultipleParticipants ? 2 : 1 }}>
+            <FormField
+              label="Start Date & Time"
+              htmlFor="slot-start"
+              required
+              error={error || undefined}
+            >
+              <DateTimePicker
+                value={newSlotDate ? new Date(newSlotDate) : null}
+                onChange={(newValue) => {
+                  if (newValue && !isNaN(newValue.getTime())) {
+                    handleDateChange(format(newValue, "yyyy-MM-dd'T'HH:mm"))
+                  } else {
+                    handleDateChange('')
+                  }
+                }}
+                disabled={isPending}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    error: !!error,
+                    id: 'slot-start',
+                    InputProps: {
+                      sx: {
+                        borderRadius: 1.5,
+                        '& fieldset': {
+                          borderColor: 'divider',
+                        },
+                      },
+                    },
+                  },
+                }}
+              />
+            </FormField>
+          </Box>
 
-        {supportsMultipleParticipants && (
-          <FormField
-            label="Capacity Override (Optional)"
-            htmlFor="slot-capacity"
-            info={
-              event.maxParticipantCount
-                ? `Leave empty to use the event default (${event.maxParticipantCount} students).`
-                : 'Leave empty — this event has no default capacity limit.'
-            }
-          >
-            <Input
-              id="slot-capacity"
-              type="number"
-              min="1"
-              value={newSlotCapacity}
-              onChange={(e) => setNewSlotCapacity(e.target.value ? Number(e.target.value) : '')}
-              placeholder="e.g. 20"
-            />
-          </FormField>
-        )}
+          {supportsMultipleParticipants && (
+            <Box sx={{ flex: 1 }}>
+              <FormField
+                label="Capacity Override"
+                htmlFor="slot-capacity"
+                info={
+                  event.maxParticipantCount
+                    ? `Leave empty to use event default (${event.maxParticipantCount}).`
+                    : 'Leave empty for no limit.'
+                }
+              >
+                <Input
+                  id="slot-capacity"
+                  type="number"
+                  min="1"
+                  value={newSlotCapacity}
+                  onChange={(e) => setNewSlotCapacity(e.target.value ? Number(e.target.value) : '')}
+                  placeholder="e.g. 20"
+                  sx={{ borderRadius: 1.5 }}
+                />
+              </FormField>
+            </Box>
+          )}
+        </Stack>
 
         {error && (
-          <Alert severity="warning" sx={{ mb: 1 }}>
+          <Alert severity="warning" sx={{ mb: 1, borderRadius: 1.5 }}>
             {error}
           </Alert>
         )}
 
-        <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
-          <Typography variant="caption" color="text.secondary" display="block">
-            Note: The session will last {event.durationSeconds / 60} minutes based on the event
-            configuration.
-          </Typography>
-          {newSlotDate && previewEndTime && (
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-              Session ends at:{' '}
-              {new Intl.DateTimeFormat('en-US', {
-                timeZone: browserTimezone,
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true,
-              }).format(previewEndTime)}
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 1.5,
+            border: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center' }}>
+            <Clock size={20} />
+          </Box>
+          <Box>
+            <Typography variant="body2" fontWeight={600} color="text.primary">
+              Note: The session will last {event.durationSeconds / 60} minutes based on the event configuration.
             </Typography>
-          )}
+            <Typography variant="body2" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+              Session ends at:{' '}
+              <strong>
+                {newSlotDate && previewEndTime ? (
+                  new Intl.DateTimeFormat('en-US', {
+                    timeZone: browserTimezone,
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true,
+                  }).format(previewEndTime)
+                ) : (
+                  '—'
+                )}
+              </strong>
+            </Typography>
+          </Box>
         </Box>
 
         <FormField
@@ -165,13 +199,19 @@ export function UpsertScheduleSlotDialog({
             value={assignedCoachId ?? ''}
             onChange={(e) => setAssignedCoachId((e.target.value as string) || null)}
             displayEmpty
+            sx={{
+              borderRadius: 1.5,
+              '& fieldset': {
+                borderColor: 'divider',
+              },
+            }}
           >
             <MenuItem value="">
               <em>Event Default</em>
             </MenuItem>
             {event.coaches.map((coach) => (
               <MenuItem key={coach.id} value={coach.coachUserId}>
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack direction="row" spacing={1.5} alignItems="center">
                   <Avatar
                     src={coach.coachUser.avatarUrl ?? undefined}
                     sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
@@ -187,7 +227,7 @@ export function UpsertScheduleSlotDialog({
             ))}
           </Select>
           {noCoachesConfigured && !assignedCoachId && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
+            <Alert severity="warning" sx={{ mt: 1, borderRadius: 1.5 }}>
               No coaches are assigned to this event. Students will not be able to book this slot
               until at least one coach is added to the event.
             </Alert>
@@ -204,10 +244,15 @@ export function UpsertScheduleSlotDialog({
         )}
 
         <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 2 }}>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} sx={{ borderRadius: 1.5 }}>
             Cancel
           </Button>
-          <Button onClick={handleAdd} isLoading={isPending} disabled={!!error || !newSlotDate}>
+          <Button
+            onClick={handleAdd}
+            isLoading={isPending}
+            disabled={!!error || !newSlotDate}
+            sx={{ borderRadius: 1.5 }}
+          >
             {mode === 'Edit' ? 'Update Session' : 'Add Session'}
           </Button>
         </Stack>

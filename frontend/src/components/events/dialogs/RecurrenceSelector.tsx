@@ -9,6 +9,7 @@ import { Select } from '@/components/shared/form/Select'
 import { Input } from '@/components/shared/form/Input'
 import { Switch } from '@/components/shared/form/Switch'
 import { InfoTooltip } from '@/components/shared/ui/InfoTooltip'
+import { Calendar as CalendarIcon } from 'lucide-react'
 
 export type RecurrenceFrequency =
   | 'WEEKLY'
@@ -70,6 +71,9 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
   const [localOccurrences, setLocalOccurrences] = useState(
     value && value.occurrences != null ? value.occurrences.toString() : '4'
   )
+  const [localVisibilityLimit, setLocalVisibilityLimit] = useState(
+    value && value.recurrenceVisibilityLimit != null ? value.recurrenceVisibilityLimit.toString() : ''
+  )
 
   useEffect(() => {
     if (value) {
@@ -84,10 +88,24 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
     }
   }, [value?.occurrences, value?.isContinuous])
 
+  useEffect(() => {
+    if (value) {
+      if (value.recurrenceVisibilityLimit != null) {
+        const parsedLocal = parseInt(localVisibilityLimit, 10)
+        if (value.recurrenceVisibilityLimit !== parsedLocal) {
+          setLocalVisibilityLimit(value.recurrenceVisibilityLimit.toString())
+        }
+      } else {
+        setLocalVisibilityLimit('')
+      }
+    }
+  }, [value?.recurrenceVisibilityLimit])
+
   const handleToggle = (enabled: boolean) => {
     if (enabled) {
-      onChange({ frequency: 'WEEKLY', occurrences: 4, isContinuous: false })
+      onChange({ frequency: 'WEEKLY', occurrences: 4, isContinuous: false, recurrenceVisibilityLimit: null })
       setLocalOccurrences('4')
+      setLocalVisibilityLimit('')
     } else {
       onChange(null)
     }
@@ -143,111 +161,200 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
     }
   }
 
+  const handleVisibilityLimitChange = (val: string) => {
+    const cleaned = val.replace(/[^0-9]/g, '')
+    setLocalVisibilityLimit(cleaned)
+
+    const parsed = parseInt(cleaned, 10)
+    if (value) {
+      onChange({
+        ...value,
+        recurrenceVisibilityLimit: !isNaN(parsed) && parsed >= 1 ? parsed : null,
+      })
+    }
+  }
+
+  const handleVisibilityLimitBlur = () => {
+    if (!value) return
+    const parsed = parseInt(localVisibilityLimit, 10)
+    if (localVisibilityLimit === '') {
+      setLocalVisibilityLimit('')
+      onChange({ ...value, recurrenceVisibilityLimit: null })
+    } else if (isNaN(parsed) || parsed < 1) {
+      setLocalVisibilityLimit('1')
+      onChange({ ...value, recurrenceVisibilityLimit: 1 })
+    } else {
+      setLocalVisibilityLimit(parsed.toString())
+      onChange({ ...value, recurrenceVisibilityLimit: parsed })
+    }
+  }
+
   return (
-    <Stack spacing={2} sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-      <Switch
-        label="Repeat this session"
-        checked={isEnabled}
-        onChange={handleToggle}
-        disabled={disabled}
-      />
+    <Stack spacing={2} sx={{ mt: 1, pt: 1 }}>
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 1.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <Switch
+          label="Repeat this session (Recurring)"
+          checked={isEnabled}
+          onChange={handleToggle}
+          disabled={disabled}
+        />
 
-      {isEnabled && (
-        <>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Box sx={{ flex: 1 }}>
-              <FormField label="Frequency" htmlFor="recurrence-frequency">
-                <Select
-                  value={value.frequency}
-                  onChange={(e) =>
-                    onChange({ ...value, frequency: e.target.value as RecurrenceFrequency })
-                  }
-                  disabled={disabled}
+        {isEnabled && (
+          <Stack spacing={2} sx={{ mt: 2.5 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Box sx={{ flex: 1 }}>
+                <FormField label="Frequency" htmlFor="recurrence-frequency">
+                  <Select
+                    value={value.frequency}
+                    onChange={(e) =>
+                      onChange({ ...value, frequency: e.target.value as RecurrenceFrequency })
+                    }
+                    disabled={disabled}
+                    sx={{
+                      borderRadius: 1.5,
+                      '& fieldset': {
+                        borderColor: 'divider',
+                      },
+                    }}
+                  >
+                    <MenuItem value="WEEKLY">Every week</MenuItem>
+                    <MenuItem value="BI_WEEKLY">Every 2 weeks</MenuItem>
+                    <MenuItem value="MONTHLY">Every month</MenuItem>
+                    <MenuItem value="TWICE_A_MONTH">Twice a month (every 14 days)</MenuItem>
+                    <MenuItem value="THRICE_A_WEEK">3 times a week</MenuItem>
+                  </Select>
+                </FormField>
+              </Box>
+
+              <Box sx={{ width: { sm: 120 } }}>
+                <FormField
+                  label="Occurrences"
+                  htmlFor="recurrence-occurrences"
+                  info="How many sessions to create in total, including the first one."
                 >
-                  <MenuItem value="WEEKLY">Every week</MenuItem>
-                  <MenuItem value="BI_WEEKLY">Every 2 weeks</MenuItem>
-                  <MenuItem value="MONTHLY">Every month</MenuItem>
-                  <MenuItem value="TWICE_A_MONTH">Twice a month (every 14 days)</MenuItem>
-                  <MenuItem value="THRICE_A_WEEK">3 times a week</MenuItem>
-                </Select>
-              </FormField>
-            </Box>
+                  <Input
+                    id="recurrence-occurrences"
+                    type="text"
+                    value={localOccurrences}
+                    onChange={(e) => handleOccurrencesChange(e.target.value)}
+                    onBlur={handleBlur}
+                    disabled={disabled || value.isContinuous}
+                    sx={{ borderRadius: 1.5 }}
+                  />
+                </FormField>
+              </Box>
+            </Stack>
 
-            <Box sx={{ width: { sm: 120 } }}>
-              <FormField
-                label="Occurrences"
-                htmlFor="recurrence-occurrences"
-                info="How many sessions to create in total, including the first one."
-              >
-                <Input
-                  type="text"
-                  value={localOccurrences}
-                  onChange={(e) => handleOccurrencesChange(e.target.value)}
-                  onBlur={handleBlur}
-                  disabled={disabled || value.isContinuous}
-                />
-              </FormField>
-            </Box>
-          </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Box sx={{ flex: 1 }}>
+                <FormField
+                  label="Recurrence Visibility Limit (slots)"
+                  htmlFor="recurrence-visibility-limit"
+                  info="How many upcoming recurring slots are visible to students at one time. Leave empty for all."
+                >
+                  <Input
+                    id="recurrence-visibility-limit"
+                    type="text"
+                    placeholder="e.g. 5"
+                    value={localVisibilityLimit}
+                    onChange={(e) => handleVisibilityLimitChange(e.target.value)}
+                    onBlur={handleVisibilityLimitBlur}
+                    disabled={disabled}
+                    sx={{ borderRadius: 1.5 }}
+                  />
+                </FormField>
+              </Box>
+              <Box sx={{ flex: 1, display: { xs: 'none', sm: 'block' } }} />
+            </Stack>
 
-          <Box sx={{ width: { sm: 160 } }}>
-            <FormField
-              label="Visibility Limit (slots)"
-              htmlFor="recurrence-visibility-limit"
-              info="Limit how many upcoming slots in this series are shown on the public booking page. Leave empty to show all."
-            >
-              <Input
-                id="recurrence-visibility-limit"
-                type="number"
-                min="1"
-                placeholder="e.g. 2"
-                value={value.recurrenceVisibilityLimit ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value
-                  onChange({
-                    ...value,
-                    recurrenceVisibilityLimit: v === '' ? null : Math.max(1, parseInt(v, 10)),
-                  })
-                }}
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
+              <Switch
+                label="Repeat indefinitely (continuous series)"
+                checked={!!value.isContinuous}
+                onChange={handleIndefiniteToggle}
                 disabled={disabled}
               />
-            </FormField>
-          </Box>
+              <InfoTooltip title="Continuous series automatically pre-generate slots up to 90 days in advance. As time passes, new slots are dynamically added to maintain the rolling window indefinitely until manually stopped." />
+            </Stack>
 
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
-            <Switch
-              label="Repeat indefinitely (continuous series)"
-              checked={!!value.isContinuous}
-              onChange={handleIndefiniteToggle}
-              disabled={disabled}
-            />
-            <InfoTooltip title="Continuous series automatically pre-generate slots up to 90 days in advance. As time passes, new slots are dynamically added to maintain the rolling window indefinitely until manually stopped." />
-          </Stack>
-
-          {startDate && (
-            <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                sx={{ mb: 0.5, fontWeight: 600 }}
+            {startDate && (
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: 'background.paper',
+                  borderRadius: 1,
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                }}
               >
-                Sessions will be created on:
-              </Typography>
-              {generatePreviewDates(startDate, value).map((date, i) => (
-                <Typography key={i} variant="caption" color="text.secondary" display="block">
-                  {i + 1}. {format(date, 'EEE, MMM d, yyyy @ h:mm a')}
+                <Typography
+                  variant="caption"
+                  color="text.primary"
+                  display="block"
+                  sx={{
+                    mb: 1.25,
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                  }}
+                >
+                  <CalendarIcon size={14} style={{ opacity: 0.7 }} />
+                  Scheduled dates preview:
                 </Typography>
-              ))}
-              {value.isContinuous && (
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontStyle: 'italic', mt: 0.5 }}>
-                  ...repeats indefinitely
-                </Typography>
-              )}
-            </Box>
-          )}
-        </>
-      )}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                    gap: 1,
+                  }}
+                >
+                  {generatePreviewDates(startDate, value).map((date, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        p: 0.75,
+                        bgcolor: 'action.hover',
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Typography variant="caption" fontWeight={700} color="primary.main">
+                        #{i + 1}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {format(date, 'EEE, MMM d, yyyy @ h:mm a')}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+                {value.isContinuous && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    sx={{ fontStyle: 'italic', mt: 1 }}
+                  >
+                    ...repeats indefinitely (rolling 90-day window)
+                  </Typography>
+                )}
+              </Box>
+            )}
+          </Stack>
+        )}
+      </Box>
     </Stack>
   )
 }
