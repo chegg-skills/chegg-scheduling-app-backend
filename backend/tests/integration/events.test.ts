@@ -1829,13 +1829,13 @@ describe("Event location link expiration & reminder configuration", () => {
     expect(res.status).toBe(400);
   });
 
-  it("auto-nullifies expiration configuration if meetingLinkSource is updated away from EVENT_LOCATION", async () => {
+  it("preserves expiration configuration when meetingLinkSource is updated away from EVENT_LOCATION (locationType stays VIRTUAL)", async () => {
     const eventType = await createEventType(context.superAdminToken);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 10);
 
     const created = await createEvent(context.teamId, context.teamAdminToken, {
-      name: "Auto Nullify Test Event",
+      name: "Preserve Expiry Test Event",
       eventTypeId: eventType.body.data.id,
       locationType: "VIRTUAL",
       locationValue: "https://example.com/meeting",
@@ -1846,12 +1846,44 @@ describe("Event location link expiration & reminder configuration", () => {
     expect(created.status).toBe(201);
     const eventId = created.body.data.id;
 
-    // Update meetingLinkSource to COACH_ISV
+    // Switching meetingLinkSource to COACH_ISV keeps locationType=VIRTUAL,
+    // so expiry fields should be preserved (not nullified).
     const res = await request(app)
       .patch(`/api/events/${eventId}`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
         meetingLinkSource: "COACH_ISV",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.locationLinkExpiresAt).not.toBeNull();
+    expect(res.body.data.locationLinkReminderDays).toBe(3);
+  });
+
+  it("auto-nullifies expiration configuration when locationType is updated to IN_PERSON", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 10);
+
+    const created = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Auto Nullify On LocType Test",
+      eventTypeId: eventType.body.data.id,
+      locationType: "VIRTUAL",
+      locationValue: "https://example.com/meeting",
+      meetingLinkSource: "EVENT_LOCATION",
+      locationLinkExpiresAt: expiresAt.toISOString(),
+      locationLinkReminderDays: 3,
+    });
+    expect(created.status).toBe(201);
+    const eventId = created.body.data.id;
+
+    // Switching to IN_PERSON nullifies expiry because it's not VIRTUAL/CUSTOM.
+    const res = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        locationType: "IN_PERSON",
+        locationValue: "123 Main St",
       });
 
     expect(res.status).toBe(200);
