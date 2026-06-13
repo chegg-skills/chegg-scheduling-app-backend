@@ -161,8 +161,8 @@ export const getManagedEvent = async (
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "eventId is required.");
   }
 
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
+  const event = await prisma.event.findFirst({
+    where: { id: eventId, deletedAt: null },
     include: eventInclude,
   });
 

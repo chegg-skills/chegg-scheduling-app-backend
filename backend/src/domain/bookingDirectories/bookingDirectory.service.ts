@@ -178,7 +178,7 @@ const addTeamToSection = async (
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Section not found in this booking directory.");
   }
 
-  const team = await prisma.team.findUnique({ where: { id: payload.teamId } });
+  const team = await prisma.team.findFirst({ where: { id: payload.teamId, deletedAt: null } });
   if (!team) throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
 
   try {

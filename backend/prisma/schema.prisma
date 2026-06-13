@@ -62,6 +62,7 @@ model Team {
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
   publicBookingSlug  String                  @unique
+  deletedAt          DateTime?
   bookings           Booking[]
   events             Event[]
   eventGroups        EventGroup[]
@@ -160,6 +161,7 @@ model Event {
   locationLinkExpiresAt     DateTime?
   locationLinkReminderDays  Int?
   groupId                   String?
+  deletedAt                 DateTime?
   bookings                  Booking[]
   createdBy                 User                      @relation("EventCreatedBy", fields: [createdById], references: [id])
   eventType                 EventType                 @relation(fields: [eventTypeId], references: [id])

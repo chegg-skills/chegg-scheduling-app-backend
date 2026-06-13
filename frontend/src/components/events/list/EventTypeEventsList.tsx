@@ -109,9 +109,14 @@ export function EventTypeEventsList({
   }
 
   const handleDelete = (event: Event) => {
+    const bookingCount = event._count?.bookings ?? 0
+    const bookingNote =
+      bookingCount > 0
+        ? `\n\nThis event has ${bookingCount} booking record(s). Those sessions will still be conducted as scheduled — only the event template will be removed. All booking history is preserved.`
+        : `\n\nAll booking records will be preserved for historical reference.`
     handleAction(deleteEvent, event.id, {
       title: 'Delete event',
-      message: `Are you sure you want to PERMANENTLY delete event "${toTitleCase(event.name)}"?`,
+      message: `Are you sure you want to PERMANENTLY delete event "${toTitleCase(event.name)}"?${bookingNote}`,
       actionName: 'Delete',
     })
   }

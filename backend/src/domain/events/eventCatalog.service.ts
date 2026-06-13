@@ -112,7 +112,7 @@ const getEventTypeUsage = async (
   _caller: CallerContext,
 ): Promise<{ id: string; name: string; team: { id: string; name: string } }[]> => {
   const events = await prisma.event.findMany({
-    where: { eventTypeId },
+    where: { eventTypeId, deletedAt: null },
     select: {
       id: true,
       name: true,
