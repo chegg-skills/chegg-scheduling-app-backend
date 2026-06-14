@@ -18,6 +18,7 @@ import { useTableSort } from '@/hooks/useTableSort'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { EventForm } from '../form/EventForm'
 import { EventTableRow } from './EventTableRow'
+import { EmbedBookingDialog } from '../dialogs/EmbedBookingDialog'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { eventSortAccessors, eventTableColumns } from './eventTableUtils'
 
@@ -41,6 +42,7 @@ export function EventTable({
   canManage = false,
 }: EventTableProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [embeddingEvent, setEmbeddingEvent] = useState<Event | null>(null)
   const { mutate: deleteEvent } = useDeleteEvent()
   const { mutate: updateEvent } = useUpdateEvent()
   const { mutate: duplicateEvent } = useDuplicateEvent()
@@ -253,6 +255,7 @@ export function EventTable({
                       onDuplicate={handleDuplicate}
                       onToggleActive={handleToggleActive}
                       onDelete={handleDelete}
+                      onEmbed={setEmbeddingEvent}
                       onViewUser={onViewUser}
                       canManage={canManage}
                     />
@@ -278,6 +281,14 @@ export function EventTable({
             onCancel={() => setEditingEvent(null)}
           />
         </Modal>
+      )}
+
+      {embeddingEvent && (
+        <EmbedBookingDialog
+          isOpen
+          onClose={() => setEmbeddingEvent(null)}
+          event={embeddingEvent}
+        />
       )}
     </>
   )

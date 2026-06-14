@@ -7,7 +7,7 @@ import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 import Tooltip from '@mui/material/Tooltip'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Calendar, Copy, Edit, Eye, EyeOff, FolderInput, Trash2 } from 'lucide-react'
+import { Calendar, Code, Copy, Edit, Eye, EyeOff, FolderInput, Trash2 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import { useState } from 'react'
 import { Badge } from '@/components/shared/ui/Badge'
@@ -25,6 +25,7 @@ interface EventTableRowProps {
   onEdit: (event: Event) => void
   onDuplicate: (event: Event) => void
   onToggleActive: (event: Event) => void | Promise<void>
+  onEmbed?: (event: Event) => void
   onViewUser?: (userId: string) => void
   canManage?: boolean
 }
@@ -39,6 +40,7 @@ export function EventTableRow({
   onEdit,
   onDuplicate,
   onToggleActive,
+  onEmbed,
   onViewUser,
   canManage = false,
 }: EventTableRowProps) {
@@ -171,6 +173,15 @@ export function EventTableRow({
                 label: 'Duplicate event',
                 icon: <Copy size={16} />,
                 onClick: () => onDuplicate(event),
+              },
+              {
+                label: 'Add to website',
+                icon: <Code size={16} />,
+                onClick: () => onEmbed?.(event),
+                disabled: !event.isActive || !event.publicBookingSlug,
+                tooltip: !event.publicBookingSlug
+                  ? 'Set a public URL for this event first'
+                  : undefined,
               },
               {
                 label: event.isActive ? 'Mark as inactive' : 'Mark as active',

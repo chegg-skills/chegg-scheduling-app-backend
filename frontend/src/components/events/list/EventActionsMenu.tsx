@@ -2,7 +2,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
-import { Edit2, Copy, Trash2 } from 'lucide-react'
+import { Code, Copy, Edit2, Trash2 } from 'lucide-react'
 
 const TRANSFORM_ORIGIN = { horizontal: 'right' as const, vertical: 'top' as const }
 const ANCHOR_ORIGIN = { horizontal: 'right' as const, vertical: 'bottom' as const }
@@ -31,6 +31,7 @@ interface EventActionsMenuProps {
   onEdit: () => void
   onDuplicate: () => void
   onDelete: () => void
+  onEmbed?: () => void
 }
 
 export function EventActionsMenu({
@@ -39,6 +40,7 @@ export function EventActionsMenu({
   onEdit,
   onDuplicate,
   onDelete,
+  onEmbed,
 }: EventActionsMenuProps) {
   return (
     <Menu
@@ -74,6 +76,21 @@ export function EventActionsMenu({
         <Copy size={14} />
         <Typography variant="body2">Duplicate</Typography>
       </MenuItem>
+
+      {onEmbed && (
+        <MenuItem
+          onClick={onEmbed}
+          sx={{
+            '&:hover': {
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+              color: 'primary.main',
+            },
+          }}
+        >
+          <Code size={14} />
+          <Typography variant="body2">Add to website</Typography>
+        </MenuItem>
+      )}
 
       <MenuItem
         onClick={onDelete}
