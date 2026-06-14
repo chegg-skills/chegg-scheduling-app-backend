@@ -8,6 +8,8 @@ import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
+import Link from '@mui/material/Link'
+import { Link as RouterLink } from 'react-router-dom'
 import { alpha } from '@mui/material/styles'
 import {
   Clock,
@@ -135,6 +137,7 @@ interface EventCardProps {
   onViewUser?: (userId: string) => void
   onToggleActive: (event: Event) => void
   onMenuOpen: (e: MouseEvent<HTMLButtonElement>, event: Event) => void
+  showTeamName?: boolean
 }
 
 export function EventCard({
@@ -146,6 +149,7 @@ export function EventCard({
   onViewUser,
   onToggleActive,
   onMenuOpen,
+  showTeamName = false,
 }: EventCardProps) {
   const durationMinutes = Math.floor(event.durationSeconds / 60)
 
@@ -167,19 +171,24 @@ export function EventCard({
       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2.5}>
         {/* Left: name, badges, coaches */}
         <Stack spacing={1} sx={{ minWidth: 0, flex: 1 }}>
-          <Typography
-            variant="subtitle1"
+          <Link
+            component={RouterLink}
+            to={`/events/${event.id}`}
             sx={{
               fontWeight: 700,
               color: 'text.primary',
+              textDecoration: 'none',
+              fontSize: '0.975rem',
+              '&:hover': { color: 'primary.main', textDecoration: 'underline' },
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              fontSize: '0.975rem',
+              alignSelf: 'flex-start',
+              maxWidth: '100%',
             }}
           >
             {toTitleCase(event.name)}
-          </Typography>
+          </Link>
 
           <Stack
             direction="row"
@@ -196,6 +205,15 @@ export function EventCard({
                 {currentEventType?.name}
               </Typography>
             </Box>
+
+            {showTeamName && event.team?.name && (
+              <Box sx={BADGE_SX}>
+                <Users size={13} style={{ opacity: 0.8, color: '#6b7280' }} />
+                <Typography variant="caption" sx={BADGE_LABEL_SX}>
+                  {toTitleCase(event.team.name)}
+                </Typography>
+              </Box>
+            )}
 
             <EventBadge icon={Clock} iconColor="#007b83" label={`${durationMinutes} min`} />
             <LocationBadge type={event.locationType} value={event.locationValue} />

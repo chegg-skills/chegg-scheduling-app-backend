@@ -35,10 +35,51 @@ const handlers = [
           {
             id: 'event-1',
             name: 'Algebra 101',
-            duration: 30,
+            durationSeconds: 1800,
             isActive: true,
             coaches: [],
             eventTypeId: 'type-1',
+            locationType: 'VIRTUAL',
+            locationValue: 'http://zoom.us',
+            bookingMode: 'COACH_AVAILABILITY',
+            interactionType: 'ONE_TO_ONE',
+          },
+        ],
+      },
+    })
+  }),
+  http.get('*/api/events', () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        events: [
+          {
+            id: 'event-1',
+            name: 'Algebra 101',
+            durationSeconds: 1800,
+            isActive: true,
+            coaches: [],
+            eventTypeId: 'type-1',
+            teamId: 'team-1',
+            team: { id: 'team-1', name: 'Math Team' },
+            locationType: 'VIRTUAL',
+            locationValue: 'http://zoom.us',
+            bookingMode: 'COACH_AVAILABILITY',
+            interactionType: 'ONE_TO_ONE',
+          },
+          {
+            id: 'event-2',
+            name: 'Biology Basics',
+            durationSeconds: 3600,
+            isActive: true,
+            coaches: [],
+            eventTypeId: 'type-1',
+            teamId: 'team-2',
+            team: { id: 'team-2', name: 'Science Team' },
+            locationType: 'VIRTUAL',
+            locationValue: 'http://zoom.us',
+            bookingMode: 'COACH_AVAILABILITY',
+            interactionType: 'ONE_TO_ONE',
           },
         ],
       },
@@ -67,7 +108,7 @@ const handlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        metrics: { newEvents: 1, activeEvents: 1, roundRobinEvents: 0, hostedEvents: 1 },
+        metrics: { newEvents: 2, activeEvents: 2, roundRobinEvents: 0, hostedEvents: 2 },
         timeframe: { label: 'January 2026' },
       },
     })
@@ -115,6 +156,37 @@ describe('Events Domain Integration', () => {
       { timeout: 8000 }
     )
     expect(screen.getByText('Active events')).toBeInTheDocument()
+  }, 15000)
+
+  it('should allow selecting "All teams" and display events from all teams', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', role: 'SUPER_ADMIN' },
+      isAuthenticated: true,
+    })
+
+    renderWithProviders(<EventsPage />)
+
+    await screen.findByRole('heading', { name: /Select an Event Type/i, level: 6 }, { timeout: 8000 })
+    fireEvent.click(await screen.findByText('Mock Interview'))
+
+    await screen.findByRole('heading', { name: /Select a Team/i, level: 6 }, { timeout: 8000 })
+
+    const selectEl = screen.getByLabelText('Select team')
+    fireEvent.mouseDown(selectEl)
+    fireEvent.click(await screen.findByRole('option', { name: 'All teams' }))
+
+    // Verify events from multiple teams are loaded
+    await waitFor(
+      () => {
+        expect(screen.getByText('Algebra 101')).toBeInTheDocument()
+        expect(screen.getByText('Biology Basics')).toBeInTheDocument()
+      },
+      { timeout: 8000 }
+    )
+
+    // Verify team badges are displayed
+    expect(screen.getByText('Math Team')).toBeInTheDocument()
+    expect(screen.getByText('Science Team')).toBeInTheDocument()
   }, 15000)
 
   it('should show "New event" button only for admins', async () => {

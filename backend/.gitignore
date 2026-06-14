@@ -11,6 +11,9 @@ coverage
 # Personal local-only notes
 /personal-notes/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Debug / scratch output files
 *.log
 *_output*.txt

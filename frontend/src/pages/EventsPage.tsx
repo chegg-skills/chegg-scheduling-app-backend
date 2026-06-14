@@ -21,7 +21,7 @@ import {
 import { useState, useMemo } from 'react'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useTeams } from '@/hooks/queries/useTeams'
-import { useTeamEvents } from '@/hooks/queries/useEvents'
+import { useTeamEvents, useEvents } from '@/hooks/queries/useEvents'
 import { useEventTypes } from '@/hooks/queries/useEventTypes'
 import { useTeamEventGroups } from '@/hooks/queries/useEventGroups'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -59,19 +59,30 @@ export function EventsPage() {
   const selectedTeam = sortedTeams.find((team) => team.id === selectedTeamId)
   const selectedEventType = eventTypes.find((et) => et.id === selectedEventTypeId)
   
-  const {
-    data: eventsData,
-    isLoading: eventsLoading,
-    error: eventsError,
-  // pageSize 1000: events are grouped/filtered client-side; no virtualisation needed for typical team sizes
-  } = useTeamEvents(selectedTeamId, { page: 1, pageSize: 1000 })
+  const isAllTeams = selectedTeamId === 'all'
 
-  const { data: groupsData } = useTeamEventGroups(selectedTeamId)
+  const {
+    data: teamEventsData,
+    isLoading: teamEventsLoading,
+    error: teamEventsError,
+  } = useTeamEvents(isAllTeams ? '' : selectedTeamId, { page: 1, pageSize: 1000 })
+
+  const {
+    data: allEventsData,
+    isLoading: allEventsLoading,
+    error: allEventsError,
+  } = useEvents({ page: 1, pageSize: 1000 }, { enabled: isAllTeams })
+
+  const eventsData = isAllTeams ? allEventsData : teamEventsData
+  const eventsLoading = isAllTeams ? allEventsLoading : teamEventsLoading
+  const eventsError = isAllTeams ? allEventsError : teamEventsError
+
+  const { data: groupsData } = useTeamEventGroups(isAllTeams ? '' : selectedTeamId)
   const groups = useMemo(() => groupsData ?? [], [groupsData])
 
   const { data: eventStats, isLoading: statsLoading } = useEventStats(
     timeframe,
-    selectedTeamId || undefined,
+    isAllTeams ? undefined : (selectedTeamId || undefined),
     { enabled: !isCoach }
   )
 
@@ -374,13 +385,47 @@ export function EventsPage() {
                               displayEmpty
                               inputProps={{ 'aria-label': 'Select team' }}
                               startAdornment={
-                                <InputAdornment position="start" sx={{ color: 'text.secondary', ml: 0.5 }}>
+                                <InputAdornment
+                                  position="start"
+                                  sx={{
+                                    color: selectedTeamId === 'all' ? 'primary.main' : 'text.secondary',
+                                    ml: 0.5,
+                                    transition: 'color 0.2s',
+                                  }}
+                                >
                                   <Users size={18} />
                                 </InputAdornment>
                               }
+                              sx={{
+                                transition: 'all 0.2s',
+                                ...(selectedTeamId === 'all' && {
+                                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                                  color: 'primary.main',
+                                  fontWeight: 700,
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: (theme) => alpha(theme.palette.primary.main, 0.3),
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'primary.main',
+                                  },
+                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'primary.main',
+                                  },
+                                  '& .MuiSelect-select': {
+                                    color: 'primary.main',
+                                    fontWeight: 700,
+                                  },
+                                  '& .MuiSelect-icon': {
+                                    color: 'primary.main',
+                                  },
+                                }),
+                              }}
                               renderValue={(value) => {
                                 if (!value) {
                                   return <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>Choose a team...</Box>
+                                }
+                                if (value === 'all') {
+                                  return 'All teams'
                                 }
                                 const team = sortedTeams.find((t) => t.id === value)
                                 return team ? toTitleCase(team.name) : 'Choose a team...'
@@ -399,6 +444,30 @@ export function EventsPage() {
                                   {toTitleCase(team.name)}
                                 </MenuItem>
                               ))}
+                              <MenuItem
+                                value="all"
+                                sx={{
+                                  borderTop: '1px solid',
+                                  borderColor: 'divider',
+                                  color: 'primary.main',
+                                  fontWeight: 600,
+                                  py: 1.25,
+                                  px: 2,
+                                  '&:hover': {
+                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                                  },
+                                  '&.Mui-selected': {
+                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                                    color: 'primary.main',
+                                    fontWeight: 700,
+                                    '&:hover': {
+                                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                                    },
+                                  },
+                                }}
+                              >
+                                All teams
+                              </MenuItem>
                             </Select>
                           </Box>
                         </Stack>
@@ -440,10 +509,10 @@ export function EventsPage() {
                         events={filteredEvents}
                         eventTypes={eventTypes}
                         selectedEventTypeId={selectedEventTypeId}
-                        teamId={selectedTeamId}
                         onViewUser={setViewingUserId}
                         canManage={canManageTeam}
                         groups={groups}
+                        isAllTeams={isAllTeams}
                       />
                     )}
                   </Stack>
@@ -461,7 +530,7 @@ export function EventsPage() {
             size="lg"
           >
             <EventForm
-              teamId={selectedTeamId}
+              teamId={selectedTeamId === 'all' ? '' : selectedTeamId}
               accessedFromEventsTab={true}
               onSuccess={() => setShowCreateEvent(false)}
               onCancel={() => setShowCreateEvent(false)}

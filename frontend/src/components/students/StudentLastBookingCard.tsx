@@ -6,6 +6,8 @@ import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import Avatar from '@mui/material/Avatar'
+import Link from '@mui/material/Link'
+import { Link as RouterLink } from 'react-router-dom'
 import { alpha } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
 import { format } from 'date-fns'
@@ -73,9 +75,20 @@ export function StudentLastBookingCard({
               icon={<BookOpen size={16} />}
               label="Event"
               value={
-                <Typography variant="body2" fontWeight={600}>
+                <Link
+                  component={RouterLink}
+                  to={`/events/${event.id}`}
+                  sx={{
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                    display: 'inline-block',
+                  }}
+                >
                   {toTitleCase(event.name)}
-                </Typography>
+                </Link>
               }
             />
           </Grid>
