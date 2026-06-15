@@ -7,8 +7,9 @@ import Divider from '@mui/material/Divider'
 import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
 import Alert from '@mui/material/Alert'
+import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
-import { HelpCircle, Plus, Trash2 } from 'lucide-react'
+import { HelpCircle, Plus, Trash2, Check } from 'lucide-react'
 import { Button } from '@/components/shared/ui/Button'
 import {
   useDefaultBookingQuestions,
@@ -148,11 +149,23 @@ export function DefaultBookingQuestionsSection() {
         bgcolor: 'background.paper',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-        <HelpCircle size={18} />
-        <Typography variant="subtitle1" fontWeight={600}>
-          Default Booking Questions
-        </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <HelpCircle size={18} />
+          <Typography variant="subtitle1" fontWeight={600}>
+            Default Booking Questions
+          </Typography>
+        </Box>
+        {!isLoading && !isDirty && questions.length > 0 && (
+          <Chip
+            icon={<Check size={13} />}
+            label="Saved"
+            size="small"
+            color="success"
+            variant="outlined"
+            sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+          />
+        )}
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         These questions are shown to students on the public booking form for all events that use default questions. You can have up to {MAX_QUESTIONS}. Click Save Changes after editing.
