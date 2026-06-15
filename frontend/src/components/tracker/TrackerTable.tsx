@@ -1,0 +1,184 @@
+import { useState } from 'react'
+import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
+import CircularProgress from '@mui/material/CircularProgress'
+import IconButton from '@mui/material/IconButton'
+import Paper from '@mui/material/Paper'
+import Stack from '@mui/material/Stack'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import { ClipboardList } from 'lucide-react'
+import type { TrackerSlot } from '@/api/tracker'
+import { LogSessionDialog } from '@/components/events/dialogs/LogSessionDialog'
+import { EmptyState } from '@/components/shared/ui/EmptyState'
+import type { EventScheduleSlot } from '@/types'
+import { OccupancyBadge } from './OccupancyBadge'
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' })
+
+function ordinal(n: number): string {
+  const v = n % 100
+  if (v >= 11 && v <= 13) return `${n}th`
+  switch (n % 10) {
+    case 1: return `${n}st`
+    case 2: return `${n}nd`
+    case 3: return `${n}rd`
+    default: return `${n}th`
+  }
+}
+
+function toEventScheduleSlot(slot: TrackerSlot): EventScheduleSlot {
+  return {
+    id: slot.slotId,
+    eventId: slot.event.id,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    capacity: slot.capacity,
+    isActive: true,
+    isCancelled: false,
+    createdAt: new Date(0).toISOString(),
+    updatedAt: new Date(0).toISOString(),
+    assignedCoachId: slot.assignedCoach?.id ?? null,
+    recurrenceGroupId: null,
+    coachRevealSentAt: null,
+    sessionJoinUrl: null,
+  }
+}
+
+interface TrackerTableProps {
+  slots: TrackerSlot[]
+  isLoading: boolean
+}
+
+export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
+  const [selectedSlot, setSelectedSlot] = useState<TrackerSlot | null>(null)
+
+  if (isLoading) {
+    return (
+      <Stack alignItems="center" py={8}>
+        <CircularProgress />
+      </Stack>
+    )
+  }
+
+  if (slots.length === 0) {
+    return (
+      <EmptyState
+        title="No sessions found"
+        description="There are no scheduled sessions matching the selected filters."
+      />
+    )
+  }
+
+  return (
+    <>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700 }}>Date & Time</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Team</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Event</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">
+                Occupancy
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">
+                Status
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">
+                Log
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">
+                Actions
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {slots.map((slot) => (
+              <TableRow key={slot.slotId} hover>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  <Typography variant="body2" fontWeight={600}>
+                    {dateFormatter.format(new Date(slot.startTime))}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap>
+                    {timeFormatter.format(new Date(slot.startTime))}
+                    {' – '}
+                    {timeFormatter.format(new Date(slot.endTime))}
+                  </Typography>
+                  {slot.seriesSessionNumber !== null && (
+                    <Typography variant="caption" color="primary" noWrap display="block">
+                      {ordinal(slot.seriesSessionNumber)} session
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={600} sx={{ textTransform: 'capitalize' }}>
+                    {slot.team.name}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box>
+                    <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                      {slot.event.name}
+                    </Typography>
+                    {slot.eventType && (
+                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                        {slot.eventType.name}
+                      </Typography>
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  <OccupancyBadge
+                    bookingCount={slot.bookingCount}
+                    capacity={slot.capacity}
+                    status={slot.status}
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Chip
+                    label={slot.status === 'FULL' ? 'Full' : 'Open'}
+                    size="small"
+                    color={slot.status === 'FULL' ? 'error' : 'success'}
+                    variant="outlined"
+                    sx={{ fontWeight: 600, fontSize: '0.7rem' }}
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Chip
+                    label={slot.isLogged ? 'Logged' : 'Not logged'}
+                    size="small"
+                    color={slot.isLogged ? 'success' : 'default'}
+                    variant={slot.isLogged ? 'filled' : 'outlined'}
+                    sx={{ fontWeight: 600, fontSize: '0.7rem' }}
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Tooltip title="View / edit session log">
+                    <IconButton size="small" onClick={() => setSelectedSlot(slot)}>
+                      <ClipboardList size={16} />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <LogSessionDialog
+        isOpen={selectedSlot !== null}
+        onClose={() => setSelectedSlot(null)}
+        eventId={selectedSlot?.event.id ?? ''}
+        slot={selectedSlot ? toEventScheduleSlot(selectedSlot) : null}
+      />
+    </>
+  )
+}
