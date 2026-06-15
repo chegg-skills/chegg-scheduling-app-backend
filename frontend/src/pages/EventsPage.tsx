@@ -18,7 +18,7 @@ import {
   ExternalLink,
   Info,
 } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamEvents, useEvents } from '@/hooks/queries/useEvents'
@@ -39,7 +39,7 @@ import { toTitleCase } from '@/utils/toTitleCase'
 import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
-  const { isCoach, isAdmin, isSuperAdmin } = usePermissions()
+  const { isCoach, isAdmin, isSuperAdmin, isTeamAdmin } = usePermissions()
   const [selectedTeamId, setSelectedTeamId] = useState<string>('')
   const [selectedEventTypeId, setSelectedEventTypeId] = useState<string>('')
   const [showCreateEvent, setShowCreateEvent] = useState(false)
@@ -55,6 +55,12 @@ export function EventsPage() {
     if (!teamsData?.teams) return []
     return [...teamsData.teams].sort((a, b) => a.name.localeCompare(b.name))
   }, [teamsData?.teams])
+
+  useEffect(() => {
+    if (isTeamAdmin && sortedTeams.length === 1 && !selectedTeamId) {
+      setSelectedTeamId(sortedTeams[0].id)
+    }
+  }, [isTeamAdmin, sortedTeams, selectedTeamId])
 
   const selectedTeam = sortedTeams.find((team) => team.id === selectedTeamId)
   const selectedEventType = eventTypes.find((et) => et.id === selectedEventTypeId)
@@ -142,24 +148,10 @@ export function EventsPage() {
         subtitle="View and manage event schedules."
         actions={
           canManageTeam && (
-            <Tooltip
-              title={
-                !isSuperAdmin && (!selectedTeamId || selectedTeamId === 'all')
-                  ? 'Select a team first'
-                  : ''
-              }
-            >
-              <span>
-                <Button
-                  size="sm"
-                  onClick={() => setShowCreateEvent(true)}
-                  disabled={!isSuperAdmin && (!selectedTeamId || selectedTeamId === 'all')}
-                >
-                  <Plus size={16} />
-                  New event
-                </Button>
-              </span>
-            </Tooltip>
+            <Button size="sm" onClick={() => setShowCreateEvent(true)}>
+              <Plus size={16} />
+              New event
+            </Button>
           )
         }
       />

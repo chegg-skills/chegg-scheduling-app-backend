@@ -126,6 +126,8 @@ const listTeams = async (
   const whereClause: Prisma.TeamWhereInput = { deletedAt: null };
   if (caller.role === UserRole.COACH) {
     whereClause.members = { some: { userId: caller.id, isActive: true } };
+  } else if (caller.role === UserRole.TEAM_ADMIN) {
+    whereClause.teamLeadId = caller.id;
   }
 
   const [teams, total] = await prisma.$transaction([
