@@ -39,13 +39,13 @@ import { toTitleCase } from '@/utils/toTitleCase'
 import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
-  const { isCoach, isSuperAdmin } = usePermissions()
+  const { isCoach, isAdmin, isSuperAdmin } = usePermissions()
   const [selectedTeamId, setSelectedTeamId] = useState<string>('')
   const [selectedEventTypeId, setSelectedEventTypeId] = useState<string>('')
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
-  const canManageTeam = isSuperAdmin
+  const canManageTeam = isAdmin
   const [copied, setCopied] = useState(false)
 
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
@@ -142,13 +142,24 @@ export function EventsPage() {
         subtitle="View and manage event schedules."
         actions={
           canManageTeam && (
-            <Button
-              size="sm"
-              onClick={() => setShowCreateEvent(true)}
+            <Tooltip
+              title={
+                !isSuperAdmin && (!selectedTeamId || selectedTeamId === 'all')
+                  ? 'Select a team first'
+                  : ''
+              }
             >
-              <Plus size={16} />
-              New event
-            </Button>
+              <span>
+                <Button
+                  size="sm"
+                  onClick={() => setShowCreateEvent(true)}
+                  disabled={!isSuperAdmin && (!selectedTeamId || selectedTeamId === 'all')}
+                >
+                  <Plus size={16} />
+                  New event
+                </Button>
+              </span>
+            </Tooltip>
           )
         }
       />
@@ -510,7 +521,7 @@ export function EventsPage() {
                         eventTypes={eventTypes}
                         selectedEventTypeId={selectedEventTypeId}
                         onViewUser={setViewingUserId}
-                        canManage={canManageTeam}
+                        canManage={isSuperAdmin || (!isAllTeams && !!selectedTeamId)}
                         groups={groups}
                         isAllTeams={isAllTeams}
                       />
