@@ -57,7 +57,7 @@ export function EventsPage() {
   }, [teamsData?.teams])
 
   useEffect(() => {
-    if (!isTeamAdmin) return
+    if (!isTeamAdmin && !isCoach) return
     if (selectedTeamId === 'all' && sortedTeams.length === 1) {
       setSelectedTeamId(sortedTeams[0].id)
       return
@@ -65,7 +65,7 @@ export function EventsPage() {
     if (sortedTeams.length === 1 && !selectedTeamId) {
       setSelectedTeamId(sortedTeams[0].id)
     }
-  }, [isTeamAdmin, sortedTeams, selectedTeamId])
+  }, [isTeamAdmin, isCoach, sortedTeams, selectedTeamId])
 
   const selectedTeam = sortedTeams.find((team) => team.id === selectedTeamId)
   const selectedEventType = eventTypes.find((et) => et.id === selectedEventTypeId)
@@ -452,7 +452,7 @@ export function EventsPage() {
                                   {toTitleCase(team.name)}
                                 </MenuItem>
                               ))}
-                              {(!isTeamAdmin || sortedTeams.length > 1) && (
+                              {((!isTeamAdmin && !isCoach) || sortedTeams.length > 1) && (
                                 <MenuItem
                                   value="all"
                                   sx={{
@@ -520,7 +520,7 @@ export function EventsPage() {
                         eventTypes={eventTypes}
                         selectedEventTypeId={selectedEventTypeId}
                         onViewUser={setViewingUserId}
-                        canManage={isSuperAdmin || (!isAllTeams && !!selectedTeamId)}
+                        canManage={!isCoach && (isSuperAdmin || (!isAllTeams && !!selectedTeamId))}
                         groups={groups}
                         isAllTeams={isAllTeams}
                       />
