@@ -1,4 +1,4 @@
-# 1:1 Tutoring Session Workflow (ONE_TO_ONE)
+# 1:1 Workflow (ONE_TO_ONE)
 
 This document provides a detailed end-to-end workflow walkthrough for **1:1 Interaction Type** sessions in the scheduling application. It details how options selected on the admin form alter the student booking experience, directory display, and backend coach assignment.
 
@@ -13,12 +13,8 @@ graph TD
         LinkSession -- "Yes" --> SelectSessionType["Choose Session Type"]
         LinkSession -- "No" --> Interaction["Select Interaction Type: 1:1"]
         SelectSessionType --> Interaction
-        Interaction --> BookingMode{"Choose Booking Mode"}
-        
-        %% Booking Mode branch
-        BookingMode -- "Coach Availability (Dynamic)" --> Policy["Set Notice & Buffer Windows"]
-        BookingMode -- "Fixed Slots (Predefined)" --> Policy
-        
+        Interaction --> Policy["Set Notice & Buffer Windows (Auto: Coach Availability mode)"]
+
         %% Coach Choice branch
         Policy --> CoachChoice{"Let Students Choose Coach?"}
         
@@ -32,28 +28,24 @@ graph TD
         Strategy -- "Round Robin" --> SetPool["Define Coach Pool Size"]
         SetPool --> Location
         
-        Location --> CreateEvent(["Create Event"])
+        Location --> Questions["Configure Booking Questions<br/>useDefaultQuestions toggle (default ON)<br/>Optional: up to 5 custom questions (255 chars each)"]
+        Questions --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
-    subgraph Setup_Phase ["2. Setup & Slots Configuration"]
+    subgraph Setup_Phase ["2. Setup & Availability Configuration"]
         CreateEvent --> AddCoaches["Assign Coaches to Event"]
         AddCoaches --> RouteRouting{"Was Session Type Linked?"}
         RouteRouting -- "Yes" --> ShowDir["Event appears in public Booking Directory"]
         RouteRouting -- "No" --> DirectLink["Only accessible via Direct Event Link"]
         
-        %% Slots if Fixed Slots
-        ShowDir --> CheckMode{"Is Booking Mode Fixed Slots?"}
-        DirectLink --> CheckMode
-        
-        CheckMode -- "Yes" --> AdminSlots["Admin creates predefined slots - respecting min notice window"]
-        CheckMode -- "No" --> CoachAvail["Coaches define availability weekly"]
+        ShowDir --> CoachAvail["Coaches define availability weekly"]
+        DirectLink --> CoachAvail
     end
 
     %% Student Booking Flow
     subgraph Student_Booking ["3. Student Booking Flow"]
-        AdminSlots --> StudentStart(["Student visits booking page"])
-        CoachAvail --> StudentStart
+        CoachAvail --> StudentStart(["Student visits booking page"])
         
         StudentStart --> ShowCoaches{"Does Event allow Coach Choice?"}
         
@@ -69,7 +61,7 @@ graph TD
         FilterDefaultSlots --> SelectTime
         FilterAllSlots --> SelectTime
         
-        SelectTime --> StudentForm["Student fills out Booking Details form"]
+        SelectTime --> StudentForm["Student fills out Booking Details form<br/>(Name, Email, Notes + configured Booking Questions)"]
         StudentForm --> BookSession(["Book Session"])
     end
 
@@ -100,9 +92,7 @@ graph TD
 An administrator (Super Admin or Team Admin) defines a scheduling category under a specific Team.
 * **Basic Info**: Enters the event's name (e.g. *1:1 Tutoring Session*) and optionally links it to a `SessionType` (which determines under which directory category it displays).
 * **Interaction Type**: Selects **1:1** (`ONE_TO_ONE`). Since this is selected, the application automatically hides group-specific fields like **Participant Capacity** and **Coach Reveal Delay**.
-* **Booking Mode**:
-  * **Coach Availability**: Bookings are dynamically created based on when the assigned coach is available (weekly schedule).
-  * **Fixed Slots**: Bookings can only be made on specific dates/times pre-created by the admin.
+* **Booking Mode**: Always **Coach Availability** for 1:1 events — bookings are dynamically created based on when the assigned coach is available (weekly schedule). The booking mode field is not shown on the form; the backend enforces this automatically.
 * **Coach Choice & Assignment Strategy**:
   * If **"Let students choose their coach"** is toggled **ON**: The student picks their coach first, and the system shows that coach's availability.
   * If toggled **OFF**: The admin defines how coaches are assigned behind the scenes:
@@ -111,18 +101,19 @@ An administrator (Super Admin or Team Admin) defines a scheduling category under
 * **Optional settings**:
   * `showDescription` — toggle to display the event description on the public booking page side panel.
   * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit). Enforced on both the availability endpoint (clips the slot date range) and the booking calendar (disables out-of-window dates).
+  * `useDefaultQuestions` / `customQuestions` — by default the event uses the system-configured default booking questions. Toggle `useDefaultQuestions` off to replace them with up to 5 per-event custom questions (max 255 chars each). Switching back to default clears the custom question list in the database. The backend resolves the effective list server-side (`effectiveBookingQuestions`) so the public booking form always receives the correct set without any client-side branching.
+  * `locationLinkExpiresAt` / `locationLinkReminderDays` — for **Virtual** or **Custom** location types only. Set an expiry date for the meeting link and a pre-expiry reminder window (1–90 days). Both fields must be set together or both left empty.
 
 ### 2. Setup & Slots Configuration
 Before the event is bookable:
 * The admin assigns one or more coaches to the event pool.
-* If using **Fixed Slots**, the admin creates the predefined scheduling blocks.
-* If using **Coach Availability**, the assigned coaches must configure their active times under their **User Profile → Availability tab**. There is no event-level availability override — coach weekly availability is the sole authority over when bookings can be made for that event.
+* The assigned coaches must configure their active times under their **User Profile → Availability tab**. There is no event-level availability override — coach weekly availability is the sole authority over when bookings can be made for that event.
 
 ### 3. Student Booking Flow
 When a student accesses the booking path:
 1. **Coach Selection** (If choice is allowed): The student views the profiles of assigned coaches and chooses one.
 2. **Time Selection**: The student views a calendar of open dates/times and picks a slot.
-3. **Information Intake**: The student fills in the booking form with their details (Name, Email, Timezone, Session Objectives, and Notes).
+3. **Information Intake**: The student fills in the booking form with their details (Name, Email, Timezone, and Notes). If the event has booking questions configured (either system defaults or per-event custom questions), those appear as additional text fields on the form. Student answers are stored as `customAnswers[]` on the `Booking` record.
 
 ### 4. Database processing & Assignment
 Once the student submits the form, the backend processes the request in a database transaction:

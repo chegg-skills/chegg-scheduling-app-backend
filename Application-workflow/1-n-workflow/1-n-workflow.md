@@ -1,4 +1,4 @@
-# 1:N Tutoring Session Workflow (ONE_TO_MANY)
+# 1:N Workflow (ONE_TO_MANY)
 
 This document provides a detailed end-to-end workflow walkthrough for **1:N Interaction Type (Group Session)** in the scheduling application. It details how form configurations (Fixed Slots, Participant Capacity, Deferred Coach Reveal, and Anonymous Booking) affect the setup, booking, notification, and session log lifecycle.
 
@@ -28,7 +28,8 @@ graph TD
         NoteAnon --> Location
         ChooseRevealMode -- "Neither (Standard)" --> Location
 
-        Location --> CreateEvent(["Create Event"])
+        Location --> Questions["Configure Booking Questions<br/>useDefaultQuestions toggle (default ON)<br/>Optional: up to 5 custom questions (255 chars each)"]
+        Questions --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
@@ -51,7 +52,7 @@ graph TD
 
         SelectSlot --> CheckCap{"Is Slot Full?<br/>(maxParticipantCount reached)"}
         CheckCap -- "Yes" --> DisableBooking["Hide slot or disable booking button"]
-        CheckCap -- "No" --> StudentForm["Student fills out Booking Details form"]
+        CheckCap -- "No" --> StudentForm["Student fills out Booking Details form<br/>(Name, Email, Notes + configured Booking Questions)"]
 
         StudentForm --> BookSession(["Book Session"])
     end
@@ -102,7 +103,11 @@ An administrator (Super Admin or Team Admin) defines a group scheduling category
   * **Defer Coach Reveal (ON)**: Students register without knowing the coach's identity or seeing the join URL. The coach reveal is triggered manually by an admin at a later time. All student reminder emails are suppressed until the reveal fires.
   * **Anonymous Booking (ON)**: The session is never associated with a named coach from the student's perspective. The event's shared `locationValue` URL is the only join link students receive. Enforces `meetingLinkSource = EVENT_LOCATION` (COACH_ISV option is disabled in the form) and requires a non-empty `locationValue`. A coach can be retroactively assigned only via the **Log Session** dialog post-session.
   * **Neither (Standard)**: Coach name and join URL are included in the booking confirmation email and all reminders.
-* **Optional settings**: `showDescription` (toggle to display the event description on the public booking page) and `maxBookingWindowDays` (limits how far in advance students can book; `null` = no limit, max 365 days).
+* **Optional settings**:
+  * `showDescription` — toggle to display the event description on the public booking page side panel.
+  * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit).
+  * `useDefaultQuestions` / `customQuestions` — by default the event uses the system-configured default booking questions. Toggle `useDefaultQuestions` off to replace them with up to 5 per-event custom questions (max 255 chars each). Switching back to default clears the custom question list in the database. The backend resolves the effective list server-side (`effectiveBookingQuestions`) so the public booking form always receives the correct set without any client-side branching.
+  * `locationLinkExpiresAt` / `locationLinkReminderDays` — for **Virtual** or **Custom** location types only. Set an expiry date for the meeting link and a pre-expiry reminder window (1–90 days). Both fields must be set together or both left empty.
 
 ### 2. Setup & Slots Configuration
 Before the event is bookable:
@@ -115,7 +120,7 @@ Before the event is bookable:
 When a student accesses the booking path:
 1. The student views available group slots displaying seat counts.
 2. The student selects an open slot.
-3. The student fills out the booking form (Name, Email, Timezone, etc.) and submits.
+3. The student fills out the booking form (Name, Email, Timezone, and Notes). If the event has booking questions configured (either system defaults or per-event custom questions), those appear as additional text fields. Student answers are stored as `customAnswers[]` on the `Booking` record.
 
 The student flow is identical regardless of whether Anonymous Booking, Deferred Reveal, or Standard mode is active — the difference is entirely in the confirmation email content.
 

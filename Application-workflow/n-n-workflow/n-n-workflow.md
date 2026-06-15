@@ -1,4 +1,4 @@
-# N:N Tutoring Session Workflow (MANY_TO_MANY)
+# N:N Workflow (MANY_TO_MANY)
 
 This document provides a detailed end-to-end workflow walkthrough for the **N:N Interaction Type (MANY_TO_MANY)** in the scheduling application. It details how the system supports collaborative group sessions where multiple coaches (1 Lead Coach and 1 or more Co-Coaches/Co-Hosts) host multiple student participants in predefined slots.
 
@@ -28,7 +28,8 @@ graph TD
         LockRotatingLead --> SetPool["Define Coach Pool Size (Min >= 2)"]
         SetPool --> Location
         
-        Location --> CreateEvent(["Create Event"])
+        Location --> Questions["Configure Booking Questions<br/>useDefaultQuestions toggle (default ON)<br/>Optional: up to 5 custom questions (255 chars each)"]
+        Questions --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
@@ -51,7 +52,7 @@ graph TD
         
         SelectSlot --> CheckCap{"Is Slot Full?<br/>(maxParticipantCount reached)"}
         CheckCap -- "Yes" --> DisableBooking["Hide slot or disable booking button"]
-        CheckCap -- "No" --> StudentForm["Student fills out Booking Details form"]
+        CheckCap -- "No" --> StudentForm["Student fills out Booking Details form<br/>(Name, Email, Notes + configured Booking Questions)"]
         
         StudentForm --> BookSession(["Book Session"])
     end
@@ -98,6 +99,8 @@ An administrator defines a collaborative group session under a Team.
 * **Optional settings**:
   * `showDescription` — toggle to display the event description on the public booking page side panel.
   * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit).
+  * `useDefaultQuestions` / `customQuestions` — by default the event uses the system-configured default booking questions. Toggle `useDefaultQuestions` off to replace them with up to 5 per-event custom questions (max 255 chars each). Switching back to default clears the custom question list in the database. The backend resolves the effective list server-side (`effectiveBookingQuestions`) so the public booking form always receives the correct set without any client-side branching.
+  * `locationLinkExpiresAt` / `locationLinkReminderDays` — for **Virtual** or **Custom** location types only. Set an expiry date for the meeting link and a pre-expiry reminder window (1–90 days). Both fields must be set together or both left empty.
 
 ### 2. Setup & Slots Configuration
 Before the event becomes bookable:
@@ -108,7 +111,7 @@ Before the event becomes bookable:
 When a student accesses the booking path:
 1. The student views the list of predefined Fixed Slots and their remaining seat counts.
 2. If the slot is full (`maxParticipantCount` is reached), booking is disabled.
-3. The student selects an available slot, fills out the details form, and submits.
+3. The student selects an available slot and fills out the booking form (Name, Email, Timezone, and Notes). If the event has booking questions configured (either system defaults or per-event custom questions), those appear as additional text fields. Student answers are stored as `customAnswers[]` on the `Booking` record.
 
 ### 4. Database Assignment & Confirmation
 To handle high concurrent traffic and prevent overbooking, the backend does the following:

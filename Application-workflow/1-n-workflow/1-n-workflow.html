@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>1:N Tutoring Session Workflow</title>
+  <title>1:N Workflow</title>
   <!-- Render Mermaid Diagrams dynamically -->
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
@@ -43,7 +43,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>1:N Tutoring Session Workflow (ONE_TO_MANY)</h1>
+    <h1>1:N Workflow (ONE_TO_MANY)</h1>
     <p>Open this page locally in your browser to view the interactive flowchart of the 1:N group session lifecycle — covering Standard, Deferred Coach Reveal, and Anonymous Booking modes.</p>
 
     <div class="mermaid">
@@ -70,7 +70,8 @@
               NoteAnon --> Location
               ChooseRevealMode -- "Neither (Standard)" --> Location
 
-              Location --> CreateEvent(["Create Event"])
+              Location --> Questions["Configure Booking Questions<br/>useDefaultQuestions toggle (default ON)<br/>Optional: up to 5 custom questions (255 chars each)"]
+              Questions --> CreateEvent(["Create Event"])
           end
 
           %% Post Creation Configuration
@@ -93,7 +94,7 @@
 
               SelectSlot --> CheckCap{"Is Slot Full?<br/>(maxParticipantCount reached)"}
               CheckCap -- "Yes" --> DisableBooking["Hide slot or disable booking button"]
-              CheckCap -- "No" --> StudentForm["Student fills out Booking Details form"]
+              CheckCap -- "No" --> StudentForm["Student fills out Booking Details form<br/>(Name, Email, Notes + configured Booking Questions)"]
 
               StudentForm --> BookSession(["Book Session"])
           end
