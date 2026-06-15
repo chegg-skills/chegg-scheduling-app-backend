@@ -3,6 +3,7 @@ import type { SafeUser } from '@/types'
 import { usersApi } from '@/api/users'
 import { authApi } from '@/api/auth'
 import { clearCsrfToken } from '@/lib/axios'
+import queryClient from '@/lib/queryClient'
 import { AuthContext } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null)
       clearCsrfToken()
+      queryClient.clear()
     }
   }, [])
 
