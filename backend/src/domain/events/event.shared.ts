@@ -90,6 +90,8 @@ export type CreateEventInput = {
   locationLinkExpiresAt?: Date | null;
   locationLinkReminderDays?: number | null;
   groupId?: string | null;
+  customQuestions?: string[];
+  useDefaultQuestions?: boolean;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput>;

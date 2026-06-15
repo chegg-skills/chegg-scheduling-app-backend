@@ -56,16 +56,17 @@ export function useBookFollowUpSession() {
       data,
     }: {
       bookingId: string
-      data: {
-        startTime: string | Date
-        timezone?: string
-        notes?: string
-        specificQuestion?: string
-        triedSolutions?: string
-        usedResources?: string
-        sessionObjectives?: string
-      }
-    }) => bookingsApi.bookFollowUp(bookingId, data),
+        data: {
+          startTime: string | Date
+          timezone?: string
+          notes?: string
+          specificQuestion?: string
+          triedSolutions?: string
+          usedResources?: string
+          sessionObjectives?: string
+          customAnswers?: string[]
+    }
+  }) => bookingsApi.bookFollowUp(bookingId, data),
     onSuccess: (_, { bookingId }) => {
       invalidateQueryKeys(qc, [
         bookingKeys.all,

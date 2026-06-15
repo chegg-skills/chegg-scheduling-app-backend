@@ -88,6 +88,8 @@ const createMockBooking = (overrides: Partial<Booking>): Booking => {
     triedSolutions: null,
     usedResources: null,
     sessionObjectives: null,
+    customQuestions: [],
+    customAnswers: [],
     teamId: 'team-1',
     eventId: 'event-1',
     coachUserId: 'coach-alice',

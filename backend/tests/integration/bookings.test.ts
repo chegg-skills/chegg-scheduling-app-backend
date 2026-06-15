@@ -1231,6 +1231,141 @@ describe("Booking Domain Integration Tests", () => {
       expect(res.status).toBe(403);
     });
   });
+
+  describe("Custom questions and answers", () => {
+    let customEventId: string;
+
+    beforeEach(async () => {
+      // Set Coach Availability: Monday 09:00 - 17:00
+      await prisma.userWeeklyAvailability.create({
+        data: {
+          userId: coachId,
+          dayOfWeek: 1, // Monday
+          startTime: "09:00",
+          endTime: "17:00",
+        },
+      });
+
+      const event = await prisma.event.create({
+        data: {
+          name: "Custom Questions Event",
+          teamId,
+          eventTypeId: eventTypeId,
+          interactionType: "ONE_TO_ONE",
+          assignmentStrategy: AssignmentStrategy.DIRECT,
+          durationSeconds: 3600,
+          locationType: EventLocationType.VIRTUAL,
+          locationValue: "Zoom",
+          createdById: coachId,
+          updatedById: coachId,
+          publicBookingSlug: `custom-questions-${Date.now()}`,
+          useDefaultQuestions: false,
+          customQuestions: ["What is your background?", "What are your goals?"],
+          coaches: {
+            create: {
+              coachUserId: coachId,
+              coachOrder: 1,
+            },
+          },
+        },
+      });
+      customEventId = event.id;
+    });
+
+    afterEach(async () => {
+      await prisma.booking.deleteMany();
+      await prisma.userWeeklyAvailability.deleteMany();
+      await prisma.event.deleteMany();
+    });
+
+    it("successfully creates a booking with custom answers and clears default fields", async () => {
+      const startTime = getNextUtcWeekdayAt(1, 10, 0).toISOString();
+
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Custom Answer Student",
+        studentEmail: "custom@example.com",
+        teamId,
+        eventId: customEventId,
+        startTime,
+        timezone: "UTC",
+        customAnswers: ["I am a CS freshman", "Learn React"],
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.customQuestions).toEqual(["What is your background?", "What are your goals?"]);
+      expect(res.body.data.booking.customAnswers).toEqual(["I am a CS freshman", "Learn React"]);
+      // Standard intake fields should be null/cleared
+      expect(res.body.data.booking.specificQuestion).toBeNull();
+      expect(res.body.data.booking.triedSolutions).toBeNull();
+    });
+
+    it("sanitizes HTML/script tags from custom answers", async () => {
+      const startTime = getNextUtcWeekdayAt(1, 10, 0).toISOString();
+
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Malicious Student",
+        studentEmail: "malicious@example.com",
+        teamId,
+        eventId: customEventId,
+        startTime,
+        timezone: "UTC",
+        customAnswers: ["<script>alert('xss')</script>CS", "<b>React</b>"],
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.customAnswers).toEqual(["CS", "React"]);
+    });
+
+    it("rejects booking if customAnswers has more than 5 elements", async () => {
+      const startTime = getNextUtcWeekdayAt(1, 10, 0).toISOString();
+
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Too Many Answers",
+        studentEmail: "toomany@example.com",
+        teamId,
+        eventId: customEventId,
+        startTime,
+        timezone: "UTC",
+        customAnswers: ["A1", "A2", "A3", "A4", "A5", "A6"],
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("books a follow-up session successfully with custom answers", async () => {
+      const startTime = getNextUtcWeekdayAt(1, 10, 0);
+      const originalBooking = await prisma.booking.create({
+        data: {
+          studentName: "Followup Custom Student",
+          studentEmail: "followup_custom@example.com",
+          teamId,
+          eventId: customEventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 3600 * 1000),
+          status: "COMPLETED",
+          customQuestions: ["What is your background?", "What are your goals?"],
+          customAnswers: ["Freshman", "Learn React"],
+        },
+      });
+
+      const newStartTime = getNextUtcWeekdayAt(1, 11, 0).toISOString();
+
+      const res = await request(app)
+        .post(`/api/bookings/${originalBooking.id}/follow-up`)
+        .set("Authorization", `Bearer ${coachToken}`)
+        .send({
+          startTime: newStartTime,
+          timezone: "UTC",
+          customAnswers: ["Sophomore now", "Learn Node.js"],
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.customQuestions).toEqual(["What is your background?", "What are your goals?"]);
+      expect(res.body.data.booking.customAnswers).toEqual(["Sophomore now", "Learn Node.js"]);
+      expect(res.body.data.booking.specificQuestion).toBeNull();
+    });
+  });
 });
 
 describe("Anonymous booking (allowAnonymousBooking=true)", () => {

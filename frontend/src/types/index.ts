@@ -125,6 +125,12 @@ export interface SystemSettings {
   feedbackFormLink: string
 }
 
+export interface SystemBookingQuestion {
+  id: string
+  text: string
+  order: number
+}
+
 export interface Team {
   id: string
   publicBookingSlug: string | null
@@ -313,6 +319,8 @@ export interface Event {
   maxBookingWindowDays: number | null
   locationLinkExpiresAt?: string | null
   locationLinkReminderDays?: number | null
+  customQuestions: string[]
+  useDefaultQuestions: boolean
   teamId: string
   groupId: string | null
   createdById: string
@@ -397,9 +405,12 @@ export interface PublicEventSummary extends Pick<
   | 'allowStudentCoachChoice'
   | 'bookingMode'
   | 'maxBookingWindowDays'
+  | 'customQuestions'
+  | 'useDefaultQuestions'
 > {
   team: PublicTeamSummary
   coaches: PublicEventCoach[]
+  effectiveBookingQuestions: string[]
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
@@ -700,6 +711,8 @@ export interface Booking {
   triedSolutions: string | null
   usedResources: string | null
   sessionObjectives: string | null
+  customQuestions: string[]
+  customAnswers: string[]
   teamId: string
   eventId: string
   coachUserId: string | null
@@ -739,6 +752,7 @@ export interface CreateBookingDto {
   usedResources?: string
   sessionObjectives?: string
   preferredCoachId?: string
+  customAnswers?: string[]
 }
 
 export interface ListBookingsFilters {

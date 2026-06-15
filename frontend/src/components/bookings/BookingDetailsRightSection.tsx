@@ -195,47 +195,91 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
             />
 
             <Stack spacing={3}>
-              {contextItems.map((item, index) => (
-                <Box key={index} sx={{ position: 'relative', pl: 3.5 }}>
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 6,
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      bgcolor: 'primary.main',
-                      border: `2px solid ${theme.palette.background.paper}`,
-                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
-                      zIndex: 1,
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontWeight: 700,
-                      color: theme.palette.primary.main,
-                      display: 'block',
-                      textTransform: 'uppercase',
-                      fontSize: '0.65rem',
-                      mb: 0.5,
-                    }}
-                  >
-                    {item.label}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      lineHeight: 1.5,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {booking[item.field] || 'None provided'}
-                  </Typography>
-                </Box>
-              ))}
+              {booking.customQuestions && booking.customQuestions.length > 0 ? (
+                booking.customQuestions.map((question, idx) => (
+                  <Box key={idx} sx={{ position: 'relative', pl: 3.5 }}>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 6,
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        bgcolor: 'primary.main',
+                        border: `2px solid ${theme.palette.background.paper}`,
+                        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
+                        zIndex: 1,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 700,
+                        color: theme.palette.primary.main,
+                        display: 'block',
+                        textTransform: 'uppercase',
+                        fontSize: '0.65rem',
+                        mb: 0.5,
+                      }}
+                    >
+                      {question}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        lineHeight: 1.5,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {booking.customAnswers?.[idx] || 'None provided'}
+                    </Typography>
+                  </Box>
+                ))
+              ) : (
+                contextItems.map((item, index) => (
+                  <Box key={index} sx={{ position: 'relative', pl: 3.5 }}>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 6,
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        bgcolor: 'primary.main',
+                        border: `2px solid ${theme.palette.background.paper}`,
+                        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
+                        zIndex: 1,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 700,
+                        color: theme.palette.primary.main,
+                        display: 'block',
+                        textTransform: 'uppercase',
+                        fontSize: '0.65rem',
+                        mb: 0.5,
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        lineHeight: 1.5,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {booking[item.field] || 'None provided'}
+                    </Typography>
+                  </Box>
+                ))
+              )}
             </Stack>
           </Box>
         </Box>

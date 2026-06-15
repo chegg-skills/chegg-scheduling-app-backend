@@ -52,6 +52,15 @@ export const eventFormSchema = z
         { message: 'Link expiry date must be today or in the future.' }
       ),
     locationLinkReminderDays: z.number().int().min(1).max(90).nullable().optional(),
+    customQuestions: z
+      .array(
+        z.string()
+          .min(1, 'Question text cannot be empty')
+          .max(255, 'Question must be 255 characters or less')
+      )
+      .max(5)
+      .default([]),
+    useDefaultQuestions: z.boolean().default(true),
     isActive: z.boolean().default(true),
     groupId: z.string().uuid().nullable().optional(),
   })
@@ -232,6 +241,8 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
         })()
         : null,
       locationLinkReminderDays: event.locationLinkReminderDays ?? null,
+      customQuestions: event.customQuestions ?? [],
+      useDefaultQuestions: event.useDefaultQuestions ?? true,
       isActive: event.isActive,
       groupId: event.groupId ?? null,
     }
@@ -262,6 +273,8 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
     meetingLinkSource: 'COACH_ISV' as const,
     locationLinkExpiresAt: null,
     locationLinkReminderDays: null,
+    customQuestions: [],
+    useDefaultQuestions: true,
     isActive: true,
     groupId: null,
   }

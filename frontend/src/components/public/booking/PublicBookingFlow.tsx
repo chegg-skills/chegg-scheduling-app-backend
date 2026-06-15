@@ -88,6 +88,7 @@ interface PublicBookingFlowProps {
   selectedTimezone: string
   setSelectedTimezone: (tz: string) => void
   eventName?: string
+  eventDetails?: PublicEventSummary | null
 }
 
 /**
@@ -126,6 +127,7 @@ export function PublicBookingFlow({
   selectedTimezone,
   setSelectedTimezone,
   eventName,
+  eventDetails,
 }: PublicBookingFlowProps) {
   switch (currentStepKey) {
     case 'team':
@@ -236,7 +238,13 @@ export function PublicBookingFlow({
         />
       )
     case 'confirm':
-      return <ConfirmationForm studentInfo={studentInfo} onUpdate={setStudentInfo} />
+      return (
+        <ConfirmationForm
+          studentInfo={studentInfo}
+          onUpdate={setStudentInfo}
+          effectiveBookingQuestions={eventDetails?.effectiveBookingQuestions ?? []}
+        />
+      )
     default:
       return null
   }

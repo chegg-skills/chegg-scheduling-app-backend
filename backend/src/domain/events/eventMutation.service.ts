@@ -242,6 +242,8 @@ export const buildEventCreateData = ({
     meetingLinkSource: validated.meetingLinkSource,
     locationLinkExpiresAt: hasExpiryCapableLocation ? (validated.locationLinkExpiresAt ?? null) : null,
     locationLinkReminderDays: hasExpiryCapableLocation ? (validated.locationLinkReminderDays ?? null) : null,
+    customQuestions: validated.customQuestions ?? [],
+    useDefaultQuestions: validated.useDefaultQuestions ?? true,
     team: { connect: { id: teamId } },
     group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
     createdBy: { connect: { id: callerId } },
@@ -353,6 +355,18 @@ export const buildEventUpdateData = ({
     updateData.locationLinkReminderDays = null;
   }
 
+  if (validated.useDefaultQuestions !== undefined) {
+    updateData.useDefaultQuestions = validated.useDefaultQuestions;
+    // When switching back to default questions, clear any stale custom questions from the DB.
+    if (validated.useDefaultQuestions === true) {
+      updateData.customQuestions = [];
+    }
+  }
+
+  if (validated.customQuestions !== undefined && validated.useDefaultQuestions !== true) {
+    updateData.customQuestions = validated.customQuestions;
+  }
+
   if (validated.groupId !== undefined) {
     updateData.group =
       validated.groupId === null ? { disconnect: true } : { connect: { id: validated.groupId } };
@@ -404,6 +418,8 @@ export const buildDuplicateEventData = ({
     meetingLinkSource: (sourceEvent as any).meetingLinkSource ?? "COACH_ISV",
     locationLinkExpiresAt: (sourceEvent as any).locationLinkExpiresAt ?? null,
     locationLinkReminderDays: (sourceEvent as any).locationLinkReminderDays ?? null,
+    customQuestions: sourceEvent.customQuestions ?? [],
+    useDefaultQuestions: sourceEvent.useDefaultQuestions ?? true,
     group: sourceEvent.groupId ? { connect: { id: sourceEvent.groupId } } : undefined,
   } as any;
 };

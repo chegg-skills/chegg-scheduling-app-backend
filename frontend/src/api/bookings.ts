@@ -65,6 +65,7 @@ export const bookingsApi = {
       triedSolutions?: string
       usedResources?: string
       sessionObjectives?: string
+      customAnswers?: string[]
     }
   ) => apiClient.post<ApiResponse<{ booking: Booking }>>(`/bookings/${bookingId}/follow-up`, data),
 }

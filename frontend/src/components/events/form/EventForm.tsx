@@ -15,6 +15,7 @@ import { EventFormSubmitActions } from './EventFormSubmitActions'
 import { useEventForm } from './hooks/useEventForm'
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
 import { extractApiError } from '@/utils/apiError'
+import { EventCustomQuestionsFields } from './EventCustomQuestionsFields'
 import type { Event } from '@/types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -40,6 +41,7 @@ const NAVIGATION_ITEMS = [
   { id: 'section-booking-rules', label: 'Booking rules' },
   { id: 'section-location', label: 'Location' },
   { id: 'section-schedule', label: 'Schedule & host' },
+  { id: 'section-custom-questions', label: 'Questions' },
 ]
 
 export function EventForm({
@@ -79,8 +81,6 @@ export function EventForm({
       return
     }
 
-    const sections = NAVIGATION_ITEMS.map((item) => item.id)
-
     const observerOptions = {
       root: null,
       rootMargin: '-10% 0px -50% 0px',
@@ -95,7 +95,7 @@ export function EventForm({
       })
     }, observerOptions)
 
-    sections.forEach((id) => {
+    NAVIGATION_ITEMS.forEach(({ id }) => {
       const el = document.getElementById(id)
       if (el) observer.observe(el)
     })
@@ -293,6 +293,27 @@ export function EventForm({
                 Select session duration, assign hosts, and choose strategy.
               </Typography>
               <EventScheduleFields caps={caps} event={event} teamMembers={teamMembers} />
+            </Box>
+
+            {/* Custom Questions Section */}
+            <Box
+              id="section-custom-questions"
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                scrollMarginTop: '24px',
+                bgcolor: 'transparent',
+              }}
+            >
+              <Typography variant="overline" color={activeSection === 'section-custom-questions' ? 'primary.main' : 'text.secondary'} sx={{ fontWeight: 700, display: 'block', mb: 0.5 }}>
+                Questions
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider', lineHeight: 1.3 }}>
+                Customize the registration questions for this event.
+              </Typography>
+              <EventCustomQuestionsFields />
             </Box>
 
             <EventAssignmentAlert

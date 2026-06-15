@@ -13,20 +13,34 @@ interface StudentInfo {
   triedSolutions: string
   usedResources: string
   sessionObjectives: string
+  customAnswers?: string[]
 }
 
 interface ConfirmationFormProps {
   studentInfo: StudentInfo
   onUpdate: (info: StudentInfo) => void
+  effectiveBookingQuestions: string[]
 }
 
 const MAX_CHARS = 500
 
-export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProps) {
+export function ConfirmationForm({ studentInfo, onUpdate, effectiveBookingQuestions }: ConfirmationFormProps) {
   const handleChange =
     (field: keyof StudentInfo) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       onUpdate({ ...studentInfo, [field]: e.target.value })
+    }
+
+  const handleCustomAnswerChange =
+    (index: number) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const newAnswers = [...(studentInfo.customAnswers || [])]
+      for (let i = 0; i <= index; i++) {
+        if (newAnswers[i] === undefined) {
+          newAnswers[i] = ''
+        }
+      }
+      newAnswers[index] = e.target.value
+      onUpdate({ ...studentInfo, customAnswers: newAnswers })
     }
 
   return (
@@ -88,112 +102,42 @@ export function ConfirmationForm({ studentInfo, onUpdate }: ConfirmationFormProp
             />
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
-            <TextField
-              label="Specific question or problem?"
-              fullWidth
-              size="small"
-              multiline
-              rows={3}
-              variant="outlined"
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-              value={studentInfo.specificQuestion}
-              onChange={handleChange('specificQuestion')}
-              placeholder="e.g., I'm having trouble with the calculus chain rule..."
-              inputProps={{ maxLength: MAX_CHARS }}
-              helperText={
-                studentInfo.specificQuestion.length >= MAX_CHARS
-                  ? `Maximum character limit of ${MAX_CHARS} reached`
-                  : `${studentInfo.specificQuestion.length} / ${MAX_CHARS}`
-              }
-              FormHelperTextProps={{
-                sx: {
-                  textAlign: 'right',
-                  color: studentInfo.specificQuestion.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                  fontWeight: studentInfo.specificQuestion.length >= MAX_CHARS ? 600 : 400,
-                }
-              }}
-              error={studentInfo.specificQuestion.length >= MAX_CHARS}
-            />
-            <TextField
-              label="What have you already tried?"
-              fullWidth
-              size="small"
-              multiline
-              rows={3}
-              variant="outlined"
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-              value={studentInfo.triedSolutions}
-              onChange={handleChange('triedSolutions')}
-              placeholder="e.g., I tried these practice problems but got stuck..."
-              inputProps={{ maxLength: MAX_CHARS }}
-              helperText={
-                studentInfo.triedSolutions.length >= MAX_CHARS
-                  ? `Maximum character limit of ${MAX_CHARS} reached`
-                  : `${studentInfo.triedSolutions.length} / ${MAX_CHARS}`
-              }
-              FormHelperTextProps={{
-                sx: {
-                  textAlign: 'right',
-                  color: studentInfo.triedSolutions.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                  fontWeight: studentInfo.triedSolutions.length >= MAX_CHARS ? 600 : 400,
-                }
-              }}
-              error={studentInfo.triedSolutions.length >= MAX_CHARS}
-            />
-            <TextField
-              label="Resources used so far?"
-              fullWidth
-              size="small"
-              multiline
-              rows={3}
-              variant="outlined"
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-              value={studentInfo.usedResources}
-              onChange={handleChange('usedResources')}
-              placeholder="e.g., Textbook chapter 4..."
-              inputProps={{ maxLength: MAX_CHARS }}
-              helperText={
-                studentInfo.usedResources.length >= MAX_CHARS
-                  ? `Maximum character limit of ${MAX_CHARS} reached`
-                  : `${studentInfo.usedResources.length} / ${MAX_CHARS}`
-              }
-              FormHelperTextProps={{
-                sx: {
-                  textAlign: 'right',
-                  color: studentInfo.usedResources.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                  fontWeight: studentInfo.usedResources.length >= MAX_CHARS ? 600 : 400,
-                }
-              }}
-              error={studentInfo.usedResources.length >= MAX_CHARS}
-            />
-            <TextField
-              label="Session objectives"
-              fullWidth
-              size="small"
-              multiline
-              rows={3}
-              variant="outlined"
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-              value={studentInfo.sessionObjectives}
-              onChange={handleChange('sessionObjectives')}
-              placeholder="e.g., I want to be able to solve these types of problems..."
-              inputProps={{ maxLength: MAX_CHARS }}
-              helperText={
-                studentInfo.sessionObjectives.length >= MAX_CHARS
-                  ? `Maximum character limit of ${MAX_CHARS} reached`
-                  : `${studentInfo.sessionObjectives.length} / ${MAX_CHARS}`
-              }
-              FormHelperTextProps={{
-                sx: {
-                  textAlign: 'right',
-                  color: studentInfo.sessionObjectives.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                  fontWeight: studentInfo.sessionObjectives.length >= MAX_CHARS ? 600 : 400,
-                }
-              }}
-              error={studentInfo.sessionObjectives.length >= MAX_CHARS}
-            />
-          </Box>
+          {effectiveBookingQuestions.length > 0 && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
+              {effectiveBookingQuestions.map((question, index) => {
+                const answerValue = studentInfo.customAnswers?.[index] || ''
+                return (
+                  <TextField
+                    key={index}
+                    label={question}
+                    fullWidth
+                    size="small"
+                    multiline
+                    rows={3}
+                    variant="outlined"
+                    sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
+                    value={answerValue}
+                    onChange={handleCustomAnswerChange(index)}
+                    placeholder="Enter your answer..."
+                    inputProps={{ maxLength: MAX_CHARS }}
+                    helperText={
+                      answerValue.length >= MAX_CHARS
+                        ? `Maximum character limit of ${MAX_CHARS} reached`
+                        : `${answerValue.length} / ${MAX_CHARS}`
+                    }
+                    FormHelperTextProps={{
+                      sx: {
+                        textAlign: 'right',
+                        color: answerValue.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
+                        fontWeight: answerValue.length >= MAX_CHARS ? 600 : 400,
+                      },
+                    }}
+                    error={answerValue.length >= MAX_CHARS}
+                  />
+                )
+              })}
+            </Box>
+          )}
 
           <TextField
             label="Additional notes (optional)"

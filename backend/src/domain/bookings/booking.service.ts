@@ -50,6 +50,54 @@ export { bookingInclude, type SafeBooking } from "./booking.shared";
 
 export type { UpdateBookingStatusInput } from "./booking.shared";
 
+/**
+ * Resolves which questions and answers to snapshot on a booking.
+ * When the event uses custom questions, the 4 legacy fields are nulled out.
+ * When it uses default questions (or has no custom questions), legacy fields pass through.
+ * Validates that customAnswers count does not exceed the number of event questions.
+ */
+const resolveBookingQuestions = (
+  event: { useDefaultQuestions: boolean; customQuestions: string[] },
+  customAnswers: string[] | undefined,
+  legacyFields: {
+    specificQuestion?: string;
+    triedSolutions?: string;
+    usedResources?: string;
+    sessionObjectives?: string;
+  },
+) => {
+  const hasCustomQuestions =
+    event.useDefaultQuestions === false &&
+    event.customQuestions.length > 0;
+
+  if (!hasCustomQuestions) {
+    return {
+      savedSpecificQuestion: legacyFields.specificQuestion ?? null,
+      savedTriedSolutions: legacyFields.triedSolutions ?? null,
+      savedUsedResources: legacyFields.usedResources ?? null,
+      savedSessionObjectives: legacyFields.sessionObjectives ?? null,
+      savedCustomQuestions: [] as string[],
+      savedCustomAnswers: [] as string[],
+    };
+  }
+
+  if (customAnswers && customAnswers.length > event.customQuestions.length) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "Number of answers exceeds the number of questions for this event.",
+    );
+  }
+
+  return {
+    savedSpecificQuestion: null,
+    savedTriedSolutions: null,
+    savedUsedResources: null,
+    savedSessionObjectives: null,
+    savedCustomQuestions: event.customQuestions,
+    savedCustomAnswers: event.customQuestions.map((_q: string, i: number) => customAnswers?.[i]?.trim() ?? ""),
+  };
+};
+
 const getBookableEvent = async (teamId: string, eventId: string): Promise<BookableEvent> => {
   const event = await findBookableEvent(eventId);
 
@@ -104,6 +152,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     usedResources,
     sessionObjectives,
     preferredCoachId,
+    customAnswers,
   } = payload;
 
   const normalizedStudentName = normalizeStudentName(studentName);
@@ -111,6 +160,23 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
 
   const start = parseBookingStartTime(startTime);
   const event = await getBookableEvent(teamId, eventId);
+
+  const {
+    savedSpecificQuestion,
+    savedTriedSolutions,
+    savedUsedResources,
+    savedSessionObjectives,
+    savedCustomQuestions,
+    savedCustomAnswers,
+  // Cast is safe: Prisma includes all scalar fields when using `include` (not `select`).
+  // customQuestions and useDefaultQuestions are present at runtime — LS cache may lag after prisma generate.
+  } = resolveBookingQuestions(event as typeof event & { useDefaultQuestions: boolean; customQuestions: string[] }, customAnswers, {
+    specificQuestion,
+    triedSolutions,
+    usedResources,
+    sessionObjectives,
+  });
+
   const { end, schedulingContext } = resolveBookingWindow(event, start);
   const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
   const activeCoaches = event.coaches as CoachCandidate[];
@@ -192,10 +258,12 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         endTime: end,
         timezone: timezone || "UTC",
         notes,
-        specificQuestion,
-        triedSolutions,
-        usedResources,
-        sessionObjectives,
+        specificQuestion: savedSpecificQuestion,
+        triedSolutions: savedTriedSolutions,
+        usedResources: savedUsedResources,
+        sessionObjectives: savedSessionObjectives,
+        customQuestions: savedCustomQuestions,
+        customAnswers: savedCustomAnswers,
         meetingJoinUrl,
         status: BookingStatus.CONFIRMED,
       });
@@ -422,6 +490,7 @@ const bookFollowUpSession = async (
     triedSolutions?: string;
     usedResources?: string;
     sessionObjectives?: string;
+    customAnswers?: string[];
   },
   caller: CallerContext,
 ): Promise<SafeBooking> => {
@@ -618,6 +687,24 @@ const bookFollowUpSession = async (
         start,
       );
 
+      const {
+        savedSpecificQuestion,
+        savedTriedSolutions,
+        savedUsedResources,
+        savedSessionObjectives,
+        savedCustomQuestions,
+        savedCustomAnswers,
+      } = resolveBookingQuestions(
+        event as typeof event & { useDefaultQuestions: boolean; customQuestions: string[] },
+        payload.customAnswers,
+        {
+          specificQuestion: payload.specificQuestion,
+          triedSolutions: payload.triedSolutions,
+          usedResources: payload.usedResources,
+          sessionObjectives: payload.sessionObjectives,
+        },
+      );
+
       return createBookingRecord(tx, {
         studentId: student.id,
         scheduleSlotId: scheduleSlot?.id ?? null,
@@ -632,10 +719,12 @@ const bookFollowUpSession = async (
         timezone: payload.timezone || originalBooking.timezone || "UTC",
         notes:
           payload.notes ?? `Follow-up to booking ${originalBooking.id.slice(0, 8).toUpperCase()}`,
-        specificQuestion: payload.specificQuestion || null,
-        triedSolutions: payload.triedSolutions || null,
-        usedResources: payload.usedResources || null,
-        sessionObjectives: payload.sessionObjectives || null,
+        specificQuestion: savedSpecificQuestion,
+        triedSolutions: savedTriedSolutions,
+        usedResources: savedUsedResources,
+        sessionObjectives: savedSessionObjectives,
+        customQuestions: savedCustomQuestions,
+        customAnswers: savedCustomAnswers,
         meetingJoinUrl,
         status: BookingStatus.CONFIRMED,
       });
