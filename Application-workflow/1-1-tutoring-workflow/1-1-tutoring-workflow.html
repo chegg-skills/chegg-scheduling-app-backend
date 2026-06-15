@@ -74,7 +74,8 @@
               Strategy -- "Round Robin" --> SetPool["Define Coach Pool Size"]
               SetPool --> Location
 
-              Location --> CreateEvent(["Create Event"])
+              Location --> Questions["Configure Booking Questions<br/>useDefaultQuestions toggle (default ON)<br/>Optional: up to 5 custom questions (255 chars each)"]
+              Questions --> CreateEvent(["Create Event"])
           end
 
           %% Post Creation Configuration
@@ -111,7 +112,7 @@
               FilterDefaultSlots --> SelectTime
               FilterAllSlots --> SelectTime
               
-              SelectTime --> StudentForm["Student fills out Booking Details form"]
+              SelectTime --> StudentForm["Student fills out Booking Details form<br/>(Name, Email, Notes + configured Booking Questions)"]
               StudentForm --> BookSession(["Book Session"])
           end
 

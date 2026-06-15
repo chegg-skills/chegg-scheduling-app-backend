@@ -31,7 +31,8 @@ graph TD
         LockRotatingLead --> SetPool["Define Coach Pool Size (Min >= 2)"]
         SetPool --> Location
         
-        Location --> CreateEvent(["Create Event"])
+        Location --> Questions["Configure Booking Questions<br/>useDefaultQuestions toggle (default ON)<br/>Optional: up to 5 custom questions (255 chars each)"]
+        Questions --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
@@ -62,7 +63,7 @@ graph TD
         FilterDefaultSlots --> SelectTime["Student selects a Date & Time"]
         FilterAllSlots --> SelectTime
         
-        SelectTime --> StudentForm["Student fills out Booking Details form"]
+        SelectTime --> StudentForm["Student fills out Booking Details form<br/>(Name, Email, Notes + configured Booking Questions)"]
         StudentForm --> BookSession(["Book Session"])
     end
 
@@ -99,6 +100,8 @@ An administrator (Super Admin or Team Admin) configures a multi-coach session un
 * **Optional settings**:
   * `showDescription` — toggle to display the event description on the public booking page side panel.
   * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit).
+  * `useDefaultQuestions` / `customQuestions` — by default the event uses the system-configured default booking questions. Toggle `useDefaultQuestions` off to replace them with up to 5 per-event custom questions (max 255 chars each). Switching back to default clears the custom question list in the database. The backend resolves the effective list server-side (`effectiveBookingQuestions`) so the public booking form always receives the correct set without any client-side branching.
+  * `locationLinkExpiresAt` / `locationLinkReminderDays` — for **Virtual** or **Custom** location types only. Set an expiry date for the meeting link and a pre-expiry reminder window (1–90 days). Both fields must be set together or both left empty.
 
 ### 2. Setup & Availability Configuration
 Before students can book a session:
@@ -110,7 +113,7 @@ Before students can book a session:
 When a student visits the booking page:
 1. The student views available times.
 2. The system displays times where the **lead coach** is available. Co-host availability is checked at booking time (not at the slot display step) and degrades gracefully — if fewer co-coaches than `targetCoHostCount` are available, the booking proceeds with however many are free.
-3. The student selects an available slot and submits the booking details.
+3. The student selects an available slot and fills out the booking form (Name, Email, Timezone, and Notes). If the event has booking questions configured (either system defaults or per-event custom questions), those appear as additional text fields. Student answers are stored as `customAnswers[]` on the `Booking` record.
 
 ### 4. Database Assignment & Confirmation
 Once the booking is submitted, the backend processes it in a single transaction:

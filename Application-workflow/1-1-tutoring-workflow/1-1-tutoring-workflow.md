@@ -32,7 +32,8 @@ graph TD
         Strategy -- "Round Robin" --> SetPool["Define Coach Pool Size"]
         SetPool --> Location
         
-        Location --> CreateEvent(["Create Event"])
+        Location --> Questions["Configure Booking Questions<br/>useDefaultQuestions toggle (default ON)<br/>Optional: up to 5 custom questions (255 chars each)"]
+        Questions --> CreateEvent(["Create Event"])
     end
 
     %% Post Creation Configuration
@@ -69,7 +70,7 @@ graph TD
         FilterDefaultSlots --> SelectTime
         FilterAllSlots --> SelectTime
         
-        SelectTime --> StudentForm["Student fills out Booking Details form"]
+        SelectTime --> StudentForm["Student fills out Booking Details form<br/>(Name, Email, Notes + configured Booking Questions)"]
         StudentForm --> BookSession(["Book Session"])
     end
 
@@ -111,6 +112,8 @@ An administrator (Super Admin or Team Admin) defines a scheduling category under
 * **Optional settings**:
   * `showDescription` — toggle to display the event description on the public booking page side panel.
   * `maxBookingWindowDays` — limits how far in advance students can book (1–365 days; `null` = no limit). Enforced on both the availability endpoint (clips the slot date range) and the booking calendar (disables out-of-window dates).
+  * `useDefaultQuestions` / `customQuestions` — by default the event uses the system-configured default booking questions. Toggle `useDefaultQuestions` off to replace them with up to 5 per-event custom questions (max 255 chars each). Switching back to default clears the custom question list in the database. The backend resolves the effective list server-side (`effectiveBookingQuestions`) so the public booking form always receives the correct set without any client-side branching.
+  * `locationLinkExpiresAt` / `locationLinkReminderDays` — for **Virtual** or **Custom** location types only. Set an expiry date for the meeting link and a pre-expiry reminder window (1–90 days). Both fields must be set together or both left empty.
 
 ### 2. Setup & Slots Configuration
 Before the event is bookable:
@@ -122,7 +125,7 @@ Before the event is bookable:
 When a student accesses the booking path:
 1. **Coach Selection** (If choice is allowed): The student views the profiles of assigned coaches and chooses one.
 2. **Time Selection**: The student views a calendar of open dates/times and picks a slot.
-3. **Information Intake**: The student fills in the booking form with their details (Name, Email, Timezone, Session Objectives, and Notes).
+3. **Information Intake**: The student fills in the booking form with their details (Name, Email, Timezone, and Notes). If the event has booking questions configured (either system defaults or per-event custom questions), those appear as additional text fields on the form. Student answers are stored as `customAnswers[]` on the `Booking` record.
 
 ### 4. Database processing & Assignment
 Once the student submits the form, the backend processes the request in a database transaction:
