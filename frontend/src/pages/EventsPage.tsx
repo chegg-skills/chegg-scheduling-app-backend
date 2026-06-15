@@ -520,7 +520,7 @@ export function EventsPage() {
                         eventTypes={eventTypes}
                         selectedEventTypeId={selectedEventTypeId}
                         onViewUser={setViewingUserId}
-                        canManage={isSuperAdmin || (!isAllTeams && !!selectedTeamId)}
+                        canManage={!isCoach && (isSuperAdmin || (!isAllTeams && !!selectedTeamId))}
                         groups={groups}
                         isAllTeams={isAllTeams}
                       />
