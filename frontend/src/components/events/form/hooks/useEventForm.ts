@@ -118,8 +118,8 @@ export function useEventForm({ teamId, event, accessedFromEventsTab, onSuccess }
       setValue('allowStudentCoachChoice', false, { shouldDirty: false })
     }
 
-    // Reset anonymous booking and deferred coach reveal when switching away from ONE_TO_MANY
-    if (currentInteractionType !== 'ONE_TO_MANY') {
+    // Reset anonymous booking and deferred coach reveal for types that don't support them
+    if (caps.multipleCoaches || !caps.multipleParticipants) {
       setValue('allowAnonymousBooking', false, { shouldDirty: false })
       setValue('deferCoachReveal', false, { shouldDirty: false })
     }

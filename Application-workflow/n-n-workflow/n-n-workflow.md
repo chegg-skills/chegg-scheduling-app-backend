@@ -1,4 +1,4 @@
-# N:N Tutoring Session Workflow (MANY_TO_MANY)
+# N:N Workflow (MANY_TO_MANY)
 
 This document provides a detailed end-to-end workflow walkthrough for the **N:N Interaction Type (MANY_TO_MANY)** in the scheduling application. It details how the system supports collaborative group sessions where multiple coaches (1 Lead Coach and 1 or more Co-Coaches/Co-Hosts) host multiple student participants in predefined slots.
 

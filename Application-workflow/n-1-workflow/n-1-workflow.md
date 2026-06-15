@@ -1,4 +1,4 @@
-# N:1 Tutoring Session Workflow (MANY_TO_ONE)
+# N:1 Workflow (MANY_TO_ONE)
 
 This document provides a detailed end-to-end workflow walkthrough for the **N:1 Interaction Type (MANY_TO_ONE)** in the scheduling application. It details how the system supports multi-coach sessions (1 Lead Coach and 1 or more Co-Coaches/Co-Hosts) with only 1 student participant, including auto-derived leadership strategies and collaborative availability checks.
 

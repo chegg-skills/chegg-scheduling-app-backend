@@ -1,4 +1,4 @@
-# 1:N Tutoring Session Workflow (ONE_TO_MANY)
+# 1:N Workflow (ONE_TO_MANY)
 
 This document provides a detailed end-to-end workflow walkthrough for **1:N Interaction Type (Group Session)** in the scheduling application. It details how form configurations (Fixed Slots, Participant Capacity, Deferred Coach Reveal, and Anonymous Booking) affect the setup, booking, notification, and session log lifecycle.
 
