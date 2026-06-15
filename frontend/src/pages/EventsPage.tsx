@@ -58,8 +58,8 @@ export function EventsPage() {
 
   useEffect(() => {
     if (!isTeamAdmin) return
-    if (selectedTeamId === 'all') {
-      setSelectedTeamId(sortedTeams.length === 1 ? sortedTeams[0].id : '')
+    if (selectedTeamId === 'all' && sortedTeams.length === 1) {
+      setSelectedTeamId(sortedTeams[0].id)
       return
     }
     if (sortedTeams.length === 1 && !selectedTeamId) {
@@ -452,7 +452,7 @@ export function EventsPage() {
                                   {toTitleCase(team.name)}
                                 </MenuItem>
                               ))}
-                              {!isTeamAdmin && (
+                              {(!isTeamAdmin || sortedTeams.length > 1) && (
                                 <MenuItem
                                   value="all"
                                   sx={{
