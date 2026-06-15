@@ -61,6 +61,7 @@ export function usePublicBookingState() {
           triedSolutions: '',
           usedResources: '',
           sessionObjectives: '',
+          customAnswers: [],
         }
       }
     } catch {
@@ -74,6 +75,7 @@ export function usePublicBookingState() {
       triedSolutions: '',
       usedResources: '',
       sessionObjectives: '',
+      customAnswers: [],
     }
   })
 
@@ -414,6 +416,7 @@ export function usePublicBookingState() {
         usedResources: studentInfo.usedResources,
         sessionObjectives: studentInfo.sessionObjectives,
         preferredCoachId,
+        customAnswers: studentInfo.customAnswers,
       })
       try {
         localStorage.setItem(

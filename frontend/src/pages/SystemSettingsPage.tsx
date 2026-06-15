@@ -11,6 +11,7 @@ import { Button } from '@/components/shared/ui/Button'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useSystemSettings, useUpdateSystemSettings } from '@/hooks/queries/useSystemSettings'
+import { DefaultBookingQuestionsSection } from '@/components/systemSettings/DefaultBookingQuestionsSection'
 
 export function SystemSettingsPage() {
   const { data: settings, isLoading, error } = useSystemSettings()
@@ -106,6 +107,8 @@ export function SystemSettingsPage() {
             Save Settings
           </Button>
         </Box>
+
+        <DefaultBookingQuestionsSection />
       </Box>
     </Box>
   )

@@ -227,6 +227,7 @@ export function PublicBookingPage() {
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
               eventName={eventDetails?.name}
+              eventDetails={eventDetails}
             />
           </Box>
           {bookError && (

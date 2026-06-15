@@ -52,6 +52,7 @@ export type CreateBookingInput = {
   usedResources?: string;
   sessionObjectives?: string;
   preferredCoachId?: string;
+  customAnswers?: string[];
 };
 
 export type RescheduleBookingInput = {

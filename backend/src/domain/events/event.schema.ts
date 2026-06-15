@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EventLocationType, EventBookingMode, AssignmentStrategy, MeetingLinkSource } from "@prisma/client";
+import { stripHtml } from "../../shared/utils/htmlSanitizer";
 import {
   INTERACTION_TYPE_CAPS,
   INTERACTION_TYPE_KEYS,
@@ -69,6 +70,8 @@ const EventBaseObjectCore = z.looseObject({
     z.coerce.number().int().min(1).max(90).optional().nullable(),
   ),
   groupId: z.preprocess((val) => (val === "" ? null : val), z.uuid().nullable().optional()),
+  customQuestions: z.array(z.string().trim().max(255).transform(stripHtml)).max(5).optional(),
+  useDefaultQuestions: z.boolean().optional(),
 });
 
 /**
@@ -87,6 +90,8 @@ const EventBaseObject = EventBaseObjectCore.extend({
   deferCoachReveal: z.boolean().default(false),
   allowAnonymousBooking: z.boolean().default(false),
   meetingLinkSource: z.nativeEnum(MeetingLinkSource).default(MeetingLinkSource.COACH_ISV),
+  customQuestions: z.array(z.string().trim().max(255).transform(stripHtml)).max(5).default([]),
+  useDefaultQuestions: z.boolean().default(true),
 });
 
 /**
@@ -334,6 +339,16 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
         message: "Expiration date is required when reminder days is set.",
       });
     }
+  }
+
+  // Custom questions mode requires at least one question.
+  // Skip when useDefaultQuestions is absent (partial PATCH) — the service enforces the DB state.
+  if (data.useDefaultQuestions === false && Array.isArray(data.customQuestions) && data.customQuestions.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["customQuestions"],
+      message: "Add at least one custom question or switch back to default questions.",
+    });
   }
 };
 

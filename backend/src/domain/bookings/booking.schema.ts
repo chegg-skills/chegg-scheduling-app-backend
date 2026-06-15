@@ -45,6 +45,15 @@ export const CreateBookingSchema = {
         .transform(stripHtml)
         .optional(),
       preferredCoachId: z.uuid().optional(),
+      customAnswers: z
+        .array(
+          z.string()
+            .trim()
+            .max(500, "Answers must be 500 characters or less")
+            .transform(stripHtml)
+        )
+        .max(5, "Maximum of 5 custom answers allowed")
+        .optional(),
     })
     .strip(),
 };
@@ -199,6 +208,15 @@ export const BookFollowUpSchema = {
         .trim()
         .max(500, "Session objectives must be 500 characters or less")
         .transform(stripHtml)
+        .optional(),
+      customAnswers: z
+        .array(
+          z.string()
+            .trim()
+            .max(500, "Answers must be 500 characters or less")
+            .transform(stripHtml)
+        )
+        .max(5, "Maximum of 5 custom answers allowed")
         .optional(),
     })
     .strip(),

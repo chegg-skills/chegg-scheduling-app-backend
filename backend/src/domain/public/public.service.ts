@@ -8,6 +8,7 @@ import {
   assertRescheduleTokenValid,
   bookingInclude,
 } from "../bookings/booking.shared";
+import { getDefaultQuestionTexts } from "../systemSettings/bookingQuestion.service";
 
 const slugSchema = z.string().trim().min(1, "Slug is required");
 
@@ -35,6 +36,8 @@ const publicEventSelect = {
   interactionType: true,
   assignmentStrategy: true,
   allowStudentCoachChoice: true,
+  customQuestions: true,
+  useDefaultQuestions: true,
   coaches: {
     where: { isActive: true },
     orderBy: { coachOrder: "asc" as const },
@@ -79,6 +82,20 @@ const publicGroupSelect = {
 
 const normalizeSlug = (slug: string): string => {
   return slugSchema.parse(slug);
+};
+
+/**
+ * Resolves the effective booking questions for a public event.
+ * Returns text strings only — IDs and order are never exposed to the public.
+ */
+const resolveEffectiveBookingQuestions = async (event: {
+  useDefaultQuestions: boolean;
+  customQuestions: string[];
+}): Promise<string[]> => {
+  if (event.useDefaultQuestions) {
+    return getDefaultQuestionTexts();
+  }
+  return event.customQuestions.length > 0 ? event.customQuestions : [];
 };
 
 /**
@@ -154,7 +171,8 @@ export const getEventBySlug = async (slug: string) => {
   }
 
   const { isActive: _isActive, ...publicEvent } = event;
-  return publicEvent;
+  const effectiveBookingQuestions = await resolveEffectiveBookingQuestions(event);
+  return { ...publicEvent, effectiveBookingQuestions };
 };
 
 export const getCoachBySlug = async (slug: string) => {

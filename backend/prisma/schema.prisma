@@ -160,6 +160,8 @@ model Event {
   meetingLinkSource         MeetingLinkSource         @default(COACH_ISV)
   locationLinkExpiresAt     DateTime?
   locationLinkReminderDays  Int?
+  customQuestions           String[]                  @default([])
+  useDefaultQuestions       Boolean                   @default(true)
   groupId                   String?
   deletedAt                 DateTime?
   bookings                  Booking[]
@@ -372,6 +374,8 @@ model Booking {
   specificQuestion  String?
   triedSolutions    String?
   usedResources     String?
+  customQuestions   String[]           @default([])
+  customAnswers     String[]           @default([])
   meetingJoinUrl    String?
   studentId         String?
   scheduleSlotId    String?
@@ -417,6 +421,14 @@ model SystemSetting {
   id        String   @id @default(uuid())
   key       String   @unique
   value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SystemBookingQuestion {
+  id        String   @id @default(uuid())
+  text      String   @db.VarChar(255)
+  order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -29,6 +29,7 @@ import { PublicBookingSummary } from '@/components/public/booking/PublicBookingS
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
 import { PublicBookingStepper } from '@/components/public/booking/PublicBookingStepper'
 import { SuccessStep } from '@/components/public/booking/SuccessStep'
+import { useDefaultBookingQuestions } from '@/hooks/queries/useSystemSettings'
 
 interface BookFollowUpDialogProps {
   isOpen: boolean
@@ -47,13 +48,57 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
     Intl.DateTimeFormat().resolvedOptions().timeZone
   )
 
-  const [studentInfo, setStudentInfo] = useState({
+  const [studentInfo, setStudentInfo] = useState<{
+    notes: string
+    specificQuestion: string
+    triedSolutions: string
+    usedResources: string
+    sessionObjectives: string
+    customAnswers?: string[]
+  }>({
     notes: '',
     specificQuestion: '',
     triedSolutions: '',
     usedResources: '',
     sessionObjectives: '',
+    customAnswers: [],
   })
+
+  const { data: systemDefaultQuestions = [] } = useDefaultBookingQuestions({ enabled: isOpen })
+
+  // Resolve effective questions: custom questions take precedence when explicitly configured.
+  // Falls back to system defaults, which may be empty (questions section is then hidden).
+  const effectiveQuestions =
+    booking?.event && booking.event.useDefaultQuestions === false && booking.event.customQuestions.length > 0
+      ? booking.event.customQuestions
+      : systemDefaultQuestions.map((q) => q.text)
+
+  React.useEffect(() => {
+    if (isOpen && booking?.event) {
+      setStudentInfo({
+        notes: '',
+        specificQuestion: '',
+        triedSolutions: '',
+        usedResources: '',
+        sessionObjectives: '',
+        customAnswers: Array(effectiveQuestions.length).fill(''),
+      })
+    }
+  // effectiveQuestions identity changes when the dialog opens and data loads; isOpen + booking are the triggers
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, booking])
+
+  const handleCustomAnswerChange =
+    (index: number) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const newAnswers = [...(studentInfo.customAnswers || [])]
+      for (let i = 0; i <= index; i++) {
+        if (newAnswers[i] === undefined) {
+          newAnswers[i] = ''
+        }
+      }
+      newAnswers[index] = e.target.value
+      setStudentInfo({ ...studentInfo, customAnswers: newAnswers })
+    }
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const bookFollowUpSessionMutation = useBookFollowUpSession()
@@ -178,6 +223,7 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
       triedSolutions: '',
       usedResources: '',
       sessionObjectives: '',
+      customAnswers: [],
     })
     setErrorMsg(null)
     setIsConfirmed(false)
@@ -589,112 +635,42 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
                       />
                     </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
-                      <TextField
-                        label="Specific question or problem?"
-                        fullWidth
-                        size="small"
-                        multiline
-                        rows={3}
-                        variant="outlined"
-                        sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-                        value={studentInfo.specificQuestion}
-                        onChange={handleFormChange('specificQuestion')}
-                        placeholder="e.g., I'm having trouble with the calculus chain rule..."
-                        inputProps={{ maxLength: MAX_CHARS }}
-                        helperText={
-                          studentInfo.specificQuestion.length >= MAX_CHARS
-                            ? `Maximum character limit of ${MAX_CHARS} reached`
-                            : `${studentInfo.specificQuestion.length} / ${MAX_CHARS}`
-                        }
-                        FormHelperTextProps={{
-                          sx: {
-                            textAlign: 'right',
-                            color: studentInfo.specificQuestion.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                            fontWeight: studentInfo.specificQuestion.length >= MAX_CHARS ? 600 : 400,
-                          }
-                        }}
-                        error={studentInfo.specificQuestion.length >= MAX_CHARS}
-                      />
-                      <TextField
-                        label="What has student tried since last session?"
-                        fullWidth
-                        size="small"
-                        multiline
-                        rows={3}
-                        variant="outlined"
-                        sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-                        value={studentInfo.triedSolutions}
-                        onChange={handleFormChange('triedSolutions')}
-                        placeholder="e.g., Attempted the textbook problems..."
-                        inputProps={{ maxLength: MAX_CHARS }}
-                        helperText={
-                          studentInfo.triedSolutions.length >= MAX_CHARS
-                            ? `Maximum character limit of ${MAX_CHARS} reached`
-                            : `${studentInfo.triedSolutions.length} / ${MAX_CHARS}`
-                        }
-                        FormHelperTextProps={{
-                          sx: {
-                            textAlign: 'right',
-                            color: studentInfo.triedSolutions.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                            fontWeight: studentInfo.triedSolutions.length >= MAX_CHARS ? 600 : 400,
-                          }
-                        }}
-                        error={studentInfo.triedSolutions.length >= MAX_CHARS}
-                      />
-                      <TextField
-                        label="Resources used so far?"
-                        fullWidth
-                        size="small"
-                        multiline
-                        rows={3}
-                        variant="outlined"
-                        sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-                        value={studentInfo.usedResources}
-                        onChange={handleFormChange('usedResources')}
-                        placeholder="e.g. Textbook chapter 4..."
-                        inputProps={{ maxLength: MAX_CHARS }}
-                        helperText={
-                          studentInfo.usedResources.length >= MAX_CHARS
-                            ? `Maximum character limit of ${MAX_CHARS} reached`
-                            : `${studentInfo.usedResources.length} / ${MAX_CHARS}`
-                        }
-                        FormHelperTextProps={{
-                          sx: {
-                            textAlign: 'right',
-                            color: studentInfo.usedResources.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                            fontWeight: studentInfo.usedResources.length >= MAX_CHARS ? 600 : 400,
-                          }
-                        }}
-                        error={studentInfo.usedResources.length >= MAX_CHARS}
-                      />
-                      <TextField
-                        label="Session objectives"
-                        fullWidth
-                        size="small"
-                        multiline
-                        rows={3}
-                        variant="outlined"
-                        sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
-                        value={studentInfo.sessionObjectives}
-                        onChange={handleFormChange('sessionObjectives')}
-                        placeholder="e.g., master related rates word problems..."
-                        inputProps={{ maxLength: MAX_CHARS }}
-                        helperText={
-                          studentInfo.sessionObjectives.length >= MAX_CHARS
-                            ? `Maximum character limit of ${MAX_CHARS} reached`
-                            : `${studentInfo.sessionObjectives.length} / ${MAX_CHARS}`
-                        }
-                        FormHelperTextProps={{
-                          sx: {
-                            textAlign: 'right',
-                            color: studentInfo.sessionObjectives.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
-                            fontWeight: studentInfo.sessionObjectives.length >= MAX_CHARS ? 600 : 400,
-                          }
-                        }}
-                        error={studentInfo.sessionObjectives.length >= MAX_CHARS}
-                      />
-                    </Box>
+                    {effectiveQuestions.length > 0 && (
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
+                        {effectiveQuestions.map((question, index) => {
+                          const answerValue = studentInfo.customAnswers?.[index] || ''
+                          return (
+                            <TextField
+                              key={index}
+                              label={question}
+                              fullWidth
+                              size="small"
+                              multiline
+                              rows={3}
+                              variant="outlined"
+                              sx={{ '& .MuiOutlinedInput-root': { minHeight: 'unset' } }}
+                              value={answerValue}
+                              onChange={handleCustomAnswerChange(index)}
+                              placeholder="Enter your answer..."
+                              inputProps={{ maxLength: MAX_CHARS }}
+                              helperText={
+                                answerValue.length >= MAX_CHARS
+                                  ? `Maximum character limit of ${MAX_CHARS} reached`
+                                  : `${answerValue.length} / ${MAX_CHARS}`
+                              }
+                              FormHelperTextProps={{
+                                sx: {
+                                  textAlign: 'right',
+                                  color: answerValue.length >= MAX_CHARS ? 'error.main' : 'text.secondary',
+                                  fontWeight: answerValue.length >= MAX_CHARS ? 600 : 400,
+                                },
+                              }}
+                              error={answerValue.length >= MAX_CHARS}
+                            />
+                          )
+                        })}
+                      </Box>
+                    )}
 
                     <TextField
                       label="Internal Notes / Follow-up Details"
