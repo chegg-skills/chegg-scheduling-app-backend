@@ -118,6 +118,11 @@ const ReportsPage = lazy(() =>
     default: module.ReportsPage,
   }))
 )
+const TrackerPage = lazy(() =>
+  import('@/pages/TrackerPage').then((module) => ({
+    default: module.TrackerPage,
+  }))
+)
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((module) => ({
     default: module.NotFoundPage,
@@ -228,6 +233,7 @@ export const router = createBrowserRouter([
           { path: '/students/:studentId', element: renderLazyPage(StudentDetailPage) },
           { path: '/system-settings', element: renderLazyPage(SystemSettingsPage) },
           { path: '/booking-directories', element: renderLazyPage(BookingDirectoriesPage) },
+          { path: '/tracker', element: renderLazyPage(TrackerPage) },
         ],
       },
     ],

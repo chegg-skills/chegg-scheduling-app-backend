@@ -8,6 +8,7 @@ import {
   GraduationCap,
   BarChart3,
   Globe,
+  MonitorPlay,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '@/types'
@@ -73,6 +74,12 @@ export const navItems: NavItem[] = [
     label: 'Booking Directories',
     Icon: Globe,
     allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    to: '/tracker',
+    label: 'Tracker',
+    Icon: MonitorPlay,
+    allowedRoles: ['SUPER_ADMIN', 'TEAM_ADMIN'],
   },
 ]
 
