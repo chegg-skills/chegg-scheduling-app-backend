@@ -332,6 +332,8 @@ const listAllEvents = async (
   const where: Prisma.EventWhereInput = { deletedAt: null };
   if (caller.role === UserRole.COACH) {
     where.coaches = { some: { coachUserId: caller.id, isActive: true } };
+  } else if (caller.role === UserRole.TEAM_ADMIN) {
+    where.team = { teamLeadId: caller.id };
   }
   return listEventsByQuery(where, options);
 };

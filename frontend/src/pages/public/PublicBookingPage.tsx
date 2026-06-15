@@ -72,7 +72,7 @@ export function PublicBookingPage() {
 
   const eventCoaches = showCoachPicker ? (eventDetails?.coaches ?? []) : []
 
-  const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
+  const { setFramed, isEmbed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
 
   const [bookError, setBookError] = useState<string | null>(null)
@@ -248,7 +248,7 @@ export function PublicBookingPage() {
             isSubmitting={isSubmitting}
             nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
-            onTroubleshoot={() => setTroubleshootOpen(true)}
+            onTroubleshoot={isEmbed ? undefined : () => setTroubleshootOpen(true)}
           />
         </PublicMainContent>
       </PublicBaseLayout>

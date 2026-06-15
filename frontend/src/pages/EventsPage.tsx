@@ -18,7 +18,7 @@ import {
   ExternalLink,
   Info,
 } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamEvents, useEvents } from '@/hooks/queries/useEvents'
@@ -39,13 +39,13 @@ import { toTitleCase } from '@/utils/toTitleCase'
 import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
-  const { isCoach, isSuperAdmin } = usePermissions()
+  const { isCoach, isAdmin, isSuperAdmin, isTeamAdmin } = usePermissions()
   const [selectedTeamId, setSelectedTeamId] = useState<string>('')
   const [selectedEventTypeId, setSelectedEventTypeId] = useState<string>('')
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
-  const canManageTeam = isSuperAdmin
+  const canManageTeam = isAdmin
   const [copied, setCopied] = useState(false)
 
   const { data: teamsData, isLoading: teamsLoading, error: teamsError } = useTeams()
@@ -55,6 +55,17 @@ export function EventsPage() {
     if (!teamsData?.teams) return []
     return [...teamsData.teams].sort((a, b) => a.name.localeCompare(b.name))
   }, [teamsData?.teams])
+
+  useEffect(() => {
+    if (!isTeamAdmin) return
+    if (selectedTeamId === 'all' && sortedTeams.length === 1) {
+      setSelectedTeamId(sortedTeams[0].id)
+      return
+    }
+    if (sortedTeams.length === 1 && !selectedTeamId) {
+      setSelectedTeamId(sortedTeams[0].id)
+    }
+  }, [isTeamAdmin, sortedTeams, selectedTeamId])
 
   const selectedTeam = sortedTeams.find((team) => team.id === selectedTeamId)
   const selectedEventType = eventTypes.find((et) => et.id === selectedEventTypeId)
@@ -142,10 +153,7 @@ export function EventsPage() {
         subtitle="View and manage event schedules."
         actions={
           canManageTeam && (
-            <Button
-              size="sm"
-              onClick={() => setShowCreateEvent(true)}
-            >
+            <Button size="sm" onClick={() => setShowCreateEvent(true)}>
               <Plus size={16} />
               New event
             </Button>
@@ -444,30 +452,32 @@ export function EventsPage() {
                                   {toTitleCase(team.name)}
                                 </MenuItem>
                               ))}
-                              <MenuItem
-                                value="all"
-                                sx={{
-                                  borderTop: '1px solid',
-                                  borderColor: 'divider',
-                                  color: 'primary.main',
-                                  fontWeight: 600,
-                                  py: 1.25,
-                                  px: 2,
-                                  '&:hover': {
-                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                                  },
-                                  '&.Mui-selected': {
-                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                              {(!isTeamAdmin || sortedTeams.length > 1) && (
+                                <MenuItem
+                                  value="all"
+                                  sx={{
+                                    borderTop: '1px solid',
+                                    borderColor: 'divider',
                                     color: 'primary.main',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
+                                    py: 1.25,
+                                    px: 2,
                                     '&:hover': {
-                                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
                                     },
-                                  },
-                                }}
-                              >
-                                All teams
-                              </MenuItem>
+                                    '&.Mui-selected': {
+                                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                                      color: 'primary.main',
+                                      fontWeight: 700,
+                                      '&:hover': {
+                                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                                      },
+                                    },
+                                  }}
+                                >
+                                  All teams
+                                </MenuItem>
+                              )}
                             </Select>
                           </Box>
                         </Stack>
@@ -510,7 +520,7 @@ export function EventsPage() {
                         eventTypes={eventTypes}
                         selectedEventTypeId={selectedEventTypeId}
                         onViewUser={setViewingUserId}
-                        canManage={canManageTeam}
+                        canManage={isSuperAdmin || (!isAllTeams && !!selectedTeamId)}
                         groups={groups}
                         isAllTeams={isAllTeams}
                       />

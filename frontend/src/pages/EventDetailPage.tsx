@@ -5,6 +5,7 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { useParams } from 'react-router-dom'
 import {
+  Code,
   Edit,
   Trash2,
   Eye,
@@ -40,11 +41,13 @@ import { EventBookingsTab } from '@/components/events/tabs/EventBookingsTab'
 import { BookingViewProvider } from '@/context/bookingView'
 import { EventScheduleTab } from '@/components/events/tabs/EventScheduleTab'
 import { getEventCoachSetupStatus } from '@/components/events/form/eventCapabilityRules'
+import { EmbedBookingDialog } from '@/components/events/dialogs/EmbedBookingDialog'
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams<{ eventId: string }>()
   const { isCoach } = usePermissions()
   const [showEdit, setShowEdit] = useState(false)
+  const [showEmbed, setShowEmbed] = useState(false)
   const [tabValue, setTabValue] = useState(0)
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
@@ -145,6 +148,15 @@ export function EventDetailPage() {
                     label: 'Edit event details',
                     icon: <Edit size={16} />,
                     onClick: () => setShowEdit(true),
+                  },
+                  {
+                    label: 'Add to website',
+                    icon: <Code size={16} />,
+                    onClick: () => setShowEmbed(true),
+                    disabled: !event.isActive || !event.publicBookingSlug,
+                    tooltip: !event.publicBookingSlug
+                      ? 'Set a public URL for this event first'
+                      : undefined,
                   },
                   {
                     label: event.isActive ? 'Mark as Inactive' : 'Mark as Active',
@@ -260,6 +272,10 @@ export function EventDetailPage() {
 
         {viewingUserId && (
           <UserDetailModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
+        )}
+
+        {showEmbed && (
+          <EmbedBookingDialog isOpen onClose={() => setShowEmbed(false)} event={event} />
         )}
       </Box>
     </Stack>

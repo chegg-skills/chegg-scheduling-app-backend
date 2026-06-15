@@ -12,6 +12,7 @@ import { toTitleCase } from '@/utils/toTitleCase'
 import { EventCard } from './EventCard'
 import { EventGroupHeader, type GroupEntry } from './EventGroupHeader'
 import { EventActionsMenu } from './EventActionsMenu'
+import { EmbedBookingDialog } from '../dialogs/EmbedBookingDialog'
 
 interface EventTypeEventsListProps {
   events: Event[]
@@ -33,6 +34,7 @@ export function EventTypeEventsList({
   isAllTeams = false,
 }: EventTypeEventsListProps) {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [embeddingEvent, setEmbeddingEvent] = useState<Event | null>(null)
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const [activeMenuEvent, setActiveMenuEvent] = useState<Event | null>(null)
 
@@ -181,6 +183,14 @@ export function EventTypeEventsList({
           if (activeMenuEvent) handleDelete(activeMenuEvent)
           handleMenuClose()
         }}
+        onEmbed={
+          activeMenuEvent?.isActive && activeMenuEvent?.publicBookingSlug
+            ? () => {
+                setEmbeddingEvent(activeMenuEvent)
+                handleMenuClose()
+              }
+            : undefined
+        }
       />
 
       {editingEvent && (
@@ -197,6 +207,14 @@ export function EventTypeEventsList({
             onCancel={() => setEditingEvent(null)}
           />
         </Modal>
+      )}
+
+      {embeddingEvent && (
+        <EmbedBookingDialog
+          isOpen
+          onClose={() => setEmbeddingEvent(null)}
+          event={embeddingEvent}
+        />
       )}
     </Stack>
   )
