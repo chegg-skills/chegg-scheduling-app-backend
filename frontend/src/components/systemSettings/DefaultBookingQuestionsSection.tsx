@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -14,42 +15,128 @@ import {
   useCreateDefaultQuestion,
   useUpdateDefaultQuestion,
   useDeleteDefaultQuestion,
+  systemSettingsKeys,
 } from '@/hooks/queries/useSystemSettings'
 
 const MAX_QUESTIONS = 5
 
+interface DraftQuestion {
+  id?: string
+  text: string
+  tempId?: string
+}
+
 export function DefaultBookingQuestionsSection() {
+  const queryClient = useQueryClient()
   const { data: questions = [], isLoading } = useDefaultBookingQuestions()
   const createMutation = useCreateDefaultQuestion()
   const updateMutation = useUpdateDefaultQuestion()
   const deleteMutation = useDeleteDefaultQuestion()
 
-  // Local draft for the "add new question" input
-  const [newText, setNewText] = useState('')
-  const [newError, setNewError] = useState<string | null>(null)
+  const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const handleAdd = () => {
-    const trimmed = newText.trim()
-    if (!trimmed) {
-      setNewError('Question text cannot be empty.')
+  // Sync draft list when database questions finish loading
+  useEffect(() => {
+    if (questions) {
+      setDraftQuestions(
+        questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+        }))
+      )
+    }
+  }, [questions])
+
+  const handleAddQuestion = () => {
+    if (draftQuestions.length < MAX_QUESTIONS) {
+      setDraftQuestions([
+        ...draftQuestions,
+        { text: '', tempId: Math.random().toString() },
+      ])
+      setSaveError(null)
+    }
+  }
+
+  const handleRemoveQuestion = (index: number) => {
+    setDraftQuestions(draftQuestions.filter((_, i) => i !== index))
+    setSaveError(null)
+  }
+
+  const handleTextChange = (index: number, newText: string) => {
+    const updated = [...draftQuestions]
+    updated[index] = { ...updated[index], text: newText }
+    setDraftQuestions(updated)
+    setSaveError(null)
+  }
+
+  const handleDiscard = () => {
+    setDraftQuestions(
+      questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+      }))
+    )
+    setSaveError(null)
+  }
+
+  const handleSave = async () => {
+    // Validate empty texts
+    const hasEmpty = draftQuestions.some((q) => !q.text.trim())
+    if (hasEmpty) {
+      setSaveError('Question text cannot be empty. Please fill in or remove empty questions.')
       return
     }
-    setNewError(null)
-    createMutation.mutate(trimmed, {
-      onSuccess: () => setNewText(''),
+
+    setIsSaving(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+
+    try {
+      // 1. Identify which questions to delete
+      const toDelete = questions.filter((q) => !draftQuestions.some((dq) => dq.id === q.id))
+      for (const q of toDelete) {
+        await deleteMutation.mutateAsync(q.id)
+      }
+
+      // 2. Process updates and creations in order
+      for (let i = 0; i < draftQuestions.length; i++) {
+        const dq = draftQuestions[i]
+        if (dq.id) {
+          // Existing: update text and/or order (index i)
+          const original = questions.find((q) => q.id === dq.id)
+          if (original && (original.text !== dq.text || original.order !== i)) {
+            await updateMutation.mutateAsync({
+              id: dq.id,
+              data: { text: dq.text, order: i },
+            })
+          }
+        } else {
+          // New: create
+          // Backend assigns it max(order) + 1, which puts it at index i as we process sequentially
+          await createMutation.mutateAsync(dq.text)
+        }
+      }
+
+      // 3. Re-fetch and update UI
+      await queryClient.invalidateQueries({ queryKey: systemSettingsKeys.bookingQuestions })
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 4000)
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to save questions. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const isDirty =
+    draftQuestions.length !== questions.length ||
+    draftQuestions.some((dq, idx) => {
+      const q = questions[idx]
+      return !q || q.id !== dq.id || q.text !== dq.text
     })
-  }
-
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id)
-  }
-
-  const handleBlurUpdate = (id: string, value: string) => {
-    const trimmed = value.trim()
-    const original = questions.find((q) => q.id === id)?.text
-    if (!trimmed || trimmed === original) return
-    updateMutation.mutate({ id, data: { text: trimmed } })
-  }
 
   return (
     <Box
@@ -68,114 +155,95 @@ export function DefaultBookingQuestionsSection() {
         </Typography>
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        These questions are shown to students on the public booking form for all events that haven't
-        defined custom questions. Changes go live immediately. Maximum {MAX_QUESTIONS} questions.
+        These questions are shown to students on the public booking form for all events that use default questions. You can have up to {MAX_QUESTIONS}. Click Save Changes after editing.
       </Typography>
 
       <Divider sx={{ my: 2.5 }} />
 
       {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-          <CircularProgress size={24} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress size={28} />
         </Box>
       ) : (
-        <Stack spacing={2}>
-          {questions.length === 0 && (
-            <Alert severity="info" variant="outlined" sx={{ borderRadius: 1.5 }}>
-              No default questions configured. Students will see no questions on events using
-              default questions mode.
+        <Stack spacing={2.5}>
+          {saveSuccess && (
+            <Alert severity="success" variant="filled" sx={{ borderRadius: 1.5 }}>
+              Default booking questions saved successfully.
             </Alert>
           )}
 
-          {questions.map((q) => (
-            <Stack key={q.id} direction="row" spacing={1} alignItems="flex-start">
+          {saveError && (
+            <Alert severity="error" variant="outlined" sx={{ borderRadius: 1.5 }}>
+              {saveError}
+            </Alert>
+          )}
+
+          {draftQuestions.length === 0 && (
+            <Alert severity="info" variant="outlined" sx={{ borderRadius: 1.5 }}>
+              No default questions configured. Click "Add Question" below to configure up to {MAX_QUESTIONS} default booking questions.
+            </Alert>
+          )}
+
+          {draftQuestions.map((dq, index) => (
+            <Stack key={dq.id || dq.tempId} direction="row" spacing={1.5} alignItems="flex-start">
               <TextField
                 fullWidth
                 size="small"
-                defaultValue={q.text}
-                onBlur={(e) => handleBlurUpdate(q.id, e.target.value)}
+                label={`Question ${index + 1}`}
+                placeholder="e.g. What is your main objective for this session?"
+                value={dq.text}
+                onChange={(e) => handleTextChange(index, e.target.value)}
                 inputProps={{ maxLength: 255 }}
-                helperText={`${q.text.length}/255`}
+                helperText={`${dq.text.length}/255`}
                 FormHelperTextProps={{ sx: { textAlign: 'right' } }}
               />
               <IconButton
                 size="small"
                 color="error"
                 sx={{ mt: 0.5, flexShrink: 0 }}
-                onClick={() => handleDelete(q.id)}
-                disabled={deleteMutation.isPending}
+                onClick={() => handleRemoveQuestion(index)}
               >
                 <Trash2 size={18} />
               </IconButton>
             </Stack>
           ))}
 
-          {questions.length < MAX_QUESTIONS && (
-            <Stack direction="row" spacing={1} alignItems="flex-start">
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Type a new default question…"
-                value={newText}
-                onChange={(e) => {
-                  setNewText(e.target.value)
-                  if (newError) setNewError(null)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleAdd()
-                  }
-                }}
-                error={!!newError}
-                helperText={newError ?? `${newText.length}/255`}
-                inputProps={{ maxLength: 255 }}
-                FormHelperTextProps={{
-                  sx: { textAlign: 'right', color: newError ? 'error.main' : 'text.secondary' },
-                }}
-              />
-              <IconButton
-                size="small"
-                color="primary"
-                sx={{ mt: 0.5, flexShrink: 0 }}
-                onClick={handleAdd}
-                disabled={createMutation.isPending || !newText.trim()}
+          {draftQuestions.length < MAX_QUESTIONS && (
+            <Box>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleAddQuestion}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
               >
-                <Plus size={18} />
-              </IconButton>
-            </Stack>
+                <Plus size={16} /> Add Question ({draftQuestions.length}/{MAX_QUESTIONS})
+              </Button>
+            </Box>
           )}
 
-          {questions.length >= MAX_QUESTIONS && (
-            <Typography variant="caption" color="text.secondary">
-              Maximum of {MAX_QUESTIONS} default questions reached.
-            </Typography>
-          )}
+          <Divider sx={{ my: 1 }} />
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDiscard}
+              disabled={!isDirty || isSaving}
+            >
+              Discard Changes
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSave}
+              disabled={!isDirty || isSaving}
+              isLoading={isSaving}
+            >
+              Save Changes
+            </Button>
+          </Box>
         </Stack>
       )}
-
-      {(createMutation.isError || updateMutation.isError || deleteMutation.isError) && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {(createMutation.error as Error)?.message ||
-            (updateMutation.error as Error)?.message ||
-            (deleteMutation.error as Error)?.message ||
-            'An error occurred. Please try again.'}
-        </Alert>
-      )}
-
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            setNewText('')
-            setNewError(null)
-          }}
-          disabled={!newText}
-        >
-          Clear
-        </Button>
-      </Box>
     </Box>
   )
 }
