@@ -124,7 +124,7 @@ export function EmbedBookingDialog({ isOpen, onClose, event }: EmbedBookingDialo
                 <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
                   <Button
                     variant="secondary"
-                    size="small"
+                    size="sm"
                     onClick={handleCopy}
                     startIcon={copied ? <Check size={14} /> : <Copy size={14} />}
                     sx={{ minWidth: 80 }}
