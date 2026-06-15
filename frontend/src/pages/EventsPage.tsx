@@ -57,7 +57,12 @@ export function EventsPage() {
   }, [teamsData?.teams])
 
   useEffect(() => {
-    if (isTeamAdmin && sortedTeams.length === 1 && !selectedTeamId) {
+    if (!isTeamAdmin) return
+    if (selectedTeamId === 'all') {
+      setSelectedTeamId(sortedTeams.length === 1 ? sortedTeams[0].id : '')
+      return
+    }
+    if (sortedTeams.length === 1 && !selectedTeamId) {
       setSelectedTeamId(sortedTeams[0].id)
     }
   }, [isTeamAdmin, sortedTeams, selectedTeamId])
@@ -447,30 +452,32 @@ export function EventsPage() {
                                   {toTitleCase(team.name)}
                                 </MenuItem>
                               ))}
-                              <MenuItem
-                                value="all"
-                                sx={{
-                                  borderTop: '1px solid',
-                                  borderColor: 'divider',
-                                  color: 'primary.main',
-                                  fontWeight: 600,
-                                  py: 1.25,
-                                  px: 2,
-                                  '&:hover': {
-                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                                  },
-                                  '&.Mui-selected': {
-                                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                              {!isTeamAdmin && (
+                                <MenuItem
+                                  value="all"
+                                  sx={{
+                                    borderTop: '1px solid',
+                                    borderColor: 'divider',
                                     color: 'primary.main',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
+                                    py: 1.25,
+                                    px: 2,
                                     '&:hover': {
-                                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
                                     },
-                                  },
-                                }}
-                              >
-                                All teams
-                              </MenuItem>
+                                    '&.Mui-selected': {
+                                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                                      color: 'primary.main',
+                                      fontWeight: 700,
+                                      '&:hover': {
+                                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                                      },
+                                    },
+                                  }}
+                                >
+                                  All teams
+                                </MenuItem>
+                              )}
                             </Select>
                           </Box>
                         </Stack>
