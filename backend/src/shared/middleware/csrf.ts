@@ -7,6 +7,19 @@ import { AUTH_COOKIE_NAME, CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "../utils/c
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const csrfProtectionEnabled = process.env.ENABLE_CSRF_PROTECTION === "true";
 
+// Pre-auth routes create a new session — there is no existing session to protect,
+// so CSRF validation is unconditionally skipped regardless of stale cookies.
+const AUTH_EXEMPT_PREFIXES = [
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/bootstrap",
+  "/api/auth/sso",
+  "/api/invites/accept-invite",
+];
+
+const isAuthExempt = (path: string): boolean =>
+  AUTH_EXEMPT_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
+
 const matchesToken = (cookieToken: string, headerToken: string): boolean => {
   const cookieBuffer = Buffer.from(cookieToken);
   const headerBuffer = Buffer.from(headerToken);
@@ -20,6 +33,11 @@ const matchesToken = (cookieToken: string, headerToken: string): boolean => {
 
 export const csrfProtection = (req: Request, _res: Response, next: NextFunction): void => {
   if (!csrfProtectionEnabled || SAFE_METHODS.has(req.method)) {
+    next();
+    return;
+  }
+
+  if (isAuthExempt(req.path)) {
     next();
     return;
   }
