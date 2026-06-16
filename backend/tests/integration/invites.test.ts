@@ -62,6 +62,42 @@ describe("POST /api/invites", () => {
     expect(res.status).toBe(201);
   });
 
+  it("TEAM_ADMIN cannot invite a TEAM_ADMIN (403)", async () => {
+    const res = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${teamAdminToken}`)
+      .send({ email: "teamadmin2@invites.com", role: "TEAM_ADMIN" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("TEAM_ADMIN cannot invite a SUPER_ADMIN (403)", async () => {
+    const res = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${teamAdminToken}`)
+      .send({ email: "superadmin2@invites.com", role: "SUPER_ADMIN" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("SUPER_ADMIN can invite a TEAM_ADMIN", async () => {
+    const res = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ email: "newteamadmin@invites.com", role: "TEAM_ADMIN" });
+
+    expect(res.status).toBe(201);
+  });
+
+  it("SUPER_ADMIN can invite a SUPER_ADMIN", async () => {
+    const res = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ email: "newsuperadmin@invites.com", role: "SUPER_ADMIN" });
+
+    expect(res.status).toBe(201);
+  });
+
   it("COACH cannot create an invite (403)", async () => {
     const res = await request(app)
       .post("/api/invites")

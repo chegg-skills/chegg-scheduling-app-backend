@@ -11,6 +11,7 @@ import { Button } from '@/components/shared/ui/Button'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useCreateInvite } from '@/hooks/queries/useInvites'
 import { extractApiError } from '@/utils/apiError'
+import { useAuth } from '@/context/auth/useAuth'
 import type { UserRole } from '@/types'
 
 const schema = z.object({
@@ -25,9 +26,11 @@ interface InviteFormProps {
   onCancel?: () => void
 }
 
-const ROLES: UserRole[] = ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH']
+const ALL_ROLES: UserRole[] = ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH']
 
 export function InviteForm({ onSuccess, onCancel }: InviteFormProps) {
+  const { user } = useAuth()
+  const roles = user?.role === 'SUPER_ADMIN' ? ALL_ROLES : (['COACH'] as UserRole[])
   const { mutate, isPending, error } = useCreateInvite()
 
   const {
@@ -66,7 +69,7 @@ export function InviteForm({ onSuccess, onCancel }: InviteFormProps) {
 
         <FormField label="Role" htmlFor="invite-role" error={errors.role?.message} required>
           <Select id="invite-role" hasError={!!errors.role} {...register('role')}>
-            {ROLES.map((r) => (
+            {roles.map((r) => (
               <MenuItem key={r} value={r}>
                 {r.replace('_', ' ')}
               </MenuItem>

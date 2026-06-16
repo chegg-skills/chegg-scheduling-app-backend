@@ -23,6 +23,7 @@ type CreateInviteInput = {
   email: string;
   role: UserRole;
   createdByAdminId: string;
+  callerRole: UserRole;
   requiresSso?: boolean;
 };
 
@@ -56,6 +57,11 @@ const createInvite = async (
   createdAt: Date;
 }> => {
   const validated = CreateInviteSchema.body.parse(payload);
+
+  if (payload.callerRole === UserRole.TEAM_ADMIN && validated.role !== UserRole.COACH) {
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "Team admins can only invite coaches.");
+  }
+
   const normalizedEmail = normalizeEmail(validated.email);
 
   const existingUser = await prisma.user.findUnique({
