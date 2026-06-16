@@ -22,6 +22,7 @@ interface LogSessionDialogProps {
   eventId: string
   slot: EventScheduleSlot | null
   event?: Event
+  readOnly?: boolean
 }
 
 function getInitials(name: string): string {
@@ -33,7 +34,7 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogSessionDialogProps) {
+export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOnly }: LogSessionDialogProps) {
   const slotId = slot?.id ?? ''
   const isAnonymous = event?.allowAnonymousBooking === true
 
@@ -123,7 +124,13 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
 
   const isLoading = bookingsLoading || logLoading
 
-  const footer = (
+  const footer = readOnly ? (
+    <Stack direction="row" justifyContent="flex-end" width="100%">
+      <Button variant="secondary" onClick={onClose}>
+        Close
+      </Button>
+    </Stack>
+  ) : (
     <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
       <Typography variant="caption" color="text.secondary">
         {attendedCount} attended · {absentCount} absent
@@ -140,7 +147,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
   )
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Log Session" size="md" footer={footer}>
+    <Modal isOpen={isOpen} onClose={onClose} title={readOnly ? 'Session Log' : 'Log Session'} size="md" footer={footer}>
       <Stack spacing={3} sx={{ mt: 1 }}>
         {/* Session header banner */}
         <Box
@@ -194,6 +201,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
               id="log-coach"
               value={assignedCoachId}
               onChange={(e) => setAssignedCoachId(e.target.value as string)}
+              disabled={readOnly}
             >
               <MenuItem value="">
                 <em>— Not assigned —</em>
@@ -220,6 +228,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
             attendanceMap={attendanceMap}
             onToggle={(id) => setAttendanceMap((prev) => ({ ...prev, [id]: !prev[id] }))}
             isLoading={isLoading}
+            readOnly={readOnly}
           />
         </Box>
 
@@ -236,6 +245,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
             onChange={(e) => setTopicsDiscussed(e.target.value.slice(0, 200))}
             inputProps={{ maxLength: 200 }}
             placeholder="e.g. React hooks, async/await patterns, system design..."
+            disabled={readOnly}
           />
         </FormField>
 
@@ -254,6 +264,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
             inputProps={{ maxLength: 800 }}
             rows={3}
             placeholder="Describe what was covered, outcomes achieved, areas of progress..."
+            disabled={readOnly}
           />
         </FormField>
 
@@ -272,6 +283,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event }: LogS
             inputProps={{ maxLength: 500 }}
             rows={2}
             placeholder="Any private observations, follow-up actions, or concerns..."
+            disabled={readOnly}
           />
         </FormField>
       </Stack>

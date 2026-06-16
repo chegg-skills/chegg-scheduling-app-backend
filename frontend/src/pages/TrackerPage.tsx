@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -37,15 +36,11 @@ export function TrackerPage() {
             top: 0,
             zIndex: 10,
             bgcolor: 'background.default',
-            pt: 2,
-            pb: 2,
             mx: { xs: -2.5, md: -4 },
             px: { xs: 2.5, md: 4 },
           }}
         >
-          <Paper variant="outlined" sx={{ px: 2.5, py: 4, borderRadius: 1, bgcolor: 'action.hover' }}>
-            <TrackerFilters filters={filters} filterData={filterData} onChange={setFilters} />
-          </Paper>
+          <TrackerFilters filters={filters} filterData={filterData} onChange={setFilters} />
         </Box>
 
         <Stack direction="row" alignItems="center" sx={{ mt: 2, mb: 2 }}>

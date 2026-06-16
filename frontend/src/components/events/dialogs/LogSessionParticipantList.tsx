@@ -18,6 +18,7 @@ interface LogSessionParticipantListProps {
   attendanceMap: Record<string, boolean>
   onToggle: (id: string) => void
   isLoading?: boolean
+  readOnly?: boolean
 }
 
 /**
@@ -29,6 +30,7 @@ export function LogSessionParticipantList({
   attendanceMap,
   onToggle,
   isLoading,
+  readOnly,
 }: LogSessionParticipantListProps) {
   const getInitials = (name: string) => {
     return name
@@ -100,6 +102,7 @@ export function LogSessionParticipantList({
                   onChange={() => onToggle(participant.id)}
                   color="success"
                   size="small"
+                  disabled={readOnly}
                 />
               </Stack>
             </Stack>
