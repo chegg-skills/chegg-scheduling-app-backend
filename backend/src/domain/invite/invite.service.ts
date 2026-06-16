@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { StatusCodes } from "http-status-codes";
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { prisma } from "../../shared/db/prisma";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
@@ -15,7 +15,8 @@ import {
   validateTimezone,
   toSafeUser,
 } from "../../shared/utils/userUtils";
-import { AcceptInviteSchema, CreateInviteSchema } from "./invite.schema";
+import { AcceptInviteSchema, CreateInviteSchema, ListInvitesSchema } from "./invite.schema";
+import { resolvePagination } from "../../shared/utils/pagination";
 
 const INVITE_EXPIRY_DAYS = Number(process.env.INVITE_EXPIRY_DAYS ?? 7);
 
@@ -215,4 +216,170 @@ const validateInvite = async (token: string): Promise<InviteValidationResult> =>
   };
 };
 
-export { createInvite, acceptInvite, validateInvite };
+// ─── Invite Audit Trail ───────────────────────────────────────────────────────
+
+export type InviteStatus = "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+
+type InviteWithCreator = {
+  id: string;
+  email: string;
+  role: UserRole;
+  status: InviteStatus;
+  requiresSso: boolean;
+  expiresAt: Date;
+  acceptedAt: Date | null;
+  revokedAt: Date | null;
+  createdAt: Date;
+  createdByUser: { firstName: string; lastName: string; email: string };
+};
+
+function computeInviteStatus(invite: {
+  acceptedAt: Date | null;
+  revokedAt: Date | null;
+  expiresAt: Date;
+}): InviteStatus {
+  if (invite.acceptedAt) return "ACCEPTED";
+  if (invite.revokedAt) return "REVOKED";
+  if (invite.expiresAt < new Date()) return "EXPIRED";
+  return "PENDING";
+}
+
+type ListInvitesOptions = {
+  status?: InviteStatus;
+  role?: UserRole;
+  page?: number;
+  pageSize?: number;
+};
+
+const listInvites = async (
+  options: ListInvitesOptions,
+  callerId: string,
+  callerRole: UserRole,
+): Promise<{
+  invites: InviteWithCreator[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+}> => {
+  const validated = ListInvitesSchema.query.parse(options);
+  const { page, pageSize, skip } = resolvePagination(validated);
+
+  const now = new Date();
+  const where: Prisma.UserInviteWhereInput = {};
+
+  // TEAM_ADMIN can only see invites they created
+  if (callerRole === UserRole.TEAM_ADMIN) {
+    where.createdBy = callerId;
+  }
+
+  if (validated.role) {
+    where.role = validated.role;
+  }
+
+  if (validated.status) {
+    switch (validated.status) {
+      case "PENDING":
+        where.acceptedAt = null;
+        where.revokedAt = null;
+        where.expiresAt = { gt: now };
+        break;
+      case "ACCEPTED":
+        where.acceptedAt = { not: null };
+        break;
+      case "EXPIRED":
+        where.acceptedAt = null;
+        where.revokedAt = null;
+        where.expiresAt = { lte: now };
+        break;
+      case "REVOKED":
+        where.revokedAt = { not: null };
+        break;
+    }
+  }
+
+  const [rows, total] = await prisma.$transaction([
+    prisma.userInvite.findMany({
+      where,
+      include: {
+        createdByUser: { select: { firstName: true, lastName: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.userInvite.count({ where }),
+  ]);
+
+  return {
+    invites: rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      status: computeInviteStatus(row),
+      requiresSso: row.requiresSso,
+      expiresAt: row.expiresAt,
+      acceptedAt: row.acceptedAt,
+      revokedAt: row.revokedAt,
+      createdAt: row.createdAt,
+      createdByUser: row.createdByUser,
+    })),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
+};
+
+const revokeInvite = async (
+  id: string,
+  callerId: string,
+  callerRole: UserRole,
+): Promise<InviteWithCreator> => {
+  const invite = await prisma.userInvite.findUnique({
+    where: { id },
+    include: {
+      createdByUser: { select: { firstName: true, lastName: true, email: true } },
+    },
+  });
+
+  if (!invite) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Invite not found.");
+  }
+  if (invite.acceptedAt) {
+    throw new ErrorHandler(StatusCodes.CONFLICT, "This invite has already been accepted.");
+  }
+  if (invite.revokedAt) {
+    throw new ErrorHandler(StatusCodes.CONFLICT, "This invite has already been revoked.");
+  }
+  if (invite.expiresAt < new Date()) {
+    throw new ErrorHandler(StatusCodes.CONFLICT, "This invite has already expired.");
+  }
+  if (callerRole === UserRole.TEAM_ADMIN && invite.createdBy !== callerId) {
+    throw new ErrorHandler(StatusCodes.FORBIDDEN, "You can only revoke invites you created.");
+  }
+
+  const updated = await prisma.userInvite.update({
+    where: { id },
+    data: { revokedAt: new Date() },
+    include: {
+      createdByUser: { select: { firstName: true, lastName: true, email: true } },
+    },
+  });
+
+  logger.info({ inviteId: id, revokedBy: callerId }, "Invite revoked.");
+
+  return {
+    id: updated.id,
+    email: updated.email,
+    role: updated.role,
+    status: computeInviteStatus(updated),
+    requiresSso: updated.requiresSso,
+    expiresAt: updated.expiresAt,
+    acceptedAt: updated.acceptedAt,
+    revokedAt: updated.revokedAt,
+    createdAt: updated.createdAt,
+    createdByUser: updated.createdByUser,
+  };
+};
+
+export { createInvite, acceptInvite, validateInvite, listInvites, revokeInvite };

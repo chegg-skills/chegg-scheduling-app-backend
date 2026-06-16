@@ -154,13 +154,32 @@ export interface TeamMember {
   user: SafeUser
 }
 
+export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED'
+
 export interface UserInvite {
   id: string
   email: string
   role: UserRole
-  token?: string // only in non-prod
+  status: InviteStatus
+  requiresSso: boolean
   expiresAt: string
+  acceptedAt: string | null
+  revokedAt: string | null
   createdAt: string
+  createdByUser: { firstName: string; lastName: string; email: string }
+  token?: string // non-prod only, from createInvite response
+}
+
+export interface InviteListResponse {
+  invites: UserInvite[]
+  pagination: Pagination
+}
+
+export interface ListInvitesParams {
+  status?: InviteStatus
+  role?: UserRole
+  page?: number
+  pageSize?: number
 }
 
 export interface EventType {

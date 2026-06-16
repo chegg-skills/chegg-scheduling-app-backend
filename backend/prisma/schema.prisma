@@ -48,6 +48,7 @@ model User {
   communicationsSent     StudentCommunicationLog[]
   createdBookingDirectories BookingDirectory[]          @relation("BookingDirectoryCreatedBy")
   updatedBookingDirectories BookingDirectory[]          @relation("BookingDirectoryUpdatedBy")
+  invitesCreated            UserInvite[]                @relation("InviteCreatedBy")
 
   @@unique([ssoProvider, ssoSub])
 }
@@ -80,9 +81,12 @@ model UserInvite {
   token       String    @unique
   expiresAt   DateTime
   acceptedAt  DateTime?
+  revokedAt   DateTime?
   createdBy   String
   createdAt   DateTime  @default(now())
   requiresSso Boolean   @default(false)
+
+  createdByUser User @relation("InviteCreatedBy", fields: [createdBy], references: [id])
 }
 
 model OidcState {

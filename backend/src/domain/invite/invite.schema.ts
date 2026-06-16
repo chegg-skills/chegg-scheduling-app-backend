@@ -25,3 +25,12 @@ export const ValidateInviteSchema = {
     token: z.string().min(1, "Token is required"),
   }),
 };
+
+export const ListInvitesSchema = {
+  query: z.object({
+    status: z.enum(["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]).optional(),
+    role: z.enum(UserRole).optional(),
+    page: z.coerce.number().int().positive().optional(),
+    pageSize: z.coerce.number().int().positive().optional(),
+  }),
+};
