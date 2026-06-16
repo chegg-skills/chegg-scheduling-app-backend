@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
@@ -45,10 +46,12 @@ import { EmbedBookingDialog } from '@/components/events/dialogs/EmbedBookingDial
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams<{ eventId: string }>()
+  const [searchParams] = useSearchParams()
   const { isCoach } = usePermissions()
   const [showEdit, setShowEdit] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
-  const [tabValue, setTabValue] = useState(0)
+  const initialTab = { details: 0, coaches: 1, bookings: 2, schedule: 3 }[searchParams.get('tab') ?? ''] ?? 0
+  const [tabValue, setTabValue] = useState(initialTab)
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
