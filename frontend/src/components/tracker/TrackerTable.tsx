@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
@@ -132,11 +133,16 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
                 </TableCell>
                 <TableCell>
                   <Box>
-                    <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                    <Typography
+                      variant="body2"
+                      component={Link}
+                      to={`/events/${slot.event.id}?tab=bookings`}
+                      sx={{ textTransform: 'capitalize', color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                    >
                       {slot.event.name}
                     </Typography>
                     {slot.eventType && (
-                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }} display="block">
                         {slot.eventType.name}
                       </Typography>
                     )}
