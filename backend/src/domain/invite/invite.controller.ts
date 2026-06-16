@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
+import { UserRole } from "@prisma/client";
 import * as inviteService from "./invite.service";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import { setAuthCookie } from "../../shared/utils/cookie";
@@ -15,12 +16,14 @@ import {
 const createInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const adminId = res.locals.authUser?.id as string;
+    const callerRole = res.locals.authUser?.role as UserRole;
 
     const result = await inviteService.createInvite({
       email: req.body.email,
       role: req.body.role,
       requiresSso: req.body.requiresSso,
       createdByAdminId: adminId,
+      callerRole,
     });
 
     void queueInviteCreatedNotification({
