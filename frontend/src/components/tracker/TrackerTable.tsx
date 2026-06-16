@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
-import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -11,9 +11,7 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import { ClipboardList } from 'lucide-react'
 import type { TrackerSlot } from '@/api/tracker'
 import { LogSessionDialog } from '@/components/events/dialogs/LogSessionDialog'
 import { EmptyState } from '@/components/shared/ui/EmptyState'
@@ -59,6 +57,12 @@ interface TrackerTableProps {
 
 export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
   const [selectedSlot, setSelectedSlot] = useState<TrackerSlot | null>(null)
+  const [readOnlyDialog, setReadOnlyDialog] = useState(false)
+
+  const openDialog = (slot: TrackerSlot, readOnly: boolean) => {
+    setReadOnlyDialog(readOnly)
+    setSelectedSlot(slot)
+  }
 
   if (isLoading) {
     return (
@@ -77,6 +81,8 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
     )
   }
 
+  const now = new Date()
+
   return (
     <>
       <TableContainer component={Paper} variant="outlined">
@@ -86,6 +92,7 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
               <TableCell sx={{ fontWeight: 700 }}>Date & Time</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Team</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Event</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Coach</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="center">
                 Occupancy
               </TableCell>
@@ -135,6 +142,15 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
                     )}
                   </Box>
                 </TableCell>
+                <TableCell>
+                  {slot.assignedCoach ? (
+                    <Typography variant="body2">
+                      {slot.assignedCoach.firstName} {slot.assignedCoach.lastName}
+                    </Typography>
+                  ) : (
+                    <Typography variant="caption" color="text.disabled">—</Typography>
+                  )}
+                </TableCell>
                 <TableCell align="center">
                   <OccupancyBadge
                     bookingCount={slot.bookingCount}
@@ -146,7 +162,7 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
                   <Chip
                     label={slot.status === 'FULL' ? 'Full' : 'Open'}
                     size="small"
-                    color={slot.status === 'FULL' ? 'error' : 'success'}
+                    color={slot.status === 'FULL' ? 'error' : 'info'}
                     variant="outlined"
                     sx={{ fontWeight: 600, fontSize: '0.7rem' }}
                   />
@@ -161,11 +177,15 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
                   />
                 </TableCell>
                 <TableCell align="center">
-                  <Tooltip title="View / edit session log">
-                    <IconButton size="small" onClick={() => setSelectedSlot(slot)}>
-                      <ClipboardList size={16} />
-                    </IconButton>
-                  </Tooltip>
+                  <Button
+                    size="small"
+                    variant="text"
+                    disabled={new Date(slot.startTime) > now}
+                    onClick={() => openDialog(slot, slot.isLogged)}
+                    sx={{ fontSize: '0.72rem', py: 0.25, px: 1 }}
+                  >
+                    {slot.isLogged ? 'View Log' : 'Log Session'}
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -178,6 +198,7 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
         onClose={() => setSelectedSlot(null)}
         eventId={selectedSlot?.event.id ?? ''}
         slot={selectedSlot ? toEventScheduleSlot(selectedSlot) : null}
+        readOnly={readOnlyDialog}
       />
     </>
   )

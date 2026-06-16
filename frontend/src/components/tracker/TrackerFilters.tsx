@@ -3,7 +3,7 @@ import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import Typography from '@mui/material/Typography'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { TrackerFilters as TrackerFiltersData } from '@/api/tracker'
@@ -49,17 +49,29 @@ export function TrackerFilters({ filters, filterData, onChange }: TrackerFilters
       justifyContent="space-between"
       flexWrap="wrap"
       gap={2}
+      sx={{
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        py: 1.5,
+      }}
     >
       {/* Left: date field + nav */}
       <Stack direction="row" alignItems="center" spacing={1}>
-        <TextField
-          label="Date"
-          type="date"
-          size="small"
-          value={filters.date}
-          onChange={(e) => onChange({ ...filters, date: e.target.value })}
-          slotProps={{ inputLabel: { shrink: true } }}
-          sx={{ minWidth: 150 }}
+        <DatePicker
+          value={new Date(filters.date + 'T00:00:00')}
+          onChange={(val) => {
+            if (val) onChange({ ...filters, date: toLocalDateString(val) })
+          }}
+          format="dd-MMM-yy"
+          slotProps={{
+            textField: {
+              size: 'small',
+              sx: { width: 165 },
+            },
+            popper: {
+              modifiers: [{ name: 'offset', options: { offset: [0, 8] } }],
+            },
+          }}
         />
 
         <Stack
@@ -106,6 +118,7 @@ export function TrackerFilters({ filters, filterData, onChange }: TrackerFilters
             label="Team"
             displayEmpty
             onChange={(e) => handleTeamChange(e.target.value)}
+            MenuProps={{ PaperProps: { sx: { mt: 1 } } }}
           >
             <MenuItem value="">All teams</MenuItem>
             {filterData.teams.map((team) => (
@@ -124,6 +137,11 @@ export function TrackerFilters({ filters, filterData, onChange }: TrackerFilters
             displayEmpty
             onChange={(e) => onChange({ ...filters, eventId: e.target.value })}
             disabled={visibleEvents.length === 0}
+            MenuProps={{
+              PaperProps: { sx: { mt: 1 } },
+              anchorOrigin: { vertical: 'bottom', horizontal: 'right' },
+              transformOrigin: { vertical: 'top', horizontal: 'right' },
+            }}
           >
             <MenuItem value="">All events</MenuItem>
             {visibleEvents.map((event) => (
