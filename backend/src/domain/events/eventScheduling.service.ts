@@ -1,4 +1,4 @@
-import { EventBookingMode, Prisma, type EventScheduleSlot, UserRole } from "@prisma/client";
+import { AssignmentStrategy, EventBookingMode, Prisma, type EventScheduleSlot, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { addWeeks, addMonths, addDays } from "date-fns";
 import { prisma } from "../../shared/db/prisma";
@@ -197,14 +197,77 @@ const listEventScheduleSlots = async (
   return { slots };
 };
 
+/**
+ * Picks the next coach for one slot via round-robin and advances the rotation cursor.
+ * Runs its own transaction with SELECT FOR UPDATE to prevent concurrent races.
+ */
+const resolveRoundRobinSlotAssignment = async (
+  eventId: string,
+  coaches: { coachUserId: string; coachOrder: number }[],
+): Promise<string> => {
+  return prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<{ nextCoachOrder: number }[]>`
+      SELECT "nextCoachOrder" FROM "EventRoutingState"
+      WHERE "eventId" = ${eventId}
+      FOR UPDATE
+    `;
+    const cursor = Number(rows[0]?.nextCoachOrder ?? 1);
+    const sorted = [...coaches].sort((a, b) => a.coachOrder - b.coachOrder);
+    const picked = sorted[(cursor - 1) % sorted.length];
+    const nextCursor = (cursor % sorted.length) + 1;
+    await tx.eventRoutingState.upsert({
+      where: { eventId },
+      create: { eventId, nextCoachOrder: nextCursor },
+      update: { nextCoachOrder: nextCursor },
+    });
+    return picked.coachUserId;
+  });
+};
+
+/**
+ * Assigns coaches to N slots in sequence, advancing the rotation cursor N times atomically.
+ * Must run inside an existing transaction.
+ */
+const resolveRoundRobinSequence = async (
+  tx: Prisma.TransactionClient,
+  eventId: string,
+  coaches: { coachUserId: string; coachOrder: number }[],
+  count: number,
+): Promise<string[]> => {
+  const rows = await tx.$queryRaw<{ nextCoachOrder: number }[]>`
+    SELECT "nextCoachOrder" FROM "EventRoutingState"
+    WHERE "eventId" = ${eventId}
+    FOR UPDATE
+  `;
+  let cursor = Number(rows[0]?.nextCoachOrder ?? 1);
+  const sorted = [...coaches].sort((a, b) => a.coachOrder - b.coachOrder);
+
+  const assignments: string[] = [];
+  for (let i = 0; i < count; i++) {
+    assignments.push(sorted[(cursor - 1) % sorted.length].coachUserId);
+    cursor = (cursor % sorted.length) + 1;
+  }
+
+  await tx.eventRoutingState.upsert({
+    where: { eventId },
+    create: { eventId, nextCoachOrder: cursor },
+    update: { nextCoachOrder: cursor },
+  });
+
+  return assignments;
+};
+
 const createEventScheduleSlot = async (
   eventId: string,
   payload: UpsertEventScheduleSlotInput,
   caller: CallerContext,
 ): Promise<EventScheduleSlot> => {
-  await getManagedEvent(eventId, caller);
+  const event = await getManagedEvent(eventId, caller);
 
   const validated = EventScheduleSlotSchema.body.parse(payload);
+  const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType];
+  const isRoundRobinGroup =
+    event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && caps?.multipleParticipants === true;
 
   if (validated.recurrence) {
     // Create RecurrenceGroup in DB
@@ -229,38 +292,39 @@ const createEventScheduleSlot = async (
     });
     const durationMs = validated.endTime.getTime() - validated.startTime.getTime();
 
+    const firstSlot = await prisma.$transaction(async (tx) => {
+      let coachAssignments: (string | null)[];
+      if (isRoundRobinGroup && !validated.assignedCoachId && event.coaches.length > 0) {
+        coachAssignments = await resolveRoundRobinSequence(tx, eventId, event.coaches, startDates.length);
+      } else {
+        coachAssignments = startDates.map(() => validated.assignedCoachId ?? null);
+      }
 
-    const slotsData = startDates.map((startTime) => ({
-      eventId,
-      startTime,
-      endTime: new Date(startTime.getTime() + durationMs),
-      capacity: validated.capacity,
-      assignedCoachId: validated.assignedCoachId,
-      isActive: validated.isActive,
-      recurrenceGroupId,
-    }));
+      const slotsData = startDates.map((startTime, i) => ({
+        eventId,
+        startTime,
+        endTime: new Date(startTime.getTime() + durationMs),
+        capacity: validated.capacity,
+        assignedCoachId: coachAssignments[i],
+        isActive: validated.isActive,
+        recurrenceGroupId,
+      }));
 
-    // Perform the creation
-    // Note: We use a loop or transaction instead of createMany if we want to return the full objects
-    // or if we need to trigger individual hooks. For simplicity and grouping, we'll use createMany.
-    await prisma.eventScheduleSlot.createMany({
-      data: slotsData,
-      skipDuplicates: true, // Safety against overlap with existing slots
-    });
+      await tx.eventScheduleSlot.createMany({ data: slotsData, skipDuplicates: true });
 
-    // Return the first instance created
-    const firstSlot = await prisma.eventScheduleSlot.findFirstOrThrow({
-      where: { eventId, startTime: validated.startTime },
-      include: {
-        assignedCoach: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
+      return tx.eventScheduleSlot.findFirstOrThrow({
+        where: { eventId, startTime: validated.startTime },
+        include: {
+          assignedCoach: {
+            select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
+          },
         },
-      },
+      });
     });
-    getRequestLogger().info({ eventId, slotCount: slotsData.length, recurrenceGroupId, createdBy: caller.id }, "Recurring schedule slots created.");
+
+    getRequestLogger().info({ eventId, slotCount: startDates.length, recurrenceGroupId, createdBy: caller.id }, "Recurring schedule slots created.");
     return firstSlot;
   }
-
 
   const existingSlot = await resolveMatchingScheduleSlot(eventId, validated.startTime);
   if (existingSlot) {
@@ -270,13 +334,18 @@ const createEventScheduleSlot = async (
     );
   }
 
+  let assignedCoachId: string | null = validated.assignedCoachId ?? null;
+  if (isRoundRobinGroup && !assignedCoachId && event.coaches.length > 0) {
+    assignedCoachId = await resolveRoundRobinSlotAssignment(eventId, event.coaches);
+  }
+
   const newSlot = await prisma.eventScheduleSlot.create({
     data: {
       eventId,
       startTime: validated.startTime,
       endTime: validated.endTime,
       capacity: validated.capacity,
-      assignedCoachId: validated.assignedCoachId,
+      assignedCoachId,
       isActive: validated.isActive,
       recurrenceGroupId: null,
     },

@@ -138,16 +138,11 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   }
 
   // Single-coach group sessions (!multipleCoaches && multipleParticipants) must use
-  // DIRECT assignment and FIXED_SLOTS booking mode. This applies to ONE_TO_MANY and any
-  // future type with the same capability profile.
+  // FIXED_SLOTS booking mode. Both DIRECT and ROUND_ROBIN are valid assignment strategies:
+  // DIRECT assigns a fixed host to every slot; ROUND_ROBIN rotates coach ownership across
+  // the pool at slot-creation time. This applies to ONE_TO_MANY and any future type with
+  // the same capability profile.
   if (caps && !caps.multipleCoaches && caps.multipleParticipants) {
-    if (data.assignmentStrategy && data.assignmentStrategy !== AssignmentStrategy.DIRECT) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["assignmentStrategy"],
-        message: "Single-coach group sessions only support DIRECT assignment strategy.",
-      });
-    }
     if (data.bookingMode && data.bookingMode !== EventBookingMode.FIXED_SLOTS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

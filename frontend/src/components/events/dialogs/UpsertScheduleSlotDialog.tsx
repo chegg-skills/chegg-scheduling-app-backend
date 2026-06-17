@@ -211,7 +211,11 @@ export function UpsertScheduleSlotDialog({
         <FormField
           label="Override Host (Optional)"
           htmlFor="slot-coach"
-          info="If specified, this coach will host this specific session. Leave blank to use the event lead. Availability is checked against the selected session time."
+          info={
+            event.assignmentStrategy === 'ROUND_ROBIN'
+              ? 'If specified, this coach overrides the automatic round-robin assignment for this slot. Leave blank to let the system pick the next coach in rotation.'
+              : 'If specified, this coach will host this specific session. Leave blank to use the event lead. Availability is checked against the selected session time.'
+          }
         >
           <SearchableCoachAvailabilityList
             id="slot-coach"
