@@ -601,6 +601,38 @@ const getCoachAvailabilityForSlot = async (
   return results.sort((a, b) => Number(b.isAvailable) - Number(a.isAvailable));
 };
 
+const getCoachAvailabilityForProposedSlot = async (
+  eventId: string,
+  startTime: Date,
+  endTime: Date,
+  excludeSlotId: string | undefined,
+  caller: CallerContext,
+) => {
+  const event = await getManagedEvent(eventId, caller, {
+    allowCoachMember: caller.role === UserRole.COACH,
+  });
+
+  const results = await Promise.all(
+    event.coaches.map(async (ec) => {
+      const conflicts = await getCoachConflicts(ec.coachUserId, startTime, endTime, {
+        scheduleSlotId: excludeSlotId,
+      });
+      return {
+        coachUserId: ec.coachUserId,
+        coachUser: ec.coachUser,
+        isAvailable: conflicts.length === 0,
+        conflicts: conflicts.map((c) => ({
+          eventName: c.event.name,
+          startTime: c.startTime,
+          endTime: c.endTime,
+        })),
+      };
+    }),
+  );
+
+  return results.sort((a, b) => Number(b.isAvailable) - Number(a.isAvailable));
+};
+
 const replenishContinuousSlots = async (
   eventId: string,
   tx?: Prisma.TransactionClient,
@@ -769,6 +801,7 @@ export {
   listSlotBookings,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  getCoachAvailabilityForProposedSlot,
   replenishContinuousSlots,
   stopRecurrenceGroup,
   resumeRecurrenceGroup,

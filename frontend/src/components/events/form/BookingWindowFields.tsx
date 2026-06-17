@@ -2,8 +2,13 @@ import { useFormContext } from 'react-hook-form'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import type { EventFormValues } from './eventFormSchema'
+import type { InteractionTypeCaps } from '@/types'
 
-export function BookingWindowFields() {
+interface BookingWindowFieldsProps {
+  caps?: InteractionTypeCaps | null
+}
+
+export function BookingWindowFields({ caps }: BookingWindowFieldsProps) {
   const {
     register,
     formState: { errors },
@@ -27,20 +32,22 @@ export function BookingWindowFields() {
         />
       </FormField>
 
-      <FormField
-        label="Buffer After Session (minutes)"
-        htmlFor="bufferAfterMinutes"
-        error={errors.bufferAfterMinutes?.message}
-        info="Mandatory cooldown period added after each session (e.g., 15 for a 15-minute break)."
-      >
-        <Input
-          id="bufferAfterMinutes"
-          type="number"
-          min="0"
-          placeholder="e.g. 15"
-          {...register('bufferAfterMinutes', { valueAsNumber: true })}
-        />
-      </FormField>
+      {!caps?.multipleParticipants && (
+        <FormField
+          label="Buffer After Session (minutes)"
+          htmlFor="bufferAfterMinutes"
+          error={errors.bufferAfterMinutes?.message}
+          info="Mandatory cooldown period added after each session (e.g., 15 for a 15-minute break)."
+        >
+          <Input
+            id="bufferAfterMinutes"
+            type="number"
+            min="0"
+            placeholder="e.g. 15"
+            {...register('bufferAfterMinutes', { valueAsNumber: true })}
+          />
+        </FormField>
+      )}
 
       <FormField
         label="Maximum Booking Window (days)"

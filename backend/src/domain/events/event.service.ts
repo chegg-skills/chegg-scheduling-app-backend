@@ -44,6 +44,7 @@ import {
   cancelEventScheduleSlot,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  getCoachAvailabilityForProposedSlot,
   stopRecurrenceGroup,
   resumeRecurrenceGroup,
 } from "./eventScheduling.service";
@@ -367,6 +368,7 @@ export {
   cancelEventScheduleSlot,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  getCoachAvailabilityForProposedSlot,
   stopRecurrenceGroup,
   resumeRecurrenceGroup,
   getEventCoachAvailability,

@@ -25,6 +25,13 @@ export const eventKeys = {
     [...eventKeys.scheduleSlots(eventId), 'log', slotId] as const,
   slotCoachAvailability: (eventId: string, slotId: string) =>
     [...eventKeys.scheduleSlots(eventId), 'coach-availability', slotId] as const,
+  proposedSlotCoachAvailability: (
+    eventId: string,
+    startTime: string | null,
+    endTime: string | null,
+    excludeSlotId?: string | null,
+  ) =>
+    [...eventKeys.scheduleSlots(eventId), 'coach-availability-proposed', startTime, endTime, excludeSlotId] as const,
   coachAvailability: (eventId: string, coachUserId: string) =>
     [...eventKeys.coaches(eventId), 'availability', coachUserId] as const,
 }
@@ -233,6 +240,24 @@ export function useCoachAvailabilityForSlot(eventId: string, slotId: string, ena
     queryFn: ({ signal }) =>
       eventsApi.getCoachAvailabilityForSlot(eventId, slotId, signal).then((r) => r.data.data),
     enabled: enabled && !!eventId && !!slotId,
+    staleTime: 30_000,
+  })
+}
+
+export function useCoachAvailabilityForProposedSlot(
+  eventId: string,
+  startTime: string | null,
+  endTime: string | null,
+  excludeSlotId?: string | null,
+  enabled?: boolean,
+) {
+  return useQuery({
+    queryKey: eventKeys.proposedSlotCoachAvailability(eventId, startTime, endTime, excludeSlotId),
+    queryFn: ({ signal }) =>
+      eventsApi
+        .getCoachAvailabilityForProposedSlot(eventId, startTime!, endTime!, excludeSlotId, signal)
+        .then((r) => r.data.data),
+    enabled: (enabled ?? true) && !!eventId && !!startTime && !!endTime,
     staleTime: 30_000,
   })
 }

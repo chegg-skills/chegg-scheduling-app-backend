@@ -138,6 +138,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/events/:eventId/schedule-slots/coach-availability")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN),
+    eventController.getCoachAvailabilityForProposedSlot,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId/schedule-slots/:slotId")
   .patch(
     authenticate,

@@ -6,15 +6,14 @@ import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
-import MenuItem from '@mui/material/MenuItem'
-import { Select } from '@/components/shared/form/Select'
-import Avatar from '@mui/material/Avatar'
 import { Clock } from 'lucide-react'
 import type { Event, EventScheduleSlot, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { useScheduleSlotForm } from './useScheduleSlotForm'
 import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
 import { zonedStringToUTC } from '@/utils/dateTimezone'
+import { SearchableCoachAvailabilityList } from '@/components/events/SearchableCoachAvailabilityList'
+import { useCoachAvailabilityForProposedSlot } from '@/hooks/queries/useEvents'
 
 const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
@@ -60,19 +59,39 @@ export function UpsertScheduleSlotDialog({
     isValid,
   } = useScheduleSlotForm({ slot, isOpen })
 
-  const previewEndTime = newSlotDate
-    ? new Date(zonedStringToUTC(newSlotDate, browserTimezone).getTime() + event.durationSeconds * 1000)
+  const proposedStart = newSlotDate
+    ? zonedStringToUTC(newSlotDate, browserTimezone).toISOString()
     : null
+  const proposedEnd =
+    newSlotDate && proposedStart
+      ? new Date(new Date(proposedStart).getTime() + event.durationSeconds * 1000).toISOString()
+      : null
+  const previewEndTime = proposedEnd ? new Date(proposedEnd) : null
+
+  const { data: coachAvailability, isLoading: isLoadingAvailability } =
+    useCoachAvailabilityForProposedSlot(
+      event.id,
+      proposedStart,
+      proposedEnd,
+      slot?.id ?? null,
+      isOpen && !!newSlotDate,
+    )
+
+  const coachList =
+    coachAvailability ??
+    event.coaches.map((ec) => ({
+      coachUserId: ec.coachUserId,
+      coachUser: ec.coachUser,
+      isAvailable: true,
+      conflicts: [] as any[],
+    }))
 
   function handleAdd() {
-    if (!isValid) return
-
-    const startTime = zonedStringToUTC(newSlotDate, browserTimezone)
-    const endTime = new Date(startTime.getTime() + event.durationSeconds * 1000)
+    if (!isValid || !proposedStart || !proposedEnd) return
 
     onSave({
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
+      startTime: proposedStart,
+      endTime: proposedEnd,
       capacity: !supportsMultipleParticipants ? 1 : newSlotCapacity === '' ? null : newSlotCapacity,
       assignedCoachId,
       recurrence,
@@ -192,40 +211,16 @@ export function UpsertScheduleSlotDialog({
         <FormField
           label="Override Host (Optional)"
           htmlFor="slot-coach"
-          info="If specified, this coach will host this specific session. Leave as 'Event Default' to use the event lead."
+          info="If specified, this coach will host this specific session. Leave blank to use the event lead. Availability is checked against the selected session time."
         >
-          <Select
+          <SearchableCoachAvailabilityList
             id="slot-coach"
-            value={assignedCoachId ?? ''}
-            onChange={(e) => setAssignedCoachId((e.target.value as string) || null)}
-            displayEmpty
-            sx={{
-              borderRadius: 1.5,
-              '& fieldset': {
-                borderColor: 'divider',
-              },
-            }}
-          >
-            <MenuItem value="">
-              <em>Event Default</em>
-            </MenuItem>
-            {event.coaches.map((coach) => (
-              <MenuItem key={coach.id} value={coach.coachUserId}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Avatar
-                    src={coach.coachUser.avatarUrl ?? undefined}
-                    sx={{ width: 24, height: 24, fontSize: '0.75rem' }}
-                  >
-                    {coach.coachUser.firstName?.[0] ?? '?'}
-                    {coach.coachUser.lastName?.[0] ?? ''}
-                  </Avatar>
-                  <Typography variant="body2">
-                    {coach.coachUser.firstName} {coach.coachUser.lastName}
-                  </Typography>
-                </Stack>
-              </MenuItem>
-            ))}
-          </Select>
+            coaches={coachList}
+            selectedCoachId={assignedCoachId ?? ''}
+            onSelectCoach={(id) => setAssignedCoachId(id || null)}
+            preAssignedCoachId={slot?.assignedCoachId ?? null}
+            isLoading={isLoadingAvailability && !!newSlotDate}
+          />
           {noCoachesConfigured && !assignedCoachId && (
             <Alert severity="warning" sx={{ mt: 1, borderRadius: 1.5 }}>
               No coaches are assigned to this event. Students will not be able to book this slot
