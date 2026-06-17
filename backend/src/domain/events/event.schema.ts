@@ -165,6 +165,21 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     });
   }
 
+  // FIXED_SLOTS events (ONE_TO_MANY, MANY_TO_MANY) assign coaches per-slot, so fixedLeadCoachId
+  // is optional convenience, not a requirement. Only enforce for COACH_AVAILABILITY events.
+  if (
+    data.assignmentStrategy === AssignmentStrategy.DIRECT &&
+    data.allowStudentCoachChoice !== true &&
+    !data.fixedLeadCoachId &&
+    data.bookingMode !== EventBookingMode.FIXED_SLOTS
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["fixedLeadCoachId"],
+      message: "DIRECT assignment requires a default host to be specified.",
+    });
+  }
+
   // targetCoHostCount must be at least 1 when specified for multi-coach types
   if (
     caps &&

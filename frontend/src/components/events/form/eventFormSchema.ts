@@ -112,6 +112,21 @@ export const eventFormSchema = z
       })
     }
 
+    // FIXED_SLOTS events (ONE_TO_MANY, MANY_TO_MANY) assign coaches per-slot — fixedLeadCoachId
+    // is optional convenience. Only require it for COACH_AVAILABILITY events.
+    if (
+      values.assignmentStrategy === 'DIRECT' &&
+      !values.allowStudentCoachChoice &&
+      !values.fixedLeadCoachId &&
+      values.bookingMode !== 'FIXED_SLOTS'
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['fixedLeadCoachId'],
+        message: 'A default host is required when using Direct assignment.',
+      })
+    }
+
     if (values.allowAnonymousBooking && values.deferCoachReveal) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

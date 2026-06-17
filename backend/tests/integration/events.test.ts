@@ -59,6 +59,15 @@ const createEventType = async (token: string, payload?: Record<string, unknown>)
 };
 
 const createEvent = async (teamId: string, token: string, payload: Record<string, unknown>) => {
+  const interactionType = (payload.interactionType as string) ?? "ONE_TO_ONE";
+  // ONE_TO_ONE + DIRECT requires fixedLeadCoachId unless allowStudentCoachChoice bypasses it.
+  // Apply that bypass as the test helper default so tests that just want a plain ONE_TO_ONE event
+  // can assign any number of coaches without pre-specifying a fixed host.
+  // Tests that explicitly provide assignmentStrategy (or a different interactionType) override this.
+  const typeDefaults: Record<string, unknown> =
+    interactionType === "ONE_TO_ONE" && !payload.assignmentStrategy
+      ? { assignmentStrategy: "DIRECT", allowStudentCoachChoice: true }
+      : {};
   return request(app)
     .post(`/api/teams/${teamId}/events`)
     .set("Authorization", `Bearer ${token}`)
@@ -66,11 +75,11 @@ const createEvent = async (teamId: string, token: string, payload: Record<string
       name: uniqueValue("Event"),
       description: "Event description",
       interactionType: "ONE_TO_ONE",
-      assignmentStrategy: "DIRECT",
       durationSeconds: 1800,
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com/session",
       isActive: true,
+      ...typeDefaults,
       ...payload,
     });
 };
@@ -1249,7 +1258,7 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
     });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/FIXED_LEAD events require a fixedLeadCoachId/i);
+    expect(res.body.message).toMatch(/DIRECT assignment requires a default host/i);
   });
 
   it("re-derives sessionLeadershipStrategy when assignmentStrategy is updated on a MANY_TO_ONE event", async () => {
