@@ -79,7 +79,11 @@ export function EventBasicFields({ teamId, showTeamSelect = false }: EventBasicF
       </FormField>
 
       <FormField label="Description" htmlFor="description" error={errors.description?.message}>
-        <Textarea id="description" {...register('description')} />
+        <Textarea
+          id="description"
+          placeholder="Write a summary and any details your invitee should know about the event."
+          {...register('description')}
+        />
       </FormField>
 
       <Controller
