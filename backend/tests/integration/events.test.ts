@@ -59,6 +59,15 @@ const createEventType = async (token: string, payload?: Record<string, unknown>)
 };
 
 const createEvent = async (teamId: string, token: string, payload: Record<string, unknown>) => {
+  const interactionType = (payload.interactionType as string) ?? "ONE_TO_ONE";
+  // ONE_TO_ONE + DIRECT requires fixedLeadCoachId unless allowStudentCoachChoice bypasses it.
+  // Apply that bypass as the test helper default so tests that just want a plain ONE_TO_ONE event
+  // can assign any number of coaches without pre-specifying a fixed host.
+  // Tests that explicitly provide assignmentStrategy (or a different interactionType) override this.
+  const typeDefaults: Record<string, unknown> =
+    interactionType === "ONE_TO_ONE" && !payload.assignmentStrategy
+      ? { assignmentStrategy: "DIRECT", allowStudentCoachChoice: true }
+      : {};
   return request(app)
     .post(`/api/teams/${teamId}/events`)
     .set("Authorization", `Bearer ${token}`)
@@ -66,11 +75,11 @@ const createEvent = async (teamId: string, token: string, payload: Record<string
       name: uniqueValue("Event"),
       description: "Event description",
       interactionType: "ONE_TO_ONE",
-      assignmentStrategy: "DIRECT",
       durationSeconds: 1800,
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com/session",
       isActive: true,
+      ...typeDefaults,
       ...payload,
     });
 };
@@ -999,6 +1008,179 @@ describe("Event scheduling routes", () => {
     expect(res.status).toBe(409);
     expect(res.body.message).toMatch(/active booking/i);
   });
+
+  it("ROUND_ROBIN ONE_TO_MANY: auto-assigns coaches in rotation order across individual slots", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+    });
+    expect(event.status).toBe(201);
+    const eventId = event.body.data.id as string;
+
+    // Add 2 coaches — syncRoutingState resets cursor to 1
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        coaches: [
+          { userId: context.coachOneId, coachOrder: 1 },
+          { userId: context.coachTwoId, coachOrder: 2 },
+        ],
+      });
+
+    const baseTime = new Date(Date.now() + 3 * 86400000);
+    baseTime.setUTCHours(10, 0, 0, 0);
+    const duration = 30 * 60 * 1000;
+    const expectedCoachIds = [
+      context.coachOneId,
+      context.coachTwoId,
+      context.coachOneId,
+      context.coachTwoId,
+    ];
+
+    for (let i = 0; i < 4; i++) {
+      const startTime = new Date(baseTime.getTime() + i * 2 * 60 * 60 * 1000);
+      const slotRes = await request(app)
+        .post(`/api/events/${eventId}/schedule-slots`)
+        .set("Authorization", `Bearer ${context.teamAdminToken}`)
+        .send({
+          startTime: startTime.toISOString(),
+          endTime: new Date(startTime.getTime() + duration).toISOString(),
+          capacity: 5,
+        });
+      expect(slotRes.status).toBe(201);
+      expect(slotRes.body.data.assignedCoachId).toBe(expectedCoachIds[i]);
+    }
+  });
+
+  it("ROUND_ROBIN ONE_TO_MANY: manual assignedCoachId bypasses rotation and cursor does not advance", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+    });
+    expect(event.status).toBe(201);
+    const eventId = event.body.data.id as string;
+
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        coaches: [
+          { userId: context.coachOneId, coachOrder: 1 },
+          { userId: context.coachTwoId, coachOrder: 2 },
+        ],
+      });
+
+    const baseTime = new Date(Date.now() + 4 * 86400000);
+    baseTime.setUTCHours(14, 0, 0, 0);
+    const duration = 30 * 60 * 1000;
+
+    // First slot: manually assign coachTwo — cursor should NOT advance
+    const slot1 = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: baseTime.toISOString(),
+        endTime: new Date(baseTime.getTime() + duration).toISOString(),
+        capacity: 5,
+        assignedCoachId: context.coachTwoId,
+      });
+    expect(slot1.status).toBe(201);
+    expect(slot1.body.data.assignedCoachId).toBe(context.coachTwoId);
+
+    // Second slot: no manual assignment — cursor still at 1, so coachOne is picked
+    const startTime2 = new Date(baseTime.getTime() + 2 * 60 * 60 * 1000);
+    const slot2 = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime2.toISOString(),
+        endTime: new Date(startTime2.getTime() + duration).toISOString(),
+        capacity: 5,
+      });
+    expect(slot2.status).toBe(201);
+    expect(slot2.body.data.assignedCoachId).toBe(context.coachOneId);
+  });
+
+  it("ROUND_ROBIN ONE_TO_MANY: empty pool leaves assignedCoachId null without error", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+    });
+    expect(event.status).toBe(201);
+    const eventId = event.body.data.id as string;
+
+    const startTime = new Date(Date.now() + 5 * 86400000);
+    startTime.setUTCHours(9, 0, 0, 0);
+    const slotRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: new Date(startTime.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+      });
+    expect(slotRes.status).toBe(201);
+    expect(slotRes.body.data.assignedCoachId).toBeNull();
+  });
+
+  it("ROUND_ROBIN ONE_TO_MANY: recurring series assigns coaches in rotation order", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+    });
+    expect(event.status).toBe(201);
+    const eventId = event.body.data.id as string;
+
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        coaches: [
+          { userId: context.coachOneId, coachOrder: 1 },
+          { userId: context.coachTwoId, coachOrder: 2 },
+        ],
+      });
+
+    const firstStart = new Date(Date.now() + 7 * 86400000);
+    firstStart.setUTCHours(10, 0, 0, 0);
+    const firstEnd = new Date(firstStart.getTime() + 60 * 60 * 1000);
+
+    const seriesRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: firstStart.toISOString(),
+        endTime: firstEnd.toISOString(),
+        capacity: 10,
+        recurrence: { frequency: "WEEKLY", occurrences: 4 },
+      });
+    expect(seriesRes.status).toBe(201);
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(listRes.status).toBe(200);
+
+    const slots = listRes.body.data.slots as Array<{ assignedCoachId: string | null }>;
+    expect(slots).toHaveLength(4);
+    expect(slots[0].assignedCoachId).toBe(context.coachOneId);
+    expect(slots[1].assignedCoachId).toBe(context.coachTwoId);
+    expect(slots[2].assignedCoachId).toBe(context.coachOneId);
+    expect(slots[3].assignedCoachId).toBe(context.coachTwoId);
+  });
 });
 
 describe("Event coach routes", () => {
@@ -1249,7 +1431,7 @@ describe("Leadership auto-derivation (derivesLeadershipFromAssignment types)", (
     });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/FIXED_LEAD events require a fixedLeadCoachId/i);
+    expect(res.body.message).toMatch(/DIRECT assignment requires a default host/i);
   });
 
   it("re-derives sessionLeadershipStrategy when assignmentStrategy is updated on a MANY_TO_ONE event", async () => {
@@ -2102,7 +2284,7 @@ describe("MANY_TO_MANY event creation", () => {
 // ─── Event Schema Validation Rejections ──────────────────────────────────────
 
 describe("Event schema validation rejections", () => {
-  it("rejects ONE_TO_MANY with ROUND_ROBIN assignment (single-coach group sessions only allow DIRECT)", async () => {
+  it("accepts ONE_TO_MANY with ROUND_ROBIN assignment strategy", async () => {
     const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
@@ -2112,8 +2294,9 @@ describe("Event schema validation rejections", () => {
       bookingMode: "FIXED_SLOTS",
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/Single-coach group sessions only support DIRECT/i);
+    expect(res.status).toBe(201);
+    expect(res.body.data.assignmentStrategy).toBe("ROUND_ROBIN");
+    expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
   });
 
   it("rejects ONE_TO_MANY with COACH_AVAILABILITY booking mode (must use FIXED_SLOTS)", async () => {

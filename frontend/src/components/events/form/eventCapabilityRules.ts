@@ -11,20 +11,7 @@ export function getAllowedAssignmentStrategies(
   // If caps is not provided yet, default to DIRECT
   if (!caps) return ['DIRECT']
 
-  // ONE_TO_MANY logic: only supports DIRECT assignment per user request.
-  // Other types support round-robin — multipleCoaches means multiple coaches
-  // *simultaneously in a session*, not that the pool can only have one coach.
-  const allStrategies: AssignmentStrategy[] = ['DIRECT', 'ROUND_ROBIN']
-
-  // Logic: ONE_TO_MANY doesn't support round robin as sessions are pre-defined
-  // and participants join a fixed host/coach.
-  const isOneToMany = !caps.multipleCoaches && caps.multipleParticipants
-
-  if (isOneToMany) {
-    return ['DIRECT']
-  }
-
-  return allStrategies
+  return ['DIRECT', 'ROUND_ROBIN']
 }
 
 export function getDefaultEventAssignmentStrategy(

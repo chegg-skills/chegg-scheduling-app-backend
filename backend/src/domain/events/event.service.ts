@@ -194,6 +194,30 @@ const updateEvent = async (
   let updatedEvent: SafeEvent;
   try {
     updatedEvent = await prisma.$transaction(async (tx) => {
+      // Mirror the create path: if fixedLeadCoachId is set, ensure that coach is in the pool.
+      // buildEventUpdateData only saves the field on the Event row — it never creates EventCoach.
+      if (context.fixedLeadCoachId) {
+        const alreadyInPool = existingEvent.coaches.some(
+          (c) => c.coachUserId === context.fixedLeadCoachId && c.isActive,
+        );
+        if (!alreadyInPool) {
+          const maxOrder = existingEvent.coaches.reduce(
+            (max, c) => Math.max(max, c.coachOrder ?? 0),
+            0,
+          );
+          await tx.eventCoach.upsert({
+            where: { eventId_coachUserId: { eventId, coachUserId: context.fixedLeadCoachId } },
+            create: {
+              eventId,
+              coachUserId: context.fixedLeadCoachId,
+              coachOrder: maxOrder + 1,
+              isActive: true,
+            },
+            update: { isActive: true },
+          });
+        }
+      }
+
       return tx.event.update({
         where: { id: eventId },
         data: buildEventUpdateData({

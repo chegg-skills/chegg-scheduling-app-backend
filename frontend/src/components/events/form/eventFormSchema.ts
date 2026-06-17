@@ -112,6 +112,24 @@ export const eventFormSchema = z
       })
     }
 
+    // fixedLeadCoachId is only relevant for multi-coach COACH_AVAILABILITY types (MANY_TO_ONE)
+    // where FIXED_LEAD leadership is derived from DIRECT assignment. Single-coach types
+    // (ONE_TO_ONE, ONE_TO_MANY) use SINGLE_COACH leadership and don't need a fixed lead.
+    if (
+      caps &&
+      caps.multipleCoaches &&
+      values.assignmentStrategy === 'DIRECT' &&
+      !values.allowStudentCoachChoice &&
+      !values.fixedLeadCoachId &&
+      values.bookingMode !== 'FIXED_SLOTS'
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['fixedLeadCoachId'],
+        message: 'A default host is required when using Direct assignment.',
+      })
+    }
+
     if (values.allowAnonymousBooking && values.deferCoachReveal) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

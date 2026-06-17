@@ -138,16 +138,11 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   }
 
   // Single-coach group sessions (!multipleCoaches && multipleParticipants) must use
-  // DIRECT assignment and FIXED_SLOTS booking mode. This applies to ONE_TO_MANY and any
-  // future type with the same capability profile.
+  // FIXED_SLOTS booking mode. Both DIRECT and ROUND_ROBIN are valid assignment strategies:
+  // DIRECT assigns a fixed host to every slot; ROUND_ROBIN rotates coach ownership across
+  // the pool at slot-creation time. This applies to ONE_TO_MANY and any future type with
+  // the same capability profile.
   if (caps && !caps.multipleCoaches && caps.multipleParticipants) {
-    if (data.assignmentStrategy && data.assignmentStrategy !== AssignmentStrategy.DIRECT) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["assignmentStrategy"],
-        message: "Single-coach group sessions only support DIRECT assignment strategy.",
-      });
-    }
     if (data.bookingMode && data.bookingMode !== EventBookingMode.FIXED_SLOTS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -162,6 +157,25 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
       code: z.ZodIssueCode.custom,
       path: ["fixedLeadCoachId"],
       message: "FIXED_LEAD strategy requires a fixed lead coach to be specified.",
+    });
+  }
+
+  // fixedLeadCoachId is only relevant for multi-coach types (MANY_TO_ONE) with DIRECT assignment
+  // and COACH_AVAILABILITY mode — that's where FIXED_LEAD leadership is derived. Single-coach
+  // types (ONE_TO_ONE, ONE_TO_MANY) use SINGLE_COACH leadership and never need a fixed lead.
+  // FIXED_SLOTS events assign coaches per-slot, so fixedLeadCoachId is optional there too.
+  if (
+    caps &&
+    caps.multipleCoaches &&
+    data.assignmentStrategy === AssignmentStrategy.DIRECT &&
+    data.allowStudentCoachChoice !== true &&
+    !data.fixedLeadCoachId &&
+    data.bookingMode !== EventBookingMode.FIXED_SLOTS
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["fixedLeadCoachId"],
+      message: "DIRECT assignment requires a default host to be specified.",
     });
   }
 

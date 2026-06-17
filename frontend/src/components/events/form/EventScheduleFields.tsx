@@ -173,6 +173,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
           <FormField
             label="Default Event Host"
             htmlFor="fixedLeadCoachId"
+            required
             error={errors.fixedLeadCoachId?.message}
             info="This coach will be the default host for all sessions unless overridden per-slot."
           >
