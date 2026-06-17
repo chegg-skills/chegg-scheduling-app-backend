@@ -185,14 +185,21 @@ export function UsersPage() {
               isLoading={statsLoading}
             />
 
-            <Box sx={{ mt: 3 }}>
+            <Box
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                mt: 3,
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+              }}
+            >
               <Tabs
                 value={activeTab}
                 onChange={(_, val: UsersTab) => setActiveTab(val)}
+                aria-label="users page tabs"
                 sx={{
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  mb: 0,
                   '& .MuiTab-root': {
                     textTransform: 'none',
                     fontWeight: 600,
@@ -215,7 +222,15 @@ export function UsersPage() {
                 />
               </Tabs>
 
-              {activeTab === 'users' && (
+              {activeTab === 'invitations' && (
+                <Box sx={{ pb: 1 }}>
+                  <InviteFilters filters={inviteFilters} onChange={setInviteFilters} />
+                </Box>
+              )}
+            </Box>
+
+            {activeTab === 'users' && (
+              <Box sx={{ mt: 2.5 }}>
                 <UserTable
                   users={users}
                   pagination={pagination}
@@ -224,28 +239,27 @@ export function UsersPage() {
                   currentUserRole={(currentUser?.role ?? 'TEAM_ADMIN') as UserRole}
                   currentUserId={currentUser?.id ?? ''}
                 />
-              )}
+              </Box>
+            )}
 
-              {activeTab === 'invitations' && (
-                <Box>
-                  <InviteFilters filters={inviteFilters} onChange={setInviteFilters} />
-                  {invLoading && !inviteData ? (
-                    <PageSpinner />
-                  ) : invError ? (
-                    <Box sx={{ py: 4 }}>
-                      <ErrorAlert message="Failed to load invitations. Please refresh the page." />
-                    </Box>
-                  ) : (
-                    <InviteTable
-                      invites={inviteData?.invites ?? []}
-                      pagination={inviteData?.pagination}
-                      onPageChange={onInvPageChange}
-                      onRowsPerPageChange={onInvRowsPerPageChange}
-                    />
-                  )}
-                </Box>
-              )}
-            </Box>
+            {activeTab === 'invitations' && (
+              <Box sx={{ mt: 2.5 }}>
+                {invLoading && !inviteData ? (
+                  <PageSpinner />
+                ) : invError ? (
+                  <Box sx={{ py: 4 }}>
+                    <ErrorAlert message="Failed to load invitations. Please refresh the page." />
+                  </Box>
+                ) : (
+                  <InviteTable
+                    invites={inviteData?.invites ?? []}
+                    pagination={inviteData?.pagination}
+                    onPageChange={onInvPageChange}
+                    onRowsPerPageChange={onInvRowsPerPageChange}
+                  />
+                )}
+              </Box>
+            )}
           </>
         )}
 

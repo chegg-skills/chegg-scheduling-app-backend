@@ -1,3 +1,4 @@
+import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
@@ -5,7 +6,6 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
 import { Ban } from 'lucide-react'
 import type { Pagination, UserInvite } from '@/types'
 import { TablePagination } from '@/components/shared/table/TablePagination'
@@ -17,11 +17,13 @@ import { useRevokeInvite } from '@/hooks/queries/useInvites'
 import { useConfirm } from '@/context/confirm'
 import { extractApiError } from '@/utils/apiError'
 
-const dateFormatter = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-})
+const HEADER_SX = {
+  fontSize: '0.75rem',
+  fontWeight: 700,
+  textTransform: 'uppercase' as const,
+  color: 'text.secondary',
+  letterSpacing: '0.05em',
+}
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
@@ -60,35 +62,33 @@ export function InviteTable({
     })
   }
 
-  if (invites.length === 0) {
-    return (
-      <Box sx={{ py: 6, textAlign: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
-          No invitations found.
-        </Typography>
-      </Box>
-    )
-  }
-
   return (
-    <>
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
+    <TableContainer component={Paper} variant="outlined">
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={HEADER_SX}>User Invited</TableCell>
+            <TableCell sx={HEADER_SX}>Role</TableCell>
+            <TableCell sx={HEADER_SX}>Status</TableCell>
+            <TableCell sx={HEADER_SX}>Invited By</TableCell>
+            <TableCell sx={HEADER_SX}>Sent</TableCell>
+            <TableCell sx={HEADER_SX}>Expires</TableCell>
+            <TableCell sx={HEADER_SX}>Accepted</TableCell>
+            <TableCell sx={HEADER_SX}>SSO</TableCell>
+            <TableCell sx={HEADER_SX} align="right">Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {invites.length === 0 ? (
             <TableRow>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Invited By</TableCell>
-              <TableCell>Sent</TableCell>
-              <TableCell>Expires</TableCell>
-              <TableCell>Accepted</TableCell>
-              <TableCell>SSO</TableCell>
-              <TableCell align="right" />
+              <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
+                <Typography variant="body2" color="text.secondary">
+                  No invitations found.
+                </Typography>
+              </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {invites.map((invite) => {
+          ) : (
+            invites.map((invite) => {
               const roleBadge = getUserRoleBadgeProps(invite.role)
               return (
                 <TableRow key={invite.id} hover>
@@ -113,7 +113,7 @@ export function InviteTable({
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {dateFormatter.format(new Date(invite.createdAt))}
+                      {dateTimeFormatter.format(new Date(invite.createdAt))}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -124,7 +124,7 @@ export function InviteTable({
                   <TableCell>
                     <Typography variant="body2">
                       {invite.acceptedAt
-                        ? dateFormatter.format(new Date(invite.acceptedAt))
+                        ? dateTimeFormatter.format(new Date(invite.acceptedAt))
                         : '—'}
                     </Typography>
                   </TableCell>
@@ -156,11 +156,10 @@ export function InviteTable({
                   </TableCell>
                 </TableRow>
               )
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
+            })
+          )}
+        </TableBody>
+      </Table>
       {pagination && (
         <TablePagination
           pagination={pagination}
@@ -168,6 +167,6 @@ export function InviteTable({
           onRowsPerPageChange={onRowsPerPageChange}
         />
       )}
-    </>
+    </TableContainer>
   )
 }

@@ -32,13 +32,8 @@ const ROLE_OPTIONS: { value: UserRole | ''; label: string }[] = [
 
 export function InviteFilters({ filters, onChange }: InviteFiltersProps) {
   return (
-    <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      alignItems="center"
-      gap={2}
-      sx={{ borderBottom: '1px solid', borderColor: 'divider', py: 1.5 }}
-    >
-      <FormControl size="small" sx={{ minWidth: 160 }}>
+    <Stack direction="row" gap={1.5} alignItems="center">
+      <FormControl size="small" sx={{ minWidth: 150 }}>
         <InputLabel id="invite-status-label">Status</InputLabel>
         <MuiSelect
           labelId="invite-status-label"
@@ -54,7 +49,7 @@ export function InviteFilters({ filters, onChange }: InviteFiltersProps) {
         </MuiSelect>
       </FormControl>
 
-      <FormControl size="small" sx={{ minWidth: 140 }}>
+      <FormControl size="small" sx={{ minWidth: 130 }}>
         <InputLabel id="invite-role-label">Role</InputLabel>
         <MuiSelect
           labelId="invite-role-label"
