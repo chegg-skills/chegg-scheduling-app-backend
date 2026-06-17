@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { UserRole } from "@prisma/client";
 import * as inviteService from "./invite.service";
+import { ListInvitesSchema } from "./invite.schema";
 import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import { setAuthCookie } from "../../shared/utils/cookie";
 import {
@@ -86,4 +87,30 @@ const validateInvite = async (req: Request, res: Response, next: NextFunction): 
   }
 };
 
-export { createInvite, acceptInvite, validateInvite };
+const listInvites = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const callerId = res.locals.authUser?.id as string;
+    const callerRole = res.locals.authUser?.role as UserRole;
+    const query = ListInvitesSchema.query.parse(req.query);
+
+    const result = await inviteService.listInvites(query, callerId, callerRole);
+    sendSuccessResponse(res, StatusCodes.OK, result, "Invites retrieved successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
+const revokeInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const callerId = res.locals.authUser?.id as string;
+    const callerRole = res.locals.authUser?.role as UserRole;
+    const { id } = req.params as { id: string };
+
+    const result = await inviteService.revokeInvite(id, callerId, callerRole);
+    sendSuccessResponse(res, StatusCodes.OK, result, "Invite revoked successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { createInvite, acceptInvite, validateInvite, listInvites, revokeInvite };

@@ -2,11 +2,14 @@ import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import Stack from '@mui/material/Stack'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import { useEffect, useState } from 'react'
-import { Search, UserPlus, Users, X, GraduationCap, UserCheck } from 'lucide-react'
+import { Search, UserPlus, Users, X, GraduationCap, UserCheck, Mail } from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { useUsers } from '@/hooks/queries/useUsers'
-import type { StatsTimeframe, UserRole } from '@/types'
+import { useInvites } from '@/hooks/queries/useInvites'
+import type { InviteStatus, StatsTimeframe, UserRole } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/shared/ui/Button'
 import { Input } from '@/components/shared/form/Input'
@@ -14,14 +17,21 @@ import { Modal } from '@/components/shared/ui/Modal'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { UserTable } from '@/components/users/UserTable'
+import { InviteTable } from '@/components/users/InviteTable'
+import { InviteFilters, type InviteFilterState } from '@/components/users/InviteFilters'
 import { InviteForm } from '@/components/users/InviteForm'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useUserStats } from '@/hooks/queries/useStats'
 import { usePagination } from '@/hooks/usePagination'
 
+type UsersTab = 'users' | 'invitations'
+
 export function UsersPage() {
   const { user: currentUser } = useAuth()
+  const [activeTab, setActiveTab] = useState<UsersTab>('users')
+
+  // ── Users tab state ───────────────────────────────────────────────────────
   const { pageSize, backendPage, onPageChange, onRowsPerPageChange, resetPage } = usePagination(20)
   const [showInvite, setShowInvite] = useState(false)
   const [searchInput, setSearchInput] = useState('')
@@ -42,6 +52,27 @@ export function UsersPage() {
 
   const users = data?.users ?? []
   const pagination = data?.pagination
+
+  // ── Invitations tab state ─────────────────────────────────────────────────
+  const {
+    pageSize: invPageSize,
+    backendPage: invBackendPage,
+    onPageChange: onInvPageChange,
+    onRowsPerPageChange: onInvRowsPerPageChange,
+    resetPage: resetInvPage,
+  } = usePagination(20)
+  const [inviteFilters, setInviteFilters] = useState<InviteFilterState>({ status: '', role: '' })
+
+  useEffect(() => {
+    resetInvPage()
+  }, [inviteFilters, resetInvPage])
+
+  const { data: inviteData, isLoading: invLoading, error: invError } = useInvites({
+    status: (inviteFilters.status as InviteStatus) || undefined,
+    role: (inviteFilters.role as UserRole) || undefined,
+    page: invBackendPage,
+    pageSize: invPageSize,
+  })
 
   const userStatItems = [
     {
@@ -78,7 +109,11 @@ export function UsersPage() {
     <Box>
       <PageHeader
         title="Users"
-        subtitle={`${pagination?.total ?? 0} total users`}
+        subtitle={
+          activeTab === 'users'
+            ? `${pagination?.total ?? 0} total users`
+            : `${inviteData?.pagination.total ?? 0} invitations`
+        }
         actions={
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
@@ -86,42 +121,44 @@ export function UsersPage() {
             alignItems="center"
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
-            <Box
-              sx={{
-                width: { xs: '100%', sm: 360 },
-                maxWidth: 360,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <Input
-                isSearch
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by name or email"
-                aria-label="Search users"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={16} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searchInput ? (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="Clear user search"
-                        edge="end"
-                        size="small"
-                        onClick={() => setSearchInput('')}
-                      >
-                        <X size={14} />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : undefined,
+            {activeTab === 'users' && (
+              <Box
+                sx={{
+                  width: { xs: '100%', sm: 360 },
+                  maxWidth: 360,
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
                 }}
-              />
-            </Box>
+              >
+                <Input
+                  isSearch
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search by name or email"
+                  aria-label="Search users"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search size={16} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchInput ? (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="Clear user search"
+                          edge="end"
+                          size="small"
+                          onClick={() => setSearchInput('')}
+                        >
+                          <X size={14} />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : undefined,
+                  }}
+                />
+              </Box>
+            )}
 
             <Button size="sm" onClick={() => setShowInvite(true)}>
               <UserPlus size={16} />
@@ -132,9 +169,9 @@ export function UsersPage() {
       />
 
       <Box sx={{ px: { xs: 2.5, md: 4 } }}>
-        {isLoading && !data ? (
+        {isLoading && !data && activeTab === 'users' ? (
           <PageSpinner />
-        ) : error ? (
+        ) : error && activeTab === 'users' ? (
           <Box sx={{ py: 4 }}>
             <ErrorAlert message="Failed to load users. Please refresh the page." />
           </Box>
@@ -148,16 +185,81 @@ export function UsersPage() {
               isLoading={statsLoading}
             />
 
-            <Box sx={{ mt: 3 }}>
-              <UserTable
-                users={users}
-                pagination={pagination}
-                onPageChange={onPageChange}
-                onRowsPerPageChange={onRowsPerPageChange}
-                currentUserRole={(currentUser?.role ?? 'TEAM_ADMIN') as UserRole}
-                currentUserId={currentUser?.id ?? ''}
-              />
+            <Box
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                mt: 3,
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Tabs
+                value={activeTab}
+                onChange={(_, val: UsersTab) => setActiveTab(val)}
+                aria-label="users page tabs"
+                sx={{
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    minHeight: 48,
+                  },
+                }}
+              >
+                <Tab
+                  value="users"
+                  label="Users"
+                  icon={<Users size={15} />}
+                  iconPosition="start"
+                />
+                <Tab
+                  value="invitations"
+                  label="Invitations"
+                  icon={<Mail size={15} />}
+                  iconPosition="start"
+                />
+              </Tabs>
+
+              {activeTab === 'invitations' && (
+                <Box sx={{ pb: 1 }}>
+                  <InviteFilters filters={inviteFilters} onChange={setInviteFilters} />
+                </Box>
+              )}
             </Box>
+
+            {activeTab === 'users' && (
+              <Box sx={{ mt: 2.5 }}>
+                <UserTable
+                  users={users}
+                  pagination={pagination}
+                  onPageChange={onPageChange}
+                  onRowsPerPageChange={onRowsPerPageChange}
+                  currentUserRole={(currentUser?.role ?? 'TEAM_ADMIN') as UserRole}
+                  currentUserId={currentUser?.id ?? ''}
+                />
+              </Box>
+            )}
+
+            {activeTab === 'invitations' && (
+              <Box sx={{ mt: 2.5 }}>
+                {invLoading && !inviteData ? (
+                  <PageSpinner />
+                ) : invError ? (
+                  <Box sx={{ py: 4 }}>
+                    <ErrorAlert message="Failed to load invitations. Please refresh the page." />
+                  </Box>
+                ) : (
+                  <InviteTable
+                    invites={inviteData?.invites ?? []}
+                    pagination={inviteData?.pagination}
+                    onPageChange={onInvPageChange}
+                    onRowsPerPageChange={onInvRowsPerPageChange}
+                  />
+                )}
+              </Box>
+            )}
           </>
         )}
 
