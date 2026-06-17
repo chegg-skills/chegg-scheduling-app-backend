@@ -347,6 +347,33 @@ const getCoachAvailabilityForSlot = async (
   }
 };
 
+const getCoachAvailabilityForProposedSlot = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const caller = res.locals.authUser as CallerContext;
+    const { startTime, endTime, excludeSlotId } = req.query as Record<string, string>;
+    if (!startTime || !endTime || isNaN(Date.parse(startTime)) || isNaN(Date.parse(endTime))) {
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "startTime and endTime must be valid ISO date strings." });
+      return;
+    }
+    const result = await eventService.getCoachAvailabilityForProposedSlot(
+      req.params.eventId as string,
+      new Date(startTime),
+      new Date(endTime),
+      excludeSlotId || undefined,
+      caller,
+    );
+    sendSuccessResponse(res, StatusCodes.OK, result, "Coach availability fetched.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 const revealCoachForSlot = async (
   req: Request,
   res: Response,
@@ -420,6 +447,7 @@ export {
   listSlotBookings,
   revealCoachForSlot,
   getCoachAvailabilityForSlot,
+  getCoachAvailabilityForProposedSlot,
   stopRecurrenceGroup,
   resumeRecurrenceGroup,
   getSessionLog,

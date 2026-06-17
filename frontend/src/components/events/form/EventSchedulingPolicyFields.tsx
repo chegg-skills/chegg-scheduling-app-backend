@@ -22,7 +22,7 @@ export function EventSchedulingPolicyFields({ caps, isLocked }: EventSchedulingP
   return (
     <Stack spacing={3}>
       <BookingModeField caps={caps} />
-      <BookingWindowFields />
+      <BookingWindowFields caps={caps} />
       {caps?.multipleParticipants && <ParticipantCapacityFields />}
       {isOneToMany && (
         <Stack spacing={1.5}>

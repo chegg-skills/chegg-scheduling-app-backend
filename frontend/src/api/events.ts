@@ -109,4 +109,15 @@ export const eventsApi = {
       `/events/${eventId}/schedule-slots/${slotId}/coach-availability`,
       { signal }
     ),
+  getCoachAvailabilityForProposedSlot: (
+    eventId: string,
+    startTime: string,
+    endTime: string,
+    excludeSlotId?: string | null,
+    signal?: AbortSignal,
+  ) =>
+    apiClient.get<ApiResponse<CoachAvailabilityEntry[]>>(
+      `/events/${eventId}/schedule-slots/coach-availability`,
+      { params: { startTime, endTime, ...(excludeSlotId ? { excludeSlotId } : {}) }, signal }
+    ),
 }
