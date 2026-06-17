@@ -49,16 +49,15 @@ export function InviteTable({
   const { mutate: revoke } = useRevokeInvite()
   const { confirm, alert } = useConfirm()
 
-  function handleRevoke(invite: UserInvite) {
-    confirm({
+  async function handleRevoke(invite: UserInvite) {
+    const confirmed = await confirm({
       title: 'Revoke invitation',
       message: `Revoke the invitation sent to ${invite.email}? They will no longer be able to use this link to create an account.`,
       confirmText: 'Revoke',
-      onConfirm: () => {
-        revoke(invite.id, {
-          onError: (err) => alert({ title: 'Error', message: extractApiError(err) }),
-        })
-      },
+    })
+    if (!confirmed) return
+    revoke(invite.id, {
+      onError: (err) => alert({ title: 'Error', message: extractApiError(err) }),
     })
   }
 
