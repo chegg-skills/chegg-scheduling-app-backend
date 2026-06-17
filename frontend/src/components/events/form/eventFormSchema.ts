@@ -112,9 +112,12 @@ export const eventFormSchema = z
       })
     }
 
-    // FIXED_SLOTS events (ONE_TO_MANY, MANY_TO_MANY) assign coaches per-slot — fixedLeadCoachId
-    // is optional convenience. Only require it for COACH_AVAILABILITY events.
+    // fixedLeadCoachId is only relevant for multi-coach COACH_AVAILABILITY types (MANY_TO_ONE)
+    // where FIXED_LEAD leadership is derived from DIRECT assignment. Single-coach types
+    // (ONE_TO_ONE, ONE_TO_MANY) use SINGLE_COACH leadership and don't need a fixed lead.
     if (
+      caps &&
+      caps.multipleCoaches &&
       values.assignmentStrategy === 'DIRECT' &&
       !values.allowStudentCoachChoice &&
       !values.fixedLeadCoachId &&
