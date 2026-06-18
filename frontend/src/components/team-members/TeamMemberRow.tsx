@@ -1,13 +1,11 @@
 import type { TeamMember, UserRole } from '@/types'
-import Avatar from '@mui/material/Avatar'
-import Box from '@mui/material/Box'
 import ListItem from '@mui/material/ListItem'
 import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
 import { UserMinus } from 'lucide-react'
 import { Badge } from '@/components/shared/ui/Badge'
+import { UserIdentity } from '@/components/shared/ui/UserIdentity'
 import { RowActions } from '@/components/shared/table/RowActions'
-import { useAuth } from '@/context/auth'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface TeamMemberRowProps {
   member: TeamMember
@@ -26,9 +24,8 @@ export function TeamMemberRow({
 }: TeamMemberRowProps) {
   const { user } = member
   const isLead = user.id === teamLeadId
-  const { user: currentUser } = useAuth()
-  const isCoach = currentUser?.role === 'COACH'
-  const isSelf = user.id === currentUser?.id
+  const { isCoach, userId } = usePermissions()
+  const isSelf = user.id === userId
   const canView = onViewUser && (!isCoach || isSelf)
 
   return (
@@ -57,43 +54,13 @@ export function TeamMemberRow({
         justifyContent="space-between"
         sx={{ width: '100%', pr: currentUserRole !== 'COACH' ? 8 : 0 }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Avatar
-            sx={{
-              bgcolor: 'primary.light',
-              color: 'primary.dark',
-              width: 36,
-              height: 36,
-              flexShrink: 0,
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
-            {user.firstName[0]}
-            {user.lastName[0]}
-          </Avatar>
-          <Box>
-            <Typography
-              variant="body2"
-              onClick={() => canView && onViewUser?.(user.id)}
-              sx={{
-                fontWeight: 600,
-                color: 'text.primary',
-                textDecoration: 'none',
-                cursor: canView ? 'pointer' : 'default',
-                '&:hover': {
-                  color: canView ? 'primary.main' : 'inherit',
-                  textDecoration: canView ? 'underline' : 'none',
-                },
-              }}
-            >
-              {user.firstName} {user.lastName}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              {user.email}
-            </Typography>
-          </Box>
-        </Stack>
+        <UserIdentity
+          firstName={user.firstName}
+          lastName={user.lastName}
+          email={user.email}
+          onClick={canView ? () => onViewUser?.(user.id) : undefined}
+          avatarSx={{ fontSize: 12, fontWeight: 700 }}
+        />
         <Stack direction="row" spacing={1.5} alignItems="center">
           {isLead && <Badge label="Lead" color="blue" />}
           <Badge label={user.role.replace('_', ' ')} color="gray" />

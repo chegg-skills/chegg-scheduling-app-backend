@@ -28,6 +28,7 @@ import type { Event, EventType } from '@/types'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { EventBadge, BADGE_SX, BADGE_LABEL_SX } from './EventBadge'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
 
 const LOCATION_COLORS = {
   VIRTUAL: '#2E8AEE',
@@ -66,10 +67,6 @@ const ACTION_ICON_SX = {
   color: 'text.secondary',
   '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
   transition: 'all 0.2s',
-}
-
-function getCoachInitials(firstName: string, lastName: string) {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
 function LocationBadge({ type, value }: { type: string; value?: string | null }) {
@@ -254,10 +251,10 @@ export function EventCard({
                 </Typography>
                 <AvatarGroup max={4} sx={AVATAR_GROUP_SX}>
                   {event.coaches.map((coach) => {
-                    const initials = getCoachInitials(
+                    const initials = getUserInitials(
                       coach.coachUser.firstName,
                       coach.coachUser.lastName
-                    )
+                    ).toUpperCase()
                     const canView = onViewUser && canViewCoachProfile(coach.coachUser.id)
                     return (
                       <Tooltip

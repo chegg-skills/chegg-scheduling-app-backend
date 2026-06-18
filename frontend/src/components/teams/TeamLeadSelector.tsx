@@ -1,4 +1,5 @@
 import Avatar from '@mui/material/Avatar'
+import { getUserInitials } from '@/utils/userDisplay'
 import Box from '@mui/material/Box'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
@@ -27,8 +28,7 @@ function TeamLeadOptionLabel({ user, isCompact = false }: { user: SafeUser; isCo
           color: 'primary.dark',
         }}
       >
-        {user.firstName[0]}
-        {user.lastName[0]}
+        {getUserInitials(user.firstName, user.lastName)}
       </Avatar>
 
       <Box>

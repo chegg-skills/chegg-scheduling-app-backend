@@ -1,5 +1,7 @@
 import { Avatar, Box, Stack, Typography, alpha, useTheme } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
+import { UserIdentity } from '@/components/shared/ui/UserIdentity'
 import { UserCheck, User } from 'lucide-react'
 import type { Booking } from '@/types'
 import { BookingSection } from './Common'
@@ -24,59 +26,37 @@ export function CoachSection({ booking }: CoachSectionProps) {
         </Typography>
       )}
 
-      <Stack direction="row" spacing={1.5} alignItems="center">
-        <Avatar
-          src={booking.coach?.avatarUrl ?? undefined}
-          sx={{
-            width: 36,
-            height: 36,
-            fontSize: '0.875rem',
-            bgcolor: alpha(theme.palette.secondary.main, 0.05),
-            color: theme.palette.secondary.main,
-            fontWeight: 600,
-          }}
-        >
-          {booking.coach ? (
-            `${booking.coach.firstName[0]}${booking.coach.lastName[0]}`
-          ) : (
+      {booking.coach ? (
+        <UserIdentity
+          firstName={booking.coach.firstName}
+          lastName={booking.coach.lastName}
+          email={booking.coach.email}
+          avatarUrl={booking.coach.avatarUrl}
+          titleCase
+          avatarVariant="secondary"
+          onClick={onViewCoach ? () => onViewCoach(booking.coach!.id) : undefined}
+        />
+      ) : (
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              fontSize: '0.875rem',
+              bgcolor: alpha(theme.palette.secondary.main, 0.05),
+              color: theme.palette.secondary.main,
+              fontWeight: 600,
+            }}
+          >
             <User size={18} />
-          )}
-        </Avatar>
-        <Box>
-          {booking.coach ? (
-            (() => {
-              const coach = booking.coach
-              return (
-                <Typography
-                  variant="body2"
-                  onClick={() => onViewCoach?.(coach.id)}
-                  sx={{
-                    fontWeight: 600,
-                    color: theme.palette.text.primary,
-                    textDecoration: 'none',
-                    cursor: onViewCoach ? 'pointer' : 'default',
-                    '&:hover': {
-                      color: onViewCoach ? 'primary.main' : 'inherit',
-                      textDecoration: onViewCoach ? 'underline' : 'none',
-                    },
-                  }}
-                >
-                  {toTitleCase(coach.firstName)} {toTitleCase(coach.lastName)}
-                </Typography>
-              )
-            })()
-          ) : (
+          </Avatar>
+          <Box>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               N/A
             </Typography>
-          )}
-          {booking.coach?.email && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              {booking.coach.email}
-            </Typography>
-          )}
-        </Box>
-      </Stack>
+          </Box>
+        </Stack>
+      )}
 
       {hasCoCoaches && (
         <Box sx={{ mt: 2.5, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
@@ -113,8 +93,7 @@ export function CoachSection({ booking }: CoachSectionProps) {
                       color: theme.palette.secondary.main,
                     }}
                   >
-                    {coCoach.firstName[0]}
-                    {coCoach.lastName[0]}
+                    {getUserInitials(coCoach.firstName, coCoach.lastName)}
                   </Avatar>
                   <Box>
                     <Typography

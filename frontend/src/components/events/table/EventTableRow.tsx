@@ -15,6 +15,7 @@ import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import type { Event } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
 import { formatEventDuration } from './eventTableUtils'
 import { MoveEventToGroupDialog } from '../groups/MoveEventToGroupDialog'
 import { useAuth } from '@/context/auth'
@@ -28,10 +29,6 @@ interface EventTableRowProps {
   onEmbed?: (event: Event) => void
   onViewUser?: (userId: string) => void
   canManage?: boolean
-}
-
-function getCoachInitials(firstName: string, lastName: string) {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`
 }
 
 export function EventTableRow({
@@ -126,7 +123,7 @@ export function EventTableRow({
                     },
                   }}
                 >
-                  {getCoachInitials(coach.coachUser.firstName, coach.coachUser.lastName)}
+                  {getUserInitials(coach.coachUser.firstName, coach.coachUser.lastName)}
                 </Avatar>
               </Tooltip>
             )

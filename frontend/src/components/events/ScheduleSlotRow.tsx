@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { getUserInitials } from '@/utils/userDisplay'
 import Box from '@mui/material/Box'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
@@ -95,8 +96,7 @@ export function ScheduleSlotRow({
               color: isOverride ? 'primary.contrastText' : 'text.primary',
             }}
           >
-            {host.firstName[0]}
-            {host.lastName[0]}
+            {getUserInitials(host.firstName, host.lastName)}
           </Avatar>
           <Box>
             <Typography

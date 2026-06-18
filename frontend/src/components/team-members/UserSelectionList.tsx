@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import { getUserInitials } from '@/utils/userDisplay'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
@@ -65,8 +66,7 @@ export function UserSelectionList({
                       color: 'primary.dark',
                     }}
                   >
-                    {option.firstName[0]}
-                    {option.lastName[0]}
+                    {getUserInitials(option.firstName, option.lastName)}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText

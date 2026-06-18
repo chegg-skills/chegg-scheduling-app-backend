@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import { getUserInitials } from '@/utils/userDisplay'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
@@ -100,7 +101,7 @@ export function StudentSessionLogTimeline({ studentId }: StudentSessionLogTimeli
 
           {items.map((entry, idx) => {
             const initials = entry.loggedBy
-              ? `${entry.loggedBy.firstName.charAt(0)}${entry.loggedBy.lastName.charAt(0)}`.toUpperCase()
+              ? getUserInitials(entry.loggedBy.firstName, entry.loggedBy.lastName).toUpperCase()
               : '??'
             const loggedByName = entry.loggedBy
               ? `${entry.loggedBy.firstName} ${entry.loggedBy.lastName}`.trim()

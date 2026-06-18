@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { Clock, Mail, MapPin, Phone, Video, Link2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
 import type { UserWithDetails } from '@/types'
 import { Badge } from '@/components/shared/ui/Badge'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
@@ -47,8 +48,7 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
           color: 'primary.dark',
         }}
       >
-        {user.firstName[0]}
-        {user.lastName[0]}
+        {getUserInitials(user.firstName, user.lastName)}
       </Avatar>
 
       <Box sx={{ flex: 1 }}>
