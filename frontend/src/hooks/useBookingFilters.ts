@@ -1,9 +1,12 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useDebouncedValue } from './useDebouncedValue'
 import { usePagination } from './usePagination'
+import { useTabParam } from './useTabParam'
 import type { BookingStatus, StatsTimeframe } from '@/types'
 
 type FilterType = 'UPCOMING' | 'ALL' | BookingStatus
+
+const BOOKING_STATUS_TABS = ['UPCOMING', 'ALL', 'CANCELLED', 'COMPLETED'] as const satisfies readonly FilterType[]
 
 interface AdvancedFilters {
   teamId: string
@@ -22,7 +25,7 @@ const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
 export function useBookingFilters() {
   const { pageSize, backendPage, onPageChange, onRowsPerPageChange, resetPage } = usePagination(25)
 
-  const [statusFilter, setStatusFilter] = useState<FilterType>('UPCOMING')
+  const [statusFilter, setStatusFilter] = useTabParam('tab', 'UPCOMING', BOOKING_STATUS_TABS)
   const [searchInput, setSearchInput] = useState('')
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(DEFAULT_ADVANCED_FILTERS)
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
@@ -54,8 +57,8 @@ export function useBookingFilters() {
     [debouncedSearch, statusFilter, advancedFilters, backendPage, pageSize]
   )
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: FilterType) => {
-    setStatusFilter(newValue)
+  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+    setStatusFilter(newValue as (typeof BOOKING_STATUS_TABS)[number])
   }
 
   const handleFilterChange = (key: string, value: any) => {

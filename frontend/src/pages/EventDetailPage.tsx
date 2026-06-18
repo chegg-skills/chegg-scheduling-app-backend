@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
@@ -26,6 +25,7 @@ import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
 import { useBookings } from '@/hooks/queries/useBookings'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { usePermissions } from '@/hooks/usePermissions'
+import { useTabParam } from '@/hooks/useTabParam'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TabPanel } from '@/components/shared/ui/TabPanel'
 import { Modal } from '@/components/shared/ui/Modal'
@@ -46,12 +46,11 @@ import { EmbedBookingDialog } from '@/components/events/dialogs/EmbedBookingDial
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams<{ eventId: string }>()
-  const [searchParams] = useSearchParams()
   const { isCoach } = usePermissions()
   const [showEdit, setShowEdit] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
-  const initialTab = { details: 0, coaches: 1, bookings: 2, schedule: 3 }[searchParams.get('tab') ?? ''] ?? 0
-  const [tabValue, setTabValue] = useState(initialTab)
+  const EVENT_TABS = ['details', 'coaches', 'bookings', 'schedule'] as const
+  const [activeTab, setTab] = useTabParam('tab', 'details', EVENT_TABS)
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
@@ -192,8 +191,8 @@ export function EventDetailPage() {
           }}
         >
           <Tabs
-            value={tabValue}
-            onChange={(_: React.SyntheticEvent, v: number) => setTabValue(v)}
+            value={activeTab}
+            onChange={(_, v: string) => setTab(v as (typeof EVENT_TABS)[number])}
             aria-label="event detail sections"
             sx={{
               '& .MuiTab-root': {
@@ -208,19 +207,22 @@ export function EventDetailPage() {
               },
             }}
           >
-            <Tab label="Details" icon={<Info size={18} />} iconPosition="start" />
+            <Tab value="details" label="Details" icon={<Info size={18} />} iconPosition="start" />
             <Tab
+              value="coaches"
               label={`Coaches (${event.coaches?.length ?? 0})`}
               icon={<Users size={18} />}
               iconPosition="start"
             />
             <Tab
+              value="bookings"
               label={`Bookings (${upcomingCount})`}
               icon={<ClipboardList size={18} />}
               iconPosition="start"
             />
             {event.bookingMode === 'FIXED_SLOTS' && (
               <Tab
+                value="schedule"
                 label={`Schedule (${event._count?.scheduleSlots ?? 0})`}
                 icon={<CalendarIcon size={18} />}
                 iconPosition="start"
@@ -229,7 +231,7 @@ export function EventDetailPage() {
           </Tabs>
         </Box>
 
-        <TabPanel value={tabValue} index={0} prefix="event">
+        <TabPanel value={activeTab} index="details" prefix="event">
           <EventDetailsTab
             event={event}
             coachSetupStatus={coachSetupStatus}
@@ -237,7 +239,7 @@ export function EventDetailPage() {
           />
         </TabPanel>
 
-        <TabPanel value={tabValue} index={1} prefix="event">
+        <TabPanel value={activeTab} index="coaches" prefix="event">
           <EventCoachesTab
             event={event}
             teamMembers={teamMembers}
@@ -249,13 +251,13 @@ export function EventDetailPage() {
           />
         </TabPanel>
 
-        <TabPanel value={tabValue} index={2} prefix="event">
+        <TabPanel value={activeTab} index="bookings" prefix="event">
           <BookingViewProvider value={bookingViewValue}>
             <EventBookingsTab eventId={eventId} />
           </BookingViewProvider>
         </TabPanel>
 
-        <TabPanel value={tabValue} index={3} prefix="event">
+        <TabPanel value={activeTab} index="schedule" prefix="event">
           <EventScheduleTab
             event={event}
             slots={slots}

@@ -18,7 +18,8 @@ import {
   ExternalLink,
   Info,
 } from 'lucide-react'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useTeams } from '@/hooks/queries/useTeams'
 import { useTeamEvents, useEvents } from '@/hooks/queries/useEvents'
@@ -40,8 +41,9 @@ import type { StatsTimeframe } from '@/types'
 
 export function EventsPage() {
   const { isCoach, isAdmin, isSuperAdmin, isTeamAdmin } = usePermissions()
-  const [selectedTeamId, setSelectedTeamId] = useState<string>('')
-  const [selectedEventTypeId, setSelectedEventTypeId] = useState<string>('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawTeamId = searchParams.get('team') ?? ''
+  const rawEventTypeId = searchParams.get('eventType') ?? ''
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<StatsTimeframe>('thisMonth')
@@ -56,16 +58,54 @@ export function EventsPage() {
     return [...teamsData.teams].sort((a, b) => a.name.localeCompare(b.name))
   }, [teamsData?.teams])
 
+  const activeEventTypes = useMemo(() => eventTypes.filter((et) => et.isActive), [eventTypes])
+
+  const selectedTeamId = useMemo(
+    () => (rawTeamId === 'all' || sortedTeams.some((t) => t.id === rawTeamId) ? rawTeamId : ''),
+    [rawTeamId, sortedTeams]
+  )
+
+  const selectedEventTypeId = useMemo(
+    () => (activeEventTypes.some((et) => et.id === rawEventTypeId) ? rawEventTypeId : ''),
+    [rawEventTypeId, activeEventTypes]
+  )
+
+  const setSelectedTeamId = useCallback(
+    (id: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (id) next.set('team', id)
+          else next.delete('team')
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
+
+  const setSelectedEventTypeId = (id: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.set('eventType', id)
+        return next
+      },
+      { replace: true }
+    )
+  }
+
   useEffect(() => {
     if (!isTeamAdmin && !isCoach) return
-    if (selectedTeamId === 'all' && sortedTeams.length === 1) {
+    if (rawTeamId === 'all' && sortedTeams.length === 1) {
       setSelectedTeamId(sortedTeams[0].id)
       return
     }
-    if (sortedTeams.length === 1 && !selectedTeamId) {
+    if (sortedTeams.length === 1 && !rawTeamId) {
       setSelectedTeamId(sortedTeams[0].id)
     }
-  }, [isTeamAdmin, isCoach, sortedTeams, selectedTeamId])
+  }, [isTeamAdmin, isCoach, sortedTeams, rawTeamId, setSelectedTeamId])
 
   const selectedTeam = sortedTeams.find((team) => team.id === selectedTeamId)
   const selectedEventType = eventTypes.find((et) => et.id === selectedEventTypeId)
@@ -105,10 +145,6 @@ export function EventsPage() {
       setTimeout(() => setCopied(false), 2000)
     }
   }
-
-  const activeEventTypes = useMemo(() => {
-    return eventTypes.filter((et) => et.isActive)
-  }, [eventTypes])
 
   const filteredEvents = useMemo(() => {
     if (!eventsData?.events) return []

@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 
 interface TabPanelProps {
   children?: ReactNode
-  index: number
-  value: number
+  index: string | number
+  value: string | number
   prefix?: string
 }
 
@@ -21,3 +21,4 @@ export function TabPanel({ children, value, index, prefix = 'tabpanel', ...other
     </div>
   )
 }
+ 

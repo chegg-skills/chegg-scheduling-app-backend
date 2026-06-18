@@ -25,6 +25,7 @@ import { useTeam, useDeleteTeam, useUpdateTeam } from '@/hooks/queries/useTeams'
 import { useTeamEvents } from '@/hooks/queries/useEvents'
 import { useTeamMembers } from '@/hooks/queries/useTeamMembers'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
+import { useTabParam } from '@/hooks/useTabParam'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TabPanel } from '@/components/shared/ui/TabPanel'
 import { Button } from '@/components/shared/ui/Button'
@@ -48,7 +49,8 @@ export function TeamDetailPage() {
   const [showAddMember, setShowAddMember] = useState(false)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
-  const [tabValue, setTabValue] = useState(0)
+  const TEAM_TABS = ['events', 'members', 'notifications'] as const
+  const [activeTab, setTab] = useTabParam('tab', 'events', TEAM_TABS)
   const { handleAction } = useAsyncAction()
   const [copied, setCopied] = useState(false)
 
@@ -217,8 +219,8 @@ export function TeamDetailPage() {
           }}
         >
           <Tabs
-            value={tabValue}
-            onChange={(_, newValue: number) => setTabValue(newValue)}
+            value={activeTab}
+            onChange={(_, v: string) => setTab(v as (typeof TEAM_TABS)[number])}
             aria-label="team detail sections"
             sx={{
               '& .MuiTab-root': {
@@ -234,25 +236,27 @@ export function TeamDetailPage() {
             }}
           >
             <Tab
+              value="events"
               label={`Events (${teamEvents.length})`}
               icon={<Calendar size={18} />}
               iconPosition="start"
             />
             <Tab
+              value="members"
               label={`Members (${members.length})`}
               icon={<Users size={18} />}
               iconPosition="start"
             />
-            <Tab label="Notifications" icon={<Bell size={18} />} iconPosition="start" />
+            <Tab value="notifications" label="Notifications" icon={<Bell size={18} />} iconPosition="start" />
           </Tabs>
 
           <Box sx={{ mb: 1 }}>
-            {!isCoach && tabValue === 0 && (
+            {!isCoach && activeTab === 'events' && (
               <Button size="sm" onClick={() => setShowCreateEvent(true)}>
                 <Plus size={16} /> New event
               </Button>
             )}
-            {!isCoach && tabValue === 1 && (
+            {!isCoach && activeTab === 'members' && (
               <Button size="sm" onClick={() => setShowAddMember(true)}>
                 <Plus size={16} /> Add member
               </Button>
@@ -260,7 +264,7 @@ export function TeamDetailPage() {
           </Box>
         </Box>
 
-        <TabPanel value={tabValue} index={0} prefix="team">
+        <TabPanel value={activeTab} index="events" prefix="team">
           <TeamEventsTab
             events={teamEvents}
             groups={groups ?? []}
@@ -273,7 +277,7 @@ export function TeamDetailPage() {
           />
         </TabPanel>
 
-        <TabPanel value={tabValue} index={1} prefix="team">
+        <TabPanel value={activeTab} index="members" prefix="team">
           <TeamMembersTab
             members={members}
             teamId={teamId}
@@ -288,7 +292,7 @@ export function TeamDetailPage() {
           />
         </TabPanel>
 
-        <TabPanel value={tabValue} index={2} prefix="team">
+        <TabPanel value={activeTab} index="notifications" prefix="team">
           <TeamNotificationsTab teamId={teamId} canEdit={isAdmin} />
         </TabPanel>
       </Box>
