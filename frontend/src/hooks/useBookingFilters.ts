@@ -58,7 +58,7 @@ export function useBookingFilters() {
   )
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
-    setStatusFilter(newValue as FilterType)
+    setStatusFilter(newValue as (typeof BOOKING_STATUS_TABS)[number])
   }
 
   const handleFilterChange = (key: string, value: any) => {
