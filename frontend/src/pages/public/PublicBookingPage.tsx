@@ -24,6 +24,14 @@ import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 
 import { usePublicBookingState } from './hooks/usePublicBookingState'
+import { usePublicSessionUser } from '@/hooks/usePublicSessionUser'
+
+function toDateInputValue(d: Date): string {
+  const y = d.getFullYear()
+  const m = `${d.getMonth() + 1}`.padStart(2, '0')
+  const day = `${d.getDate()}`.padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 export function PublicBookingPage() {
   const {
@@ -71,6 +79,8 @@ export function PublicBookingPage() {
   } = usePublicBookingState()
 
   const eventCoaches = showCoachPicker ? (eventDetails?.coaches ?? []) : []
+
+  const { isInternalUser } = usePublicSessionUser()
 
   const { setFramed, isEmbed } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
@@ -254,7 +264,14 @@ export function PublicBookingPage() {
         </PublicMainContent>
       </PublicBaseLayout>
 
-      <TroubleshootDialog open={troubleshootOpen} onClose={() => setTroubleshootOpen(false)} />
+      <TroubleshootDialog
+        open={troubleshootOpen}
+        onClose={() => setTroubleshootOpen(false)}
+        isAdminViewer={isInternalUser}
+        eventId={eventDetails?.id ?? selectedEvent ?? undefined}
+        selectedTimezone={selectedTimezone}
+        currentDate={toDateInputValue(selectedDate)}
+      />
     </LocalizationProvider>
   )
 }

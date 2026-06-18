@@ -11,6 +11,7 @@ import type {
   SetEventCoachesDto,
   Pagination,
   SessionLog,
+  SlotDebugReport,
   UpsertSessionLogDto,
   WeeklyAvailabilitySlot,
 } from '@/types'
@@ -120,4 +121,9 @@ export const eventsApi = {
       `/events/${eventId}/schedule-slots/coach-availability`,
       { params: { startTime, endTime, ...(excludeSlotId ? { excludeSlotId } : {}) }, signal }
     ),
+  getSlotDebugReport: (eventId: string, date: string, timezone?: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<SlotDebugReport>>(`/events/${eventId}/slots/debug`, {
+      params: { date, ...(timezone ? { timezone } : {}) },
+      signal,
+    }),
 }
