@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import { useEffect, useState } from 'react'
+import { useTabParam } from '@/hooks/useTabParam'
 import { Search, UserPlus, Users, X, GraduationCap, UserCheck, Mail } from 'lucide-react'
 import { useAuth } from '@/context/auth/useAuth'
 import { useUsers } from '@/hooks/queries/useUsers'
@@ -25,11 +26,12 @@ import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useUserStats } from '@/hooks/queries/useStats'
 import { usePagination } from '@/hooks/usePagination'
 
-type UsersTab = 'users' | 'invitations'
+const USERS_TABS = ['users', 'invitations'] as const
+type UsersTab = (typeof USERS_TABS)[number]
 
 export function UsersPage() {
   const { user: currentUser } = useAuth()
-  const [activeTab, setActiveTab] = useState<UsersTab>('users')
+  const [activeTab, setTab] = useTabParam('tab', 'users', USERS_TABS)
 
   // ── Users tab state ───────────────────────────────────────────────────────
   const { pageSize, backendPage, onPageChange, onRowsPerPageChange, resetPage } = usePagination(20)
@@ -197,7 +199,7 @@ export function UsersPage() {
             >
               <Tabs
                 value={activeTab}
-                onChange={(_, val: UsersTab) => setActiveTab(val)}
+                onChange={(_, val: string) => setTab(val as UsersTab)}
                 aria-label="users page tabs"
                 sx={{
                   '& .MuiTab-root': {

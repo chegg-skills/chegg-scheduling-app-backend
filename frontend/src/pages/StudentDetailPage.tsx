@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Box, Stack, Tabs, Tab } from '@mui/material'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -10,12 +9,16 @@ import { StudentProfileCard } from '@/components/students/StudentProfileCard'
 import { StudentSessionLogTimeline } from '@/components/students/StudentSessionLogTimeline'
 import { SendEmailDialog } from '@/components/students/dialogs/SendEmailDialog'
 import { StudentCommunicationsTab } from '@/components/students/tabs/StudentCommunicationsTab'
+import { useState } from 'react'
 import { useStudent, useStudentBookings } from '@/hooks/queries/useStudents'
+import { useTabParam } from '@/hooks/useTabParam'
 import { CalendarDays, ClipboardCheck, Mail } from 'lucide-react'
+
+const STUDENT_TABS = ['notes', 'bookings', 'communications'] as const
 
 export function StudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>()
-  const [activeTab, setActiveTab] = useState<'notes' | 'bookings' | 'communications'>('notes')
+  const [activeTab, setTab] = useTabParam('tab', 'notes', STUDENT_TABS)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
   const { data: student, isLoading: studentLoading, error: studentError } = useStudent(studentId!)
@@ -35,13 +38,6 @@ export function StudentDetailPage() {
         </Box>
       </Box>
     )
-  }
-
-  const handleTabChange = (
-    _: React.SyntheticEvent,
-    newValue: 'notes' | 'bookings' | 'communications'
-  ) => {
-    setActiveTab(newValue)
   }
 
   return (
@@ -66,7 +62,7 @@ export function StudentDetailPage() {
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
           <Tabs
             value={activeTab}
-            onChange={handleTabChange}
+            onChange={(_, v: string) => setTab(v as (typeof STUDENT_TABS)[number])}
             aria-label="student profile tabs"
             sx={{
               '& .MuiTab-root': {
