@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { Event, EventGroup } from '@/types'
 
 export interface TabItem {
@@ -9,19 +10,11 @@ export interface TabItem {
   rawGroup: EventGroup | null
 }
 
-/**
- * Derives the group filter tabs for a team's events and tracks the selected tab.
- * Encapsulates the events-by-group grouping, the dynamically-built tab list, the
- * active tab resolution, the events shown for the active tab, and the two reset
- * effects (team change, selected-group deletion).
- */
 export function useEventGroupTabs(groups: EventGroup[], events: Event[], teamId: string) {
-  const [selectedTab, setSelectedTab] = useState<string>('all')
+  void teamId // consumed by parent URL (/teams/:teamId) — group resets naturally on team navigation
 
-  // Reset tab when team changes
-  useEffect(() => {
-    setSelectedTab('all')
-  }, [teamId])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawGroupParam = searchParams.get('group') ?? 'all'
 
   const eventsByGroupId = useMemo(() => {
     const map = new Map<string | null, Event[]>()
@@ -36,7 +29,6 @@ export function useEventGroupTabs(groups: EventGroup[], events: Event[], teamId:
 
   const ungrouped = useMemo(() => eventsByGroupId.get(null) ?? [], [eventsByGroupId])
 
-  // Build the list of available tabs dynamically
   const tabs = useMemo(() => {
     const list: TabItem[] = [
       { id: 'all', name: 'All Events', count: events.length, color: null, rawGroup: null },
@@ -63,16 +55,26 @@ export function useEventGroupTabs(groups: EventGroup[], events: Event[], teamId:
     return list
   }, [groups, events.length, ungrouped.length, eventsByGroupId])
 
-  // Reset to 'all' if selected group is deleted
-  useEffect(() => {
-    if (
-      selectedTab !== 'all' &&
-      selectedTab !== 'ungrouped' &&
-      !groups.some((g) => g.id === selectedTab)
-    ) {
-      setSelectedTab('all')
-    }
-  }, [groups, selectedTab])
+  // Validate URL param against current tabs; deleted groups fall back to 'all' automatically
+  const selectedTab = useMemo(
+    () => (tabs.some((t) => t.id === rawGroupParam) ? rawGroupParam : 'all'),
+    [rawGroupParam, tabs]
+  )
+
+  const setSelectedTab = useCallback(
+    (tabId: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (tabId === 'all') next.delete('group')
+          else next.set('group', tabId)
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
 
   const activeTab = useMemo(() => {
     return tabs.find((t) => t.id === selectedTab) ?? tabs[0]
