@@ -919,3 +919,46 @@ export interface StudentCommunicationLog {
     avatarUrl: string | null
   }
 }
+
+// ─── Slot Availability Debug (admin diagnostic) ─────────────────────────────────
+// Mirrors backend/src/domain/availability/availabilityDebug.service.ts. Surfaced
+// only to internal users via the public Troubleshoot dialog.
+
+export type SlotDebugCoachStatus =
+  | { status: 'available' }
+  | { status: 'conflict'; conflictingEvent: string; conflictStart: string; conflictEnd: string }
+  | { status: 'outside_availability'; windows: string[] }
+  | { status: 'exception_block' }
+  | { status: 'invalid_timezone' }
+  | { status: 'in_the_past' }
+  | { status: 'notice_window'; minimumNoticeMinutes: number }
+  | { status: 'booking_window'; maxBookingWindowDays: number }
+  | { status: 'recurrence_limit' }
+  | { status: 'capacity_full'; remaining: number }
+
+export interface SlotDebugCoach {
+  coachId: string
+  coachName: string
+  decidesVisibility: boolean
+  status: SlotDebugCoachStatus
+}
+
+export interface SlotDebugEntry {
+  startTime: string
+  endTime: string
+  scheduleSlotId?: string
+  visible: boolean
+  eventLevelStatus: SlotDebugCoachStatus | null
+  coaches: SlotDebugCoach[]
+}
+
+export interface SlotDebugReport {
+  date: string
+  eventName: string
+  bookingMode: string
+  assignmentStrategy: string
+  totalSlots: number
+  visibleSlots: number
+  coaches: { id: string; name: string }[]
+  slots: SlotDebugEntry[]
+}

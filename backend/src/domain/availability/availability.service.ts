@@ -173,7 +173,48 @@ const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
   },
 });
 
-const isCoachAvailable = async (
+/**
+ * Why a coach is not available for a given slot. Surfaced by
+ * `evaluateCoachAvailability` for the admin slot-debug tool. The booking path
+ * itself only cares about the boolean (see `isCoachAvailable`).
+ */
+export type CoachUnavailabilityReason =
+  | "conflict"
+  | "exception_block"
+  | "outside_availability"
+  | "invalid_timezone";
+
+/**
+ * Result of an availability evaluation: the boolean the booking path uses, plus
+ * the reason (and, for conflicts, the first blocking booking) used by the
+ * admin slot-debug report.
+ */
+export type CoachAvailabilityResult = {
+  available: boolean;
+  reason: CoachUnavailabilityReason | null;
+  /** Populated only when `reason === "conflict"`: the first blocking booking. */
+  conflict?: BookingWithEventBuffer;
+};
+
+const AVAILABLE: CoachAvailabilityResult = { available: true, reason: null };
+const unavailable = (
+  reason: CoachUnavailabilityReason,
+  conflict?: BookingWithEventBuffer,
+): CoachAvailabilityResult => ({ available: false, reason, conflict });
+
+/**
+ * Single source of truth for coach availability. Returns whether the coach is
+ * free for `[startTime, endTime]` and, when not, the reason (conflict, exception
+ * block, outside weekly window, or invalid timezone).
+ *
+ * `isCoachAvailable` is a thin wrapper that discards the reason — the booking
+ * path only needs the boolean. The admin slot-debug service consumes the full
+ * result so the two never drift apart.
+ *
+ * Decision order: booking conflicts → invalid-timezone guard → cross-midnight
+ * split → one-off exception override → weekly availability fallback.
+ */
+const evaluateCoachAvailability = async (
   userId: string,
   startTime: Date,
   endTime: Date,
@@ -191,7 +232,7 @@ const isCoachAvailable = async (
     /** Pre-fetched conflicts already filtered for this slot — skips getCoachConflicts when provided. */
     prefetchedConflicts?: BookingWithEventBuffer[];
   } = {},
-): Promise<boolean> => {
+): Promise<CoachAvailabilityResult> => {
   const client: AvailabilityClient = options.tx || prisma;
 
   // 1. Resolve Coach and Calendar Data
@@ -203,7 +244,7 @@ const isCoachAvailable = async (
       where: { id: userId },
       select: { timezone: true },
     });
-    if (!user) return false;
+    if (!user) return unavailable("invalid_timezone");
     resolvedTimezone = user.timezone;
   }
 
@@ -225,7 +266,7 @@ const isCoachAvailable = async (
 
   // 2. Conflict Check (Bookings)
   if (conflicts.length > 0) {
-    return false;
+    return unavailable("conflict", conflicts[0]);
   }
 
   // 3. Resolve effective weekly schedule: event-specific override takes priority over global.
@@ -260,27 +301,44 @@ const isCoachAvailable = async (
     endLocal = toLocalAvailabilityInfo(effectiveEndTime, resolvedTimezone);
   } catch {
     logger.warn({ userId, timezone: resolvedTimezone }, "Invalid coach timezone — treating as unavailable.");
-    return false;
+    return unavailable("invalid_timezone");
   }
 
   if (startLocal.dateString !== endLocal.dateString) {
-    if (options.ignoreWeeklySchedule) return true;
-    return isCoachAvailableAcrossMidnight(startTime, effectiveEndTime, effectiveCalendar, resolvedTimezone);
+    if (options.ignoreWeeklySchedule) return AVAILABLE;
+    return isCoachAvailableAcrossMidnight(startTime, effectiveEndTime, effectiveCalendar, resolvedTimezone)
+      ? AVAILABLE
+      : unavailable("outside_availability");
   }
 
   const dayException = findAvailabilityException(effectiveCalendar.exceptions, startLocal.dateString);
   const exceptionDecision = resolveAvailabilityFromException(dayException, startLocal, endLocal);
 
   if (exceptionDecision !== null) {
-    return exceptionDecision;
+    return exceptionDecision ? AVAILABLE : unavailable("exception_block");
   }
 
   // 5. Weekly Schedule Fallback
   if (options.ignoreWeeklySchedule) {
-    return true;
+    return AVAILABLE;
   }
 
-  return isWithinWeeklyAvailability(effectiveCalendar.weekly, startLocal, endLocal);
+  return isWithinWeeklyAvailability(effectiveCalendar.weekly, startLocal, endLocal)
+    ? AVAILABLE
+    : unavailable("outside_availability");
+};
+
+/**
+ * Thin boolean wrapper over `evaluateCoachAvailability` for the booking path.
+ * Signature and semantics are unchanged from the original implementation.
+ */
+const isCoachAvailable = async (
+  userId: string,
+  startTime: Date,
+  endTime: Date,
+  options: Parameters<typeof evaluateCoachAvailability>[3] = {},
+): Promise<boolean> => {
+  return (await evaluateCoachAvailability(userId, startTime, endTime, options)).available;
 };
 
 export type AvailableSlot = {
@@ -693,5 +751,7 @@ export {
   removeAvailabilityException,
   getEffectiveAvailability,
   isCoachAvailable,
+  evaluateCoachAvailability,
+  endOfBookingWindowInTimezone,
   getAvailableSlots,
 };

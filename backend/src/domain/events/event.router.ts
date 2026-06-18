@@ -110,6 +110,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/events/:eventId/slots/debug")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    eventController.getSlotDebugReport,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId/coaches")
   .get(
     authenticate,

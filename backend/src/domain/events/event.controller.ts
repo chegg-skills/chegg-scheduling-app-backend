@@ -4,6 +4,7 @@ import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as eventService from "./event.service";
 import * as sessionLogService from "./sessionLog.service";
+import * as availabilityDebugService from "../availability/availabilityDebug.service";
 
 const createEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -422,7 +423,32 @@ const listSlotBookings = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+const getSlotDebugReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { date, timezone } = req.query as Record<string, string>;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "A valid 'date' query param (YYYY-MM-DD) is required." });
+      return;
+    }
+    const report = await availabilityDebugService.getSlotDebugReport(
+      req.params.eventId as string,
+      date,
+      { timezone: timezone || undefined },
+    );
+    sendSuccessResponse(res, StatusCodes.OK, report, "Slot availability debug report generated.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 export {
+  getSlotDebugReport,
   createEventType,
   listEventTypes,
   updateEventType,
