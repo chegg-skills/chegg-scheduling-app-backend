@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getUserInitials } from '@/utils/userDisplay'
 import { format } from 'date-fns'
 import Avatar from '@mui/material/Avatar'
 import Chip from '@mui/material/Chip'
@@ -204,8 +205,7 @@ export function SearchableCoachAvailabilityList({
                             src={c.coachUser.avatarUrl ?? undefined}
                             sx={{ width: 32, height: 32, fontSize: '0.875rem' }}
                           >
-                            {c.coachUser.firstName[0]}
-                            {c.coachUser.lastName[0]}
+                            {getUserInitials(c.coachUser.firstName, c.coachUser.lastName)}
                           </Avatar>
                           <Box sx={{ minWidth: 0, textAlign: 'left' }}>
                             <Typography

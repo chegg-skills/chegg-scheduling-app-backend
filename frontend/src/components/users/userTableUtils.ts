@@ -1,6 +1,9 @@
-import type { SafeUser, UserRole } from '@/types'
+import type { SafeUser } from '@/types'
 import type { SortAccessorMap } from '@/hooks/useTableSort'
-import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserRoleBadgeProps } from '@/utils/userDisplay'
+
+// Re-exported for back-compat; the canonical definition lives in @/utils/userDisplay.
+export { getUserRoleBadgeProps }
 
 export type UserSortKey = 'user' | 'role' | 'timezone' | 'status' | 'zoomExpiry' | 'bookingLink'
 
@@ -26,19 +29,6 @@ export function getUserStatusBadgeProps(isActive: boolean) {
   return {
     label: isActive ? 'Active' : 'Inactive',
     color: isActive ? ('green' as const) : ('red' as const),
-  }
-}
-
-export function getUserRoleBadgeProps(role: UserRole) {
-  const colors: Record<UserRole, 'blue' | 'yellow' | 'gray'> = {
-    SUPER_ADMIN: 'blue',
-    TEAM_ADMIN: 'yellow',
-    COACH: 'gray',
-  }
-
-  return {
-    label: toTitleCase(role.replace('_', ' ')),
-    color: colors[role],
   }
 }
 

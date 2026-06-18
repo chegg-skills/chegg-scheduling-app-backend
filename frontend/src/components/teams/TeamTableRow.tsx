@@ -11,6 +11,7 @@ import { Badge } from '@/components/shared/ui/Badge'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
 import type { Team, SafeUser } from '@/types'
 
 interface TeamTableRowProps {
@@ -33,7 +34,7 @@ export function TeamTableRow({
   const leadUser = team.teamLead || users.find((u) => u.id === team.teamLeadId)
   const leadName = leadUser ? `${leadUser.firstName} ${leadUser.lastName}` : 'No lead'
   const leadInitials = leadUser
-    ? `${leadUser.firstName?.[0] ?? ''}${leadUser.lastName?.[0] ?? ''}`.toUpperCase()
+    ? getUserInitials(leadUser.firstName, leadUser.lastName).toUpperCase()
     : ''
 
   return (

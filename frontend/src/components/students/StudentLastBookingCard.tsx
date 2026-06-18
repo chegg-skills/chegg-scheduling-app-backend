@@ -14,6 +14,7 @@ import { format } from 'date-fns'
 import { Calendar, Clock, Users, BookOpen } from 'lucide-react'
 import { BookingStatusBadge } from '@/components/bookings/BookingStatusBadge'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
 import type { StudentSummary } from '@/types'
 
 interface StudentLastBookingCardProps {
@@ -57,7 +58,7 @@ export function StudentLastBookingCard({
   const theme = useTheme()
   const { startTime, endTime, status, event, team, coach } = latestBooking
 
-  const coachInitials = `${coach.firstName[0]}${coach.lastName[0]}`.toUpperCase()
+  const coachInitials = getUserInitials(coach.firstName, coach.lastName).toUpperCase()
 
   return (
     <Card variant="outlined" sx={{ borderRadius: 2 }}>

@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack'
 import { alpha, useTheme } from '@mui/material/styles'
 import { ChevronRight } from 'lucide-react'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
 import type { PublicEventCoach } from '@/types'
 
 interface PreferredCoachStepProps {
@@ -110,8 +111,7 @@ export function PreferredCoachStep({
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      {coach.firstName[0]}
-                      {coach.lastName[0]}
+                      {getUserInitials(coach.firstName, coach.lastName)}
                     </Avatar>
                     <Typography
                       className="coach-name"

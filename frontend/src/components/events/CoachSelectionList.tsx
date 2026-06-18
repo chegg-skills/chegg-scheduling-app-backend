@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import { getUserInitials } from '@/utils/userDisplay'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
@@ -85,8 +86,7 @@ export function CoachSelectionList({
                         color: isActive ? 'primary.contrastText' : 'primary.dark',
                       }}
                     >
-                      {option.user.firstName[0]}
-                      {option.user.lastName[0]}
+                      {getUserInitials(option.user.firstName, option.user.lastName)}
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText

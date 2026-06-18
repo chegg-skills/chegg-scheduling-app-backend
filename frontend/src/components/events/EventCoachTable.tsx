@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getUserInitials } from '@/utils/userDisplay'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -175,8 +176,7 @@ export function EventCoachTable({
                           fontWeight: 600,
                         }}
                       >
-                        {coach.coachUser.firstName[0]}
-                        {coach.coachUser.lastName[0]}
+                        {getUserInitials(coach.coachUser.firstName, coach.coachUser.lastName)}
                       </Avatar>
                       <Box>
                         <Typography

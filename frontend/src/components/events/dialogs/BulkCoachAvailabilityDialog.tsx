@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getUserInitials } from '@/utils/userDisplay'
 import Alert from '@mui/material/Alert'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
@@ -100,7 +101,7 @@ export function BulkCoachAvailabilityDialog({
                   }}
                 >
                   <Avatar sx={{ width: 18, height: 18, fontSize: '0.625rem', bgcolor: 'primary.light', color: 'primary.dark' }}>
-                    {c.coachUser.firstName[0]}{c.coachUser.lastName[0]}
+                    {getUserInitials(c.coachUser.firstName, c.coachUser.lastName)}
                   </Avatar>
                   <Typography variant="caption" fontWeight={500} color="text.primary">
                     {c.coachUser.firstName} {c.coachUser.lastName}

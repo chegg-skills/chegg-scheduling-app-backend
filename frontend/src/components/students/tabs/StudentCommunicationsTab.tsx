@@ -17,6 +17,7 @@ import {
 import { CheckCircle2, AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import { format } from 'date-fns'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { getUserInitials } from '@/utils/userDisplay'
 import { useStudentCommunications, useRetryStudentEmail } from '@/hooks/queries/useStudents'
 import { alpha, keyframes } from '@mui/material/styles'
 import DOMPurify from 'dompurify'
@@ -158,8 +159,7 @@ export function StudentCommunicationsTab({ studentId }: StudentCommunicationsTab
                 fontSize: '0.875rem',
               }}
             >
-              {log.sentBy.firstName[0]}
-              {log.sentBy.lastName[0]}
+              {getUserInitials(log.sentBy.firstName, log.sentBy.lastName)}
             </Avatar>
 
             {/* Timeline Message Card */}

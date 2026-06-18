@@ -1,14 +1,11 @@
-import Avatar from '@mui/material/Avatar'
-import Box from '@mui/material/Box'
-import Stack from '@mui/material/Stack'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/shared/ui/Badge'
+import { UserIdentity } from '@/components/shared/ui/UserIdentity'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
-import { toTitleCase } from '@/utils/toTitleCase'
 import type { SafeUser } from '@/types'
 import {
   getUserRoleBadgeProps,
@@ -37,44 +34,14 @@ export function UserTableRow({
   return (
     <TableRow hover>
       <TableCell>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Avatar
-            src={user.avatarUrl ?? undefined}
-            sx={{
-              width: 36,
-              height: 36,
-              flexShrink: 0,
-              fontSize: '0.875rem',
-              bgcolor: 'primary.light',
-              color: 'primary.dark',
-              fontWeight: 600,
-            }}
-          >
-            {user.firstName[0]}
-            {user.lastName[0]}
-          </Avatar>
-          <Box>
-            <Typography
-              variant="body2"
-              onClick={() => onView(user.id)}
-              sx={{
-                fontWeight: 600,
-                color: 'text.primary',
-                textDecoration: 'none',
-                cursor: 'pointer',
-                '&:hover': {
-                  color: 'primary.main',
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              {toTitleCase(user.firstName)} {toTitleCase(user.lastName)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              {user.email}
-            </Typography>
-          </Box>
-        </Stack>
+        <UserIdentity
+          firstName={user.firstName}
+          lastName={user.lastName}
+          email={user.email}
+          avatarUrl={user.avatarUrl}
+          titleCase
+          onClick={() => onView(user.id)}
+        />
       </TableCell>
 
       <TableCell>
