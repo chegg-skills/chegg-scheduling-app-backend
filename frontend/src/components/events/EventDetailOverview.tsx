@@ -2,11 +2,15 @@ import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { alpha } from '@mui/material/styles'
-import { AlertTriangle, Clock } from 'lucide-react'
+import Link from '@mui/material/Link'
+import Divider from '@mui/material/Divider'
+import Stack from '@mui/material/Stack'
+import { alpha, useTheme } from '@mui/material/styles'
+import { AlertTriangle, Clock, ExternalLink, Settings, Users, Sliders } from 'lucide-react'
 import type { Event } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
 import { DataField } from '@/components/shared/ui/DataField'
+import { PublicBookingLinkCell } from '@/components/shared/PublicBookingLinkCell'
 
 function LinkExpiryChip({ expiresAt }: { expiresAt: string }) {
   const expiry = new Date(expiresAt)
@@ -60,6 +64,27 @@ function LinkExpiryChip({ expiresAt }: { expiresAt: string }) {
   )
 }
 
+function SectionHeader({ title, icon: Icon }: { title: string; icon: React.ComponentType<any> }) {
+  const theme = useTheme()
+  return (
+    <Grid size={12}>
+      <Box sx={{ mt: 1.5, mb: 1 }}>
+        <Stack direction="row" spacing={1.25} alignItems="center">
+          <Icon size={16} color={theme.palette.primary.main} style={{ opacity: 0.85 }} />
+          <Typography
+            variant="caption"
+            color="primary.main"
+            sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.725rem' }}
+          >
+            {title}
+          </Typography>
+        </Stack>
+        <Divider sx={{ mt: 0.5, borderColor: alpha(theme.palette.primary.main, 0.12) }} />
+      </Box>
+    </Grid>
+  )
+}
+
 interface EventDetailOverviewProps {
   event: Event
 }
@@ -89,16 +114,11 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
       .join(' ')
   }
 
-  const Spacer = () => <Grid size={12} sx={{ height: 8 }} />
-
-  // Note: Backend interaction info details for the selected event's interactionType enum
-  // are often needed here. For now we use the event directly which should have been populated.
-  // If event.interactionTypeInfo is missing, we might need a separate hook.
 
   return (
     <Paper component="section" variant="outlined" sx={{ p: 3, borderRadius: 1.5 }}>
       <Grid container spacing={2}>
-        {/* Core Configuration */}
+        <SectionHeader title="Core Configuration" icon={Settings} />
         <DataField label="Event Type" value={toTitleCase(event.eventType.name)} />
         <DataField
           label="Interaction type"
@@ -112,26 +132,111 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
         />
         <DataField label="Duration" value={`${event.durationSeconds / 60} min`} />
         <DataField label="Location type" value={formatEnumLabel(event.locationType)} />
-        {event.locationValue && <DataField label="Location" value={event.locationValue} />}
-        {(event.locationType === 'VIRTUAL' || event.locationType === 'CUSTOM') && (
+        <DataField
+          label="Join method"
+          value={
+            event.locationType === 'IN_PERSON'
+              ? 'In Person'
+              : event.locationType === 'CUSTOM'
+                ? 'Custom Instructions'
+                : (event.meetingLinkSource ?? 'COACH_ISV') === 'COACH_ISV'
+                  ? "Coach's Zoom Link"
+                  : 'Shared Event Link'
+          }
+          tooltip="Determines how students will join sessions booked for this event."
+        />
+        {event.locationType === 'VIRTUAL' && (event.meetingLinkSource ?? 'COACH_ISV') === 'COACH_ISV' ? (
+          event.locationValue ? (
+            <DataField
+              label="Fallback event link"
+              value={
+                <Link
+                  href={event.locationValue}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    '&:hover': { textDecoration: 'underline' },
+                  }}
+                >
+                  Join Session (Fallback)
+                  <ExternalLink size={13} />
+                </Link>
+              }
+              tooltip="Optional event-level link used as a fallback if the coach's link is unavailable."
+            />
+          ) : null
+        ) : event.locationValue ? (
           <DataField
-            label="Meeting link source"
-            value={
-              (event.meetingLinkSource ?? 'COACH_ISV') === 'EVENT_LOCATION'
-                ? 'Event location URL'
-                : "Assigned coach's Zoom link"
+            label={
+              event.locationType === 'IN_PERSON'
+                ? 'Address'
+                : event.locationType === 'CUSTOM'
+                  ? 'Instructions'
+                  : 'Location'
             }
-            tooltip="Determines whether students receive the assigned coach's personal Zoom link or the configured event-level location URL."
+            value={
+              event.locationType === 'VIRTUAL' ? (
+                <Link
+                  href={event.locationValue}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    '&:hover': { textDecoration: 'underline' },
+                  }}
+                >
+                  Join Session
+                  <ExternalLink size={13} />
+                </Link>
+              ) : (
+                event.locationValue
+              )
+            }
+          />
+        ) : null}
+        {(event.meetingLinkSource ?? 'COACH_ISV') === 'EVENT_LOCATION' && (
+          <DataField
+            label="Link expires"
+            value={
+              event.locationLinkExpiresAt ? (
+                <LinkExpiryChip expiresAt={event.locationLinkExpiresAt} />
+              ) : (
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: '10px',
+                    bgcolor: alpha('#D97706', 0.08),
+                    border: `1px solid ${alpha('#D97706', 0.2)}`,
+                    color: '#D97706',
+                  }}
+                >
+                  <AlertTriangle size={11} />
+                  <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.7rem' }}>
+                    No expiry set
+                  </Typography>
+                </Box>
+              )
+            }
+            tooltip="The date when the event location URL expires."
           />
         )}
-        {(event.meetingLinkSource ?? 'COACH_ISV') === 'EVENT_LOCATION' &&
-          event.locationLinkExpiresAt && (
-            <DataField
-              label="Link expires"
-              value={<LinkExpiryChip expiresAt={event.locationLinkExpiresAt} />}
-              tooltip="The date when the event location URL expires. Update the link before this date to avoid disrupting student sessions."
-            />
-          )}
         {(event.meetingLinkSource ?? 'COACH_ISV') === 'EVENT_LOCATION' &&
           event.locationLinkReminderDays && (
             <DataField
@@ -140,10 +245,20 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
               tooltip="An email reminder will be sent to the team lead this many days before the link expires."
             />
           )}
+        <DataField
+          label="Public booking link"
+          value={
+            <PublicBookingLinkCell
+              type="event"
+              slug={event.publicBookingSlug}
+              isActive={event.isActive}
+              variant="button"
+            />
+          }
+          tooltip="Direct public booking link for this event."
+        />
 
-        <Spacer />
-
-        {/* Scheduling & Policies */}
+        <SectionHeader title="Scheduling & Policies" icon={Clock} />
         <DataField
           label="Minimum notice"
           value={
@@ -159,9 +274,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           tooltip={TOOLTIPS.BUFFER}
         />
 
-        <Spacer />
-
-        {/* Coaching & Leadership */}
+        <SectionHeader title="Coaching & Leadership" icon={Users} />
         <DataField
           label="Assignment strategy"
           value={formatEnumLabel(event.assignmentStrategy)}
@@ -187,9 +300,7 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
           value={event.assignmentStrategy === 'ROUND_ROBIN' ? 'Enabled' : 'Disabled'}
         />
 
-        <Spacer />
-
-        {/* Capacity & Limits */}
+        <SectionHeader title="Capacity & Limits" icon={Sliders} />
         <DataField
           label="Participant capacity"
           value={event.maxParticipantCount ? `Up to ${event.maxParticipantCount}` : 'Unlimited'}

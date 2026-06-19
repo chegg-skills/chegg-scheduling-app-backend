@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query'
 import { startOfDayInTimezone } from '@/utils/dateTimezone'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import { TroubleshootSlotsButton } from '@/components/shared/ui/TroubleshootSlotsButton'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { alpha } from '@mui/material/styles'
@@ -338,25 +339,7 @@ export function PublicReschedulePage() {
             extraAccessory={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                 {isInternalUser && (
-                  <Button
-                    onClick={() => setShowDebug(!showDebug)}
-                    sx={{
-                      fontWeight: 700,
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      color: 'primary.main',
-                      border: '1px solid',
-                      borderColor: 'primary.main',
-                      borderRadius: 1.5,
-                      px: 1.5,
-                      py: 0.5,
-                      '&:hover': {
-                        bgcolor: 'primary.light',
-                      },
-                    }}
-                  >
-                    {showDebug ? 'Hide Debug' : 'Troubleshoot Slots'}
-                  </Button>
+                  <TroubleshootSlotsButton show={showDebug} onClick={() => setShowDebug(!showDebug)} />
                 )}
                 <Button
                   color="error"

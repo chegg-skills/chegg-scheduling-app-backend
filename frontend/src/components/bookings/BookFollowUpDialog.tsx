@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Dialog, Box, IconButton, Alert, Button } from '@mui/material'
+import { Dialog, Box, IconButton, Alert } from '@mui/material'
+import { TroubleshootSlotsButton } from '@/components/shared/ui/TroubleshootSlotsButton'
 import { X } from 'lucide-react'
 import type { Booking } from '@/types'
 import { useBookFollowUpSession } from '@/hooks/queries/useBookings'
@@ -234,25 +235,7 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
               onPrimary={activeStep === 1 ? handleConfirmBooking : handleNext}
               extraAccessory={
                 activeStep === 0 && isInternalUser && (
-                  <Button
-                    onClick={() => setShowDebug(!showDebug)}
-                    sx={{
-                      fontWeight: 700,
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      color: 'primary.main',
-                      border: '1px solid',
-                      borderColor: 'primary.main',
-                      borderRadius: 1.5,
-                      px: 1.5,
-                      py: 0.5,
-                      '&:hover': {
-                        bgcolor: 'primary.light',
-                      },
-                    }}
-                  >
-                    {showDebug ? 'Hide Debug' : 'Troubleshoot Slots'}
-                  </Button>
+                  <TroubleshootSlotsButton show={showDebug} onClick={() => setShowDebug(!showDebug)} />
                 )
               }
             />
