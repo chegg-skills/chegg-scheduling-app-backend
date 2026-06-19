@@ -6,6 +6,10 @@
  * @param utcDate  UTC Date (or ISO string)
  * @param timezone IANA timezone string (e.g. "Asia/Kolkata")
  */
+export function formatDateInTimezone(date: Date, timezone: string): string {
+  return utcToZonedString(date, timezone).slice(0, 10)
+}
+
 export function utcToZonedString(utcDate: Date | string, timezone: string): string {
   const d = typeof utcDate === 'string' ? new Date(utcDate) : utcDate
   const parts = new Intl.DateTimeFormat('en-CA', {

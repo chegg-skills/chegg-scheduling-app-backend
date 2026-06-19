@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
+import { TroubleshootSlotsButton } from '@/components/shared/ui/TroubleshootSlotsButton'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { useEffect, useState } from 'react'
@@ -27,12 +27,6 @@ import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { usePublicBookingState } from './hooks/usePublicBookingState'
 import { usePublicSessionUser } from '@/hooks/usePublicSessionUser'
 
-function toDateInputValue(d: Date): string {
-  const y = d.getFullYear()
-  const m = `${d.getMonth() + 1}`.padStart(2, '0')
-  const day = `${d.getDate()}`.padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 export function PublicBookingPage() {
   const {
@@ -272,25 +266,7 @@ export function PublicBookingPage() {
             onTroubleshoot={isEmbed ? undefined : () => setTroubleshootOpen(true)}
             extraAccessory={
               isInternalUser && currentStepKey === 'schedule' && (
-                <Button
-                  onClick={() => setShowDebug(!showDebug)}
-                  sx={{
-                    fontWeight: 700,
-                    textTransform: 'none',
-                    fontSize: '0.75rem',
-                    color: 'primary.main',
-                    border: '1px solid',
-                    borderColor: 'primary.main',
-                    borderRadius: 1.5,
-                    px: 1.5,
-                    py: 0.5,
-                    '&:hover': {
-                      bgcolor: 'primary.light',
-                    },
-                  }}
-                >
-                  {showDebug ? 'Hide Debug' : 'Troubleshoot Slots'}
-                </Button>
+                <TroubleshootSlotsButton show={showDebug} onClick={() => setShowDebug(!showDebug)} />
               )
             }
           />
@@ -300,10 +276,6 @@ export function PublicBookingPage() {
       <TroubleshootDialog
         open={troubleshootOpen}
         onClose={() => setTroubleshootOpen(false)}
-        isAdminViewer={isInternalUser}
-        eventId={eventDetails?.id ?? selectedEvent ?? undefined}
-        selectedTimezone={selectedTimezone}
-        currentDate={toDateInputValue(selectedDate)}
       />
     </LocalizationProvider>
   )
