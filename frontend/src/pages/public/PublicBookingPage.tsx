@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { useEffect, useState } from 'react'
@@ -82,11 +83,12 @@ export function PublicBookingPage() {
 
   const { isInternalUser } = usePublicSessionUser()
 
-  const { setFramed, isEmbed } = useOutletContext<PublicLayoutOutletContext>()
+  const { setFramed, isEmbed, setExpandedLayout } = useOutletContext<PublicLayoutOutletContext>()
   const isSuccess = currentStepKey === null || activeStep >= completionStep
 
   const [bookError, setBookError] = useState<string | null>(null)
   const [troubleshootOpen, setTroubleshootOpen] = useState(false)
+  const [showDebug, setShowDebug] = useState(false)
 
   const handleBookWithError = async () => {
     setBookError(null)
@@ -101,6 +103,13 @@ export function PublicBookingPage() {
     setFramed(!isSuccess)
     return () => setFramed(true)
   }, [isSuccess, setFramed])
+
+  useEffect(() => {
+    if (setExpandedLayout) {
+      setExpandedLayout(showDebug && currentStepKey === 'schedule' && isInternalUser)
+    }
+    return () => setExpandedLayout?.(false)
+  }, [showDebug, currentStepKey, isInternalUser, setExpandedLayout])
 
   // Show a full-page loading spinner while loading event details in direct event booking scope
   if (scope === 'event' && !eventDetails && !eventDetailsError) {
@@ -238,6 +247,7 @@ export function PublicBookingPage() {
               setSelectedTimezone={setSelectedTimezone}
               eventName={eventDetails?.name}
               eventDetails={eventDetails}
+              showDebug={showDebug}
             />
           </Box>
           {bookError && (
@@ -260,6 +270,29 @@ export function PublicBookingPage() {
             nextLabel={currentStepKey === 'confirm' ? 'Confirm booking' : 'Next'}
             submittingLabel={currentStepKey === 'confirm' ? 'Confirming...' : 'Next'}
             onTroubleshoot={isEmbed ? undefined : () => setTroubleshootOpen(true)}
+            extraAccessory={
+              isInternalUser && currentStepKey === 'schedule' && (
+                <Button
+                  onClick={() => setShowDebug(!showDebug)}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    fontSize: '0.75rem',
+                    color: 'primary.main',
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 1.5,
+                    px: 1.5,
+                    py: 0.5,
+                    '&:hover': {
+                      bgcolor: 'primary.light',
+                    },
+                  }}
+                >
+                  {showDebug ? 'Hide Debug' : 'Troubleshoot Slots'}
+                </Button>
+              )
+            }
           />
         </PublicMainContent>
       </PublicBaseLayout>

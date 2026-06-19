@@ -32,6 +32,7 @@ import { PublicMobileHeader } from '@/components/public/layout/PublicMobileHeade
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
 import { TroubleshootDialog } from '@/components/public/booking/TroubleshootDialog'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
+import { usePublicSessionUser } from '@/hooks/usePublicSessionUser'
 
 export function PublicReschedulePage() {
   const { bookingId = '' } = useParams()
@@ -66,12 +67,21 @@ export function PublicReschedulePage() {
   )
   const [rescheduleError, setRescheduleError] = React.useState<string | null>(null)
   const [troubleshootOpen, setTroubleshootOpen] = React.useState(false)
-  const { setFramed } = useOutletContext<PublicLayoutOutletContext>()
+  const [showDebug, setShowDebug] = React.useState(false)
+  const { setFramed, setExpandedLayout } = useOutletContext<PublicLayoutOutletContext>()
+  const { isInternalUser } = usePublicSessionUser()
 
   React.useEffect(() => {
     setFramed(!isSuccess)
     return () => setFramed(true)
   }, [isSuccess, setFramed])
+
+  React.useEffect(() => {
+    if (setExpandedLayout) {
+      setExpandedLayout(showDebug && isInternalUser)
+    }
+    return () => setExpandedLayout?.(false)
+  }, [showDebug, isInternalUser, setExpandedLayout])
 
   // Strip token from URL after capturing it — prevents it lingering in browser history
   React.useEffect(() => {
@@ -307,7 +317,8 @@ export function PublicReschedulePage() {
               onSelect={setSelectedSlot}
               selectedTimezone={selectedTimezone}
               setSelectedTimezone={setSelectedTimezone}
-
+              eventId={bookingData.eventId}
+              showDebug={showDebug}
             />
           </Box>
 
@@ -325,7 +336,28 @@ export function PublicReschedulePage() {
             isSubmitting={isSubmitting}
             onTroubleshoot={() => setTroubleshootOpen(true)}
             extraAccessory={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                {isInternalUser && (
+                  <Button
+                    onClick={() => setShowDebug(!showDebug)}
+                    sx={{
+                      fontWeight: 700,
+                      textTransform: 'none',
+                      fontSize: '0.75rem',
+                      color: 'primary.main',
+                      border: '1px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: 1.5,
+                      px: 1.5,
+                      py: 0.5,
+                      '&:hover': {
+                        bgcolor: 'primary.light',
+                      },
+                    }}
+                  >
+                    {showDebug ? 'Hide Debug' : 'Troubleshoot Slots'}
+                  </Button>
+                )}
                 <Button
                   color="error"
                   variant="text"
