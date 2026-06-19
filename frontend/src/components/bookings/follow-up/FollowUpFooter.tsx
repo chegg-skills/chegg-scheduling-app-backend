@@ -7,6 +7,7 @@ interface FollowUpFooterProps {
   primaryDisabled: boolean
   onBackOrCancel: () => void
   onPrimary: () => void
+  extraAccessory?: React.ReactNode
 }
 
 /** Dialog footer with Back/Cancel and the primary Next/Confirm action. */
@@ -16,6 +17,7 @@ export function FollowUpFooter({
   primaryDisabled,
   onBackOrCancel,
   onPrimary,
+  extraAccessory,
 }: FollowUpFooterProps) {
   return (
     <Box
@@ -26,13 +28,17 @@ export function FollowUpFooter({
         borderColor: 'divider',
         bgcolor: 'background.paper',
         display: 'flex',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        gap: 2,
         flexShrink: 0,
       }}
     >
-      <Button
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {extraAccessory}
+      </Box>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
         onClick={onBackOrCancel}
         disabled={isPending}
         sx={{
@@ -74,6 +80,7 @@ export function FollowUpFooter({
       >
         {isPending ? 'Confirming...' : activeStep === 1 ? 'Confirm booking' : 'Next'}
       </Button>
+      </Box>
     </Box>
   )
 }

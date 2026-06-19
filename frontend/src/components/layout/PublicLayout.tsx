@@ -12,6 +12,7 @@ interface PublicLayoutProps {
 export interface PublicLayoutOutletContext {
   setFramed: (isFramed: boolean) => void
   isEmbed: boolean
+  setExpandedLayout?: (expanded: boolean) => void
 }
 
 /**
@@ -23,11 +24,15 @@ export interface PublicLayoutOutletContext {
  */
 export function PublicLayout({ maxWidth = 'md' }: PublicLayoutProps) {
   const [isFramed, setIsFramed] = React.useState(true)
+  const [expanded, setExpanded] = React.useState(false)
   const [searchParams] = useSearchParams()
   const isEmbed = searchParams.get('embed') === 'true'
 
   // Embed mode always renders flat regardless of what child pages request via setFramed
   const effectiveIsFramed = isEmbed ? false : isFramed
+
+  // If expanded, use 'xl' so layout stretches
+  const effectiveMaxWidth = expanded ? 'xl' : maxWidth
 
   return (
     <Box
@@ -38,7 +43,13 @@ export function PublicLayout({ maxWidth = 'md' }: PublicLayoutProps) {
         px: isEmbed ? 0 : { xs: 0, sm: 2 },
       }}
     >
-      <Container maxWidth={maxWidth} disableGutters>
+      <Container
+        maxWidth={effectiveMaxWidth}
+        disableGutters
+        sx={{
+          transition: 'max-width 0.3s ease-in-out',
+        }}
+      >
         <Box
           sx={{
             bgcolor: effectiveIsFramed ? 'background.paper' : 'transparent',
@@ -55,7 +66,7 @@ export function PublicLayout({ maxWidth = 'md' }: PublicLayoutProps) {
             overflow: 'hidden',
           }}
         >
-          <Outlet context={{ setFramed: setIsFramed, isEmbed }} />
+          <Outlet context={{ setFramed: setIsFramed, isEmbed, setExpandedLayout: setExpanded }} />
         </Box>
       </Container>
       {!isEmbed && <ConsentNotice />}

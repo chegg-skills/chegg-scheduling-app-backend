@@ -89,6 +89,7 @@ interface PublicBookingFlowProps {
   setSelectedTimezone: (tz: string) => void
   eventName?: string
   eventDetails?: PublicEventSummary | null
+  showDebug?: boolean
 }
 
 /**
@@ -128,6 +129,7 @@ export function PublicBookingFlow({
   setSelectedTimezone,
   eventName,
   eventDetails,
+  showDebug = false,
 }: PublicBookingFlowProps) {
   switch (currentStepKey) {
     case 'team':
@@ -225,7 +227,8 @@ export function PublicBookingFlow({
           onMonthChange={onMonthChange}
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
-
+          eventId={eventDetails?.id ?? selectedEvent ?? undefined}
+          showDebug={showDebug}
         />
       )
     case 'preferred-coach':

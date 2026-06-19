@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Dialog, Box, IconButton, Alert } from '@mui/material'
+import { Dialog, Box, IconButton, Alert, Button } from '@mui/material'
 import { X } from 'lucide-react'
 import type { Booking } from '@/types'
 import { useBookFollowUpSession } from '@/hooks/queries/useBookings'
+import { usePublicSessionUser } from '@/hooks/usePublicSessionUser'
 import { extractApiError } from '@/utils/apiError'
 import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
 import { PublicBookingStepper } from '@/components/public/booking/PublicBookingStepper'
@@ -29,6 +30,8 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
     Intl.DateTimeFormat().resolvedOptions().timeZone
   )
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [showDebug, setShowDebug] = useState(false)
+  const { isInternalUser } = usePublicSessionUser()
 
   const {
     studentInfo,
@@ -63,6 +66,7 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
     resetStudentInfo()
     setErrorMsg(null)
     setIsConfirmed(false)
+    setShowDebug(false)
     onClose()
   }
 
@@ -108,12 +112,13 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
         sx: {
           borderRadius: 2,
           overflow: 'hidden',
-          width: 1200,
-          maxWidth: '90vw',
+          width: showDebug && activeStep === 0 ? 1536 : 1200,
+          maxWidth: showDebug && activeStep === 0 ? '95vw' : '90vw',
           height: 750,
           minHeight: 750,
           maxHeight: 750,
           p: 0,
+          transition: 'width 0.3s ease-in-out, max-width 0.3s ease-in-out',
         },
       }}
     >
@@ -202,6 +207,8 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
                   pmSlots={pmSlots}
                   timeFormat={timeFormat}
                   dateFormat={dateFormat}
+                  showDebug={showDebug}
+                  eventId={booking.event?.id || booking.eventId || undefined}
                 />
               )}
 
@@ -225,6 +232,29 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
               }
               onBackOrCancel={handleBackOrCancel}
               onPrimary={activeStep === 1 ? handleConfirmBooking : handleNext}
+              extraAccessory={
+                activeStep === 0 && isInternalUser && (
+                  <Button
+                    onClick={() => setShowDebug(!showDebug)}
+                    sx={{
+                      fontWeight: 700,
+                      textTransform: 'none',
+                      fontSize: '0.75rem',
+                      color: 'primary.main',
+                      border: '1px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: 1.5,
+                      px: 1.5,
+                      py: 0.5,
+                      '&:hover': {
+                        bgcolor: 'primary.light',
+                      },
+                    }}
+                  >
+                    {showDebug ? 'Hide Debug' : 'Troubleshoot Slots'}
+                  </Button>
+                )
+              }
             />
           </Box>
         </Box>
