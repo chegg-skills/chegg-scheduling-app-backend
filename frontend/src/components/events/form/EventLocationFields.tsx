@@ -50,6 +50,7 @@ export function EventLocationFields() {
   }, [allowAnonymousBooking, meetingLinkSource, setValue])
 
   const minDate = useMemo(() => new Date(), [])
+  const maxDate = useMemo(() => new Date(new Date().getFullYear() + 2, 11, 31), [])
 
   // Derive the current join method from backend field states
   const joinMethod = useMemo(() => {
@@ -166,6 +167,7 @@ export function EventLocationFields() {
                         field.onChange(`${y}-${mo}-${d}`)
                       }}
                       minDate={minDate}
+                      maxDate={maxDate}
                       slotProps={{
                         textField: {
                           id: 'locationLinkExpiresAt',

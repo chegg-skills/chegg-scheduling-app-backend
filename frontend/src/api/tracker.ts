@@ -17,6 +17,9 @@ export interface TrackerSlot {
   remainingSeats: number | null
   status: 'OPEN' | 'FULL'
   isLogged: boolean
+  summary: string | null
+  coachNotes: string | null
+  attendedCount: number | null
 }
 
 export interface TrackerFilters {
@@ -26,6 +29,8 @@ export interface TrackerFilters {
 
 export interface TrackerSlotsParams {
   date?: string
+  startDate?: string
+  endDate?: string
   teamId?: string
   eventId?: string
 }

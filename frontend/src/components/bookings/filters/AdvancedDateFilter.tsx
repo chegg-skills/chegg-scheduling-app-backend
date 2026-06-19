@@ -23,6 +23,10 @@ interface AdvancedDateFilterProps {
   onRangeChange: (start: Date | null, end: Date | null) => void
 }
 
+const now = new Date()
+const MIN_DATE = new Date(now.getFullYear() - 2, 0, 1)
+const MAX_DATE = new Date(now.getFullYear() + 2, 11, 31)
+
 export const AdvancedDateFilter = ({
   startDate,
   endDate,
@@ -76,6 +80,8 @@ export const AdvancedDateFilter = ({
           <StaticDatePicker
             displayStaticWrapperAs="desktop"
             value={startDate}
+            minDate={MIN_DATE}
+            maxDate={MAX_DATE}
             onChange={(val) => onRangeChange(val, endDate)}
             slotProps={{
               actionBar: { sx: { display: 'none' } },
@@ -99,6 +105,8 @@ export const AdvancedDateFilter = ({
           <StaticDatePicker
             displayStaticWrapperAs="desktop"
             value={endDate}
+            minDate={MIN_DATE}
+            maxDate={MAX_DATE}
             onChange={handleManualEndChange}
             slotProps={{
               actionBar: { sx: { display: 'none' } },
