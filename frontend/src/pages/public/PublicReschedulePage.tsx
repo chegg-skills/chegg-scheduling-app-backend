@@ -34,6 +34,7 @@ import { PublicStepHeader } from '@/components/public/layout/PublicStepHeader'
 import { TroubleshootDialog } from '@/components/public/booking/TroubleshootDialog'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
 import { usePublicSessionUser } from '@/hooks/usePublicSessionUser'
+import { usePublicSlotDates } from '@/hooks/queries/usePublicBooking'
 
 export function PublicReschedulePage() {
   const { bookingId = '' } = useParams()
@@ -69,6 +70,7 @@ export function PublicReschedulePage() {
   const [rescheduleError, setRescheduleError] = React.useState<string | null>(null)
   const [troubleshootOpen, setTroubleshootOpen] = React.useState(false)
   const [showDebug, setShowDebug] = React.useState(false)
+  const [calendarMonth, setCalendarMonth] = React.useState(new Date())
   const { setFramed, setExpandedLayout } = useOutletContext<PublicLayoutOutletContext>()
   const { isInternalUser } = usePublicSessionUser()
 
@@ -104,6 +106,16 @@ export function PublicReschedulePage() {
     enabled: !!bookingId && !!token,
     retry: false,
   })
+
+  const isFixedSlots = bookingData?.event?.bookingMode === 'FIXED_SLOTS'
+  const { availableDates, isLoading: isLoadingDates } = usePublicSlotDates(
+    bookingData?.eventId ?? '',
+    calendarMonth,
+    isFixedSlots,
+    undefined,
+    selectedTimezone
+  )
+  const handleMonthChange = React.useCallback((date: Date) => setCalendarMonth(date), [])
 
   // 2. Fetch Slots for the Event
   const { startDate, endDate } = React.useMemo(
@@ -320,6 +332,10 @@ export function PublicReschedulePage() {
               setSelectedTimezone={setSelectedTimezone}
               eventId={bookingData.eventId}
               showDebug={showDebug}
+              isFixedSlots={isFixedSlots}
+              availableDates={availableDates}
+              isLoadingDates={isLoadingDates}
+              onMonthChange={handleMonthChange}
             />
           </Box>
 
