@@ -30,10 +30,20 @@ export interface TrackerSlotsParams {
   eventId?: string
 }
 
+export interface TrackerSessionDatesParams {
+  startDate: string
+  endDate: string
+  teamId?: string
+  eventId?: string
+}
+
 export const trackerApi = {
   getSlots: (params?: TrackerSlotsParams, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<TrackerSlot[]>>('/v1/tracker/slots', { params, signal }),
 
   getFilters: (signal?: AbortSignal) =>
     apiClient.get<ApiResponse<TrackerFilters>>('/v1/tracker/filters', { signal }),
+
+  getSessionDates: (params: TrackerSessionDatesParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ dates: string[] }>>('/v1/tracker/session-dates', { params, signal }),
 }

@@ -1,12 +1,18 @@
+import { useState, useMemo } from 'react'
+import Box from '@mui/material/Box'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Stack from '@mui/material/Stack'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { PickersDay } from '@mui/x-date-pickers/PickersDay'
+import type { PickersDayProps } from '@mui/x-date-pickers/PickersDay'
 import Typography from '@mui/material/Typography'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { startOfMonth, endOfMonth, format } from 'date-fns'
 import type { TrackerFilters as TrackerFiltersData } from '@/api/tracker'
+import { useTrackerSessionDates } from '@/hooks/queries/useTracker'
 
 export interface TrackerFilterState {
   date: string
@@ -31,7 +37,47 @@ function shiftDate(date: string, days: number): string {
 
 export const todayDate = () => toLocalDateString(new Date())
 
+function makeSessionDayIndicator(sessionDates: Set<string>) {
+  return function SessionDayIndicator({ day, outsideCurrentMonth, ...props }: PickersDayProps) {
+    const hasSession = !outsideCurrentMonth && sessionDates.has(format(day, 'yyyy-MM-dd'))
+    return (
+      <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+        <PickersDay day={day} outsideCurrentMonth={outsideCurrentMonth} {...props} />
+        {hasSession && !props.disabled && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 3,
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              bgcolor: props.selected ? 'primary.contrastText' : 'primary.main',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+      </Box>
+    )
+  }
+}
+
 export function TrackerFilters({ filters, filterData, onChange }: TrackerFiltersProps) {
+  const [calendarMonth, setCalendarMonth] = useState(
+    () => new Date(filters.date + 'T00:00:00')
+  )
+
+  const startDate = format(startOfMonth(calendarMonth), 'yyyy-MM-dd')
+  const endDate = format(endOfMonth(calendarMonth), 'yyyy-MM-dd')
+
+  const sessionDates = useTrackerSessionDates({
+    startDate,
+    endDate,
+    teamId: filters.teamId || undefined,
+    eventId: filters.eventId || undefined,
+  })
+
+  const DaySlot = useMemo(() => makeSessionDayIndicator(sessionDates), [sessionDates])
+
   const visibleEvents = filters.teamId
     ? filterData.events.filter((e) => e.teamId === filters.teamId)
     : filterData.events
@@ -62,7 +108,9 @@ export function TrackerFilters({ filters, filterData, onChange }: TrackerFilters
           onChange={(val) => {
             if (val) onChange({ ...filters, date: toLocalDateString(val) })
           }}
+          onMonthChange={(month) => setCalendarMonth(month)}
           format="dd-MMM-yy"
+          slots={{ day: DaySlot }}
           slotProps={{
             textField: {
               size: 'small',

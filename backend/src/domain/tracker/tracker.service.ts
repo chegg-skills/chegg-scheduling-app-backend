@@ -147,6 +147,41 @@ export const getTrackerSlots = async (
   });
 };
 
+export const getSessionDates = async (
+  caller: CallerContext,
+  filters: { startDate: string; endDate: string; teamId?: string; eventId?: string },
+): Promise<{ dates: string[] }> => {
+  requireTrackerAccess(caller);
+
+  const rangeStart = new Date(`${filters.startDate}T00:00:00.000`);
+  const rangeEnd = new Date(`${filters.endDate}T23:59:59.999`);
+
+  const slots = await prisma.eventScheduleSlot.findMany({
+    where: {
+      isCancelled: false,
+      startTime: { gte: rangeStart, lte: rangeEnd },
+      ...(filters.eventId ? { eventId: filters.eventId } : {}),
+      event: {
+        deletedAt: null,
+        isActive: true,
+        interactionType: { in: TRACKER_INTERACTION_TYPES },
+        ...(filters.teamId ? { teamId: filters.teamId } : {}),
+        team: {
+          deletedAt: null,
+          ...(caller.role === UserRole.TEAM_ADMIN ? { teamLeadId: caller.id } : {}),
+        },
+      },
+    },
+    select: { startTime: true },
+  });
+
+  const toLocalDate = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const dates = [...new Set(slots.map((s) => toLocalDate(s.startTime)))];
+  return { dates };
+};
+
 export const getTrackerFilters = async (
   caller: CallerContext,
 ): Promise<TrackerFilters> => {
