@@ -23,6 +23,9 @@ export interface TrackerSlot {
   remainingSeats: number | null;
   status: "OPEN" | "FULL";
   isLogged: boolean;
+  summary: string | null;
+  coachNotes: string | null;
+  attendedCount: number | null;
 }
 
 export interface TrackerFilters {
@@ -38,22 +41,29 @@ const requireTrackerAccess = (caller: CallerContext): void => {
 
 export const getTrackerSlots = async (
   caller: CallerContext,
-  filters: { date?: string; teamId?: string; eventId?: string },
+  filters: { date?: string; startDate?: string; endDate?: string; teamId?: string; eventId?: string },
 ): Promise<TrackerSlot[]> => {
   requireTrackerAccess(caller);
 
-  const now = new Date();
-  const targetDate =
-    filters.date ??
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  // Use a full 24-hour window anchored to the local calendar day passed from the client
-  const startOfDay = new Date(`${targetDate}T00:00:00.000`);
-  const endOfDay = new Date(`${targetDate}T23:59:59.999`);
+  let start: Date;
+  let end: Date;
+
+  if (filters.startDate && filters.endDate) {
+    start = new Date(`${filters.startDate}T00:00:00.000`);
+    end = new Date(`${filters.endDate}T23:59:59.999`);
+  } else {
+    const now = new Date();
+    const targetDate =
+      filters.date ??
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    start = new Date(`${targetDate}T00:00:00.000`);
+    end = new Date(`${targetDate}T23:59:59.999`);
+  }
 
   const slots = await prisma.eventScheduleSlot.findMany({
     where: {
       isCancelled: false,
-      startTime: { gte: startOfDay, lte: endOfDay },
+      startTime: { gte: start, lte: end },
       ...(filters.eventId ? { eventId: filters.eventId } : {}),
       event: {
         deletedAt: null,
@@ -79,7 +89,18 @@ export const getTrackerSlots = async (
       },
       assignedCoach: { select: { id: true, firstName: true, lastName: true } },
       recurrenceGroup: { select: { id: true, frequency: true } },
-      sessionLog: { select: { id: true } },
+      sessionLog: {
+        select: {
+          id: true,
+          summary: true,
+          coachNotes: true,
+          attendance: {
+            select: {
+              attended: true,
+            },
+          },
+        },
+      },
       _count: { select: { bookings: { where: { status: { not: "CANCELLED" } } } } },
     },
     orderBy: { startTime: "asc" },
@@ -143,8 +164,48 @@ export const getTrackerSlots = async (
       capacity,
       remainingSeats,
       status,
+      summary: slot.sessionLog?.summary ?? null,
+      coachNotes: slot.sessionLog?.coachNotes ?? null,
+      attendedCount: slot.sessionLog
+        ? slot.sessionLog.attendance.filter((a) => a.attended).length
+        : null,
     };
   });
+};
+
+export const getSessionDates = async (
+  caller: CallerContext,
+  filters: { startDate: string; endDate: string; teamId?: string; eventId?: string },
+): Promise<{ dates: string[] }> => {
+  requireTrackerAccess(caller);
+
+  const rangeStart = new Date(`${filters.startDate}T00:00:00.000`);
+  const rangeEnd = new Date(`${filters.endDate}T23:59:59.999`);
+
+  const slots = await prisma.eventScheduleSlot.findMany({
+    where: {
+      isCancelled: false,
+      startTime: { gte: rangeStart, lte: rangeEnd },
+      ...(filters.eventId ? { eventId: filters.eventId } : {}),
+      event: {
+        deletedAt: null,
+        isActive: true,
+        interactionType: { in: TRACKER_INTERACTION_TYPES },
+        ...(filters.teamId ? { teamId: filters.teamId } : {}),
+        team: {
+          deletedAt: null,
+          ...(caller.role === UserRole.TEAM_ADMIN ? { teamLeadId: caller.id } : {}),
+        },
+      },
+    },
+    select: { startTime: true },
+  });
+
+  const toLocalDate = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const dates = [...new Set(slots.map((s) => toLocalDate(s.startTime)))];
+  return { dates };
 };
 
 export const getTrackerFilters = async (

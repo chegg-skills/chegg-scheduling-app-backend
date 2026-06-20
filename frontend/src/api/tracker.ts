@@ -17,6 +17,9 @@ export interface TrackerSlot {
   remainingSeats: number | null
   status: 'OPEN' | 'FULL'
   isLogged: boolean
+  summary: string | null
+  coachNotes: string | null
+  attendedCount: number | null
 }
 
 export interface TrackerFilters {
@@ -26,6 +29,15 @@ export interface TrackerFilters {
 
 export interface TrackerSlotsParams {
   date?: string
+  startDate?: string
+  endDate?: string
+  teamId?: string
+  eventId?: string
+}
+
+export interface TrackerSessionDatesParams {
+  startDate: string
+  endDate: string
   teamId?: string
   eventId?: string
 }
@@ -36,4 +48,7 @@ export const trackerApi = {
 
   getFilters: (signal?: AbortSignal) =>
     apiClient.get<ApiResponse<TrackerFilters>>('/v1/tracker/filters', { signal }),
+
+  getSessionDates: (params: TrackerSessionDatesParams, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ dates: string[] }>>('/v1/tracker/session-dates', { params, signal }),
 }
