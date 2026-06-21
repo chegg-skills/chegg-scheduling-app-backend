@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import { getRequestLogger } from "../../shared/logging/requestContext";
-import { buildAuthToken } from "../../shared/utils/jwtUtils";
-import { setAuthCookie } from "../../shared/utils/cookie";
+import { buildAuthToken } from "../../shared/auth/jwtUtils";
+import { setAuthCookie } from "../../shared/auth/cookie";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import { normalizeEmail, toSafeUser } from "../../shared/utils/userUtils";
 import {
@@ -11,7 +11,7 @@ import {
   exchangeCodeForUserInfo,
   generateState,
   generateNonce,
-} from "../../shared/utils/oidcClient";
+} from "../../shared/auth/oidcClient";
 import { queueInviteAcceptedNotification } from "../invite/invite.notification";
 
 const SSO_STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes

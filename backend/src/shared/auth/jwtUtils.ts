@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
 import { logger } from "../logging/logger";
-import type { SafeUser } from "./userUtils";
+import type { SafeUser } from "../utils/userUtils";
 
 /**
  * Returns the `JWT_SECRET` environment variable, throwing a 500 if it is

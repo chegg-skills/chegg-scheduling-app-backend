@@ -3,8 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import { UserRole } from "@prisma/client";
 import * as inviteService from "./invite.service";
 import { ListInvitesSchema } from "./invite.schema";
-import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
-import { setAuthCookie } from "../../shared/utils/cookie";
+import { sendSuccessResponse } from "../../shared/http/responseHelper";
+import { setAuthCookie } from "../../shared/auth/cookie";
 import {
   queueInviteAcceptedNotification,
   queueInviteCreatedNotification,

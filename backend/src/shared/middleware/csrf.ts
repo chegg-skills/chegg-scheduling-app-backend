@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
-import { AUTH_COOKIE_NAME, CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "../utils/cookie";
+import { AUTH_COOKIE_NAME, CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "../auth/cookie";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const csrfProtectionEnabled = process.env.ENABLE_CSRF_PROTECTION === "true";

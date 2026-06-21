@@ -4,7 +4,7 @@ import ssoRoutes from "../domain/auth/sso.router";
 import eventRoutes from "../domain/events/event.router";
 import eventGroupRoutes from "../domain/eventGroups/eventGroup.router";
 import inviteRoutes from "../domain/invite/invite.router";
-import teamMemberRoutes from "../domain/team-members/teamMember.router";
+import teamMemberRoutes from "../domain/teamMembers/teamMember.router";
 import usersRoutes from "../domain/users/user.router";
 import teamRoutes from "../domain/teams/team.router";
 import configRoutes from "../domain/config/config.router";
@@ -27,11 +27,17 @@ router.use("/users", usersRoutes);
 router.use("/teams", teamRoutes);
 router.use("/bookings", bookingRoutes);
 router.use("/students", studentRoutes);
+router.use("/booking-directories", bookingDirectoryRoutes);
+router.use("/system-settings", systemSettingRoutes);
+
+// Mounted bare (no prefix) on purpose: each of these routers spans multiple
+// top-level resources, so a single mount prefix can't represent them.
+//   teamMemberRoutes  -> /teams/:teamId/members*
+//   eventRoutes       -> /events*, /event-types*, /event-interaction-types, /teams/:teamId/events
+//   eventGroupRoutes  -> /event-groups/:groupId, /teams/:teamId/event-groups
 router.use(teamMemberRoutes);
 router.use(eventRoutes);
 router.use(eventGroupRoutes);
-router.use(bookingDirectoryRoutes);
-router.use(systemSettingRoutes);
 
 router.use("/v1", authenticate, v1routes);
 

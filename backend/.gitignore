@@ -18,3 +18,6 @@ coverage
 *.log
 *_output*.txt
 *_results*.log
+
+# Ad-hoc, throwaway debug scripts (operational scripts live in src/scripts/ops/)
+/src/scripts/dev/

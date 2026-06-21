@@ -1,4 +1,4 @@
-import { prisma } from "../shared/db/prisma";
+import { prisma } from "../../shared/db/prisma";
 import {
   AssignmentStrategy,
   EventBookingMode,

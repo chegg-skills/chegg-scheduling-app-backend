@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import * as authService from "./auth.service";
-import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
-import { setAuthCookie, clearAuthCookie } from "../../shared/utils/cookie";
+import { sendSuccessResponse } from "../../shared/http/responseHelper";
+import { setAuthCookie, clearAuthCookie } from "../../shared/auth/cookie";
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

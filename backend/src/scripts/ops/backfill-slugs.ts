@@ -1,6 +1,6 @@
 import { UserRole } from "@prisma/client";
-import { prisma } from "../shared/db/prisma";
-import { createPublicBookingSlug } from "../shared/utils/publicBookingSlug";
+import { prisma } from "../../shared/db/prisma";
+import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 
 async function backfill() {
   console.log("🚀 Starting publicBookingSlug backfill...");

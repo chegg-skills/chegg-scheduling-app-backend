@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
+import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as availabilityService from "./availability.service";

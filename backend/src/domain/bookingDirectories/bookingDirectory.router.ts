@@ -17,7 +17,7 @@ import {
 const router = express.Router();
 
 router
-  .route("/booking-directories")
+  .route("/")
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
@@ -28,7 +28,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/booking-directories/:directoryId")
+  .route("/:directoryId")
   .get(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
@@ -50,7 +50,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/booking-directories/:directoryId/sections")
+  .route("/:directoryId/sections")
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
@@ -60,7 +60,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/booking-directories/:directoryId/sections/:sectionId")
+  .route("/:directoryId/sections/:sectionId")
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
@@ -70,7 +70,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/booking-directories/:directoryId/sections/:sectionId/teams")
+  .route("/:directoryId/sections/:sectionId/teams")
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
@@ -80,7 +80,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/booking-directories/:directoryId/sections/:sectionId/teams/:teamId")
+  .route("/:directoryId/sections/:sectionId/teams/:teamId")
   .delete(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),

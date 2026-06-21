@@ -1,4 +1,4 @@
-import { prisma } from "../shared/db/prisma";
+import { prisma } from "../../shared/db/prisma";
 import { UserRole } from "@prisma/client";
 
 async function main() {

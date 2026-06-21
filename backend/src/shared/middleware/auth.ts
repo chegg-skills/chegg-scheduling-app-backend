@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
 import { prisma } from "../db/prisma";
 import { canReadUser } from "../auth/permissions";
-import { getJwtSecret } from "../utils/jwtUtils";
+import { getJwtSecret } from "../auth/jwtUtils";
 import { getRequestLogger } from "../logging/requestContext";
 
 const AUTH_COOKIE_NAME = "auth_token";
