@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
+import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import { parseBoundedDateRange } from "../../shared/utils/date";
 import * as AvailabilityService from "../availability/availability.service";
 import * as PublicService from "./public.service";

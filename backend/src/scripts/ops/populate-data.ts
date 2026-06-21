@@ -1,8 +1,8 @@
 import { AssignmentStrategy, BookingStatus, EventLocationType, UserRole } from "@prisma/client";
 import "dotenv/config";
 import request from "supertest";
-import app from "../app";
-import { prisma } from "../shared/db/prisma";
+import app from "../../app";
+import { prisma } from "../../shared/db/prisma";
 
 const SUPER_ADMIN_EMAIL = "mohitkumar3005@example.com";
 const SUPER_ADMIN_FIRST_NAME = "Mohit";

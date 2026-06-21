@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
+import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import { ConfigService } from "./config.service";
 import { getFriendlyTimezoneLabel } from "../../shared/utils/date";
 

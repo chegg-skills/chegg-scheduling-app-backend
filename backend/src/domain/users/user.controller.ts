@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
+import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
-import { CSRF_COOKIE_NAME } from "../../shared/utils/cookie";
+import { CSRF_COOKIE_NAME } from "../../shared/auth/cookie";
 import * as userService from "./user.service";
 
 const listUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

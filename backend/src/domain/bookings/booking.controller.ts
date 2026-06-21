@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { sendSuccessResponse } from "../../shared/utils/helper/responseHelper";
+import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import * as BookingService from "./booking.service";
 import * as BookingSessionLogService from "./bookingSessionLog.service";
 import { BookingStatus, UserRole } from "@prisma/client";

@@ -1,4 +1,4 @@
-import { prisma } from "../shared/db/prisma";
+import { prisma } from "../../shared/db/prisma";
 
 async function main() {
   console.log("🔍 Finding events in the database...");

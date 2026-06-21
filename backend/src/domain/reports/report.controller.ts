@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import * as reportService from "./report.service";
 import type { CallerContext } from "../../shared/utils/userUtils";
-import { sendFileResponse } from "../../shared/utils/helper/responseHelper";
+import { sendFileResponse } from "../../shared/http/responseHelper";
 
 export const downloadBookingsReport = async (req: Request, res: Response, next: NextFunction) => {
   try {

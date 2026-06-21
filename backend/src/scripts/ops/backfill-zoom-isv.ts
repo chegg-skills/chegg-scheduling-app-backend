@@ -1,4 +1,4 @@
-import { prisma } from "../shared/db/prisma";
+import { prisma } from "../../shared/db/prisma";
 
 /**
  * Script to update all users with a coach-specific Zoom ISV Link.

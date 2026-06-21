@@ -6,7 +6,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { prisma } from "../../shared/db/prisma";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { logger } from "../../shared/logging/logger";
-import { buildAuthToken } from "../../shared/utils/jwtUtils";
+import { buildAuthToken } from "../../shared/auth/jwtUtils";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   SALT_ROUNDS,

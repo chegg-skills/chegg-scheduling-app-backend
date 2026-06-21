@@ -2,7 +2,7 @@ import type { ErrorRequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ZodError } from "zod";
 import { logger } from "../logging/logger";
-import { sendErrorResponse } from "../utils/helper/responseHelper";
+import { sendErrorResponse } from "../http/responseHelper";
 import { MethodNotAllowedError } from "./methodNotAllowed";
 import { PathNotFoundError } from "./pathNotFound";
 

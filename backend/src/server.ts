@@ -5,7 +5,7 @@ dotenv.config();
 import app from "./app";
 import { prisma } from "./shared/db/prisma";
 import { logger } from "./shared/logging/logger";
-import { getOidcClient } from "./shared/utils/oidcClient";
+import { getOidcClient } from "./shared/auth/oidcClient";
 import { startFeedbackConsumer } from "./shared/notifications/communication.feedback";
 
 const validateEnv = (): void => {

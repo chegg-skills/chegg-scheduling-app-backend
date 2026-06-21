@@ -1,4 +1,4 @@
-import prisma from "../shared/db/prisma";
+import prisma from "../../shared/db/prisma";
 
 /**
  * Script to update all coach email addresses to a unique plus-address pattern:

@@ -11,7 +11,7 @@ import { CreateBookingQuestionSchema, UpdateBookingQuestionSchema } from "./book
 const router = express.Router();
 
 router
-  .route("/system-settings")
+  .route("/")
   .get(authenticate, authorize(UserRole.SUPER_ADMIN), controller.getSystemSettingsController)
   .put(
     authenticate,
@@ -22,7 +22,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/system-settings/booking-questions")
+  .route("/booking-questions")
   .get(authenticate, authorize(UserRole.SUPER_ADMIN), bookingQuestionController.listDefaultQuestionsController)
   .post(
     authenticate,
@@ -33,7 +33,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/system-settings/booking-questions/:id")
+  .route("/booking-questions/:id")
   .put(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
