@@ -1,5 +1,6 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import { UserRole } from "@prisma/client";
+import { asyncHandler } from "../../shared/http/asyncHandler";
 import { prisma } from "../../shared/db/prisma";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { buildAuthToken } from "../../shared/auth/jwtUtils";
@@ -32,88 +33,68 @@ const redirectError = (res: Response, reason: string): void => {
  * GET /auth/sso/login
  * Initiates the OIDC authorization flow for regular login.
  */
-export const initiateLogin = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const state = generateState();
-    const nonce = generateNonce();
-    const expiresAt = new Date(Date.now() + SSO_STATE_TTL_MS);
+export const initiateLogin = asyncHandler(async (req: Request, res: Response) => {
+  const state = generateState();
+  const nonce = generateNonce();
+  const expiresAt = new Date(Date.now() + SSO_STATE_TTL_MS);
 
-    await prisma.oidcState.create({
-      data: { state, nonce, inviteToken: null, expiresAt },
-    });
+  await prisma.oidcState.create({
+    data: { state, nonce, inviteToken: null, expiresAt },
+  });
 
-    const authUrl = await buildAuthorizationUrl(state, nonce);
-    res.redirect(authUrl);
-  } catch (error) {
-    next(error);
-  }
-};
+  const authUrl = await buildAuthorizationUrl(state, nonce);
+  res.redirect(authUrl);
+});
 
 /**
  * GET /auth/sso/accept-invite?token=<inviteToken>
  * Initiates the OIDC flow for accepting an SSO-required invite.
  */
-export const initiateInviteAcceptance = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const inviteToken = req.query.token as string | undefined;
+export const initiateInviteAcceptance = asyncHandler(async (req: Request, res: Response) => {
+  const inviteToken = req.query.token as string | undefined;
 
-    if (!inviteToken) {
-      redirectError(res, "missing_invite_token");
-      return;
-    }
-
-    const invite = await prisma.userInvite.findUnique({ where: { token: inviteToken } });
-
-    if (!invite) {
-      redirectError(res, "invite_not_found");
-      return;
-    }
-    if (invite.acceptedAt) {
-      redirectError(res, "invite_already_accepted");
-      return;
-    }
-    if (new Date() > invite.expiresAt) {
-      redirectError(res, "invite_expired");
-      return;
-    }
-    if (!invite.requiresSso) {
-      redirectError(res, "invite_not_sso");
-      return;
-    }
-
-    const state = generateState();
-    const nonce = generateNonce();
-    const expiresAt = new Date(Date.now() + SSO_STATE_TTL_MS);
-
-    await prisma.oidcState.create({
-      data: { state, nonce, inviteToken, expiresAt },
-    });
-
-    const authUrl = await buildAuthorizationUrl(state, nonce);
-    res.redirect(authUrl);
-  } catch (error) {
-    next(error);
+  if (!inviteToken) {
+    redirectError(res, "missing_invite_token");
+    return;
   }
-};
+
+  const invite = await prisma.userInvite.findUnique({ where: { token: inviteToken } });
+
+  if (!invite) {
+    redirectError(res, "invite_not_found");
+    return;
+  }
+  if (invite.acceptedAt) {
+    redirectError(res, "invite_already_accepted");
+    return;
+  }
+  if (new Date() > invite.expiresAt) {
+    redirectError(res, "invite_expired");
+    return;
+  }
+  if (!invite.requiresSso) {
+    redirectError(res, "invite_not_sso");
+    return;
+  }
+
+  const state = generateState();
+  const nonce = generateNonce();
+  const expiresAt = new Date(Date.now() + SSO_STATE_TTL_MS);
+
+  await prisma.oidcState.create({
+    data: { state, nonce, inviteToken, expiresAt },
+  });
+
+  const authUrl = await buildAuthorizationUrl(state, nonce);
+  res.redirect(authUrl);
+});
 
 /**
  * GET /auth/sso/callback
  * Handles the OIDC provider callback after user authentication.
  * Routes to new-user provisioning (invite path) or existing-user login.
  */
-export const handleCallback = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+export const handleCallback = asyncHandler(async (req: Request, res: Response) => {
   const stateParam = req.query.state as string | undefined;
 
   if (!stateParam) {
@@ -159,9 +140,9 @@ export const handleCallback = async (
     }
   } catch (error) {
     getRequestLogger().error({ error }, "SSO callback failed.");
-    next(error);
+    throw error; // asyncHandler forwards to the global errorHandler
   }
-};
+});
 
 type OidcUserInfoPartial = {
   given_name?: string;
@@ -186,14 +167,20 @@ async function handleInviteAcceptance(
   }
 
   if (normalizeEmail(invite.email) !== normalizedEmail) {
-    getRequestLogger().warn({ inviteEmail: invite.email, ssoEmail: normalizedEmail }, "SSO email does not match invite email.");
+    getRequestLogger().warn(
+      { inviteEmail: invite.email, ssoEmail: normalizedEmail },
+      "SSO email does not match invite email.",
+    );
     redirectError(res, "email_mismatch");
     return;
   }
 
   // SUPER_ADMIN can never be created via SSO
   if (invite.role === UserRole.SUPER_ADMIN) {
-    getRequestLogger().warn({ inviteId: invite.id }, "SSO invite acceptance rejected: SUPER_ADMIN role not allowed via SSO.");
+    getRequestLogger().warn(
+      { inviteId: invite.id },
+      "SSO invite acceptance rejected: SUPER_ADMIN role not allowed via SSO.",
+    );
     redirectError(res, "forbidden");
     return;
   }
@@ -238,7 +225,10 @@ async function handleInviteAcceptance(
 
   const safeUser = toSafeUser(createdUser);
 
-  getRequestLogger().info({ userId: safeUser.id, role: safeUser.role, provider }, "SSO invite accepted and user provisioned.");
+  getRequestLogger().info(
+    { userId: safeUser.id, role: safeUser.role, provider },
+    "SSO invite accepted and user provisioned.",
+  );
 
   void queueInviteAcceptedNotification({
     invitedById: invite.createdBy,
@@ -264,7 +254,10 @@ async function handleExistingUserLogin(
   });
 
   if (!user) {
-    getRequestLogger().warn({ email: normalizedEmail, provider }, "SSO login rejected: no account found for identity.");
+    getRequestLogger().warn(
+      { email: normalizedEmail, provider },
+      "SSO login rejected: no account found for identity.",
+    );
     redirectError(res, "no_account");
     return;
   }
@@ -282,7 +275,10 @@ async function handleExistingUserLogin(
 
   const safeUser = toSafeUser(user);
 
-  getRequestLogger().info({ userId: safeUser.id, role: safeUser.role, provider }, "SSO login successful.");
+  getRequestLogger().info(
+    { userId: safeUser.id, role: safeUser.role, provider },
+    "SSO login successful.",
+  );
 
   const token = buildAuthToken(safeUser);
   setAuthCookie(res, token);

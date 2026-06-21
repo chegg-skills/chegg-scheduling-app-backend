@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { asyncHandler } from "../../shared/http/asyncHandler";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import * as BookingService from "./booking.service";
@@ -14,7 +15,7 @@ const getStringParam = (value: unknown): string | undefined => {
   return undefined;
 };
 
-export const createBooking = async (req: Request, res: Response) => {
+export const createBooking = asyncHandler(async (req: Request, res: Response) => {
   const booking = await BookingService.createBooking(req.body);
 
   return sendSuccessResponse(
@@ -23,9 +24,9 @@ export const createBooking = async (req: Request, res: Response) => {
     { booking },
     "Booking confirmed successfully.",
   );
-};
+});
 
-export const getBooking = async (req: Request, res: Response) => {
+export const getBooking = asyncHandler(async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const caller = res.locals.authUser as CallerContext;
   const booking = await BookingService.getBooking(bookingId);
@@ -40,9 +41,9 @@ export const getBooking = async (req: Request, res: Response) => {
   }
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking fetched successfully.");
-};
+});
 
-export const listBookings = async (req: Request, res: Response) => {
+export const listBookings = asyncHandler(async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const page = req.query.page ? Number(req.query.page) : undefined;
   const limit = req.query.limit ? Number(req.query.limit) : undefined;
@@ -76,9 +77,9 @@ export const listBookings = async (req: Request, res: Response) => {
     },
     "Bookings fetched successfully.",
   );
-};
+});
 
-export const updateBooking = async (req: Request, res: Response) => {
+export const updateBooking = asyncHandler(async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const { status, coCoachUserIds, cancellationReason } = req.body;
   const booking = await BookingService.updateBooking(bookingId, {
@@ -88,9 +89,9 @@ export const updateBooking = async (req: Request, res: Response) => {
   });
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking updated successfully.");
-};
+});
 
-export const rescheduleBooking = async (req: Request, res: Response) => {
+export const rescheduleBooking = asyncHandler(async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const { startTime, timezone, token } = req.body;
   const caller = res.locals.authUser as CallerContext | undefined;
@@ -109,27 +110,27 @@ export const rescheduleBooking = async (req: Request, res: Response) => {
   });
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking rescheduled successfully.");
-};
+});
 
-export const getBookingSessionLog = async (req: Request, res: Response) => {
+export const getBookingSessionLog = asyncHandler(async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const caller = res.locals.authUser as CallerContext;
 
   const log = await BookingSessionLogService.getBookingSessionLog(bookingId, caller);
 
   return sendSuccessResponse(res, StatusCodes.OK, log, "Booking session log fetched successfully.");
-};
+});
 
-export const upsertBookingSessionLog = async (req: Request, res: Response) => {
+export const upsertBookingSessionLog = asyncHandler(async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const caller = res.locals.authUser as CallerContext;
 
   const log = await BookingSessionLogService.upsertBookingSessionLog(bookingId, req.body, caller);
 
   return sendSuccessResponse(res, StatusCodes.OK, log, "Booking session log saved successfully.");
-};
+});
 
-export const cancelBooking = async (req: Request, res: Response) => {
+export const cancelBooking = asyncHandler(async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const { token, cancellationReason } = req.body;
   const caller = res.locals.authUser as CallerContext | undefined;
@@ -155,9 +156,9 @@ export const cancelBooking = async (req: Request, res: Response) => {
   );
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking cancelled successfully.");
-};
+});
 
-export const bookFollowUpSession = async (req: Request, res: Response) => {
+export const bookFollowUpSession = asyncHandler(async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const caller = res.locals.authUser as CallerContext;
 
@@ -169,4 +170,4 @@ export const bookFollowUpSession = async (req: Request, res: Response) => {
     { booking },
     "Follow-up booking confirmed successfully.",
   );
-};
+});

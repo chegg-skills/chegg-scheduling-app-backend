@@ -1,4 +1,5 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { asyncHandler } from "../../shared/http/asyncHandler";
 import { StatusCodes } from "http-status-codes";
 import { UserRole } from "@prisma/client";
 import * as inviteService from "./invite.service";
@@ -14,103 +15,83 @@ import {
  * POST /api/invites
  * Admin sends invite to a user with a specific role.
  */
-const createInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const adminId = res.locals.authUser?.id as string;
-    const callerRole = res.locals.authUser?.role as UserRole;
+const createInvite = asyncHandler(async (req: Request, res: Response) => {
+  const adminId = res.locals.authUser?.id as string;
+  const callerRole = res.locals.authUser?.role as UserRole;
 
-    const result = await inviteService.createInvite({
-      email: req.body.email,
-      role: req.body.role,
-      requiresSso: req.body.requiresSso,
-      createdByAdminId: adminId,
-      callerRole,
-    });
+  const result = await inviteService.createInvite({
+    email: req.body.email,
+    role: req.body.role,
+    requiresSso: req.body.requiresSso,
+    createdByAdminId: adminId,
+    callerRole,
+  });
 
-    void queueInviteCreatedNotification({
+  void queueInviteCreatedNotification({
+    email: result.email,
+    role: result.role,
+    token: result.token,
+    expiresAt: result.expiresAt,
+    createdByAdminId: adminId,
+    requiresSso: result.requiresSso,
+  });
+
+  sendSuccessResponse(
+    res,
+    StatusCodes.CREATED,
+    {
+      id: result.id,
       email: result.email,
       role: result.role,
-      token: result.token,
+      token: process.env.NODE_ENV !== "production" ? result.token : undefined,
       expiresAt: result.expiresAt,
-      createdByAdminId: adminId,
-      requiresSso: result.requiresSso,
-    });
+      createdAt: result.createdAt,
+    },
+    "Invite sent successfully.",
+  );
+});
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.CREATED,
-      {
-        id: result.id,
-        email: result.email,
-        role: result.role,
-        token: process.env.NODE_ENV !== "production" ? result.token : undefined,
-        expiresAt: result.expiresAt,
-        createdAt: result.createdAt,
-      },
-      "Invite sent successfully.",
-    );
-  } catch (error) {
-    next(error);
-  }
-};
+const acceptInvite = asyncHandler(async (req: Request, res: Response) => {
+  const result = await inviteService.acceptInvite(req.body);
 
-const acceptInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const result = await inviteService.acceptInvite(req.body);
+  const csrfToken = setAuthCookie(res, result.token);
 
-    const csrfToken = setAuthCookie(res, result.token);
+  void queueInviteAcceptedNotification({
+    invitedById: result.invitedById,
+    inviteeName: `${result.user.firstName} ${result.user.lastName}`.trim(),
+    inviteeEmail: result.user.email,
+    role: result.user.role,
+  });
 
-    void queueInviteAcceptedNotification({
-      invitedById: result.invitedById,
-      inviteeName: `${result.user.firstName} ${result.user.lastName}`.trim(),
-      inviteeEmail: result.user.email,
-      role: result.user.role,
-    });
+  sendSuccessResponse(
+    res,
+    StatusCodes.CREATED,
+    { user: result.user, token: result.token, csrfToken },
+    "Invite accepted. Account created and logged in.",
+  );
+});
 
-    sendSuccessResponse(
-      res,
-      StatusCodes.CREATED,
-      { user: result.user, token: result.token, csrfToken },
-      "Invite accepted. Account created and logged in.",
-    );
-  } catch (error) {
-    next(error);
-  }
-};
+const validateInvite = asyncHandler(async (req: Request, res: Response) => {
+  const result = await inviteService.validateInvite(req.body.token as string);
+  sendSuccessResponse(res, StatusCodes.OK, result, "Invite validation result.");
+});
 
-const validateInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const result = await inviteService.validateInvite(req.body.token as string);
-    sendSuccessResponse(res, StatusCodes.OK, result, "Invite validation result.");
-  } catch (error) {
-    next(error);
-  }
-};
+const listInvites = asyncHandler(async (req: Request, res: Response) => {
+  const callerId = res.locals.authUser?.id as string;
+  const callerRole = res.locals.authUser?.role as UserRole;
+  const query = ListInvitesSchema.query.parse(req.query);
 
-const listInvites = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const callerId = res.locals.authUser?.id as string;
-    const callerRole = res.locals.authUser?.role as UserRole;
-    const query = ListInvitesSchema.query.parse(req.query);
+  const result = await inviteService.listInvites(query, callerId, callerRole);
+  sendSuccessResponse(res, StatusCodes.OK, result, "Invites retrieved successfully.");
+});
 
-    const result = await inviteService.listInvites(query, callerId, callerRole);
-    sendSuccessResponse(res, StatusCodes.OK, result, "Invites retrieved successfully.");
-  } catch (error) {
-    next(error);
-  }
-};
+const revokeInvite = asyncHandler(async (req: Request, res: Response) => {
+  const callerId = res.locals.authUser?.id as string;
+  const callerRole = res.locals.authUser?.role as UserRole;
+  const { id } = req.params as { id: string };
 
-const revokeInvite = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const callerId = res.locals.authUser?.id as string;
-    const callerRole = res.locals.authUser?.role as UserRole;
-    const { id } = req.params as { id: string };
-
-    const result = await inviteService.revokeInvite(id, callerId, callerRole);
-    sendSuccessResponse(res, StatusCodes.OK, result, "Invite revoked successfully.");
-  } catch (error) {
-    next(error);
-  }
-};
+  const result = await inviteService.revokeInvite(id, callerId, callerRole);
+  sendSuccessResponse(res, StatusCodes.OK, result, "Invite revoked successfully.");
+});
 
 export { createInvite, acceptInvite, validateInvite, listInvites, revokeInvite };
