@@ -5,7 +5,7 @@ import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as teamMemberService from "./teamMember.service";
 
-const addTeamMember = asyncHandler(async (req: Request, res: Response) => {
+const addTeamMember = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const teamId = req.params.teamId as string;
   const { userId, userIds } = req.body;
@@ -23,23 +23,27 @@ const addTeamMember = asyncHandler(async (req: Request, res: Response) => {
     result,
     userIds ? "Team members added successfully." : "Team member added successfully.",
   );
-});
+};
 
-const listTeamMembers = asyncHandler(async (req: Request, res: Response) => {
+const listTeamMembers = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const teamId = req.params.teamId as string;
   const result = await teamMemberService.listTeamMembers(teamId, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Team members fetched successfully.");
-});
+};
 
-const removeTeamMember = asyncHandler(async (req: Request, res: Response) => {
+const removeTeamMember = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const teamId = req.params.teamId as string;
   const userId = req.params.userId as string;
   const member = await teamMemberService.removeTeamMember(teamId, userId, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, member, "Team member removed successfully.");
-});
+};
 
-export { addTeamMember, listTeamMembers, removeTeamMember };
+export default {
+  addTeamMember: asyncHandler(addTeamMember),
+  listTeamMembers: asyncHandler(listTeamMembers),
+  removeTeamMember: asyncHandler(removeTeamMember),
+};

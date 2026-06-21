@@ -7,34 +7,34 @@ import * as eventService from "./event.service";
 import * as sessionLogService from "./sessionLog.service";
 import * as availabilityDebugService from "../availability/availabilityDebug.service";
 
-const createEvent = asyncHandler(async (req: Request, res: Response) => {
+const createEvent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const event = await eventService.createEvent(req.params.teamId as string, req.body, caller);
 
   sendSuccessResponse(res, StatusCodes.CREATED, event, "Event created successfully.");
-});
+};
 
-const duplicateEvent = asyncHandler(async (req: Request, res: Response) => {
+const duplicateEvent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const event = await eventService.duplicateEvent(req.params.eventId as string, caller);
 
   sendSuccessResponse(res, StatusCodes.CREATED, event, "Event duplicated successfully.");
-});
+};
 
-const createEventType = asyncHandler(async (req: Request, res: Response) => {
+const createEventType = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const eventType = await eventService.createEventType(req.body, caller);
 
   sendSuccessResponse(res, StatusCodes.CREATED, eventType, "Event type created successfully.");
-});
+};
 
-const listEventTypes = asyncHandler(async (_req: Request, res: Response) => {
+const listEventTypes = async (_req: Request, res: Response) => {
   const result = await eventService.listEventTypes();
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Event types fetched successfully.");
-});
+};
 
-const updateEventType = asyncHandler(async (req: Request, res: Response) => {
+const updateEventType = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const eventType = await eventService.updateEventType(
     req.params.eventTypeId as string,
@@ -43,29 +43,29 @@ const updateEventType = asyncHandler(async (req: Request, res: Response) => {
   );
 
   sendSuccessResponse(res, StatusCodes.OK, eventType, "Event type updated successfully.");
-});
+};
 
-const deleteEventType = asyncHandler(async (req: Request, res: Response) => {
+const deleteEventType = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const eventType = await eventService.deleteEventType(req.params.eventTypeId as string, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, eventType, "Event type deleted successfully.");
-});
+};
 
-const getEventTypeUsage = asyncHandler(async (req: Request, res: Response) => {
+const getEventTypeUsage = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const usage = await eventService.getEventTypeUsage(req.params.eventTypeId as string, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, usage, "Event type usage fetched successfully.");
-});
+};
 
-const listInteractionTypes = asyncHandler(async (_req: Request, res: Response) => {
+const listInteractionTypes = async (_req: Request, res: Response) => {
   const result = eventService.listInteractionTypes();
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Interaction types fetched successfully.");
-});
+};
 
-const listTeamEvents = asyncHandler(async (req: Request, res: Response) => {
+const listTeamEvents = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.listTeamEvents(req.params.teamId as string, caller, {
     page: req.query.page ? Number(req.query.page) : undefined,
@@ -73,37 +73,37 @@ const listTeamEvents = asyncHandler(async (req: Request, res: Response) => {
   });
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Events fetched successfully.");
-});
+};
 
-const readEvent = asyncHandler(async (req: Request, res: Response) => {
+const readEvent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const event = await eventService.readEvent(req.params.eventId as string, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, event, "Event fetched successfully.");
-});
+};
 
-const updateEvent = asyncHandler(async (req: Request, res: Response) => {
+const updateEvent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const event = await eventService.updateEvent(req.params.eventId as string, req.body, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, event, "Event updated successfully.");
-});
+};
 
-const deleteEvent = asyncHandler(async (req: Request, res: Response) => {
+const deleteEvent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const event = await eventService.deleteEvent(req.params.eventId as string, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, event, "Event deleted successfully.");
-});
+};
 
-const listEventCoaches = asyncHandler(async (req: Request, res: Response) => {
+const listEventCoaches = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.listEventCoaches(req.params.eventId as string, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Event coaches fetched successfully.");
-});
+};
 
-const replaceEventCoaches = asyncHandler(async (req: Request, res: Response) => {
+const replaceEventCoaches = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.replaceEventCoaches(
     req.params.eventId as string,
@@ -112,9 +112,9 @@ const replaceEventCoaches = asyncHandler(async (req: Request, res: Response) => 
   );
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Event coaches updated successfully.");
-});
+};
 
-const removeEventCoach = asyncHandler(async (req: Request, res: Response) => {
+const removeEventCoach = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.removeEventCoach(
     req.params.eventId as string,
@@ -123,9 +123,9 @@ const removeEventCoach = asyncHandler(async (req: Request, res: Response) => {
   );
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Event coach removed successfully.");
-});
+};
 
-const getEventCoachAvailability = asyncHandler(async (req: Request, res: Response) => {
+const getEventCoachAvailability = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.getEventCoachAvailability(
     req.params.eventId as string,
@@ -138,9 +138,9 @@ const getEventCoachAvailability = asyncHandler(async (req: Request, res: Respons
     result,
     "Event coach availability fetched successfully.",
   );
-});
+};
 
-const setEventCoachAvailability = asyncHandler(async (req: Request, res: Response) => {
+const setEventCoachAvailability = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.setEventCoachAvailability(
     req.params.eventId as string,
@@ -154,16 +154,16 @@ const setEventCoachAvailability = asyncHandler(async (req: Request, res: Respons
     result,
     "Event coach availability updated successfully.",
   );
-});
+};
 
-const listEventScheduleSlots = asyncHandler(async (req: Request, res: Response) => {
+const listEventScheduleSlots = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.listEventScheduleSlots(req.params.eventId as string, caller);
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Event schedule slots fetched successfully.");
-});
+};
 
-const createEventScheduleSlot = asyncHandler(async (req: Request, res: Response) => {
+const createEventScheduleSlot = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const slot = await eventService.createEventScheduleSlot(
     req.params.eventId as string,
@@ -172,9 +172,9 @@ const createEventScheduleSlot = asyncHandler(async (req: Request, res: Response)
   );
 
   sendSuccessResponse(res, StatusCodes.CREATED, slot, "Event schedule slot created successfully.");
-});
+};
 
-const updateEventScheduleSlot = asyncHandler(async (req: Request, res: Response) => {
+const updateEventScheduleSlot = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const slot = await eventService.updateEventScheduleSlot(
     req.params.eventId as string,
@@ -184,9 +184,9 @@ const updateEventScheduleSlot = asyncHandler(async (req: Request, res: Response)
   );
 
   sendSuccessResponse(res, StatusCodes.OK, slot, "Event schedule slot updated successfully.");
-});
+};
 
-const deleteEventScheduleSlot = asyncHandler(async (req: Request, res: Response) => {
+const deleteEventScheduleSlot = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const slot = await eventService.deleteEventScheduleSlot(
     req.params.eventId as string,
@@ -195,9 +195,9 @@ const deleteEventScheduleSlot = asyncHandler(async (req: Request, res: Response)
   );
 
   sendSuccessResponse(res, StatusCodes.OK, slot, "Event schedule slot deleted successfully.");
-});
+};
 
-const cancelEventScheduleSlot = asyncHandler(async (req: Request, res: Response) => {
+const cancelEventScheduleSlot = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const slot = await eventService.cancelEventScheduleSlot(
     req.params.eventId as string,
@@ -206,9 +206,9 @@ const cancelEventScheduleSlot = asyncHandler(async (req: Request, res: Response)
   );
 
   sendSuccessResponse(res, StatusCodes.OK, slot, "Event schedule slot cancelled successfully.");
-});
+};
 
-const getCoachAvailabilityForSlot = asyncHandler(async (req: Request, res: Response) => {
+const getCoachAvailabilityForSlot = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.getCoachAvailabilityForSlot(
     req.params.eventId as string,
@@ -216,9 +216,9 @@ const getCoachAvailabilityForSlot = asyncHandler(async (req: Request, res: Respo
     caller,
   );
   sendSuccessResponse(res, StatusCodes.OK, result, "Coach availability fetched.");
-});
+};
 
-const getCoachAvailabilityForProposedSlot = asyncHandler(async (req: Request, res: Response) => {
+const getCoachAvailabilityForProposedSlot = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const { startTime, endTime, excludeSlotId } = req.query as Record<string, string>;
   if (!startTime || !endTime || isNaN(Date.parse(startTime)) || isNaN(Date.parse(endTime))) {
@@ -235,9 +235,9 @@ const getCoachAvailabilityForProposedSlot = asyncHandler(async (req: Request, re
     caller,
   );
   sendSuccessResponse(res, StatusCodes.OK, result, "Coach availability fetched.");
-});
+};
 
-const revealCoachForSlot = asyncHandler(async (req: Request, res: Response) => {
+const revealCoachForSlot = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const slot = await eventService.revealCoachForSlot(
     req.params.eventId as string,
@@ -246,9 +246,9 @@ const revealCoachForSlot = asyncHandler(async (req: Request, res: Response) => {
     caller,
   );
   sendSuccessResponse(res, StatusCodes.OK, slot, "Coach reveal sent successfully.");
-});
+};
 
-const listAllEvents = asyncHandler(async (req: Request, res: Response) => {
+const listAllEvents = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.listAllEvents(caller, {
     page: req.query.page ? Number(req.query.page) : undefined,
@@ -256,9 +256,9 @@ const listAllEvents = asyncHandler(async (req: Request, res: Response) => {
   });
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Events fetched successfully.");
-});
+};
 
-const listSlotBookings = asyncHandler(async (req: Request, res: Response) => {
+const listSlotBookings = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.listSlotBookings(
     req.params.eventId as string,
@@ -267,9 +267,9 @@ const listSlotBookings = asyncHandler(async (req: Request, res: Response) => {
   );
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Slot bookings fetched successfully.");
-});
+};
 
-const getSlotDebugReport = asyncHandler(async (req: Request, res: Response) => {
+const getSlotDebugReport = async (req: Request, res: Response) => {
   const { date, timezone } = req.query as Record<string, string>;
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     res
@@ -283,44 +283,9 @@ const getSlotDebugReport = asyncHandler(async (req: Request, res: Response) => {
     { timezone: timezone || undefined },
   );
   sendSuccessResponse(res, StatusCodes.OK, report, "Slot availability debug report generated.");
-});
-
-export {
-  getSlotDebugReport,
-  createEventType,
-  listEventTypes,
-  updateEventType,
-  deleteEventType,
-  getEventTypeUsage,
-  listInteractionTypes,
-  createEvent,
-  duplicateEvent,
-  createEventScheduleSlot,
-  deleteEvent,
-  deleteEventScheduleSlot,
-  cancelEventScheduleSlot,
-  listEventCoaches,
-  listEventScheduleSlots,
-  listTeamEvents,
-  listAllEvents,
-  readEvent,
-  removeEventCoach,
-  replaceEventCoaches,
-  updateEvent,
-  updateEventScheduleSlot,
-  listSlotBookings,
-  revealCoachForSlot,
-  getCoachAvailabilityForSlot,
-  getCoachAvailabilityForProposedSlot,
-  stopRecurrenceGroup,
-  resumeRecurrenceGroup,
-  getSessionLog,
-  upsertSessionLog,
-  getEventCoachAvailability,
-  setEventCoachAvailability,
 };
 
-const getSessionLog = asyncHandler(async (req: Request, res: Response) => {
+const getSessionLog = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await sessionLogService.getSessionLog(
     req.params.eventId as string,
@@ -328,9 +293,9 @@ const getSessionLog = asyncHandler(async (req: Request, res: Response) => {
     caller,
   );
   sendSuccessResponse(res, StatusCodes.OK, result, "Session log fetched successfully.");
-});
+};
 
-const upsertSessionLog = asyncHandler(async (req: Request, res: Response) => {
+const upsertSessionLog = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await sessionLogService.upsertSessionLog(
     req.params.eventId as string,
@@ -339,9 +304,9 @@ const upsertSessionLog = asyncHandler(async (req: Request, res: Response) => {
     caller,
   );
   sendSuccessResponse(res, StatusCodes.OK, result, "Session log saved successfully.");
-});
+};
 
-const stopRecurrenceGroup = asyncHandler(async (req: Request, res: Response) => {
+const stopRecurrenceGroup = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.stopRecurrenceGroup(
     req.params.eventId as string,
@@ -349,9 +314,9 @@ const stopRecurrenceGroup = asyncHandler(async (req: Request, res: Response) => 
     caller,
   );
   sendSuccessResponse(res, StatusCodes.OK, result, "Recurrence series stopped successfully.");
-});
+};
 
-const resumeRecurrenceGroup = asyncHandler(async (req: Request, res: Response) => {
+const resumeRecurrenceGroup = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.resumeRecurrenceGroup(
     req.params.eventId as string,
@@ -359,4 +324,39 @@ const resumeRecurrenceGroup = asyncHandler(async (req: Request, res: Response) =
     caller,
   );
   sendSuccessResponse(res, StatusCodes.OK, result, "Recurrence series resumed successfully.");
-});
+};
+
+export default {
+  createEvent: asyncHandler(createEvent),
+  duplicateEvent: asyncHandler(duplicateEvent),
+  createEventType: asyncHandler(createEventType),
+  listEventTypes: asyncHandler(listEventTypes),
+  updateEventType: asyncHandler(updateEventType),
+  deleteEventType: asyncHandler(deleteEventType),
+  getEventTypeUsage: asyncHandler(getEventTypeUsage),
+  listInteractionTypes: asyncHandler(listInteractionTypes),
+  listTeamEvents: asyncHandler(listTeamEvents),
+  readEvent: asyncHandler(readEvent),
+  updateEvent: asyncHandler(updateEvent),
+  deleteEvent: asyncHandler(deleteEvent),
+  listEventCoaches: asyncHandler(listEventCoaches),
+  replaceEventCoaches: asyncHandler(replaceEventCoaches),
+  removeEventCoach: asyncHandler(removeEventCoach),
+  getEventCoachAvailability: asyncHandler(getEventCoachAvailability),
+  setEventCoachAvailability: asyncHandler(setEventCoachAvailability),
+  listEventScheduleSlots: asyncHandler(listEventScheduleSlots),
+  createEventScheduleSlot: asyncHandler(createEventScheduleSlot),
+  updateEventScheduleSlot: asyncHandler(updateEventScheduleSlot),
+  deleteEventScheduleSlot: asyncHandler(deleteEventScheduleSlot),
+  cancelEventScheduleSlot: asyncHandler(cancelEventScheduleSlot),
+  getCoachAvailabilityForSlot: asyncHandler(getCoachAvailabilityForSlot),
+  getCoachAvailabilityForProposedSlot: asyncHandler(getCoachAvailabilityForProposedSlot),
+  revealCoachForSlot: asyncHandler(revealCoachForSlot),
+  listAllEvents: asyncHandler(listAllEvents),
+  listSlotBookings: asyncHandler(listSlotBookings),
+  getSlotDebugReport: asyncHandler(getSlotDebugReport),
+  getSessionLog: asyncHandler(getSessionLog),
+  upsertSessionLog: asyncHandler(upsertSessionLog),
+  stopRecurrenceGroup: asyncHandler(stopRecurrenceGroup),
+  resumeRecurrenceGroup: asyncHandler(resumeRecurrenceGroup),
+};

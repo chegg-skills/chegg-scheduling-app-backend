@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as BookingController from "./booking.controller";
+import BookingController from "./booking.controller";
 import { authenticate, optionalAuthenticate, authorize } from "../../shared/middleware/auth";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { UserRole } from "@prisma/client";

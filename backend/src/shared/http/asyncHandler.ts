@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 
-type AsyncRouteHandler = (req: Request, res: Response, next: NextFunction) => Promise<unknown>;
+// Accepts async handlers (the common case) and sync handlers alike — the
+// Promise.resolve(...) below normalizes both.
+type AsyncRouteHandler = (req: Request, res: Response, next: NextFunction) => unknown;
 
 /**
  * Wraps an async route handler so any thrown error or rejected promise is

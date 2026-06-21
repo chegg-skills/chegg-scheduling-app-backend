@@ -5,22 +5,22 @@ import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as StudentService from "./student.service";
 
-const listStudents = asyncHandler(async (req: Request, res: Response) => {
+const listStudents = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await StudentService.listStudents(caller, req.query as any);
 
   return sendSuccessResponse(res, StatusCodes.OK, result, "Students fetched successfully.");
-});
+};
 
-const readStudent = asyncHandler(async (req: Request, res: Response) => {
+const readStudent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const { studentId } = req.params;
 
   const student = await StudentService.readStudent(studentId as string, caller);
   return sendSuccessResponse(res, StatusCodes.OK, { student }, "Student fetched successfully.");
-});
+};
 
-const listStudentBookings = asyncHandler(async (req: Request, res: Response) => {
+const listStudentBookings = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const { studentId } = req.params;
 
@@ -31,9 +31,9 @@ const listStudentBookings = asyncHandler(async (req: Request, res: Response) => 
   );
 
   return sendSuccessResponse(res, StatusCodes.OK, result, "Student bookings fetched successfully.");
-});
+};
 
-const listStudentSessionLogs = asyncHandler(async (req: Request, res: Response) => {
+const listStudentSessionLogs = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const { studentId } = req.params;
 
@@ -45,18 +45,18 @@ const listStudentSessionLogs = asyncHandler(async (req: Request, res: Response) 
     { sessionLogs },
     "Student session logs fetched successfully.",
   );
-});
+};
 
-const sendEmailToStudent = asyncHandler(async (req: Request, res: Response) => {
+const sendEmailToStudent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const { studentId } = req.params;
   const { subject, body } = req.body;
 
   const log = await StudentService.sendStudentEmail(studentId as string, subject, body, caller);
   return sendSuccessResponse(res, StatusCodes.CREATED, { log }, "Email queued successfully.");
-});
+};
 
-const listStudentCommunications = asyncHandler(async (req: Request, res: Response) => {
+const listStudentCommunications = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const { studentId } = req.params;
 
@@ -67,22 +67,22 @@ const listStudentCommunications = asyncHandler(async (req: Request, res: Respons
     { logs },
     "Student communications fetched successfully.",
   );
-});
+};
 
-const retryEmailDispatch = asyncHandler(async (req: Request, res: Response) => {
+const retryEmailDispatch = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const { logId } = req.params;
 
   const log = await StudentService.retryEmailDispatch(logId as string, caller);
   return sendSuccessResponse(res, StatusCodes.OK, { log }, "Email dispatch retried successfully.");
-});
+};
 
-export {
-  listStudents,
-  readStudent,
-  listStudentBookings,
-  listStudentSessionLogs,
-  sendEmailToStudent,
-  listStudentCommunications,
-  retryEmailDispatch,
+export default {
+  listStudents: asyncHandler(listStudents),
+  readStudent: asyncHandler(readStudent),
+  listStudentBookings: asyncHandler(listStudentBookings),
+  listStudentSessionLogs: asyncHandler(listStudentSessionLogs),
+  sendEmailToStudent: asyncHandler(sendEmailToStudent),
+  listStudentCommunications: asyncHandler(listStudentCommunications),
+  retryEmailDispatch: asyncHandler(retryEmailDispatch),
 };

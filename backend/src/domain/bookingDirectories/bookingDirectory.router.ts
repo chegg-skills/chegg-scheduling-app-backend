@@ -3,7 +3,7 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { validate } from "../../shared/middleware/validate";
-import * as bookingDirectoryController from "./bookingDirectory.controller";
+import bookingDirectoryController from "./bookingDirectory.controller";
 import {
   CreateBookingDirectorySchema,
   UpdateBookingDirectorySchema,
@@ -24,7 +24,11 @@ router
     validate(CreateBookingDirectorySchema),
     bookingDirectoryController.createBookingDirectory,
   )
-  .get(authenticate, authorize(UserRole.SUPER_ADMIN), bookingDirectoryController.listBookingDirectories)
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN),
+    bookingDirectoryController.listBookingDirectories,
+  )
   .all(methodNotAllowed);
 
 router

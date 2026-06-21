@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
+import { asyncHandler } from "../../shared/http/asyncHandler";
 import { ConfigService } from "./config.service";
 import { getFriendlyTimezoneLabel } from "../../shared/utils/date";
 
@@ -135,7 +136,7 @@ const CURATED_IANA_TIMEZONES = [
 /**
  * Get all supported IANA timezones
  */
-export const getTimezones = (_req: Request, res: Response) => {
+const getTimezones = (_req: Request, res: Response) => {
   const timezones = CURATED_IANA_TIMEZONES.map((iana) => ({
     iana,
     label: getFriendlyTimezoneLabel(iana),
@@ -147,7 +148,7 @@ export const getTimezones = (_req: Request, res: Response) => {
 /**
  * Get all countries
  */
-export const getCountries = (_req: Request, res: Response) => {
+const getCountries = (_req: Request, res: Response) => {
   const countries = ConfigService.getCountries();
 
   return sendSuccessResponse(res, StatusCodes.OK, { countries }, "Countries fetched successfully.");
@@ -156,8 +157,14 @@ export const getCountries = (_req: Request, res: Response) => {
 /**
  * Get all languages
  */
-export const getLanguages = (_req: Request, res: Response) => {
+const getLanguages = (_req: Request, res: Response) => {
   const languages = ConfigService.getLanguages();
 
   return sendSuccessResponse(res, StatusCodes.OK, { languages }, "Languages fetched successfully.");
+};
+
+export default {
+  getTimezones: asyncHandler(getTimezones),
+  getCountries: asyncHandler(getCountries),
+  getLanguages: asyncHandler(getLanguages),
 };

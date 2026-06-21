@@ -5,7 +5,7 @@ import * as authService from "./auth.service";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import { setAuthCookie, clearAuthCookie } from "../../shared/auth/cookie";
 
-const register = asyncHandler(async (req: Request, res: Response) => {
+const register = async (req: Request, res: Response) => {
   // When self-register is enabled (public endpoint), always force role to
   // COACH — callers must not be able to self-promote to SUPER_ADMIN/TEAM_ADMIN.
   const isSelfRegister = process.env.ALLOW_SELF_REGISTER === "true";
@@ -20,23 +20,23 @@ const register = asyncHandler(async (req: Request, res: Response) => {
     { ...result, csrfToken },
     "User registered successfully.",
   );
-});
+};
 
-const login = asyncHandler(async (req: Request, res: Response) => {
+const login = async (req: Request, res: Response) => {
   const result = await authService.login(req.body);
   const csrfToken = setAuthCookie(res, result.token);
 
   sendSuccessResponse(res, StatusCodes.OK, { ...result, csrfToken }, "Login successful.");
-});
+};
 
-const logout = asyncHandler(async (_req: Request, res: Response) => {
+const logout = async (_req: Request, res: Response) => {
   const result = await authService.logout();
   clearAuthCookie(res);
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Logout successful.");
-});
+};
 
-const bootstrap = asyncHandler(async (req: Request, res: Response) => {
+const bootstrap = async (req: Request, res: Response) => {
   const result = await authService.bootstrap(req.body);
   const csrfToken = setAuthCookie(res, result.token);
   sendSuccessResponse(
@@ -45,6 +45,11 @@ const bootstrap = asyncHandler(async (req: Request, res: Response) => {
     { ...result, csrfToken },
     "Super admin created successfully. Bootstrap complete.",
   );
-});
+};
 
-export { bootstrap, login, logout, register };
+export default {
+  register: asyncHandler(register),
+  login: asyncHandler(login),
+  logout: asyncHandler(logout),
+  bootstrap: asyncHandler(bootstrap),
+};

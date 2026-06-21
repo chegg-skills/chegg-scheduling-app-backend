@@ -2,7 +2,7 @@ import express from "express";
 import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
-import * as eventController from "./event.controller";
+import eventController from "./event.controller";
 import { validate } from "../../shared/middleware/validate";
 import {
   CreateEventSchema,

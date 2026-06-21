@@ -2,8 +2,8 @@ import express from "express";
 import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
-import * as teamController from "./team.controller";
-import * as teamNotifConfigController from "./team.notificationConfig.controller";
+import teamController from "./team.controller";
+import teamNotifConfigController from "./team.notificationConfig.controller";
 import { validate } from "../../shared/middleware/validate";
 import { CreateTeamSchema, ListTeamsSchema, UpdateTeamSchema } from "./team.schema";
 import {

@@ -1,6 +1,6 @@
 import express from "express";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import * as ssoController from "./sso.controller";
+import ssoController from "./sso.controller";
 import { sensitiveLimiter } from "../../shared/middleware/rateLimit";
 
 const router = express.Router();

@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import * as availabilityController from "./availability.controller";
+import availabilityController from "./availability.controller";
 
 import { validate } from "../../shared/middleware/validate";
 import {

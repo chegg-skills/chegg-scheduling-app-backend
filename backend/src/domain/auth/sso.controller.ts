@@ -33,7 +33,7 @@ const redirectError = (res: Response, reason: string): void => {
  * GET /auth/sso/login
  * Initiates the OIDC authorization flow for regular login.
  */
-export const initiateLogin = asyncHandler(async (req: Request, res: Response) => {
+const initiateLogin = async (req: Request, res: Response) => {
   const state = generateState();
   const nonce = generateNonce();
   const expiresAt = new Date(Date.now() + SSO_STATE_TTL_MS);
@@ -44,13 +44,13 @@ export const initiateLogin = asyncHandler(async (req: Request, res: Response) =>
 
   const authUrl = await buildAuthorizationUrl(state, nonce);
   res.redirect(authUrl);
-});
+};
 
 /**
  * GET /auth/sso/accept-invite?token=<inviteToken>
  * Initiates the OIDC flow for accepting an SSO-required invite.
  */
-export const initiateInviteAcceptance = asyncHandler(async (req: Request, res: Response) => {
+const initiateInviteAcceptance = async (req: Request, res: Response) => {
   const inviteToken = req.query.token as string | undefined;
 
   if (!inviteToken) {
@@ -87,14 +87,14 @@ export const initiateInviteAcceptance = asyncHandler(async (req: Request, res: R
 
   const authUrl = await buildAuthorizationUrl(state, nonce);
   res.redirect(authUrl);
-});
+};
 
 /**
  * GET /auth/sso/callback
  * Handles the OIDC provider callback after user authentication.
  * Routes to new-user provisioning (invite path) or existing-user login.
  */
-export const handleCallback = asyncHandler(async (req: Request, res: Response) => {
+const handleCallback = async (req: Request, res: Response) => {
   const stateParam = req.query.state as string | undefined;
 
   if (!stateParam) {
@@ -142,7 +142,7 @@ export const handleCallback = asyncHandler(async (req: Request, res: Response) =
     getRequestLogger().error({ error }, "SSO callback failed.");
     throw error; // asyncHandler forwards to the global errorHandler
   }
-});
+};
 
 type OidcUserInfoPartial = {
   given_name?: string;
@@ -284,3 +284,9 @@ async function handleExistingUserLogin(
   setAuthCookie(res, token);
   res.redirect(`${getFrontendUrl()}/dashboard`);
 }
+
+export default {
+  initiateLogin: asyncHandler(initiateLogin),
+  initiateInviteAcceptance: asyncHandler(initiateInviteAcceptance),
+  handleCallback: asyncHandler(handleCallback),
+};

@@ -1,12 +1,17 @@
 import express from "express";
 import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import * as inviteController from "./invite.controller";
+import inviteController from "./invite.controller";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { sensitiveLimiter } from "../../shared/middleware/rateLimit";
 
 import { validate } from "../../shared/middleware/validate";
-import { CreateInviteSchema, AcceptInviteSchema, ValidateInviteSchema, ListInvitesSchema } from "./invite.schema";
+import {
+  CreateInviteSchema,
+  AcceptInviteSchema,
+  ValidateInviteSchema,
+  ListInvitesSchema,
+} from "./invite.schema";
 
 const router = express.Router();
 

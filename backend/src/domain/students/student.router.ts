@@ -2,7 +2,7 @@ import express from "express";
 import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
-import * as studentController from "./student.controller";
+import studentController from "./student.controller";
 
 import { validate } from "../../shared/middleware/validate";
 import {

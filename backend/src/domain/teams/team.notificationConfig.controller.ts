@@ -5,7 +5,7 @@ import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as service from "./team.notificationConfig.service";
 
-export const getNotificationConfig = asyncHandler(async (req: Request, res: Response) => {
+const getNotificationConfig = async (req: Request, res: Response) => {
   const { teamId } = req.params;
   const caller = res.locals.authUser as CallerContext;
   const config = await service.getNotificationConfig(teamId as string, caller);
@@ -15,9 +15,9 @@ export const getNotificationConfig = asyncHandler(async (req: Request, res: Resp
     config,
     "Notification configuration fetched successfully.",
   );
-});
+};
 
-export const upsertNotificationConfig = asyncHandler(async (req: Request, res: Response) => {
+const upsertNotificationConfig = async (req: Request, res: Response) => {
   const { teamId } = req.params;
   const caller = res.locals.authUser as CallerContext;
   const config = await service.upsertNotificationConfig(teamId as string, req.body, caller);
@@ -27,4 +27,9 @@ export const upsertNotificationConfig = asyncHandler(async (req: Request, res: R
     config,
     "Notification configuration updated successfully.",
   );
-});
+};
+
+export default {
+  getNotificationConfig: asyncHandler(getNotificationConfig),
+  upsertNotificationConfig: asyncHandler(upsertNotificationConfig),
+};

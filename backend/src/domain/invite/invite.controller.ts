@@ -15,7 +15,7 @@ import {
  * POST /api/invites
  * Admin sends invite to a user with a specific role.
  */
-const createInvite = asyncHandler(async (req: Request, res: Response) => {
+const createInvite = async (req: Request, res: Response) => {
   const adminId = res.locals.authUser?.id as string;
   const callerRole = res.locals.authUser?.role as UserRole;
 
@@ -49,9 +49,9 @@ const createInvite = asyncHandler(async (req: Request, res: Response) => {
     },
     "Invite sent successfully.",
   );
-});
+};
 
-const acceptInvite = asyncHandler(async (req: Request, res: Response) => {
+const acceptInvite = async (req: Request, res: Response) => {
   const result = await inviteService.acceptInvite(req.body);
 
   const csrfToken = setAuthCookie(res, result.token);
@@ -69,29 +69,35 @@ const acceptInvite = asyncHandler(async (req: Request, res: Response) => {
     { user: result.user, token: result.token, csrfToken },
     "Invite accepted. Account created and logged in.",
   );
-});
+};
 
-const validateInvite = asyncHandler(async (req: Request, res: Response) => {
+const validateInvite = async (req: Request, res: Response) => {
   const result = await inviteService.validateInvite(req.body.token as string);
   sendSuccessResponse(res, StatusCodes.OK, result, "Invite validation result.");
-});
+};
 
-const listInvites = asyncHandler(async (req: Request, res: Response) => {
+const listInvites = async (req: Request, res: Response) => {
   const callerId = res.locals.authUser?.id as string;
   const callerRole = res.locals.authUser?.role as UserRole;
   const query = ListInvitesSchema.query.parse(req.query);
 
   const result = await inviteService.listInvites(query, callerId, callerRole);
   sendSuccessResponse(res, StatusCodes.OK, result, "Invites retrieved successfully.");
-});
+};
 
-const revokeInvite = asyncHandler(async (req: Request, res: Response) => {
+const revokeInvite = async (req: Request, res: Response) => {
   const callerId = res.locals.authUser?.id as string;
   const callerRole = res.locals.authUser?.role as UserRole;
   const { id } = req.params as { id: string };
 
   const result = await inviteService.revokeInvite(id, callerId, callerRole);
   sendSuccessResponse(res, StatusCodes.OK, result, "Invite revoked successfully.");
-});
+};
 
-export { createInvite, acceptInvite, validateInvite, listInvites, revokeInvite };
+export default {
+  createInvite: asyncHandler(createInvite),
+  acceptInvite: asyncHandler(acceptInvite),
+  validateInvite: asyncHandler(validateInvite),
+  listInvites: asyncHandler(listInvites),
+  revokeInvite: asyncHandler(revokeInvite),
+};
