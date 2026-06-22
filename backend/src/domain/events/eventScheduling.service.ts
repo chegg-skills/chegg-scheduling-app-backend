@@ -294,7 +294,9 @@ const createEventScheduleSlot = async (
 
     const firstSlot = await prisma.$transaction(async (tx) => {
       let coachAssignments: (string | null)[];
-      if (isRoundRobinGroup && !validated.assignedCoachId && event.coaches.length > 0) {
+      // Round-robin is the source of truth for a series: rotate across coaches and
+      // ignore any supplied override, which would otherwise pin every slot to one coach.
+      if (isRoundRobinGroup && event.coaches.length > 0) {
         coachAssignments = await resolveRoundRobinSequence(tx, eventId, event.coaches, startDates.length);
       } else {
         coachAssignments = startDates.map(() => validated.assignedCoachId ?? null);

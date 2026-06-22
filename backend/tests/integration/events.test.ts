@@ -952,6 +952,59 @@ describe("Event scheduling routes", () => {
     expect(availRes.body.data.slots).toHaveLength(2);
   });
 
+  it("ignores a series-level override coach for ROUND_ROBIN events and rotates instead", async () => {
+    const eventType = await createEventType(context.superAdminToken, {
+      key: uniqueValue("rr-series-offering"),
+      name: "RR Series Offering",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "RR Series Event",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+      minimumNoticeMinutes: 0,
+    });
+    const eventId = event.body.data.id as string;
+
+    // Two coaches in the pool, ordered.
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        coaches: [
+          { userId: context.coachOneId, coachOrder: 1 },
+          { userId: context.coachTwoId, coachOrder: 2 },
+        ],
+      });
+
+    const sunday = getNextUtcWeekdayAt(0, 10);
+
+    // Create a 4-occurrence series with an explicit override coach. Round-robin should
+    // ignore the override and rotate across the pool rather than pinning every slot.
+    const createRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: sunday.toISOString(),
+        endTime: new Date(sunday.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+        assignedCoachId: context.coachOneId,
+        recurrence: { frequency: "WEEKLY", occurrences: 4 },
+      });
+    expect(createRes.status).toBe(201);
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    const assignedIds = listRes.body.data.slots.map((s: any) => s.assignedCoachId);
+
+    // Both coaches appear — the override did not pin all four slots to coach one.
+    expect(assignedIds).toContain(context.coachOneId);
+    expect(assignedIds).toContain(context.coachTwoId);
+    expect(new Set(assignedIds).size).toBe(2);
+  });
+
   it("blocks deletion of a schedule slot with active bookings", async () => {
     const eventType = await createEventType(context.superAdminToken);
     const event = await createEvent(context.teamId, context.teamAdminToken, {
