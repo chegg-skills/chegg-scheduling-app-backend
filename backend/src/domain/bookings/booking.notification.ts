@@ -150,12 +150,15 @@ const queueStudentReminderByOffset = async (
   isAnonymous = false,
 ): Promise<boolean> => {
   const type = isAnonymous ? OFFSET_TO_ANONYMOUS_TYPE[offsetMinutes] : OFFSET_TO_TYPE[offsetMinutes];
-  if (!type) return false;
+  // Nothing to schedule (unknown offset or send time already passed) is success,
+  // not a publish failure — returning false here would make the outbox worker
+  // retry and eventually dead-letter a booking that actually delivered fine.
+  if (!type) return true;
 
   const sendAt = buildReminderSendAt(new Date(booking.startTime), offsetMinutes);
 
   if (!sendAt) {
-    return false;
+    return true;
   }
 
   return publishNotificationSafely({
@@ -180,15 +183,19 @@ const queueCoachPoolRemindersForSlot = async (
   eventId: string,
   slotStartTime: Date,
   config: ResolvedNotificationConfig,
-): Promise<void> => {
+): Promise<boolean> => {
+  const results: boolean[] = [];
+
   // Cancel all existing pool reminders for this slot
-  await publishNotificationSafely({
-    type: "CANCEL_BOOKING_REMINDERS",
-    recipients: "",
-    entityType: "scheduleSlot",
-    entityId: slotId,
-    metadata: { slotId },
-  });
+  results.push(
+    await publishNotificationSafely({
+      type: "CANCEL_BOOKING_REMINDERS",
+      recipients: "",
+      entityType: "scheduleSlot",
+      entityId: slotId,
+      metadata: { slotId },
+    }),
+  );
 
   // Count active bookings remaining on this slot
   const activeCount = await prisma.booking.count({
@@ -198,7 +205,7 @@ const queueCoachPoolRemindersForSlot = async (
     },
   });
 
-  if (activeCount === 0 || config.poolReminderOffsets.length === 0) return;
+  if (activeCount === 0 || config.poolReminderOffsets.length === 0) return results.every(Boolean);
 
   // Fetch the event coach pool
   const coaches = await prisma.eventCoach.findMany({
@@ -212,24 +219,28 @@ const queueCoachPoolRemindersForSlot = async (
       const sendAt = buildReminderSendAt(slotStartTime, offsetMinutes);
       if (!sendAt) continue;
 
-      await publishNotificationSafely({
-        type: "ANONYMOUS_BOOKING_POOL_REMINDER",
-        recipients: coach.coachUser.email,
-        userId: coach.coachUserId,
-        variables: {
-          confirmedCount: activeCount,
-          startTime: formatNotificationDate(slotStartTime, coach.coachUser.timezone || "UTC"),
-          timezone: getFriendlyTimezoneLabel(coach.coachUser.timezone || "UTC"),
-        },
-        sendAt,
-        notificationKey: `slot:${slotId}:pool:${coach.coachUserId}:${offsetMinutes}`,
-        entityType: "scheduleSlot",
-        entityId: slotId,
-        recipientRole: "COACH",
-        metadata: { slotId, offsetMinutes, confirmedCount: activeCount },
-      });
+      results.push(
+        await publishNotificationSafely({
+          type: "ANONYMOUS_BOOKING_POOL_REMINDER",
+          recipients: coach.coachUser.email,
+          userId: coach.coachUserId,
+          variables: {
+            confirmedCount: activeCount,
+            startTime: formatNotificationDate(slotStartTime, coach.coachUser.timezone || "UTC"),
+            timezone: getFriendlyTimezoneLabel(coach.coachUser.timezone || "UTC"),
+          },
+          sendAt,
+          notificationKey: `slot:${slotId}:pool:${coach.coachUserId}:${offsetMinutes}`,
+          entityType: "scheduleSlot",
+          entityId: slotId,
+          recipientRole: "COACH",
+          metadata: { slotId, offsetMinutes, confirmedCount: activeCount },
+        }),
+      );
     }
   }
+
+  return results.every(Boolean);
 };
 
 export const notifyPoolOfSlotCancellation = async (
@@ -279,15 +290,17 @@ export const notifyPoolOfSlotCancellation = async (
 const queueBookingReminderNotifications = async (
   booking: SafeBooking,
   config: ResolvedNotificationConfig,
-): Promise<void> => {
-  if (config.reminderOffsets.length === 0) return;
+): Promise<boolean> => {
+  if (config.reminderOffsets.length === 0) return true;
 
   try {
-    await Promise.all(
+    const results = await Promise.all(
       config.reminderOffsets.map((offset) => queueStudentReminderByOffset(booking, offset)),
     );
+    return results.every(Boolean);
   } catch (error) {
     logger.error({ bookingId: booking.id, error }, "Failed to queue booking reminders.");
+    return false;
   }
 };
 
@@ -313,10 +326,23 @@ type BookingNotificationOpts = {
   slotRevealedAt?: Date | null;
 };
 
+/**
+ * Publishes the confirmation/assignment emails for a freshly created booking.
+ *
+ * Returns `true` only when every publish (and reminder scheduling) succeeded.
+ * The outbox worker uses this to decide whether to retry: a `false` keeps the
+ * outbox row pending. Because retries re-publish, every payload carries a stable,
+ * role-based `notificationKey` so the notification-service dedups already-sent
+ * emails (no duplicates). Keys are role-based rather than type-based so a
+ * deferred→revealed flip between attempts can't produce two student emails.
+ */
 const queueBookingCreatedNotifications = async (
   booking: SafeBooking,
   opts?: BookingNotificationOpts,
-) => {
+): Promise<boolean> => {
+  const keyFor = (role: string, recipient: string) =>
+    `booking:${booking.id}:created:${role}:${recipient}`;
+
   try {
     const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
     const config = await getTeamNotificationConfig(booking.teamId);
@@ -330,6 +356,7 @@ const queueBookingCreatedNotifications = async (
         publishNotificationSafely({
           type: "BOOKING_CONFIRMED_ANONYMOUS",
           recipients: booking.studentEmail,
+          notificationKey: keyFor("student", booking.studentEmail),
           variables: {
             studentName: studentVariables.studentName,
             eventName: studentVariables.eventName,
@@ -350,31 +377,33 @@ const queueBookingCreatedNotifications = async (
             publishNotificationSafely({
               type: "TEAM_BOOKING_CONFIRMED",
               recipients: admin.email,
+              notificationKey: keyFor("admin", admin.email),
               variables: await getBookingNotificationVariables(booking, admin.timezone),
             }),
           );
         }
       }
 
-      await Promise.all(publishTasks);
+      const confirmResults = await Promise.all(publishTasks);
 
       // Queue anonymous student reminders
-      await Promise.all(
+      const reminderResults = await Promise.all(
         config.reminderOffsets.map((offset) =>
           queueStudentReminderByOffset(booking, offset, true),
         ),
       );
 
       // Refresh slot-level pool reminders with updated participant count
+      let poolOk = true;
       if (booking.scheduleSlotId) {
-        await queueCoachPoolRemindersForSlot(
+        poolOk = await queueCoachPoolRemindersForSlot(
           booking.scheduleSlotId,
           booking.eventId,
           new Date(booking.startTime),
           config,
         );
       }
-      return;
+      return confirmResults.every(Boolean) && reminderResults.every(Boolean) && poolOk;
     }
 
     const coachVariables = await getBookingNotificationVariables(
@@ -387,6 +416,7 @@ const queueBookingCreatedNotifications = async (
         type: isDeferredReveal ? "BOOKING_CONFIRMED_DEFERRED" : "BOOKING_CONFIRMED",
         recipients: booking.studentEmail,
         userId: booking.coachUserId ?? undefined,
+        notificationKey: keyFor("student", booking.studentEmail),
         variables: isDeferredReveal
           ? {
               studentName: studentVariables.studentName,
@@ -407,6 +437,7 @@ const queueBookingCreatedNotifications = async (
           type: "COACH_BOOKING_ASSIGNED",
           recipients: booking.coach.email,
           userId: booking.coach.id,
+          notificationKey: keyFor("coach", booking.coach.email),
           variables: coachVariables,
         }),
       );
@@ -420,6 +451,7 @@ const queueBookingCreatedNotifications = async (
             type: "TEAM_BOOKING_CONFIRMED",
             recipients: admin.email,
             userId: booking.coachUserId ?? undefined,
+            notificationKey: keyFor("admin", admin.email),
             variables: await getBookingNotificationVariables(booking, admin.timezone),
           }),
         );
@@ -439,6 +471,7 @@ const queueBookingCreatedNotifications = async (
               type: "COACH_BOOKING_COCOACH_ASSIGNED",
               recipients: coHost.email,
               userId: coHost.id,
+              notificationKey: keyFor("cocoach", coHost.email),
               variables: await getBookingNotificationVariables(booking, coHost.timezone),
             }),
           );
@@ -446,12 +479,14 @@ const queueBookingCreatedNotifications = async (
       }
     }
 
-    await Promise.all(publishTasks);
-    if (!isDeferredReveal) {
-      await queueBookingReminderNotifications(booking, config);
-    }
+    const confirmResults = await Promise.all(publishTasks);
+    const remindersOk = isDeferredReveal
+      ? true
+      : await queueBookingReminderNotifications(booking, config);
+    return confirmResults.every(Boolean) && remindersOk;
   } catch (error) {
     logger.error({ bookingId: booking.id, eventId: booking.eventId, error }, "Failed to queue booking creation notifications.");
+    return false;
   }
 };
 

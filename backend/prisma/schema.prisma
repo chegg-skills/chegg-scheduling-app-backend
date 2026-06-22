@@ -402,6 +402,28 @@ model Booking {
   @@index([startTime, endTime])
 }
 
+/// Transactional outbox for ALL notifications. Every notification is enqueued
+/// here (by publishNotificationSafely) instead of going straight to RabbitMQ; a
+/// background worker publishes each row, retrying on failure. This guarantees no
+/// notification is silently lost when RabbitMQ is unavailable.
+model OutboxNotification {
+  id              String    @id @default(cuid())
+  type            String // notification type — denormalized for inspection
+  payload         Json // the full NotificationPayload
+  notificationKey String? // denormalized from payload, for inspection
+  entityType      String?
+  entityId        String?
+  createdAt       DateTime  @default(now())
+  claimedAt       DateTime? // lease marker for multi-worker FOR UPDATE SKIP LOCKED claim
+  processedAt     DateTime?
+  deadLetteredAt  DateTime?
+  attempts        Int       @default(0)
+  lastError       String?
+
+  @@index([processedAt, deadLetteredAt, attempts, claimedAt])
+  @@index([processedAt, createdAt]) // retention cleanup
+}
+
 model TeamNotificationConfig {
   id                        String   @id @default(uuid())
   teamId                    String   @unique

@@ -9,6 +9,21 @@ export async function createOrUpsertNotification(
 ): Promise<Notification | null> {
   try {
     if (data.notificationKey) {
+      // Idempotency: if this notification was already delivered (or cancelled),
+      // return it untouched so the caller's skip-if-SENT check fires. The upsert
+      // below would otherwise reset `status` back to PENDING on a re-delivery
+      // (e.g. an outbox retry), causing a duplicate email to be sent.
+      const existing = await prisma.notification.findUnique({
+        where: { notificationKey: data.notificationKey },
+      });
+      if (
+        existing &&
+        (existing.status === NotificationStatus.SENT ||
+          existing.status === NotificationStatus.CANCELLED)
+      ) {
+        return existing;
+      }
+
       const record = await prisma.notification.upsert({
         where: { notificationKey: data.notificationKey },
         create: data,
