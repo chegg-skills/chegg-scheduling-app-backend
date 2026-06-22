@@ -245,7 +245,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         start,
       );
 
-      return createBookingRecord(tx, {
+      const bookingRecord = await createBookingRecord(tx, {
         studentId: student.id,
         scheduleSlotId: scheduleSlot?.id ?? null,
         studentName: normalizedStudentName,
@@ -267,6 +267,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         meetingJoinUrl,
         status: BookingStatus.CONFIRMED,
       });
+
+      return bookingRecord;
     },
     { timeout: 15000 },
   );
@@ -293,6 +295,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     return null;
   })();
 
+  // Notifications are enqueued into the outbox by publishNotificationSafely and
+  // published by the outbox worker, so they survive a RabbitMQ outage.
   void queueBookingCreatedNotifications(booking, { slotRevealedAt });
 
   return booking;
@@ -705,7 +709,7 @@ const bookFollowUpSession = async (
         },
       );
 
-      return createBookingRecord(tx, {
+      const bookingRecord = await createBookingRecord(tx, {
         studentId: student.id,
         scheduleSlotId: scheduleSlot?.id ?? null,
         studentName: originalBooking.studentName,
@@ -728,6 +732,8 @@ const bookFollowUpSession = async (
         meetingJoinUrl,
         status: BookingStatus.CONFIRMED,
       });
+
+      return bookingRecord;
     },
     { timeout: 15000 },
   );

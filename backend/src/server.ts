@@ -10,6 +10,7 @@ import { prisma } from "./shared/db/prisma";
 import { logger } from "./shared/logging/logger";
 import { getOidcClient } from "./shared/auth/oidcClient";
 import { startFeedbackConsumer } from "./shared/notifications/communication.feedback";
+import { startOutboxWorker } from "./shared/notifications/outbox.worker";
 
 const validateEnv = (): void => {
   const required = ["DATABASE_URL", "JWT_SECRET"];
@@ -48,6 +49,10 @@ const start = async (): Promise<void> => {
   // Start the background RabbitMQ consumer to process delivery feedback status
   await startFeedbackConsumer();
 
+  // Start the transactional-outbox worker that publishes booking notifications
+  // to RabbitMQ, retrying on failure so emails survive a RabbitMQ outage.
+  const stopOutboxWorker = startOutboxWorker();
+
   // Verify DB is reachable before accepting traffic — fail fast rather than serving requests
   // that immediately hit connection errors.
   try {
@@ -66,6 +71,7 @@ const start = async (): Promise<void> => {
 
   const shutdown = (signal: string) => {
     logger.info({ signal }, "Shutdown signal received.");
+    stopOutboxWorker();
     server.close(async () => {
       logger.info("HTTP server closed. Disconnecting database...");
       await prisma.$disconnect();

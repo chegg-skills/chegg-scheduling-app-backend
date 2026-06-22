@@ -1,4 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { logger } from "../logging/logger";
+import { prisma } from "../db/prisma";
+import { triggerOutboxProcessing } from "./outbox.signal";
 
 type NotificationType =
   | "USER_INVITED"
@@ -177,13 +180,40 @@ const publishNotification = async (payload: NotificationPayload): Promise<boolea
   return wasPublished;
 };
 
+/**
+ * Enqueue a notification into the transactional outbox instead of publishing
+ * directly to RabbitMQ. The outbox worker publishes each row (via the raw
+ * `publishNotification`), retrying on failure — so notifications are never
+ * silently lost during a RabbitMQ outage. Every call site already routes through
+ * here, so this single change makes all notification types reliable.
+ */
 const publishNotificationSafely = async (payload: NotificationPayload): Promise<boolean> => {
+  const recipients = normalizeRecipients(payload.recipients);
+  const isControlMessage = CONTROL_MESSAGE_TYPES.has(payload.type);
+
+  // Same skip conditions as a direct publish: no-op in test / when notifications
+  // are disabled / when a non-control message has no recipients. Preserves
+  // existing test behaviour (nothing is enqueued) and disabled-notification setups.
+  if (!notificationsEnabled() || (!recipients && !isControlMessage)) {
+    return false;
+  }
+
   try {
-    return await publishNotification(payload);
+    await prisma.outboxNotification.create({
+      data: {
+        type: payload.type,
+        payload: payload as unknown as Prisma.InputJsonValue,
+        notificationKey: payload.notificationKey ?? null,
+        entityType: payload.entityType ?? null,
+        entityId: payload.entityId ?? null,
+      },
+    });
+    triggerOutboxProcessing();
+    return true;
   } catch (error) {
     logger.error(
       { type: payload.type, entityType: payload.entityType, entityId: payload.entityId, error },
-      "Failed to publish notification job.",
+      "Failed to enqueue notification.",
     );
     return false;
   }

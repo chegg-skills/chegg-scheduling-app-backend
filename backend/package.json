@@ -18,6 +18,8 @@
     "seed:demo:reset": "RESET_DEMO_DATA=true tsx src/scripts/ops/populate-data.ts",
     "sync:enums": "tsx src/scripts/ops/sync-shared-enums.ts",
     "db:update-session-descriptions": "tsx src/scripts/ops/update-session-type-descriptions.ts",
+    "outbox:inspect": "tsx src/scripts/ops/resetOutbox.ts inspect",
+    "outbox:reset": "tsx src/scripts/ops/resetOutbox.ts reset",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:unit": "jest --runInBand --testPathPattern=tests/unit",
