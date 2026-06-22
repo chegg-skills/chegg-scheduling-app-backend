@@ -3,7 +3,7 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { validate } from "../../shared/middleware/validate";
-import * as eventGroupController from "./eventGroup.controller";
+import eventGroupController from "./eventGroup.controller";
 import {
   CreateEventGroupSchema,
   EventGroupParamsSchema,

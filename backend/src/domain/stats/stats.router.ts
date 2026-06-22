@@ -1,6 +1,6 @@
 import express from "express";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import * as statsController from "./stats.controller";
+import statsController from "./stats.controller";
 
 import { validate } from "../../shared/middleware/validate";
 import { StatsQuerySchema } from "./stats.schema";

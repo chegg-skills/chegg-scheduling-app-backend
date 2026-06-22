@@ -3,8 +3,8 @@ import { UserRole } from "@prisma/client";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { validate } from "../../shared/middleware/validate";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import * as controller from "./systemSetting.controller";
-import * as bookingQuestionController from "./bookingQuestion.controller";
+import controller from "./systemSetting.controller";
+import bookingQuestionController from "./bookingQuestion.controller";
 import { UpdateSystemSettingsSchema } from "./systemSetting.schema";
 import { CreateBookingQuestionSchema, UpdateBookingQuestionSchema } from "./bookingQuestion.schema";
 
@@ -23,7 +23,11 @@ router
 
 router
   .route("/booking-questions")
-  .get(authenticate, authorize(UserRole.SUPER_ADMIN), bookingQuestionController.listDefaultQuestionsController)
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN),
+    bookingQuestionController.listDefaultQuestionsController,
+  )
   .post(
     authenticate,
     authorize(UserRole.SUPER_ADMIN),
@@ -40,7 +44,11 @@ router
     validate(UpdateBookingQuestionSchema),
     bookingQuestionController.updateDefaultQuestionController,
   )
-  .delete(authenticate, authorize(UserRole.SUPER_ADMIN), bookingQuestionController.deleteDefaultQuestionController)
+  .delete(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN),
+    bookingQuestionController.deleteDefaultQuestionController,
+  )
   .all(methodNotAllowed);
 
 export default router;

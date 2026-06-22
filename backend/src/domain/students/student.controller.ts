@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { asyncHandler } from "../../shared/http/asyncHandler";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
@@ -76,12 +77,12 @@ const retryEmailDispatch = async (req: Request, res: Response) => {
   return sendSuccessResponse(res, StatusCodes.OK, { log }, "Email dispatch retried successfully.");
 };
 
-export {
-  listStudents,
-  readStudent,
-  listStudentBookings,
-  listStudentSessionLogs,
-  sendEmailToStudent,
-  listStudentCommunications,
-  retryEmailDispatch,
+export default {
+  listStudents: asyncHandler(listStudents),
+  readStudent: asyncHandler(readStudent),
+  listStudentBookings: asyncHandler(listStudentBookings),
+  listStudentSessionLogs: asyncHandler(listStudentSessionLogs),
+  sendEmailToStudent: asyncHandler(sendEmailToStudent),
+  listStudentCommunications: asyncHandler(listStudentCommunications),
+  retryEmailDispatch: asyncHandler(retryEmailDispatch),
 };
