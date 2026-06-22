@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Stack from '@mui/material/Stack'
+import Tooltip from '@mui/material/Tooltip'
 import { Plus, CalendarRange } from 'lucide-react'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import type { EventCoach, TeamMember, SetWeeklyAvailabilityDto } from '@/types'
@@ -47,6 +48,7 @@ export function EventCoachManager({
   const [showBulkScheduleDialog, setShowBulkScheduleDialog] = useState(false)
   const [addCoachError, setAddCoachError] = useState<string | null>(null)
   const [isSavingAvailability, setIsSavingAvailability] = useState(false)
+  const [selectedCoachIds, setSelectedCoachIds] = useState<Set<string>>(new Set())
   const showAddModal = showAddModalOverride || localShowAddModal
   const { handleAction } = useAsyncAction()
   const queryClient = useQueryClient()
@@ -56,6 +58,32 @@ export function EventCoachManager({
   const { mutate: removeCoach } = useRemoveEventCoach(eventId)
 
   const activeCoaches = coachesResponse?.coaches ?? coaches
+
+  const selectable = canManage && activeCoaches.length >= 2
+
+  // Drop selected ids that are no longer in the pool (e.g. a coach was removed).
+  useEffect(() => {
+    setSelectedCoachIds((prev) => {
+      const valid = new Set(activeCoaches.map((c) => c.coachUserId))
+      const next = new Set([...prev].filter((id) => valid.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [activeCoaches])
+
+  const toggleCoach = (coachUserId: string) => {
+    setSelectedCoachIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(coachUserId)) next.delete(coachUserId)
+      else next.add(coachUserId)
+      return next
+    })
+  }
+
+  const toggleAllCoaches = (checked: boolean) => {
+    setSelectedCoachIds(checked ? new Set(activeCoaches.map((c) => c.coachUserId)) : new Set())
+  }
+
+  const selectedCoaches = activeCoaches.filter((c) => selectedCoachIds.has(c.coachUserId))
 
   const currentCoachUserIds = new Set(activeCoaches.map((c) => c.coachUserId))
   const eligibleCount = teamMembers.filter(
@@ -144,15 +172,22 @@ export function EventCoachManager({
           action={
             canManage && (
               <Stack direction="row" spacing={1}>
-                {activeCoaches.length >= 2 && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    startIcon={<CalendarRange size={16} />}
-                    onClick={() => setShowBulkScheduleDialog(true)}
-                  >
-                    Bulk set schedule
-                  </Button>
+                {selectable && (
+                  <Tooltip title={selectedCoaches.length === 0 ? 'Select coaches first' : ''}>
+                    <span>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        startIcon={<CalendarRange size={16} />}
+                        disabled={selectedCoaches.length === 0}
+                        onClick={() => setShowBulkScheduleDialog(true)}
+                      >
+                        {selectedCoaches.length > 0
+                          ? `Bulk set schedule (${selectedCoaches.length})`
+                          : 'Bulk set schedule'}
+                      </Button>
+                    </span>
+                  </Tooltip>
                 )}
                 {eligibleCount > 0 && (
                   <Button
@@ -181,13 +216,18 @@ export function EventCoachManager({
         onRemove={handleRemove}
         onViewUser={onViewUser}
         canManage={canManage}
+        selectable={selectable}
+        selectedCoachIds={selectedCoachIds}
+        onToggleCoach={toggleCoach}
+        onToggleAll={toggleAllCoaches}
       />
 
       <BulkCoachAvailabilityDialog
         isOpen={showBulkScheduleDialog}
         onClose={() => setShowBulkScheduleDialog(false)}
         eventId={eventId}
-        coaches={activeCoaches}
+        coaches={selectedCoaches}
+        onApplied={() => setSelectedCoachIds(new Set())}
       />
 
       <Modal

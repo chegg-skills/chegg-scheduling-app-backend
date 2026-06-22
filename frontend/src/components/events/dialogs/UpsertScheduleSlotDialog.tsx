@@ -59,6 +59,11 @@ export function UpsertScheduleSlotDialog({
     isValid,
   } = useScheduleSlotForm({ slot, isOpen })
 
+  // Under round-robin, a series-level host override would pin every generated slot
+  // to one coach and defeat rotation — so hide it while a recurrence is configured.
+  // Single slots and edits still allow a per-slot override.
+  const isRoundRobinSeries = event.assignmentStrategy === 'ROUND_ROBIN' && recurrence != null
+
   const proposedStart = newSlotDate
     ? zonedStringToUTC(newSlotDate, browserTimezone).toISOString()
     : null
@@ -93,7 +98,7 @@ export function UpsertScheduleSlotDialog({
       startTime: proposedStart,
       endTime: proposedEnd,
       capacity: !supportsMultipleParticipants ? 1 : newSlotCapacity === '' ? null : newSlotCapacity,
-      assignedCoachId,
+      assignedCoachId: isRoundRobinSeries ? null : assignedCoachId,
       recurrence,
     })
   }
@@ -208,30 +213,38 @@ export function UpsertScheduleSlotDialog({
           </Box>
         </Box>
 
-        <FormField
-          label="Override Host (Optional)"
-          htmlFor="slot-coach"
-          info={
-            event.assignmentStrategy === 'ROUND_ROBIN'
-              ? 'If specified, this coach overrides the automatic round-robin assignment for this slot. Leave blank to let the system pick the next coach in rotation.'
-              : 'If specified, this coach will host this specific session. Leave blank to use the event lead. Availability is checked against the selected session time.'
-          }
-        >
-          <SearchableCoachAvailabilityList
-            id="slot-coach"
-            coaches={coachList}
-            selectedCoachId={assignedCoachId ?? ''}
-            onSelectCoach={(id) => setAssignedCoachId(id || null)}
-            preAssignedCoachId={slot?.assignedCoachId ?? null}
-            isLoading={isLoadingAvailability && !!newSlotDate}
-          />
-          {noCoachesConfigured && !assignedCoachId && (
-            <Alert severity="warning" sx={{ mt: 1, borderRadius: 1.5 }}>
-              No coaches are assigned to this event. Students will not be able to book this slot
-              until at least one coach is added to the event.
-            </Alert>
-          )}
-        </FormField>
+        {isRoundRobinSeries ? (
+          <Alert severity="info" sx={{ borderRadius: 1.5 }}>
+            Hosts are assigned automatically via round-robin rotation across the series. To pin a
+            specific host, add a single (non-recurring) session or edit an individual slot
+            afterward.
+          </Alert>
+        ) : (
+          <FormField
+            label="Override Host (Optional)"
+            htmlFor="slot-coach"
+            info={
+              event.assignmentStrategy === 'ROUND_ROBIN'
+                ? 'If specified, this coach overrides the automatic round-robin assignment for this slot. Leave blank to let the system pick the next coach in rotation.'
+                : 'If specified, this coach will host this specific session. Leave blank to use the event lead. Availability is checked against the selected session time.'
+            }
+          >
+            <SearchableCoachAvailabilityList
+              id="slot-coach"
+              coaches={coachList}
+              selectedCoachId={assignedCoachId ?? ''}
+              onSelectCoach={(id) => setAssignedCoachId(id || null)}
+              preAssignedCoachId={slot?.assignedCoachId ?? null}
+              isLoading={isLoadingAvailability && !!newSlotDate}
+            />
+            {noCoachesConfigured && !assignedCoachId && (
+              <Alert severity="warning" sx={{ mt: 1, borderRadius: 1.5 }}>
+                No coaches are assigned to this event. Students will not be able to book this slot
+                until at least one coach is added to the event.
+              </Alert>
+            )}
+          </FormField>
+        )}
 
         {mode === 'Add' && (
           <RecurrenceSelector

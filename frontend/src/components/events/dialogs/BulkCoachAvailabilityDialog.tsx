@@ -19,6 +19,8 @@ interface BulkCoachAvailabilityDialogProps {
   onClose: () => void
   eventId: string
   coaches: EventCoach[]
+  /** Called after availability is applied successfully to all coaches. */
+  onApplied?: () => void
 }
 
 export function BulkCoachAvailabilityDialog({
@@ -26,6 +28,7 @@ export function BulkCoachAvailabilityDialog({
   onClose,
   eventId,
   coaches,
+  onApplied,
 }: BulkCoachAvailabilityDialogProps) {
   const [slots, setSlots] = useState<SetWeeklyAvailabilityDto>([])
   const [isPending, setIsPending] = useState(false)
@@ -58,6 +61,7 @@ export function BulkCoachAvailabilityDialog({
       setError(`Failed to update: ${failed.join(', ')}`)
       return
     }
+    onApplied?.()
     handleClose()
   }
 
@@ -66,7 +70,7 @@ export function BulkCoachAvailabilityDialog({
       <Stack spacing={2} sx={{ mt: 1 }}>
         <Stack spacing={1.5}>
           <Typography variant="body2" color="text.secondary">
-            Apply the same custom availability to all coaches on this event.
+            Apply the same custom availability to the selected coaches.
           </Typography>
 
           <Box

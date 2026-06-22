@@ -10,6 +10,7 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Avatar from '@mui/material/Avatar'
+import Checkbox from '@mui/material/Checkbox'
 import Typography from '@mui/material/Typography'
 import Tooltip from '@mui/material/Tooltip'
 import { Trash2, Info } from 'lucide-react'
@@ -85,6 +86,11 @@ interface EventCoachTableProps {
   onRemove: (coachUserId: string, name: string) => void
   onViewUser?: (userId: string) => void
   canManage?: boolean
+  /** When true, renders a leading checkbox column for bulk selection. */
+  selectable?: boolean
+  selectedCoachIds?: Set<string>
+  onToggleCoach?: (coachUserId: string) => void
+  onToggleAll?: (checked: boolean) => void
 }
 
 export function EventCoachTable({
@@ -93,6 +99,10 @@ export function EventCoachTable({
   onRemove,
   onViewUser,
   canManage = true,
+  selectable = false,
+  selectedCoachIds,
+  onToggleCoach,
+  onToggleAll,
 }: EventCoachTableProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -103,12 +113,26 @@ export function EventCoachTable({
 
   const paginatedCoaches = coaches.slice((page - 1) * pageSize, page * pageSize)
 
+  const selectedCount = selectedCoachIds?.size ?? 0
+  const allSelected = selectable && coaches.length > 0 && selectedCount === coaches.length
+  const someSelected = selectable && selectedCount > 0 && !allSelected
+
   return (
     <>
     <TableContainer component={Paper} variant="outlined">
       <Table>
         <TableHead>
           <TableRow>
+            {selectable && (
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onChange={(e) => onToggleAll?.(e.target.checked)}
+                />
+              </TableCell>
+            )}
             {['Coach', 'Time Zone', 'Availability', 'Language', ...(canManage ? ['Actions'] : [])].map(
               (col) => {
                 const isAvailability = col === 'Availability'
@@ -163,7 +187,16 @@ export function EventCoachTable({
               const isSelf = coach.coachUser.id === currentUser?.id
               const canView = onViewUser && (!isCoach || isSelf)
               return (
-                <TableRow key={coach.id} hover>
+                <TableRow key={coach.id} hover selected={selectable && (selectedCoachIds?.has(coach.coachUserId) ?? false)}>
+                  {selectable && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={selectedCoachIds?.has(coach.coachUserId) ?? false}
+                        onChange={() => onToggleCoach?.(coach.coachUserId)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <Avatar
@@ -277,7 +310,7 @@ export function EventCoachTable({
           ) : (
             <TableRow>
               <TableCell
-                colSpan={canManage ? 5 : 4}
+                colSpan={(canManage ? 5 : 4) + (selectable ? 1 : 0)}
                 align="center"
                 sx={{ py: 3, color: 'text.secondary' }}
               >
