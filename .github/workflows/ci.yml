@@ -39,6 +39,13 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      # Reports known-vulnerable dependencies. Non-blocking for now (warn);
+      # promote to a hard failure (drop continue-on-error) once the tree is clean.
+      - name: Backend dependency audit
+        working-directory: backend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
       - name: Check for missing migrations
         working-directory: backend
         env:
@@ -67,13 +74,19 @@ jobs:
           LOG_LEVEL=warn
           EOF
 
-      - name: Test backend
+      - name: Test backend (with coverage gate)
         working-directory: backend
-        run: npm test -- --runInBand
+        run: npm run test:coverage
 
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
+
+      # Reports known-vulnerable frontend dependencies. Non-blocking for now.
+      - name: Frontend dependency audit
+        working-directory: frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Lint frontend
         working-directory: frontend

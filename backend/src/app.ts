@@ -10,6 +10,12 @@ import { errorHandler } from "./shared/error/errorhandler";
 import { logger } from "./shared/logging/logger";
 import { csrfProtection } from "./shared/middleware/csrf";
 import { attachRequestContext } from "./shared/middleware/requestContext";
+import { prisma } from "./shared/db/prisma";
+import {
+  checkRabbitHealthy,
+  type DependencyStatus,
+} from "./shared/notifications/notification.publisher";
+import { registry, metricsMiddleware } from "./shared/observability/metrics";
 import routes from "./routes/index";
 
 dotenv.config();
@@ -59,8 +65,13 @@ const httpLogger = pinoHttp({
     req: (req) => ({ method: req.method, url: req.url }),
     res: (res) => ({ statusCode: res.statusCode }),
   },
-  // Suppress health check endpoint to avoid log noise
-  autoLogging: { ignore: (req) => (req as Request).url === "/health" },
+  // Suppress health/metrics endpoints to avoid log noise
+  autoLogging: {
+    ignore: (req) => {
+      const url = (req as Request).url;
+      return url === "/health" || url === "/health/ready" || url === "/metrics";
+    },
+  },
 });
 
 const app = express();
@@ -73,10 +84,41 @@ app.use(csrfProtection);
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(httpLogger);
+app.use(metricsMiddleware);
 
+// Prometheus scrape endpoint. Optionally protected by METRICS_TOKEN (bearer).
+app.get("/metrics", async (req, res) => {
+  const token = process.env.METRICS_TOKEN;
+  if (token && req.headers.authorization !== `Bearer ${token}`) {
+    res.status(401).end();
+    return;
+  }
+  res.set("Content-Type", registry.contentType);
+  res.end(await registry.metrics());
+});
 
+// Liveness: cheap, no dependency calls — answers "is the process up?"
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Readiness: answers "can this instance serve traffic right now?" by checking its
+// dependencies. Orchestrators/load balancers should route on this so an instance
+// that loses its DB stops receiving traffic instead of serving 500s.
+app.get("/health/ready", async (_req, res) => {
+  const checks: { db: DependencyStatus; mq: DependencyStatus } = { db: "down", mq: "skipped" };
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.db = "ok";
+  } catch {
+    checks.db = "down";
+  }
+
+  checks.mq = await checkRabbitHealthy();
+
+  const ready = checks.db === "ok" && checks.mq !== "down";
+  res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "not_ready", checks });
 });
 
 app.use("/api", routes);

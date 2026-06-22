@@ -117,6 +117,31 @@ const getChannel = async () => {
   return channelPromise;
 };
 
+export type DependencyStatus = "ok" | "skipped" | "down";
+
+/**
+ * Readiness probe for RabbitMQ. Returns "skipped" when notifications are not a
+ * required dependency in this configuration (test / NOTIFICATIONS_ENABLED=false /
+ * no RABBITMQ_URL), "ok" when a channel can be established, "down" otherwise.
+ */
+export const checkRabbitHealthy = async (timeoutMs = 2000): Promise<DependencyStatus> => {
+  if (!notificationsEnabled()) {
+    return "skipped";
+  }
+
+  try {
+    await Promise.race([
+      getChannel(),
+      new Promise((_resolve, reject) =>
+        setTimeout(() => reject(new Error("rabbitmq health check timed out")), timeoutMs),
+      ),
+    ]);
+    return "ok";
+  } catch {
+    return "down";
+  }
+};
+
 const normalizeRecipients = (recipients: string | string[]): string => {
   if (Array.isArray(recipients)) {
     return recipients.filter(Boolean).join(", ");
