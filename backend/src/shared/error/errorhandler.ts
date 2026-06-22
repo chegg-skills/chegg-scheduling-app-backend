@@ -1,10 +1,22 @@
 import type { ErrorRequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ZodError } from "zod";
+import * as Sentry from "@sentry/node";
 import { logger } from "../logging/logger";
 import { sendErrorResponse } from "../http/responseHelper";
 import { MethodNotAllowedError } from "./methodNotAllowed";
 import { PathNotFoundError } from "./pathNotFound";
+import { isSentryEnabled } from "../../instrument";
+
+/** Report a genuine server-side (5xx) error to Sentry, tagged with the request id
+ *  so it lines up with the structured logs. No-op when Sentry is not configured. */
+const captureServerError = (err: unknown, requestId?: string): void => {
+  if (!isSentryEnabled()) return;
+  Sentry.withScope((scope) => {
+    if (requestId) scope.setTag("requestId", requestId);
+    Sentry.captureException(err);
+  });
+};
 
 /**
  * Standard application error class. Throw this anywhere in the service or
@@ -14,7 +26,7 @@ import { PathNotFoundError } from "./pathNotFound";
  *
  * @example
  * throw new ErrorHandler(StatusCodes.NOT_FOUND, "Event not found.");
- */
+*/
 export class ErrorHandler extends Error {
   statusCode: number;
   constructor(statusCode: number, message: string) {
@@ -78,6 +90,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       logClientError(err, requestId);
     } else {
       logger.error({ requestId, error: err }, "Unhandled application error.");
+      captureServerError(err, requestId);
     }
     return sendErrorResponse(res, err.statusCode, err.message);
   }
@@ -86,6 +99,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (frameworkStatus !== undefined) {
     if (frameworkStatus >= 500) {
       logger.error({ requestId, error: err }, "Framework request error.");
+      captureServerError(err, requestId);
     } else {
       logClientError(err as Error, requestId);
     }
@@ -93,5 +107,6 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   }
 
   logger.error({ requestId, error: err }, "Unexpected server error.");
+  captureServerError(err, requestId);
   return sendErrorResponse(res, StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error");
 };

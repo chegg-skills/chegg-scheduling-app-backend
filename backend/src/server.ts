@@ -1,3 +1,6 @@
+// Must be first: initializes Sentry (no-op without SENTRY_DSN) before other
+// modules are required so it can instrument them.
+import "./instrument";
 import dotenv from "dotenv";
 
 dotenv.config();
