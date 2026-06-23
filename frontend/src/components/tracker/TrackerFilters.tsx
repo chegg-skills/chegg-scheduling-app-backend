@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
@@ -26,10 +26,13 @@ import {
   endOfYear,
   subYears,
 } from 'date-fns'
+import { PickersDay } from '@mui/x-date-pickers/PickersDay'
+import type { PickersDayProps } from '@mui/x-date-pickers/PickersDay'
 import type { TrackerFilters as TrackerFiltersData } from '@/api/tracker'
 import { DateFilterModal, DEFAULT_TIMEFRAMES } from '@/components/shared/form/DateFilterModal'
 import type { StatsTimeframe } from '@/types'
 import { toTitleCase } from '@/utils/toTitleCase'
+import { useTrackerSessionDates } from '@/hooks/queries/useTracker'
 
 export interface TrackerFilterState {
   startDate: string
@@ -145,9 +148,79 @@ function formatPeriodDate(dateStr: string): string {
   }
 }
 
+function makeSessionDayIndicator(sessionDates: Set<string>) {
+  return function SessionDayIndicator({ day, outsideCurrentMonth, ...props }: PickersDayProps) {
+    const hasSession = !outsideCurrentMonth && sessionDates.has(format(day as Date, 'yyyy-MM-dd'))
+    return (
+      <PickersDay
+        day={day}
+        outsideCurrentMonth={outsideCurrentMonth}
+        {...props}
+        sx={{
+          position: 'relative',
+          ...(hasSession && !props.disabled && {
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: 2,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              bgcolor: props.selected ? 'common.white' : 'primary.main',
+              pointerEvents: 'none',
+            },
+          }),
+        }}
+      />
+    )
+  }
+}
+
 export function TrackerFilters({ filters, filterData, onChange }: TrackerFiltersProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const currentTimeframe = detectTimeframe(filters.startDate, filters.endDate)
+
+  const [startCalendarMonth, setStartCalendarMonth] = useState(
+    () => new Date(filters.startDate + 'T00:00:00')
+  )
+  const [endCalendarMonth, setEndCalendarMonth] = useState(
+    () => new Date(filters.endDate + 'T00:00:00')
+  )
+
+  // Sync calendar months to what the DatePicker will actually display when the modal opens.
+  // For custom ranges: the picker opens to the custom start/end months.
+  // For presets: DateFilterModal defaults customStart/customEnd to today, so the picker shows today's month.
+  useEffect(() => {
+    if (modalOpen) {
+      if (currentTimeframe.startsWith('custom:')) {
+        const parts = currentTimeframe.split(':')
+        setStartCalendarMonth(new Date(parts[1] + 'T00:00:00'))
+        setEndCalendarMonth(new Date(parts[2] + 'T00:00:00'))
+      } else {
+        const today = new Date()
+        setStartCalendarMonth(today)
+        setEndCalendarMonth(today)
+      }
+    }
+  }, [modalOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startSessionDates = useTrackerSessionDates({
+    startDate: format(startOfMonth(startCalendarMonth), 'yyyy-MM-dd'),
+    endDate: format(endOfMonth(startCalendarMonth), 'yyyy-MM-dd'),
+    teamId: filters.teamId || undefined,
+    eventId: filters.eventId || undefined,
+  })
+  const endSessionDates = useTrackerSessionDates({
+    startDate: format(startOfMonth(endCalendarMonth), 'yyyy-MM-dd'),
+    endDate: format(endOfMonth(endCalendarMonth), 'yyyy-MM-dd'),
+    teamId: filters.teamId || undefined,
+    eventId: filters.eventId || undefined,
+  })
+
+  const StartDaySlot = useMemo(() => makeSessionDayIndicator(startSessionDates), [startSessionDates])
+  const EndDaySlot = useMemo(() => makeSessionDayIndicator(endSessionDates), [endSessionDates])
 
   const handleTimeframeChange = (newTf: StatsTimeframe) => {
     const range = getTimeframeDateRange(newTf)
@@ -303,6 +376,10 @@ export function TrackerFilters({ filters, filterData, onChange }: TrackerFilters
           onClose={() => setModalOpen(false)}
           currentValue={currentTimeframe}
           onChange={handleTimeframeChange}
+          startPickerSlots={{ day: StartDaySlot }}
+          endPickerSlots={{ day: EndDaySlot }}
+          onStartMonthChange={setStartCalendarMonth}
+          onEndMonthChange={setEndCalendarMonth}
         />
       </Stack>
 

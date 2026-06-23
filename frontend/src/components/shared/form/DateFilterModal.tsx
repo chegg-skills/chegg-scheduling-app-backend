@@ -9,6 +9,10 @@ import Typography from '@mui/material/Typography'
 import { CalendarRange, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import type { PickersDayProps } from '@mui/x-date-pickers/PickersDay'
+import type { ComponentType } from 'react'
+
+type DaySlotComponent = ComponentType<PickersDayProps>
 import { format } from 'date-fns'
 import type { StatsTimeframe } from '@/types'
 
@@ -31,9 +35,22 @@ export interface DateFilterModalProps {
   onClose: () => void
   currentValue: StatsTimeframe
   onChange: (value: StatsTimeframe) => void
+  startPickerSlots?: { day?: DaySlotComponent }
+  endPickerSlots?: { day?: DaySlotComponent }
+  onStartMonthChange?: (month: Date) => void
+  onEndMonthChange?: (month: Date) => void
 }
 
-export function DateFilterModal({ open, onClose, currentValue, onChange }: DateFilterModalProps) {
+export function DateFilterModal({
+  open,
+  onClose,
+  currentValue,
+  onChange,
+  startPickerSlots,
+  endPickerSlots,
+  onStartMonthChange,
+  onEndMonthChange,
+}: DateFilterModalProps) {
   const [selected, setSelected] = useState<StatsTimeframe>(() => {
     if (currentValue.startsWith('custom:')) return 'custom'
     return currentValue
@@ -119,11 +136,12 @@ export function DateFilterModal({ open, onClose, currentValue, onChange }: DateF
               value={customStart ? new Date(customStart + 'T00:00:00') : null}
               onChange={(val) => setCustomStart(val ? format(val, 'yyyy-MM-dd') : '')}
               format="dd-MMM-yy"
+              slots={startPickerSlots}
               slotProps={{
-                textField: {
-                  size: 'small',
-                  fullWidth: true,
-                },
+                textField: { size: 'small', fullWidth: true },
+                ...(onStartMonthChange && {
+                  calendarHeader: { onMonthChange: onStartMonthChange },
+                }),
               }}
             />
             <DatePicker
@@ -131,11 +149,12 @@ export function DateFilterModal({ open, onClose, currentValue, onChange }: DateF
               value={customEnd ? new Date(customEnd + 'T00:00:00') : null}
               onChange={(val) => setCustomEnd(val ? format(val, 'yyyy-MM-dd') : '')}
               format="dd-MMM-yy"
+              slots={endPickerSlots}
               slotProps={{
-                textField: {
-                  size: 'small',
-                  fullWidth: true,
-                },
+                textField: { size: 'small', fullWidth: true },
+                ...(onEndMonthChange && {
+                  calendarHeader: { onMonthChange: onEndMonthChange },
+                }),
               }}
             />
           </Stack>
