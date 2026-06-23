@@ -9,6 +9,7 @@ import { TrackerFilters, todayDate, type TrackerFilterState } from '@/components
 import { TrackerTable } from '@/components/tracker/TrackerTable'
 import { useTrackerFilters, useTrackerSlots } from '@/hooks/queries/useTracker'
 import { Button } from '@/components/shared/ui/Button'
+import { APP_HEADER_MIN_HEIGHT } from '@/components/shared/layoutConstants'
 
 export function TrackerPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -168,11 +169,13 @@ export function TrackerPage() {
         <Box
           sx={{
             position: 'sticky',
-            top: 0,
+            top: APP_HEADER_MIN_HEIGHT,
             zIndex: 10,
             bgcolor: 'background.default',
             mx: { xs: -2.5, md: -4 },
             px: { xs: 2.5, md: 4 },
+            pt: 4,
+            mt: -4,
           }}
         >
           <TrackerFilters filters={filters} filterData={filterData} onChange={setFilters} />
