@@ -38,6 +38,7 @@ import { StatsOverview } from '@/components/shared/StatsOverview'
 import { useEventStats } from '@/hooks/queries/useStats'
 import { toTitleCase } from '@/utils/toTitleCase'
 import type { StatsTimeframe } from '@/types'
+import { APP_HEADER_MIN_HEIGHT } from '@/components/shared/layoutConstants'
 
 export function EventsPage() {
   const { isCoach, isAdmin, isSuperAdmin, isTeamAdmin } = usePermissions()
@@ -216,9 +217,35 @@ export function EventsPage() {
               />
             )}
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} sx={{ mt: 3, alignItems: 'flex-start' }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} sx={{ mt: { xs: 3, md: 0 }, alignItems: 'flex-start' }}>
               {/* Left Column: Event Types Sidebar */}
-              <Box sx={{ width: { xs: '100%', md: 280 }, flexShrink: 0 }}>
+              <Box
+                sx={{
+                  width: { xs: '100%', md: 280 },
+                  flexShrink: 0,
+                  position: { md: 'sticky' },
+                  top: { md: APP_HEADER_MIN_HEIGHT },
+                  pt: { md: 3 },
+                  pb: { md: 1 },
+                  maxHeight: { md: `calc(100vh - ${APP_HEADER_MIN_HEIGHT}px - 32px)` },
+                  overflowY: { md: 'auto' },
+                  alignSelf: 'flex-start',
+                  // Premium slim scrollbar styling for sidebar
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: (theme) => alpha(theme.palette.divider, 0.4),
+                    borderRadius: '3px',
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    background: (theme) => alpha(theme.palette.divider, 0.7),
+                  },
+                }}
+              >
                 {eventTypesLoading ? (
                   <PageSpinner />
                 ) : eventTypesError ? (
@@ -330,6 +357,7 @@ export function EventsPage() {
                       flexDirection: 'column',
                       alignItems: 'center',
                       gap: 2,
+                      mt: { md: 3 },
                     }}
                   >
                     <Info size={36} style={{ color: alpha('#E87100', 0.5) }} />
@@ -345,16 +373,26 @@ export function EventsPage() {
                 ) : (
                   <Stack spacing={3}>
                     {/* Event Type Header & Team Selector Container */}
-                    <Paper
-                      variant="outlined"
+                    <Box
                       sx={{
-                        p: 3,
-                        borderRadius: 1.5,
-                        backgroundColor: (theme) => theme.palette.accent.peach,
-                        borderColor: (theme) => alpha(theme.palette.primary.main, 0.15),
-                        boxShadow: '0 2px 12px rgba(232, 113, 0, 0.03)',
+                        position: { md: 'sticky' },
+                        top: { md: APP_HEADER_MIN_HEIGHT },
+                        pt: { md: 3 },
+                        pb: { md: 1 },
+                        bgcolor: 'background.default',
+                        zIndex: 10,
                       }}
                     >
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          p: 3,
+                          borderRadius: 1.5,
+                          backgroundColor: (theme) => theme.palette.accent.peach,
+                          borderColor: (theme) => alpha(theme.palette.primary.main, 0.15),
+                          boxShadow: '0 2px 12px rgba(232, 113, 0, 0.03)',
+                        }}
+                      >
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }}>
                         <Box>
                           <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
@@ -519,6 +557,7 @@ export function EventsPage() {
                         </Stack>
                       </Stack>
                     </Paper>
+                    </Box>
 
                      {!selectedTeamId ? (
                       <Paper

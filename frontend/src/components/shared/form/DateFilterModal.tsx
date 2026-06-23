@@ -5,10 +5,11 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { CalendarRange, X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { format } from 'date-fns'
 import type { StatsTimeframe } from '@/types'
 
 export const DEFAULT_TIMEFRAMES: Array<{ value: StatsTimeframe; label: string }> = [
@@ -33,9 +34,34 @@ export interface DateFilterModalProps {
 }
 
 export function DateFilterModal({ open, onClose, currentValue, onChange }: DateFilterModalProps) {
-  const [selected, setSelected] = useState<StatsTimeframe>(currentValue)
-  const [customStart, setCustomStart] = useState('')
-  const [customEnd, setCustomEnd] = useState('')
+  const [selected, setSelected] = useState<StatsTimeframe>(() => {
+    if (currentValue.startsWith('custom:')) return 'custom'
+    return currentValue
+  })
+  const [customStart, setCustomStart] = useState(() => {
+    const today = format(new Date(), 'yyyy-MM-dd')
+    if (currentValue.startsWith('custom:')) {
+      return currentValue.split(':')[1] || today
+    }
+    return today
+  })
+  const [customEnd, setCustomEnd] = useState(() => {
+    const today = format(new Date(), 'yyyy-MM-dd')
+    if (currentValue.startsWith('custom:')) {
+      return currentValue.split(':')[2] || today
+    }
+    return today
+  })
+
+  useEffect(() => {
+    if (open) {
+      const isCustomVal = currentValue.startsWith('custom:')
+      setSelected(isCustomVal ? 'custom' : currentValue)
+      const today = format(new Date(), 'yyyy-MM-dd')
+      setCustomStart(isCustomVal ? currentValue.split(':')[1] || today : today)
+      setCustomEnd(isCustomVal ? currentValue.split(':')[2] || today : today)
+    }
+  }, [open, currentValue])
 
   const handleApply = () => {
     if (selected === 'custom') {
@@ -88,23 +114,29 @@ export function DateFilterModal({ open, onClose, currentValue, onChange }: DateF
 
         {isCustom && (
           <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-            <TextField
+            <DatePicker
               label="Start Date"
-              type="date"
-              fullWidth
-              size="small"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              value={customStart ? new Date(customStart + 'T00:00:00') : null}
+              onChange={(val) => setCustomStart(val ? format(val, 'yyyy-MM-dd') : '')}
+              format="dd-MMM-yy"
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                },
+              }}
             />
-            <TextField
+            <DatePicker
               label="End Date"
-              type="date"
-              fullWidth
-              size="small"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              value={customEnd ? new Date(customEnd + 'T00:00:00') : null}
+              onChange={(val) => setCustomEnd(val ? format(val, 'yyyy-MM-dd') : '')}
+              format="dd-MMM-yy"
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                },
+              }}
             />
           </Stack>
         )}
