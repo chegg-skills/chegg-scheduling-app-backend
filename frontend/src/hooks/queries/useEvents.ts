@@ -18,6 +18,7 @@ export const eventKeys = {
     [...eventKeys.all, 'team', teamId, params] as const,
   detail: (id: string) => [...eventKeys.all, 'detail', id] as const,
   coaches: (id: string) => [...eventKeys.all, 'coaches', id] as const,
+  coachWorkload: (id: string) => [...eventKeys.all, 'coaches', id, 'workload'] as const,
   scheduleSlots: (id: string) => [...eventKeys.all, 'schedule-slots', id] as const,
   slotBookings: (eventId: string, slotId: string) =>
     [...eventKeys.scheduleSlots(eventId), 'bookings', slotId] as const,

@@ -119,6 +119,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/events/:eventId/coaches/workload")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    eventController.getEventCoachWorkload,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/events/:eventId/coaches")
   .get(
     authenticate,

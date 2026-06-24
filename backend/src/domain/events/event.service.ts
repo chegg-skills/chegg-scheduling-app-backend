@@ -30,6 +30,7 @@ import {
   syncRoutingState,
   getEventCoachAvailability,
   setEventCoachAvailability,
+  getEventCoachWorkload,
 } from "./eventCoach.service";
 import {
   assertBookingNoticeSatisfied,
@@ -397,5 +398,6 @@ export {
   resumeRecurrenceGroup,
   getEventCoachAvailability,
   setEventCoachAvailability,
+  getEventCoachWorkload,
   type SafeEvent,
 };

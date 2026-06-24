@@ -42,6 +42,11 @@ export const eventsApi = {
     apiClient.post<ApiResponse<Event>>(`/events/${eventId}/duplicate`),
   listCoaches: (eventId: string, signal?: AbortSignal) =>
     apiClient.get<ApiResponse<{ coaches: EventCoach[] }>>(`/events/${eventId}/coaches`, { signal }),
+  getCoachWorkload: (eventId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ workload: { coachUserId: string; bookingCount: number }[] }>>(
+      `/events/${eventId}/coaches/workload`,
+      { signal }
+    ),
   setCoaches: (eventId: string, data: SetEventCoachesDto) =>
     apiClient.put<ApiResponse<{ coaches: EventCoach[] }>>(`/events/${eventId}/coaches`, data),
   removeCoach: (eventId: string, userId: string) =>

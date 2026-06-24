@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
 import { Plus, CalendarRange } from 'lucide-react'
@@ -7,7 +7,7 @@ import type { EventCoach, TeamMember, SetWeeklyAvailabilityDto } from '@/types'
 import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEventCoaches, useSetEventCoaches, useRemoveEventCoach, eventKeys } from '@/hooks/queries/useEvents'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { extractApiError } from '@/utils/apiError'
@@ -56,6 +56,19 @@ export function EventCoachManager({
   const { data: coachesResponse } = useEventCoaches(eventId)
   const { mutate: setCoaches, isPending: setting } = useSetEventCoaches(eventId)
   const { mutate: removeCoach } = useRemoveEventCoach(eventId)
+
+  const { data: workloadResponse } = useQuery({
+    queryKey: eventKeys.coachWorkload(eventId),
+    queryFn: ({ signal }) => eventsApi.getCoachWorkload(eventId, signal),
+    enabled: !!eventId,
+  })
+  const workload = useMemo(() => {
+    const map = new Map<string, number>()
+    workloadResponse?.data?.data?.workload?.forEach(
+      (w: { coachUserId: string; bookingCount: number }) => map.set(w.coachUserId, w.bookingCount)
+    )
+    return map
+  }, [workloadResponse])
 
   const activeCoaches = coachesResponse?.coaches ?? coaches
 
@@ -133,8 +146,9 @@ export function EventCoachManager({
           setIsSavingAvailability(false)
           setAddCoachError(null)
 
-          // Invalidate coaches query to fetch new availabilities immediately
+          // Invalidate coaches and workload queries to reflect the new pool
           queryClient.invalidateQueries({ queryKey: eventKeys.coaches(eventId) })
+          queryClient.invalidateQueries({ queryKey: eventKeys.coachWorkload(eventId) })
 
           if (onCloseAddModal) {
             onCloseAddModal()
@@ -220,6 +234,7 @@ export function EventCoachManager({
         selectedCoachIds={selectedCoachIds}
         onToggleCoach={toggleCoach}
         onToggleAll={toggleAllCoaches}
+        workload={workload}
       />
 
       <BulkCoachAvailabilityDialog

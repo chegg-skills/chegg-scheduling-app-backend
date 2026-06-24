@@ -114,7 +114,17 @@ const getBookableEvent = async (teamId: string, eventId: string): Promise<Bookab
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Event does not belong to the specified team.");
   }
 
-  return event;
+  // Restrict the coach pool to users who are currently active team members.
+  // EventCoach.isActive alone is not sufficient — a team member can be deactivated
+  // without their EventCoach records being cleared.
+  const activeMembers = await prisma.teamMember.findMany({
+    where: { teamId, isActive: true },
+    select: { userId: true },
+  });
+  const activeMemberIds = new Set(activeMembers.map((m) => m.userId));
+  const filteredCoaches = event.coaches.filter((c) => activeMemberIds.has(c.coachUserId));
+
+  return { ...event, coaches: filteredCoaches } as BookableEvent;
 };
 
 const resolveBookingWindow = (event: BookableEvent, start: Date) => {
