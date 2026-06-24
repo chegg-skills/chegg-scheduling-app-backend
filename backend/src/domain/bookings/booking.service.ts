@@ -1,4 +1,6 @@
-import { BookingStatus, UserRole } from "@prisma/client";
+import { BookingStatus, UserRole, BookingActivityType, BookingActivityActor } from "@prisma/client";
+import { recordBookingActivity } from "./bookingActivity.service";
+import { getDefaultQuestionTexts } from "../systemSettings/bookingQuestion.service";
 import { StatusCodes } from "http-status-codes";
 import { randomUUID } from "crypto";
 import { prisma } from "../../shared/db/prisma";
@@ -56,7 +58,7 @@ export type { UpdateBookingStatusInput } from "./booking.shared";
  * When it uses default questions (or has no custom questions), legacy fields pass through.
  * Validates that customAnswers count does not exceed the number of event questions.
  */
-const resolveBookingQuestions = (
+const resolveBookingQuestions = async (
   event: { useDefaultQuestions: boolean; customQuestions: string[] },
   customAnswers: string[] | undefined,
   legacyFields: {
@@ -66,11 +68,13 @@ const resolveBookingQuestions = (
     sessionObjectives?: string;
   },
 ) => {
-  const hasCustomQuestions =
-    event.useDefaultQuestions === false &&
-    event.customQuestions.length > 0;
+  // Resolve the question set from the same source the public form uses, so the
+  // snapshot's question/answer indexes match what the student actually saw.
+  const questionTexts = event.useDefaultQuestions
+    ? await getDefaultQuestionTexts()
+    : event.customQuestions;
 
-  if (!hasCustomQuestions) {
+  if (questionTexts.length === 0) {
     return {
       savedSpecificQuestion: legacyFields.specificQuestion ?? null,
       savedTriedSolutions: legacyFields.triedSolutions ?? null,
@@ -81,7 +85,7 @@ const resolveBookingQuestions = (
     };
   }
 
-  if (customAnswers && customAnswers.length > event.customQuestions.length) {
+  if (customAnswers && customAnswers.length > questionTexts.length) {
     throw new ErrorHandler(
       StatusCodes.BAD_REQUEST,
       "Number of answers exceeds the number of questions for this event.",
@@ -93,8 +97,8 @@ const resolveBookingQuestions = (
     savedTriedSolutions: null,
     savedUsedResources: null,
     savedSessionObjectives: null,
-    savedCustomQuestions: event.customQuestions,
-    savedCustomAnswers: event.customQuestions.map((_q: string, i: number) => customAnswers?.[i]?.trim() ?? ""),
+    savedCustomQuestions: questionTexts,
+    savedCustomAnswers: questionTexts.map((_q: string, i: number) => customAnswers?.[i]?.trim() ?? ""),
   };
 };
 
@@ -170,7 +174,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     savedCustomAnswers,
   // Cast is safe: Prisma includes all scalar fields when using `include` (not `select`).
   // customQuestions and useDefaultQuestions are present at runtime — LS cache may lag after prisma generate.
-  } = resolveBookingQuestions(event as typeof event & { useDefaultQuestions: boolean; customQuestions: string[] }, customAnswers, {
+  } = await resolveBookingQuestions(event as typeof event & { useDefaultQuestions: boolean; customQuestions: string[] }, customAnswers, {
     specificQuestion,
     triedSolutions,
     usedResources,
@@ -273,6 +277,16 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     { timeout: 15000 },
   );
 
+  try {
+    await recordBookingActivity(
+      prisma, booking.id, BookingActivityType.BOOKING_CREATED,
+      BookingActivityActor.STUDENT, null, booking.studentName,
+      { startTime: booking.startTime, endTime: booking.endTime, coachUserId: booking.coachUserId },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: booking.id }, "Failed to record BOOKING_CREATED activity.");
+  }
+
   getRequestLogger().info(
     {
       bookingId: booking.id,
@@ -310,9 +324,17 @@ const listBookings = async (filters: ListBookingsFilters) => {
   return { bookings, totalCount };
 };
 
+// Admin/coach status changes (PATCH /bookings/:id) map to timeline lifecycle events.
+const STATUS_ACTIVITY: Partial<Record<BookingStatus, BookingActivityType>> = {
+  [BookingStatus.CANCELLED]: BookingActivityType.BOOKING_CANCELLED,
+  [BookingStatus.COMPLETED]: BookingActivityType.SESSION_COMPLETED,
+  [BookingStatus.NO_SHOW]: BookingActivityType.SESSION_NO_SHOW,
+};
+
 const updateBooking = async (
   id: string,
   data: { status?: BookingStatus; coCoachUserIds?: string[]; cancellationReason?: string },
+  caller?: CallerContext,
 ): Promise<SafeBooking> => {
   const oldBooking = await findBookingById(id);
   const booking = await updateBookingById(id, data);
@@ -323,6 +345,36 @@ const updateBooking = async (
       "Booking status updated.",
     );
     void queueBookingStatusNotifications(booking);
+
+    const activityType = STATUS_ACTIVITY[data.status];
+    if (activityType) {
+      const actorType = caller
+        ? caller.role === UserRole.COACH
+          ? BookingActivityActor.COACH
+          : BookingActivityActor.ADMIN
+        : BookingActivityActor.SYSTEM;
+
+      // Best-effort: this update is not transactional, so a failed audit write must
+      // never turn an already-applied status change into an error for the caller.
+      try {
+        await recordBookingActivity(
+          prisma,
+          id,
+          activityType,
+          actorType,
+          caller?.id ?? null,
+          null,
+          data.status === BookingStatus.CANCELLED
+            ? { cancellationReason: booking.cancellationReason }
+            : undefined,
+        );
+      } catch (activityError) {
+        getRequestLogger().error(
+          { error: activityError, bookingId: id, status: data.status },
+          "Failed to record booking status activity.",
+        );
+      }
+    }
   }
   void queueBookingUpdatedNotifications(oldBooking, booking);
 
@@ -332,6 +384,7 @@ const updateBooking = async (
 const rescheduleBooking = async (
   id: string,
   payload: { startTime: string | Date; timezone?: string; token?: string },
+  caller?: CallerContext,
 ): Promise<SafeBooking> => {
   const { startTime, timezone, token } = payload;
   const start = parseBookingStartTime(startTime);
@@ -349,7 +402,7 @@ const rescheduleBooking = async (
   const activeCoaches = event.coaches as CoachCandidate[];
 
   // 3. Re-assign host (prefer current host if available)
-  const updatedBooking = await prisma.$transaction(
+  const rescheduleResult = await prisma.$transaction(
     async (tx) => {
       // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
       if (matchedScheduleSlot) {
@@ -390,7 +443,7 @@ const rescheduleBooking = async (
         assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
       }
 
-      return updateBookingById(id, {
+      const updated = await updateBookingById(id, {
         startTime: start,
         endTime: end,
         timezone: timezone || booking.timezone,
@@ -401,12 +454,36 @@ const rescheduleBooking = async (
         status: BookingStatus.CONFIRMED,
         ...(token && { rescheduleToken: randomUUID() }), // rotate token to invalidate the old link
       }, tx);
+
+      // Resolve actor and coach-change context — returned for post-transaction activity writes.
+      let actorType: BookingActivityActor = BookingActivityActor.SYSTEM;
+      let actorUserId: string | null = null;
+      let actorName: string | null = null;
+
+      if (caller) {
+        actorType = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
+        actorUserId = caller.id;
+      } else if (token) {
+        actorType = BookingActivityActor.STUDENT;
+        actorName = booking.studentName;
+      }
+
+      return {
+        updated,
+        actorType,
+        actorUserId,
+        actorName,
+        previousSlot: { startTime: booking.startTime, endTime: booking.endTime, coachUserId: booking.coachUserId },
+        coachChanged: booking.coachUserId !== updated.coachUserId,
+      };
     },
     // Reschedule re-evaluates coach availability via sequential per-coach DB queries, which takes
     // longer than the initial booking creation path. 30s gives enough headroom without risking
     // indefinite deadlock holds.
     { timeout: 30000 },
   );
+
+  const updatedBooking = rescheduleResult.updated;
 
   getRequestLogger().info(
     {
@@ -419,6 +496,29 @@ const rescheduleBooking = async (
     "Booking rescheduled.",
   );
 
+  const { actorType, actorUserId, actorName, previousSlot, coachChanged } = rescheduleResult;
+  try {
+    await recordBookingActivity(
+      prisma, updatedBooking.id, BookingActivityType.BOOKING_RESCHEDULED,
+      actorType, actorUserId, actorName,
+      { previousSlot, newSlot: { startTime: updatedBooking.startTime, endTime: updatedBooking.endTime, coachUserId: updatedBooking.coachUserId } },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: updatedBooking.id }, "Failed to record BOOKING_RESCHEDULED activity.");
+  }
+
+  if (coachChanged) {
+    try {
+      await recordBookingActivity(
+        prisma, updatedBooking.id, BookingActivityType.COACH_REASSIGNED,
+        actorType, actorUserId, actorName,
+        { previousCoachId: previousSlot.coachUserId, newCoachId: updatedBooking.coachUserId },
+      );
+    } catch (e) {
+      getRequestLogger().error({ error: e, bookingId: updatedBooking.id }, "Failed to record COACH_REASSIGNED activity.");
+    }
+  }
+
   void queueBookingUpdatedNotifications(updatedBooking, updatedBooking);
 
   return updatedBooking;
@@ -430,7 +530,7 @@ const cancelBooking = async (
 ): Promise<SafeBooking> => {
   const { token, cancellationReason } = payload;
 
-  const updatedBooking = await prisma.$transaction(
+  const cancelResult = await prisma.$transaction(
     async (tx) => {
       const booking = token ? await findBookingByToken(id, token, tx) : await findBookingById(id, tx);
 
@@ -450,28 +550,55 @@ const cancelBooking = async (
         }
       }
 
-      return updateBookingById(id, {
+      const updated = await updateBookingById(id, {
         status: BookingStatus.CANCELLED,
         cancellationReason: cancellationReason?.trim() || null,
         // rescheduleToken is NOT rotated — assertCancelTokenValid blocks reuse via status check
       }, tx);
+
+      // Resolve actor context — returned for post-transaction activity write.
+      let actorType: BookingActivityActor = BookingActivityActor.SYSTEM;
+      let actorUserId: string | null = null;
+      let actorName: string | null = null;
+
+      if (caller) {
+        actorType = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
+        actorUserId = caller.id;
+      } else if (token) {
+        actorType = BookingActivityActor.STUDENT;
+        actorName = booking.studentName;
+      }
+
+      return { updated, actorType, actorUserId, actorName };
     },
     { timeout: 15000 },
   );
 
+  const { updated: cancelledBooking, actorType: cancelActorType, actorUserId: cancelActorUserId, actorName: cancelActorName } = cancelResult;
+
   getRequestLogger().info(
     {
-      bookingId: updatedBooking.id,
-      eventId: updatedBooking.eventId,
-      teamId: updatedBooking.teamId,
+      bookingId: cancelledBooking.id,
+      eventId: cancelledBooking.eventId,
+      teamId: cancelledBooking.teamId,
     },
     "Booking cancelled.",
   );
 
+  try {
+    await recordBookingActivity(
+      prisma, cancelledBooking.id, BookingActivityType.BOOKING_CANCELLED,
+      cancelActorType, cancelActorUserId, cancelActorName,
+      { cancellationReason: cancelledBooking.cancellationReason },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: cancelledBooking.id }, "Failed to record BOOKING_CANCELLED activity.");
+  }
+
   const slotRevealedAt = await (async () => {
-    if (updatedBooking.event?.deferCoachReveal && updatedBooking.scheduleSlotId) {
+    if (cancelledBooking.event?.deferCoachReveal && cancelledBooking.scheduleSlotId) {
       const slot = await prisma.eventScheduleSlot.findUnique({
-        where: { id: updatedBooking.scheduleSlotId },
+        where: { id: cancelledBooking.scheduleSlotId },
         select: { coachRevealSentAt: true },
       });
       return slot?.coachRevealSentAt ?? null;
@@ -479,9 +606,9 @@ const cancelBooking = async (
     return null;
   })();
 
-  void queueBookingStatusNotifications(updatedBooking, { slotRevealedAt });
+  void queueBookingStatusNotifications(cancelledBooking, { slotRevealedAt });
 
-  return updatedBooking;
+  return cancelledBooking;
 };
 
 const bookFollowUpSession = async (
@@ -698,7 +825,7 @@ const bookFollowUpSession = async (
         savedSessionObjectives,
         savedCustomQuestions,
         savedCustomAnswers,
-      } = resolveBookingQuestions(
+      } = await resolveBookingQuestions(
         event as typeof event & { useDefaultQuestions: boolean; customQuestions: string[] },
         payload.customAnswers,
         {
@@ -733,14 +860,36 @@ const bookFollowUpSession = async (
         status: BookingStatus.CONFIRMED,
       });
 
-      return bookingRecord;
+      return { bookingRecord, actorType: caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN };
     },
     { timeout: 15000 },
   );
 
-  void queueBookingCreatedNotifications(followUpBooking);
+  const { bookingRecord: followUpRecord, actorType: followUpActorType } = followUpBooking;
 
-  return followUpBooking;
+  try {
+    await recordBookingActivity(
+      prisma, followUpRecord.id, BookingActivityType.BOOKING_CREATED,
+      followUpActorType, caller.id, null,
+      { startTime: followUpRecord.startTime, endTime: followUpRecord.endTime, coachUserId: followUpRecord.coachUserId, isFollowUp: true, parentBookingId: bookingId },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: followUpRecord.id }, "Failed to record BOOKING_CREATED activity.");
+  }
+
+  try {
+    await recordBookingActivity(
+      prisma, followUpRecord.id, BookingActivityType.FOLLOW_UP_BOOKED,
+      followUpActorType, caller.id, null,
+      { parentBookingId: bookingId },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: followUpRecord.id }, "Failed to record FOLLOW_UP_BOOKED activity.");
+  }
+
+  void queueBookingCreatedNotifications(followUpRecord);
+
+  return followUpRecord;
 };
 
 export {

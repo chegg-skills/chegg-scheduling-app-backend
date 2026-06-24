@@ -1,5 +1,6 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, BookingActivityType, BookingActivityActor } from "@prisma/client";
 import { logger } from "../logging/logger";
+import { recordBookingActivity } from "../../domain/bookings/bookingActivity.service";
 import { prisma } from "../db/prisma";
 import { triggerOutboxProcessing } from "./outbox.signal";
 
@@ -208,6 +209,58 @@ const publishNotificationSafely = async (payload: NotificationPayload): Promise<
         entityId: payload.entityId ?? null,
       },
     });
+
+    // Write to timeline if this notification is for a Booking (control messages are skipped —
+    // they cancel queued reminders and don't represent an email actually sent to anyone).
+    // Future-dated notifications (reminders scheduled for sessionStart − offset) are only
+    // enqueued here, not sent — and there's no delivered-callback for them — so logging them
+    // now as "sent" would be a lie. Skip until/unless we record actual delivery.
+    const isScheduledForLater =
+      payload.sendAt != null && new Date(payload.sendAt).getTime() > Date.now();
+
+    if (
+      payload.entityType === "BOOKING" &&
+      payload.entityId &&
+      !CONTROL_MESSAGE_TYPES.has(payload.type) &&
+      !isScheduledForLater
+    ) {
+      try {
+        const SESSION_REMINDER_TYPES = new Set<NotificationType>([
+          "SESSION_REMINDER_24H",
+          "SESSION_REMINDER_12H",
+          "SESSION_REMINDER_6H",
+          "SESSION_REMINDER_1H",
+          "SESSION_REMINDER_ANONYMOUS_24H",
+          "SESSION_REMINDER_ANONYMOUS_12H",
+          "SESSION_REMINDER_ANONYMOUS_6H",
+          "SESSION_REMINDER_ANONYMOUS_1H",
+          "ANONYMOUS_BOOKING_POOL_REMINDER",
+        ]);
+        const activityType = SESSION_REMINDER_TYPES.has(payload.type)
+          ? BookingActivityType.REMINDER_SENT
+          : BookingActivityType.EMAIL_SENT;
+
+        await recordBookingActivity(
+          prisma,
+          payload.entityId,
+          activityType,
+          BookingActivityActor.SYSTEM,
+          null,
+          "System",
+          {
+            recipient: recipients,
+            notificationType: payload.type,
+            recipientRole: payload.recipientRole || "UNKNOWN",
+          }
+        );
+      } catch (actError) {
+        logger.error(
+          { error: actError, bookingId: payload.entityId, notificationType: payload.type },
+          "Failed to log notification to booking timeline."
+        );
+      }
+    }
+
     triggerOutboxProcessing();
     return true;
   } catch (error) {

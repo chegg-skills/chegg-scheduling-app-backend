@@ -1,6 +1,8 @@
-import { BookingStatus, UserRole } from "@prisma/client";
+import { BookingStatus, UserRole, BookingActivityType, BookingActivityActor } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
+import { getRequestLogger } from "../../shared/logging/requestContext";
+import { recordBookingActivity } from "./bookingActivity.service";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import { assertSlotLogAccess } from "../events/sessionLog.service";
@@ -107,6 +109,18 @@ export const upsertBookingSessionLog = async (
     booking.status !== BookingStatus.PENDING;
 
   const result = await prisma.$transaction(async (tx) => {
+    // Distinguish a first-time log from an edit so we don't re-emit timeline
+    // entries (SESSION_LOGGED, status, attendance) every time the log is re-saved.
+    const existingLog = await tx.sessionLog.findUnique({
+      where: { bookingId },
+      select: { id: true },
+    });
+    const isFirstLog = !existingLog;
+    const existingAttendance = await tx.sessionAttendance.findUnique({
+      where: { bookingId },
+      select: { attended: true },
+    });
+
     const log = await tx.sessionLog.upsert({
       where: { bookingId },
       create: {
@@ -136,25 +150,77 @@ export const upsertBookingSessionLog = async (
       });
 
       if (booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.PENDING) {
+        const newStatus = payload.attended ? BookingStatus.COMPLETED : BookingStatus.NO_SHOW;
         await tx.booking.update({
           where: { id: bookingId },
-          data: {
-            status: payload.attended ? BookingStatus.COMPLETED : BookingStatus.NO_SHOW,
-          },
+          data: { status: newStatus },
         });
+
+        // Collect which activities to emit — written post-transaction (best-effort).
+        const actorRole = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
+        const statusChanged = booking.status !== newStatus;
+        const attendanceChanged = !existingAttendance || existingAttendance.attended !== payload.attended;
+        return {
+          log: await tx.sessionLog.findUnique({ where: { id: log.id }, include: sessionLogReadInclude }),
+          actorRole,
+          statusChanged,
+          attendanceChanged,
+          isFirstLog,
+          attended: payload.attended,
+        };
       }
     }
 
-    return tx.sessionLog.findUnique({
-      where: { id: log.id },
-      include: sessionLogReadInclude,
-    });
+    return {
+      log: await tx.sessionLog.findUnique({ where: { id: log.id }, include: sessionLogReadInclude }),
+      actorRole: null,
+      statusChanged: false,
+      attendanceChanged: false,
+      isFirstLog: false,
+      attended: undefined as boolean | undefined,
+    };
   });
+
+  const { log: sessionLogResult, actorRole, statusChanged, attendanceChanged, isFirstLog: firstLog, attended } = result;
+
+  if (actorRole !== null && payload.attended !== undefined) {
+    if (statusChanged) {
+      try {
+        await recordBookingActivity(
+          prisma, bookingId,
+          attended ? BookingActivityType.SESSION_COMPLETED : BookingActivityType.SESSION_NO_SHOW,
+          actorRole, caller.id, null,
+        );
+      } catch (e) {
+        getRequestLogger().error({ error: e, bookingId }, "Failed to record session status activity.");
+      }
+    }
+    if (attendanceChanged) {
+      try {
+        await recordBookingActivity(
+          prisma, bookingId, BookingActivityType.ATTENDANCE_UPDATED,
+          actorRole, caller.id, null, { attended },
+        );
+      } catch (e) {
+        getRequestLogger().error({ error: e, bookingId }, "Failed to record ATTENDANCE_UPDATED activity.");
+      }
+    }
+    if (firstLog) {
+      try {
+        await recordBookingActivity(
+          prisma, bookingId, BookingActivityType.SESSION_LOGGED,
+          actorRole, caller.id, null,
+        );
+      } catch (e) {
+        getRequestLogger().error({ error: e, bookingId }, "Failed to record SESSION_LOGGED activity.");
+      }
+    }
+  }
 
   if (isTransitioningToCompleted) {
     const fullBooking = await findBookingById(bookingId);
     await queueStudentFeedbackNotification(fullBooking);
   }
 
-  return result;
+  return sessionLogResult;
 };

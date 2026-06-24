@@ -221,3 +221,18 @@ export const BookFollowUpSchema = {
     })
     .strip(),
 };
+
+export const GetBookingTimelineSchema = {
+  params: z
+    .object({
+      bookingId: z.uuid("Invalid booking ID"),
+    })
+    .strip(),
+  query: z
+    .object({
+      page: z.coerce.number().int().positive().default(1),
+      limit: z.coerce.number().int().positive().default(20),
+    })
+    .strip(),
+};
+

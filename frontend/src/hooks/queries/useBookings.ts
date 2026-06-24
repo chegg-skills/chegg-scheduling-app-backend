@@ -77,3 +77,14 @@ export function useBookFollowUpSession() {
     },
   })
 }
+
+export function useBookingTimeline(id: string, params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: [...bookingKeys.all, 'detail', id, 'timeline', params] as const,
+    queryFn: ({ signal }) =>
+      bookingsApi.getTimeline(id, params, signal).then((r) => r.data.data),
+    enabled: !!id,
+    placeholderData: (prev) => prev,
+  })
+}
+

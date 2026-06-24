@@ -1,5 +1,6 @@
-import { BookingStatus, UserRole } from "@prisma/client";
+import { BookingStatus, UserRole, BookingActivityType, BookingActivityActor } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import { recordBookingActivity } from "../bookings/bookingActivity.service";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
@@ -100,7 +101,7 @@ export const upsertSessionLog = async (
 
   const slotBookings = await prisma.booking.findMany({
     where: { scheduleSlotId: slotId },
-    select: { id: true, status: true },
+    select: { id: true, status: true, coachUserId: true },
   });
 
   const slotBookingIds = new Set(slotBookings.map((b) => b.id));
@@ -132,6 +133,21 @@ export const upsertSessionLog = async (
     .map((a) => a.bookingId);
 
   const result = await prisma.$transaction(async (tx) => {
+    // Distinguish a first-time log from an edit so we don't re-emit timeline
+    // entries every time the slot log is re-saved.
+    const existingLog = await tx.sessionLog.findUnique({
+      where: { scheduleSlotId: slotId },
+      select: { id: true },
+    });
+    const isFirstLog = !existingLog;
+    const existingAttendances = await tx.sessionAttendance.findMany({
+      where: { bookingId: { in: slotBookings.map((b) => b.id) } },
+      select: { bookingId: true, attended: true },
+    });
+    const previousAttendance = Object.fromEntries(
+      existingAttendances.map((a) => [a.bookingId, a.attended]),
+    );
+
     const log = await tx.sessionLog.upsert({
       where: { scheduleSlotId: slotId },
       create: {
@@ -164,48 +180,100 @@ export const upsertSessionLog = async (
         },
         data: { coachUserId: payload.assignedCoachId },
       });
+
+      // Collect reassigned bookings for post-transaction activity writes.
+      const reassignedBookings = slotBookings.filter(
+        (b) => b.status !== BookingStatus.CANCELLED && b.coachUserId !== payload.assignedCoachId,
+      );
+      return { reassignedBookings, isFirstLog, previousAttendance };
     }
 
+    // Collect per-booking attendance change context for post-transaction activity writes.
     for (const entry of payload.attendance) {
       await tx.sessionAttendance.upsert({
         where: { bookingId: entry.bookingId },
-        create: {
-          sessionLogId: log.id,
-          bookingId: entry.bookingId,
-          attended: entry.attended,
-        },
+        create: { sessionLogId: log.id, bookingId: entry.bookingId, attended: entry.attended },
         update: { attended: entry.attended },
       });
 
       const booking = bookingMap[entry.bookingId];
       if (booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.PENDING) {
-        await tx.booking.update({
-          where: { id: entry.bookingId },
-          data: {
-            status: entry.attended ? BookingStatus.COMPLETED : BookingStatus.NO_SHOW,
-          },
-        });
+        const newStatus = entry.attended ? BookingStatus.COMPLETED : BookingStatus.NO_SHOW;
+        await tx.booking.update({ where: { id: entry.bookingId }, data: { status: newStatus } });
       }
     }
 
     const logResult = await tx.sessionLog.findUnique({
       where: { id: log.id },
       include: {
-        attendance: {
-          include: { booking: true },
-        },
-        loggedBy: {
-          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
-        },
+        attendance: { include: { booking: true } },
+        loggedBy: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
       },
     });
 
-    const attended = payload.attendance.filter((a) => a.attended).length;
-    const absent = payload.attendance.length - attended;
-    getRequestLogger().info({ slotId, eventId, attended, absent, loggedBy: caller.id }, "Session log saved.");
+    const attendedCount = payload.attendance.filter((a) => a.attended).length;
+    const absent = payload.attendance.length - attendedCount;
+    getRequestLogger().info({ slotId, eventId, attended: attendedCount, absent, loggedBy: caller.id }, "Session log saved.");
 
-    return logResult;
+    return { logResult, isFirstLog, previousAttendance, reassignedBookings: [] as typeof slotBookings };
   });
+
+  const { logResult, isFirstLog, previousAttendance, reassignedBookings } = result;
+  const actorRole = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
+
+  for (const b of reassignedBookings) {
+    try {
+      await recordBookingActivity(
+        prisma, b.id, BookingActivityType.COACH_REASSIGNED, actorRole, caller.id, null,
+        { previousCoachId: b.coachUserId, newCoachId: payload.assignedCoachId },
+      );
+    } catch (e) {
+      getRequestLogger().error({ error: e, bookingId: b.id }, "Failed to record COACH_REASSIGNED activity.");
+    }
+  }
+
+  for (const entry of payload.attendance) {
+    const booking = bookingMap[entry.bookingId];
+    if (booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.PENDING) {
+      const newStatus = entry.attended ? BookingStatus.COMPLETED : BookingStatus.NO_SHOW;
+      const statusChanged = booking.status !== newStatus;
+      const attendanceChanged =
+        !(entry.bookingId in previousAttendance) ||
+        previousAttendance[entry.bookingId] !== entry.attended;
+
+      if (statusChanged) {
+        try {
+          await recordBookingActivity(
+            prisma, entry.bookingId,
+            entry.attended ? BookingActivityType.SESSION_COMPLETED : BookingActivityType.SESSION_NO_SHOW,
+            actorRole, caller.id, null,
+          );
+        } catch (e) {
+          getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record session status activity.");
+        }
+      }
+      if (attendanceChanged) {
+        try {
+          await recordBookingActivity(
+            prisma, entry.bookingId, BookingActivityType.ATTENDANCE_UPDATED,
+            actorRole, caller.id, null, { attended: entry.attended },
+          );
+        } catch (e) {
+          getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record ATTENDANCE_UPDATED activity.");
+        }
+      }
+      if (isFirstLog) {
+        try {
+          await recordBookingActivity(
+            prisma, entry.bookingId, BookingActivityType.SESSION_LOGGED,
+            actorRole, caller.id, null,
+          );
+        } catch (e) {
+          getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record SESSION_LOGGED activity.");
+        }
+      }
+    }
+  }
 
   // Fire feedback emails after transaction commits — single batch query, not N+1.
   if (transitioningToCompletedIds.length > 0) {
@@ -219,5 +287,5 @@ export const upsertSessionLog = async (
     );
   }
 
-  return result;
+  return logResult;
 };

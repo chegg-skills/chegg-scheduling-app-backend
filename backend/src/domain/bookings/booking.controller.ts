@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import * as BookingService from "./booking.service";
 import * as BookingSessionLogService from "./bookingSessionLog.service";
+import * as BookingActivityService from "./bookingActivity.service";
 import { BookingStatus, UserRole } from "@prisma/client";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { CallerContext } from "../../shared/utils/userUtils";
@@ -82,11 +83,16 @@ const listBookings = async (req: Request, res: Response) => {
 const updateBooking = async (req: Request, res: Response) => {
   const bookingId = req.params.bookingId as string;
   const { status, coCoachUserIds, cancellationReason } = req.body;
-  const booking = await BookingService.updateBooking(bookingId, {
-    status,
-    coCoachUserIds,
-    cancellationReason,
-  });
+  const caller = res.locals.authUser as CallerContext;
+  const booking = await BookingService.updateBooking(
+    bookingId,
+    {
+      status,
+      coCoachUserIds,
+      cancellationReason,
+    },
+    caller,
+  );
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking updated successfully.");
 };
@@ -107,7 +113,7 @@ const rescheduleBooking = async (req: Request, res: Response) => {
     startTime,
     timezone,
     token,
-  });
+  }, caller);
 
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking rescheduled successfully.");
 };
@@ -172,6 +178,32 @@ const bookFollowUpSession = async (req: Request, res: Response) => {
   );
 };
 
+const getBookingTimeline = async (req: Request, res: Response) => {
+  const { bookingId } = req.params as { bookingId: string };
+  const { page, limit } = req.query as unknown as { page: number; limit: number };
+  const caller = res.locals.authUser as CallerContext;
+
+  const booking = await BookingService.getBooking(bookingId);
+  await BookingActivityService.assertBookingTimelineAccess(booking, caller);
+
+  const { activities, totalCount } = await BookingActivityService.getBookingActivities(bookingId, page, limit);
+
+  return sendSuccessResponse(
+    res,
+    StatusCodes.OK,
+    {
+      activities,
+      pagination: {
+        total: totalCount,
+        page,
+        pageSize: limit,
+        totalPages: Math.ceil(totalCount / limit) || 1,
+      },
+    },
+    "Booking timeline activities fetched successfully.",
+  );
+};
+
 export default {
   createBooking: asyncHandler(createBooking),
   getBooking: asyncHandler(getBooking),
@@ -182,4 +214,5 @@ export default {
   upsertBookingSessionLog: asyncHandler(upsertBookingSessionLog),
   cancelBooking: asyncHandler(cancelBooking),
   bookFollowUpSession: asyncHandler(bookFollowUpSession),
+  getBookingTimeline: asyncHandler(getBookingTimeline),
 };
