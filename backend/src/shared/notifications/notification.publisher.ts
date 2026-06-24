@@ -1,6 +1,5 @@
-import { Prisma, BookingActivityType, BookingActivityActor } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { logger } from "../logging/logger";
-import { recordBookingActivity } from "../../domain/bookings/bookingActivity.service";
 import { prisma } from "../db/prisma";
 import { triggerOutboxProcessing } from "./outbox.signal";
 
@@ -70,6 +69,34 @@ const CONTROL_MESSAGE_TYPES = new Set<NotificationType>([
 
 const NOTIFICATION_EXCHANGE = process.env.NOTIFICATION_EXCHANGE ?? "notificationExchange";
 const NOTIFICATION_ROUTING_KEY = process.env.NOTIFICATION_ROUTING_KEY ?? "notification.send";
+
+/**
+ * Facts about a just-enqueued notification, handed to an optional observer so that
+ * domain layers can react (e.g. the bookings domain records a timeline entry) without
+ * this shared/infra module depending on any domain. `deferred` is true for control
+ * messages and future-dated sends — i.e. notifications that are not an actual immediate
+ * email to a recipient.
+ */
+export interface EnqueuedNotification {
+  type: string;
+  entityType: string | null;
+  entityId: string | null;
+  recipients: string;
+  recipientRole?: string;
+  deferred: boolean;
+}
+
+type NotificationEnqueuedHook = (event: EnqueuedNotification) => void | Promise<void>;
+
+let notificationEnqueuedHook: NotificationEnqueuedHook | null = null;
+
+/**
+ * Register an observer invoked after each notification is enqueued. Registered once at
+ * startup (see server.ts) so the publisher stays decoupled from domain code.
+ */
+export const registerNotificationEnqueuedHook = (hook: NotificationEnqueuedHook): void => {
+  notificationEnqueuedHook = hook;
+};
 
 let connectionPromise: Promise<any> | null = null;
 let channelPromise: Promise<any> | null = null;
@@ -210,53 +237,27 @@ const publishNotificationSafely = async (payload: NotificationPayload): Promise<
       },
     });
 
-    // Write to timeline if this notification is for a Booking (control messages are skipped —
-    // they cancel queued reminders and don't represent an email actually sent to anyone).
-    // Future-dated notifications (reminders scheduled for sessionStart − offset) are only
-    // enqueued here, not sent — and there's no delivered-callback for them — so logging them
-    // now as "sent" would be a lie. Skip until/unless we record actual delivery.
-    const isScheduledForLater =
-      payload.sendAt != null && new Date(payload.sendAt).getTime() > Date.now();
-
-    if (
-      payload.entityType === "BOOKING" &&
-      payload.entityId &&
-      !CONTROL_MESSAGE_TYPES.has(payload.type) &&
-      !isScheduledForLater
-    ) {
+    // Notify the registered observer (if any) that a notification was enqueued. Control
+    // messages and future-dated sends are flagged `deferred` — they are not an actual
+    // immediate email. The observer (registered by the domain layer at startup) decides
+    // what to do; the publisher stays free of any domain dependency. Best-effort: an
+    // observer failure is logged and never blocks enqueueing.
+    if (notificationEnqueuedHook) {
+      const isScheduledForLater =
+        payload.sendAt != null && new Date(payload.sendAt).getTime() > Date.now();
       try {
-        const SESSION_REMINDER_TYPES = new Set<NotificationType>([
-          "SESSION_REMINDER_24H",
-          "SESSION_REMINDER_12H",
-          "SESSION_REMINDER_6H",
-          "SESSION_REMINDER_1H",
-          "SESSION_REMINDER_ANONYMOUS_24H",
-          "SESSION_REMINDER_ANONYMOUS_12H",
-          "SESSION_REMINDER_ANONYMOUS_6H",
-          "SESSION_REMINDER_ANONYMOUS_1H",
-          "ANONYMOUS_BOOKING_POOL_REMINDER",
-        ]);
-        const activityType = SESSION_REMINDER_TYPES.has(payload.type)
-          ? BookingActivityType.REMINDER_SENT
-          : BookingActivityType.EMAIL_SENT;
-
-        await recordBookingActivity(
-          prisma,
-          payload.entityId,
-          activityType,
-          BookingActivityActor.SYSTEM,
-          null,
-          "System",
-          {
-            recipient: recipients,
-            notificationType: payload.type,
-            recipientRole: payload.recipientRole || "UNKNOWN",
-          }
-        );
-      } catch (actError) {
+        await notificationEnqueuedHook({
+          type: payload.type,
+          entityType: payload.entityType ?? null,
+          entityId: payload.entityId ?? null,
+          recipients,
+          recipientRole: payload.recipientRole,
+          deferred: isControlMessage || isScheduledForLater,
+        });
+      } catch (hookError) {
         logger.error(
-          { error: actError, bookingId: payload.entityId, notificationType: payload.type },
-          "Failed to log notification to booking timeline."
+          { error: hookError, entityType: payload.entityType, entityId: payload.entityId, type: payload.type },
+          "notification-enqueued observer failed.",
         );
       }
     }
