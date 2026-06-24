@@ -4,6 +4,13 @@ import { logger } from "../logger";
 
 type NotificationRecordData = Prisma.NotificationUncheckedCreateInput;
 
+// How many times the scheduler will retry a transiently-failing send before giving up.
+export const MAX_SCHEDULER_ATTEMPTS = Number(process.env.NOTIFICATION_MAX_ATTEMPTS ?? 5);
+// Linear backoff base — nth retry waits n * this many ms.
+const RETRY_BACKOFF_MS = Number(process.env.NOTIFICATION_RETRY_BACKOFF_MS ?? 60_000);
+// A claimed (SENDING) row older than this is assumed orphaned by a crashed instance.
+const SEND_LEASE_MS = Number(process.env.NOTIFICATION_SEND_LEASE_MS ?? 5 * 60_000);
+
 export async function createOrUpsertNotification(
   data: NotificationRecordData,
 ): Promise<Notification | null> {
@@ -100,14 +107,66 @@ export async function markNotificationAsFailed(
   }
 }
 
-export async function findDueScheduledNotifications(limit: number): Promise<Notification[]> {
-  return prisma.notification.findMany({
-    where: {
-      status: { in: [NotificationStatus.SCHEDULED, NotificationStatus.RETRYING] },
-      sendAt: { lte: new Date() },
+/**
+ * Atomically claim due scheduled/retrying rows by flipping them to SENDING in a single
+ * `FOR UPDATE SKIP LOCKED` statement, so concurrent notification-service instances never
+ * select and send the same reminder twice. Mirrors the backend outbox worker's claim.
+ */
+export async function claimDueScheduledNotifications(limit: number): Promise<Notification[]> {
+  return prisma.$queryRaw<Notification[]>(Prisma.sql`
+    UPDATE "Notification"
+    SET status = 'SENDING'::"NotificationStatus", "lastAttemptAt" = now()
+    WHERE id IN (
+      SELECT id FROM "Notification"
+      WHERE status IN ('SCHEDULED', 'RETRYING')
+        AND "sendAt" <= now()
+      ORDER BY "sendAt" ASC
+      LIMIT ${limit}
+      FOR UPDATE SKIP LOCKED
+    )
+    RETURNING *;
+  `);
+}
+
+/**
+ * Recover rows left in SENDING by a crashed/restarted instance: once the lease elapses,
+ * return them to RETRYING (due immediately) so another instance can pick them up.
+ */
+export async function reclaimStaleSendingNotifications(): Promise<number> {
+  const cutoff = new Date(Date.now() - SEND_LEASE_MS);
+  const count = await prisma.$executeRaw(Prisma.sql`
+    UPDATE "Notification"
+    SET status = 'RETRYING'::"NotificationStatus", "sendAt" = now(), "updatedAt" = now()
+    WHERE status = 'SENDING'::"NotificationStatus"
+      AND "lastAttemptAt" < ${cutoff}
+  `);
+  if (count > 0) {
+    logger.warn({ count }, "Reclaimed stale SENDING notifications back to RETRYING.");
+  }
+  return count;
+}
+
+/**
+ * Schedule a transiently-failed notification for a later retry (picked up by the next
+ * sweep once `sendAt` passes), with linear backoff. Used only on the scheduler path —
+ * the immediate/consumer path continues to rely on the RabbitMQ DLQ.
+ */
+export async function markNotificationForRetry(
+  record: Notification,
+  error: unknown,
+): Promise<void> {
+  const nextRetries = record.retries + 1;
+  const backoffMs = RETRY_BACKOFF_MS * nextRetries;
+  await prisma.notification.update({
+    where: { id: record.id },
+    data: {
+      status: NotificationStatus.RETRYING,
+      retries: nextRetries,
+      sendAt: new Date(Date.now() + backoffMs),
+      error_message: error instanceof Error ? error.message : String(error),
+      lastAttemptAt: new Date(),
+      updatedAt: new Date(),
     },
-    orderBy: [{ sendAt: "asc" }, { createdAt: "asc" }],
-    take: limit,
   });
 }
 

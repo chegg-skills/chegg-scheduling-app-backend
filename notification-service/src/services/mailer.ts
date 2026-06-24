@@ -44,7 +44,7 @@ const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(
  *   - Connection timeouts (ECONNRESET, ETIMEDOUT)
  *   - Temporary server unavailability (421, 450, 451)
  */
-function isNonRetryableSmtpError(error: unknown): boolean {
+export function isNonRetryableSmtpError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
   const message = error.message.toLowerCase();
