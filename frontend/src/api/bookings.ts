@@ -68,4 +68,47 @@ export const bookingsApi = {
       customAnswers?: string[]
     }
   ) => apiClient.post<ApiResponse<{ booking: Booking }>>(`/bookings/${bookingId}/follow-up`, data),
+
+  getTimeline: (
+    bookingId: string,
+    params?: { page?: number; limit?: number },
+    signal?: AbortSignal
+  ) =>
+    apiClient.get<
+      ApiResponse<{
+        activities: BookingActivity[]
+        pagination: Pagination
+      }>
+    >(`/v1/bookings/${bookingId}/timeline`, { params, signal }),
 }
+
+export interface BookingActivity {
+  id: string
+  bookingId: string
+  activityType:
+    | 'BOOKING_CREATED'
+    | 'BOOKING_CONFIRMED'
+    | 'EMAIL_SENT'
+    | 'REMINDER_SENT'
+    | 'BOOKING_RESCHEDULED'
+    | 'BOOKING_CANCELLED'
+    | 'SESSION_COMPLETED'
+    | 'SESSION_NO_SHOW'
+    | 'SESSION_LOGGED'
+    | 'COACH_REASSIGNED'
+    | 'ATTENDANCE_UPDATED'
+    | 'FOLLOW_UP_BOOKED'
+  timestamp: string
+  actorType: 'STUDENT' | 'COACH' | 'ADMIN' | 'SYSTEM'
+  actorUserId?: string | null
+  actorName?: string | null
+  metadata?: any
+  actorUser?: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarUrl?: string | null
+    role: string
+  } | null
+}
+

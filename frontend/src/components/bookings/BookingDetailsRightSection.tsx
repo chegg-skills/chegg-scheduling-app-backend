@@ -5,6 +5,7 @@ import type { Booking } from '@/types'
 import { useSessionLogDraft } from './details/useSessionLogDraft'
 import { ProblemContextTab } from './details/ProblemContextTab'
 import { SessionNotesTab } from './details/SessionNotesTab'
+import { BookingTimelineTab } from './details/BookingTimelineTab'
 
 interface BookingDetailsRightSectionProps {
   booking: Booking
@@ -71,14 +72,17 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
               },
             }}
           >
-            <Tab label="Problem Context" />
+            <Tab label="Timeline" />
+            <Tab label="Questions" />
             <Tab label={draft.log ? 'Session Notes' : 'Log Session'} />
           </Tabs>
         </Box>
 
-        {activeTab === 0 && <ProblemContextTab booking={booking} />}
+        {activeTab === 0 && <BookingTimelineTab booking={booking} />}
 
-        {activeTab === 1 && <SessionNotesTab booking={booking} draft={draft} />}
+        {activeTab === 1 && <ProblemContextTab booking={booking} />}
+
+        {activeTab === 2 && <SessionNotesTab booking={booking} draft={draft} />}
       </Box>
     </Box>
   )
