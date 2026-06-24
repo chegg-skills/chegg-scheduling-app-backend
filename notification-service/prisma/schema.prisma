@@ -9,6 +9,7 @@ datasource db {
 enum NotificationStatus {
   PENDING
   SCHEDULED
+  SENDING
   SENT
   FAILED
   RETRYING

@@ -1,11 +1,18 @@
 import { NotificationStatus, Prisma, type Notification } from "@prisma/client";
 import { renderTemplate } from "../templates/renderer";
 import type { NotificationPayload } from "../types/notification";
-import { DEFAULT_FROM_EMAIL, sendEmailWithRetry, type SentMessageInfo } from "./mailer";
+import {
+  DEFAULT_FROM_EMAIL,
+  isNonRetryableSmtpError,
+  sendEmailWithRetry,
+  type SentMessageInfo,
+} from "./mailer";
 import {
   createOrUpsertNotification,
   markNotificationAsFailed,
   markNotificationAsSent,
+  markNotificationForRetry,
+  MAX_SCHEDULER_ATTEMPTS,
 } from "./notificationRepository";
 import { publishFeedback } from "./feedbackPublisher";
 import { logger } from "../logger";
@@ -14,6 +21,7 @@ type NotificationSendResult =
   | SentMessageInfo
   | { skipped: true; notificationId: number; status: NotificationStatus }
   | { scheduled: true; notificationId: number; sendAt: string }
+  | { retried: true; notificationId: number }
   | null;
 
 const normalizeRecipients = (recipients: string | string[]): string => {
@@ -46,6 +54,7 @@ const buildMailOptions = (record: Pick<Notification, "recipient" | "payload">) =
 
 export async function sendStoredNotification(
   record: Notification | null,
+  opts: { allowSchedulerRetry?: boolean } = {},
 ): Promise<NotificationSendResult> {
   if (!record) return null;
 
@@ -65,6 +74,25 @@ export async function sendStoredNotification(
 
     return info;
   } catch (error) {
+    // Scheduler path only: a transient SMTP failure (under the attempt cap) becomes a
+    // RETRYING row the next sweep will pick up — so a brief provider hiccup no longer
+    // permanently loses the email. The immediate/consumer path keeps its existing
+    // behaviour (mark FAILED + throw → RabbitMQ DLQ), so retry semantics there are
+    // unchanged and a send is never retried by two tiers at once.
+    const canSchedulerRetry =
+      opts.allowSchedulerRetry &&
+      !isNonRetryableSmtpError(error) &&
+      record.retries + 1 < MAX_SCHEDULER_ATTEMPTS;
+
+    if (canSchedulerRetry) {
+      await markNotificationForRetry(record, error);
+      logger.warn(
+        { notificationId: record.id, notificationType: record.notificationType, retries: record.retries + 1 },
+        "Notification send failed transiently — scheduled for retry.",
+      );
+      return { retried: true, notificationId: record.id };
+    }
+
     await markNotificationAsFailed(record.id, error);
     logger.error({ error, notificationType: record.notificationType }, "Error sending notification.");
 
