@@ -181,6 +181,10 @@ const bookFollowUpSession = async (req: Request, res: Response) => {
 const getBookingTimeline = async (req: Request, res: Response) => {
   const { bookingId } = req.params as { bookingId: string };
   const { page, limit } = req.query as unknown as { page: number; limit: number };
+  const caller = res.locals.authUser as CallerContext;
+
+  const booking = await BookingService.getBooking(bookingId);
+  await BookingActivityService.assertBookingTimelineAccess(booking, caller);
 
   const { activities, totalCount } = await BookingActivityService.getBookingActivities(bookingId, page, limit);
 
