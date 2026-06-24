@@ -426,6 +426,26 @@ model OutboxNotification {
   @@index([processedAt, createdAt]) // retention cleanup
 }
 
+// End-to-end delivery status for a notification, reported back by the notification-service
+// after it actually sends (or terminally fails to send) the email. Keyed by the same
+// notificationKey the publisher set, so a SENT/FAILED result can be correlated to the
+// originating notification. Additive observability — does not affect any send path.
+model NotificationDelivery {
+  id               String    @id @default(uuid())
+  notificationKey  String    @unique
+  notificationType String
+  status           String // "SENT" | "FAILED"
+  recipient        String?
+  entityType       String?
+  entityId         String?
+  errorMessage     String?
+  deliveredAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([entityType, entityId])
+}
+
 model TeamNotificationConfig {
   id                        String   @id @default(uuid())
   teamId                    String   @unique
