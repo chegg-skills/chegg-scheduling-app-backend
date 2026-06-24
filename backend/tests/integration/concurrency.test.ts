@@ -55,6 +55,9 @@ describe("Concurrency Integration Tests", () => {
     });
     coachId = coach.id;
 
+    // Coach must be an active team member so getBookableEvent's TeamMember filter keeps them
+    await prisma.teamMember.create({ data: { teamId: team.id, userId: coachId } });
+
     const offering = await prisma.eventType.create({
       data: {
         key: "concurrency_offering",
