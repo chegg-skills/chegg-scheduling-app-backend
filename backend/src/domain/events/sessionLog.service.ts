@@ -221,12 +221,15 @@ export const upsertSessionLog = async (
   const { logResult, isFirstLog, previousAttendance, reassignedBookings } = result;
   const actorRole = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
 
-  // Best-effort post-transaction activity writes — never block the committed slot log.
   for (const b of reassignedBookings) {
-    void recordBookingActivity(
-      prisma, b.id, BookingActivityType.COACH_REASSIGNED, actorRole, caller.id, null,
-      { previousCoachId: b.coachUserId, newCoachId: payload.assignedCoachId },
-    ).catch((e) => getRequestLogger().error({ error: e, bookingId: b.id }, "Failed to record COACH_REASSIGNED activity."));
+    try {
+      await recordBookingActivity(
+        prisma, b.id, BookingActivityType.COACH_REASSIGNED, actorRole, caller.id, null,
+        { previousCoachId: b.coachUserId, newCoachId: payload.assignedCoachId },
+      );
+    } catch (e) {
+      getRequestLogger().error({ error: e, bookingId: b.id }, "Failed to record COACH_REASSIGNED activity.");
+    }
   }
 
   for (const entry of payload.attendance) {
@@ -239,23 +242,35 @@ export const upsertSessionLog = async (
         previousAttendance[entry.bookingId] !== entry.attended;
 
       if (statusChanged) {
-        void recordBookingActivity(
-          prisma, entry.bookingId,
-          entry.attended ? BookingActivityType.SESSION_COMPLETED : BookingActivityType.SESSION_NO_SHOW,
-          actorRole, caller.id, null,
-        ).catch((e) => getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record session status activity."));
+        try {
+          await recordBookingActivity(
+            prisma, entry.bookingId,
+            entry.attended ? BookingActivityType.SESSION_COMPLETED : BookingActivityType.SESSION_NO_SHOW,
+            actorRole, caller.id, null,
+          );
+        } catch (e) {
+          getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record session status activity.");
+        }
       }
       if (attendanceChanged) {
-        void recordBookingActivity(
-          prisma, entry.bookingId, BookingActivityType.ATTENDANCE_UPDATED,
-          actorRole, caller.id, null, { attended: entry.attended },
-        ).catch((e) => getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record ATTENDANCE_UPDATED activity."));
+        try {
+          await recordBookingActivity(
+            prisma, entry.bookingId, BookingActivityType.ATTENDANCE_UPDATED,
+            actorRole, caller.id, null, { attended: entry.attended },
+          );
+        } catch (e) {
+          getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record ATTENDANCE_UPDATED activity.");
+        }
       }
       if (isFirstLog) {
-        void recordBookingActivity(
-          prisma, entry.bookingId, BookingActivityType.SESSION_LOGGED,
-          actorRole, caller.id, null,
-        ).catch((e) => getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record SESSION_LOGGED activity."));
+        try {
+          await recordBookingActivity(
+            prisma, entry.bookingId, BookingActivityType.SESSION_LOGGED,
+            actorRole, caller.id, null,
+          );
+        } catch (e) {
+          getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record SESSION_LOGGED activity.");
+        }
       }
     }
   }

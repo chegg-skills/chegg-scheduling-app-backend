@@ -175,7 +175,7 @@ describe("Booking Activity Timeline API", () => {
   describe("GET /api/bookings/:bookingId/timeline", () => {
     it("returns activity timeline successfully for authorized coach", async () => {
       const res = await request(app)
-        .get(`/api/bookings/${testBookingId}/timeline`)
+        .get(`/api/v1/bookings/${testBookingId}/timeline`)
         .set("Authorization", `Bearer ${coachToken}`);
 
       expect(res.status).toBe(200);
@@ -190,7 +190,7 @@ describe("Booking Activity Timeline API", () => {
 
     it("rejects 403 for unauthorized coaches", async () => {
       const res = await request(app)
-        .get(`/api/bookings/${testBookingId}/timeline`)
+        .get(`/api/v1/bookings/${testBookingId}/timeline`)
         .set("Authorization", `Bearer ${otherCoachToken}`);
 
       expect(res.status).toBe(403);
@@ -198,19 +198,19 @@ describe("Booking Activity Timeline API", () => {
 
     it("allows team admin and super admin to access timeline", async () => {
       const adminRes = await request(app)
-        .get(`/api/bookings/${testBookingId}/timeline`)
+        .get(`/api/v1/bookings/${testBookingId}/timeline`)
         .set("Authorization", `Bearer ${teamAdminToken}`);
       expect(adminRes.status).toBe(200);
 
       const superRes = await request(app)
-        .get(`/api/bookings/${testBookingId}/timeline`)
+        .get(`/api/v1/bookings/${testBookingId}/timeline`)
         .set("Authorization", `Bearer ${superAdminToken}`);
       expect(superRes.status).toBe(200);
     });
 
     it("paginates activity timeline results correctly", async () => {
       const res = await request(app)
-        .get(`/api/bookings/${testBookingId}/timeline?page=1&limit=1`)
+        .get(`/api/v1/bookings/${testBookingId}/timeline?page=1&limit=1`)
         .set("Authorization", `Bearer ${coachToken}`);
 
       expect(res.status).toBe(200);
@@ -239,7 +239,7 @@ describe("Booking Activity Timeline API", () => {
 
       // Verify activity recorded
       const activitiesRes = await request(app)
-        .get(`/api/bookings/${testBookingId}/timeline`)
+        .get(`/api/v1/bookings/${testBookingId}/timeline`)
         .set("Authorization", `Bearer ${coachToken}`);
 
       const rescheduleActivity = activitiesRes.body.data.activities.find(
@@ -265,7 +265,7 @@ describe("Booking Activity Timeline API", () => {
       expect(res.status).toBe(200);
 
       const timelineRes = await request(app)
-        .get(`/api/bookings/${pastBookingId}/timeline`)
+        .get(`/api/v1/bookings/${pastBookingId}/timeline`)
         .set("Authorization", `Bearer ${coachToken}`);
 
       const types = timelineRes.body.data.activities.map((a: any) => a.activityType);
@@ -285,7 +285,7 @@ describe("Booking Activity Timeline API", () => {
       expect(res.status).toBe(200);
 
       const timelineRes = await request(app)
-        .get(`/api/bookings/${testBookingId}/timeline`)
+        .get(`/api/v1/bookings/${testBookingId}/timeline`)
         .set("Authorization", `Bearer ${coachToken}`);
 
       const cancelActivity = timelineRes.body.data.activities.find(

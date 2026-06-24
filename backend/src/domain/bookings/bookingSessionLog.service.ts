@@ -183,26 +183,37 @@ export const upsertBookingSessionLog = async (
 
   const { log: sessionLogResult, actorRole, statusChanged, attendanceChanged, isFirstLog: firstLog, attended } = result;
 
-  // Best-effort — activity writes must never roll back a committed session log.
   if (actorRole !== null && payload.attended !== undefined) {
     if (statusChanged) {
-      void recordBookingActivity(
-        prisma, bookingId,
-        attended ? BookingActivityType.SESSION_COMPLETED : BookingActivityType.SESSION_NO_SHOW,
-        actorRole, caller.id, null,
-      ).catch((e) => getRequestLogger().error({ error: e, bookingId }, "Failed to record session status activity."));
+      try {
+        await recordBookingActivity(
+          prisma, bookingId,
+          attended ? BookingActivityType.SESSION_COMPLETED : BookingActivityType.SESSION_NO_SHOW,
+          actorRole, caller.id, null,
+        );
+      } catch (e) {
+        getRequestLogger().error({ error: e, bookingId }, "Failed to record session status activity.");
+      }
     }
     if (attendanceChanged) {
-      void recordBookingActivity(
-        prisma, bookingId, BookingActivityType.ATTENDANCE_UPDATED,
-        actorRole, caller.id, null, { attended },
-      ).catch((e) => getRequestLogger().error({ error: e, bookingId }, "Failed to record ATTENDANCE_UPDATED activity."));
+      try {
+        await recordBookingActivity(
+          prisma, bookingId, BookingActivityType.ATTENDANCE_UPDATED,
+          actorRole, caller.id, null, { attended },
+        );
+      } catch (e) {
+        getRequestLogger().error({ error: e, bookingId }, "Failed to record ATTENDANCE_UPDATED activity.");
+      }
     }
     if (firstLog) {
-      void recordBookingActivity(
-        prisma, bookingId, BookingActivityType.SESSION_LOGGED,
-        actorRole, caller.id, null,
-      ).catch((e) => getRequestLogger().error({ error: e, bookingId }, "Failed to record SESSION_LOGGED activity."));
+      try {
+        await recordBookingActivity(
+          prisma, bookingId, BookingActivityType.SESSION_LOGGED,
+          actorRole, caller.id, null,
+        );
+      } catch (e) {
+        getRequestLogger().error({ error: e, bookingId }, "Failed to record SESSION_LOGGED activity.");
+      }
     }
   }
 

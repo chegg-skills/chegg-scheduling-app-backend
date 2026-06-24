@@ -277,12 +277,15 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     { timeout: 15000 },
   );
 
-  // Best-effort — activity write must never roll back a committed booking.
-  void recordBookingActivity(
-    prisma, booking.id, BookingActivityType.BOOKING_CREATED,
-    BookingActivityActor.STUDENT, null, booking.studentName,
-    { startTime: booking.startTime, endTime: booking.endTime, coachUserId: booking.coachUserId },
-  ).catch((e) => getRequestLogger().error({ error: e, bookingId: booking.id }, "Failed to record BOOKING_CREATED activity."));
+  try {
+    await recordBookingActivity(
+      prisma, booking.id, BookingActivityType.BOOKING_CREATED,
+      BookingActivityActor.STUDENT, null, booking.studentName,
+      { startTime: booking.startTime, endTime: booking.endTime, coachUserId: booking.coachUserId },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: booking.id }, "Failed to record BOOKING_CREATED activity.");
+  }
 
   getRequestLogger().info(
     {
@@ -493,20 +496,27 @@ const rescheduleBooking = async (
     "Booking rescheduled.",
   );
 
-  // Best-effort — activity writes must never roll back a committed reschedule.
   const { actorType, actorUserId, actorName, previousSlot, coachChanged } = rescheduleResult;
-  void recordBookingActivity(
-    prisma, updatedBooking.id, BookingActivityType.BOOKING_RESCHEDULED,
-    actorType, actorUserId, actorName,
-    { previousSlot, newSlot: { startTime: updatedBooking.startTime, endTime: updatedBooking.endTime, coachUserId: updatedBooking.coachUserId } },
-  ).catch((e) => getRequestLogger().error({ error: e, bookingId: updatedBooking.id }, "Failed to record BOOKING_RESCHEDULED activity."));
+  try {
+    await recordBookingActivity(
+      prisma, updatedBooking.id, BookingActivityType.BOOKING_RESCHEDULED,
+      actorType, actorUserId, actorName,
+      { previousSlot, newSlot: { startTime: updatedBooking.startTime, endTime: updatedBooking.endTime, coachUserId: updatedBooking.coachUserId } },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: updatedBooking.id }, "Failed to record BOOKING_RESCHEDULED activity.");
+  }
 
   if (coachChanged) {
-    void recordBookingActivity(
-      prisma, updatedBooking.id, BookingActivityType.COACH_REASSIGNED,
-      actorType, actorUserId, actorName,
-      { previousCoachId: previousSlot.coachUserId, newCoachId: updatedBooking.coachUserId },
-    ).catch((e) => getRequestLogger().error({ error: e, bookingId: updatedBooking.id }, "Failed to record COACH_REASSIGNED activity."));
+    try {
+      await recordBookingActivity(
+        prisma, updatedBooking.id, BookingActivityType.COACH_REASSIGNED,
+        actorType, actorUserId, actorName,
+        { previousCoachId: previousSlot.coachUserId, newCoachId: updatedBooking.coachUserId },
+      );
+    } catch (e) {
+      getRequestLogger().error({ error: e, bookingId: updatedBooking.id }, "Failed to record COACH_REASSIGNED activity.");
+    }
   }
 
   void queueBookingUpdatedNotifications(updatedBooking, updatedBooking);
@@ -575,12 +585,15 @@ const cancelBooking = async (
     "Booking cancelled.",
   );
 
-  // Best-effort — activity write must never roll back a committed cancellation.
-  void recordBookingActivity(
-    prisma, cancelledBooking.id, BookingActivityType.BOOKING_CANCELLED,
-    cancelActorType, cancelActorUserId, cancelActorName,
-    { cancellationReason: cancelledBooking.cancellationReason },
-  ).catch((e) => getRequestLogger().error({ error: e, bookingId: cancelledBooking.id }, "Failed to record BOOKING_CANCELLED activity."));
+  try {
+    await recordBookingActivity(
+      prisma, cancelledBooking.id, BookingActivityType.BOOKING_CANCELLED,
+      cancelActorType, cancelActorUserId, cancelActorName,
+      { cancellationReason: cancelledBooking.cancellationReason },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: cancelledBooking.id }, "Failed to record BOOKING_CANCELLED activity.");
+  }
 
   const slotRevealedAt = await (async () => {
     if (cancelledBooking.event?.deferCoachReveal && cancelledBooking.scheduleSlotId) {
@@ -854,18 +867,25 @@ const bookFollowUpSession = async (
 
   const { bookingRecord: followUpRecord, actorType: followUpActorType } = followUpBooking;
 
-  // Best-effort — activity writes must never roll back a committed follow-up booking.
-  void recordBookingActivity(
-    prisma, followUpRecord.id, BookingActivityType.BOOKING_CREATED,
-    followUpActorType, caller.id, null,
-    { startTime: followUpRecord.startTime, endTime: followUpRecord.endTime, coachUserId: followUpRecord.coachUserId, isFollowUp: true, parentBookingId: bookingId },
-  ).catch((e) => getRequestLogger().error({ error: e, bookingId: followUpRecord.id }, "Failed to record BOOKING_CREATED activity."));
+  try {
+    await recordBookingActivity(
+      prisma, followUpRecord.id, BookingActivityType.BOOKING_CREATED,
+      followUpActorType, caller.id, null,
+      { startTime: followUpRecord.startTime, endTime: followUpRecord.endTime, coachUserId: followUpRecord.coachUserId, isFollowUp: true, parentBookingId: bookingId },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: followUpRecord.id }, "Failed to record BOOKING_CREATED activity.");
+  }
 
-  void recordBookingActivity(
-    prisma, followUpRecord.id, BookingActivityType.FOLLOW_UP_BOOKED,
-    followUpActorType, caller.id, null,
-    { parentBookingId: bookingId },
-  ).catch((e) => getRequestLogger().error({ error: e, bookingId: followUpRecord.id }, "Failed to record FOLLOW_UP_BOOKED activity."));
+  try {
+    await recordBookingActivity(
+      prisma, followUpRecord.id, BookingActivityType.FOLLOW_UP_BOOKED,
+      followUpActorType, caller.id, null,
+      { parentBookingId: bookingId },
+    );
+  } catch (e) {
+    getRequestLogger().error({ error: e, bookingId: followUpRecord.id }, "Failed to record FOLLOW_UP_BOOKED activity.");
+  }
 
   void queueBookingCreatedNotifications(followUpRecord);
 
