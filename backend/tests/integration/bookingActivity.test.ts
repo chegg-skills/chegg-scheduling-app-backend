@@ -115,7 +115,6 @@ beforeAll(async () => {
 
   // Create standard future booking (creates BOOKING_CREATED & BOOKING_CONFIRMED activities)
   const futureStart = new Date(Date.now() + 24 * 3600 * 1000);
-  const futureEnd = new Date(Date.now() + 25 * 3600 * 1000);
   const res = await request(app)
     .post("/api/bookings")
     .send({
