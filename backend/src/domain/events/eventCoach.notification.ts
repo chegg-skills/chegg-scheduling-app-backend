@@ -30,7 +30,7 @@ const queueEventCoachAddedNotification = async (input: EventCoachAddedNotificati
     const userName = `${user.firstName} ${user.lastName}`.trim();
 
     await publishNotificationSafely({
-      type: "EVENT_COACH_ADDED",
+      type: "EVENT_HOST_ADDED",
       recipients: user.email,
       userId: input.coachUserId,
       variables: {
