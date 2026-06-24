@@ -46,6 +46,7 @@ import {
   queueBookingCreatedNotifications,
   queueBookingStatusNotifications,
   queueBookingUpdatedNotifications,
+  queueBookingRescheduledNotifications,
 } from "./booking.notification";
 
 export { bookingInclude, type SafeBooking } from "./booking.shared";
@@ -519,7 +520,7 @@ const rescheduleBooking = async (
     }
   }
 
-  void queueBookingUpdatedNotifications(updatedBooking, updatedBooking);
+  void queueBookingRescheduledNotifications(updatedBooking);
 
   return updatedBooking;
 };
