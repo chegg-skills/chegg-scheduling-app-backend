@@ -468,7 +468,7 @@ const queueBookingCreatedNotifications = async (
         if (coHost.email) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COCOACH_ASSIGNED",
+              type: "COACH_BOOKING_COHOST_ASSIGNED",
               recipients: coHost.email,
               userId: coHost.id,
               notificationKey: keyFor("cocoach", coHost.email),
@@ -552,7 +552,7 @@ const queueBookingStatusNotifications = async (
           if (coHost.email) {
             publishTasks.push(
               publishNotificationSafely({
-                type: "COACH_BOOKING_COCOACH_CANCELLED",
+                type: "COACH_BOOKING_COHOST_CANCELLED",
                 recipients: coHost.email,
                 userId: coHost.id,
                 variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
@@ -614,7 +614,7 @@ const queueBookingStatusNotifications = async (
         if (coHost.email) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COCOACH_NO_SHOW",
+              type: "COACH_BOOKING_COHOST_NO_SHOW",
               recipients: coHost.email,
               userId: coHost.id,
               variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
@@ -666,7 +666,7 @@ const queueBookingUpdatedNotifications = async (
         if (coCoach.email) {
           publishTasks.push(
             publishNotificationSafely({
-              type: "COACH_BOOKING_COCOACH_ASSIGNED",
+              type: "COACH_BOOKING_COHOST_ASSIGNED",
               recipients: coCoach.email,
               userId: coCoach.id,
               variables: await getBookingNotificationVariables(newBooking, coCoach.timezone),
