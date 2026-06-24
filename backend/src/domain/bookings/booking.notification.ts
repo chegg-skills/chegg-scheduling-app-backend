@@ -77,6 +77,18 @@ const getBookingNotificationVariables = async (
   return variables;
 };
 
+/**
+ * Resolve the active co-host users (id/email/timezone) for a set of co-coach user ids.
+ * Single source of truth for the recipient lookup that several notification paths share.
+ */
+const resolveCoHostRecipients = async (userIds: string[] | null | undefined) => {
+  if (!userIds || userIds.length === 0) return [];
+  return prisma.user.findMany({
+    where: { id: { in: userIds }, isActive: true },
+    select: { id: true, email: true, timezone: true },
+  });
+};
+
 const getTeamAdminRecipients = async (
   teamId: string,
 ): Promise<{ email: string; timezone: string }[]> => {
@@ -459,10 +471,7 @@ const queueBookingCreatedNotifications = async (
     }
 
     if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
-      const coHosts = await prisma.user.findMany({
-        where: { id: { in: booking.coCoachUserIds }, isActive: true },
-        select: { id: true, email: true, timezone: true },
-      });
+      const coHosts = await resolveCoHostRecipients(booking.coCoachUserIds);
 
       for (const coHost of coHosts) {
         if (coHost.email) {
@@ -508,12 +517,7 @@ const queueBookingStatusNotifications = async (
 
     // Fetch co-hosts if needed
     const coCoachUserIds = (booking as any).coCoachUserIds as string[] | undefined;
-    const coHostUsers = coCoachUserIds?.length
-      ? await prisma.user.findMany({
-          where: { id: { in: coCoachUserIds }, isActive: true },
-          select: { id: true, email: true, timezone: true },
-        })
-      : [];
+    const coHostUsers = await resolveCoHostRecipients(coCoachUserIds);
 
     if (booking.status === BookingStatus.CANCELLED) {
       const isAnonymous = booking.event?.allowAnonymousBooking === true;
@@ -657,10 +661,7 @@ const queueBookingUpdatedNotifications = async (
     const addedCoCoaches = newCoCoaches.filter((id) => !oldCoCoaches.has(id));
 
     if (addedCoCoaches.length > 0) {
-      const coCoachUsers = await prisma.user.findMany({
-        where: { id: { in: addedCoCoaches }, isActive: true },
-        select: { id: true, email: true, timezone: true },
-      });
+      const coCoachUsers = await resolveCoHostRecipients(addedCoCoaches);
 
       for (const coCoach of coCoachUsers) {
         if (coCoach.email) {
@@ -718,10 +719,7 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
 
     // Also notify co-hosts
     if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
-      const coHosts = await prisma.user.findMany({
-        where: { id: { in: booking.coCoachUserIds }, isActive: true },
-        select: { id: true, email: true, timezone: true },
-      });
+      const coHosts = await resolveCoHostRecipients(booking.coCoachUserIds);
 
       for (const coHost of coHosts) {
         if (coHost.email) {

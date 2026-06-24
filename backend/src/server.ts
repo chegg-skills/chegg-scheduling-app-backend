@@ -11,6 +11,8 @@ import { logger } from "./shared/logging/logger";
 import { getOidcClient } from "./shared/auth/oidcClient";
 import { startFeedbackConsumer } from "./shared/notifications/communication.feedback";
 import { startOutboxWorker } from "./shared/notifications/outbox.worker";
+import { registerNotificationEnqueuedHook } from "./shared/notifications/notification.publisher";
+import { recordBookingNotificationActivity } from "./domain/bookings/notificationTimeline.hook";
 
 const validateEnv = (): void => {
   const required = ["DATABASE_URL", "JWT_SECRET"];
@@ -45,6 +47,10 @@ const start = async (): Promise<void> => {
     await getOidcClient();
     logger.info("OIDC client initialized.");
   }
+
+  // Record a booking-timeline entry whenever a booking notification is enqueued for
+  // immediate send. Registered here so the shared publisher stays free of domain imports.
+  registerNotificationEnqueuedHook(recordBookingNotificationActivity);
 
   // Start the background RabbitMQ consumer to process delivery feedback status
   await startFeedbackConsumer();
