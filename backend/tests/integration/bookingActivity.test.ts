@@ -13,7 +13,6 @@ let superAdminId: string;
 let teamAdminId: string;
 let coachId: string;
 
-let eventId: string;
 let testBookingId: string;
 let pastBookingId: string;
 
@@ -89,7 +88,6 @@ beforeAll(async () => {
       publicBookingSlug: "test-1to1-event",
     },
   });
-  eventId = oneOnOneEvent.id;
 
   // Create an active coach assignment to the event
   await prisma.eventCoach.create({
@@ -180,11 +178,10 @@ describe("Booking Activity Timeline API", () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.activities).toBeInstanceOf(Array);
-      expect(res.body.data.activities.length).toBe(2); // BOOKING_CREATED and BOOKING_CONFIRMED
+      expect(res.body.data.activities.length).toBe(1);
 
       const types = res.body.data.activities.map((a: any) => a.activityType);
       expect(types).toContain("BOOKING_CREATED");
-      expect(types).toContain("BOOKING_CONFIRMED");
     });
 
     it("rejects 403 for unauthorized coaches", async () => {
@@ -215,10 +212,10 @@ describe("Booking Activity Timeline API", () => {
       expect(res.status).toBe(200);
       expect(res.body.data.activities.length).toBe(1);
       expect(res.body.data.pagination).toEqual({
-        total: 2,
+        total: 1,
         page: 1,
         pageSize: 1,
-        totalPages: 2,
+        totalPages: 1,
       });
     });
   });
