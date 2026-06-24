@@ -10,6 +10,7 @@ import { prisma } from "./shared/db/prisma";
 import { logger } from "./shared/logging/logger";
 import { getOidcClient } from "./shared/auth/oidcClient";
 import { startFeedbackConsumer } from "./shared/notifications/communication.feedback";
+import { startNotificationDeliveryConsumer } from "./shared/notifications/notificationDelivery.consumer";
 import { startOutboxWorker } from "./shared/notifications/outbox.worker";
 
 const validateEnv = (): void => {
@@ -48,6 +49,9 @@ const start = async (): Promise<void> => {
 
   // Start the background RabbitMQ consumer to process delivery feedback status
   await startFeedbackConsumer();
+
+  // Record end-to-end delivery status for every notification type into NotificationDelivery.
+  await startNotificationDeliveryConsumer();
 
   // Start the transactional-outbox worker that publishes booking notifications
   // to RabbitMQ, retrying on failure so emails survive a RabbitMQ outage.
