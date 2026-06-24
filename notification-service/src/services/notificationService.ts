@@ -14,7 +14,7 @@ import {
   markNotificationForRetry,
   MAX_SCHEDULER_ATTEMPTS,
 } from "./notificationRepository";
-import { publishFeedback } from "./feedbackPublisher";
+import { publishFeedback, publishDeliveryFeedback } from "./feedbackPublisher";
 import { logger } from "../logger";
 
 type NotificationSendResult =
@@ -72,6 +72,9 @@ export async function sendStoredNotification(
       await publishFeedback(record.notificationKey, "SENT");
     }
 
+    // Generic end-to-end delivery feedback for any keyed notification.
+    await reportDelivery(record, "SENT");
+
     return info;
   } catch (error) {
     // Scheduler path only: a transient SMTP failure (under the attempt cap) becomes a
@@ -96,14 +99,39 @@ export async function sendStoredNotification(
     await markNotificationAsFailed(record.id, error);
     logger.error({ error, notificationType: record.notificationType }, "Error sending notification.");
 
+    const errMsg = error instanceof Error ? error.message : String(error);
+
     // If this is a custom student email, report failure back to RabbitMQ
     if (record.notificationType === "STUDENT_CUSTOM_EMAIL" && record.notificationKey) {
-      const errMsg = error instanceof Error ? error.message : String(error);
       await publishFeedback(record.notificationKey, "FAILED", errMsg);
     }
 
+    // Generic end-to-end delivery feedback (terminal failure only — not on RETRYING).
+    await reportDelivery(record, "FAILED", errMsg);
+
     throw error;
   }
+}
+
+/**
+ * Emit generic delivery feedback for any notification that carries a notificationKey, so
+ * the backend can track end-to-end delivery. Best-effort and never throws.
+ */
+async function reportDelivery(
+  record: Notification,
+  status: "SENT" | "FAILED",
+  errorMessage?: string,
+): Promise<void> {
+  if (!record.notificationKey) return;
+  await publishDeliveryFeedback({
+    notificationKey: record.notificationKey,
+    notificationType: record.notificationType,
+    status,
+    recipient: record.recipient,
+    entityType: record.entityType,
+    entityId: record.entityId,
+    errorMessage: errorMessage ?? null,
+  });
 }
 
 export async function sendNotification(
