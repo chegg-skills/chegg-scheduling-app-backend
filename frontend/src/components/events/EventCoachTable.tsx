@@ -91,6 +91,8 @@ interface EventCoachTableProps {
   selectedCoachIds?: Set<string>
   onToggleCoach?: (coachUserId: string) => void
   onToggleAll?: (checked: boolean) => void
+  /** Team-wide confirmed booking count per coachUserId. */
+  workload?: Map<string, number>
 }
 
 export function EventCoachTable({
@@ -103,6 +105,7 @@ export function EventCoachTable({
   selectedCoachIds,
   onToggleCoach,
   onToggleAll,
+  workload,
 }: EventCoachTableProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -133,7 +136,7 @@ export function EventCoachTable({
                 />
               </TableCell>
             )}
-            {['Coach', 'Time Zone', 'Availability', 'Language', ...(canManage ? ['Actions'] : [])].map(
+            {['Coach', 'Time Zone', 'Availability', 'Language', 'Bookings', ...(canManage ? ['Actions'] : [])].map(
               (col) => {
                 const isAvailability = col === 'Availability'
                 return (
@@ -286,6 +289,11 @@ export function EventCoachTable({
                   <TableCell sx={{ fontSize: '0.8125rem' }}>
                     {coach.coachUser.preferredLanguage ?? '—'}
                   </TableCell>
+                  <TableCell sx={{ fontSize: '0.8125rem' }}>
+                    <Tooltip title="Confirmed bookings across all events in this team">
+                      <span>{workload?.get(coach.coachUserId) ?? 0}</span>
+                    </Tooltip>
+                  </TableCell>
                   {canManage && (
                     <TableCell align="right">
                       <RowActions
@@ -310,7 +318,7 @@ export function EventCoachTable({
           ) : (
             <TableRow>
               <TableCell
-                colSpan={(canManage ? 5 : 4) + (selectable ? 1 : 0)}
+                colSpan={(canManage ? 6 : 5) + (selectable ? 1 : 0)}
                 align="center"
                 sx={{ py: 3, color: 'text.secondary' }}
               >

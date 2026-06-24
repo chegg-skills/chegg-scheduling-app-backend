@@ -103,6 +103,12 @@ const listEventCoaches = async (req: Request, res: Response) => {
   sendSuccessResponse(res, StatusCodes.OK, result, "Event coaches fetched successfully.");
 };
 
+const getEventCoachWorkload = async (req: Request, res: Response) => {
+  const caller = res.locals.authUser as CallerContext;
+  const workload = await eventService.getEventCoachWorkload(req.params.eventId as string, caller);
+  sendSuccessResponse(res, StatusCodes.OK, { workload }, "Coach workload fetched successfully.");
+};
+
 const replaceEventCoaches = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const result = await eventService.replaceEventCoaches(
@@ -340,6 +346,7 @@ export default {
   updateEvent: asyncHandler(updateEvent),
   deleteEvent: asyncHandler(deleteEvent),
   listEventCoaches: asyncHandler(listEventCoaches),
+  getEventCoachWorkload: asyncHandler(getEventCoachWorkload),
   replaceEventCoaches: asyncHandler(replaceEventCoaches),
   removeEventCoach: asyncHandler(removeEventCoach),
   getEventCoachAvailability: asyncHandler(getEventCoachAvailability),

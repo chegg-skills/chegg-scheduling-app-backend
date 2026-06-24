@@ -69,6 +69,14 @@ beforeAll(async () => {
   });
   coach2Id = coach2.id;
 
+  // Both coaches must be active team members so getBookableEvent's TeamMember filter keeps them
+  await prisma.teamMember.createMany({
+    data: [
+      { teamId: team.id, userId: coach.id },
+      { teamId: team.id, userId: coach2.id },
+    ],
+  });
+
   // Create Offering
   const offering = await prisma.eventType.create({
     data: {
@@ -387,6 +395,43 @@ describe("Booking Domain Integration Tests", () => {
       });
 
       expect(res.status).toBe(201);
+      expect(res.body.data.booking.coachUserId).toBe(coach2Id);
+    });
+
+    it("prefers coach with fewer team-wide bookings when both are available", async () => {
+      // Both coaches are available on Monday 09:00–12:00 — give Coach 1 an existing
+      // confirmed booking on this team so their team-wide count is higher.
+      await prisma.booking.create({
+        data: {
+          teamId,
+          eventId: rrEventId,
+          coachUserId: coachId,
+          studentName: "Prior Student",
+          studentEmail: "prior@test.com",
+          startTime: getNextUtcWeekdayAt(1, 9, 0),
+          endTime: getNextUtcWeekdayAt(1, 10, 0),
+          timezone: "UTC",
+          status: BookingStatus.CONFIRMED,
+        },
+      });
+
+      // Make Coach 2 available during the morning window too
+      await prisma.userWeeklyAvailability.create({
+        data: { userId: coach2Id, dayOfWeek: 1, startTime: "09:00", endTime: "12:00" },
+      });
+
+      const startTime = getNextUtcWeekdayAt(1, 10, 0).toISOString(); // Monday 10:00 — both available
+
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Student RR 3",
+        studentEmail: "stu3@rr.com",
+        teamId,
+        eventId: rrEventId,
+        startTime,
+      });
+
+      expect(res.status).toBe(201);
+      // Coach 2 has 0 team-wide bookings vs Coach 1's 1 — should be preferred
       expect(res.body.data.booking.coachUserId).toBe(coach2Id);
     });
   });

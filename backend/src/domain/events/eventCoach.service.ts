@@ -325,6 +325,30 @@ const removeEventCoach = async (
   return { coaches: refreshedEvent.coaches };
 };
 
+const getEventCoachWorkload = async (
+  eventId: string,
+  caller: CallerContext,
+): Promise<{ coachUserId: string; bookingCount: number }[]> => {
+  const event = await getManagedEvent(eventId, caller, { allowCoachMember: true });
+
+  const coachIds = event.coaches.map((c) => c.coachUserId);
+  if (coachIds.length === 0) return [];
+
+  const counts = await prisma.booking.groupBy({
+    by: ["coachUserId"],
+    where: {
+      teamId: event.teamId,
+      coachUserId: { in: coachIds },
+      status: { not: "CANCELLED" },
+    },
+    _count: { coachUserId: true },
+  });
+
+  return counts
+    .filter((r): r is typeof r & { coachUserId: string } => r.coachUserId !== null)
+    .map((r) => ({ coachUserId: r.coachUserId, bookingCount: r._count.coachUserId }));
+};
+
 /**
  * Returns the event-specific weekly availability override for a coach.
  * Empty array means the coach's global profile schedule applies for this event.
@@ -390,4 +414,5 @@ export {
   syncRoutingState,
   getEventCoachAvailability,
   setEventCoachAvailability,
+  getEventCoachWorkload,
 };

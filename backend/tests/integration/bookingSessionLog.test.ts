@@ -67,6 +67,9 @@ beforeAll(async () => {
     },
   });
 
+  // Coach must be an active team member so getBookableEvent's TeamMember filter keeps them
+  await prisma.teamMember.create({ data: { teamId: team.id, userId: coachId } });
+
   const eventType = await prisma.eventType.create({
     data: {
       key: "test_type",

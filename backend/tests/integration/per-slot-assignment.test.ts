@@ -65,6 +65,14 @@ describe("Per-Slot Coach Assignment Integration Tests", () => {
       })
     ).id;
 
+    // Both coaches must be active team members so getBookableEvent's TeamMember filter keeps them
+    await prisma.teamMember.createMany({
+      data: [
+        { teamId: team.id, userId: coach1Id },
+        { teamId: team.id, userId: coach2Id },
+      ],
+    });
+
     eventTypeId = (
       await prisma.eventType.create({
         data: { key: "slot_test", name: "Slot Test", createdById: admin.id, updatedById: admin.id },

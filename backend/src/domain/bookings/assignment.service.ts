@@ -1,4 +1,4 @@
-import { AssignmentStrategy, Prisma, PrismaClient } from "@prisma/client";
+import { AssignmentStrategy, BookingStatus, Prisma, PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { isCoachAvailable } from "../availability/availability.service";
@@ -17,6 +17,7 @@ export type HostCandidate = CoachCandidate;
 export type AssignmentContext = {
   prisma: Prisma.TransactionClient | PrismaClient;
   eventId: string;
+  teamId: string;
   start: Date;
   end: Date;
   bookingMode: string;
@@ -129,18 +130,35 @@ export class RoundRobinAssignmentStrategy implements IAssignmentStrategy {
 
     const routingState = await getRoutingState(context.prisma, context.eventId);
 
-    const sortedCandidates = [...candidates].sort((a, b) => a.coachOrder - b.coachOrder);
-    const maxOrder = Math.max(...sortedCandidates.map((c) => c.coachOrder));
+    // Count confirmed bookings for each candidate across all events in the team.
+    // Team-scoped (not per-event) so a coach heavily loaded by one event is
+    // deprioritised when another event in the same team assigns next.
+    const bookingCounts = await context.prisma.booking.groupBy({
+      by: ["coachUserId"],
+      where: {
+        teamId: context.teamId,
+        coachUserId: { in: candidates.map((c) => c.coachUserId) },
+        status: { not: BookingStatus.CANCELLED },
+      },
+      _count: { coachUserId: true },
+    });
+    const countMap = new Map(bookingCounts.map((r) => [r.coachUserId, r._count.coachUserId]));
 
-    let startIndex = sortedCandidates.findIndex((c) => c.coachOrder >= routingState.nextCoachOrder);
-    if (startIndex === -1) {
-      startIndex = 0;
-    }
+    const maxOrder = Math.max(...candidates.map((c) => c.coachOrder));
 
-    for (let offset = 0; offset < sortedCandidates.length; offset++) {
-      const index = (startIndex + offset) % sortedCandidates.length;
-      const candidate = sortedCandidates[index];
+    // Primary sort: fewest team-wide bookings first.
+    // Tiebreaker: rotation cursor (nextCoachOrder) so equal-count coaches cycle fairly.
+    const sorted = [...candidates].sort((a, b) => {
+      const countDiff = (countMap.get(a.coachUserId) ?? 0) - (countMap.get(b.coachUserId) ?? 0);
+      if (countDiff !== 0) return countDiff;
+      const aRot =
+        a.coachOrder >= routingState.nextCoachOrder ? a.coachOrder : a.coachOrder + maxOrder;
+      const bRot =
+        b.coachOrder >= routingState.nextCoachOrder ? b.coachOrder : b.coachOrder + maxOrder;
+      return aRot - bRot;
+    });
 
+    for (const candidate of sorted) {
       if (await isCandidateAvailable(candidate, context)) {
         await updateRoutingState(context, candidate.coachOrder, maxOrder);
         return toAssignmentResult(candidate);

@@ -66,6 +66,7 @@ const buildAssignmentContext = ({
 >): AssignmentContext => ({
   prisma: tx,
   eventId: event.id,
+  teamId: event.teamId,
   start,
   end,
   bookingMode: event.bookingMode,
