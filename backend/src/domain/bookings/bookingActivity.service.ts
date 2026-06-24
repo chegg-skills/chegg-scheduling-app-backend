@@ -1,5 +1,8 @@
-import { BookingActivityType, BookingActivityActor, Prisma } from "@prisma/client";
+import { BookingActivityType, BookingActivityActor, UserRole, Prisma } from "@prisma/client";
+import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
+import { ErrorHandler } from "../../shared/error/errorhandler";
+import type { CallerContext } from "../../shared/utils/userUtils";
 
 /**
  * Records a booking activity log.
@@ -41,6 +44,41 @@ export const recordBookingActivity = async (
       metadata: metadata ?? undefined,
     },
   });
+};
+
+/**
+ * Enforces timeline access control.
+ * - SUPER_ADMIN: unrestricted
+ * - TEAM_ADMIN: must be the team lead of the booking's team
+ * - COACH: must be the lead or a co-host on the booking
+ */
+export const assertBookingTimelineAccess = async (
+  booking: { coachUserId: string | null; coCoachUserIds: string[]; teamId: string },
+  caller: CallerContext,
+): Promise<void> => {
+  if (caller.role === UserRole.SUPER_ADMIN) return;
+
+  if (caller.role === UserRole.COACH) {
+    const isLead = booking.coachUserId != null && booking.coachUserId === caller.id;
+    const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
+    if (!isLead && !isCoHost) {
+      throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking timeline.");
+    }
+    return;
+  }
+
+  if (caller.role === UserRole.TEAM_ADMIN) {
+    const isTeamLead = await prisma.team.findFirst({
+      where: { id: booking.teamId, teamLeadId: caller.id },
+      select: { id: true },
+    });
+    if (!isTeamLead) {
+      throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking timeline.");
+    }
+    return;
+  }
+
+  throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking timeline.");
 };
 
 /**

@@ -184,15 +184,7 @@ const getBookingTimeline = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
 
   const booking = await BookingService.getBooking(bookingId);
-
-  if (caller.role === UserRole.COACH) {
-    const isLead = booking.coachUserId != null && booking.coachUserId === caller.id;
-    const isCoHost = (booking.coCoachUserIds ?? []).includes(caller.id);
-
-    if (!isLead && !isCoHost) {
-      throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking timeline.");
-    }
-  }
+  await BookingActivityService.assertBookingTimelineAccess(booking, caller);
 
   const { activities, totalCount } = await BookingActivityService.getBookingActivities(bookingId, page, limit);
 
