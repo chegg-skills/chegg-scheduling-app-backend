@@ -27,4 +27,6 @@ ENV NODE_ENV=production
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:${HEALTH_PORT:-3001}/health || exit 1
 
-CMD ["node", "dist/index.js"]
+# `npm start` runs `prisma migrate deploy && node dist/index.js` — the Prisma CLI is
+# present because `prisma` is a runtime dependency (kept by `npm ci --omit=dev` above).
+CMD ["npm", "start"]

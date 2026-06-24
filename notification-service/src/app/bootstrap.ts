@@ -6,7 +6,32 @@ import { config } from "../config/env";
 import { createHealthServer } from "./healthServer";
 import { logger } from "../logger";
 
+/**
+ * Fail fast on missing configuration with a clear message, before opening any
+ * connection — rather than surfacing an opaque error on the first DB/RabbitMQ/SMTP use.
+ */
+const validateConfig = (): void => {
+  const missing: string[] = [];
+
+  if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
+  if (!process.env.RABBITMQ_URL) missing.push("RABBITMQ_URL");
+
+  // Email transport: either an SMTP host, or a service username + password.
+  const hasSmtp = !!process.env.SMTP_HOST;
+  const hasServiceCreds = !!process.env.EMAIL_USERNAME && !!process.env.EMAIL_PASSWORD;
+  if (!hasSmtp && !hasServiceCreds) {
+    missing.push("SMTP_HOST or (EMAIL_USERNAME and EMAIL_PASSWORD)");
+  }
+
+  if (missing.length > 0) {
+    logger.fatal({ missing }, "Missing required configuration — exiting.");
+    throw new Error(`Missing required environment configuration: ${missing.join(", ")}`);
+  }
+};
+
 export async function bootstrap(): Promise<void> {
+  validateConfig();
+
   logger.info(
     { nodeEnv: process.env.NODE_ENV, dbConfigured: !!process.env.DATABASE_URL },
     "Notification service starting.",

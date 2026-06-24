@@ -73,4 +73,7 @@ const getRabbitConnection = async (): Promise<RabbitConnection> => {
   }
 };
 
-export { getRabbitConnection };
+/** Cheap readiness signal: true when a live connection is currently held. */
+const isRabbitConnected = (): boolean => connection !== null;
+
+export { getRabbitConnection, isRabbitConnected };
