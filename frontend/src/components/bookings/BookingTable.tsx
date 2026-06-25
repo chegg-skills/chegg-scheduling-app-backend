@@ -31,6 +31,16 @@ interface Props {
 
 type BookingSortKey = 'student' | 'event' | 'coach' | 'date' | 'status'
 
+const stickyHeaderStyle = {
+  position: 'sticky',
+  top: 154,
+  zIndex: 8,
+  background: (theme: any) =>
+    theme.palette.mode === 'dark'
+      ? theme.palette.background.paper
+      : 'linear-gradient(rgba(232, 113, 0, 0.03), rgba(232, 113, 0, 0.03)), #ffffff',
+}
+
 const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
   weekday: 'long',
   month: 'long',
@@ -124,11 +134,11 @@ export function BookingTable({
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'visible' }}>
       <Table>
         <TableHead>
           <TableRow>
-            {COLUMNS.map((col) => (
+            {COLUMNS.map((col, index) => (
               <SortableHeaderCell
                 key={col.sortKey}
                 label={col.label}
@@ -137,6 +147,10 @@ export function BookingTable({
                 direction={sortConfig?.direction ?? 'asc'}
                 onSort={requestSort}
                 width={col.width}
+                sx={{
+                  ...stickyHeaderStyle,
+                  ...(index === 0 ? { borderTopLeftRadius: '12px' } : {}),
+                }}
               />
             ))}
             <TableCell
@@ -149,6 +163,8 @@ export function BookingTable({
                 letterSpacing: '0.05em',
                 width: 140,
                 pr: 3,
+                ...stickyHeaderStyle,
+                borderTopRightRadius: '12px',
               }}
             >
               Actions

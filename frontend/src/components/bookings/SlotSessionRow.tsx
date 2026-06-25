@@ -1,5 +1,6 @@
-import { Collapse, TableCell, TableRow, Box, Stack, Typography, Button } from '@mui/material'
-import { ChevronDown, ChevronUp, Calendar } from 'lucide-react'
+import { Collapse, TableCell, TableRow, Box, Stack, Typography, Button, Avatar } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { ChevronDown, ChevronUp, Calendar, Users } from 'lucide-react'
 import type { Booking } from '@/types'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { BookingTimeCell } from './cells/BookingTimeCell'
@@ -73,28 +74,40 @@ export function SlotSessionRow({
 
         {/* Group Session placeholder — Column 2 */}
         <TableCell>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-              Group Session
-            </Typography>
-            <Box
-              component="span"
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Avatar
               sx={{
-                display: 'inline-block',
-                mt: 0.5,
-                px: 0.75,
-                py: 0.15,
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                borderRadius: 0.75,
-                bgcolor: 'action.selected',
-                color: 'text.secondary',
-                letterSpacing: '0.02em',
+                width: 34,
+                height: 34,
+                bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.1),
+                color: (theme) => theme.palette.secondary.main,
               }}
             >
-              {activeCount}{capacity ? ` / ${capacity}` : ''} enrolled
+              <Users size={16} />
+            </Avatar>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                Group Session
+              </Typography>
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-block',
+                  mt: 0.5,
+                  px: 0.75,
+                  py: 0.15,
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  borderRadius: 0.75,
+                  bgcolor: 'action.selected',
+                  color: 'text.secondary',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {activeCount}{capacity ? ` / ${capacity}` : ''} enrolled
+              </Box>
             </Box>
-          </Box>
+          </Stack>
         </TableCell>
 
         <TableCell>

@@ -205,12 +205,17 @@ export function BookingsPage() {
 
           <Box
             sx={{
+              position: 'sticky',
+              top: 90,
+              bgcolor: 'background.default',
+              zIndex: 9,
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
+              alignItems: 'flex-end',
               borderBottom: '1px solid',
               borderColor: 'divider',
-              mt: 4,
+              pt: 2,
+              pb: 0,
               mb: 3,
             }}
           >
@@ -248,7 +253,7 @@ export function BookingsPage() {
               />
             </Tabs>
 
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', pb: 0.5 }}>
               <ToggleButtonGroup
                 value={viewMode}
                 exclusive
