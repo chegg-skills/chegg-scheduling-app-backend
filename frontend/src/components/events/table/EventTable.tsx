@@ -181,7 +181,7 @@ export function EventTable({
           <TableBody>
             {sortedEvents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={canManage ? 8 : 7} align="center" sx={{ py: 8 }}>
+                <TableCell colSpan={canManage ? 7 : 6} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">
                     No events found.
                   </Typography>
@@ -197,7 +197,7 @@ export function EventTable({
                       }}
                     >
                       <TableCell
-                        colSpan={canManage ? 8 : 7}
+                        colSpan={canManage ? 7 : 6}
                         sx={{
                           py: 1.5,
                           px: 3,

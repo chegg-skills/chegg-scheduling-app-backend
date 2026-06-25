@@ -3,6 +3,7 @@ import AvatarGroup from '@mui/material/AvatarGroup'
 import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 import Tooltip from '@mui/material/Tooltip'
@@ -82,12 +83,13 @@ export function EventTableRow({
             >
               {toTitleCase(event.name)}
             </Link>
+            {event.eventType?.name && (
+              <Typography variant="caption" color="text.secondary">
+                {toTitleCase(event.eventType.name)}
+              </Typography>
+            )}
           </Stack>
         </Stack>
-      </TableCell>
-
-      <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-        {event.eventType?.name ? toTitleCase(event.eventType.name) : '—'}
       </TableCell>
 
       <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
