@@ -119,6 +119,7 @@ model EventType {
   key         String   @unique
   name        String
   description String?
+  color       String?
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdById String

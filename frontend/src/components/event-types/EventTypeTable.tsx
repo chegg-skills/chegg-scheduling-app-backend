@@ -141,6 +141,17 @@ export function EventTypeTable({ eventTypes }: EventTypeTableProps) {
                   letterSpacing: '0.05em',
                 }}
               >
+                Color
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 Actions
               </TableCell>
             </TableRow>
@@ -190,6 +201,33 @@ export function EventTypeTable({ eventTypes }: EventTypeTableProps) {
                     label={et.isActive ? 'Active' : 'Inactive'}
                     color={et.isActive ? 'green' : 'red'}
                   />
+                </TableCell>
+                <TableCell>
+                  {et.color ? (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: et.color,
+                          flexShrink: 0,
+                          border: '2px solid',
+                          borderColor: 'divider',
+                        }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+                      >
+                        {et.color}
+                      </Typography>
+                    </Stack>
+                  ) : (
+                    <Typography variant="caption" color="text.disabled">
+                      None
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell>
                   <RowActions

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Typography from '@mui/material/Typography'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Box from '@mui/material/Box'
@@ -12,6 +13,7 @@ import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useCreateEventType, useUpdateEventType } from '@/hooks/queries/useEventTypes'
 import { extractApiError } from '@/utils/apiError'
 import type { EventType } from '@/types'
+import { ColorSwatchesPicker } from '@/components/events/groups/ColorSwatchesPicker'
 
 const schema = z.object({
   key: z
@@ -39,6 +41,7 @@ export function EventTypeForm({ eventType, onSuccess, onCancel }: EventTypeFormP
   const { mutate: create, isPending: creating, error: createError } = useCreateEventType()
   const { mutate: update, isPending: updating, error: updateError } = useUpdateEventType()
   const [keyTouched, setKeyTouched] = useState(false)
+  const [color, setColor] = useState<string | null>(eventType?.color ?? '#E87100')
 
   const {
     register,
@@ -60,6 +63,7 @@ export function EventTypeForm({ eventType, onSuccess, onCancel }: EventTypeFormP
   // Reset keyTouched when switching between create/edit modes or editing a different record
   useEffect(() => {
     setKeyTouched(false)
+    setColor(eventType?.color ?? '#E87100')
     if (eventType)
       reset({
         key: eventType.key,
@@ -82,13 +86,15 @@ export function EventTypeForm({ eventType, onSuccess, onCancel }: EventTypeFormP
   }, [watchedName, isEdit, keyTouched, setValue])
 
   function onSubmit(values: FormValues) {
+    const payload = { ...values, color }
     if (isEdit && eventType) {
-      update({ eventTypeId: eventType.id, data: values }, { onSuccess })
+      update({ eventTypeId: eventType.id, data: payload }, { onSuccess })
     } else {
-      create(values, {
+      create(payload, {
         onSuccess: () => {
           reset()
           setKeyTouched(false)
+          setColor('#E87100')
           onSuccess?.()
         },
       })
@@ -145,6 +151,16 @@ export function EventTypeForm({ eventType, onSuccess, onCancel }: EventTypeFormP
             {...register('sortOrder')}
           />
         </FormField>
+
+        <Box>
+          <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+            Color
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+            Used to color-code bookings of this event type in the bookings table.
+          </Typography>
+          <ColorSwatchesPicker selectedColor={color} onColorSelect={setColor} />
+        </Box>
 
         <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ pt: 1 }}>
           {onCancel && (

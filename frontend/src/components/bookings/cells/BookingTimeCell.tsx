@@ -16,7 +16,7 @@ export function BookingTimeCell({ startTime, endTime }: BookingTimeCellProps) {
   const end = new Date(endTime)
 
   return (
-    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+    <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
       {timeFormatter.format(start)} – {timeFormatter.format(end)}
     </Typography>
   )

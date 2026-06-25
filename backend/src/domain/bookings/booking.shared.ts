@@ -101,6 +101,7 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
   team: { select: bookingTeamSelect },
   event: {
     include: {
+      eventType: true,
       coaches: {
         include: {
           coachUser: {

@@ -31,6 +31,13 @@ interface Props {
 
 type BookingSortKey = 'student' | 'event' | 'coach' | 'date' | 'status'
 
+const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+})
+
 const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
   student: (booking) => booking.studentName,
   event: (booking) => booking.event?.name ?? '',
@@ -40,21 +47,20 @@ const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
 }
 
 const COLUMNS = [
-  { label: 'Student', sortKey: 'student' as const, width: '25%' },
-  { label: 'Event', sortKey: 'event' as const, width: '20%' },
-  { label: 'Coach', sortKey: 'coach' as const, width: '20%' },
+  { label: 'Event', sortKey: 'event' as const, width: '36%' },
+  { label: 'Student', sortKey: 'student' as const, width: '22%' },
+  { label: 'Coach', sortKey: 'coach' as const, width: '17%' },
   { label: 'Date / Time', sortKey: 'date' as const, width: '20%' },
-  { label: 'Status', sortKey: 'status' as const, width: '15%' },
+  { label: 'Status', sortKey: 'status' as const, width: '5%' },
 ]
 
-const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-})
-
-export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPageChange, disableSlotGrouping }: Props) {
+export function BookingTable({
+  bookings,
+  pagination,
+  onPageChange,
+  onRowsPerPageChange,
+  disableSlotGrouping,
+}: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const {
     sortedItems: sortedBookings,
@@ -141,7 +147,7 @@ export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPage
                 textTransform: 'uppercase',
                 color: 'text.secondary',
                 letterSpacing: '0.05em',
-                width: 50,
+                width: 140,
                 pr: 3,
               }}
             >

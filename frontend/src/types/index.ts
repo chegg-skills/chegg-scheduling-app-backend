@@ -187,6 +187,7 @@ export interface EventType {
   key: string
   name: string
   description: string | null
+  color: string | null
   isActive: boolean
   sortOrder: number
   createdById: string
@@ -601,6 +602,7 @@ export interface CreateEventTypeDto {
   key: string
   name: string
   description?: string
+  color?: string | null
   sortOrder?: number
   isActive?: boolean
 }

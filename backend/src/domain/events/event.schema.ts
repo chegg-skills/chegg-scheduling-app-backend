@@ -18,6 +18,7 @@ const EventTypeBase = z.looseObject({
     .optional(),
   name: z.string().trim().min(1, "Name is required").optional(),
   description: z.string().trim().optional().nullable(),
+  color: z.string().trim().nullable().optional(),
   sortOrder: z.coerce.number().int().nonnegative().default(0),
   isActive: z.boolean().default(true),
 });

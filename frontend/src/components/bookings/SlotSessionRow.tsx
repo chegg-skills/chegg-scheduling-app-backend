@@ -1,11 +1,12 @@
-import { Collapse, TableCell, TableRow, Box, Stack, Typography, Chip, Button } from '@mui/material'
-import { ChevronDown, ChevronUp, Users } from 'lucide-react'
+import { Collapse, TableCell, TableRow, Box, Stack, Typography, Button } from '@mui/material'
+import { ChevronDown, ChevronUp, Calendar } from 'lucide-react'
 import type { Booking } from '@/types'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { BookingTimeCell } from './cells/BookingTimeCell'
 import { BookingCoachInfo } from './cells/BookingCoachInfo'
 import { SlotSessionPanel } from './SlotSessionPanel'
 import { deriveSlotStatus } from './slotUtils'
+import { hexToIconColors } from '@/utils/color'
 
 interface SlotSessionRowProps {
   slotId: string
@@ -25,6 +26,7 @@ export function SlotSessionRow({
   const activeCount = bookings.filter((b) => b.status !== 'CANCELLED').length
   const slotStatus = deriveSlotStatus(bookings)
   const capacity = first.scheduleSlot?.capacity ?? first.event?.maxParticipantCount ?? null
+  const iconColors = hexToIconColors(first.event?.eventType?.color ?? '#6366f1')
 
   return (
     <>
@@ -34,12 +36,13 @@ export function SlotSessionRow({
           bgcolor: isExpanded ? 'action.hover' : 'inherit',
           transition: 'background-color 0.2s ease',
           cursor: 'pointer',
+          '& .MuiTableCell-root': { py: 2 },
         }}
         onClick={onToggle}
       >
-        {/* Session label — spans Student + Event columns */}
-        <TableCell sx={{ pl: 3 }} colSpan={2}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
+        {/* Event name cell — Column 1 */}
+        <TableCell>
+          <Stack direction="row" spacing={1.25} alignItems="center">
             <Box
               sx={{
                 display: 'flex',
@@ -47,27 +50,51 @@ export function SlotSessionRow({
                 justifyContent: 'center',
                 width: 32,
                 height: 32,
-                borderRadius: 1,
-                bgcolor: 'primary.lighter',
-                color: 'primary.main',
+                borderRadius: '50%',
+                bgcolor: iconColors.bg,
+                color: iconColors.icon,
                 flexShrink: 0,
               }}
             >
-              <Users size={16} />
+              <Calendar size={18} />
             </Box>
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                {first.event?.name ?? 'Group Session'}
+                {first.event?.name || 'Group Session'}
               </Typography>
-              <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.25 }}>
-                <Chip
-                  label={`${activeCount}${capacity ? ` / ${capacity}` : ''} enrolled`}
-                  size="small"
-                  sx={{ fontSize: '0.7rem', height: 18, bgcolor: 'action.hover' }}
-                />
-              </Stack>
+              {first.event?.eventType?.name && (
+                <Typography variant="caption" color="text.secondary">
+                  {first.event.eventType.name}
+                </Typography>
+              )}
             </Box>
           </Stack>
+        </TableCell>
+
+        {/* Group Session placeholder — Column 2 */}
+        <TableCell>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+              Group Session
+            </Typography>
+            <Box
+              component="span"
+              sx={{
+                display: 'inline-block',
+                mt: 0.5,
+                px: 0.75,
+                py: 0.15,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                borderRadius: 0.75,
+                bgcolor: 'action.selected',
+                color: 'text.secondary',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {activeCount}{capacity ? ` / ${capacity}` : ''} enrolled
+            </Box>
+          </Box>
         </TableCell>
 
         <TableCell>
@@ -82,7 +109,7 @@ export function SlotSessionRow({
           <BookingStatusBadge status={slotStatus} />
         </TableCell>
 
-        <TableCell align="right" sx={{ pr: 3 }}>
+        <TableCell align="right" sx={{ pr: 3, width: 140 }}>
           <Button
             size="small"
             onClick={(e) => {
@@ -94,6 +121,8 @@ export function SlotSessionRow({
               color: isExpanded ? 'primary.main' : 'text.secondary',
               fontWeight: 600,
               whiteSpace: 'nowrap',
+              px: 0.75,
+              minWidth: 'auto',
             }}
           >
             {isExpanded ? 'Hide' : 'Details'}
