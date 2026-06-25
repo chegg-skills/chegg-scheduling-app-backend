@@ -8,25 +8,40 @@ import { sendFileResponse } from "../../shared/http/responseHelper";
 const downloadBookingsReport = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const timeframe = typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
-  const { csv, filename } = await reportService.getBookingsReport(caller, timeframe);
+  const format = req.query.format;
+  const { data, csv, filename } = await reportService.getBookingsReport(caller, timeframe);
 
-  sendFileResponse(res, StatusCodes.OK, csv, "text/csv", filename);
+  if (format === "json") {
+    res.status(StatusCodes.OK).json({ success: true, data });
+  } else {
+    sendFileResponse(res, StatusCodes.OK, csv, "text/csv", filename);
+  }
 };
 
 const downloadPerformanceReport = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const timeframe = typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
-  const { csv, filename } = await reportService.getPerformanceReport(caller, timeframe);
+  const format = req.query.format;
+  const { data, csv, filename } = await reportService.getPerformanceReport(caller, timeframe);
 
-  sendFileResponse(res, StatusCodes.OK, csv, "text/csv", filename);
+  if (format === "json") {
+    res.status(StatusCodes.OK).json({ success: true, data });
+  } else {
+    sendFileResponse(res, StatusCodes.OK, csv, "text/csv", filename);
+  }
 };
 
 const downloadStudentReport = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
   const timeframe = typeof req.query.timeframe === "string" ? req.query.timeframe : undefined;
-  const { csv, filename } = await reportService.getStudentReport(caller, timeframe);
+  const format = req.query.format;
+  const { data, csv, filename } = await reportService.getStudentReport(caller, timeframe);
 
-  sendFileResponse(res, StatusCodes.OK, csv, "text/csv", filename);
+  if (format === "json") {
+    res.status(StatusCodes.OK).json({ success: true, data });
+  } else {
+    sendFileResponse(res, StatusCodes.OK, csv, "text/csv", filename);
+  }
 };
 
 export default {
