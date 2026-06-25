@@ -166,9 +166,9 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
                 </TableCell>
                 <TableCell align="center">
                   <Chip
-                    label={slot.status === 'FULL' ? 'Full' : 'Open'}
+                    label={slot.status === 'FULL' ? 'Full' : slot.status === 'CLOSED' ? 'Closed' : 'Open'}
                     size="small"
-                    color={slot.status === 'FULL' ? 'error' : 'info'}
+                    color={slot.status === 'FULL' ? 'error' : slot.status === 'CLOSED' ? 'default' : 'info'}
                     variant="outlined"
                     sx={{ fontWeight: 600, fontSize: '0.7rem' }}
                   />

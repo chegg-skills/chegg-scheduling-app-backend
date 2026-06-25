@@ -3,9 +3,10 @@ import type { BookingStatus } from '@/types'
 
 interface Props {
   status: BookingStatus
+  useAttendanceLabels?: boolean
 }
 
-export function BookingStatusBadge({ status }: Props) {
+export function BookingStatusBadge({ status, useAttendanceLabels }: Props) {
   const getStatusConfig = (s: BookingStatus): { label: string; color: BadgeColor } => {
     switch (s) {
       case 'CONFIRMED':
@@ -13,9 +14,9 @@ export function BookingStatusBadge({ status }: Props) {
       case 'CANCELLED':
         return { label: 'Cancelled', color: 'red' }
       case 'COMPLETED':
-        return { label: 'Completed', color: 'blue' }
+        return { label: useAttendanceLabels ? 'Present' : 'Completed', color: useAttendanceLabels ? 'green' : 'blue' }
       case 'NO_SHOW':
-        return { label: 'No Show', color: 'yellow' }
+        return { label: useAttendanceLabels ? 'Absent' : 'No Show', color: useAttendanceLabels ? 'red' : 'yellow' }
       default:
         return { label: s, color: 'gray' }
     }

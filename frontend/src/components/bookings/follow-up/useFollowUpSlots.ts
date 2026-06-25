@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { Booking } from '@/types'
-import { usePublicSlots } from '@/hooks/queries/usePublicBooking'
+import { usePublicSlots, usePublicSlotDates } from '@/hooks/queries/usePublicBooking'
 import { startOfDayInTimezone } from '@/utils/dateTimezone'
 
 /**
@@ -12,7 +12,8 @@ import { startOfDayInTimezone } from '@/utils/dateTimezone'
 export function useFollowUpSlots(
   booking: Booking | null,
   selectedDate: Date,
-  selectedTimezone: string
+  selectedTimezone: string,
+  calendarMonth: Date
 ) {
   // Max selectable date based on event's booking window, anchored to the student's timezone
   const maxDate = useMemo(() => {
@@ -130,6 +131,19 @@ export function useFollowUpSlots(
     return tzName ? `${timeStr} (${tzName})` : timeStr
   }
 
+  const isFixedSlots = booking?.event?.bookingMode === 'FIXED_SLOTS'
+  const preferredCoachId = booking?.coachUserId || undefined
+
+  const { availableDates, isLoading: isLoadingDates } = usePublicSlotDates(
+    booking?.eventId || '',
+    calendarMonth,
+    isFixedSlots,
+    preferredCoachId,
+    selectedTimezone
+  )
+
+
+
   return {
     maxDate,
     slots,
@@ -139,5 +153,8 @@ export function useFollowUpSlots(
     timeFormat,
     dateFormat,
     formatSlotWithTz,
+    availableDates,
+    isLoadingDates,
+    isFixedSlots,
   }
 }

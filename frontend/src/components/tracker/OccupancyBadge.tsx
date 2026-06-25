@@ -3,7 +3,7 @@ import Chip from '@mui/material/Chip'
 interface OccupancyBadgeProps {
   bookingCount: number
   capacity: number | null
-  status: 'OPEN' | 'FULL'
+  status: 'OPEN' | 'FULL' | 'CLOSED'
 }
 
 export function OccupancyBadge({ bookingCount, capacity, status }: OccupancyBadgeProps) {
@@ -19,7 +19,19 @@ export function OccupancyBadge({ bookingCount, capacity, status }: OccupancyBadg
 
   const fillPct = capacity > 0 ? bookingCount / capacity : 1
 
-  if (status === 'FULL') {
+  if (status === 'CLOSED') {
+    return (
+      <Chip
+        label={`Closed (${bookingCount} / ${capacity})`}
+        size="small"
+        sx={{ fontWeight: 600, bgcolor: 'grey.200', color: 'text.secondary' }}
+      />
+    )
+  }
+
+  const isFull = bookingCount >= capacity
+
+  if (status === 'FULL' || isFull) {
     return (
       <Chip
         label={`Full (${bookingCount} / ${capacity})`}

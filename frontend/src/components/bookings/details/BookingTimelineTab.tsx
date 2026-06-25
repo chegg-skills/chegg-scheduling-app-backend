@@ -495,41 +495,39 @@ export function BookingTimelineTab({ booking }: BookingTimelineTabProps) {
                               </Typography>
                             )}
 
-                            {activity.activityType === 'BOOKING_RESCHEDULED' && activity.metadata?.previousSlot && (
+                            {activity.activityType === 'BOOKING_RESCHEDULED' && activity.metadata?.previousSlot && activity.metadata?.newSlot && (
                               <Box
                                 sx={{
                                   mt: 1,
-                                  p: 1,
+                                  p: 1.25,
                                   borderRadius: 1,
-                                  bgcolor: alpha(theme.palette.action.hover, 0.6),
-                                  border: `1px solid ${theme.palette.divider}`,
+                                  bgcolor: theme.palette.accent.peach,
+                                  border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
                                 }}
                               >
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                <Typography variant="caption" color="text.primary" sx={{ display: 'block' }}>
                                   <strong>From:</strong> {formatDateTime(activity.metadata.previousSlot.startTime)}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                <Typography variant="caption" color="text.primary" sx={{ display: 'block' }}>
                                   <strong>To:</strong> {formatDateTime(activity.metadata.newSlot.startTime)}
                                 </Typography>
                               </Box>
                             )}
 
                             {activity.activityType === 'BOOKING_CANCELLED' && activity.metadata?.cancellationReason && (
-                              <Typography
-                                variant="caption"
-                                color="error.main"
+                              <Box
                                 sx={{
-                                  display: 'block',
-                                  mt: 0.8,
-                                  fontStyle: 'italic',
-                                  p: 0.8,
+                                  mt: 1,
+                                  p: 1.25,
                                   borderRadius: 1,
-                                  bgcolor: alpha(theme.palette.error.main, 0.05),
-                                  borderLeft: `3px solid ${theme.palette.error.main}`,
+                                  bgcolor: theme.palette.error.light,
+                                  border: `1px solid ${alpha(theme.palette.error.main, 0.15)}`,
                                 }}
                               >
-                                &ldquo;{activity.metadata.cancellationReason}&rdquo;
-                              </Typography>
+                                <Typography variant="caption" color="text.primary" sx={{ display: 'block' }}>
+                                  <strong>Reason:</strong> &ldquo;{activity.metadata.cancellationReason}&rdquo;
+                                </Typography>
+                              </Box>
                             )}
 
                             {activity.activityType === 'ATTENDANCE_UPDATED' && (
@@ -554,6 +552,37 @@ export function BookingTimelineTab({ booking }: BookingTimelineTabProps) {
                               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.4, fontSize: '0.75rem' }}>
                                 Scheduled for {formatDateTime(activity.metadata.startTime)}
                               </Typography>
+                            )}
+
+                            {activity.activityType === 'SESSION_LOGGED' && (
+                              <Box
+                                sx={{
+                                  mt: 1,
+                                  p: 1.25,
+                                  borderRadius: 1,
+                                  bgcolor: 'background.default',
+                                  border: `1px solid ${theme.palette.divider}`,
+                                }}
+                              >
+                                {activity.metadata?.topicsDiscussed && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.primary"
+                                    sx={{ display: 'block', fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}
+                                  >
+                                    <strong>Topics:</strong> {activity.metadata.topicsDiscussed}
+                                  </Typography>
+                                )}
+                                {activity.metadata?.summary && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ display: 'block', mt: 0.5, fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}
+                                  >
+                                    <strong>Summary:</strong> {activity.metadata.summary}
+                                  </Typography>
+                                )}
+                              </Box>
                             )}
 
                             {/* Notifications triggered by this action — secondary detail */}

@@ -74,7 +74,7 @@ export function BookingDetailsRightSection({ booking }: BookingDetailsRightSecti
           >
             <Tab label="Timeline" />
             <Tab label="Questions" />
-            <Tab label={draft.log ? 'Session Notes' : 'Log Session'} />
+            <Tab label={booking.scheduleSlotId ? 'Session Notes' : (draft.log ? 'Session Notes' : 'Log Session')} />
           </Tabs>
         </Box>
 

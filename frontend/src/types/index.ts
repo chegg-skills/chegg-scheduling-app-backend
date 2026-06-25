@@ -285,6 +285,7 @@ export interface EventScheduleSlot {
     bookings: number
   }
   sessionLog?: SessionLog | null
+  bookings?: Booking[]
   recurrenceGroup?: {
     id: string
     frequency: string

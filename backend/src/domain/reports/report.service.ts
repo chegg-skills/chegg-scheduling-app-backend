@@ -9,7 +9,7 @@ import { StatusCodes } from "http-status-codes";
 export const getBookingsReport = async (
   caller: CallerContext,
   timeframeRaw?: string,
-): Promise<{ csv: string; filename: string }> => {
+): Promise<{ data: any[]; csv: string; filename: string }> => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
@@ -52,6 +52,7 @@ export const getBookingsReport = async (
 
   const dateStr = new Date().toISOString().split("T")[0];
   return {
+    data: reportData,
     csv: convertToCSV(reportData),
     filename: `bookings_report_${dateStr}.csv`,
   };
@@ -60,7 +61,7 @@ export const getBookingsReport = async (
 export const getPerformanceReport = async (
   caller: CallerContext,
   timeframeRaw?: string,
-): Promise<{ csv: string; filename: string }> => {
+): Promise<{ data: any[]; csv: string; filename: string }> => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
@@ -79,40 +80,45 @@ export const getPerformanceReport = async (
 
   const reportData = await Promise.all(
     coaches.map(async (coach) => {
-      const stats = await prisma.booking.groupBy({
-        by: ["status"],
-        where: {
-          ...bookingWhere,
-          coachUserId: coach.id,
-        },
-        _count: { _all: true },
-      });
+      const coachWhere: Prisma.BookingWhereInput = { ...bookingWhere, coachUserId: coach.id };
 
-      const counts = stats.reduce(
-        (acc, curr) => {
-          acc[curr.status] = curr._count._all;
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
+      // Count sessions, not raw bookings. A ONE_TO_MANY slot with N students = 1 session.
+      // For each status: count distinct slots (group sessions) + individual bookings (no slot).
+      const countSessions = async (status: BookingStatus): Promise<number> => {
+        const statusWhere = { ...coachWhere, status };
+        const [slotGroups, individual] = await Promise.all([
+          prisma.booking.groupBy({
+            by: ["scheduleSlotId"],
+            where: { ...statusWhere, scheduleSlotId: { not: null } },
+          }),
+          prisma.booking.count({ where: { ...statusWhere, scheduleSlotId: null } }),
+        ]);
+        return slotGroups.length + individual;
+      };
 
-      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+      const [completed, noShow, cancelled] = await Promise.all([
+        countSessions(BookingStatus.COMPLETED),
+        countSessions(BookingStatus.NO_SHOW),
+        countSessions(BookingStatus.CANCELLED),
+      ]);
+
+      const total = completed + noShow + cancelled;
 
       return {
         "Coach Name": `${coach.firstName} ${coach.lastName}`,
         Email: coach.email,
-        "Total Bookings": total,
-        Completed: counts[BookingStatus.COMPLETED] || 0,
-        "No-Show": counts[BookingStatus.NO_SHOW] || 0,
-        Cancelled: counts[BookingStatus.CANCELLED] || 0,
-        "Completion Rate (%)":
-          total > 0 ? Math.round(((counts[BookingStatus.COMPLETED] || 0) / total) * 100) : 0,
+        "Total Sessions": total,
+        Completed: completed,
+        "No-Show": noShow,
+        Cancelled: cancelled,
+        "Completion Rate (%)": total > 0 ? Math.round((completed / total) * 100) : 0,
       };
     }),
   );
 
   const dateStr = new Date().toISOString().split("T")[0];
   return {
+    data: reportData,
     csv: convertToCSV(reportData),
     filename: `performance_report_${dateStr}.csv`,
   };
@@ -121,7 +127,7 @@ export const getPerformanceReport = async (
 export const getStudentReport = async (
   caller: CallerContext,
   timeframeRaw?: string,
-): Promise<{ csv: string; filename: string }> => {
+): Promise<{ data: any[]; csv: string; filename: string }> => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
@@ -149,6 +155,7 @@ export const getStudentReport = async (
 
   const dateStr = new Date().toISOString().split("T")[0];
   return {
+    data: reportData,
     csv: convertToCSV(reportData),
     filename: `student_engagement_report_${dateStr}.csv`,
   };

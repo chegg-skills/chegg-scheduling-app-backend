@@ -143,15 +143,23 @@ export function usePublicSlotDates(
   const startDate = startOfMonth(calendarMonth).toISOString()
   const endDate = endOfMonth(calendarMonth).toISOString()
 
-  const { data: slots = [], isLoading } = useQuery({
+  const queryResult = useQuery({
     queryKey: publicKeys.slotDates(eventId, startDate, endDate, preferredCoachId, timezone),
-    queryFn: ({ signal }) =>
-      publicApi
+    queryFn: ({ signal }) => {
+      return publicApi
         .getAvailableSlots(eventId, startDate, endDate, preferredCoachId, signal, timezone)
-        .then((r) => r.data.data?.slots ?? []),
+        .then((r) => {
+          return r.data.data?.slots ?? []
+        })
+        .catch((err) => {
+          throw err
+        })
+    },
     enabled: isFixedSlots && !!eventId,
     staleTime: 5 * 60 * 1000,
   })
+
+  const { data: slots = [], isLoading } = queryResult
 
   const availableDates = useMemo(() => {
     const dates = new Set<string>()
