@@ -242,7 +242,7 @@ describe('Bookings Domain Integration', () => {
         groupId: null,
         locationLinkExpiresAt: null,
         locationLinkReminderDays: null,
-        eventType: { id: 'type-1', key: 'tutoring', name: 'Tutoring', description: null, isActive: true, sortOrder: 0, createdById: 'admin-1', updatedById: 'admin-1', createdAt: '2026-06-24T10:30:00Z', updatedAt: '2026-06-24T10:30:00Z' },
+        eventType: { id: 'type-1', key: 'tutoring', name: 'Tutoring', description: null, color: null, isActive: true, sortOrder: 0, createdById: 'admin-1', updatedById: 'admin-1', createdAt: '2026-06-24T10:30:00Z', updatedAt: '2026-06-24T10:30:00Z' },
         coaches: [],
         createdAt: '2026-06-24T10:30:00Z',
         updatedAt: '2026-06-24T10:30:00Z',

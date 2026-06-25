@@ -62,7 +62,7 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
               <Calendar size={18} />
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                 {booking.event?.name || 'Unknown Event'}
               </Typography>
               {booking.event?.eventType?.name && (
