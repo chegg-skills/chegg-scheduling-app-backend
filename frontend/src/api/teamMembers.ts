@@ -19,4 +19,10 @@ export const teamMembersApi = {
 
   remove: (teamId: string, userId: string) =>
     apiClient.delete<ApiResponse<TeamMember>>(`/teams/${teamId}/members/${userId}`),
+
+  getWorkload: (teamId: string, signal?: AbortSignal) =>
+    apiClient.get<ApiResponse<{ workload: { userId: string; sessionCount: number }[] }>>(
+      `/teams/${teamId}/members/workload`,
+      { signal }
+    ),
 }

@@ -136,7 +136,7 @@ export function EventCoachTable({
                 />
               </TableCell>
             )}
-            {['Coach', 'Time Zone', 'Availability', 'Language', 'Bookings', ...(canManage ? ['Actions'] : [])].map(
+            {['Coach', 'Time Zone', 'Availability', 'Language', 'Sessions', ...(canManage ? ['Actions'] : [])].map(
               (col) => {
                 const isAvailability = col === 'Availability'
                 return (
@@ -290,7 +290,7 @@ export function EventCoachTable({
                     {coach.coachUser.preferredLanguage ?? '—'}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.8125rem' }}>
-                    <Tooltip title="Confirmed bookings across all events in this team">
+                    <Tooltip title="Upcoming sessions for this event">
                       <span>{workload?.get(coach.coachUserId) ?? 0}</span>
                     </Tooltip>
                   </TableCell>

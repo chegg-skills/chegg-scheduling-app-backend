@@ -5,12 +5,21 @@ import { invalidateQueryKeys } from '../queryUtils'
 export const memberKeys = {
   all: ['team-members'] as const,
   byTeam: (teamId: string) => [...memberKeys.all, 'team', teamId] as const,
+  workload: (teamId: string) => [...memberKeys.all, 'team', teamId, 'workload'] as const,
 }
 
 export function useTeamMembers(teamId: string) {
   return useQuery({
     queryKey: memberKeys.byTeam(teamId),
     queryFn: ({ signal }) => teamMembersApi.list(teamId, signal).then((r) => r.data.data),
+    enabled: !!teamId,
+  })
+}
+
+export function useTeamMemberWorkload(teamId: string) {
+  return useQuery({
+    queryKey: memberKeys.workload(teamId),
+    queryFn: ({ signal }) => teamMembersApi.getWorkload(teamId, signal).then((r) => r.data.data),
     enabled: !!teamId,
   })
 }

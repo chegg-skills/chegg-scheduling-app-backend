@@ -42,8 +42,15 @@ const removeTeamMember = async (req: Request, res: Response) => {
   sendSuccessResponse(res, StatusCodes.OK, member, "Team member removed successfully.");
 };
 
+const getTeamMemberWorkload = async (req: Request, res: Response) => {
+  const caller = res.locals.authUser as CallerContext;
+  const workload = await teamMemberService.getTeamMemberWorkload(req.params.teamId as string, caller);
+  sendSuccessResponse(res, StatusCodes.OK, { workload }, "Team member workload fetched.");
+};
+
 export default {
   addTeamMember: asyncHandler(addTeamMember),
   listTeamMembers: asyncHandler(listTeamMembers),
   removeTeamMember: asyncHandler(removeTeamMember),
+  getTeamMemberWorkload: asyncHandler(getTeamMemberWorkload),
 };

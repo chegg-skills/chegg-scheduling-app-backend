@@ -1,5 +1,6 @@
 import type { TeamMember, UserRole } from '@/types'
-import ListItem from '@mui/material/ListItem'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
 import Stack from '@mui/material/Stack'
 import { UserMinus } from 'lucide-react'
 import { Badge } from '@/components/shared/ui/Badge'
@@ -13,6 +14,7 @@ interface TeamMemberRowProps {
   teamLeadId: string
   onRemove: (userId: string, name: string) => void
   onViewUser?: (userId: string) => void
+  sessionCount?: number
 }
 
 export function TeamMemberRow({
@@ -21,18 +23,44 @@ export function TeamMemberRow({
   teamLeadId,
   onRemove,
   onViewUser,
+  sessionCount,
 }: TeamMemberRowProps) {
   const { user } = member
   const isLead = user.id === teamLeadId
   const { isCoach, userId } = usePermissions()
   const isSelf = user.id === userId
   const canView = onViewUser && (!isCoach || isSelf)
+  const canManage = currentUserRole !== 'COACH'
 
   return (
-    <ListItem
-      divider
-      secondaryAction={
-        currentUserRole !== 'COACH' ? (
+    <TableRow hover>
+      {/* Member Identity Details Column */}
+      <TableCell>
+        <UserIdentity
+          firstName={user.firstName}
+          lastName={user.lastName}
+          email={user.email}
+          onClick={canView ? () => onViewUser?.(user.id) : undefined}
+          avatarSx={{ fontSize: 12, fontWeight: 700 }}
+        />
+      </TableCell>
+
+      {/* Role details column */}
+      <TableCell>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Badge label={user.role.replace('_', ' ')} color="gray" />
+          {isLead && <Badge label="Lead" color="blue" />}
+        </Stack>
+      </TableCell>
+
+      {/* Workload Session Count details column */}
+      <TableCell sx={{ fontSize: '0.8125rem', color: 'text.primary' }}>
+        {sessionCount !== undefined ? sessionCount : '—'}
+      </TableCell>
+
+      {/* Action Row Buttons Column */}
+      {canManage && (
+        <TableCell align="right">
           <RowActions
             actions={[
               {
@@ -44,28 +72,8 @@ export function TeamMemberRow({
               },
             ]}
           />
-        ) : undefined
-      }
-    >
-      <Stack
-        direction="row"
-        spacing={2}
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ width: '100%', pr: currentUserRole !== 'COACH' ? 8 : 0 }}
-      >
-        <UserIdentity
-          firstName={user.firstName}
-          lastName={user.lastName}
-          email={user.email}
-          onClick={canView ? () => onViewUser?.(user.id) : undefined}
-          avatarSx={{ fontSize: 12, fontWeight: 700 }}
-        />
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          {isLead && <Badge label="Lead" color="blue" />}
-          <Badge label={user.role.replace('_', ' ')} color="gray" />
-        </Stack>
-      </Stack>
-    </ListItem>
+        </TableCell>
+      )}
+    </TableRow>
   )
 }

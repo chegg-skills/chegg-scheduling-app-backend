@@ -203,6 +203,7 @@ const listEventScheduleSlots = async (
  */
 const resolveRoundRobinSlotAssignment = async (
   eventId: string,
+  teamId: string,
   coaches: { coachUserId: string; coachOrder: number }[],
 ): Promise<string> => {
   return prisma.$transaction(async (tx) => {
@@ -212,9 +213,35 @@ const resolveRoundRobinSlotAssignment = async (
       FOR UPDATE
     `;
     const cursor = Number(rows[0]?.nextCoachOrder ?? 1);
-    const sorted = [...coaches].sort((a, b) => a.coachOrder - b.coachOrder);
-    const picked = sorted[(cursor - 1) % sorted.length];
-    const nextCursor = (cursor % sorted.length) + 1;
+
+    // Count active assigned slots per coach across the whole team.
+    // One slot = one session regardless of how many students attend, so this
+    // correctly measures group-session workload without attendance distortion.
+    const slotCounts = await tx.eventScheduleSlot.groupBy({
+      by: ["assignedCoachId"],
+      where: {
+        event: { teamId },
+        assignedCoachId: { in: coaches.map((c) => c.coachUserId) },
+        isActive: true,
+        isCancelled: false,
+      },
+      _count: { assignedCoachId: true },
+    });
+    const countMap = new Map(
+      slotCounts.map((r) => [r.assignedCoachId as string, r._count.assignedCoachId]),
+    );
+
+    const maxOrder = Math.max(...coaches.map((c) => c.coachOrder));
+    const sorted = [...coaches].sort((a, b) => {
+      const countDiff = (countMap.get(a.coachUserId) ?? 0) - (countMap.get(b.coachUserId) ?? 0);
+      if (countDiff !== 0) return countDiff;
+      const aRot = a.coachOrder >= cursor ? a.coachOrder : a.coachOrder + maxOrder;
+      const bRot = b.coachOrder >= cursor ? b.coachOrder : b.coachOrder + maxOrder;
+      return aRot - bRot;
+    });
+
+    const picked = sorted[0];
+    const nextCursor = (picked.coachOrder % maxOrder) + 1;
     await tx.eventRoutingState.upsert({
       where: { eventId },
       create: { eventId, nextCoachOrder: nextCursor },
@@ -226,11 +253,15 @@ const resolveRoundRobinSlotAssignment = async (
 
 /**
  * Assigns coaches to N slots in sequence, advancing the rotation cursor N times atomically.
+ * Uses team-wide assigned slot counts as the primary sort key (fewest sessions first) with
+ * the rotation cursor as a tiebreaker. A virtual count is tracked within the batch so each
+ * slot in the series also distributes fairly without waiting for students to book.
  * Must run inside an existing transaction.
  */
 const resolveRoundRobinSequence = async (
   tx: Prisma.TransactionClient,
   eventId: string,
+  teamId: string,
   coaches: { coachUserId: string; coachOrder: number }[],
   count: number,
 ): Promise<string[]> => {
@@ -240,12 +271,39 @@ const resolveRoundRobinSequence = async (
     FOR UPDATE
   `;
   let cursor = Number(rows[0]?.nextCoachOrder ?? 1);
-  const sorted = [...coaches].sort((a, b) => a.coachOrder - b.coachOrder);
+
+  const slotCounts = await tx.eventScheduleSlot.groupBy({
+    by: ["assignedCoachId"],
+    where: {
+      event: { teamId },
+      assignedCoachId: { in: coaches.map((c) => c.coachUserId) },
+      isActive: true,
+      isCancelled: false,
+    },
+    _count: { assignedCoachId: true },
+  });
+  const countMap = new Map(
+    slotCounts.map((r) => [r.assignedCoachId as string, r._count.assignedCoachId]),
+  );
+
+  // Virtual counts track assignments made within this batch so the series itself
+  // distributes fairly before any students book.
+  const virtualCounts = new Map(coaches.map((c) => [c.coachUserId, countMap.get(c.coachUserId) ?? 0]));
+  const maxOrder = Math.max(...coaches.map((c) => c.coachOrder));
 
   const assignments: string[] = [];
   for (let i = 0; i < count; i++) {
-    assignments.push(sorted[(cursor - 1) % sorted.length].coachUserId);
-    cursor = (cursor % sorted.length) + 1;
+    const sorted = [...coaches].sort((a, b) => {
+      const countDiff = (virtualCounts.get(a.coachUserId) ?? 0) - (virtualCounts.get(b.coachUserId) ?? 0);
+      if (countDiff !== 0) return countDiff;
+      const aRot = a.coachOrder >= cursor ? a.coachOrder : a.coachOrder + maxOrder;
+      const bRot = b.coachOrder >= cursor ? b.coachOrder : b.coachOrder + maxOrder;
+      return aRot - bRot;
+    });
+    const picked = sorted[0];
+    assignments.push(picked.coachUserId);
+    virtualCounts.set(picked.coachUserId, (virtualCounts.get(picked.coachUserId) ?? 0) + 1);
+    cursor = (picked.coachOrder % maxOrder) + 1;
   }
 
   await tx.eventRoutingState.upsert({
@@ -297,7 +355,7 @@ const createEventScheduleSlot = async (
       // Round-robin is the source of truth for a series: rotate across coaches and
       // ignore any supplied override, which would otherwise pin every slot to one coach.
       if (isRoundRobinGroup && event.coaches.length > 0) {
-        coachAssignments = await resolveRoundRobinSequence(tx, eventId, event.coaches, startDates.length);
+        coachAssignments = await resolveRoundRobinSequence(tx, eventId, event.teamId, event.coaches, startDates.length);
       } else {
         coachAssignments = startDates.map(() => validated.assignedCoachId ?? null);
       }
@@ -338,7 +396,7 @@ const createEventScheduleSlot = async (
 
   let assignedCoachId: string | null = validated.assignedCoachId ?? null;
   if (isRoundRobinGroup && !assignedCoachId && event.coaches.length > 0) {
-    assignedCoachId = await resolveRoundRobinSlotAssignment(eventId, event.coaches);
+    assignedCoachId = await resolveRoundRobinSlotAssignment(eventId, event.teamId, event.coaches);
   }
 
   const newSlot = await prisma.eventScheduleSlot.create({

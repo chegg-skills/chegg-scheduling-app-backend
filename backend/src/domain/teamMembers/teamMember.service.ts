@@ -1,4 +1,4 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { EventBookingMode, Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -202,4 +202,58 @@ const removeTeamMember = async (
   return removed;
 };
 
-export { addTeamMember, addTeamMembers, listTeamMembers, removeTeamMember, type SafeTeamMember };
+const getTeamMemberWorkload = async (
+  teamId: string,
+  caller: CallerContext,
+): Promise<{ userId: string; sessionCount: number }[]> => {
+  await getManagedTeam(teamId, caller, { allowInactive: true, allowCoachMember: true });
+  const now = new Date();
+
+  // Individual sessions from COACH_AVAILABILITY events (each booking = one private session)
+  const bookingCounts = await prisma.booking.groupBy({
+    by: ["coachUserId"],
+    where: {
+      teamId,
+      status: { not: "CANCELLED" },
+      startTime: { gte: now },
+      event: { bookingMode: EventBookingMode.COACH_AVAILABILITY },
+    },
+    _count: { coachUserId: true },
+  });
+
+  // Group sessions from FIXED_SLOTS events (each slot = one group session)
+  const slotCounts = await prisma.eventScheduleSlot.groupBy({
+    by: ["assignedCoachId"],
+    where: {
+      event: { teamId },
+      isActive: true,
+      isCancelled: false,
+      startTime: { gte: now },
+    },
+    _count: { assignedCoachId: true },
+  });
+
+  const sessionMap = new Map<string, number>();
+  for (const r of bookingCounts) {
+    if (r.coachUserId)
+      sessionMap.set(r.coachUserId, (sessionMap.get(r.coachUserId) ?? 0) + r._count.coachUserId);
+  }
+  for (const r of slotCounts) {
+    if (r.assignedCoachId)
+      sessionMap.set(
+        r.assignedCoachId,
+        (sessionMap.get(r.assignedCoachId) ?? 0) + r._count.assignedCoachId,
+      );
+  }
+
+  return [...sessionMap.entries()].map(([userId, sessionCount]) => ({ userId, sessionCount }));
+};
+
+export {
+  addTeamMember,
+  addTeamMembers,
+  listTeamMembers,
+  removeTeamMember,
+  getTeamMemberWorkload,
+  type SafeTeamMember,
+};

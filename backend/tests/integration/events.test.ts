@@ -1161,6 +1161,58 @@ describe("Event scheduling routes", () => {
     expect(slot2.body.data.assignedCoachId).toBe(context.coachOneId);
   });
 
+  it("ROUND_ROBIN ONE_TO_MANY: prefers coach with fewer team-wide assigned slots", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "ROUND_ROBIN",
+      bookingMode: "FIXED_SLOTS",
+    });
+    expect(event.status).toBe(201);
+    const eventId = event.body.data.id as string;
+
+    await request(app)
+      .put(`/api/events/${eventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        coaches: [
+          { userId: context.coachOneId, coachOrder: 1 },
+          { userId: context.coachTwoId, coachOrder: 2 },
+        ],
+      });
+
+    // Give coachOne an existing assigned slot in the team (from any event) so their
+    // slot count is higher — the new slot should go to coachTwo (0 slots assigned).
+    const seedStart = new Date(Date.now() + 10 * 86400000);
+    seedStart.setUTCHours(9, 0, 0, 0);
+    await prisma.eventScheduleSlot.create({
+      data: {
+        eventId,
+        startTime: seedStart,
+        endTime: new Date(seedStart.getTime() + 30 * 60 * 1000),
+        assignedCoachId: context.coachOneId,
+        isActive: true,
+        isCancelled: false,
+      },
+    });
+
+    const slotStart = new Date(Date.now() + 11 * 86400000);
+    slotStart.setUTCHours(10, 0, 0, 0);
+    const slotRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: slotStart.toISOString(),
+        endTime: new Date(slotStart.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+      });
+
+    expect(slotRes.status).toBe(201);
+    // coachOne already has 1 assigned slot; coachTwo has 0 — coachTwo should be picked
+    expect(slotRes.body.data.assignedCoachId).toBe(context.coachTwoId);
+  });
+
   it("ROUND_ROBIN ONE_TO_MANY: empty pool leaves assignedCoachId null without error", async () => {
     const eventType = await createEventType(context.superAdminToken);
     const event = await createEvent(context.teamId, context.teamAdminToken, {
