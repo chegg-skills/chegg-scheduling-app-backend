@@ -99,6 +99,15 @@ export const upsertSessionLog = async (
   await assertSlotLogAccess(slotId, caller);
   await verifySlotBelongsToEvent(eventId, slotId);
 
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId },
+    select: { startTime: true },
+  });
+
+  if (slot && new Date(slot.startTime) > new Date()) {
+    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Cannot log a session before it has started.");
+  }
+
   const slotBookings = await prisma.booking.findMany({
     where: { scheduleSlotId: slotId },
     select: { id: true, status: true, coachUserId: true },

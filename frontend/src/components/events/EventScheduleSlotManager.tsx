@@ -159,6 +159,7 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
         onClose={handleCloseModal}
         event={event}
         slot={editingSlot}
+        bookingCount={editingSlot?._count?.bookings ?? 0}
         onSave={handleSave}
         isPending={isPending}
       />

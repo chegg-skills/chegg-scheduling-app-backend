@@ -21,6 +21,7 @@ import { generateRecurrenceDates } from "./recurrence.service";
 import {
   queueBookingStatusNotifications,
   notifyPoolOfSlotCancellation,
+  queueSlotRescheduledNotifications,
 } from "../bookings/booking.notification";
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
@@ -427,9 +428,13 @@ const updateEventScheduleSlot = async (
   payload: UpsertEventScheduleSlotInput,
   caller: CallerContext,
 ): Promise<EventScheduleSlot> => {
-  await getManagedEvent(eventId, caller);
+  const event = await getManagedEvent(eventId, caller);
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
+    include: {
+      sessionLog: { select: { id: true } },
+      assignedCoach: { select: { id: true, email: true, timezone: true } },
+    },
   });
   if (!slot || slot.eventId !== eventId) {
     throw new ErrorHandler(StatusCodes.NOT_FOUND, "Schedule slot not found for this event.");
@@ -438,7 +443,34 @@ const updateEventScheduleSlot = async (
   // Use partial schema for updates to avoid refinement issues
   const validated = EventScheduleSlotSchema.partial.parse(payload);
 
+  // Guard: block rescheduling a slot that has already started
+  if (validated.startTime !== undefined && new Date(slot.startTime) <= new Date()) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Cannot reschedule a session that has already started.",
+    );
+  }
 
+  // Guard: block capacity reduction below current active booking count
+  if (validated.capacity !== undefined && validated.capacity !== null) {
+    const activeBookingCount = await prisma.booking.count({
+      where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
+    });
+    if (validated.capacity < activeBookingCount) {
+      throw new ErrorHandler(
+        StatusCodes.CONFLICT,
+        `Cannot reduce capacity below the current number of active bookings (${activeBookingCount}).`,
+      );
+    }
+  }
+
+  // Detect field changes that affect booked students
+  const timeChanged =
+    (validated.startTime !== undefined && String(validated.startTime) !== String(slot.startTime)) ||
+    (validated.endTime !== undefined && String(validated.endTime) !== String(slot.endTime));
+  const coachChanged =
+    validated.assignedCoachId !== undefined &&
+    validated.assignedCoachId !== slot.assignedCoachId;
 
   // Remove recurrence if it exists, since it is not part of the EventScheduleSlot model
   delete (validated as any).recurrence;
@@ -454,6 +486,44 @@ const updateEventScheduleSlot = async (
   });
 
   getRequestLogger().info({ eventId, slotId, updatedBy: caller.id }, "Schedule slot updated.");
+
+  // Cascade time/coach changes to active bookings and notify affected students
+  if (timeChanged || coachChanged) {
+    const activeBookingCount = await prisma.booking.count({
+      where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
+    });
+
+    if (activeBookingCount > 0) {
+      const cascadeData: Record<string, unknown> = {};
+      if (timeChanged) {
+        if (validated.startTime) cascadeData.startTime = validated.startTime;
+        if (validated.endTime) cascadeData.endTime = validated.endTime;
+      }
+      // Only cascade coach to bookings if the coach was already revealed to students
+      if (coachChanged && slot.coachRevealSentAt !== null) {
+        cascadeData.coachUserId = validated.assignedCoachId ?? null;
+      }
+
+      if (Object.keys(cascadeData).length > 0) {
+        await prisma.booking.updateMany({
+          where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
+          data: cascadeData,
+        });
+      }
+
+      try {
+        await queueSlotRescheduledNotifications(slotId, {
+          isAnonymous: event.allowAnonymousBooking,
+          coachRevealSentAt: slot.coachRevealSentAt,
+          assignedCoach: updated.assignedCoach
+            ? { id: updated.assignedCoach.id, email: updated.assignedCoach.email, timezone: null }
+            : null,
+        });
+      } catch (error) {
+        logger.error({ slotId, error }, "Failed to queue slot rescheduled notifications.");
+      }
+    }
+  }
 
   return updated;
 };
@@ -526,6 +596,7 @@ const cancelEventScheduleSlot = async (
 
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
+    include: { sessionLog: { select: { id: true } } },
   });
 
   if (!slot || slot.eventId !== eventId) {
@@ -534,6 +605,13 @@ const cancelEventScheduleSlot = async (
 
   if (slot.isCancelled) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Schedule slot is already cancelled.");
+  }
+
+  if (slot.sessionLog) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Cannot cancel a session that has already been logged.",
+    );
   }
 
   // Use a transaction to update slot and bookings
