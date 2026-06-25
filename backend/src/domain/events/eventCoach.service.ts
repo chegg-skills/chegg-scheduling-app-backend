@@ -1,4 +1,4 @@
-import { AssignmentStrategy, Prisma, SessionLeadershipStrategy, UserRole } from "@prisma/client";
+import { AssignmentStrategy, EventBookingMode, Prisma, SessionLeadershipStrategy, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -334,17 +334,38 @@ const getEventCoachWorkload = async (
   const coachIds = event.coaches.map((c) => c.coachUserId);
   if (coachIds.length === 0) return [];
 
-  const counts = await prisma.booking.groupBy({
+  const now = new Date();
+
+  if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
+    // ONE_TO_MANY: each slot = one group session regardless of student count
+    const slotCounts = await prisma.eventScheduleSlot.groupBy({
+      by: ["assignedCoachId"],
+      where: {
+        eventId,
+        assignedCoachId: { in: coachIds },
+        isActive: true,
+        isCancelled: false,
+        startTime: { gte: now },
+      },
+      _count: { assignedCoachId: true },
+    });
+    return slotCounts
+      .filter((r): r is typeof r & { assignedCoachId: string } => r.assignedCoachId !== null)
+      .map((r) => ({ coachUserId: r.assignedCoachId, bookingCount: r._count.assignedCoachId }));
+  }
+
+  // ONE_TO_ONE: each booking = one private session
+  const bookingCounts = await prisma.booking.groupBy({
     by: ["coachUserId"],
     where: {
-      teamId: event.teamId,
+      eventId,
       coachUserId: { in: coachIds },
       status: { not: "CANCELLED" },
+      startTime: { gte: now },
     },
     _count: { coachUserId: true },
   });
-
-  return counts
+  return bookingCounts
     .filter((r): r is typeof r & { coachUserId: string } => r.coachUserId !== null)
     .map((r) => ({ coachUserId: r.coachUserId, bookingCount: r._count.coachUserId }));
 };

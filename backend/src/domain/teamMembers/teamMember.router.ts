@@ -40,6 +40,15 @@ router
   .all(methodNotAllowed);
 
 router
+  .route("/teams/:teamId/members/workload")
+  .get(
+    authenticate,
+    authorize(UserRole.SUPER_ADMIN, UserRole.TEAM_ADMIN, UserRole.COACH),
+    teamMemberController.getTeamMemberWorkload,
+  )
+  .all(methodNotAllowed);
+
+router
   .route("/teams/:teamId/members/:userId")
   .delete(
     authenticate,
