@@ -9,7 +9,7 @@ import {
   Typography,
 } from '@mui/material'
 import { toTitleCase } from '@/utils/toTitleCase'
-import { ChevronDown, ChevronUp, CalendarPlus } from 'lucide-react'
+import { ChevronDown, ChevronUp, CalendarPlus, Calendar } from 'lucide-react'
 import type { Booking } from '@/types'
 import { BookingStatusBadge } from './BookingStatusBadge'
 import { BookingStudentCell } from './cells/BookingStudentCell'
@@ -18,6 +18,7 @@ import { BookingCoachInfo } from './cells/BookingCoachInfo'
 import { useAuth } from '@/context/auth/useAuth'
 import { BookFollowUpDialog } from './BookFollowUpDialog'
 import { BookingDetailsExpandedContent } from './BookingDetailsExpandedContent'
+import { hexToIconColors } from '@/utils/color'
 
 interface BookingTableRowProps {
   booking: Booking
@@ -28,29 +29,57 @@ interface BookingTableRowProps {
 export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableRowProps) {
   const { user } = useAuth()
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false)
+  const iconColors = hexToIconColors(booking.event?.eventType?.color ?? '#6366f1')
 
 
   return (
     <>
       <TableRow
         hover
+        onClick={onToggle}
         sx={{
           bgcolor: isExpanded ? 'action.hover' : 'inherit',
           transition: 'background-color 0.2s ease',
+          cursor: 'pointer',
+          '& .MuiTableCell-root': { py: 2 },
         }}
       >
-        <TableCell sx={{ pl: 3 }}>
+        <TableCell>
+          <Stack direction="row" spacing={1.25} alignItems="center">
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                bgcolor: iconColors.bg,
+                color: iconColors.icon,
+                flexShrink: 0,
+              }}
+            >
+              <Calendar size={18} />
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                {booking.event?.name || 'Unknown Event'}
+              </Typography>
+              {booking.event?.eventType?.name && (
+                <Typography variant="caption" color="text.secondary">
+                  {booking.event.eventType.name}
+                </Typography>
+              )}
+            </Box>
+          </Stack>
+        </TableCell>
+
+        <TableCell>
           <BookingStudentCell
             name={toTitleCase(booking.studentName)}
             email={booking.studentEmail}
             studentId={booking.studentId}
           />
-        </TableCell>
-
-        <TableCell>
-          <Box sx={{ color: 'text.secondary', typography: 'body2' }}>
-            {booking.event?.name || 'Unknown Event'}
-          </Box>
         </TableCell>
 
         <TableCell>
@@ -65,8 +94,8 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
           <BookingStatusBadge status={booking.status} />
         </TableCell>
 
-        <TableCell align="right" sx={{ pr: 3 }}>
-          <Stack direction="row" spacing={2.5} justifyContent="flex-end" alignItems="center">
+        <TableCell align="right" sx={{ pr: 3, width: 140 }}>
+          <Stack direction="row" spacing={0.75} justifyContent="flex-end" alignItems="center">
             {booking.status === 'COMPLETED' &&
               user &&
               ['SUPER_ADMIN', 'TEAM_ADMIN', 'COACH'].includes(user.role) && (
@@ -74,7 +103,7 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 1,
+                    gap: 0.5,
                     alignSelf: 'center',
                     cursor: 'pointer',
                     color: 'text.secondary',
@@ -83,7 +112,7 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
                     borderColor: 'grey.300',
                     borderRadius: 1.5,
                     height: 28,
-                    px: 1.25,
+                    px: 0.75,
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
                       color: 'primary.main',
@@ -104,7 +133,7 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
                   <Typography
                     variant="caption"
                     sx={{
-                      fontSize: '0.75rem',
+                      fontSize: '0.6875rem',
                       fontWeight: 700,
                       color: 'inherit',
                       letterSpacing: '0.02em',
@@ -117,12 +146,14 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
               )}
             <Button
               size="small"
-              onClick={onToggle}
+              onClick={(e) => { e.stopPropagation(); onToggle() }}
               endIcon={isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               sx={{
                 color: isExpanded ? 'primary.main' : 'text.secondary',
                 fontWeight: 600,
                 whiteSpace: 'nowrap',
+                px: 0.75,
+                minWidth: 'auto',
               }}
             >
               {isExpanded ? 'Hide' : 'Details'}

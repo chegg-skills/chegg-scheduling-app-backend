@@ -100,6 +100,7 @@ export type UpsertEventTypeInput = {
   key?: string;
   name?: string;
   description?: string;
+  color?: string | null;
   sortOrder?: number;
   isActive?: boolean;
 };
