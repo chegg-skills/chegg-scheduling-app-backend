@@ -18,7 +18,7 @@ export function StudentBookingHistory({ bookings }: StudentBookingHistoryProps) 
         </Typography>
       </Box>
 
-      <BookingTable bookings={bookings} />
+      <BookingTable bookings={bookings} disableSlotGrouping />
     </Stack>
   )
 }

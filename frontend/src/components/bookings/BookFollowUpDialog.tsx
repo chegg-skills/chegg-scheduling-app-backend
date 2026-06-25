@@ -34,6 +34,8 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
   const [showDebug, setShowDebug] = useState(false)
   const { isInternalUser } = usePublicSessionUser()
 
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date())
+
   const {
     studentInfo,
     effectiveQuestions,
@@ -44,8 +46,19 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
 
   const bookFollowUpSessionMutation = useBookFollowUpSession()
 
-  const { maxDate, slots, isLoadingSlots, amSlots, pmSlots, timeFormat, dateFormat, formatSlotWithTz } =
-    useFollowUpSlots(booking, selectedDate, selectedTimezone)
+  const {
+    maxDate,
+    slots,
+    isLoadingSlots,
+    amSlots,
+    pmSlots,
+    timeFormat,
+    dateFormat,
+    formatSlotWithTz,
+    availableDates,
+    isLoadingDates,
+    isFixedSlots,
+  } = useFollowUpSlots(booking, selectedDate, selectedTimezone, calendarMonth)
 
   if (!booking) return null
 
@@ -63,6 +76,7 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
     if (bookFollowUpSessionMutation.isPending) return
     setActiveStep(0)
     setSelectedDate(new Date())
+    setCalendarMonth(new Date())
     setSelectedSlot(null)
     resetStudentInfo()
     setErrorMsg(null)
@@ -210,6 +224,10 @@ export function BookFollowUpDialog({ isOpen, booking, onClose }: BookFollowUpDia
                   dateFormat={dateFormat}
                   showDebug={showDebug}
                   eventId={booking.event?.id || booking.eventId || undefined}
+                  availableDates={availableDates}
+                  isLoadingDates={isLoadingDates}
+                  isFixedSlots={isFixedSlots}
+                  onMonthChange={setCalendarMonth}
                 />
               )}
 

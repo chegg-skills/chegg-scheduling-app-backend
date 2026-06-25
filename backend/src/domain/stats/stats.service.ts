@@ -111,21 +111,41 @@ export const getBookingStats = async (
     upcomingBookings: number;
     completedBookings: number;
     cancelledBookings: number;
+    sessionsConducted: number;
     mostBookedCoach?: { id: string; name: string; count: number } | null;
     mostBookedTeam?: { id: string; name: string; count: number } | null;
   }>
 > => {
   const timeframe = resolveTimeframe(timeframeRaw);
   const bookingWhere = buildBookingWhere(caller, timeframe);
+  const completedWhere = { ...bookingWhere, status: BookingStatus.COMPLETED };
 
-  const [totalBookings, upcomingBookings, completedBookings, cancelledBookings] = await Promise.all(
-    [
-      prisma.booking.count({ where: bookingWhere }),
-      prisma.booking.count({ where: buildUpcomingBookingWhere(caller, timeframe) }),
-      prisma.booking.count({ where: { ...bookingWhere, status: BookingStatus.COMPLETED } }),
-      prisma.booking.count({ where: { ...bookingWhere, status: BookingStatus.CANCELLED } }),
-    ],
-  );
+  const upcomingWhere = buildUpcomingBookingWhere(caller, timeframe);
+
+  const [totalBookings, completedBookings, cancelledBookings] = await Promise.all([
+    prisma.booking.count({ where: bookingWhere }),
+    prisma.booking.count({ where: completedWhere }),
+    prisma.booking.count({ where: { ...bookingWhere, status: BookingStatus.CANCELLED } }),
+  ]);
+
+  // Both upcomingBookings and sessionsConducted apply the same slot-dedup logic:
+  // a ONE_TO_MANY slot with N students = 1 session, not N.
+  const [upcomingSlotSessions, upcomingIndividual, completedSlotSessions, completedIndividual] =
+    await Promise.all([
+      prisma.booking.groupBy({
+        by: ["scheduleSlotId"],
+        where: { ...upcomingWhere, scheduleSlotId: { not: null } },
+      }),
+      prisma.booking.count({ where: { ...upcomingWhere, scheduleSlotId: null } }),
+      prisma.booking.groupBy({
+        by: ["scheduleSlotId"],
+        where: { ...completedWhere, scheduleSlotId: { not: null } },
+      }),
+      prisma.booking.count({ where: { ...completedWhere, scheduleSlotId: null } }),
+    ]);
+
+  const upcomingBookings = upcomingSlotSessions.length + upcomingIndividual;
+  const sessionsConducted = completedSlotSessions.length + completedIndividual;
 
   const [mostBookedCoach, mostBookedTeam] =
     totalBookings > 0
@@ -142,6 +162,7 @@ export const getBookingStats = async (
     upcomingBookings,
     completedBookings,
     cancelledBookings,
+    sessionsConducted,
     ...(mostBookedCoach ? { mostBookedCoach } : {}),
     ...(mostBookedTeam ? { mostBookedTeam } : {}),
   });
@@ -332,14 +353,20 @@ export const getDashboardStats = async (
           .then((teams) => teams.length)
       : prisma.team.count({ where: { isActive: true } });
 
-  const [scheduledBookings, upcomingBookings, activeUsers, activeEvents, activeTeams] =
+  const [scheduledBookings, upcomingSlotSessions, upcomingIndividual, activeUsers, activeEvents, activeTeams] =
     await Promise.all([
       prisma.booking.count({ where: bookingWhere }),
-      prisma.booking.count({ where: upcomingWhere }),
+      prisma.booking.groupBy({
+        by: ["scheduleSlotId"],
+        where: { ...upcomingWhere, scheduleSlotId: { not: null } },
+      }),
+      prisma.booking.count({ where: { ...upcomingWhere, scheduleSlotId: null } }),
       prisma.user.count({ where: { isActive: true } }),
       prisma.event.count({ where: activeEventsWhere }),
       activeTeamsPromise,
     ]);
+
+  const upcomingBookings = upcomingSlotSessions.length + upcomingIndividual;
 
   return buildStatsResponse(timeframe, {
     scheduledBookings,

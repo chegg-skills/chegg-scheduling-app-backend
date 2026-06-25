@@ -94,7 +94,9 @@ export function SessionNotesTab({ booking, draft }: SessionNotesTabProps) {
           ) : (
             <Box sx={{ py: 4, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                No session notes have been logged for this booking yet.
+                {booking.scheduleSlotId
+                  ? 'No session notes yet. Notes for group sessions are logged from the schedule view.'
+                  : 'No session notes have been logged for this booking yet.'}
               </Typography>
               {canLog && (
                 <Button variant="primary" onClick={() => setIsEditing(true)} size="sm">

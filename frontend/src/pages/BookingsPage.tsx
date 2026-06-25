@@ -101,10 +101,10 @@ export function BookingsPage() {
           accent: 'teal' as const,
         },
         {
-          label: 'Completed',
-          value: bookingStats?.metrics.completedBookings ?? 0,
-          helperText: 'Successfully conducted sessions',
-          icon: <CheckCircle2 size={18} />,
+          label: 'Sessions Conducted',
+          value: bookingStats?.metrics.sessionsConducted ?? 0,
+          helperText: 'Unique sessions led (group sessions count as 1)',
+          icon: <UsersRound size={18} />,
           accent: 'green' as const,
         },
         {
@@ -131,6 +131,13 @@ export function BookingsPage() {
           accent: 'teal' as const,
         },
         {
+          label: 'Sessions Conducted',
+          value: bookingStats?.metrics.sessionsConducted ?? 0,
+          helperText: 'Unique sessions (group sessions count as 1)',
+          icon: <CheckCircle2 size={18} />,
+          accent: 'green' as const,
+        },
+        {
           label: 'Top Coach',
           value: bookingStats?.metrics.mostBookedCoach?.name ?? 'N/A',
           helperText: bookingStats?.metrics.mostBookedCoach
@@ -138,15 +145,6 @@ export function BookingsPage() {
             : 'No coach metrics',
           icon: <GraduationCap size={18} />,
           accent: 'purple' as const,
-        },
-        {
-          label: 'Top Team',
-          value: bookingStats?.metrics.mostBookedTeam?.name ?? 'N/A',
-          helperText: bookingStats?.metrics.mostBookedTeam
-            ? `${bookingStats.metrics.mostBookedTeam.count} team bookings`
-            : 'No team metrics',
-          icon: <UsersRound size={18} />,
-          accent: 'green' as const,
         },
       ]
 

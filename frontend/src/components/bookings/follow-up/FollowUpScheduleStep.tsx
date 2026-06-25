@@ -1,5 +1,9 @@
+import * as React from 'react'
 import { Box, Typography, Stack, Divider, Paper } from '@mui/material'
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
+import { PickersDay } from '@mui/x-date-pickers/PickersDay'
+import type { PickersDayProps } from '@mui/x-date-pickers/PickersDay'
+import { format } from 'date-fns'
 import type { Booking } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import type { InteractionType } from '@/constants/interactionTypes'
@@ -25,6 +29,35 @@ interface FollowUpScheduleStepProps {
   dateFormat: Intl.DateTimeFormat
   showDebug?: boolean
   eventId?: string
+  availableDates?: Set<string>
+  isLoadingDates?: boolean
+  isFixedSlots?: boolean
+  onMonthChange?: (date: Date) => void
+}
+
+function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
+  return function SlotDayIndicator({ day, outsideCurrentMonth, ...props }: PickersDayProps) {
+    const hasSlots = !outsideCurrentMonth && !!availableDates?.has(format(day, 'yyyy-MM-dd'))
+    return (
+      <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+        <PickersDay day={day} outsideCurrentMonth={outsideCurrentMonth} {...props} />
+        {hasSlots && !props.disabled && (
+          <Box
+            data-testid="slot-indicator-dot"
+            sx={{
+              position: 'absolute',
+              bottom: 3,
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              bgcolor: props.selected ? 'primary.contrastText' : 'primary.main',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+      </Box>
+    )
+  }
 }
 
 /** Step 1 — date picker + timezone select + available morning/afternoon slots. */
@@ -45,7 +78,12 @@ export function FollowUpScheduleStep({
   dateFormat,
   showDebug = false,
   eventId,
+  availableDates,
+  isLoadingDates,
+  isFixedSlots,
+  onMonthChange,
 }: FollowUpScheduleStepProps) {
+  const DaySlot = React.useMemo(() => makeSlotDayIndicator(availableDates), [availableDates])
   return (
     <Stack
       direction={{ xs: 'column', lg: 'row' }}
@@ -77,8 +115,17 @@ export function FollowUpScheduleStep({
                 setSelectedSlot(null)
               }
             }}
+            onMonthChange={onMonthChange}
             minDate={new Date()}
             maxDate={maxDate}
+            shouldDisableDate={(day) => {
+              if (maxDate && day > maxDate) return true
+              if (isFixedSlots && !isLoadingDates && availableDates) {
+                return !availableDates.has(format(day, 'yyyy-MM-dd'))
+              }
+              return false
+            }}
+            slots={{ day: DaySlot }}
             slotProps={{
               actionBar: { actions: [] },
             }}

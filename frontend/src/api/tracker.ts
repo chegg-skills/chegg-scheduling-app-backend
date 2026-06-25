@@ -15,7 +15,7 @@ export interface TrackerSlot {
   bookingCount: number
   capacity: number | null
   remainingSeats: number | null
-  status: 'OPEN' | 'FULL'
+  status: 'OPEN' | 'FULL' | 'CLOSED'
   isLogged: boolean
   summary: string | null
   coachNotes: string | null

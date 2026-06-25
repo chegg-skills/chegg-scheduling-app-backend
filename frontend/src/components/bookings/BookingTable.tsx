@@ -18,6 +18,7 @@ import type { Booking, Pagination } from '@/types'
 import { SortableHeaderCell } from '@/components/shared/table/SortableHeaderCell'
 import { useTableSort, type SortAccessorMap } from '@/hooks/useTableSort'
 import { BookingTableRow } from './BookingTableRow'
+import { SlotSessionRow } from './SlotSessionRow'
 import { TablePagination } from '@/components/shared/table/TablePagination'
 
 interface Props {
@@ -25,6 +26,7 @@ interface Props {
   pagination?: Pagination
   onPageChange?: (page: number) => void
   onRowsPerPageChange?: (rowsPerPage: number) => void
+  disableSlotGrouping?: boolean
 }
 
 type BookingSortKey = 'student' | 'event' | 'coach' | 'date' | 'status'
@@ -52,7 +54,7 @@ const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
 })
 
-export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPageChange }: Props) {
+export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPageChange, disableSlotGrouping }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const {
     sortedItems: sortedBookings,
@@ -61,19 +63,25 @@ export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPage
   } = useTableSort(bookings, bookingSortAccessors)
 
   const groupedBookings = useMemo(() => {
-    const groups: { date: string; bookings: Booking[] }[] = []
-    let currentGroup: { date: string; bookings: Booking[] } | null = null
+    const groups: { date: string; slots: Map<string, Booking[]> }[] = []
+    let currentGroup: { date: string; slots: Map<string, Booking[]> } | null = null
 
     sortedBookings.forEach((booking) => {
       const dateStr = dateHeaderFormatter.format(new Date(booking.startTime))
       if (!currentGroup || currentGroup.date !== dateStr) {
-        currentGroup = { date: dateStr, bookings: [] }
+        currentGroup = { date: dateStr, slots: new Map() }
         groups.push(currentGroup)
       }
-      currentGroup.bookings.push(booking)
+      const key = disableSlotGrouping ? booking.id : (booking.scheduleSlotId ?? booking.id)
+      const existing = currentGroup.slots.get(key)
+      if (existing) {
+        if (!existing.some((b) => b.id === booking.id)) existing.push(booking)
+      } else {
+        currentGroup.slots.set(key, [booking])
+      }
     })
     return groups
-  }, [sortedBookings])
+  }, [sortedBookings, disableSlotGrouping])
 
   const handleToggle = useCallback((id: string) => {
     setExpandedId((prev) => (prev === id ? null : id))
@@ -162,14 +170,27 @@ export function BookingTable({ bookings, pagination, onPageChange, onRowsPerPage
                   {group.date}
                 </TableCell>
               </TableRow>
-              {group.bookings.map((booking) => (
-                <BookingTableRow
-                  key={booking.id}
-                  booking={booking}
-                  isExpanded={expandedId === booking.id}
-                  onToggle={() => handleToggle(booking.id)}
-                />
-              ))}
+              {[...group.slots].flatMap(([slotKey, slotBookings]) => {
+                if (!disableSlotGrouping && slotBookings[0]?.scheduleSlotId) {
+                  return [
+                    <SlotSessionRow
+                      key={slotKey}
+                      slotId={slotKey}
+                      bookings={slotBookings}
+                      isExpanded={expandedId === slotKey}
+                      onToggle={() => handleToggle(slotKey)}
+                    />
+                  ]
+                }
+                return slotBookings.map((booking) => (
+                  <BookingTableRow
+                    key={booking.id}
+                    booking={booking}
+                    isExpanded={expandedId === booking.id}
+                    onToggle={() => handleToggle(booking.id)}
+                  />
+                ))
+              })}
             </React.Fragment>
           ))}
         </TableBody>

@@ -127,6 +127,25 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
       zoomIsvLink: true,
     },
   },
+  scheduleSlot: {
+    include: {
+      bookings: {
+        include: {
+          student: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              firstBookedAt: true,
+              lastBookedAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      },
+    },
+  },
 });
 
 export type SafeBooking = Prisma.BookingGetPayload<{
@@ -148,6 +167,21 @@ export const bookingDetailInclude = Prisma.validator<Prisma.BookingInclude>()({
   scheduleSlot: {
     include: {
       sessionLog: sessionLogDetailInclude,
+      bookings: {
+        include: {
+          student: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              firstBookedAt: true,
+              lastBookedAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      },
     },
   },
 });

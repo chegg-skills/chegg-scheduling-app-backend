@@ -4,6 +4,8 @@ import { BookingsPage } from '@/pages/BookingsPage'
 import { renderWithProviders } from '../utils/renderWithProviders'
 import { http, HttpResponse } from 'msw'
 import { server } from '../msw/server'
+import { BookFollowUpDialog } from '@/components/bookings/BookFollowUpDialog'
+import type { Booking } from '@/types'
 
 const handlers = [
   // Mock Auth API
@@ -93,6 +95,20 @@ const handlers = [
   http.patch('*/api/bookings/:id/status', () => {
     return HttpResponse.json({ success: true })
   }),
+
+  http.get('*/api/v1/bookings/:id/timeline', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { timeline: [] },
+    })
+  }),
+
+  http.get('*/api/bookings/:id/log', () => {
+    return HttpResponse.json({
+      success: true,
+      data: { logs: [] },
+    })
+  }),
 ]
 
 describe('Bookings Domain Integration', () => {
@@ -164,5 +180,142 @@ describe('Bookings Domain Integration', () => {
     // 5. Confirm action (dialog defaults to "Yes" when no confirmText is passed)
     const confirmButton = screen.getByRole('button', { name: /^Yes$/i })
     fireEvent.click(confirmButton)
+  }, 15000)
+
+  it('should display the orange dot on follow-up calendar days with available slots', async () => {
+    // 1. Set up a completed booking object
+    const completedBooking: Booking = {
+      id: 'booking-completed',
+      studentId: 'student-1',
+      scheduleSlotId: null,
+      studentName: 'Charlie Student',
+      studentEmail: 'charlie@example.com',
+      startTime: '2026-06-25T10:30:00Z',
+      endTime: '2026-06-25T11:00:00Z',
+      timezone: 'UTC',
+      status: 'COMPLETED',
+      notes: null,
+      specificQuestion: null,
+      triedSolutions: null,
+      usedResources: null,
+      sessionObjectives: null,
+      customQuestions: [],
+      customAnswers: [],
+      teamId: 'team-1',
+      eventId: 'event-1',
+      coachUserId: 'coach-1',
+      coCoachUserIds: [],
+      meetingJoinUrl: null,
+      rescheduleToken: null,
+      createdAt: '2026-06-24T10:30:00Z',
+      updatedAt: '2026-06-24T10:30:00Z',
+      event: {
+        id: 'event-1',
+        name: 'History',
+        bookingMode: 'FIXED_SLOTS',
+        useDefaultQuestions: true,
+        customQuestions: [],
+        description: null,
+        isActive: true,
+        durationSeconds: 1800,
+        bufferAfterMinutes: 0,
+        minimumNoticeMinutes: 0,
+        maxParticipantCount: null,
+        sessionLeadershipStrategy: 'SINGLE_COACH',
+        fixedLeadCoachId: null,
+        targetCoHostCount: null,
+        allowAnonymousBooking: false,
+        eventTypeId: 'type-1',
+        meetingLinkSource: 'COACH_ZOOM',
+        allowStudentCoachChoice: false,
+        maxBookingWindowDays: 30,
+        showDescription: true,
+        deferCoachReveal: false,
+        locationType: 'VIRTUAL',
+        locationValue: null,
+        teamId: 'team-1',
+        createdById: 'admin-1',
+        updatedById: 'admin-1',
+        deletedAt: null,
+        createdAt: '2026-06-24T10:30:00Z',
+        updatedAt: '2026-06-24T10:30:00Z',
+      },
+      coach: {
+        id: 'coach-1',
+        firstName: 'Mike',
+        lastName: 'Coach',
+        email: 'mike@example.com',
+        avatarUrl: null,
+        role: 'COACH',
+        timezone: 'UTC',
+        publicBookingSlug: null,
+        phoneNumber: null,
+        country: null,
+        preferredLanguage: null,
+        zoomIsvLink: null,
+        zoomIsvLinkExpiresAt: null,
+        zoomIsvLinkReminderDays: null,
+        isActive: true,
+        lastLoginAt: null,
+        ssoLinkedAt: null,
+        createdAt: '2026-06-24T10:30:00Z',
+        updatedAt: '2026-06-24T10:30:00Z',
+      }
+    }
+
+    // 2. Setup mock response for public slot dates for this event
+    server.use(
+      http.get('*/api/public/events/event-1/slots', () => {
+        return HttpResponse.json({
+          success: true,
+          data: {
+            slots: [
+              {
+                startTime: '2026-06-28T10:30:00.000Z',
+                endTime: '2026-06-28T11:00:00.000Z',
+                scheduleSlotId: 'slot-1',
+                assignedCoach: {
+                  id: 'coach-1',
+                  firstName: 'Mike',
+                  lastName: 'Coach',
+                  avatarUrl: null,
+                },
+              },
+            ],
+          },
+        })
+      }),
+      http.get('*/api/system-settings/booking-questions', () => {
+        return HttpResponse.json({
+          success: true,
+          data: { questions: [] },
+        })
+      })
+    )
+
+    // 3. Render BookFollowUpDialog
+    renderWithProviders(
+      <BookFollowUpDialog
+        isOpen={true}
+        booking={completedBooking}
+        onClose={() => {}}
+      />
+    )
+
+    // 4. Verify slots are fetched and the orange dot renders on June 28th
+    // Locate the calendar cell for June 28, 2026
+    await waitFor(() => {
+      const dayCell = screen.getByRole('gridcell', { name: '28' })
+      expect(dayCell).toBeInTheDocument()
+      
+      // Let's verify the dot is rendered. Our makeSlotDayIndicator wraps the button
+      // and placing the dot sibling. So the parent of the button has the dot.
+      const dayContainer = dayCell.parentElement
+      expect(dayContainer).toBeInTheDocument()
+      
+      // Find the slot-indicator-dot inside the day container
+      const dot = within(dayContainer!).getByTestId('slot-indicator-dot')
+      expect(dot).toBeInTheDocument()
+    }, { timeout: 8000 })
   }, 15000)
 })

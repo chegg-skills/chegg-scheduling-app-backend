@@ -21,7 +21,7 @@ export interface TrackerSlot {
   bookingCount: number;
   capacity: number | null;
   remainingSeats: number | null;
-  status: "OPEN" | "FULL";
+  status: "OPEN" | "FULL" | "CLOSED";
   isLogged: boolean;
   summary: string | null;
   coachNotes: string | null;
@@ -45,6 +45,7 @@ export const getTrackerSlots = async (
 ): Promise<TrackerSlot[]> => {
   requireTrackerAccess(caller);
 
+  const now = new Date();
   let start: Date;
   let end: Date;
 
@@ -52,7 +53,6 @@ export const getTrackerSlots = async (
     start = new Date(`${filters.startDate}T00:00:00.000`);
     end = new Date(`${filters.endDate}T23:59:59.999`);
   } else {
-    const now = new Date();
     const targetDate =
       filters.date ??
       `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -138,8 +138,9 @@ export const getTrackerSlots = async (
     const bookingCount = slot._count.bookings;
     const capacity = slot.capacity ?? slot.event.maxParticipantCount ?? null;
     const remainingSeats = capacity !== null ? Math.max(0, capacity - bookingCount) : null;
-    const status: "OPEN" | "FULL" =
-      capacity !== null && bookingCount >= capacity ? "FULL" : "OPEN";
+    const isPast = slot.endTime < now;
+    const status: "OPEN" | "FULL" | "CLOSED" =
+      isPast ? "CLOSED" : (capacity !== null && bookingCount >= capacity ? "FULL" : "OPEN");
     const seriesPos = sessionPositionMap.get(slot.id) ?? null;
 
     return {
