@@ -9,7 +9,7 @@ import { StatusCodes } from "http-status-codes";
 export const getBookingsReport = async (
   caller: CallerContext,
   timeframeRaw?: string,
-): Promise<{ csv: string; filename: string }> => {
+): Promise<{ data: any[]; csv: string; filename: string }> => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
@@ -52,6 +52,7 @@ export const getBookingsReport = async (
 
   const dateStr = new Date().toISOString().split("T")[0];
   return {
+    data: reportData,
     csv: convertToCSV(reportData),
     filename: `bookings_report_${dateStr}.csv`,
   };
@@ -60,7 +61,7 @@ export const getBookingsReport = async (
 export const getPerformanceReport = async (
   caller: CallerContext,
   timeframeRaw?: string,
-): Promise<{ csv: string; filename: string }> => {
+): Promise<{ data: any[]; csv: string; filename: string }> => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
@@ -110,14 +111,14 @@ export const getPerformanceReport = async (
         Completed: completed,
         "No-Show": noShow,
         Cancelled: cancelled,
-        "Completion Rate (%)":
-          total > 0 ? Math.round((completed / total) * 100) : 0,
+        "Completion Rate (%)": total > 0 ? Math.round((completed / total) * 100) : 0,
       };
     }),
   );
 
   const dateStr = new Date().toISOString().split("T")[0];
   return {
+    data: reportData,
     csv: convertToCSV(reportData),
     filename: `performance_report_${dateStr}.csv`,
   };
@@ -126,7 +127,7 @@ export const getPerformanceReport = async (
 export const getStudentReport = async (
   caller: CallerContext,
   timeframeRaw?: string,
-): Promise<{ csv: string; filename: string }> => {
+): Promise<{ data: any[]; csv: string; filename: string }> => {
   requireAdmin(caller);
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
@@ -154,6 +155,7 @@ export const getStudentReport = async (
 
   const dateStr = new Date().toISOString().split("T")[0];
   return {
+    data: reportData,
     csv: convertToCSV(reportData),
     filename: `student_engagement_report_${dateStr}.csv`,
   };
