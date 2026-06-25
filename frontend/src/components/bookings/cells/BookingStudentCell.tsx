@@ -16,6 +16,7 @@ export function BookingStudentCell({ name, email, studentId }: BookingStudentCel
           <MuiLink
             component={Link}
             to={`/students/${studentId}`}
+            onClick={(e) => e.stopPropagation()}
             sx={{
               color: 'inherit',
               textDecoration: 'none',
