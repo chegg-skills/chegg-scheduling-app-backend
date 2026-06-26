@@ -846,6 +846,24 @@ const replenishContinuousSlots = async (
   const client = tx ?? prisma;
 
   try {
+    // Fetch event strategy + coach pool once — needed for round-robin replenishment.
+    const event = await client.event.findUnique({
+      where: { id: eventId },
+      select: {
+        assignmentStrategy: true,
+        teamId: true,
+        coaches: {
+          where: { isActive: true },
+          select: { coachUserId: true, coachOrder: true },
+          orderBy: { coachOrder: "asc" },
+        },
+      },
+    });
+
+    const isRoundRobin =
+      event?.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
+      (event?.coaches.length ?? 0) > 0;
+
     const activeGroups = await client.recurrenceGroup.findMany({
       where: {
         eventId,
@@ -878,7 +896,15 @@ const replenishContinuousSlots = async (
       }
 
       const durationMs = latestSlot.endTime.getTime() - latestSlot.startTime.getTime();
-      const newSlotsData = [];
+      const newSlotsData: Array<{
+        eventId: string;
+        startTime: Date;
+        endTime: Date;
+        capacity: number | null;
+        assignedCoachId: string | null;
+        isActive: boolean;
+        recurrenceGroupId: string;
+      }> = [];
       let nextStart = new Date(latestSlot.startTime);
       let iterations = 0;
 
@@ -929,10 +955,30 @@ const replenishContinuousSlots = async (
       }
 
       if (newSlotsData.length > 0) {
-        await client.eventScheduleSlot.createMany({
-          data: newSlotsData,
-          skipDuplicates: true,
-        });
+        if (isRoundRobin && event!.coaches.length > 0) {
+          // Advance the round-robin cursor and assign coaches atomically.
+          await prisma.$transaction(async (innerTx) => {
+            const coachIds = await resolveRoundRobinSequence(
+              innerTx,
+              eventId,
+              event!.teamId,
+              event!.coaches,
+              newSlotsData.length,
+            );
+            await innerTx.eventScheduleSlot.createMany({
+              data: newSlotsData.map((slot, i) => ({
+                ...slot,
+                assignedCoachId: coachIds[i],
+              })),
+              skipDuplicates: true,
+            });
+          });
+        } else {
+          await client.eventScheduleSlot.createMany({
+            data: newSlotsData,
+            skipDuplicates: true,
+          });
+        }
         getRequestLogger().info(
           { eventId, groupId: group.id, count: newSlotsData.length },
           "Replenished continuous recurrence slots."
