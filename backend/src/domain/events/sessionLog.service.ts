@@ -1,6 +1,6 @@
 import { BookingStatus, UserRole, BookingActivityType, BookingActivityActor } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { recordBookingActivity } from "../bookings/bookingActivity.service";
+import { recordBookingActivity, upsertBookingActivityByType } from "../bookings/bookingActivity.service";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
@@ -146,7 +146,7 @@ export const upsertSessionLog = async (
     // entries every time the slot log is re-saved.
     const existingLog = await tx.sessionLog.findUnique({
       where: { scheduleSlotId: slotId },
-      select: { id: true },
+      select: { id: true, topicsDiscussed: true, summary: true, coachNotes: true },
     });
     const isFirstLog = !existingLog;
     const existingAttendances = await tx.sessionAttendance.findMany({
@@ -194,7 +194,7 @@ export const upsertSessionLog = async (
       const reassignedBookings = slotBookings.filter(
         (b) => b.status !== BookingStatus.CANCELLED && b.coachUserId !== payload.assignedCoachId,
       );
-      return { reassignedBookings, isFirstLog, previousAttendance };
+      return { reassignedBookings, isFirstLog, previousAttendance, existingLog };
     }
 
     // Collect per-booking attendance change context for post-transaction activity writes.
@@ -224,10 +224,10 @@ export const upsertSessionLog = async (
     const absent = payload.attendance.length - attendedCount;
     getRequestLogger().info({ slotId, eventId, attended: attendedCount, absent, loggedBy: caller.id }, "Session log saved.");
 
-    return { logResult, isFirstLog, previousAttendance, reassignedBookings: [] as typeof slotBookings };
+    return { logResult, isFirstLog, previousAttendance, reassignedBookings: [] as typeof slotBookings, existingLog };
   });
 
-  const { logResult, isFirstLog, previousAttendance, reassignedBookings } = result;
+  const { logResult, isFirstLog, previousAttendance, reassignedBookings, existingLog } = result;
   const actorRole = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
 
   for (const b of reassignedBookings) {
@@ -263,7 +263,10 @@ export const upsertSessionLog = async (
       }
       if (attendanceChanged) {
         try {
-          await recordBookingActivity(
+          // Upsert rather than insert — attendance may toggle back and forth, so we
+          // keep exactly one "current attendance state" entry per booking rather than
+          // accumulating a new entry on every toggle.
+          await upsertBookingActivityByType(
             prisma, entry.bookingId, BookingActivityType.ATTENDANCE_UPDATED,
             actorRole, caller.id, null, { attended: entry.attended },
           );
@@ -279,6 +282,28 @@ export const upsertSessionLog = async (
           );
         } catch (e) {
           getRequestLogger().error({ error: e, bookingId: entry.bookingId }, "Failed to record SESSION_LOGGED activity.");
+        }
+      }
+    }
+  }
+
+  // Emit SESSION_LOG_UPDATED when notes fields change on a subsequent edit.
+  // Upserted so repeated note tweaks produce a single "last updated" entry.
+  if (!isFirstLog) {
+    const notesChanged =
+      (payload.topicsDiscussed ?? null) !== (existingLog?.topicsDiscussed ?? null) ||
+      (payload.summary ?? null) !== (existingLog?.summary ?? null) ||
+      (payload.coachNotes ?? null) !== (existingLog?.coachNotes ?? null);
+
+    if (notesChanged) {
+      for (const b of slotBookings.filter((b) => b.status !== BookingStatus.CANCELLED)) {
+        try {
+          await upsertBookingActivityByType(
+            prisma, b.id, BookingActivityType.SESSION_LOG_UPDATED,
+            actorRole, caller.id, null,
+          );
+        } catch (e) {
+          getRequestLogger().error({ error: e, bookingId: b.id }, "Failed to record SESSION_LOG_UPDATED activity.");
         }
       }
     }

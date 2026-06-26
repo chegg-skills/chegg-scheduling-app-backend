@@ -3,7 +3,7 @@ import { Box, Stack, Typography, alpha, Button, CircularProgress, Chip } from '@
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import { format, isToday, isYesterday } from 'date-fns'
-import { Calendar, RefreshCw, XCircle, CheckCircle, Mail, UserCheck, UserX, Bell } from 'lucide-react'
+import { Calendar, RefreshCw, XCircle, CheckCircle, Mail, UserCheck, UserX, Bell, FileEdit } from 'lucide-react'
 import { useBookingTimeline } from '@/hooks/queries/useBookings'
 import type { Booking } from '@/types'
 import type { BookingActivity } from '@/api/bookings'
@@ -20,6 +20,7 @@ const PRIMARY_TYPES = new Set<ActivityType>([
   'SESSION_NO_SHOW',
   'SESSION_LOGGED',
   'ATTENDANCE_UPDATED',
+  'SESSION_LOG_UPDATED',
   'FOLLOW_UP_BOOKED',
 ])
 
@@ -156,6 +157,12 @@ const getActivityStyles = (type: ActivityType, theme: any) => {
         bgColor: alpha(theme.palette.info.main, 0.1),
         icon: UserCheck,
       }
+    case 'SESSION_LOG_UPDATED':
+      return {
+        color: theme.palette.text.secondary,
+        bgColor: alpha(theme.palette.text.secondary, 0.08),
+        icon: FileEdit,
+      }
     case 'BOOKING_CANCELLED':
     case 'SESSION_NO_SHOW':
       return {
@@ -182,6 +189,7 @@ const getBaseTitle = (type: ActivityType): string => {
     case 'SESSION_LOGGED': return 'Session Logged'
     case 'COACH_REASSIGNED': return 'Coach Reassigned'
     case 'ATTENDANCE_UPDATED': return 'Attendance Updated'
+    case 'SESSION_LOG_UPDATED': return 'Session Notes Updated'
     case 'FOLLOW_UP_BOOKED': return 'Follow-up Booked'
     default: return 'Timeline Event'
   }

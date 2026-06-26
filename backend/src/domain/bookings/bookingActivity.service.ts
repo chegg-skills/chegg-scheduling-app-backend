@@ -47,6 +47,61 @@ export const recordBookingActivity = async (
 };
 
 /**
+ * Upserts a booking activity of the given type — finds the most recent existing
+ * record of that type for the booking and updates it in place, or inserts a new one.
+ * Use this for activities that represent a "current state" (e.g. ATTENDANCE_UPDATED,
+ * SESSION_LOG_UPDATED) rather than a discrete event worth repeating in the audit trail.
+ */
+export const upsertBookingActivityByType = async (
+  tx: Prisma.TransactionClient,
+  bookingId: string,
+  activityType: BookingActivityType,
+  actorType: BookingActivityActor,
+  actorUserId?: string | null,
+  actorName?: string | null,
+  metadata?: Prisma.InputJsonValue,
+) => {
+  let resolvedActorName = actorName;
+  if (!resolvedActorName && actorUserId) {
+    const user = await tx.user.findUnique({
+      where: { id: actorUserId },
+      select: { firstName: true, lastName: true },
+    });
+    if (user) resolvedActorName = `${user.firstName} ${user.lastName}`.trim();
+  }
+
+  const existing = await tx.bookingActivity.findFirst({
+    where: { bookingId, activityType },
+    orderBy: { timestamp: "desc" },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return tx.bookingActivity.update({
+      where: { id: existing.id },
+      data: {
+        timestamp: new Date(),
+        actorType,
+        actorUserId: actorUserId ?? null,
+        actorName: resolvedActorName ?? null,
+        metadata: metadata ?? undefined,
+      },
+    });
+  }
+
+  return tx.bookingActivity.create({
+    data: {
+      bookingId,
+      activityType,
+      actorType,
+      actorUserId: actorUserId ?? null,
+      actorName: resolvedActorName ?? null,
+      metadata: metadata ?? undefined,
+    },
+  });
+};
+
+/**
  * Enforces timeline access control.
  * - SUPER_ADMIN: unrestricted
  * - TEAM_ADMIN: must be the team lead of the booking's team

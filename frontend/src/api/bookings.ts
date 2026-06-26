@@ -97,6 +97,7 @@ export interface BookingActivity {
     | 'SESSION_LOGGED'
     | 'COACH_REASSIGNED'
     | 'ATTENDANCE_UPDATED'
+    | 'SESSION_LOG_UPDATED'
     | 'FOLLOW_UP_BOOKED'
   timestamp: string
   actorType: 'STUDENT' | 'COACH' | 'ADMIN' | 'SYSTEM'
