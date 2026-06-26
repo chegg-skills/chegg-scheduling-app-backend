@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useConfirm } from '@/context/confirm'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
@@ -48,8 +48,10 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({})
   const [assignedCoachId, setAssignedCoachId] = useState<string>('')
 
-  const activeBookings =
-    (bookings as Booking[] | undefined)?.filter((b) => b.status !== 'CANCELLED') ?? []
+  const activeBookings = useMemo(
+    () => (bookings as Booking[] | undefined)?.filter((b) => b.status !== 'CANCELLED') ?? [],
+    [bookings]
+  )
 
   useEffect(() => {
     if (!isOpen) return
