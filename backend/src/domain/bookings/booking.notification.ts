@@ -7,6 +7,7 @@ import {
   type NotificationType,
 } from "../../shared/notifications/notification.publisher";
 import type { SafeBooking } from "./booking.service";
+import { bookingInclude } from "./booking.shared";
 
 import { formatNotificationDate, getFriendlyTimezoneLabel } from "../../shared/utils/date";
 import { escapeHtml } from "../../shared/utils/htmlSanitizer";
@@ -780,10 +781,84 @@ const queueStudentFeedbackNotification = async (booking: SafeBooking): Promise<v
   }
 };
 
+/**
+ * Notifies all active booking holders and the assigned coach when a slot's
+ * time or coach is changed by an admin. Respects anonymous and deferred-reveal modes.
+ */
+const queueSlotRescheduledNotifications = async (
+  slotId: string,
+  opts: {
+    isAnonymous: boolean;
+    coachRevealSentAt: Date | null;
+    assignedCoach: { id: string; email: string; timezone: string | null } | null;
+  },
+): Promise<void> => {
+  try {
+    const { isAnonymous, assignedCoach } = opts;
+
+    const bookings = await prisma.booking.findMany({
+      where: { scheduleSlotId: slotId, status: { notIn: ["CANCELLED"] } },
+      include: bookingInclude,
+    });
+
+    const publishTasks: Array<Promise<boolean>> = [];
+
+    for (const booking of bookings) {
+      const studentVars = await getBookingNotificationVariables(booking as SafeBooking, booking.timezone);
+
+      if (isAnonymous) {
+        publishTasks.push(
+          publishNotificationSafely({
+            type: "SLOT_RESCHEDULED_ANONYMOUS",
+            recipients: booking.studentEmail,
+            variables: {
+              studentName: studentVars.studentName,
+              eventName: studentVars.eventName,
+              teamName: studentVars.teamName,
+              startTime: studentVars.startTime,
+              timezone: studentVars.timezone,
+              meetingJoinUrl: studentVars.meetingJoinUrl,
+            },
+          }),
+        );
+      } else {
+        publishTasks.push(
+          publishNotificationSafely({
+            type: "SLOT_RESCHEDULED",
+            recipients: booking.studentEmail,
+            variables: studentVars,
+          }),
+        );
+      }
+    }
+
+    // Notify the assigned coach once (all bookings in a slot share the same time)
+    if (!isAnonymous && assignedCoach?.email && bookings.length > 0) {
+      const coachVars = await getBookingNotificationVariables(
+        bookings[0] as SafeBooking,
+        assignedCoach.timezone,
+      );
+      publishTasks.push(
+        publishNotificationSafely({
+          type: "SLOT_RESCHEDULED_COACH",
+          recipients: assignedCoach.email,
+          userId: assignedCoach.id,
+          variables: coachVars,
+        }),
+      );
+    }
+
+    await Promise.all(publishTasks);
+  } catch (error) {
+    logger.error({ slotId, error }, "Failed to queue slot rescheduled notifications.");
+  }
+};
+
 export {
   queueBookingCreatedNotifications,
   queueBookingStatusNotifications,
   queueBookingUpdatedNotifications,
   queueBookingRescheduledNotifications,
   queueStudentFeedbackNotification,
+  queueSlotRescheduledNotifications,
 };

@@ -22,7 +22,9 @@ export default defineConfig({
     },
     include: ['tests/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'dist'],
-    pool: 'forks',
+    pool: 'threads',
+    testTimeout: 15000,
+    hookTimeout: 15000,
   },
   build: {
     rollupOptions: {

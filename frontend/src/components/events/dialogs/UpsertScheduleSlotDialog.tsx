@@ -24,6 +24,7 @@ interface UpsertScheduleSlotDialogProps {
   onClose: () => void
   event: Event
   slot?: EventScheduleSlot | null
+  bookingCount?: number
   onSave: (data: {
     startTime: string
     endTime: string
@@ -39,6 +40,7 @@ export function UpsertScheduleSlotDialog({
   onClose,
   event,
   slot,
+  bookingCount = 0,
   onSave,
   isPending,
 }: UpsertScheduleSlotDialogProps) {
@@ -108,6 +110,13 @@ export function UpsertScheduleSlotDialog({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`${mode} Scheduled Session`}>
       <Stack spacing={2.5} sx={{ mt: 1 }}>
+        {slot && bookingCount > 0 && (
+          <Alert severity="info" sx={{ borderRadius: 1.5 }}>
+            This session has <strong>{bookingCount}</strong> confirmed booking
+            {bookingCount !== 1 ? 's' : ''}. Changing the time or coach will update their
+            session details and notify them.
+          </Alert>
+        )}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <Box sx={{ flex: supportsMultipleParticipants ? 2 : 1 }}>
             <FormField

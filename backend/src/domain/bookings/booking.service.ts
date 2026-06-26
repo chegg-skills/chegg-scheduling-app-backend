@@ -410,6 +410,14 @@ const rescheduleBooking = async (
   const { end } = resolveBookingWindow(event, start);
   const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
 
+  // Guard: block rescheduling to a slot that has already started
+  if (matchedScheduleSlot && new Date(matchedScheduleSlot.startTime) <= new Date()) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "Cannot reschedule to a session that has already started.",
+    );
+  }
+
   const activeCoaches = event.coaches as CoachCandidate[];
 
   // 3. Re-assign host (prefer current host if available)

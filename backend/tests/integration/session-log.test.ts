@@ -16,8 +16,8 @@ type TestContext = {
 
 let context: TestContext;
 
-// A slot one week from now to avoid past-slot issues
-const futureSlotStart = () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+// A slot one hour in the past so session logging is allowed (guard blocks future slots)
+const futureSlotStart = () => new Date(Date.now() - 60 * 60 * 1000);
 
 const createBooking = async (
   eventId: string,
@@ -491,8 +491,8 @@ describe("GET /api/events/:eventId/schedule-slots/:slotId/log", () => {
     const slot = await prisma.eventScheduleSlot.create({
       data: {
         eventId: context.eventId,
-        startTime: new Date(slotStart.getTime() + 14 * 24 * 60 * 60 * 1000),
-        endTime: new Date(slotEnd.getTime() + 14 * 24 * 60 * 60 * 1000),
+        startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        endTime: new Date(Date.now() - 60 * 60 * 1000),
         capacity: 5,
         assignedCoachId: context.coachOne.id,
       },

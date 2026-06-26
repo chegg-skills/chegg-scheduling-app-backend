@@ -127,10 +127,13 @@ export function useSlotManagerActions(eventId: string) {
 
   function handleCancelSlot(slot: EventScheduleSlot, info: string) {
     const bookingCount = slot._count?.bookings ?? 0
+    const hasStarted = new Date(slot.startTime) <= new Date()
+    const pastNote = hasStarted ? '\n\nNote: This session has already started.' : ''
+
     const message =
       bookingCount > 0
-        ? `Are you sure you want to cancel the session on ${info}? \n\nThis will cancel all ${bookingCount} active bookings and notify all participants. This action cannot be undone.`
-        : `Are you sure you want to cancel the session on ${info}? \n\nThis will mark the session as cancelled and prevent new bookings.`
+        ? `Are you sure you want to cancel the session on ${info}?${pastNote}\n\nThis will cancel all ${bookingCount} active bookings and notify all participants. This action cannot be undone.`
+        : `Are you sure you want to cancel the session on ${info}?${pastNote}\n\nThis will mark the session as cancelled and prevent new bookings.`
 
     handleAction(cancel, slot.id, {
       title: 'Cancel Session',

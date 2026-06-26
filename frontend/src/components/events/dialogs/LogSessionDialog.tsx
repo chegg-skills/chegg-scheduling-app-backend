@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useConfirm } from '@/context/confirm'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
@@ -48,8 +48,10 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({})
   const [assignedCoachId, setAssignedCoachId] = useState<string>('')
 
-  const activeBookings =
-    (bookings as Booking[] | undefined)?.filter((b) => b.status !== 'CANCELLED') ?? []
+  const activeBookings = useMemo(
+    () => (bookings as Booking[] | undefined)?.filter((b) => b.status !== 'CANCELLED') ?? [],
+    [bookings]
+  )
 
   useEffect(() => {
     if (!isOpen) return
@@ -62,11 +64,15 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
       existingLog.attendance.forEach((a) => {
         map[a.bookingId] = a.attended
       })
+      // For any active booking not yet in existingLog.attendance (e.g. added after initial log),
+      // default them to present so they don't silently show as absent
+      activeBookings.forEach((b) => {
+        if (!(b.id in map)) map[b.id] = true
+      })
       setAttendanceMap(map)
-      // Pre-fill assigned coach from the slot's current value
       setAssignedCoachId(slot?.assignedCoachId ?? '')
     } else if (activeBookings.length > 0) {
-      // For a new log, default everyone to present
+      // New log — default everyone to present
       setTopicsDiscussed('')
       setSummary('')
       setCoachNotes('')
@@ -77,8 +83,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
       setAttendanceMap(map)
       setAssignedCoachId(slot?.assignedCoachId ?? '')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, existingLog, activeBookings.length])
+  }, [isOpen, existingLog, activeBookings, slot?.assignedCoachId])
 
   const attendedCount = activeBookings.filter((b) => attendanceMap[b.id] === true).length
   const absentCount = activeBookings.filter((b) => attendanceMap[b.id] === false).length

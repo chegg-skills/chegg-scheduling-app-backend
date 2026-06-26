@@ -43,6 +43,65 @@ export const bookingTemplates: EmailTemplateMap = {
     ),
   },
 
+  SLOT_RESCHEDULED: {
+    subject: "Session Update: {{eventName}} has been rescheduled",
+    preheader: "Your session has been moved to {{startTime}}.",
+    text: "Hi {{studentName}}, your session for {{eventName}} with {{coachName}} has been rescheduled by the organiser to {{startTime}} ({{timezone}}). Please update your calendar accordingly.",
+    html: wrapLayout(
+      "Session Rescheduled",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your upcoming session has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("New Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Coach", "{{coachName}}")}
+       </p>
+       <p>Please update your calendar accordingly.</p>`,
+      "Your session has been moved to {{startTime}}.",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
+  SLOT_RESCHEDULED_ANONYMOUS: {
+    subject: "Session Update: {{eventName}} has been rescheduled",
+    preheader: "Your session has been moved to {{startTime}}.",
+    text: "Hi {{studentName}}, your session for {{eventName}} with {{teamName}} has been rescheduled by the organiser to {{startTime}} ({{timezone}}). Please update your calendar accordingly.",
+    html: wrapLayout(
+      "Session Rescheduled",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your upcoming session has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("New Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+       </p>
+       <p>Please update your calendar accordingly.</p>`,
+      "Your session has been moved to {{startTime}}.",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
+  SLOT_RESCHEDULED_COACH: {
+    subject: "Session Update: {{eventName}} has been rescheduled",
+    preheader: "A session you are hosting has been moved to {{startTime}}.",
+    text: "Hi {{coachName}}, the session for {{eventName}} with {{studentName}} has been rescheduled to {{startTime}} ({{timezone}}) by the organiser.",
+    html: wrapLayout(
+      "Session Rescheduled",
+      `<p>Hi <strong>{{coachName}}</strong>,</p>
+       <p>A session you are hosting has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("New Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+       </p>`,
+      "A session you are hosting has been moved to {{startTime}}.",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
   BOOKING_CANCELLED: {
     subject: "Session Cancelled: {{eventName}}",
     preheader: "Your booking for {{eventName}} has been cancelled.",
