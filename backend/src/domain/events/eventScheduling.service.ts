@@ -451,11 +451,13 @@ const updateEventScheduleSlot = async (
     );
   }
 
+  // Fetch active booking count once — reused by both the capacity guard and cascade check below.
+  const activeBookingCount = await prisma.booking.count({
+    where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
+  });
+
   // Guard: block capacity reduction below current active booking count
   if (validated.capacity !== undefined && validated.capacity !== null) {
-    const activeBookingCount = await prisma.booking.count({
-      where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
-    });
     if (validated.capacity < activeBookingCount) {
       throw new ErrorHandler(
         StatusCodes.CONFLICT,
@@ -480,7 +482,7 @@ const updateEventScheduleSlot = async (
     data: validated,
     include: {
       assignedCoach: {
-        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true },
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true, timezone: true },
       },
     },
   });
@@ -489,9 +491,6 @@ const updateEventScheduleSlot = async (
 
   // Cascade time/coach changes to active bookings and notify affected students
   if (timeChanged || coachChanged) {
-    const activeBookingCount = await prisma.booking.count({
-      where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
-    });
 
     if (activeBookingCount > 0) {
       const cascadeData: Record<string, unknown> = {};
@@ -516,7 +515,7 @@ const updateEventScheduleSlot = async (
           isAnonymous: event.allowAnonymousBooking,
           coachRevealSentAt: slot.coachRevealSentAt,
           assignedCoach: updated.assignedCoach
-            ? { id: updated.assignedCoach.id, email: updated.assignedCoach.email, timezone: null }
+            ? { id: updated.assignedCoach.id, email: updated.assignedCoach.email, timezone: updated.assignedCoach.timezone }
             : null,
         });
       } catch (error) {
