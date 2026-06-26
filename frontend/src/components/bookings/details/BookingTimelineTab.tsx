@@ -562,7 +562,8 @@ export function BookingTimelineTab({ booking }: BookingTimelineTabProps) {
                               </Typography>
                             )}
 
-                            {activity.activityType === 'SESSION_LOGGED' && (
+                            {activity.activityType === 'SESSION_LOGGED' &&
+                              (activity.metadata?.topicsDiscussed || activity.metadata?.summary) && (
                               <Box
                                 sx={{
                                   mt: 1,
