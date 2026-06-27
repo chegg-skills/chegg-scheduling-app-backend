@@ -1084,8 +1084,10 @@ describe("Event scheduling routes", () => {
         ],
       });
 
-    const baseTime = new Date(Date.now() + 3 * 86400000);
-    baseTime.setUTCHours(10, 0, 0, 0);
+    // Use a far-future time at an unusual hour to avoid collision with bookings
+    // created by other tests that reuse the same coachOneId/coachTwoId.
+    const baseTime = new Date(Date.now() + 45 * 86400000);
+    baseTime.setUTCHours(3, 0, 0, 0);
     const duration = 30 * 60 * 1000;
 
     const assignedCoachIds: string[] = [];
@@ -1261,8 +1263,10 @@ describe("Event scheduling routes", () => {
         ],
       });
 
-    const firstStart = new Date(Date.now() + 7 * 86400000);
-    firstStart.setUTCHours(10, 0, 0, 0);
+    // Use a far-future time at an unusual hour to avoid collision with bookings
+    // from other tests that reuse the same coachOneId/coachTwoId.
+    const firstStart = new Date(Date.now() + 45 * 86400000);
+    firstStart.setUTCHours(4, 0, 0, 0);
     const firstEnd = new Date(firstStart.getTime() + 60 * 60 * 1000);
 
     const seriesRes = await request(app)
