@@ -47,7 +47,7 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
     return bookings
   }, [data?.bookings, statusFilter])
 
-  const handleTabChange = (_: React.SyntheticEvent | React.MouseEvent, newValue: FilterType) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: FilterType) => {
     setStatusFilter(newValue)
     setParams((p) => ({ ...p, page: 1 }))
   }
