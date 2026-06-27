@@ -50,10 +50,39 @@ export const getCoachConflicts = async (
     },
   })) as BookingWithEventBuffer[];
 
-  // 3. Filter for true "effective" overlaps (Meeting + Buffer)
+  // 3. Also check fixed slot assignments — a coach assigned to a slot is hard-blocked
+  // for that time even before any student has booked (no Booking record exists yet).
+  const assignedSlots = await client.eventScheduleSlot.findMany({
+    where: {
+      assignedCoachId: userId,
+      isActive: true,
+      isCancelled: false,
+      startTime: { lt: endTime },
+      endTime: { gt: lookbackStartTime },
+      ...(options.scheduleSlotId ? { NOT: { id: options.scheduleSlotId } } : {}),
+    },
+    select: {
+      id: true,
+      startTime: true,
+      endTime: true,
+      eventId: true,
+      event: { select: { bufferAfterMinutes: true } },
+    },
+  });
+
+  // Shape slot assignments to match the fields callers need for overlap detection.
+  const slotConflicts = assignedSlots.map((s) => ({
+    startTime: s.startTime,
+    endTime: s.endTime,
+    scheduleSlotId: s.id,
+    eventId: s.eventId,
+    event: { bufferAfterMinutes: s.event?.bufferAfterMinutes ?? null },
+  })) as unknown as BookingWithEventBuffer[];
+
+  // 4. Filter for true "effective" overlaps (Meeting + Buffer)
   // A conflict occurs if the new meeting's [startTime, endTime]
   // overlaps with an existing meeting's [startTime, endTime + buffer]
-  return bookings.filter((booking) => {
+  return [...bookings, ...slotConflicts].filter((booking) => {
     const effectiveEndTime = new Date(
       booking.endTime.getTime() + (booking.event.bufferAfterMinutes ?? 0) * 60 * 1000,
     );

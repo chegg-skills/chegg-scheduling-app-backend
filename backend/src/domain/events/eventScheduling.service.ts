@@ -25,6 +25,7 @@ import {
 } from "../bookings/booking.notification";
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
+import { isCoachAvailable } from "../availability/availability.service";
 import { logger } from "../../shared/logging/logger";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { BookingStatus } from "@prisma/client";
@@ -206,7 +207,9 @@ const resolveRoundRobinSlotAssignment = async (
   eventId: string,
   teamId: string,
   coaches: { coachUserId: string; coachOrder: number }[],
-): Promise<string> => {
+  startTime: Date,
+  endTime: Date,
+): Promise<string | null> => {
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<{ nextCoachOrder: number }[]>`
       SELECT "nextCoachOrder" FROM "EventRoutingState"
@@ -241,14 +244,27 @@ const resolveRoundRobinSlotAssignment = async (
       return aRot - bRot;
     });
 
-    const picked = sorted[0];
-    const nextCursor = (picked.coachOrder % maxOrder) + 1;
-    await tx.eventRoutingState.upsert({
-      where: { eventId },
-      create: { eventId, nextCoachOrder: nextCursor },
-      update: { nextCoachOrder: nextCursor },
-    });
-    return picked.coachUserId;
+    // Pick the first coach who is actually free at this slot's time.
+    for (const candidate of sorted) {
+      const available = await isCoachAvailable(candidate.coachUserId, startTime, endTime, {
+        ignoreWeeklySchedule: true,
+        eventId,
+        tx,
+      });
+      if (available) {
+        const nextCursor = (candidate.coachOrder % maxOrder) + 1;
+        await tx.eventRoutingState.upsert({
+          where: { eventId },
+          create: { eventId, nextCoachOrder: nextCursor },
+          update: { nextCoachOrder: nextCursor },
+        });
+        return candidate.coachUserId;
+      }
+    }
+
+    // No coach is free at this time — create the slot unassigned so the admin can assign manually.
+    logger.warn({ eventId, startTime }, "No available coach for round-robin slot; created unassigned.");
+    return null;
   });
 };
 
@@ -265,7 +281,8 @@ const resolveRoundRobinSequence = async (
   teamId: string,
   coaches: { coachUserId: string; coachOrder: number }[],
   count: number,
-): Promise<string[]> => {
+  slotTimes: Array<{ startTime: Date; endTime: Date }>,
+): Promise<(string | null)[]> => {
   const rows = await tx.$queryRaw<{ nextCoachOrder: number }[]>`
     SELECT "nextCoachOrder" FROM "EventRoutingState"
     WHERE "eventId" = ${eventId}
@@ -292,8 +309,9 @@ const resolveRoundRobinSequence = async (
   const virtualCounts = new Map(coaches.map((c) => [c.coachUserId, countMap.get(c.coachUserId) ?? 0]));
   const maxOrder = Math.max(...coaches.map((c) => c.coachOrder));
 
-  const assignments: string[] = [];
+  const assignments: (string | null)[] = [];
   for (let i = 0; i < count; i++) {
+    const { startTime, endTime } = slotTimes[i];
     const sorted = [...coaches].sort((a, b) => {
       const countDiff = (virtualCounts.get(a.coachUserId) ?? 0) - (virtualCounts.get(b.coachUserId) ?? 0);
       if (countDiff !== 0) return countDiff;
@@ -301,10 +319,27 @@ const resolveRoundRobinSequence = async (
       const bRot = b.coachOrder >= cursor ? b.coachOrder : b.coachOrder + maxOrder;
       return aRot - bRot;
     });
-    const picked = sorted[0];
-    assignments.push(picked.coachUserId);
-    virtualCounts.set(picked.coachUserId, (virtualCounts.get(picked.coachUserId) ?? 0) + 1);
-    cursor = (picked.coachOrder % maxOrder) + 1;
+
+    // Pick the first candidate who is free at this slot's exact time.
+    let assigned = false;
+    for (const candidate of sorted) {
+      const available = await isCoachAvailable(candidate.coachUserId, startTime, endTime, {
+        ignoreWeeklySchedule: true,
+        eventId,
+        tx,
+      });
+      if (available) {
+        assignments.push(candidate.coachUserId);
+        virtualCounts.set(candidate.coachUserId, (virtualCounts.get(candidate.coachUserId) ?? 0) + 1);
+        cursor = (candidate.coachOrder % maxOrder) + 1;
+        assigned = true;
+        break;
+      }
+    }
+    if (!assigned) {
+      assignments.push(null);
+      logger.warn({ eventId, startTime }, "No available coach for slot in batch; created unassigned.");
+    }
   }
 
   await tx.eventRoutingState.upsert({
@@ -356,7 +391,10 @@ const createEventScheduleSlot = async (
       // Round-robin is the source of truth for a series: rotate across coaches and
       // ignore any supplied override, which would otherwise pin every slot to one coach.
       if (isRoundRobinGroup && event.coaches.length > 0) {
-        coachAssignments = await resolveRoundRobinSequence(tx, eventId, event.teamId, event.coaches, startDates.length);
+        coachAssignments = await resolveRoundRobinSequence(
+          tx, eventId, event.teamId, event.coaches, startDates.length,
+          startDates.map((s) => ({ startTime: s, endTime: new Date(s.getTime() + durationMs) })),
+        );
       } else {
         coachAssignments = startDates.map(() => validated.assignedCoachId ?? null);
       }
@@ -397,7 +435,10 @@ const createEventScheduleSlot = async (
 
   let assignedCoachId: string | null = validated.assignedCoachId ?? null;
   if (isRoundRobinGroup && !assignedCoachId && event.coaches.length > 0) {
-    assignedCoachId = await resolveRoundRobinSlotAssignment(eventId, event.teamId, event.coaches);
+    assignedCoachId = await resolveRoundRobinSlotAssignment(
+      eventId, event.teamId, event.coaches,
+      validated.startTime, validated.endTime,
+    );
   }
 
   const newSlot = await prisma.eventScheduleSlot.create({
@@ -964,6 +1005,7 @@ const replenishContinuousSlots = async (
               event!.teamId,
               event!.coaches,
               newSlotsData.length,
+              newSlotsData.map((s) => ({ startTime: s.startTime, endTime: s.endTime })),
             );
             await innerTx.eventScheduleSlot.createMany({
               data: newSlotsData.map((slot, i) => ({
