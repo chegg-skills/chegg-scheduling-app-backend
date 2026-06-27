@@ -27,19 +27,10 @@ interface Props {
   onPageChange?: (page: number) => void
   onRowsPerPageChange?: (rowsPerPage: number) => void
   disableSlotGrouping?: boolean
+  stickyTop?: number
 }
 
 type BookingSortKey = 'student' | 'event' | 'coach' | 'date' | 'status'
-
-const stickyHeaderStyle = {
-  position: 'sticky',
-  top: 154,
-  zIndex: 8,
-  background: (theme: any) =>
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.paper
-      : 'linear-gradient(rgba(232, 113, 0, 0.03), rgba(232, 113, 0, 0.03)), #ffffff',
-}
 
 const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
   weekday: 'long',
@@ -70,6 +61,7 @@ export function BookingTable({
   onPageChange,
   onRowsPerPageChange,
   disableSlotGrouping,
+  stickyTop,
 }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const {
@@ -133,6 +125,16 @@ export function BookingTable({
     )
   }
 
+  const stickyHeaderStyle = stickyTop !== undefined ? {
+    position: 'sticky',
+    top: stickyTop,
+    zIndex: 8,
+    background: (theme: any) =>
+      theme.palette.mode === 'dark'
+        ? theme.palette.background.paper
+        : 'linear-gradient(rgba(232, 113, 0, 0.03), rgba(232, 113, 0, 0.03)), #ffffff',
+  } : {}
+
   return (
     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'visible' }}>
       <Table>
@@ -149,7 +151,7 @@ export function BookingTable({
                 width={col.width}
                 sx={{
                   ...stickyHeaderStyle,
-                  ...(index === 0 ? { borderTopLeftRadius: '12px' } : {}),
+                  ...(stickyTop !== undefined && index === 0 ? { borderTopLeftRadius: '10px' } : {}),
                 }}
               />
             ))}
@@ -164,7 +166,7 @@ export function BookingTable({
                 width: 140,
                 pr: 3,
                 ...stickyHeaderStyle,
-                borderTopRightRadius: '12px',
+                ...(stickyTop !== undefined ? { borderTopRightRadius: '10px' } : {}),
               }}
             >
               Actions

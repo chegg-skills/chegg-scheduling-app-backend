@@ -18,20 +18,10 @@ import { LogSessionDialog } from '@/components/events/dialogs/LogSessionDialog'
 import { EmptyState } from '@/components/shared/ui/EmptyState'
 import type { EventScheduleSlot } from '@/types'
 import { OccupancyBadge } from './OccupancyBadge'
+import { ordinal } from '@/utils/ordinal'
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
 const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' })
-
-function ordinal(n: number): string {
-  const v = n % 100
-  if (v >= 11 && v <= 13) return `${n}th`
-  switch (n % 10) {
-    case 1: return `${n}st`
-    case 2: return `${n}nd`
-    case 3: return `${n}rd`
-    default: return `${n}th`
-  }
-}
 
 function toEventScheduleSlot(slot: TrackerSlot): EventScheduleSlot {
   return {
@@ -121,7 +111,7 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
                     {timeFormatter.format(new Date(slot.endTime))}
                   </Typography>
                   {slot.seriesSessionNumber !== null && (
-                    <Typography variant="caption" color="primary" noWrap display="block">
+                    <Typography variant="caption" sx={{ color: 'warning.main', fontWeight: 600 }} noWrap display="block">
                       {ordinal(slot.seriesSessionNumber)} session
                     </Typography>
                   )}

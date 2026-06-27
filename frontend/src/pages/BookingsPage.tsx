@@ -351,6 +351,7 @@ export function BookingsPage() {
                   pagination={pagination}
                   onPageChange={onPageChange}
                   onRowsPerPageChange={onRowsPerPageChange}
+                  stickyTop={154}
                 />
               ) : (
                 <BookingCalendar bookings={filteredBookings} onViewDetail={setSelectedBooking} />

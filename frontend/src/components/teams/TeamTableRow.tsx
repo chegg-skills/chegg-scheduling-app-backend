@@ -72,24 +72,7 @@ export function TeamTableRow({
         </Stack>
       </TableCell>
 
-      <TableCell
-        sx={{
-          color: 'text.secondary',
-          fontSize: '0.875rem',
-          width: '25%',
-          minWidth: 200,
-          whiteSpace: 'normal',
-          wordBreak: 'break-word',
-        }}
-      >
-        {team.description
-          ? team.description.length > 60
-            ? `${team.description.slice(0, 60)}...`
-            : team.description
-          : 'No description provided'}
-      </TableCell>
-
-      <TableCell sx={{ width: '25%', minWidth: 150 }}>
+      <TableCell sx={{ width: '27%', minWidth: 150 }}>
         {leadUser ? (
           <Stack direction="row" spacing={1.25} alignItems="center">
             <Avatar
