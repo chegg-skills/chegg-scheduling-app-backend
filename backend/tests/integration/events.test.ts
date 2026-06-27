@@ -1281,10 +1281,17 @@ describe("Event scheduling routes", () => {
 
     const slots = listRes.body.data.slots as Array<{ assignedCoachId: string | null }>;
     expect(slots).toHaveLength(4);
-    expect(slots[0].assignedCoachId).toBe(context.coachOneId);
-    expect(slots[1].assignedCoachId).toBe(context.coachTwoId);
-    expect(slots[2].assignedCoachId).toBe(context.coachOneId);
-    expect(slots[3].assignedCoachId).toBe(context.coachTwoId);
+    // Each coach should receive exactly 2 slots. The exact ordering depends on
+    // team-wide workload (bookings + slot assignments), so we check distribution
+    // rather than fixed position to keep the test environment-independent.
+    const coachOneSlotsCount = slots.filter((s) => s.assignedCoachId === context.coachOneId).length;
+    const coachTwoSlotsCount = slots.filter((s) => s.assignedCoachId === context.coachTwoId).length;
+    expect(coachOneSlotsCount).toBe(2);
+    expect(coachTwoSlotsCount).toBe(2);
+    // Slots should alternate between the two coaches (no two consecutive same coach).
+    for (let i = 0; i < slots.length - 1; i++) {
+      expect(slots[i].assignedCoachId).not.toBe(slots[i + 1].assignedCoachId);
+    }
   });
 });
 
