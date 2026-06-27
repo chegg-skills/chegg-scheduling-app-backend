@@ -183,7 +183,8 @@ describe('Event Detail Integration', () => {
     const coachesTab = screen.getByRole('tab', { name: /Coaches/i })
     fireEvent.click(coachesTab)
     expect(await screen.findByText('John Coach')).toBeInTheDocument()
-    expect(screen.getByText('Mon: 09:00–17:00')).toBeInTheDocument()
+    // FIXED_SLOTS events show "Assigned Sessions" column instead of availability windows
+    expect(screen.getByText('Assigned Sessions')).toBeInTheDocument()
 
     // 4. Switch to Schedule tab
     const scheduleTab = screen.getByRole('tab', { name: /Schedule/i })
