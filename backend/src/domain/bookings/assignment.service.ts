@@ -130,19 +130,35 @@ export class RoundRobinAssignmentStrategy implements IAssignmentStrategy {
 
     const routingState = await getRoutingState(context.prisma, context.eventId);
 
-    // Count confirmed bookings for each candidate across all events in the team.
-    // Team-scoped (not per-event) so a coach heavily loaded by one event is
-    // deprioritised when another event in the same team assigns next.
-    const bookingCounts = await context.prisma.booking.groupBy({
-      by: ["coachUserId"],
-      where: {
-        teamId: context.teamId,
-        coachUserId: { in: candidates.map((c) => c.coachUserId) },
-        status: { not: BookingStatus.CANCELLED },
-      },
-      _count: { coachUserId: true },
-    });
+    // Count total sessions per coach across all events in the team — both
+    // COACH_AVAILABILITY bookings AND fixed slot assignments — so a coach
+    // heavily loaded by either session type is deprioritised when assigning next.
+    const [bookingCounts, slotCounts] = await Promise.all([
+      context.prisma.booking.groupBy({
+        by: ["coachUserId"],
+        where: {
+          teamId: context.teamId,
+          coachUserId: { in: candidates.map((c) => c.coachUserId) },
+          status: { not: BookingStatus.CANCELLED },
+        },
+        _count: { coachUserId: true },
+      }),
+      context.prisma.eventScheduleSlot.groupBy({
+        by: ["assignedCoachId"],
+        where: {
+          event: { teamId: context.teamId },
+          assignedCoachId: { in: candidates.map((c) => c.coachUserId) },
+          isActive: true,
+          isCancelled: false,
+        },
+        _count: { assignedCoachId: true },
+      }),
+    ]);
     const countMap = new Map(bookingCounts.map((r) => [r.coachUserId, r._count.coachUserId]));
+    for (const r of slotCounts) {
+      if (!r.assignedCoachId) continue;
+      countMap.set(r.assignedCoachId, (countMap.get(r.assignedCoachId) ?? 0) + r._count.assignedCoachId);
+    }
 
     const maxOrder = Math.max(...candidates.map((c) => c.coachOrder));
 

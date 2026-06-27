@@ -218,22 +218,36 @@ const resolveRoundRobinSlotAssignment = async (
     `;
     const cursor = Number(rows[0]?.nextCoachOrder ?? 1);
 
-    // Count active assigned slots per coach across the whole team.
-    // One slot = one session regardless of how many students attend, so this
-    // correctly measures group-session workload without attendance distortion.
-    const slotCounts = await tx.eventScheduleSlot.groupBy({
-      by: ["assignedCoachId"],
-      where: {
-        event: { teamId },
-        assignedCoachId: { in: coaches.map((c) => c.coachUserId) },
-        isActive: true,
-        isCancelled: false,
-      },
-      _count: { assignedCoachId: true },
-    });
+    // Count total sessions per coach team-wide: fixed slot assignments + COACH_AVAILABILITY
+    // bookings combined, so a coach loaded by either session type is deprioritised.
+    const [slotCounts, bookingCounts] = await Promise.all([
+      tx.eventScheduleSlot.groupBy({
+        by: ["assignedCoachId"],
+        where: {
+          event: { teamId },
+          assignedCoachId: { in: coaches.map((c) => c.coachUserId) },
+          isActive: true,
+          isCancelled: false,
+        },
+        _count: { assignedCoachId: true },
+      }),
+      tx.booking.groupBy({
+        by: ["coachUserId"],
+        where: {
+          event: { teamId },
+          coachUserId: { in: coaches.map((c) => c.coachUserId) },
+          status: { not: BookingStatus.CANCELLED },
+        },
+        _count: { coachUserId: true },
+      }),
+    ]);
     const countMap = new Map(
       slotCounts.map((r) => [r.assignedCoachId as string, r._count.assignedCoachId]),
     );
+    for (const r of bookingCounts) {
+      if (!r.coachUserId) continue;
+      countMap.set(r.coachUserId, (countMap.get(r.coachUserId) ?? 0) + r._count.coachUserId);
+    }
 
     const maxOrder = Math.max(...coaches.map((c) => c.coachOrder));
     const sorted = [...coaches].sort((a, b) => {
@@ -290,19 +304,36 @@ const resolveRoundRobinSequence = async (
   `;
   let cursor = Number(rows[0]?.nextCoachOrder ?? 1);
 
-  const slotCounts = await tx.eventScheduleSlot.groupBy({
-    by: ["assignedCoachId"],
-    where: {
-      event: { teamId },
-      assignedCoachId: { in: coaches.map((c) => c.coachUserId) },
-      isActive: true,
-      isCancelled: false,
-    },
-    _count: { assignedCoachId: true },
-  });
+  // Count total sessions per coach team-wide: fixed slot assignments + COACH_AVAILABILITY
+  // bookings combined, so a coach loaded by either session type is deprioritised.
+  const [slotCounts, bookingCounts] = await Promise.all([
+    tx.eventScheduleSlot.groupBy({
+      by: ["assignedCoachId"],
+      where: {
+        event: { teamId },
+        assignedCoachId: { in: coaches.map((c) => c.coachUserId) },
+        isActive: true,
+        isCancelled: false,
+      },
+      _count: { assignedCoachId: true },
+    }),
+    tx.booking.groupBy({
+      by: ["coachUserId"],
+      where: {
+        event: { teamId },
+        coachUserId: { in: coaches.map((c) => c.coachUserId) },
+        status: { not: BookingStatus.CANCELLED },
+      },
+      _count: { coachUserId: true },
+    }),
+  ]);
   const countMap = new Map(
     slotCounts.map((r) => [r.assignedCoachId as string, r._count.assignedCoachId]),
   );
+  for (const r of bookingCounts) {
+    if (!r.coachUserId) continue;
+    countMap.set(r.coachUserId, (countMap.get(r.coachUserId) ?? 0) + r._count.coachUserId);
+  }
 
   // Virtual counts track assignments made within this batch so the series itself
   // distributes fairly before any students book.
