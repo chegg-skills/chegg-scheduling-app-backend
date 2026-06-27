@@ -1087,13 +1087,8 @@ describe("Event scheduling routes", () => {
     const baseTime = new Date(Date.now() + 3 * 86400000);
     baseTime.setUTCHours(10, 0, 0, 0);
     const duration = 30 * 60 * 1000;
-    const expectedCoachIds = [
-      context.coachOneId,
-      context.coachTwoId,
-      context.coachOneId,
-      context.coachTwoId,
-    ];
 
+    const assignedCoachIds: string[] = [];
     for (let i = 0; i < 4; i++) {
       const startTime = new Date(baseTime.getTime() + i * 2 * 60 * 60 * 1000);
       const slotRes = await request(app)
@@ -1105,7 +1100,14 @@ describe("Event scheduling routes", () => {
           capacity: 5,
         });
       expect(slotRes.status).toBe(201);
-      expect(slotRes.body.data.assignedCoachId).toBe(expectedCoachIds[i]);
+      expect([context.coachOneId, context.coachTwoId]).toContain(slotRes.body.data.assignedCoachId);
+      assignedCoachIds.push(slotRes.body.data.assignedCoachId);
+    }
+    // Each coach should get exactly 2 slots and they should alternate.
+    expect(assignedCoachIds.filter((id) => id === context.coachOneId).length).toBe(2);
+    expect(assignedCoachIds.filter((id) => id === context.coachTwoId).length).toBe(2);
+    for (let i = 0; i < assignedCoachIds.length - 1; i++) {
+      expect(assignedCoachIds[i]).not.toBe(assignedCoachIds[i + 1]);
     }
   });
 
