@@ -16,6 +16,7 @@ import { usePermissions } from '@/hooks/usePermissions'
 
 interface ScheduleSlotListProps {
   slots: EventScheduleSlot[]
+  groupSlots?: EventScheduleSlot[]
   event: Event
   onRemove: (slotId: string, info: string) => void
   onEdit: (slot: EventScheduleSlot) => void
@@ -27,6 +28,7 @@ interface ScheduleSlotListProps {
 
 export function ScheduleSlotList({
   slots,
+  groupSlots,
   event,
   onRemove,
   onEdit,
@@ -68,6 +70,10 @@ export function ScheduleSlotList({
 
   const paginatedSlots = slots.slice((page - 1) * pageSize, page * pageSize)
 
+  const chronSorted = [...(groupSlots ?? slots)].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  )
+
   return (
     <>
       {(canManage || isCoach) && unreveledUpcoming.length > 0 && (
@@ -97,20 +103,25 @@ export function ScheduleSlotList({
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedSlots.map((slot) => (
-              <ScheduleSlotRow
-                key={slot.id}
-                slot={slot}
-                event={event}
-                onRemove={onRemove}
-                onEdit={onEdit}
-                onViewAttendees={onViewAttendees}
-                onLogSession={onLogSession}
-                onCancel={onCancel}
-                onReveal={setRevealSlot}
-                canManage={canManage}
-              />
-            ))}
+            {paginatedSlots.map((slot) => {
+              const slotNumber = chronSorted.findIndex((s) => s.id === slot.id) + 1
+
+              return (
+                <ScheduleSlotRow
+                  key={slot.id}
+                  slot={slot}
+                  event={event}
+                  slotNumber={slotNumber}
+                  onRemove={onRemove}
+                  onEdit={onEdit}
+                  onViewAttendees={onViewAttendees}
+                  onLogSession={onLogSession}
+                  onCancel={onCancel}
+                  onReveal={setRevealSlot}
+                  canManage={canManage}
+                />
+              )
+            })}
           </TableBody>
         </Table>
         <TablePagination

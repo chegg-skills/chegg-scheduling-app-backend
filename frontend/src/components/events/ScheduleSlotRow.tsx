@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { getUserInitials } from '@/utils/userDisplay'
+import { ordinal } from '@/utils/ordinal'
 import Box from '@mui/material/Box'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
@@ -15,6 +16,7 @@ import { usePermissions } from '@/hooks/usePermissions'
 interface ScheduleSlotRowProps {
   slot: EventScheduleSlot
   event: Event
+  slotNumber?: number
   onRemove: (slotId: string, info: string) => void
   onEdit: (slot: EventScheduleSlot) => void
   onViewAttendees: (slot: EventScheduleSlot) => void
@@ -24,6 +26,7 @@ interface ScheduleSlotRowProps {
   canManage?: boolean
 }
 
+
 /**
  * Individual row for the ScheduleSlotList table.
  * Encapsulates date formatting, occupancy logic, status badges, and host assignment display.
@@ -31,6 +34,7 @@ interface ScheduleSlotRowProps {
 export function ScheduleSlotRow({
   slot,
   event,
+  slotNumber,
   onRemove,
   onEdit,
   onViewAttendees,
@@ -41,7 +45,7 @@ export function ScheduleSlotRow({
 }: ScheduleSlotRowProps) {
   const { isCoach } = usePermissions()
 
-  const dateStr = format(new Date(slot.startTime), 'EEE, MMM d, yyyy')
+  const dateStr = format(new Date(slot.startTime), 'EEE, do MMMM, yyyy')
   const timeRange = `${format(new Date(slot.startTime), 'h:mm a')} – ${format(
     new Date(slot.endTime),
     'h:mm a'
@@ -149,14 +153,16 @@ export function ScheduleSlotRow({
     <TableRow hover>
       <TableCell sx={{ py: 2 }}>
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            {dateStr}
-          </Typography>
-          {isRecurring && (
-            <Tooltip title="Part of a recurring series">
-              <RefreshCw size={14} style={{ color: '#6366f1' }} />
-            </Tooltip>
-          )}
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {dateStr}
+            </Typography>
+            {slotNumber != null && slotNumber > 0 && (
+              <Typography variant="caption" sx={{ display: 'block', mt: 0.25, color: 'warning.main', fontWeight: 600 }}>
+                {ordinal(slotNumber)} session
+              </Typography>
+            )}
+          </Box>
         </Stack>
       </TableCell>
       <TableCell sx={{ py: 2 }}>{timeRange}</TableCell>

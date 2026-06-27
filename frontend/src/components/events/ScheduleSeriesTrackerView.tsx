@@ -2,13 +2,12 @@ import { useState, useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import Breadcrumbs from '@mui/material/Breadcrumbs'
 import Link from '@mui/material/Link'
-import Tabs from '@mui/material/Tabs'
-import Tab from '@mui/material/Tab'
-import { ChevronRight } from 'lucide-react'
-import EventRepeatIcon from '@mui/icons-material/EventRepeat'
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import FormControl from '@mui/material/FormControl'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import IconButton from '@mui/material/IconButton'
+import { ChevronLeft } from 'lucide-react'
 import type { Event, EventScheduleSlot } from '@/types'
 import { ScheduleSlotList } from './ScheduleSlotList'
 import { Button } from '@/components/shared/ui/Button'
@@ -73,113 +72,148 @@ export function ScheduleSeriesTrackerView({
     }
   }, [group.slots])
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: TabValue) => {
+  const handleTabChange = (newValue: TabValue) => {
     setActiveTab(newValue)
   }
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Breadcrumbs
-          separator={<ChevronRight size={14} />}
-          sx={{ mb: 1, '& .MuiBreadcrumbs-li': { display: 'flex', alignItems: 'center' } }}
-        >
-          <Link
-            underline="hover"
-            color="inherit"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault()
-              onBack()
-            }}
+      {/* Redesigned Single-Row Header toolbar */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', md: 'center' },
+          flexDirection: { xs: 'column', md: 'row' },
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          pb: 2,
+          mb: 3,
+          gap: 2,
+        }}
+      >
+        {/* Left Side: Back button + Recurrence Info */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <IconButton
+            onClick={onBack}
+            size="small"
             sx={{
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1.5,
+              bgcolor: 'background.paper',
+              color: 'text.secondary',
+              width: 32,
+              height: 32,
+              '&:hover': {
+                bgcolor: 'action.hover',
+                color: 'text.primary',
+              },
             }}
+            aria-label="Back to Scheduled Sessions"
           >
-            Scheduled Sessions
-          </Link>
-          <Typography color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 700 }}>
-            {group.isRecurring ? 'Series Tracker' : 'Session Tracker'}
-          </Typography>
-        </Breadcrumbs>
+            <ChevronLeft size={16} />
+          </IconButton>
 
-        <Stack direction="row" spacing={2} alignItems="center">
           <Box
             sx={{
-              p: group.isRecurring ? 1.5 : 0.5,
-              borderRadius: 1,
-              bgcolor: group.isRecurring ? 'background.paper' : 'transparent',
-              border: group.isRecurring ? '1px solid' : 'none',
-              borderColor: 'divider',
-              color: group.isRecurring ? 'primary.main' : 'text.secondary',
+              width: '1px',
+              height: 20,
+              bgcolor: 'divider',
+              display: { xs: 'none', sm: 'block' },
             }}
-          >
-            {group.isRecurring ? (
-              <EventRepeatIcon sx={{ fontSize: 28 }} />
-            ) : (
-              <CalendarTodayIcon sx={{ fontSize: 28 }} />
-            )}
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {group.isRecurring ? 'Weekly Recurring Series' : 'Individual Session Detail'}
+          />
+
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              {group.isRecurring ? 'Series Tracker' : 'Session Tracker'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
+              {group.isRecurring ? 'Weekly Series' : 'One-time session'}
+              {' • '}
               {new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(group.startTime))}s at{' '}
-              {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(group.startTime))} •{' '}
-              {group.isContinuous
-                ? group.isStopped
-                  ? 'Stopped (Continuous)'
-                  : 'Continuous'
-                : `${group.slots.length} occurrences`}
+              {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(group.startTime))}
+              {' • '}
+              {group.isContinuous ? 'Continuous' : `${group.slots.length} occurrences`}
             </Typography>
-          </Box>
-          {group.isContinuous && !group.isStopped && canManage && onStopSeries && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onStopSeries(group)}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                bgcolor: group.isStopped ? 'error.lighter' : 'success.lighter',
+                color: group.isStopped ? 'error.main' : 'success.main',
+                fontSize: '0.6875rem',
+                fontWeight: 700,
+              }}
             >
-              Stop Recurrence
-            </Button>
-          )}
-          {group.isContinuous && group.isStopped && canManage && onResumeSeries && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onResumeSeries(group)}
-            >
-              Resume Recurrence
-            </Button>
-          )}
-        </Stack>
-      </Box>
+              <Box
+                sx={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  bgcolor: group.isStopped ? 'error.main' : 'success.main',
+                }}
+              />
+              {group.isStopped ? 'Stopped' : 'Active'}
+            </Box>
+          </Stack>
+        </Box>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              minWidth: 100,
-            },
-          }}
-        >
-          <Tab label={`Upcoming (${counts.upcoming})`} value="upcoming" />
-          <Tab label={`All Sessions (${counts.all})`} value="all" />
-          <Tab label={`Past (${counts.past})`} value="past" />
-        </Tabs>
+        {/* Right Side: Select Dropdown filter + Action button */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' }, justifyContent: { xs: 'space-between', md: 'flex-end' } }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <Select
+              value={activeTab}
+              onChange={(e) => handleTabChange(e.target.value as TabValue)}
+              sx={{
+                borderRadius: 1.5,
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                bgcolor: 'background.paper',
+                '& .MuiSelect-select': {
+                  py: 1,
+                  px: 1.5,
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                },
+              }}
+            >
+              <MenuItem value="upcoming" sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                Upcoming ({counts.upcoming})
+              </MenuItem>
+              <MenuItem value="all" sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                All Sessions ({counts.all})
+              </MenuItem>
+              <MenuItem value="past" sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                Past ({counts.past})
+              </MenuItem>
+            </Select>
+          </FormControl>
+
+          {canManage && group.isContinuous && (
+            <Box>
+              {!group.isStopped && onStopSeries && (
+                <Button variant="secondary" size="sm" onClick={() => onStopSeries(group)}>
+                  Stop Recurrence
+                </Button>
+              )}
+              {group.isStopped && onResumeSeries && (
+                <Button variant="primary" size="sm" onClick={() => onResumeSeries(group)}>
+                  Resume Recurrence
+                </Button>
+              )}
+            </Box>
+          )}
+        </Box>
       </Box>
 
       <ScheduleSlotList
         slots={filteredSlots}
+        groupSlots={group.slots}
         event={event}
         onRemove={onRemoveSlot}
         onEdit={onEditSlot}

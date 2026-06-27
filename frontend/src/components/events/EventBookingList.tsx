@@ -5,7 +5,6 @@ import { useBookings } from '@/hooks/queries/useBookings'
 import { BookingTable } from '@/components/bookings/BookingTable'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
-import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import type { BookingStatus } from '@/types'
 
 interface EventBookingListProps {
@@ -48,7 +47,7 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
     return bookings
   }, [data?.bookings, statusFilter])
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: FilterType) => {
+  const handleTabChange = (_: React.SyntheticEvent | React.MouseEvent, newValue: FilterType) => {
     setStatusFilter(newValue)
     setParams((p) => ({ ...p, page: 1 }))
   }
@@ -60,18 +59,28 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
 
   return (
     <Stack spacing={3}>
-      <SectionHeader
-        title="Bookings"
-        description="View and manage bookings and co-coach assignments for this event."
-      />
-
       <Box
         sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', md: 'flex-end' },
+          flexDirection: { xs: 'column', md: 'row' },
           borderBottom: '1px solid',
           borderColor: 'divider',
+          pb: 0,
           mb: 1,
+          gap: { xs: 2, md: 0 },
         }}
       >
+        <Box sx={{ pb: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            Bookings
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            View and manage bookings and co-coach assignments for this event.
+          </Typography>
+        </Box>
+
         <Tabs
           value={statusFilter}
           onChange={handleTabChange}

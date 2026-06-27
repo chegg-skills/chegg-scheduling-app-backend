@@ -3,6 +3,9 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
+import Tooltip from '@mui/material/Tooltip'
+import IconButton from '@mui/material/IconButton'
+import { alpha } from '@mui/material/styles'
 import { useParams } from 'react-router-dom'
 import {
   Code,
@@ -14,6 +17,9 @@ import {
   Info,
   Calendar as CalendarIcon,
   ClipboardList,
+  ExternalLink,
+  Copy,
+  Check,
 } from 'lucide-react'
 import {
   useEvent,
@@ -53,6 +59,7 @@ export function EventDetailPage() {
   const [activeTab, setTab] = useTabParam('tab', 'details', EVENT_TABS)
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const { data: event, isLoading, error } = useEvent(eventId)
   const {
@@ -100,6 +107,15 @@ export function EventDetailPage() {
   })
   const needsScheduleSlots = event.bookingMode === 'FIXED_SLOTS' && slots.length === 0
 
+  const handleCopy = async () => {
+    if (event.publicBookingSlug) {
+      const shareUrl = `${window.location.origin}/book/event/${event.publicBookingSlug}`
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   const handleToggleStatus = (isActive: boolean) => {
     handleAction(
       (vars) => updateEventMutation.mutate(vars),
@@ -143,7 +159,65 @@ export function EventDetailPage() {
         }
         actions={
           !isCoach ? (
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              {event.publicBookingSlug && (
+                <>
+                  <Tooltip title="Open booking page" arrow>
+                    <IconButton
+                      onClick={() => {
+                        const shareUrl = `${window.location.origin}/book/event/${event.publicBookingSlug}`
+                        window.open(shareUrl, '_blank', 'noopener,noreferrer')
+                      }}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1.2,
+                        width: 36,
+                        height: 36,
+                        color: 'text.secondary',
+                        bgcolor: 'transparent',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                          color: 'primary.main',
+                          borderColor: 'primary.main',
+                          transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out',
+                      }}
+                    >
+                      <ExternalLink size={16} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={copied ? 'Copied!' : 'Copy booking link'} arrow>
+                    <IconButton
+                      onClick={handleCopy}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: copied ? 'success.main' : 'divider',
+                        borderRadius: 1.2,
+                        width: 36,
+                        height: 36,
+                        bgcolor: (theme) =>
+                          copied ? alpha(theme.palette.success.main, 0.1) : 'transparent',
+                        color: (theme) =>
+                          copied ? theme.palette.success.main : 'text.secondary',
+                        '&:hover': {
+                          bgcolor: (theme) =>
+                            copied ? alpha(theme.palette.success.main, 0.1) : 'action.hover',
+                          color: (theme) =>
+                            copied ? theme.palette.success.main : 'primary.main',
+                          borderColor: (theme) =>
+                            copied ? theme.palette.success.main : 'primary.main',
+                          transform: 'scale(1.05)',
+                        },
+                        transition: 'all 0.2s ease-in-out',
+                      }}
+                    >
+                      {copied ? <Check size={16} /> : <Copy size={16} />}
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
               <RowActions
                 actions={[
                   {

@@ -128,10 +128,15 @@ export function ScheduleSeriesTable({
                   <Stack direction="row" spacing={2} alignItems="center">
                     <Box
                       sx={{
-                        p: 1,
-                        borderRadius: 1,
-                        bgcolor: group.isRecurring ? 'primary.lighter' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        bgcolor: group.isRecurring ? 'primary.lighter' : 'action.hover',
                         color: group.isRecurring ? 'primary.main' : 'text.secondary',
+                        flexShrink: 0,
                       }}
                     >
                       {group.isRecurring ? (
