@@ -4,9 +4,9 @@ import { ordinal } from '@/utils/ordinal'
 import Box from '@mui/material/Box'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
-import { Edit, Trash2, User, RefreshCw, ClipboardList, Users, Ban, Eye } from 'lucide-react'
+import { Edit, Trash2, User, ClipboardList, Users, Ban, Eye } from 'lucide-react'
 import Avatar from '@mui/material/Avatar'
-import { Stack, Typography, Tooltip } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { Badge } from '@/components/shared/ui/Badge'
 import type { EventScheduleSlot, Event, InteractionType } from '@/types'
@@ -58,7 +58,6 @@ export function ScheduleSlotRow({
     : 1
   const isFull = effectiveCapacity !== null && bookingCount >= effectiveCapacity
   const canDelete = bookingCount === 0
-  const isRecurring = !!slot.recurrenceGroupId
 
   const renderStatus = () => {
     const now = new Date()
