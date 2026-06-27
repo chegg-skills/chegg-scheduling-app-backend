@@ -6,7 +6,7 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { FormField } from '@/components/shared/form/FormField'
-import { Input } from '@/components/shared/form/Input'
+import { QuickSelectInput } from '@/components/shared/form/QuickSelectInput'
 import { Select } from '@/components/shared/form/Select'
 import { Switch } from '@/components/shared/form/Switch'
 import { Autocomplete } from '@/components/shared/form/Autocomplete'
@@ -105,11 +105,18 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
         info="How long the event will last (e.g., 60 for one hour)."
         required
       >
-        <Input
+        <QuickSelectInput
           id="durationMinutes"
           type="number"
           min="1"
           hasError={!!errors.durationMinutes}
+          options={[
+            { label: '15 min', value: 15 },
+            { label: '30 min', value: 30 },
+            { label: '45 min', value: 45 },
+            { label: '60 min', value: 60 },
+            { label: '90 min', value: 90 },
+          ]}
           {...register('durationMinutes', { valueAsNumber: true })}
         />
       </FormField>
@@ -336,7 +343,7 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
                 name="targetCoHostCount"
                 control={control}
                 render={({ field }) => (
-                  <Input
+                  <QuickSelectInput
                     id="targetCoHostCount"
                     type="number"
                     min={1}
@@ -348,6 +355,14 @@ export function EventScheduleFields({ caps, event, teamMembers }: EventScheduleF
                       field.onChange(value === '' ? null : Number(value))
                     }}
                     onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    options={[
+                      { label: 'All', value: null },
+                      { label: '1', value: 1 },
+                      { label: '2', value: 2 },
+                      { label: '3', value: 3 },
+                    ]}
                   />
                 )}
               />
