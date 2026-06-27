@@ -156,7 +156,7 @@ export function ScheduleSlotRow({
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
               {dateStr}
             </Typography>
-            {slotNumber != null && slotNumber > 0 && (
+            {slotNumber != null && slotNumber > 0 && ( // 0 means findIndex missed — slot not in groupSlots
               <Typography variant="caption" sx={{ display: 'block', mt: 0.25, color: 'warning.main', fontWeight: 600 }}>
                 {ordinal(slotNumber)} session
               </Typography>
