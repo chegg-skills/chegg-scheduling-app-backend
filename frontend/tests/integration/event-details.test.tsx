@@ -195,11 +195,16 @@ describe('Event Detail Integration', () => {
     const seriesRow = await screen.findByText(/Recurring Weekly Series/i)
     fireEvent.click(seriesRow)
 
-    // 6. Verify Tracker sub-tabs
+    // 6. Verify Tracker filter Select (options only in DOM when dropdown is open)
     expect(await screen.findByText(/Series Tracker/i)).toBeInTheDocument()
-    expect(screen.getByText(/Upcoming/i)).toBeInTheDocument()
-    expect(screen.getByText(/All Sessions/i)).toBeInTheDocument()
-    expect(screen.getByText(/Past/i)).toBeInTheDocument()
+    const filterCombobox = screen
+      .getAllByRole('combobox')
+      .find((el) => /Upcoming/i.test(el.textContent ?? ''))
+    expect(filterCombobox).toBeDefined()
+    fireEvent.mouseDown(filterCombobox!)
+    expect(screen.getByRole('option', { name: /Upcoming/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /All Sessions/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /Past/i })).toBeInTheDocument()
   }, 15000)
 
   it('should restrict management actions to admins', async () => {
