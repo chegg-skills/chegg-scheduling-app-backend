@@ -1,6 +1,6 @@
 import { Controller, useFormContext } from 'react-hook-form'
 import { FormField } from '@/components/shared/form/FormField'
-import { Input } from '@/components/shared/form/Input'
+import { QuickSelectInput } from '@/components/shared/form/QuickSelectInput'
 import type { EventFormValues } from './eventFormSchema'
 
 /**
@@ -25,7 +25,7 @@ export function ParticipantCapacityFields() {
         name="maxParticipantCount"
         control={control}
         render={({ field }) => (
-          <Input
+          <QuickSelectInput
             id="maxParticipantCount"
             type="number"
             min={1}
@@ -37,9 +37,21 @@ export function ParticipantCapacityFields() {
               field.onChange(value === '' ? null : Number(value))
             }}
             onBlur={field.onBlur}
+            name={field.name}
+            ref={field.ref}
+            options={[
+              { label: 'No Cap', value: null },
+              { label: '5', value: 5 },
+              { label: '10', value: 10 },
+              { label: '15', value: 15 },
+              { label: '20', value: 20 },
+              { label: '25', value: 25 },
+              { label: '30', value: 30 },
+            ]}
           />
         )}
       />
     </FormField>
   )
 }
+
