@@ -14,7 +14,7 @@ import Checkbox from '@mui/material/Checkbox'
 import Typography from '@mui/material/Typography'
 import Tooltip from '@mui/material/Tooltip'
 import { Trash2, Info } from 'lucide-react'
-import type { EventCoach, UserWeeklyAvailability } from '@/types'
+import type { EventCoach, UserWeeklyAvailability, EventBookingMode } from '@/types'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TablePagination } from '@/components/shared/table/TablePagination'
 import { useAuth } from '@/context/auth'
@@ -93,6 +93,9 @@ interface EventCoachTableProps {
   onToggleAll?: (checked: boolean) => void
   /** Team-wide confirmed booking count per coachUserId. */
   workload?: Map<string, number>
+  bookingMode?: EventBookingMode
+  /** Assigned slot count per coachUserId — used when bookingMode is FIXED_SLOTS. */
+  slotCountMap?: Map<string, number>
 }
 
 export function EventCoachTable({
@@ -106,7 +109,10 @@ export function EventCoachTable({
   onToggleCoach,
   onToggleAll,
   workload,
+  bookingMode,
+  slotCountMap,
 }: EventCoachTableProps) {
+  const isFixedSlots = bookingMode === 'FIXED_SLOTS'
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [availabilityDialogCoach, setAvailabilityDialogCoach] = useState<EventCoach | null>(null)
@@ -136,7 +142,7 @@ export function EventCoachTable({
                 />
               </TableCell>
             )}
-            {['Coach', 'Time Zone', 'Availability', 'Language', 'Sessions', ...(canManage ? ['Actions'] : [])].map(
+            {['Coach', 'Time Zone', isFixedSlots ? 'Assigned Sessions' : 'Availability', 'Language', ...(isFixedSlots ? [] : ['Sessions']), ...(canManage ? ['Actions'] : [])].map(
               (col) => {
                 const isAvailability = col === 'Availability'
                 return (
@@ -245,55 +251,63 @@ export function EventCoachTable({
                     {formatTimezoneLabel(coach.coachUser.timezone, timezones) || '—'}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.8125rem' }}>
-                    <Stack spacing={0.5}>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <Typography
-                          variant="caption"
-                          onClick={canManage ? () => setAvailabilityDialogCoach(coach) : undefined}
-                          sx={{
-                            fontWeight: 600,
-                            color: (coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'primary.main' : 'text.secondary',
-                            fontSize: '0.75rem',
-                            textDecoration: canManage ? 'underline' : 'none',
-                            cursor: canManage ? 'pointer' : 'default',
-                            '&:hover': {
-                              color: canManage
-                                ? ((coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'primary.dark' : 'text.primary')
-                                : 'inherit',
-                            },
-                          }}
-                        >
-                          {(coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'Custom availability' : 'Set Custom Availability'}
-                        </Typography>
+                    {isFixedSlots ? (
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                        {slotCountMap?.get(coach.coachUserId) ?? 0} slot{(slotCountMap?.get(coach.coachUserId) ?? 0) !== 1 ? 's' : ''}
+                      </Typography>
+                    ) : (
+                      <Stack spacing={0.5}>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <Typography
+                            variant="caption"
+                            onClick={canManage ? () => setAvailabilityDialogCoach(coach) : undefined}
+                            sx={{
+                              fontWeight: 600,
+                              color: (coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'primary.main' : 'text.secondary',
+                              fontSize: '0.75rem',
+                              textDecoration: canManage ? 'underline' : 'none',
+                              cursor: canManage ? 'pointer' : 'default',
+                              '&:hover': {
+                                color: canManage
+                                  ? ((coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'primary.dark' : 'text.primary')
+                                  : 'inherit',
+                              },
+                            }}
+                          >
+                            {(coach.weeklyAvailabilityOverride ?? []).length > 0 ? 'Custom availability' : 'Set Custom Availability'}
+                          </Typography>
+                        </Stack>
+                        {formatCoachAvailability(
+                          (coach.weeklyAvailabilityOverride ?? []).length > 0
+                            ? (coach.weeklyAvailabilityOverride as unknown as UserWeeklyAvailability[])
+                            : coach.coachUser.weeklyAvailability
+                        ).map((line, idx) => (
+                          <Typography
+                            key={idx}
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              display: 'block',
+                              fontSize: '0.75rem',
+                              fontWeight: line === 'No availability defined' ? 400 : 500,
+                            }}
+                          >
+                            {line}
+                          </Typography>
+                        ))}
                       </Stack>
-                      {formatCoachAvailability(
-                        (coach.weeklyAvailabilityOverride ?? []).length > 0
-                          ? (coach.weeklyAvailabilityOverride as unknown as UserWeeklyAvailability[])
-                          : coach.coachUser.weeklyAvailability
-                      ).map((line, idx) => (
-                        <Typography
-                          key={idx}
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{
-                            display: 'block',
-                            fontSize: '0.75rem',
-                            fontWeight: line === 'No availability defined' ? 400 : 500,
-                          }}
-                        >
-                          {line}
-                        </Typography>
-                      ))}
-                    </Stack>
+                    )}
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.8125rem' }}>
                     {coach.coachUser.preferredLanguage ?? '—'}
                   </TableCell>
-                  <TableCell sx={{ fontSize: '0.8125rem' }}>
-                    <Tooltip title="Upcoming sessions for this event">
-                      <span>{workload?.get(coach.coachUserId) ?? 0}</span>
-                    </Tooltip>
-                  </TableCell>
+                  {!isFixedSlots && (
+                    <TableCell sx={{ fontSize: '0.8125rem' }}>
+                      <Tooltip title="Upcoming sessions for this event">
+                        <span>{workload?.get(coach.coachUserId) ?? 0}</span>
+                      </Tooltip>
+                    </TableCell>
+                  )}
                   {canManage && (
                     <TableCell align="right">
                       <RowActions

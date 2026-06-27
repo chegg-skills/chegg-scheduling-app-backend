@@ -193,7 +193,7 @@ export async function getSlotDebugReport(
     );
     const lookbackStart = new Date(dayStartUTC.getTime() - 120 * 60 * 1000);
 
-    const [weeklyRows, exceptionRows, overrides, conflictBookings] = await Promise.all([
+    const [weeklyRows, exceptionRows, overrides, conflictBookings, conflictSlots] = await Promise.all([
       prisma.userWeeklyAvailability.findMany({ where: { userId: { in: coachIds } } }),
       prisma.userAvailabilityException.findMany({
         where: { userId: { in: coachIds }, date: { gte: dayStartUTC, lte: batchFetchEnd } },
@@ -210,6 +210,25 @@ export async function getSlotDebugReport(
         },
         include: { event: true },
       }) as Promise<BookingWithEventBuffer[]>,
+      // Also pre-fetch fixed slot assignments — a coach is blocked as soon as they're
+      // assigned to a slot, even before any student books.
+      prisma.eventScheduleSlot.findMany({
+        where: {
+          assignedCoachId: { in: coachIds },
+          isActive: true,
+          isCancelled: false,
+          startTime: { lt: batchFetchEnd },
+          endTime: { gt: lookbackStart },
+        },
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          eventId: true,
+          assignedCoachId: true,
+          event: { select: { bufferAfterMinutes: true, name: true } },
+        },
+      }),
     ]);
 
     for (const r of weeklyRows) {
@@ -240,6 +259,19 @@ export async function getSlotDebugReport(
           rawConflictsMap.set(ccId, list);
         }
       }
+    }
+    for (const s of conflictSlots) {
+      if (!s.assignedCoachId || !coachIds.includes(s.assignedCoachId)) continue;
+      const shaped = {
+        startTime: s.startTime,
+        endTime: s.endTime,
+        scheduleSlotId: s.id,
+        eventId: s.eventId,
+        event: { bufferAfterMinutes: s.event?.bufferAfterMinutes ?? null, name: s.event?.name ?? "Fixed Session" },
+      } as unknown as BookingWithEventBuffer;
+      const list = rawConflictsMap.get(s.assignedCoachId) ?? [];
+      list.push(shaped);
+      rawConflictsMap.set(s.assignedCoachId, list);
     }
   }
 

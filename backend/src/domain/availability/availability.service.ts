@@ -487,15 +487,36 @@ const getAvailableSlots = async (
     // Upper bound uses batchFetchEnd so cross-midnight slots at end of range
     // can detect bookings that start on the next calendar day.
     const lookbackStart = new Date(startDate.getTime() - 120 * 60 * 1000);
-    const conflictBookings = await prisma.booking.findMany({
-      where: {
-        OR: [{ coachUserId: { in: coachIds } }, { coCoachUserIds: { hasSome: coachIds } }],
-        status: { in: ["CONFIRMED", "PENDING"] },
-        startTime: { lt: batchFetchEnd },
-        endTime: { gt: lookbackStart },
-      },
-      include: { event: true },
-    }) as BookingWithEventBuffer[];
+    const [conflictBookings, conflictSlots] = await Promise.all([
+      prisma.booking.findMany({
+        where: {
+          OR: [{ coachUserId: { in: coachIds } }, { coCoachUserIds: { hasSome: coachIds } }],
+          status: { in: ["CONFIRMED", "PENDING"] },
+          startTime: { lt: batchFetchEnd },
+          endTime: { gt: lookbackStart },
+        },
+        include: { event: true },
+      }) as Promise<BookingWithEventBuffer[]>,
+      // Also pre-fetch fixed slot assignments — a coach is blocked as soon as they're
+      // assigned to a slot, even before any student books.
+      prisma.eventScheduleSlot.findMany({
+        where: {
+          assignedCoachId: { in: coachIds },
+          isActive: true,
+          isCancelled: false,
+          startTime: { lt: batchFetchEnd },
+          endTime: { gt: lookbackStart },
+        },
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          eventId: true,
+          assignedCoachId: true,
+          event: { select: { bufferAfterMinutes: true } },
+        },
+      }),
+    ]);
 
     for (const b of conflictBookings) {
       if (b.coachUserId && coachIds.includes(b.coachUserId)) {
@@ -510,6 +531,20 @@ const getAvailableSlots = async (
           rawConflictsMap.set(ccId, list);
         }
       }
+    }
+
+    for (const s of conflictSlots) {
+      if (!s.assignedCoachId || !coachIds.includes(s.assignedCoachId)) continue;
+      const shaped = {
+        startTime: s.startTime,
+        endTime: s.endTime,
+        scheduleSlotId: s.id,
+        eventId: s.eventId,
+        event: { bufferAfterMinutes: s.event?.bufferAfterMinutes ?? null },
+      } as unknown as BookingWithEventBuffer;
+      const list = rawConflictsMap.get(s.assignedCoachId) ?? [];
+      list.push(shaped);
+      rawConflictsMap.set(s.assignedCoachId, list);
     }
   }
 
