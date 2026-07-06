@@ -1,6 +1,7 @@
 import {
   AssignmentStrategy,
   BookingStatus,
+  MeetingLinkSource,
   Prisma,
   SessionLeadershipStrategy,
 } from "@prisma/client";
@@ -327,11 +328,16 @@ export const resolveBookingCoachSelection = async (
   const isDirect = event.assignmentStrategy === AssignmentStrategy.DIRECT;
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType];
 
-  // Anonymous booking: no coach assigned — use event location URL directly.
+  // Anonymous booking: no coach assigned to the booking.
+  // SESSION_LANDING_PAGE: meetingJoinUrl is set post-creation once sessionToken is known.
+  // EVENT_LOCATION: use the shared event location URL directly.
   if (event.allowAnonymousBooking) {
     return {
       assignedCoachId: null,
-      meetingJoinUrl: event.locationValue || null,
+      meetingJoinUrl:
+        event.meetingLinkSource === MeetingLinkSource.SESSION_LANDING_PAGE
+          ? null
+          : event.locationValue || null,
       coCoachUserIds: [],
     };
   }

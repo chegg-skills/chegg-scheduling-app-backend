@@ -386,6 +386,7 @@ model Booking {
   studentId         String?
   scheduleSlotId    String?
   rescheduleToken   String?            @unique @default(uuid())
+  sessionToken      String?            @unique @default(uuid())
   coCoachUserIds    String[]           @default([])
   coachUserId       String?
   coach             User?              @relation(fields: [coachUserId], references: [id])
@@ -572,6 +573,7 @@ enum InteractionType {
 enum MeetingLinkSource {
   COACH_ISV
   EVENT_LOCATION
+  SESSION_LANDING_PAGE
 }
 
 enum CommunicationStatus {

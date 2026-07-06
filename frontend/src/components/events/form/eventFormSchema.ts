@@ -138,15 +138,24 @@ export const eventFormSchema = z
       })
     }
 
-    if (values.allowAnonymousBooking && values.meetingLinkSource !== 'EVENT_LOCATION') {
+    if (
+      values.allowAnonymousBooking &&
+      values.meetingLinkSource !== 'EVENT_LOCATION' &&
+      values.meetingLinkSource !== 'SESSION_LANDING_PAGE'
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['meetingLinkSource'],
-        message: 'Anonymous booking requires the Event Location URL as the meeting link source.',
+        message: 'Anonymous booking requires the Event Location URL or Dynamic Session Link as the meeting link source.',
       })
     }
 
-    if (values.allowAnonymousBooking && !values.locationValue?.trim()) {
+    // SESSION_LANDING_PAGE derives the join URL from the assigned coach at session time — no locationValue needed
+    if (
+      values.allowAnonymousBooking &&
+      values.meetingLinkSource !== 'SESSION_LANDING_PAGE' &&
+      !values.locationValue?.trim()
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['locationValue'],

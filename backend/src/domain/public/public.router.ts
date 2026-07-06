@@ -71,4 +71,9 @@ router
   .get(validate(GetPublicBookingSchema), PublicController.getPublicBooking)
   .all(methodNotAllowed);
 
+router
+  .route("/slots/:slotId/join-info")
+  .get(PublicController.getSlotJoinInfo)
+  .all(methodNotAllowed);
+
 export default router;

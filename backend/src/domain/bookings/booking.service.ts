@@ -48,6 +48,7 @@ import {
   queueBookingUpdatedNotifications,
   queueBookingRescheduledNotifications,
 } from "./booking.notification";
+import { resolveFrontendUrl } from "../../shared/notifications/notification.publisher";
 
 export { bookingInclude, type SafeBooking } from "./booking.shared";
 
@@ -215,7 +216,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   }
 
   // 3. Create Booking (Assignment happens inside transaction for concurrency safety)
-  const booking = await prisma.$transaction(
+  let booking = await prisma.$transaction(
     async (tx) => {
       // PESSIMISTIC LOCK: Serialize access to this slot or event's capacity
       if (matchedScheduleSlot) {
@@ -287,6 +288,19 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     },
     { timeout: 15000 },
   );
+
+  // For SESSION_LANDING_PAGE anonymous bookings, meetingJoinUrl couldn't be set inside the
+  // transaction (sessionToken wasn't known yet). Patch it now with the landing page URL.
+  // Cast: Prisma returns all scalar fields including sessionToken; IDE type lags after prisma generate.
+  const bookingWithToken = booking as typeof booking & { sessionToken: string | null };
+  if (
+    (booking.event?.meetingLinkSource as string) === "SESSION_LANDING_PAGE" &&
+    bookingWithToken.sessionToken
+  ) {
+    const landingPageUrl = `${resolveFrontendUrl()}/session/${booking.scheduleSlotId}?t=${bookingWithToken.sessionToken}`;
+    await prisma.booking.update({ where: { id: booking.id }, data: { meetingJoinUrl: landingPageUrl } });
+    booking = { ...booking, meetingJoinUrl: landingPageUrl };
+  }
 
   try {
     await recordBookingActivity(

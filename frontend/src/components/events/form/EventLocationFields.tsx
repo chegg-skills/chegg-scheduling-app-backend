@@ -11,7 +11,7 @@ import { FormField } from '@/components/shared/form/FormField'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { Input } from '@/components/shared/form/Input'
 import { Switch } from '@/components/shared/form/Switch'
-import { Video, Link2, MapPin, Sliders } from 'lucide-react'
+import { Video, Link2, MapPin, Sliders, Timer } from 'lucide-react'
 import type { EventFormValues } from './eventFormSchema'
 
 /**
@@ -47,6 +47,10 @@ export function EventLocationFields() {
     if (allowAnonymousBooking && meetingLinkSource === 'COACH_ISV') {
       setValue('meetingLinkSource', 'EVENT_LOCATION', { shouldDirty: true, shouldValidate: true })
     }
+    // When anonymous booking is disabled, SESSION_LANDING_PAGE is not meaningful — revert to EVENT_LOCATION.
+    if (!allowAnonymousBooking && meetingLinkSource === 'SESSION_LANDING_PAGE') {
+      setValue('meetingLinkSource', 'EVENT_LOCATION', { shouldDirty: true, shouldValidate: true })
+    }
   }, [allowAnonymousBooking, meetingLinkSource, setValue])
 
   const minDate = useMemo(() => new Date(), [])
@@ -58,6 +62,7 @@ export function EventLocationFields() {
     if (locationType === 'CUSTOM') return 'CUSTOM_INSTRUCTIONS'
     if (locationType === 'VIRTUAL') {
       if (meetingLinkSource === 'COACH_ISV') return 'COACH_ZOOM'
+      if (meetingLinkSource === 'SESSION_LANDING_PAGE') return 'DYNAMIC_SESSION_LINK'
       return 'EVENT_LINK'
     }
     return 'COACH_ZOOM'
@@ -78,6 +83,12 @@ export function EventLocationFields() {
         icon: Link2,
       },
       {
+        value: 'DYNAMIC_SESSION_LINK' as const,
+        title: "Dynamic Session Link",
+        description: "Students receive a session page link in their confirmation email. The actual joining link (from the assigned coach's Zoom) is revealed 15 minutes before the session starts.",
+        icon: Timer,
+      },
+      {
         value: 'IN_PERSON' as const,
         title: "In Person",
         description: "Meet face-to-face at a physical address or location.",
@@ -92,22 +103,27 @@ export function EventLocationFields() {
     ]
 
     if (allowAnonymousBooking) {
+      // COACH_ZOOM is invalid for anonymous bookings; DYNAMIC_SESSION_LINK is only for anonymous bookings
       return methods.filter((m) => m.value !== 'COACH_ZOOM')
     }
-    return methods
+    // DYNAMIC_SESSION_LINK is only meaningful for anonymous group sessions
+    return methods.filter((m) => m.value !== 'DYNAMIC_SESSION_LINK')
   }, [allowAnonymousBooking])
 
   const selectedMethodInfo = useMemo(() => {
     return joinMethods.find((o) => o.value === joinMethod)
   }, [joinMethod, joinMethods])
 
-  const handleJoinMethodChange = (method: 'COACH_ZOOM' | 'EVENT_LINK' | 'IN_PERSON' | 'CUSTOM_INSTRUCTIONS') => {
+  const handleJoinMethodChange = (method: 'COACH_ZOOM' | 'EVENT_LINK' | 'DYNAMIC_SESSION_LINK' | 'IN_PERSON' | 'CUSTOM_INSTRUCTIONS') => {
     if (method === 'COACH_ZOOM') {
       setValue('locationType', 'VIRTUAL', { shouldDirty: true, shouldValidate: true })
       setValue('meetingLinkSource', 'COACH_ISV', { shouldDirty: true, shouldValidate: true })
     } else if (method === 'EVENT_LINK') {
       setValue('locationType', 'VIRTUAL', { shouldDirty: true, shouldValidate: true })
       setValue('meetingLinkSource', 'EVENT_LOCATION', { shouldDirty: true, shouldValidate: true })
+    } else if (method === 'DYNAMIC_SESSION_LINK') {
+      setValue('locationType', 'VIRTUAL', { shouldDirty: true, shouldValidate: true })
+      setValue('meetingLinkSource', 'SESSION_LANDING_PAGE', { shouldDirty: true, shouldValidate: true })
     } else if (method === 'IN_PERSON') {
       setValue('locationType', 'IN_PERSON', { shouldDirty: true, shouldValidate: true })
       setValue('meetingLinkSource', 'EVENT_LOCATION', { shouldDirty: true, shouldValidate: true })
@@ -347,6 +363,24 @@ export function EventLocationFields() {
             </FormField>
             {renderExpirationSettings()}
           </Stack>
+        )}
+
+        {joinMethod === 'DYNAMIC_SESSION_LINK' && (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 1.5,
+              bgcolor: 'action.hover',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+              <strong>No link required.</strong> Students will receive a session page URL in their
+              confirmation email. The joining link will be derived from the assigned coach's Zoom
+              account and revealed automatically 15 minutes before the session starts.
+            </Typography>
+          </Box>
         )}
 
         {joinMethod === 'IN_PERSON' && (

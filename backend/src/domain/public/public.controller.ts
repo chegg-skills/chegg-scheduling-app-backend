@@ -100,6 +100,19 @@ const getPublicBookingDirectory = async (req: Request, res: Response) => {
   );
 };
 
+const getSlotJoinInfo = async (req: Request, res: Response) => {
+  const { slotId } = req.params;
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
+
+  if (!token) {
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid session link.");
+  }
+
+  const result = await PublicService.getSlotJoinInfo(slotId as string, token);
+  return sendSuccessResponse(res, StatusCodes.OK, result, "Slot join info fetched successfully.");
+};
+
 const getPublicBooking = async (req: Request, res: Response) => {
   const { id } = req.params;
   const authHeader = req.headers.authorization;
@@ -127,4 +140,5 @@ export default {
   listGroupEventsBySlug: asyncHandler(listGroupEventsBySlug),
   getPublicBookingDirectory: asyncHandler(getPublicBookingDirectory),
   getPublicBooking: asyncHandler(getPublicBooking),
+  getSlotJoinInfo: asyncHandler(getSlotJoinInfo),
 };
