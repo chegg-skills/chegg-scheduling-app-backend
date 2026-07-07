@@ -20,7 +20,18 @@ export const RegisterSchema = {
       timezone: z.string().trim().default("UTC"),
       role: z.enum(UserRole).optional(),
       phoneNumber: z.string().trim().optional(),
-      avatarUrl: z.string().trim().url("Invalid avatar URL").optional().or(z.string().length(0)),
+      avatarUrl: z
+        .string()
+        .trim()
+        .refine((u) => {
+          try {
+            return new URL(u).protocol === "https:";
+          } catch {
+            return false;
+          }
+        }, "Avatar URL must be a valid HTTPS URL")
+        .optional()
+        .or(z.string().length(0)),
     })
     .strip(),
 };

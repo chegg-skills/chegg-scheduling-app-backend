@@ -66,55 +66,59 @@ export const getPerformanceReport = async (
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
 
-  const bookingWhere: Prisma.BookingWhereInput = {
-    ...(dateFilter ? { startTime: dateFilter } : {}),
+  const statusFilter = {
+    in: [BookingStatus.COMPLETED, BookingStatus.NO_SHOW, BookingStatus.CANCELLED] as BookingStatus[],
   };
+  const dateWhere: Prisma.BookingWhereInput = dateFilter ? { startTime: dateFilter } : {};
 
-  // Get all coaches
-  const coaches = await prisma.user.findMany({
-    where: {
-      role: UserRole.COACH,
-      isActive: true,
-    },
-  });
-
-  const reportData = await Promise.all(
-    coaches.map(async (coach) => {
-      const coachWhere: Prisma.BookingWhereInput = { ...bookingWhere, coachUserId: coach.id };
-
-      // Count sessions, not raw bookings. A ONE_TO_MANY slot with N students = 1 session.
-      // For each status: count distinct slots (group sessions) + individual bookings (no slot).
-      const countSessions = async (status: BookingStatus): Promise<number> => {
-        const statusWhere = { ...coachWhere, status };
-        const [slotGroups, individual] = await Promise.all([
-          prisma.booking.groupBy({
-            by: ["scheduleSlotId"],
-            where: { ...statusWhere, scheduleSlotId: { not: null } },
-          }),
-          prisma.booking.count({ where: { ...statusWhere, scheduleSlotId: null } }),
-        ]);
-        return slotGroups.length + individual;
-      };
-
-      const [completed, noShow, cancelled] = await Promise.all([
-        countSessions(BookingStatus.COMPLETED),
-        countSessions(BookingStatus.NO_SHOW),
-        countSessions(BookingStatus.CANCELLED),
-      ]);
-
-      const total = completed + noShow + cancelled;
-
-      return {
-        "Coach Name": `${coach.firstName} ${coach.lastName}`,
-        Email: coach.email,
-        "Total Sessions": total,
-        Completed: completed,
-        "No-Show": noShow,
-        Cancelled: cancelled,
-        "Completion Rate (%)": total > 0 ? Math.round((completed / total) * 100) : 0,
-      };
+  // 3 parallel queries regardless of coach count (replaces N×6 per-coach queries)
+  const [coaches, slotRows, individualRows] = await Promise.all([
+    prisma.user.findMany({ where: { role: UserRole.COACH, isActive: true } }),
+    // Each (coachUserId, scheduleSlotId, status) row = 1 distinct session
+    prisma.booking.groupBy({
+      by: ["coachUserId", "scheduleSlotId", "status"],
+      where: { ...dateWhere, status: statusFilter, scheduleSlotId: { not: null } },
     }),
-  );
+    // Individual bookings (no slot) grouped by coach+status
+    prisma.booking.groupBy({
+      by: ["coachUserId", "status"],
+      where: { ...dateWhere, status: statusFilter, scheduleSlotId: null },
+      _count: { id: true },
+    }),
+  ]);
+
+  type StatusKey = "COMPLETED" | "NO_SHOW" | "CANCELLED";
+  type SessionCounts = Record<StatusKey, number>;
+  const sessionCounts = new Map<string, SessionCounts>();
+  const zero = (): SessionCounts => ({ COMPLETED: 0, NO_SHOW: 0, CANCELLED: 0 });
+
+  for (const row of slotRows) {
+    if (!row.coachUserId) continue;
+    const entry = sessionCounts.get(row.coachUserId) ?? zero();
+    entry[row.status as StatusKey] = (entry[row.status as StatusKey] ?? 0) + 1;
+    sessionCounts.set(row.coachUserId, entry);
+  }
+
+  for (const row of individualRows) {
+    if (!row.coachUserId) continue;
+    const entry = sessionCounts.get(row.coachUserId) ?? zero();
+    entry[row.status as StatusKey] = (entry[row.status as StatusKey] ?? 0) + (row._count?.id ?? 0);
+    sessionCounts.set(row.coachUserId, entry);
+  }
+
+  const reportData = coaches.map((coach) => {
+    const counts = sessionCounts.get(coach.id) ?? zero();
+    const total = counts.COMPLETED + counts.NO_SHOW + counts.CANCELLED;
+    return {
+      "Coach Name": `${coach.firstName} ${coach.lastName}`,
+      Email: coach.email,
+      "Total Sessions": total,
+      Completed: counts.COMPLETED,
+      "No-Show": counts.NO_SHOW,
+      Cancelled: counts.CANCELLED,
+      "Completion Rate (%)": total > 0 ? Math.round((counts.COMPLETED / total) * 100) : 0,
+    };
+  });
 
   const dateStr = new Date().toISOString().split("T")[0];
   return {

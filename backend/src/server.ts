@@ -38,6 +38,14 @@ const validateEnv = (): void => {
   if (isProduction && process.env.ENABLE_CSRF_PROTECTION !== "true") {
     throw new Error("ENABLE_CSRF_PROTECTION must be 'true' in production.");
   }
+
+  if (isProduction && !process.env.FRONTEND_URL) {
+    throw new Error("FRONTEND_URL must be set in production.");
+  }
+
+  if (isProduction && !process.env.METRICS_TOKEN) {
+    throw new Error("METRICS_TOKEN must be set in production to protect the /metrics endpoint.");
+  }
 };
 
 const start = async (): Promise<void> => {
@@ -125,4 +133,3 @@ process.on("warning", (warning) => {
   );
 });
 
-// Force hot-reload to load fresh Prisma Client with updated database schema (Reloaded: 2026-05-28)

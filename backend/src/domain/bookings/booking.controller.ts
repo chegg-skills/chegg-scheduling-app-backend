@@ -9,6 +9,7 @@ import { BookingStatus, UserRole } from "@prisma/client";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { CallerContext } from "../../shared/utils/userUtils";
 import type { ListBookingsFilters } from "./booking.shared";
+import { prisma } from "../../shared/db/prisma";
 
 const getStringParam = (value: unknown): string | undefined => {
   if (typeof value === "string") return value;
@@ -41,6 +42,21 @@ const getBooking = async (req: Request, res: Response) => {
     }
   }
 
+  if (caller.role === UserRole.TEAM_ADMIN) {
+    const memberCount = await prisma.team.count({
+      where: {
+        id: booking.teamId,
+        OR: [
+          { teamLeadId: caller.id },
+          { members: { some: { userId: caller.id, isActive: true } } },
+        ],
+      },
+    });
+    if (memberCount === 0) {
+      throw new ErrorHandler(StatusCodes.FORBIDDEN, "You are not authorized to view this booking.");
+    }
+  }
+
   return sendSuccessResponse(res, StatusCodes.OK, { booking }, "Booking fetched successfully.");
 };
 
@@ -57,6 +73,7 @@ const listBookings = async (req: Request, res: Response) => {
     search: getStringParam(req.query.search),
     startDate: getStringParam(req.query.startDate),
     endDate: getStringParam(req.query.endDate),
+    teamAdminCallerId: caller.role === UserRole.TEAM_ADMIN ? caller.id : undefined,
     page,
     limit,
   };

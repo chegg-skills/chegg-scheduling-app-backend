@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { timingSafeEqual } from "node:crypto";
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
@@ -200,7 +201,9 @@ const bootstrap = async (payload: BootstrapInput): Promise<{ user: SafeUser; tok
     throw new ErrorHandler(StatusCodes.FORBIDDEN, "Bootstrap is not enabled on this server.");
   }
 
-  if (payload.bootstrapSecret !== secret) {
+  const expectedBuf = Buffer.from(secret);
+  const givenBuf = Buffer.from(payload.bootstrapSecret ?? "");
+  if (expectedBuf.length !== givenBuf.length || !timingSafeEqual(expectedBuf, givenBuf)) {
     throw new ErrorHandler(StatusCodes.FORBIDDEN, "Invalid bootstrap secret.");
   }
 

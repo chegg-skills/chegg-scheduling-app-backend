@@ -76,6 +76,8 @@ export type ListBookingsFilters = {
   endDate?: string | Date;
   page?: number;
   limit?: number;
+  /** When set, restricts results to teams where this user is lead or active member. */
+  teamAdminCallerId?: string;
 };
 
 const bookingTeamSelect = Prisma.validator<Prisma.TeamSelect>()({
@@ -313,6 +315,20 @@ export const buildBookingListWhere = (filters: ListBookingsFilters): Prisma.Book
   const and = where.AND as Prisma.BookingWhereInput[];
 
   if (filters.teamId) and.push({ teamId: filters.teamId });
+
+  // Scope to teams the caller leads or belongs to. Always applied alongside teamId (if provided)
+  // so a TEAM_ADMIN cannot enumerate another team's bookings by supplying a foreign teamId.
+  if (filters.teamAdminCallerId) {
+    and.push({
+      team: {
+        OR: [
+          { teamLeadId: filters.teamAdminCallerId },
+          { members: { some: { userId: filters.teamAdminCallerId, isActive: true } } },
+        ],
+      },
+    });
+  }
+
   if (filters.eventId) and.push({ eventId: filters.eventId });
   if (filters.status) and.push({ status: filters.status });
 

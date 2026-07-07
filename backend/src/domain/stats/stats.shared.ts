@@ -50,12 +50,17 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
       }
 
       if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+        // Cap custom ranges to 366 days to prevent full-table scans.
+        const maxMs = 366 * 24 * 60 * 60 * 1000;
+        const clampedEnd = end.getTime() - start.getTime() > maxMs
+          ? new Date(start.getTime() + maxMs)
+          : end;
         return {
           key: timeframe,
           label: "Custom Range",
           start,
-          end,
-          rangeLabel: formatDateRangeLabel(start, end),
+          end: clampedEnd,
+          rangeLabel: formatDateRangeLabel(start, clampedEnd),
         };
       }
     }
@@ -199,8 +204,12 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
         rangeLabel: formatDateRangeLabel(start, end),
       };
     }
-    case "all":
-      return { key: "all", label: "All time", start: null, end: null, rangeLabel: "All time" };
+    case "all": {
+      // Cap "all time" lookback to 365 days to prevent unbounded full-table scans.
+      // Upper bound is left open (null) so upcoming bookings are included.
+      const start = getStartOfDate(new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()));
+      return { key: "all", label: "All time", start, end: null, rangeLabel: formatDateRangeLabel(start, now) };
+    }
     default: {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
       start.setHours(0, 0, 0, 0);
@@ -242,12 +251,12 @@ export const requireAdmin = (caller: CallerContext): void => {
 export const buildDateFilter = (
   timeframe: ResolvedTimeframe,
 ): Prisma.DateTimeFilter | undefined => {
-  if (!timeframe.start || !timeframe.end) {
+  if (!timeframe.start && !timeframe.end) {
     return undefined;
   }
 
   return {
-    gte: timeframe.start,
-    lte: timeframe.end,
+    ...(timeframe.start ? { gte: timeframe.start } : {}),
+    ...(timeframe.end ? { lte: timeframe.end } : {}),
   };
 };
