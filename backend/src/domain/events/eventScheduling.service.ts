@@ -850,10 +850,10 @@ const revealCoachForSlot = async (
         coachRevealSentAt: new Date(),
       },
     }),
-    // Keep booking records in sync so cancellation notifications reference the revealed coach
+    // Keep booking records in sync so cancellation/reminder notifications reference the revealed coach
     prisma.booking.updateMany({
       where: { scheduleSlotId: slotId, status: { notIn: [BookingStatus.CANCELLED] } },
-      data: { coachUserId: finalCoachId },
+      data: { coachUserId: finalCoachId, meetingJoinUrl: finalJoinUrl || null },
     }),
   ]);
 
