@@ -849,8 +849,90 @@ const queueSlotRescheduledNotifications = async (
     }
 
     await Promise.all(publishTasks);
+
+    // Cancel stale reminders and re-queue with the updated slot time for each booking.
+    for (const booking of bookings) {
+      try {
+        const config = await getTeamNotificationConfig(booking.teamId);
+        await cancelScheduledBookingReminders(booking as SafeBooking);
+        await queueBookingReminderNotifications(booking as SafeBooking, config);
+      } catch (error) {
+        logger.error({ slotId, bookingId: booking.id, error }, "Failed to refresh reminders after slot reschedule.");
+      }
+    }
   } catch (error) {
     logger.error({ slotId, error }, "Failed to queue slot rescheduled notifications.");
+  }
+};
+
+/**
+ * Notifies all active booking holders and the newly assigned coach when only the
+ * coach is changed on a slot (time unchanged). Also cancels stale reminders and
+ * re-queues them with the updated coach and meeting link.
+ */
+const queueSlotCoachReassignedNotifications = async (
+  slotId: string,
+  opts: {
+    isAnonymous: boolean;
+    newCoach: { id: string; email: string; timezone: string | null } | null;
+  },
+): Promise<void> => {
+  try {
+    const { isAnonymous, newCoach } = opts;
+
+    // Bookings have already been cascaded with the new coachUserId before this runs,
+    // so bookingInclude will join the updated coach data.
+    const bookings = await prisma.booking.findMany({
+      where: { scheduleSlotId: slotId, status: { notIn: ["CANCELLED"] } },
+      include: bookingInclude,
+    });
+
+    const publishTasks: Array<Promise<boolean>> = [];
+
+    for (const booking of bookings) {
+      // Anonymous events don't expose coach identity to students — skip student email.
+      if (!isAnonymous) {
+        const studentVars = await getBookingNotificationVariables(booking as SafeBooking, booking.timezone);
+        publishTasks.push(
+          publishNotificationSafely({
+            type: "SLOT_COACH_REASSIGNED",
+            recipients: booking.studentEmail,
+            variables: studentVars,
+          }),
+        );
+      }
+    }
+
+    // Notify the new coach once for the slot.
+    if (newCoach?.email && bookings.length > 0) {
+      const coachVars = await getBookingNotificationVariables(
+        bookings[0] as SafeBooking,
+        newCoach.timezone,
+      );
+      publishTasks.push(
+        publishNotificationSafely({
+          type: "SLOT_COACH_REASSIGNED_COACH",
+          recipients: newCoach.email,
+          userId: newCoach.id,
+          variables: coachVars,
+        }),
+      );
+    }
+
+    await Promise.all(publishTasks);
+
+    // Cancel stale reminders (baked with old coach name/link) and re-queue fresh.
+    for (const booking of bookings) {
+      try {
+        const config = await getTeamNotificationConfig(booking.teamId);
+        await cancelScheduledBookingReminders(booking as SafeBooking);
+        await queueBookingReminderNotifications(booking as SafeBooking, config);
+      } catch (error) {
+        logger.error({ slotId, bookingId: booking.id, error }, "Failed to refresh reminders after coach reassignment.");
+      }
+    }
+  } catch (error) {
+    logger.error({ slotId, error }, "Failed to queue slot coach reassignment notifications.");
   }
 };
 
@@ -861,4 +943,5 @@ export {
   queueBookingRescheduledNotifications,
   queueStudentFeedbackNotification,
   queueSlotRescheduledNotifications,
+  queueSlotCoachReassignedNotifications,
 };

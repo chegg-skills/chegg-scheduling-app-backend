@@ -318,7 +318,11 @@ export const buildBookingListWhere = (filters: ListBookingsFilters): Prisma.Book
 
   if (filters.coachUserId) {
     and.push({
-      OR: [{ coachUserId: filters.coachUserId }, { coCoachUserIds: { has: filters.coachUserId } }],
+      OR: [
+        { coachUserId: filters.coachUserId },
+        { coCoachUserIds: { has: filters.coachUserId } },
+        { scheduleSlot: { assignedCoachId: filters.coachUserId } },
+      ],
     });
   }
 

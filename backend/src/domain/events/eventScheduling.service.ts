@@ -22,6 +22,7 @@ import {
   queueBookingStatusNotifications,
   notifyPoolOfSlotCancellation,
   queueSlotRescheduledNotifications,
+  queueSlotCoachReassignedNotifications,
 } from "../bookings/booking.notification";
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
@@ -570,9 +571,28 @@ const updateEventScheduleSlot = async (
         if (validated.startTime) cascadeData.startTime = validated.startTime;
         if (validated.endTime) cascadeData.endTime = validated.endTime;
       }
-      // Only cascade coach to bookings if the coach was already revealed to students
-      if (coachChanged && slot.coachRevealSentAt !== null) {
+      // Cascade coach when:
+      // - non-deferred event (coach is always visible to students), OR
+      // - deferred event where the reveal has already been sent
+      const shouldCascadeCoach =
+        coachChanged && (!event.deferCoachReveal || slot.coachRevealSentAt !== null);
+      if (shouldCascadeCoach) {
         cascadeData.coachUserId = validated.assignedCoachId ?? null;
+
+        // COACH_ISV: join URL is per-coach — update to new coach's link
+        if (event.meetingLinkSource === "COACH_ISV") {
+          if (validated.assignedCoachId) {
+            const newCoach = await prisma.user.findUnique({
+              where: { id: validated.assignedCoachId },
+              select: { zoomIsvLink: true },
+            });
+            cascadeData.meetingJoinUrl = getMeetingJoinUrl(event, newCoach?.zoomIsvLink ?? null);
+          } else {
+            cascadeData.meetingJoinUrl = null;
+          }
+        }
+        // SESSION_LANDING_PAGE: meetingJoinUrl is a stable token URL — unchanged when coach changes
+        // EVENT_LOCATION: shared event link — not coach-specific, no update needed
       }
 
       if (Object.keys(cascadeData).length > 0) {
@@ -582,16 +602,29 @@ const updateEventScheduleSlot = async (
         });
       }
 
-      try {
-        await queueSlotRescheduledNotifications(slotId, {
-          isAnonymous: event.allowAnonymousBooking,
-          coachRevealSentAt: slot.coachRevealSentAt,
-          assignedCoach: updated.assignedCoach
-            ? { id: updated.assignedCoach.id, email: updated.assignedCoach.email, timezone: updated.assignedCoach.timezone }
-            : null,
-        });
-      } catch (error) {
-        logger.error({ slotId, error }, "Failed to queue slot rescheduled notifications.");
+      if (timeChanged) {
+        try {
+          await queueSlotRescheduledNotifications(slotId, {
+            isAnonymous: event.allowAnonymousBooking,
+            coachRevealSentAt: slot.coachRevealSentAt,
+            assignedCoach: updated.assignedCoach
+              ? { id: updated.assignedCoach.id, email: updated.assignedCoach.email, timezone: updated.assignedCoach.timezone }
+              : null,
+          });
+        } catch (error) {
+          logger.error({ slotId, error }, "Failed to queue slot rescheduled notifications.");
+        }
+      } else if (coachChanged && shouldCascadeCoach) {
+        try {
+          await queueSlotCoachReassignedNotifications(slotId, {
+            isAnonymous: event.allowAnonymousBooking,
+            newCoach: updated.assignedCoach
+              ? { id: updated.assignedCoach.id, email: updated.assignedCoach.email, timezone: updated.assignedCoach.timezone }
+              : null,
+          });
+        } catch (error) {
+          logger.error({ slotId, error }, "Failed to queue slot coach reassignment notifications.");
+        }
       }
     }
   }

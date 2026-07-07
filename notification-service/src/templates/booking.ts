@@ -83,6 +83,45 @@ export const bookingTemplates: EmailTemplateMap = {
     ),
   },
 
+  SLOT_COACH_REASSIGNED: {
+    subject: "Session Update: Your coach for {{eventName}} has changed",
+    preheader: "Your session on {{startTime}} now has a new coach.",
+    text: "Hi {{studentName}}, your upcoming session for {{eventName}} on {{startTime}} ({{timezone}}) will now be hosted by {{coachName}}. Your meeting link has been updated accordingly. Please disregard the coach details in your earlier confirmation email.",
+    html: wrapLayout(
+      "Coach Update",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your upcoming session has been assigned to a new coach by the organiser.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("New Coach", "{{coachName}}")}
+       </p>
+       <p>Please disregard the coach details in your earlier confirmation email.</p>`,
+      "Your session on {{startTime}} now has a new coach.",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
+  SLOT_COACH_REASSIGNED_COACH: {
+    subject: "You've been assigned to host: {{eventName}}",
+    preheader: "You are now hosting a session on {{startTime}}.",
+    text: "Hi {{coachName}}, you have been assigned to host a session for {{eventName}} on {{startTime}} ({{timezone}}) for the {{teamName}} team.",
+    html: wrapLayout(
+      "Session Assignment",
+      `<p>Hi <strong>{{coachName}}</strong>,</p>
+       <p>You have been assigned to host a session by the organiser.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+       </p>`,
+      "You are now hosting a session on {{startTime}}.",
+      { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
   SLOT_RESCHEDULED_COACH: {
     subject: "Session Update: {{eventName}} has been rescheduled",
     preheader: "A session you are hosting has been moved to {{startTime}}.",

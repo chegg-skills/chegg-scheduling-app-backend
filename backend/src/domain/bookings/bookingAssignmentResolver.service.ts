@@ -359,6 +359,23 @@ export const resolveBookingCoachSelection = async (
     });
 
     if (existingSession) {
+      // For FIXED_SLOTS, the slot's assignedCoachId is authoritative. If an admin has overridden
+      // the slot's coach after initial bookings were made, new bookings must use the new coach —
+      // not copy the old coach from an existing booking.
+      if (event.bookingMode === "FIXED_SLOTS" && input.matchedScheduleSlotId) {
+        const slot = await tx.eventScheduleSlot.findUnique({
+          where: { id: input.matchedScheduleSlotId },
+          select: { assignedCoachId: true, assignedCoach: { select: { zoomIsvLink: true } } },
+        });
+        if (slot?.assignedCoachId) {
+          return {
+            assignedCoachId: slot.assignedCoachId,
+            meetingJoinUrl: getMeetingJoinUrl(event, slot.assignedCoach?.zoomIsvLink),
+            coCoachUserIds: existingSession.coCoachUserIds,
+          };
+        }
+      }
+
       return {
         assignedCoachId: existingSession.coachUserId,
         meetingJoinUrl: getMeetingJoinUrl(event, existingSession.coach?.zoomIsvLink),

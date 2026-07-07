@@ -10,6 +10,7 @@ import type {
 } from '@/types'
 import { invalidateQueryKeys } from '../queryUtils'
 import { statsKeys } from './useStats'
+import { bookingKeys } from './useBookings'
 
 export const eventKeys = {
   all: ['events'] as const,
@@ -76,8 +77,13 @@ export function useUpdateEventScheduleSlot(eventId: string) {
   return useMutation({
     mutationFn: ({ slotId, data }: { slotId: string; data: Partial<EventScheduleSlot> }) =>
       eventsApi.updateScheduleSlot(eventId, slotId, data),
-    onSuccess: () =>
-      invalidateQueryKeys(qc, [eventKeys.scheduleSlots(eventId), eventKeys.detail(eventId)]),
+    onSuccess: (_data, { slotId }) =>
+      invalidateQueryKeys(qc, [
+        eventKeys.scheduleSlots(eventId),
+        eventKeys.detail(eventId),
+        eventKeys.slotBookings(eventId, slotId),
+        bookingKeys.all,
+      ]),
   })
 }
 

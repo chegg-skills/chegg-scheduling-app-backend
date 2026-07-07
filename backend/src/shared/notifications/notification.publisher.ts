@@ -48,7 +48,9 @@ type NotificationType =
   | "ANONYMOUS_SLOT_CANCELLED_POOL"
   | "SLOT_RESCHEDULED"
   | "SLOT_RESCHEDULED_ANONYMOUS"
-  | "SLOT_RESCHEDULED_COACH";
+  | "SLOT_RESCHEDULED_COACH"
+  | "SLOT_COACH_REASSIGNED"
+  | "SLOT_COACH_REASSIGNED_COACH";
 
 type NotificationPayload = {
   type: NotificationType;
