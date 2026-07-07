@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  validate:
+  validate-backend:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -31,9 +31,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install backend dependencies
         working-directory: backend
@@ -78,6 +76,19 @@ jobs:
         working-directory: backend
         run: npm run test:coverage
 
+  validate-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
@@ -99,3 +110,28 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+
+  validate-notification-service:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: notification-service/package-lock.json
+
+      - name: Install notification-service dependencies
+        working-directory: notification-service
+        run: npm ci
+
+      - name: Build notification-service
+        working-directory: notification-service
+        run: npm run build
+
+      - name: Test notification-service
+        working-directory: notification-service
+        run: npm test
