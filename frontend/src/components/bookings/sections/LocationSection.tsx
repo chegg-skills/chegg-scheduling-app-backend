@@ -82,15 +82,16 @@ export function LocationSection({ booking }: LocationSectionProps) {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
+            gap: 1.5,
             p: 1.5,
             borderRadius: 1.5,
-            bgcolor: alpha(theme.palette.warning.main, 0.08),
-            border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
+            bgcolor: 'warning.light',
+            border: '1px solid',
+            borderColor: (t) => alpha(t.palette.warning.main, 0.2),
           }}
         >
           <AlertTriangle size={16} color={theme.palette.warning.main} style={{ flexShrink: 0 }} />
-          <Typography variant="body2" sx={{ fontWeight: 600, color: 'warning.dark' }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, color: '#473C2C' }}>
             Coach ISV link is not set in their profile.
           </Typography>
         </Box>

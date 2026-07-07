@@ -265,7 +265,7 @@ export function SessionLandingPage() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             We couldn't retrieve this session. The link may have expired or is incorrect.
           </Typography>
-          <Button variant="outlined" color="primary" sx={{ borderRadius: 1 }} onClick={() => refetch()} size="small">
+          <Button variant="outlined" color="primary" sx={{ borderRadius: 1.5 }} onClick={() => refetch()} size="small">
             Retry Connection
           </Button>
         </Box>
@@ -446,14 +446,14 @@ export function SessionLandingPage() {
                 sx={{ 
                   py: 1, 
                   px: 2.5, 
-                  borderRadius: 1, 
+                  borderRadius: 1.5, 
                   borderColor: 'divider', 
                   color: 'text.secondary',
                   fontWeight: 600,
                   textTransform: 'none',
                   '&:hover': {
-                    borderColor: '#D46200', // Rich dark orange border
-                    color: '#D46200', // Rich dark orange text
+                    borderColor: '#D46200', 
+                    color: '#D46200', 
                     bgcolor: 'rgba(232, 113, 0, 0.04)',
                   }
                 }}
@@ -476,13 +476,13 @@ export function SessionLandingPage() {
                 sx={{
                   py: 1,
                   px: 3,
-                  borderRadius: 1,
+                  borderRadius: 1.5,
                   fontWeight: 700,
-                  bgcolor: 'primary.main', // Flat solid Chegg Orange
+                  bgcolor: 'primary.main', 
                   boxShadow: 'none',
                   textTransform: 'none',
                   '&:hover': {
-                    bgcolor: '#D46200', // Rich dark orange on hover (gets darker/richer)
+                    bgcolor: '#D46200', 
                     boxShadow: 'none',
                   }
                 }}
@@ -492,7 +492,7 @@ export function SessionLandingPage() {
             </motion.div>
           </Stack>
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main', p: 1.5, borderRadius: 1, bgcolor: 'warning.light', border: '1px solid', borderColor: 'warning.main', opacity: 0.85, width: '100%', boxSizing: 'border-box' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main', p: 1.5, borderRadius: 1.5, bgcolor: 'warning.light', border: '1px solid', borderColor: 'warning.main', opacity: 0.85, width: '100%', boxSizing: 'border-box' }}>
             <HelpCircle size={18} />
             <Typography variant="body2" fontWeight={600} textAlign="left">
               No joining URL is configured. Please contact your coordinator.
@@ -623,8 +623,8 @@ function DigitBlock({ value, label }: { value: number; label: string }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `rgba(232, 113, 0, 0.05)`, // Soft orange primary accent background
-          borderRadius: 1, // 8px minimum border radius
+          background: `rgba(232, 113, 0, 0.05)`, 
+          borderRadius: 1.5, // 12px border radius
           border: '1px solid',
           borderColor: 'rgba(232, 113, 0, 0.15)',
         }}
@@ -634,7 +634,7 @@ function DigitBlock({ value, label }: { value: number; label: string }) {
           sx={{
             fontFamily: '"Outfit", sans-serif',
             fontWeight: 800,
-            color: 'primary.main', // Chegg orange digits
+            color: 'primary.main', 
             letterSpacing: '-0.02em',
             fontSize: '2rem'
           }}
