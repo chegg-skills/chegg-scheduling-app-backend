@@ -4,7 +4,6 @@ import Tooltip from '@mui/material/Tooltip'
 import { Plus, CalendarRange } from 'lucide-react'
 import { SectionHeader } from '@/components/shared/ui/SectionHeader'
 import type { EventCoach, TeamMember, SetWeeklyAvailabilityDto, EventBookingMode } from '@/types'
-import { useEventScheduleSlots } from '@/hooks/queries/useEvents'
 import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
@@ -59,20 +58,6 @@ export function EventCoachManager({
   const { data: coachesResponse } = useEventCoaches(eventId)
   const { mutate: setCoaches, isPending: setting } = useSetEventCoaches(eventId)
   const { mutate: removeCoach } = useRemoveEventCoach(eventId)
-
-  const isFixedSlots = bookingMode === 'FIXED_SLOTS'
-
-  const { data: scheduleSlotsData } = useEventScheduleSlots(isFixedSlots ? eventId : '')
-  const slotCountMap = useMemo(() => {
-    const map = new Map<string, number>()
-    if (!isFixedSlots) return map
-    for (const slot of scheduleSlotsData?.slots ?? []) {
-      if (slot.assignedCoachId && !slot.isCancelled && slot.isActive) {
-        map.set(slot.assignedCoachId, (map.get(slot.assignedCoachId) ?? 0) + 1)
-      }
-    }
-    return map
-  }, [scheduleSlotsData, isFixedSlots])
 
   const { data: workloadResponse } = useQuery({
     queryKey: eventKeys.coachWorkload(eventId),
@@ -253,7 +238,6 @@ export function EventCoachManager({
         onToggleAll={toggleAllCoaches}
         workload={workload}
         bookingMode={bookingMode}
-        slotCountMap={slotCountMap}
       />
 
       <BulkCoachAvailabilityDialog
