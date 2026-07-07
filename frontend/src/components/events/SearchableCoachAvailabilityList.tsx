@@ -244,14 +244,6 @@ export function SearchableCoachAvailabilityList({
                             >
                               {c.coachUser.email}
                             </Typography>
-                            {workloadMap && (
-                              <Typography
-                                variant="caption"
-                                sx={{ display: 'block', mt: 0.25, color: 'text.disabled', fontWeight: 500 }}
-                              >
-                                {workloadMap.get(c.coachUserId) ?? 0} upcoming session{(workloadMap.get(c.coachUserId) ?? 0) !== 1 ? 's' : ''}
-                              </Typography>
-                            )}
                             {!c.isAvailable && (c.conflicts?.length ?? 0) > 0 && (() => {
                               const first = c.conflicts![0]
                               return (
@@ -269,6 +261,17 @@ export function SearchableCoachAvailabilityList({
                             })()}
                           </Box>
                         </Stack>
+
+                        {workloadMap && (
+                          <Box sx={{ textAlign: 'center', flexShrink: 0, minWidth: 80 }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', display: 'block', lineHeight: 1.2 }}>
+                              {workloadMap.get(c.coachUserId) ?? 0}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
+                              upcoming
+                            </Typography>
+                          </Box>
+                        )}
 
                         <Chip
                           label={c.isAvailable ? 'Available' : 'Conflict'}
