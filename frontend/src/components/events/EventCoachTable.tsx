@@ -94,8 +94,6 @@ interface EventCoachTableProps {
   /** Team-wide confirmed booking count per coachUserId. */
   workload?: Map<string, number>
   bookingMode?: EventBookingMode
-  /** Assigned slot count per coachUserId — used when bookingMode is FIXED_SLOTS. */
-  slotCountMap?: Map<string, number>
 }
 
 export function EventCoachTable({
@@ -110,7 +108,6 @@ export function EventCoachTable({
   onToggleAll,
   workload,
   bookingMode,
-  slotCountMap,
 }: EventCoachTableProps) {
   const isFixedSlots = bookingMode === 'FIXED_SLOTS'
   const [page, setPage] = useState(1)
@@ -176,6 +173,15 @@ export function EventCoachTable({
                           }
                           arrow
                         >
+                          <span style={{ display: 'inline-flex', cursor: 'pointer', color: '#9CA3AF' }}>
+                            <Info size={14} />
+                          </span>
+                        </Tooltip>
+                      </Stack>
+                    ) : col === 'Assigned Sessions' ? (
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <span>{col}</span>
+                        <Tooltip title="Active slots assigned to this coach for this event, including past sessions. Cancelled slots are excluded." arrow>
                           <span style={{ display: 'inline-flex', cursor: 'pointer', color: '#9CA3AF' }}>
                             <Info size={14} />
                           </span>
@@ -253,7 +259,7 @@ export function EventCoachTable({
                   <TableCell sx={{ fontSize: '0.8125rem' }}>
                     {isFixedSlots ? (
                       <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
-                        {slotCountMap?.get(coach.coachUserId) ?? 0} slot{(slotCountMap?.get(coach.coachUserId) ?? 0) !== 1 ? 's' : ''}
+                        {workload?.get(coach.coachUserId) ?? 0} session{(workload?.get(coach.coachUserId) ?? 0) !== 1 ? 's' : ''}
                       </Typography>
                     ) : (
                       <Stack spacing={0.5}>

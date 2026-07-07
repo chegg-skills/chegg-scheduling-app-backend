@@ -54,7 +54,7 @@ export function UserTableRow({
         <Badge {...getUserStatusBadgeProps(user.isActive)} />
       </TableCell>
       <TableCell>
-        <Badge {...getZoomExpiryLabel(user.zoomIsvLinkExpiresAt)} />
+        <Badge {...getZoomExpiryLabel(user.zoomIsvLink, user.zoomIsvLinkExpiresAt)} />
       </TableCell>
       <TableCell>
         {user.role === 'COACH' ? (

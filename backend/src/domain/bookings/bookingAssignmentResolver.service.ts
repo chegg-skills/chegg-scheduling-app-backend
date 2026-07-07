@@ -1,6 +1,7 @@
 import {
   AssignmentStrategy,
   BookingStatus,
+  MeetingLinkSource,
   Prisma,
   SessionLeadershipStrategy,
 } from "@prisma/client";
@@ -327,11 +328,16 @@ export const resolveBookingCoachSelection = async (
   const isDirect = event.assignmentStrategy === AssignmentStrategy.DIRECT;
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType];
 
-  // Anonymous booking: no coach assigned — use event location URL directly.
+  // Anonymous booking: no coach assigned to the booking.
+  // SESSION_LANDING_PAGE: meetingJoinUrl is set post-creation once sessionToken is known.
+  // EVENT_LOCATION: use the shared event location URL directly.
   if (event.allowAnonymousBooking) {
     return {
       assignedCoachId: null,
-      meetingJoinUrl: event.locationValue || null,
+      meetingJoinUrl:
+        event.meetingLinkSource === MeetingLinkSource.SESSION_LANDING_PAGE
+          ? null
+          : event.locationValue || null,
       coCoachUserIds: [],
     };
   }
@@ -353,6 +359,23 @@ export const resolveBookingCoachSelection = async (
     });
 
     if (existingSession) {
+      // For FIXED_SLOTS, the slot's assignedCoachId is authoritative. If an admin has overridden
+      // the slot's coach after initial bookings were made, new bookings must use the new coach —
+      // not copy the old coach from an existing booking.
+      if (event.bookingMode === "FIXED_SLOTS" && input.matchedScheduleSlotId) {
+        const slot = await tx.eventScheduleSlot.findUnique({
+          where: { id: input.matchedScheduleSlotId },
+          select: { assignedCoachId: true, assignedCoach: { select: { zoomIsvLink: true } } },
+        });
+        if (slot?.assignedCoachId) {
+          return {
+            assignedCoachId: slot.assignedCoachId,
+            meetingJoinUrl: getMeetingJoinUrl(event, slot.assignedCoach?.zoomIsvLink),
+            coCoachUserIds: existingSession.coCoachUserIds,
+          };
+        }
+      }
+
       return {
         assignedCoachId: existingSession.coachUserId,
         meetingJoinUrl: getMeetingJoinUrl(event, existingSession.coach?.zoomIsvLink),

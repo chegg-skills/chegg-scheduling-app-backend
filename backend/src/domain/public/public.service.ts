@@ -317,6 +317,132 @@ export const getPublicBookingDirectory = async (slug: string) => {
   return { id: directory.id, slug: directory.slug, name: directory.name, description: directory.description, sections };
 };
 
+const REVEAL_WINDOW_MS = 15 * 60 * 1000;
+
+export const getSlotJoinInfo = async (slotId: string, token: string) => {
+  const booking = await prisma.booking.findFirst({
+    where: { scheduleSlotId: slotId, sessionToken: token } as any,
+    select: { id: true, status: true, timezone: true },
+  });
+
+  if (!booking) {
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid session link.");
+  }
+
+  if (booking.status === "CANCELLED") {
+    const slot = await prisma.eventScheduleSlot.findUnique({
+      where: { id: slotId },
+      select: {
+        startTime: true,
+        endTime: true,
+        event: {
+          select: {
+            name: true,
+            team: { select: { name: true } },
+          },
+        },
+      },
+    });
+    return {
+      status: "booking_cancelled" as const,
+      sessionDetails: slot
+        ? {
+            eventName: slot.event?.name || "Session",
+            eventDescription: null,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            durationSeconds: 0,
+            teamName: slot.event?.team?.name || null,
+            timezone: booking.timezone,
+            coachName: null,
+            coachAvatarUrl: null,
+          }
+        : null,
+    };
+  }
+
+  const slot = await prisma.eventScheduleSlot.findUnique({
+    where: { id: slotId },
+    select: {
+      startTime: true,
+      endTime: true,
+      isCancelled: true,
+      sessionJoinUrl: true,
+      coachRevealSentAt: true,
+      assignedCoach: { select: { zoomIsvLink: true, firstName: true, lastName: true, avatarUrl: true } },
+      event: {
+        select: {
+          name: true,
+          description: true,
+          durationSeconds: true,
+          meetingLinkSource: true,
+          locationValue: true,
+          allowAnonymousBooking: true,
+          deferCoachReveal: true,
+          team: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  if (!slot) {
+    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Slot not found.");
+  }
+
+  const shouldHideCoach =
+    slot.event?.allowAnonymousBooking ||
+    (slot.event?.deferCoachReveal && !slot.coachRevealSentAt);
+
+  const sessionDetails = {
+    eventName: slot.event?.name || "Session",
+    eventDescription: slot.event?.description || null,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    durationSeconds: slot.event?.durationSeconds || 0,
+    teamName: slot.event?.team?.name || null,
+    timezone: booking.timezone,
+    coachName:
+      !shouldHideCoach && slot.assignedCoach
+        ? `${slot.assignedCoach.firstName} ${slot.assignedCoach.lastName}`
+        : null,
+    coachAvatarUrl: (!shouldHideCoach && slot.assignedCoach?.avatarUrl) || null,
+  };
+
+  if (slot.isCancelled) {
+    return { status: "slot_cancelled" as const, sessionDetails };
+  }
+
+  const msUntilStart = slot.startTime.getTime() - Date.now();
+  if (msUntilStart > REVEAL_WINDOW_MS) {
+    const minutesUntilAvailable = Math.ceil((msUntilStart - REVEAL_WINDOW_MS) / 60000);
+    return {
+      status: "pending" as const,
+      startsAt: slot.startTime,
+      minutesUntilAvailable,
+      sessionDetails,
+    };
+  }
+
+  const rawJoinUrl =
+    slot.sessionJoinUrl ||
+    slot.assignedCoach?.zoomIsvLink ||
+    slot.event?.locationValue ||
+    null;
+
+  // Only allow http/https URLs to prevent javascript: or other dangerous schemes
+  const joinUrl = (() => {
+    if (!rawJoinUrl) return null;
+    try {
+      const u = new URL(rawJoinUrl);
+      return u.protocol === "https:" || u.protocol === "http:" ? rawJoinUrl : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  return { status: "available" as const, joinUrl, sessionDetails };
+};
+
 export const getPublicBooking = async (id: string, token: string, mode?: string) => {
   const booking = await prisma.booking.findFirst({
     where: { id, rescheduleToken: token } as any,

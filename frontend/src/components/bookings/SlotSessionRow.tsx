@@ -111,7 +111,7 @@ export function SlotSessionRow({
         </TableCell>
 
         <TableCell>
-          <BookingCoachInfo coach={first.coach ?? null} />
+          <BookingCoachInfo coach={(first.scheduleSlot as any)?.assignedCoach ?? first.coach ?? null} />
         </TableCell>
 
         <TableCell>

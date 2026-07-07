@@ -130,6 +130,9 @@ export const bookingInclude = Prisma.validator<Prisma.BookingInclude>()({
   },
   scheduleSlot: {
     include: {
+      assignedCoach: {
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true, zoomIsvLink: true },
+      },
       bookings: {
         include: {
           student: {
@@ -167,6 +170,9 @@ export const bookingDetailInclude = Prisma.validator<Prisma.BookingInclude>()({
   sessionLog: sessionLogDetailInclude,
   scheduleSlot: {
     include: {
+      assignedCoach: {
+        select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true, zoomIsvLink: true },
+      },
       sessionLog: sessionLogDetailInclude,
       bookings: {
         include: {
@@ -312,7 +318,11 @@ export const buildBookingListWhere = (filters: ListBookingsFilters): Prisma.Book
 
   if (filters.coachUserId) {
     and.push({
-      OR: [{ coachUserId: filters.coachUserId }, { coCoachUserIds: { has: filters.coachUserId } }],
+      OR: [
+        { coachUserId: filters.coachUserId },
+        { coCoachUserIds: { has: filters.coachUserId } },
+        { scheduleSlot: { assignedCoachId: filters.coachUserId } },
+      ],
     });
   }
 

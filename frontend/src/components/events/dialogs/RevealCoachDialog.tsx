@@ -50,7 +50,7 @@ export function RevealCoachDialog({ isOpen, onClose, event, slot }: RevealCoachD
     revealCoach(
       {
         coachUserId: selectedCoachId || undefined,
-        sessionJoinUrl: customJoinUrl.trim() || null,
+        ...(customJoinUrl.trim() ? { sessionJoinUrl: customJoinUrl.trim() } : {}),
       },
       {
         onSuccess: () => {

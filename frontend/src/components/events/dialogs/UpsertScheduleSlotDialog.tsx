@@ -13,7 +13,9 @@ import { useScheduleSlotForm } from './useScheduleSlotForm'
 import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
 import { zonedStringToUTC } from '@/utils/dateTimezone'
 import { SearchableCoachAvailabilityList } from '@/components/events/SearchableCoachAvailabilityList'
-import { useCoachAvailabilityForProposedSlot } from '@/hooks/queries/useEvents'
+import { useCoachAvailabilityForProposedSlot, eventKeys } from '@/hooks/queries/useEvents'
+import { useQuery } from '@tanstack/react-query'
+import { eventsApi } from '@/api/events'
 
 const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
@@ -84,7 +86,18 @@ export function UpsertScheduleSlotDialog({
       isOpen && !!newSlotDate,
     )
 
-  const coachList =
+  const { data: workloadResponse } = useQuery({
+    queryKey: eventKeys.coachWorkload(event.id),
+    queryFn: ({ signal }) => eventsApi.getCoachWorkload(event.id, signal),
+    enabled: isOpen,
+  })
+  const workloadMap = new Map<string, number>(
+    workloadResponse?.data?.data?.workload?.map(
+      (w: { coachUserId: string; bookingCount: number }) => [w.coachUserId, w.bookingCount]
+    ) ?? []
+  )
+
+  const rawCoachList =
     coachAvailability ??
     event.coaches.map((ec) => ({
       coachUserId: ec.coachUserId,
@@ -92,6 +105,12 @@ export function UpsertScheduleSlotDialog({
       isAvailable: true,
       conflicts: [] as any[],
     }))
+
+  // Sort: available coaches first, then within each group least loaded first.
+  const coachList = [...rawCoachList].sort((a, b) => {
+    if (a.isAvailable !== b.isAvailable) return a.isAvailable ? -1 : 1
+    return (workloadMap.get(a.coachUserId) ?? 0) - (workloadMap.get(b.coachUserId) ?? 0)
+  })
 
   function handleAdd() {
     if (!isValid || !proposedStart || !proposedEnd) return
@@ -245,6 +264,7 @@ export function UpsertScheduleSlotDialog({
               onSelectCoach={(id) => setAssignedCoachId(id || null)}
               preAssignedCoachId={slot?.assignedCoachId ?? null}
               isLoading={isLoadingAvailability && !!newSlotDate}
+              workloadMap={workloadMap}
             />
             {noCoachesConfigured && !assignedCoachId && (
               <Alert severity="warning" sx={{ mt: 1, borderRadius: 1.5 }}>

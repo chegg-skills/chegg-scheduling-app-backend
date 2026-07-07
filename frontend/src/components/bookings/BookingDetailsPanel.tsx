@@ -12,6 +12,18 @@ interface BookingDetailsPanelProps {
 export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   const fallbackLocation = booking.event?.locationValue ?? ''
 
+  if (booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE') {
+    // booking.coach is null for anonymous bookings — resolve from slot's assigned coach.
+    return (booking.scheduleSlot as any)?.assignedCoach?.zoomIsvLink ?? null
+  }
+
+  if (booking.event?.meetingLinkSource === 'COACH_ISV') {
+    // For FIXED_SLOTS, slot.assignedCoach is authoritative — booking.meetingJoinUrl may be
+    // stale if the slot's coach was overridden before the cascade propagated.
+    const slotLink = (booking.scheduleSlot as any)?.assignedCoach?.zoomIsvLink ?? null
+    return slotLink ?? booking.meetingJoinUrl ?? (fallbackLocation || null)
+  }
+
   return (
     booking.meetingJoinUrl ??
     booking.coach?.zoomIsvLink ??

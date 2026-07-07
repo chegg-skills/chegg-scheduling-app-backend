@@ -83,7 +83,7 @@ export function BookingTableRow({ booking, isExpanded, onToggle }: BookingTableR
         </TableCell>
 
         <TableCell>
-          <BookingCoachInfo coach={booking.coach ?? null} />
+          <BookingCoachInfo coach={(booking.scheduleSlot as any)?.assignedCoach ?? booking.coach ?? null} />
         </TableCell>
 
         <TableCell>

@@ -18,6 +18,11 @@ export function CoachSection({ booking }: CoachSectionProps) {
   const hasCoCoaches = booking.coCoachUserIds?.length > 0
   const labelText = hasCoCoaches ? 'Lead Coach & Team' : 'Coach'
 
+  // For FIXED_SLOTS events, slot.assignedCoach is authoritative (booking.coach may be stale
+  // if an admin overrode the slot coach before the cascade ran). Prefer slot over booking.
+  const displayCoach =
+    (booking.scheduleSlot as any)?.assignedCoach ?? booking.coach ?? null
+
   return (
     <BookingSection label={labelText} icon={<UserCheck size={16} />}>
       {hasCoCoaches && (
@@ -26,15 +31,15 @@ export function CoachSection({ booking }: CoachSectionProps) {
         </Typography>
       )}
 
-      {booking.coach ? (
+      {displayCoach ? (
         <UserIdentity
-          firstName={booking.coach.firstName}
-          lastName={booking.coach.lastName}
-          email={booking.coach.email}
-          avatarUrl={booking.coach.avatarUrl}
+          firstName={displayCoach.firstName}
+          lastName={displayCoach.lastName}
+          email={displayCoach.email}
+          avatarUrl={displayCoach.avatarUrl}
           titleCase
           avatarVariant="secondary"
-          onClick={onViewCoach ? () => onViewCoach(booking.coach!.id) : undefined}
+          onClick={displayCoach && onViewCoach ? () => onViewCoach(displayCoach.id) : undefined}
         />
       ) : (
         <Stack direction="row" spacing={1.5} alignItems="center">

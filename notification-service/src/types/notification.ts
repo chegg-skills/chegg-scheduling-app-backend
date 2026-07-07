@@ -49,7 +49,9 @@ export type NotificationType =
   | "CANCEL_EVENT_LINK_EXPIRY_REMINDER"
   | "SLOT_RESCHEDULED"
   | "SLOT_RESCHEDULED_ANONYMOUS"
-  | "SLOT_RESCHEDULED_COACH";
+  | "SLOT_RESCHEDULED_COACH"
+  | "SLOT_COACH_REASSIGNED"
+  | "SLOT_COACH_REASSIGNED_COACH";
 
 export type NotificationPayload = {
   type: NotificationType;

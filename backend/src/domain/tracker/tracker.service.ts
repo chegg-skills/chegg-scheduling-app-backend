@@ -17,7 +17,7 @@ export interface TrackerSlot {
   seriesFrequency: string | null;
   seriesSessionNumber: number | null;
   seriesTotalCount: number | null;
-  assignedCoach: { id: string; firstName: string; lastName: string } | null;
+  assignedCoach: { id: string; firstName: string; lastName: string; zoomIsvLink: string | null } | null;
   bookingCount: number;
   capacity: number | null;
   remainingSeats: number | null;
@@ -87,7 +87,7 @@ export const getTrackerSlots = async (
           eventType: { select: { id: true, name: true } },
         },
       },
-      assignedCoach: { select: { id: true, firstName: true, lastName: true } },
+      assignedCoach: { select: { id: true, firstName: true, lastName: true, zoomIsvLink: true } },
       recurrenceGroup: { select: { id: true, frequency: true } },
       sessionLog: {
         select: {
@@ -159,6 +159,7 @@ export const getTrackerSlots = async (
             id: slot.assignedCoach.id,
             firstName: slot.assignedCoach.firstName,
             lastName: slot.assignedCoach.lastName,
+            zoomIsvLink: slot.assignedCoach.zoomIsvLink,
           }
         : null,
       bookingCount,

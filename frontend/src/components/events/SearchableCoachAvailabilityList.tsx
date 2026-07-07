@@ -26,6 +26,7 @@ interface SearchableCoachAvailabilityListProps {
   onSelectCoach: (coachUserId: string) => void
   preAssignedCoachId?: string | null
   isLoading?: boolean
+  workloadMap?: Map<string, number>
 }
 
 export function SearchableCoachAvailabilityList({
@@ -35,6 +36,7 @@ export function SearchableCoachAvailabilityList({
   onSelectCoach,
   preAssignedCoachId = null,
   isLoading = false,
+  workloadMap,
 }: SearchableCoachAvailabilityListProps) {
   const [isListVisible, setIsListVisible] = useState<boolean>(false)
   const selectedCoach = coaches.find((c) => c.coachUserId === selectedCoachId)
@@ -188,18 +190,12 @@ export function SearchableCoachAvailabilityList({
                         },
                       }}
                     >
-                      <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        width="100%"
-                        spacing={2}
-                      >
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
                         <Stack
                           direction="row"
                           spacing={1.5}
                           alignItems="center"
-                          sx={{ minWidth: 0, flexGrow: 1 }}
+                          sx={{ flex: 1, minWidth: 0 }}
                         >
                           <Avatar
                             src={c.coachUser.avatarUrl ?? undefined}
@@ -260,6 +256,15 @@ export function SearchableCoachAvailabilityList({
                           </Box>
                         </Stack>
 
+                        {workloadMap && (
+                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                              {workloadMap.get(c.coachUserId) ?? 0} upcoming session{(workloadMap.get(c.coachUserId) ?? 0) !== 1 ? 's' : ''}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                         <Chip
                           label={c.isAvailable ? 'Available' : 'Conflict'}
                           size="small"
@@ -272,7 +277,8 @@ export function SearchableCoachAvailabilityList({
                             fontSize: '0.7rem',
                           }}
                         />
-                      </Stack>
+                        </Box>
+                      </Box>
                     </ListItemButton>
                   )
                 })}

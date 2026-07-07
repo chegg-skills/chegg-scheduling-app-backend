@@ -230,17 +230,29 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     });
   }
 
-  // Anonymous booking requires EVENT_LOCATION as the meeting link source
-  if (data.allowAnonymousBooking === true && data.meetingLinkSource !== undefined && data.meetingLinkSource !== MeetingLinkSource.EVENT_LOCATION) {
+  // Anonymous booking requires EVENT_LOCATION or SESSION_LANDING_PAGE as the meeting link source
+  if (
+    data.allowAnonymousBooking === true &&
+    data.meetingLinkSource !== undefined &&
+    data.meetingLinkSource !== MeetingLinkSource.EVENT_LOCATION &&
+    data.meetingLinkSource !== MeetingLinkSource.SESSION_LANDING_PAGE
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["meetingLinkSource"],
-      message: "Anonymous booking requires the Event Location URL as the meeting link source.",
+      message:
+        "Anonymous booking requires the Event Location URL or Dynamic Session Link as the meeting link source.",
     });
   }
 
-  // Anonymous booking requires a location value so students receive a link/details
-  if (data.allowAnonymousBooking === true && data.locationValue !== undefined && data.locationValue.trim() === "") {
+  // Anonymous booking with EVENT_LOCATION requires a location value so students receive a link/details
+  // SESSION_LANDING_PAGE derives the join URL from the assigned coach at session time — no locationValue needed
+  if (
+    data.allowAnonymousBooking === true &&
+    data.meetingLinkSource !== MeetingLinkSource.SESSION_LANDING_PAGE &&
+    data.locationValue !== undefined &&
+    data.locationValue.trim() === ""
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["locationValue"],

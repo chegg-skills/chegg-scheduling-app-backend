@@ -141,11 +141,19 @@ export function EventDetailOverview({ event }: EventDetailOverviewProps) {
                 ? 'Custom Instructions'
                 : (event.meetingLinkSource ?? 'COACH_ISV') === 'COACH_ISV'
                   ? "Coach's Zoom Link"
-                  : 'Shared Event Link'
+                  : event.meetingLinkSource === 'SESSION_LANDING_PAGE'
+                    ? 'Dynamic Session Link'
+                    : 'Shared Event Link'
           }
           tooltip="Determines how students will join sessions booked for this event."
         />
-        {event.locationType === 'VIRTUAL' && (event.meetingLinkSource ?? 'COACH_ISV') === 'COACH_ISV' ? (
+        {event.meetingLinkSource === 'SESSION_LANDING_PAGE' ? (
+          <DataField
+            label="Location"
+            value="Derived from assigned coach's Zoom at session time"
+            tooltip="No static link is stored. The joining URL is resolved from the assigned coach's Zoom account and revealed to students 15 minutes before the session starts."
+          />
+        ) : event.locationType === 'VIRTUAL' && (event.meetingLinkSource ?? 'COACH_ISV') === 'COACH_ISV' ? (
           event.locationValue ? (
             <DataField
               label="Fallback event link"

@@ -34,8 +34,14 @@ export function getUserStatusBadgeProps(isActive: boolean) {
 
 import { formatDistanceToNow, isPast, isToday } from 'date-fns'
 
-export function getZoomExpiryLabel(expiresAt: string | null) {
-  if (!expiresAt) return { label: 'N/A', color: 'gray' as const }
+export function getZoomExpiryLabel(zoomIsvLink: string | null, expiresAt: string | null) {
+  if (!zoomIsvLink) {
+    return { label: 'Not Set', color: 'red' as const }
+  }
+
+  if (!expiresAt) {
+    return { label: 'Active', color: 'green' as const }
+  }
 
   const expiryDate = new Date(expiresAt)
 

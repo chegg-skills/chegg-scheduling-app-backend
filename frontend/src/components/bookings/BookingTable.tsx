@@ -42,7 +42,10 @@ const dateHeaderFormatter = new Intl.DateTimeFormat('en-US', {
 const bookingSortAccessors: SortAccessorMap<Booking, BookingSortKey> = {
   student: (booking) => booking.studentName,
   event: (booking) => booking.event?.name ?? '',
-  coach: (booking) => (booking.coach ? `${booking.coach.firstName} ${booking.coach.lastName}` : ''),
+  coach: (booking) => {
+    const coach = (booking.scheduleSlot as any)?.assignedCoach ?? booking.coach
+    return coach ? `${coach.firstName} ${coach.lastName}` : ''
+  },
   date: (booking) => new Date(booking.startTime),
   status: (booking) => booking.status,
 }
