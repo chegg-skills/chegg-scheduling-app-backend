@@ -128,6 +128,10 @@ jobs:
         working-directory: notification-service
         run: npm ci
 
+      - name: Generate Prisma client
+        working-directory: notification-service
+        run: npx prisma generate
+
       - name: Build notification-service
         working-directory: notification-service
         run: npm run build
