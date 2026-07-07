@@ -190,18 +190,12 @@ export function SearchableCoachAvailabilityList({
                         },
                       }}
                     >
-                      <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        width="100%"
-                        spacing={2}
-                      >
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
                         <Stack
                           direction="row"
                           spacing={1.5}
                           alignItems="center"
-                          sx={{ minWidth: 0, flexGrow: 1 }}
+                          sx={{ flex: 1, minWidth: 0 }}
                         >
                           <Avatar
                             src={c.coachUser.avatarUrl ?? undefined}
@@ -263,16 +257,19 @@ export function SearchableCoachAvailabilityList({
                         </Stack>
 
                         {workloadMap && (
-                          <Box sx={{ textAlign: 'center', flexShrink: 0, minWidth: 80 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', display: 'block', lineHeight: 1.2 }}>
-                              {workloadMap.get(c.coachUserId) ?? 0}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
-                              upcoming
-                            </Typography>
+                          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', display: 'block', lineHeight: 1.2 }}>
+                                {workloadMap.get(c.coachUserId) ?? 0}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
+                                upcoming
+                              </Typography>
+                            </Box>
                           </Box>
                         )}
 
+                        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                         <Chip
                           label={c.isAvailable ? 'Available' : 'Conflict'}
                           size="small"
@@ -285,7 +282,8 @@ export function SearchableCoachAvailabilityList({
                             fontSize: '0.7rem',
                           }}
                         />
-                      </Stack>
+                        </Box>
+                      </Box>
                     </ListItemButton>
                   )
                 })}
