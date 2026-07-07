@@ -13,8 +13,7 @@ export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   const fallbackLocation = booking.event?.locationValue ?? ''
 
   if (booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE') {
-    // booking.coach is null for anonymous bookings — resolve from slot's assigned coach.
-    return (booking.scheduleSlot as any)?.assignedCoach?.zoomIsvLink ?? null
+    return booking.meetingJoinUrl ?? null
   }
 
   if (booking.event?.meetingLinkSource === 'COACH_ISV') {

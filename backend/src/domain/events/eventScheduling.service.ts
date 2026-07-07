@@ -850,10 +850,12 @@ const revealCoachForSlot = async (
         coachRevealSentAt: new Date(),
       },
     }),
-    // Keep booking records in sync so cancellation/reminder notifications reference the revealed coach
+    // Keep booking records in sync so cancellation/reminder notifications reference the revealed coach.
+    // Only overwrite meetingJoinUrl when a resolved URL exists — avoids clearing per-student
+    // token URLs (SESSION_LANDING_PAGE) or pre-existing links when the coach has no Zoom ISV link.
     prisma.booking.updateMany({
       where: { scheduleSlotId: slotId, status: { notIn: [BookingStatus.CANCELLED] } },
-      data: { coachUserId: finalCoachId, meetingJoinUrl: finalJoinUrl || null },
+      data: { coachUserId: finalCoachId, ...(finalJoinUrl ? { meetingJoinUrl: finalJoinUrl } : {}) },
     }),
   ]);
 

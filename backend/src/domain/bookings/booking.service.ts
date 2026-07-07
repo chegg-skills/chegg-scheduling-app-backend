@@ -261,9 +261,18 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         start,
       );
 
+      // Pre-generate sessionToken so SESSION_LANDING_PAGE meetingJoinUrl can be computed and
+      // written inside this transaction — avoids a non-atomic post-transaction patch.
+      const sessionToken = randomUUID();
+      const slotId = scheduleSlot?.id ?? null;
+      const sessionLandingPageUrl =
+        (event.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
+          ? `${resolveFrontendUrl()}/session/${slotId}?t=${sessionToken}`
+          : null;
+
       const bookingRecord = await createBookingRecord(tx, {
         studentId: student.id,
-        scheduleSlotId: scheduleSlot?.id ?? null,
+        scheduleSlotId: slotId,
         studentName: normalizedStudentName,
         studentEmail: normalizedStudentEmail,
         teamId,
@@ -280,7 +289,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         sessionObjectives: savedSessionObjectives,
         customQuestions: savedCustomQuestions,
         customAnswers: savedCustomAnswers,
-        meetingJoinUrl,
+        meetingJoinUrl: sessionLandingPageUrl ?? meetingJoinUrl,
+        sessionToken,
         status: BookingStatus.CONFIRMED,
       });
 
@@ -289,17 +299,15 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     { timeout: 15000 },
   );
 
-  // For SESSION_LANDING_PAGE anonymous bookings, meetingJoinUrl couldn't be set inside the
-  // transaction (sessionToken wasn't known yet). Patch it now with the landing page URL.
-  // Cast: Prisma returns all scalar fields including sessionToken; IDE type lags after prisma generate.
-  const bookingWithToken = booking as typeof booking & { sessionToken: string | null };
-  if (
-    (booking.event?.meetingLinkSource as string) === "SESSION_LANDING_PAGE" &&
-    bookingWithToken.sessionToken
-  ) {
-    const landingPageUrl = `${resolveFrontendUrl()}/session/${booking.scheduleSlotId}?t=${bookingWithToken.sessionToken}`;
-    await prisma.booking.update({ where: { id: booking.id }, data: { meetingJoinUrl: landingPageUrl } });
-    booking = { ...booking, meetingJoinUrl: landingPageUrl };
+  if ((booking.event?.meetingLinkSource as string) === "SESSION_LANDING_PAGE") {
+    // meetingJoinUrl was set atomically inside the transaction above; keep local reference in sync.
+    const bookingWithToken = booking as typeof booking & { sessionToken: string | null };
+    if (bookingWithToken.sessionToken && booking.scheduleSlotId) {
+      booking = {
+        ...booking,
+        meetingJoinUrl: `${resolveFrontendUrl()}/session/${booking.scheduleSlotId}?t=${bookingWithToken.sessionToken}`,
+      };
+    }
   }
 
   try {
