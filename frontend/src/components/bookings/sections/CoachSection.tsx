@@ -18,6 +18,13 @@ export function CoachSection({ booking }: CoachSectionProps) {
   const hasCoCoaches = booking.coCoachUserIds?.length > 0
   const labelText = hasCoCoaches ? 'Lead Coach & Team' : 'Coach'
 
+  // For SESSION_LANDING_PAGE anonymous bookings, booking.coach is null but the slot
+  // has a pre-assigned coach via round-robin. Show that coach as a fallback.
+  const slotCoach = !booking.coach
+    ? ((booking.scheduleSlot as any)?.assignedCoach ?? null)
+    : null
+  const displayCoach = booking.coach ?? slotCoach
+
   return (
     <BookingSection label={labelText} icon={<UserCheck size={16} />}>
       {hasCoCoaches && (
@@ -26,15 +33,15 @@ export function CoachSection({ booking }: CoachSectionProps) {
         </Typography>
       )}
 
-      {booking.coach ? (
+      {displayCoach ? (
         <UserIdentity
-          firstName={booking.coach.firstName}
-          lastName={booking.coach.lastName}
-          email={booking.coach.email}
-          avatarUrl={booking.coach.avatarUrl}
+          firstName={displayCoach.firstName}
+          lastName={displayCoach.lastName}
+          email={displayCoach.email}
+          avatarUrl={displayCoach.avatarUrl}
           titleCase
           avatarVariant="secondary"
-          onClick={onViewCoach ? () => onViewCoach(booking.coach!.id) : undefined}
+          onClick={booking.coach && onViewCoach ? () => onViewCoach(booking.coach!.id) : undefined}
         />
       ) : (
         <Stack direction="row" spacing={1.5} alignItems="center">

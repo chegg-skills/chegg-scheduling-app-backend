@@ -10,8 +10,13 @@ interface BookingDetailsPanelProps {
 }
 
 export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
-  const fallbackLocation = booking.event?.locationValue ?? ''
+  // For SESSION_LANDING_PAGE, booking.meetingJoinUrl is the student-facing landing page URL
+  // and booking.coach is null (anonymous booking). Resolve from the slot's assigned coach instead.
+  if (booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE') {
+    return (booking.scheduleSlot as any)?.assignedCoach?.zoomIsvLink ?? null
+  }
 
+  const fallbackLocation = booking.event?.locationValue ?? ''
   return (
     booking.meetingJoinUrl ??
     booking.coach?.zoomIsvLink ??

@@ -11,7 +11,7 @@ export interface TrackerSlot {
   seriesFrequency: string | null
   seriesSessionNumber: number | null
   seriesTotalCount: number | null
-  assignedCoach: { id: string; firstName: string; lastName: string } | null
+  assignedCoach: { id: string; firstName: string; lastName: string; zoomIsvLink: string | null } | null
   bookingCount: number
   capacity: number | null
   remainingSeats: number | null
