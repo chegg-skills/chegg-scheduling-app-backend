@@ -181,6 +181,15 @@ export function EventCoachTable({
                           </span>
                         </Tooltip>
                       </Stack>
+                    ) : col === 'Assigned Sessions' ? (
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <span>{col}</span>
+                        <Tooltip title="Active slots assigned to this coach for this event, including past sessions. Cancelled slots are excluded." arrow>
+                          <span style={{ display: 'inline-flex', cursor: 'pointer', color: '#9CA3AF' }}>
+                            <Info size={14} />
+                          </span>
+                        </Tooltip>
+                      </Stack>
                     ) : (
                       col
                     )}

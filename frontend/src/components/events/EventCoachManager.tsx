@@ -67,7 +67,7 @@ export function EventCoachManager({
     const map = new Map<string, number>()
     if (!isFixedSlots) return map
     for (const slot of scheduleSlotsData?.slots ?? []) {
-      if (slot.assignedCoachId) {
+      if (slot.assignedCoachId && !slot.isCancelled && slot.isActive) {
         map.set(slot.assignedCoachId, (map.get(slot.assignedCoachId) ?? 0) + 1)
       }
     }
