@@ -266,7 +266,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       const sessionToken = randomUUID();
       const slotId = scheduleSlot?.id ?? null;
       const sessionLandingPageUrl =
-        (booking.event?.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
+        (event.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
           ? `${resolveFrontendUrl()}/session/${slotId}?t=${sessionToken}`
           : null;
 
