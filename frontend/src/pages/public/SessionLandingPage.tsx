@@ -139,11 +139,12 @@ export function SessionLandingPage() {
 
     if (delayMs > 0) {
       revealTimerRef.current = setTimeout(() => {
-        retryCountRef.current = 0
+        retryCountRef.current = 1
         refetch()
       }, delayMs)
     } else {
-      // Already within window — refetch immediately
+      // Already within window — refetch immediately; clock-skew retries start from 1
+      retryCountRef.current = 1
       refetch()
     }
 

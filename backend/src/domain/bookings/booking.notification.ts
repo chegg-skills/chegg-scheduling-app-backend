@@ -851,13 +851,16 @@ const queueSlotRescheduledNotifications = async (
     await Promise.all(publishTasks);
 
     // Cancel stale reminders and re-queue with the updated slot time for each booking.
-    for (const booking of bookings) {
-      try {
-        const config = await getTeamNotificationConfig(booking.teamId);
-        await cancelScheduledBookingReminders(booking as SafeBooking);
-        await queueBookingReminderNotifications(booking as SafeBooking, config);
-      } catch (error) {
-        logger.error({ slotId, bookingId: booking.id, error }, "Failed to refresh reminders after slot reschedule.");
+    // All bookings share the same teamId — fetch config once outside the loop.
+    if (bookings.length > 0) {
+      const reminderConfig = await getTeamNotificationConfig(bookings[0].teamId);
+      for (const booking of bookings) {
+        try {
+          await cancelScheduledBookingReminders(booking as SafeBooking);
+          await queueBookingReminderNotifications(booking as SafeBooking, reminderConfig);
+        } catch (error) {
+          logger.error({ slotId, bookingId: booking.id, error }, "Failed to refresh reminders after slot reschedule.");
+        }
       }
     }
   } catch (error) {
@@ -922,13 +925,16 @@ const queueSlotCoachReassignedNotifications = async (
     await Promise.all(publishTasks);
 
     // Cancel stale reminders (baked with old coach name/link) and re-queue fresh.
-    for (const booking of bookings) {
-      try {
-        const config = await getTeamNotificationConfig(booking.teamId);
-        await cancelScheduledBookingReminders(booking as SafeBooking);
-        await queueBookingReminderNotifications(booking as SafeBooking, config);
-      } catch (error) {
-        logger.error({ slotId, bookingId: booking.id, error }, "Failed to refresh reminders after coach reassignment.");
+    // All bookings share the same teamId — fetch config once outside the loop.
+    if (bookings.length > 0) {
+      const reminderConfig = await getTeamNotificationConfig(bookings[0].teamId);
+      for (const booking of bookings) {
+        try {
+          await cancelScheduledBookingReminders(booking as SafeBooking);
+          await queueBookingReminderNotifications(booking as SafeBooking, reminderConfig);
+        } catch (error) {
+          logger.error({ slotId, bookingId: booking.id, error }, "Failed to refresh reminders after coach reassignment.");
+        }
       }
     }
   } catch (error) {
