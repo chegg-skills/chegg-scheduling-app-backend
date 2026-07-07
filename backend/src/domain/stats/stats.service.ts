@@ -452,38 +452,33 @@ export const getTeamPerformance = async (
   const timeframe = resolveTimeframe(timeframeRaw);
   const bookingWhere = buildBookingWhere(caller, timeframe);
 
-  const teams = await prisma.team.findMany({
-    where: { isActive: true },
-    select: {
-      id: true,
-      name: true,
-      bookings: {
-        where: bookingWhere,
-        select: {
-          status: true,
-        },
-      },
-    },
-  });
+  const [teams, bookingGroups] = await Promise.all([
+    prisma.team.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+    }),
+    prisma.booking.groupBy({
+      by: ["teamId", "status"],
+      where: bookingWhere,
+      _count: { id: true },
+    }),
+  ]);
+
+  const teamBookingMap = new Map<string, { total: number; completed: number; cancelled: number; noShow: number }>();
+  for (const row of bookingGroups) {
+    const entry = teamBookingMap.get(row.teamId) ?? { total: 0, completed: 0, cancelled: 0, noShow: 0 };
+    const n = row._count.id;
+    entry.total += n;
+    if (row.status === BookingStatus.COMPLETED) entry.completed += n;
+    if (row.status === BookingStatus.CANCELLED) entry.cancelled += n;
+    if (row.status === BookingStatus.NO_SHOW) entry.noShow += n;
+    teamBookingMap.set(row.teamId, entry);
+  }
 
   const performance = teams
     .map((team) => {
-      const stats = {
-        teamId: team.id,
-        name: team.name,
-        total: team.bookings.length,
-        completed: 0,
-        cancelled: 0,
-        noShow: 0,
-      };
-
-      team.bookings.forEach((b) => {
-        if (b.status === BookingStatus.COMPLETED) stats.completed++;
-        if (b.status === BookingStatus.CANCELLED) stats.cancelled++;
-        if (b.status === BookingStatus.NO_SHOW) stats.noShow++;
-      });
-
-      return stats;
+      const counts = teamBookingMap.get(team.id) ?? { total: 0, completed: 0, cancelled: 0, noShow: 0 };
+      return { teamId: team.id, name: team.name, ...counts };
     })
     .sort((a, b) => b.total - a.total);
 

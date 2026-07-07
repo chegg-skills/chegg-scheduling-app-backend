@@ -409,7 +409,17 @@ const updateBooking = async (
       }
     }
   }
-  void queueBookingUpdatedNotifications(oldBooking, booking);
+  // Only fire update notifications when co-host assignment changed — other field changes
+  // are covered by status notifications or don't warrant an email.
+  const oldCoCoachIds = new Set(oldBooking.coCoachUserIds ?? []);
+  const newCoCoachIds = booking.coCoachUserIds ?? [];
+  const coCoachsChanged =
+    newCoCoachIds.length !== oldCoCoachIds.size ||
+    newCoCoachIds.some((id) => !oldCoCoachIds.has(id));
+
+  if (coCoachsChanged) {
+    void queueBookingUpdatedNotifications(oldBooking, booking);
+  }
 
   return booking;
 };
@@ -877,9 +887,16 @@ const bookFollowUpSession = async (
         },
       );
 
+      const slotId = scheduleSlot?.id ?? null;
+      const sessionToken = randomUUID();
+      const sessionLandingPageUrl =
+        (event.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
+          ? `${resolveFrontendUrl()}/session/${slotId}?t=${sessionToken}`
+          : null;
+
       const bookingRecord = await createBookingRecord(tx, {
         studentId: student.id,
-        scheduleSlotId: scheduleSlot?.id ?? null,
+        scheduleSlotId: slotId,
         studentName: originalBooking.studentName,
         studentEmail: originalBooking.studentEmail,
         teamId: originalBooking.teamId,
@@ -897,7 +914,8 @@ const bookFollowUpSession = async (
         sessionObjectives: savedSessionObjectives,
         customQuestions: savedCustomQuestions,
         customAnswers: savedCustomAnswers,
-        meetingJoinUrl,
+        meetingJoinUrl: sessionLandingPageUrl ?? meetingJoinUrl,
+        sessionToken,
         status: BookingStatus.CONFIRMED,
       });
 

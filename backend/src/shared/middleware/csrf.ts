@@ -5,7 +5,7 @@ import { ErrorHandler } from "../error/errorhandler";
 import { AUTH_COOKIE_NAME, CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "../auth/cookie";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-const csrfProtectionEnabled = process.env.ENABLE_CSRF_PROTECTION === "true";
+const csrfProtectionEnabled = process.env.ENABLE_CSRF_PROTECTION !== "false";
 
 // Pre-auth routes create a new session — there is no existing session to protect,
 // so CSRF validation is unconditionally skipped regardless of stale cookies.

@@ -2,6 +2,19 @@ import { z } from "zod";
 import { BookingStatus } from "@prisma/client";
 import { stripHtml } from "../../shared/utils/htmlSanitizer";
 
+const ianaTimezone = z
+  .string()
+  .trim()
+  .refine((tz) => {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: tz });
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Invalid IANA timezone")
+  .optional();
+
 export const CreateBookingSchema = {
   body: z
     .object({
@@ -13,7 +26,7 @@ export const CreateBookingSchema = {
         if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
         return arg;
       }, z.date()),
-      timezone: z.string().trim().optional(),
+      timezone: ianaTimezone,
       notes: z
         .string()
         .trim()
@@ -66,8 +79,8 @@ export const RescheduleBookingSchema = {
     .strip(),
   body: z
     .object({
-      startTime: z.string().datetime().or(z.date()),
-      timezone: z.string().trim().optional(),
+      startTime: z.iso.datetime().or(z.date()),
+      timezone: ianaTimezone,
       token: z.string().trim().optional(),
     })
     .strip(),
@@ -81,10 +94,10 @@ export const ListBookingsSchema = {
       coachUserId: z.uuid("Invalid host ID").optional(),
       status: z.enum(BookingStatus).optional(),
       search: z.string().trim().optional(),
-      startDate: z.string().datetime().optional(),
-      endDate: z.string().datetime().optional(),
+      startDate: z.iso.datetime().optional(),
+      endDate: z.iso.datetime().optional(),
       page: z.coerce.number().int().positive().default(1),
-      limit: z.coerce.number().int().positive().default(10),
+      limit: z.coerce.number().int().positive().max(200).default(10),
     })
     .strip(),
 };
@@ -178,7 +191,7 @@ export const BookFollowUpSchema = {
         if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
         return arg;
       }, z.date()),
-      timezone: z.string().trim().optional(),
+      timezone: ianaTimezone,
       notes: z
         .string()
         .trim()

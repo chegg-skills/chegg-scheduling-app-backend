@@ -7,25 +7,25 @@ const RABBITMQ_URL = process.env.RABBITMQ_URL ?? "amqp://localhost";
 const FEEDBACK_EXCHANGE = "notificationExchange";
 const FEEDBACK_QUEUE = "notificationResponseQueue";
 const FEEDBACK_ROUTING_KEY = "notification.feedback";
+const MAX_RECONNECT_DELAY_MS = 30_000;
 
-export async function startFeedbackConsumer(): Promise<void> {
-  // Prevent starting consumer in test environments to avoid blocking test runs
-  if (process.env.NODE_ENV === "test") {
-    return;
-  }
-
+async function connectFeedbackConsumer(attempt: number): Promise<void> {
   try {
     const connection = await amqp.connect(RABBITMQ_URL);
+
+    connection.on("close", () => {
+      logger.warn("[FeedbackConsumer] Connection closed — scheduling reconnect.");
+      scheduleReconnect(attempt + 1);
+    });
+
+    connection.on("error", (err) => {
+      logger.error({ error: err }, "[FeedbackConsumer] Connection error.");
+    });
+
     const channel = await connection.createChannel();
 
-    await channel.assertExchange(FEEDBACK_EXCHANGE, "direct", {
-      durable: true,
-    });
-
-    await channel.assertQueue(FEEDBACK_QUEUE, {
-      durable: true,
-    });
-
+    await channel.assertExchange(FEEDBACK_EXCHANGE, "direct", { durable: true });
+    await channel.assertQueue(FEEDBACK_QUEUE, { durable: true });
     await channel.bindQueue(FEEDBACK_QUEUE, FEEDBACK_EXCHANGE, FEEDBACK_ROUTING_KEY);
 
     logger.info({ queue: FEEDBACK_QUEUE }, "[FeedbackConsumer] Subscribed and waiting for messages.");
@@ -62,6 +62,22 @@ export async function startFeedbackConsumer(): Promise<void> {
       }
     });
   } catch (error) {
-    logger.error({ error }, "[FeedbackConsumer] Failed to start feedback consumer.");
+    logger.error({ error, attempt }, "[FeedbackConsumer] Failed to connect — scheduling reconnect.");
+    scheduleReconnect(attempt + 1);
   }
+}
+
+function scheduleReconnect(attempt: number): void {
+  const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY_MS);
+  logger.info({ delayMs, attempt }, "[FeedbackConsumer] Reconnecting.");
+  setTimeout(() => connectFeedbackConsumer(attempt).catch(() => {}), delayMs);
+}
+
+export async function startFeedbackConsumer(): Promise<void> {
+  // Prevent starting consumer in test environments to avoid blocking test runs
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  await connectFeedbackConsumer(0);
 }

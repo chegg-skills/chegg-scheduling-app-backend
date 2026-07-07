@@ -36,7 +36,8 @@ export const getJwtSecret = (): string => {
  * @returns A signed HS256 JWT string.
  */
 export const buildAuthToken = (user: SafeUser): string => {
-  const expiresInSeconds = Number(process.env.JWT_EXPIRES_IN_SECONDS ?? 86400);
+  const raw = Number(process.env.JWT_EXPIRES_IN_SECONDS ?? "86400");
+  const expiresInSeconds = Number.isFinite(raw) && raw > 0 ? raw : 86400;
   return jwt.sign({ sub: user.id, role: user.role, email: user.email }, getJwtSecret(), {
     expiresIn: expiresInSeconds,
   });

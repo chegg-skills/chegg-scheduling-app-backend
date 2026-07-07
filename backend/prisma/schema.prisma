@@ -88,6 +88,8 @@ model UserInvite {
   requiresSso Boolean   @default(false)
 
   createdByUser User @relation("InviteCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([email])
 }
 
 model OidcState {
@@ -97,6 +99,8 @@ model OidcState {
   inviteToken String?
   createdAt   DateTime @default(now())
   expiresAt   DateTime
+
+  @@index([expiresAt])
 }
 
 model TeamMember {
@@ -404,6 +408,8 @@ model Booking {
   @@index([eventId])
   @@index([coachUserId])
   @@index([startTime, endTime])
+  @@index([status])
+  @@index([studentEmail])
 }
 
 /// Transactional outbox for ALL notifications. Every notification is enqueued

@@ -6,6 +6,7 @@ const RABBITMQ_URL = process.env.RABBITMQ_URL ?? "amqp://localhost";
 const DELIVERY_EXCHANGE = "notificationExchange";
 const DELIVERY_QUEUE = "notificationDeliveryQueue";
 const DELIVERY_ROUTING_KEY = "notification.delivery";
+const MAX_RECONNECT_DELAY_MS = 30_000;
 
 interface DeliveryFeedbackMessage {
   type: string;
@@ -26,13 +27,19 @@ interface DeliveryFeedbackMessage {
  * Bound to a distinct queue/routing key so it operates independently of the existing
  * STUDENT_CUSTOM_EMAIL feedback consumer.
  */
-export async function startNotificationDeliveryConsumer(): Promise<void> {
-  if (process.env.NODE_ENV === "test") {
-    return;
-  }
-
+async function connectDeliveryConsumer(attempt: number): Promise<void> {
   try {
     const connection = await amqp.connect(RABBITMQ_URL);
+
+    connection.on("close", () => {
+      logger.warn("[DeliveryConsumer] Connection closed — scheduling reconnect.");
+      scheduleReconnect(attempt + 1);
+    });
+
+    connection.on("error", (err) => {
+      logger.error({ error: err }, "[DeliveryConsumer] Connection error.");
+    });
+
     const channel = await connection.createChannel();
 
     await channel.assertExchange(DELIVERY_EXCHANGE, "direct", { durable: true });
@@ -82,6 +89,21 @@ export async function startNotificationDeliveryConsumer(): Promise<void> {
       }
     });
   } catch (error) {
-    logger.error({ error }, "[DeliveryConsumer] Failed to start delivery feedback consumer.");
+    logger.error({ error, attempt }, "[DeliveryConsumer] Failed to connect — scheduling reconnect.");
+    scheduleReconnect(attempt + 1);
   }
+}
+
+function scheduleReconnect(attempt: number): void {
+  const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY_MS);
+  logger.info({ delayMs, attempt }, "[DeliveryConsumer] Reconnecting.");
+  setTimeout(() => connectDeliveryConsumer(attempt).catch(() => {}), delayMs);
+}
+
+export async function startNotificationDeliveryConsumer(): Promise<void> {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  await connectDeliveryConsumer(0);
 }

@@ -33,7 +33,7 @@ const createPgPool = (): Pool => {
   const pool = new Pool({
     connectionString: dbUrl,
     allowExitOnIdle: process.env.NODE_ENV !== "production",
-    ssl: isProduction ? { rejectUnauthorized: false } : false,
+    ssl: isProduction ? { rejectUnauthorized: true } : false,
   });
 
   // Without this handler, an error on an idle pool client becomes an unhandled

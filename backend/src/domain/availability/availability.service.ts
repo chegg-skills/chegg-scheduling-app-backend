@@ -7,7 +7,7 @@ import {
 } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import { toDateOnlyString } from "../../shared/utils/date";
-import type { CallerContext } from "../../shared/utils/userUtils";
+
 import {
   findAvailabilityException,
   isWithinWeeklyAvailability,
@@ -16,7 +16,7 @@ import {
   type AvailabilityClient,
   type LocalAvailabilityInfo,
 } from "./availability.shared";
-import { type SafeEvent } from "../events/event.shared";
+
 import {
   assertBookingNoticeSatisfied,
   getEffectiveParticipantPolicy,
@@ -172,6 +172,29 @@ const availabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
     orderBy: { coachOrder: "asc" },
   },
 });
+
+const slotAvailabilityScheduleSlotInclude = {
+  assignedCoach: {
+    select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+  },
+} satisfies Prisma.EventScheduleSlotInclude;
+
+type AvailabilityScheduleSlot = Prisma.EventScheduleSlotGetPayload<{
+  include: typeof slotAvailabilityScheduleSlotInclude;
+}>;
+
+const slotAvailabilityEventInclude = Prisma.validator<Prisma.EventInclude>()({
+  coaches: availabilityEventInclude.coaches,
+  scheduleSlots: {
+    where: { isActive: true },
+    include: slotAvailabilityScheduleSlotInclude,
+    orderBy: { startTime: "asc" },
+  },
+});
+
+type AvailabilityEvent = Prisma.EventGetPayload<{
+  include: typeof slotAvailabilityEventInclude;
+}>;
 
 /**
  * Why a coach is not available for a given slot. Surfaced by
@@ -368,7 +391,7 @@ const getAvailableSlots = async (
   const eventResult = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
-      ...availabilityEventInclude,
+      ...slotAvailabilityEventInclude,
       scheduleSlots: {
         where: {
           isActive: true,
@@ -377,16 +400,7 @@ const getAvailableSlots = async (
             lte: endDate,
           },
         },
-        include: {
-          assignedCoach: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatarUrl: true,
-            },
-          },
-        } as any,
+        include: slotAvailabilityScheduleSlotInclude,
         orderBy: { startTime: "asc" },
       },
     },
@@ -402,7 +416,7 @@ const getAvailableSlots = async (
   // Falls back to UTC arithmetic (matching the frontend's SlotStep.tsx behaviour)
   // when studentTimezone is absent or invalid.
   let effectiveMaxDate = endDate;
-  const event = eventResult as any;
+  const event: AvailabilityEvent = eventResult;
   if (event.maxBookingWindowDays != null) {
     const windowEnd = studentTimezone
       ? endOfBookingWindowInTimezone(studentTimezone, event.maxBookingWindowDays)
@@ -424,7 +438,7 @@ const getAvailableSlots = async (
 
   if (eligibleCoaches.length === 0) return [];
 
-  const coachIds: string[] = eligibleCoaches.map((c: any) => c.coachUserId);
+  const coachIds: string[] = eligibleCoaches.map((c) => c.coachUserId);
   const isCoachAvailabilityMode = event.bookingMode !== EventBookingMode.FIXED_SLOTS;
 
   // Pre-fetch all event-coach weekly overrides in one query so the slot loop
@@ -524,7 +538,7 @@ const getAvailableSlots = async (
         list.push(b);
         rawConflictsMap.set(b.coachUserId, list);
       }
-      for (const ccId of (b as any).coCoachUserIds ?? []) {
+      for (const ccId of b.coCoachUserIds ?? []) {
         if (coachIds.includes(ccId)) {
           const list = rawConflictsMap.get(ccId) ?? [];
           list.push(b);
@@ -553,7 +567,7 @@ const getAvailableSlots = async (
   const getSlotAvailability = async (
     slotStart: Date,
     slotEnd: Date,
-    scheduleSlot?: { id: string; capacity: number | null },
+    scheduleSlot?: AvailabilityScheduleSlot,
   ): Promise<AvailableSlot | null> => {
     // Buffers and notice checks
     const BUFFER_MS = 2 * 60 * 1000;
@@ -615,9 +629,9 @@ const getAvailableSlots = async (
     let isAvailable = false;
 
     // Assignment specific availability check
-    if (scheduleSlot && (scheduleSlot as any).assignedCoachId) {
+    if (scheduleSlot && scheduleSlot.assignedCoachId) {
       // If a specific coach is assigned to this slot, only check their availability
-      const assignedId = (scheduleSlot as any).assignedCoachId as string;
+      const assignedId = scheduleSlot.assignedCoachId;
       if (
         await isCoachAvailable(assignedId, slotStart, slotEnd, {
           ignoreWeeklySchedule: event.bookingMode === EventBookingMode.FIXED_SLOTS,
@@ -625,7 +639,6 @@ const getAvailableSlots = async (
           eventId: allowSharedSessionOverlap ? eventId : undefined,
           scheduleSlotId: allowSharedSessionOverlap ? (scheduleSlot?.id ?? null) : undefined,
           bufferAfterMinutes: event.bufferAfterMinutes,
-          tx: (event as any).tx,
           ...buildPrefetch(assignedId),
         })
       ) {
@@ -666,7 +679,7 @@ const getAvailableSlots = async (
 
     if (!isAvailable) return null;
 
-    const assignedCoach = (scheduleSlot as any)?.assignedCoach ?? null;
+    const assignedCoach = scheduleSlot?.assignedCoach ?? null;
 
     return {
       startTime: slotStart.toISOString(),

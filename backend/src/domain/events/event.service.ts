@@ -219,7 +219,7 @@ const updateEvent = async (
         }
       }
 
-      return tx.event.update({
+      const result = await tx.event.update({
         where: { id: eventId },
         data: buildEventUpdateData({
           payload,
@@ -229,22 +229,23 @@ const updateEvent = async (
         }),
         include: eventInclude,
       });
+
+      // Validate before committing so the write rolls back if this throws.
+      assertRoundRobinCoachCount(result);
+
+      await syncRoutingState(
+        tx,
+        eventId,
+        result.assignmentStrategy,
+        result.coaches.length,
+      );
+
+      return result;
     });
   } catch (error) {
     getRequestLogger().error({ eventId, error }, "Event update transaction failed.");
     throw error;
   }
-
-  assertRoundRobinCoachCount(updatedEvent);
-
-  await prisma.$transaction(async (tx) => {
-    await syncRoutingState(
-      tx,
-      eventId,
-      updatedEvent.assignmentStrategy,
-      updatedEvent.coaches.length,
-    );
-  });
 
   if (payload.isActive !== undefined && payload.isActive !== existingEvent.isActive) {
     getRequestLogger().info({ eventId, isActive: updatedEvent.isActive, updatedBy: caller.id }, "Event active status changed.");

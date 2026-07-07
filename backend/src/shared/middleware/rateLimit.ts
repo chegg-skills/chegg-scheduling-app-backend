@@ -4,7 +4,7 @@ type RateLimitOptions = NonNullable<Parameters<typeof rateLimit>[0]>;
 
 const isTestRuntime = process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID !== undefined;
 const isDevRuntime =
-  process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production";
+  process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
 const shouldBypassRateLimit =
   (isTestRuntime && process.env.ENABLE_RATE_LIMITS_IN_TEST !== "true") || isDevRuntime;
@@ -27,7 +27,7 @@ const withTestBypass = <T extends RateLimitOptions>(options: T): T => ({
 export const sensitiveLimiter = rateLimit({
   ...withTestBypass({
     windowMs: Number(process.env.SENSITIVE_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
-    max: Number(process.env.SENSITIVE_RATE_LIMIT_MAX ?? 100),
+    max: Number(process.env.SENSITIVE_RATE_LIMIT_MAX ?? 10),
     standardHeaders: true,
     legacyHeaders: false,
     message: {

@@ -1,5 +1,5 @@
 import { UserRole } from "@prisma/client";
-import jwt, { type JwtPayload } from "jsonwebtoken";
+import jwt, { type JwtPayload, JsonWebTokenError, TokenExpiredError, NotBeforeError } from "jsonwebtoken";
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../error/errorhandler";
@@ -115,10 +115,15 @@ const authenticate = (req: Request, res: Response, next: NextFunction): Promise<
       // Always use the DB role — so role changes take effect immediately too.
       res.locals.authUser = { id: user.id, email: user.email, role: user.role };
       next();
-    } catch {
-      // JWT is present but fails verification — could be tampered, malformed, or expired.
-      getRequestLogger().warn("JWT verification failed — token present but invalid.");
-      next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
+    } catch (err) {
+      if (err instanceof JsonWebTokenError || err instanceof TokenExpiredError || err instanceof NotBeforeError) {
+        // Token present but fails cryptographic verification — bad/expired/tampered token.
+        getRequestLogger().warn("JWT verification failed — token present but invalid.");
+        next(new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid or expired authentication token."));
+      } else {
+        // Non-JWT error (e.g. DB connectivity failure during user re-fetch) — propagate as 500.
+        next(err);
+      }
     }
   })();
 };

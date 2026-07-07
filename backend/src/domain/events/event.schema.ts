@@ -9,7 +9,7 @@ import {
 
 // --- Base Schemas ---
 
-const EventTypeBase = z.looseObject({
+const EventTypeBase = z.object({
   key: z
     .string()
     .trim()
@@ -29,7 +29,7 @@ const EventTypeBase = z.looseObject({
  * This lets `resolveUpdateEventContext` distinguish "user did not send this field"
  * (→ fall back to existing DB value) from "user explicitly sent a new value".
  */
-const EventBaseObjectCore = z.looseObject({
+const EventBaseObjectCore = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   eventTypeId: z.string().min(1, "Event Type is required"),
@@ -381,7 +381,7 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
 
 const EventBase = EventBaseObject.superRefine(refineEventConstraints);
 
-const EventScheduleSlotBase = z.looseObject({
+const EventScheduleSlotBase = z.object({
   startTime: z.preprocess((val) => (typeof val === "string" ? new Date(val) : val), z.date()),
   endTime: z.preprocess((val) => (typeof val === "string" ? new Date(val) : val), z.date()),
   capacity: z.coerce.number().int().nonnegative().optional().nullable(),
@@ -430,7 +430,7 @@ export const UpdateEventSchema = {
 };
 
 export const ReplaceEventCoachesSchema = {
-  body: z.looseObject({
+  body: z.object({
     coaches: z.array(
       z.object({
         userId: z.uuid("Invalid user ID"),
@@ -456,14 +456,14 @@ export const ListTeamEventsSchema = {
   params: z.object({
     teamId: z.uuid("Invalid team ID"),
   }),
-  query: z.looseObject({
+  query: z.object({
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().positive().default(10),
   }),
 };
 
 export const ListAllEventsSchema = {
-  query: z.looseObject({
+  query: z.object({
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().positive().default(10),
     teamId: z.uuid().optional(),
@@ -511,7 +511,19 @@ export const RevealCoachSchema = {
   }),
   body: z.object({
     coachUserId: z.uuid("Invalid coach user ID").optional(),
-    sessionJoinUrl: z.string().url("Invalid URL").optional().nullable(),
+    sessionJoinUrl: z
+      .string()
+      .trim()
+      .refine((u) => {
+        try {
+          const { protocol } = new URL(u);
+          return protocol === "https:" || protocol === "http:";
+        } catch {
+          return false;
+        }
+      }, "Invalid URL")
+      .optional()
+      .nullable(),
   }),
 };
 
