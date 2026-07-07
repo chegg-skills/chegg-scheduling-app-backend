@@ -26,6 +26,7 @@ interface SearchableCoachAvailabilityListProps {
   onSelectCoach: (coachUserId: string) => void
   preAssignedCoachId?: string | null
   isLoading?: boolean
+  workloadMap?: Map<string, number>
 }
 
 export function SearchableCoachAvailabilityList({
@@ -35,6 +36,7 @@ export function SearchableCoachAvailabilityList({
   onSelectCoach,
   preAssignedCoachId = null,
   isLoading = false,
+  workloadMap,
 }: SearchableCoachAvailabilityListProps) {
   const [isListVisible, setIsListVisible] = useState<boolean>(false)
   const selectedCoach = coaches.find((c) => c.coachUserId === selectedCoachId)
@@ -242,6 +244,14 @@ export function SearchableCoachAvailabilityList({
                             >
                               {c.coachUser.email}
                             </Typography>
+                            {workloadMap && (
+                              <Typography
+                                variant="caption"
+                                sx={{ display: 'block', mt: 0.25, color: 'text.disabled', fontWeight: 500 }}
+                              >
+                                {workloadMap.get(c.coachUserId) ?? 0} upcoming session{(workloadMap.get(c.coachUserId) ?? 0) !== 1 ? 's' : ''}
+                              </Typography>
+                            )}
                             {!c.isAvailable && (c.conflicts?.length ?? 0) > 0 && (() => {
                               const first = c.conflicts![0]
                               return (
