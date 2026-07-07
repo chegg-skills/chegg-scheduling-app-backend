@@ -183,6 +183,23 @@ describe('Bookings Domain Integration', () => {
   }, 15000)
 
   it('should display the orange dot on follow-up calendar days with available slots', async () => {
+    // Compute dates dynamically so this test doesn't become stale as time passes.
+    // The slot must be in the current calendar month (dialog opens to current month)
+    // and in the future so the date picker doesn't disable it.
+    const now = new Date()
+    const pastDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 5)
+    const tentative = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14)
+    // If +14 days crosses into next month, use the last day of the current month instead
+    const slotDate = tentative.getMonth() === now.getMonth()
+      ? tentative
+      : new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    const slotDayNum = slotDate.getDate().toString()
+    const slotISO = new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate(), 10, 30).toISOString()
+    const slotEndISO = new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate(), 11, 0).toISOString()
+    const pastISO = pastDate.toISOString()
+    const pastEndISO = new Date(pastDate.getTime() + 1800000).toISOString()
+    const createdISO = new Date(pastDate.getTime() - 86400000).toISOString()
+
     // 1. Set up a completed booking object
     const completedBooking: Booking = {
       id: 'booking-completed',
@@ -190,8 +207,8 @@ describe('Bookings Domain Integration', () => {
       scheduleSlotId: null,
       studentName: 'Charlie Student',
       studentEmail: 'charlie@example.com',
-      startTime: '2026-06-25T10:30:00Z',
-      endTime: '2026-06-25T11:00:00Z',
+      startTime: pastISO,
+      endTime: pastEndISO,
       timezone: 'UTC',
       status: 'COMPLETED',
       notes: null,
@@ -207,8 +224,8 @@ describe('Bookings Domain Integration', () => {
       coCoachUserIds: [],
       meetingJoinUrl: null,
       rescheduleToken: null,
-      createdAt: '2026-06-24T10:30:00Z',
-      updatedAt: '2026-06-24T10:30:00Z',
+      createdAt: createdISO,
+      updatedAt: createdISO,
       event: {
         id: 'event-1',
         name: 'History',
@@ -228,7 +245,7 @@ describe('Bookings Domain Integration', () => {
         eventTypeId: 'type-1',
         meetingLinkSource: 'COACH_ISV',
         allowStudentCoachChoice: false,
-        maxBookingWindowDays: 30,
+        maxBookingWindowDays: null,
         showDescription: true,
         deferCoachReveal: false,
         locationType: 'VIRTUAL',
@@ -242,10 +259,10 @@ describe('Bookings Domain Integration', () => {
         groupId: null,
         locationLinkExpiresAt: null,
         locationLinkReminderDays: null,
-        eventType: { id: 'type-1', key: 'tutoring', name: 'Tutoring', description: null, color: null, isActive: true, sortOrder: 0, createdById: 'admin-1', updatedById: 'admin-1', createdAt: '2026-06-24T10:30:00Z', updatedAt: '2026-06-24T10:30:00Z' },
+        eventType: { id: 'type-1', key: 'tutoring', name: 'Tutoring', description: null, color: null, isActive: true, sortOrder: 0, createdById: 'admin-1', updatedById: 'admin-1', createdAt: createdISO, updatedAt: createdISO },
         coaches: [],
-        createdAt: '2026-06-24T10:30:00Z',
-        updatedAt: '2026-06-24T10:30:00Z',
+        createdAt: createdISO,
+        updatedAt: createdISO,
       },
       coach: {
         id: 'coach-1',
@@ -265,8 +282,8 @@ describe('Bookings Domain Integration', () => {
         isActive: true,
         lastLoginAt: null,
         ssoLinkedAt: null,
-        createdAt: '2026-06-24T10:30:00Z',
-        updatedAt: '2026-06-24T10:30:00Z',
+        createdAt: createdISO,
+        updatedAt: createdISO,
       }
     }
 
@@ -278,8 +295,8 @@ describe('Bookings Domain Integration', () => {
           data: {
             slots: [
               {
-                startTime: '2026-06-28T10:30:00.000Z',
-                endTime: '2026-06-28T11:00:00.000Z',
+                startTime: slotISO,
+                endTime: slotEndISO,
                 scheduleSlotId: 'slot-1',
                 assignedCoach: {
                   id: 'coach-1',
@@ -309,18 +326,15 @@ describe('Bookings Domain Integration', () => {
       />
     )
 
-    // 4. Verify slots are fetched and the orange dot renders on June 28th
-    // Locate the calendar cell for June 28, 2026
+    // 4. Verify slots are fetched and the orange dot renders on the expected day
     await waitFor(() => {
-      const dayCell = screen.getByRole('gridcell', { name: '28' })
+      const dayCell = screen.getByRole('gridcell', { name: slotDayNum })
       expect(dayCell).toBeInTheDocument()
-      
-      // Let's verify the dot is rendered. Our makeSlotDayIndicator wraps the button
-      // and placing the dot sibling. So the parent of the button has the dot.
+
+      // makeSlotDayIndicator wraps the day button; the dot is a sibling inside the container
       const dayContainer = dayCell.parentElement
       expect(dayContainer).toBeInTheDocument()
-      
-      // Find the slot-indicator-dot inside the day container
+
       const dot = within(dayContainer!).getByTestId('slot-indicator-dot')
       expect(dot).toBeInTheDocument()
     }, { timeout: 8000 })
