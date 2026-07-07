@@ -258,14 +258,9 @@ export function SearchableCoachAvailabilityList({
 
                         {workloadMap && (
                           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', display: 'block', lineHeight: 1.2 }}>
-                                {workloadMap.get(c.coachUserId) ?? 0}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
-                                upcoming
-                              </Typography>
-                            </Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                              {workloadMap.get(c.coachUserId) ?? 0} upcoming session{(workloadMap.get(c.coachUserId) ?? 0) !== 1 ? 's' : ''}
+                            </Typography>
                           </Box>
                         )}
 
