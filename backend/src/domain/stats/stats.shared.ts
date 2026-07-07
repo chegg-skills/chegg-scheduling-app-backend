@@ -205,10 +205,10 @@ export const resolveTimeframe = (timeframe?: string): ResolvedTimeframe => {
       };
     }
     case "all": {
-      // Cap "all time" to the past 365 days to prevent unbounded full-table scans.
+      // Cap "all time" lookback to 365 days to prevent unbounded full-table scans.
+      // Upper bound is left open (null) so upcoming bookings are included.
       const start = getStartOfDate(new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()));
-      const end = getEndOfDate(now);
-      return { key: "all", label: "All time", start, end, rangeLabel: formatDateRangeLabel(start, end) };
+      return { key: "all", label: "All time", start, end: null, rangeLabel: formatDateRangeLabel(start, now) };
     }
     default: {
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -251,12 +251,12 @@ export const requireAdmin = (caller: CallerContext): void => {
 export const buildDateFilter = (
   timeframe: ResolvedTimeframe,
 ): Prisma.DateTimeFilter | undefined => {
-  if (!timeframe.start || !timeframe.end) {
+  if (!timeframe.start && !timeframe.end) {
     return undefined;
   }
 
   return {
-    gte: timeframe.start,
-    lte: timeframe.end,
+    ...(timeframe.start ? { gte: timeframe.start } : {}),
+    ...(timeframe.end ? { lte: timeframe.end } : {}),
   };
 };
