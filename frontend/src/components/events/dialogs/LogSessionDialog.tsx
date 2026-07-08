@@ -15,6 +15,7 @@ import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
 import { useSlotBookings, useSlotSessionLog, useUpsertSessionLog } from '@/hooks/queries/useEvents'
 import type { Event, EventScheduleSlot, Booking } from '@/types'
+import { extractApiError } from '@/utils/apiError'
 
 interface LogSessionDialogProps {
   isOpen: boolean
@@ -108,10 +109,10 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
         onSuccess: () => {
           onClose()
         },
-        onError: (_err) => {
+        onError: (err) => {
           alert({
             title: 'Save Failed',
-            message: 'Failed to save session log. Please try again.',
+            message: extractApiError(err) || 'Failed to save session log. Please try again.',
           })
         },
       }
