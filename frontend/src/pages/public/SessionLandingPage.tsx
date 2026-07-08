@@ -43,12 +43,13 @@ const CLOCK_SKEW_RETRIES = 5
 const CLOCK_SKEW_INTERVAL_MS = 5000
 
 function getRemainingTime(diffMs: number) {
-  if (diffMs <= 0) return { hours: 0, minutes: 0, seconds: 0, total: 0 }
+  if (diffMs <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 }
   const totalSeconds = Math.ceil(diffMs / 1000)
-  const hours = Math.floor(totalSeconds / 3600)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
-  return { hours, minutes, seconds, total: totalSeconds }
+  return { days, hours, minutes, seconds, total: totalSeconds }
 }
 
 function getInitials(name: string | null) {
@@ -483,7 +484,7 @@ export function SessionLandingPage() {
             />
 
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5, px: 2 }}>
-              The Zoom link will automatically reveal 15 minutes before the session starts. You don't need to refresh this page.
+              The join link will automatically reveal 15 minutes before the session starts. You don't need to refresh this page.
             </Typography>
           </Box>
         ) : joinUrl ? (
@@ -624,7 +625,7 @@ function IconWrapper({ children, color, bg }: { children: React.ReactNode; color
 }
 
 function VisualCountdown({ revealAt, onComplete }: { revealAt: number; onComplete: () => void }) {
-  const [timeLeft, setTimeLeft] = React.useState<{ hours: number; minutes: number; seconds: number; total: number }>(() => {
+  const [timeLeft, setTimeLeft] = React.useState<{ days: number; hours: number; minutes: number; seconds: number; total: number }>(() => {
     const remaining = revealAt - Date.now()
     return getRemainingTime(remaining)
   })
@@ -634,7 +635,7 @@ function VisualCountdown({ revealAt, onComplete }: { revealAt: number; onComplet
       const remaining = revealAt - Date.now()
       if (remaining <= 0) {
         clearInterval(interval)
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0, total: 0 })
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 })
         onComplete()
       } else {
         setTimeLeft(getRemainingTime(remaining))
@@ -653,6 +654,12 @@ function VisualCountdown({ revealAt, onComplete }: { revealAt: number; onComplet
 
   return (
     <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ my: 3 }}>
+      {timeLeft.days > 0 && (
+        <>
+          <DigitBlock value={timeLeft.days} label="Days" />
+          <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 800, mb: 2, fontFamily: '"Outfit", sans-serif' }}>:</Typography>
+        </>
+      )}
       <DigitBlock value={timeLeft.hours} label="Hours" />
       <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 800, mb: 2, fontFamily: '"Outfit", sans-serif' }}>:</Typography>
       <DigitBlock value={timeLeft.minutes} label="Mins" />
