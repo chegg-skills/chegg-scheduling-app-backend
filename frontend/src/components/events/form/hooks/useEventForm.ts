@@ -175,7 +175,7 @@ export function useEventForm({ teamId, event, accessedFromEventsTab, onSuccess }
 
     const apiPayload = {
       ...values,
-      minimumNoticeMinutes: Math.round((values.minimumNoticeMinutes || 0) * 60),
+      minimumNoticeMinutes: values.minimumNoticeMinutes || 0,
       fixedLeadCoachId: values.fixedLeadCoachId || null,
       assignmentStrategy: values.assignmentStrategy || getDefaultEventAssignmentStrategy(caps),
       durationSeconds: values.durationMinutes * 60,

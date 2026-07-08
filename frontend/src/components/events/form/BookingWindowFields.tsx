@@ -17,22 +17,25 @@ export function BookingWindowFields({ caps }: BookingWindowFieldsProps) {
   return (
     <>
       <FormField
-        label="Minimum Notice (hours)"
+        label="Minimum Notice (minutes)"
         htmlFor="minimumNoticeMinutes"
         error={errors.minimumNoticeMinutes?.message}
-        info="How much time in advance must a booking be made? (e.g., 3 for 3 hours)."
+        info="How much time in advance must a booking be made? (e.g., 30 for 30 minutes, 180 for 3 hours)."
       >
         <QuickSelectInput
           id="minimumNoticeMinutes"
           type="number"
           min="0"
-          step="0.5"
-          placeholder="e.g. 2"
+          step="1"
+          placeholder="e.g. 30"
           options={[
-            { label: '3 hr', value: 3 },
-            { label: '6 hr', value: 6 },
-            { label: '12 hr', value: 12 },
-            { label: '24 hr', value: 24 },
+            { label: '30 min', value: 30 },
+            { label: '1 hr', value: 60 },
+            { label: '3 hr', value: 180 },
+            { label: '6 hr', value: 360 },
+            { label: '12 hr', value: 720 },
+            { label: '18 hr', value: 1080 },
+            { label: '24 hr', value: 1440 },
           ]}
           {...register('minimumNoticeMinutes', { valueAsNumber: true })}
         />

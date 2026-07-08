@@ -246,7 +246,7 @@ export function getEventFormDefaults(event?: Event): Partial<EventFormValues> {
       durationMinutes: Math.floor(event.durationSeconds / 60),
       assignmentStrategy: event.assignmentStrategy,
       bookingMode: event.bookingMode,
-      minimumNoticeMinutes: event.minimumNoticeMinutes / 60,
+      minimumNoticeMinutes: event.minimumNoticeMinutes,
       sessionLeadershipStrategy: event.sessionLeadershipStrategy,
       fixedLeadCoachId: event.fixedLeadCoachId,
       targetCoHostCount: event.targetCoHostCount,
