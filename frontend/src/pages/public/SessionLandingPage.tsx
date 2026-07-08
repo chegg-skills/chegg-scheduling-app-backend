@@ -103,8 +103,16 @@ export function SessionLandingPage() {
     setFramed(true)
   }, [setFramed])
 
-  // Strip token from URL immediately; hold in state only
-  const [token] = React.useState(() => searchParams.get('t') ?? '')
+  // Strip token from URL immediately; persist in sessionStorage so refresh within the same tab works.
+  // sessionStorage is tab-scoped and cleared on tab close — token never re-appears in the URL.
+  const [token] = React.useState(() => {
+    const fromUrl = searchParams.get('t')
+    if (fromUrl) {
+      sessionStorage.setItem(`session-token-${slotId}`, fromUrl)
+      return fromUrl
+    }
+    return sessionStorage.getItem(`session-token-${slotId}`) ?? ''
+  })
   React.useEffect(() => {
     if (searchParams.has('t')) {
       navigate(window.location.pathname, { replace: true })
