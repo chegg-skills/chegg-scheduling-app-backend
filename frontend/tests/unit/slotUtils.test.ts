@@ -112,6 +112,7 @@ describe('groupBookingsBySlot', () => {
       createdAt: '2026-06-25T10:00:00Z',
       updatedAt: '2026-06-25T10:00:00Z',
       assignedCoachId: 'coach-1',
+      assignedCoachOverride: false,
       recurrenceGroupId: null,
       coachRevealSentAt: null,
       sessionJoinUrl: null,
