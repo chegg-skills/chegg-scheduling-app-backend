@@ -440,7 +440,7 @@ export const getSlotJoinInfo = async (slotId: string, token: string) => {
     }
   })();
 
-  return { status: "available" as const, joinUrl: shouldHideCoach ? null : joinUrl, sessionDetails };
+  return { status: "available" as const, joinUrl, sessionDetails };
 };
 
 export const getPublicBooking = async (id: string, token: string, mode?: string) => {
