@@ -412,6 +412,10 @@ export const getSlotJoinInfo = async (slotId: string, token: string) => {
     return { status: "slot_cancelled" as const, sessionDetails };
   }
 
+  if (slot.endTime && Date.now() > slot.endTime.getTime()) {
+    return { status: "session_ended" as const, sessionDetails };
+  }
+
   const msUntilStart = slot.startTime.getTime() - Date.now();
   if (msUntilStart > REVEAL_WINDOW_MS) {
     const minutesUntilAvailable = Math.ceil((msUntilStart - REVEAL_WINDOW_MS) / 60000);
