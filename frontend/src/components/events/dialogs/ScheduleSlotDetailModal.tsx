@@ -274,7 +274,7 @@ export function ScheduleSlotDetailModal({
                   Edit Slot
                 </Button>
               )}
-              {canManage && !slot.isCancelled && (
+              {canManage && !slot.isCancelled && new Date() < endTime && (
                 <Button
                   variant="outlined"
                   fullWidth

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useConfirm } from '@/context/confirm'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import MenuItem from '@mui/material/MenuItem'
@@ -13,8 +12,10 @@ import { LogSessionParticipantList } from './LogSessionParticipantList'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
 import { Textarea } from '@/components/shared/form/Textarea'
+import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useSlotBookings, useSlotSessionLog, useUpsertSessionLog } from '@/hooks/queries/useEvents'
 import type { Event, EventScheduleSlot, Booking } from '@/types'
+import { extractApiError } from '@/utils/apiError'
 
 interface LogSessionDialogProps {
   isOpen: boolean
@@ -40,7 +41,9 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
 
   const { data: bookings, isLoading: bookingsLoading } = useSlotBookings(eventId, slotId)
   const { data: existingLog, isLoading: logLoading } = useSlotSessionLog(eventId, slotId)
-  const { mutate: upsertLog, isPending } = useUpsertSessionLog(eventId, slotId)
+  const { mutate: upsertLog, isPending, error: submitError, reset: resetMutation } = useUpsertSessionLog(eventId, slotId)
+
+  const [hasStarted, setHasStarted] = useState(() => (slot ? new Date(slot.startTime) <= new Date() : false))
 
   const [topicsDiscussed, setTopicsDiscussed] = useState('')
   const [summary, setSummary] = useState('')
@@ -54,7 +57,22 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
   )
 
   useEffect(() => {
+    if (!isOpen || !slot) return
+    const msUntilStart = new Date(slot.startTime).getTime() - Date.now()
+    if (msUntilStart <= 0) {
+      setHasStarted(true)
+      return
+    }
+    const timer = setTimeout(() => setHasStarted(true), msUntilStart)
+    return () => clearTimeout(timer)
+  }, [isOpen, slot?.startTime])
+
+  useEffect(() => {
     if (!isOpen) return
+
+    resetMutation()
+    setHasStarted(slot ? new Date(slot.startTime) <= new Date() : false)
+    setAssignedCoachId(slot?.assignedCoachId ?? '')
 
     if (existingLog) {
       setTopicsDiscussed(existingLog.topicsDiscussed ?? '')
@@ -70,7 +88,6 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
         if (!(b.id in map)) map[b.id] = true
       })
       setAttendanceMap(map)
-      setAssignedCoachId(slot?.assignedCoachId ?? '')
     } else if (activeBookings.length > 0) {
       // New log — default everyone to present
       setTopicsDiscussed('')
@@ -81,14 +98,16 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
         map[b.id] = true
       })
       setAttendanceMap(map)
-      setAssignedCoachId(slot?.assignedCoachId ?? '')
+    } else {
+      setTopicsDiscussed('')
+      setSummary('')
+      setCoachNotes('')
+      setAttendanceMap({})
     }
   }, [isOpen, existingLog, activeBookings, slot?.assignedCoachId])
 
   const attendedCount = activeBookings.filter((b) => attendanceMap[b.id] === true).length
   const absentCount = activeBookings.filter((b) => attendanceMap[b.id] === false).length
-
-  const { alert } = useConfirm()
 
   const handleSave = () => {
     const attendance = activeBookings.map((b) => ({
@@ -107,12 +126,6 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
       {
         onSuccess: () => {
           onClose()
-        },
-        onError: (_err) => {
-          alert({
-            title: 'Save Failed',
-            message: 'Failed to save session log. Please try again.',
-          })
         },
       }
     )
@@ -144,7 +157,7 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
         <Button variant="secondary" onClick={onClose} disabled={isPending}>
           Cancel
         </Button>
-        <Button onClick={handleSave} isLoading={isPending} disabled={isPending || isLoading}>
+        <Button onClick={handleSave} isLoading={isPending} disabled={isPending || isLoading || !hasStarted}>
           {existingLog ? 'Update Log' : 'Save Log'}
         </Button>
       </Stack>
@@ -154,13 +167,27 @@ export function LogSessionDialog({ isOpen, onClose, eventId, slot, event, readOn
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={readOnly ? 'Session Log' : 'Log Session'} size="md" footer={footer}>
       <Stack spacing={3} sx={{ mt: 1 }}>
+        {!hasStarted && !readOnly ? (
+          <ErrorAlert
+            severity="info"
+            title="Session Has Not Started"
+            message={`You will be able to log this session once it starts on ${dateStr} at ${slot ? format(new Date(slot.startTime), 'h:mm a') : ''}.`}
+          />
+        ) : submitError ? (
+          <ErrorAlert
+            severity="error"
+            title="Save Failed"
+            message={extractApiError(submitError) || 'Failed to save session log. Please try again.'}
+          />
+        ) : null}
+
         {/* Session header banner */}
         <Box
           sx={{
             p: 2,
             bgcolor: '#FFF6F0',
             border: '1px solid #DEE3ED',
-            borderRadius: 2,
+            borderRadius: 1.5,
           }}
         >
           <Stack direction="row" justifyContent="space-between" alignItems="center">

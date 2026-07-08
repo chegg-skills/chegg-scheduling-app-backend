@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import { Plus, LayoutList, Calendar as CalendarIcon } from 'lucide-react'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -27,7 +28,8 @@ interface Props {
 
 export function EventScheduleSlotManager({ event, slots, isLoading, canManage = true }: Props) {
   const theme = useTheme()
-  const [activeSeriesId, setActiveSeriesId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeSeriesId = searchParams.get('series')
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   const seriesGroups = useScheduleSeriesGroups(slots)
@@ -116,7 +118,13 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
           {viewMode === 'list' ? (
             <ScheduleSeriesTable
               groups={seriesGroups}
-              onViewTracker={(group) => setActiveSeriesId(group.id)}
+              onViewTracker={(group) =>
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev)
+                  next.set('series', group.id)
+                  return next
+                })
+              }
               onRemoveSeries={handleRemoveSeries}
               onStopSeries={handleStopSeries}
               onResumeSeries={handleResumeSeries}
@@ -130,7 +138,16 @@ export function EventScheduleSlotManager({ event, slots, isLoading, canManage = 
         <ScheduleSeriesTrackerView
           event={event}
           group={activeSeries}
-          onBack={() => setActiveSeriesId(null)}
+          onBack={() =>
+            setSearchParams(
+              (prev) => {
+                const next = new URLSearchParams(prev)
+                next.delete('series')
+                return next
+              },
+              { replace: true }
+            )
+          }
           onEditSlot={handleOpenEdit}
           onRemoveSlot={handleRemoveSlot}
           onViewAttendees={handleOpenAttendees}

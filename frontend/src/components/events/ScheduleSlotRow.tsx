@@ -52,6 +52,7 @@ export function ScheduleSlotRow({
   )}`
 
   const bookingCount = slot._count?.bookings ?? 0
+  const isEnded = new Date(slot.endTime) < new Date()
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType]
   const effectiveCapacity = caps.multipleParticipants
     ? (slot.capacity ?? event.maxParticipantCount)
@@ -60,14 +61,11 @@ export function ScheduleSlotRow({
   const canDelete = bookingCount === 0
 
   const renderStatus = () => {
-    const now = new Date()
-    const isPast = new Date(slot.endTime) < now
-
     if (slot.isCancelled) {
       return <Badge label="Session Cancelled" color="error" />
     }
 
-    if (isPast) {
+    if (isEnded) {
       return <Badge label="Session Ended" color="gray" />
     }
 
@@ -75,7 +73,8 @@ export function ScheduleSlotRow({
   }
 
   const renderCoach = () => {
-    const overrideCoach = slot.assignedCoach
+    const slotCoach = slot.assignedCoach
+    const isRoundRobin = event.assignmentStrategy === 'ROUND_ROBIN'
     const isRotating = event.sessionLeadershipStrategy === 'ROTATING_LEAD'
 
     const defaultCoach =
@@ -83,8 +82,21 @@ export function ScheduleSlotRow({
         ? event.coaches.find((c) => c.coachUserId === event.fixedLeadCoachId)?.coachUser
         : null
 
-    const host = overrideCoach || defaultCoach
-    const isOverride = !!overrideCoach
+    const host = slotCoach || defaultCoach
+
+    let coachLabel = 'Event Lead (Default)'
+    let isHighlighted = false
+
+    if (slotCoach) {
+      if (slot.assignedCoachOverride) {
+        coachLabel = 'Session Host (Override)'
+        isHighlighted = true
+      } else if (isRoundRobin) {
+        coachLabel = 'Assigned via Round Robin'
+      } else {
+        coachLabel = 'Event Lead (Default)'
+      }
+    }
 
     if (host) {
       return (
@@ -95,8 +107,8 @@ export function ScheduleSlotRow({
               width: 32,
               height: 32,
               fontSize: '0.875rem',
-              bgcolor: isOverride ? 'primary.main' : 'grey.200',
-              color: isOverride ? 'primary.contrastText' : 'text.primary',
+              bgcolor: isHighlighted ? 'primary.main' : 'grey.200',
+              color: isHighlighted ? 'primary.contrastText' : 'text.primary',
             }}
           >
             {getUserInitials(host.firstName, host.lastName)}
@@ -111,11 +123,11 @@ export function ScheduleSlotRow({
             <Typography
               variant="caption"
               sx={{
-                color: isOverride ? 'primary.main' : 'text.secondary',
-                fontWeight: isOverride ? 600 : 400,
+                color: isHighlighted ? 'primary.main' : 'text.secondary',
+                fontWeight: isHighlighted ? 600 : 400,
               }}
             >
-              {isOverride ? 'Session Host (Override)' : 'Event Lead (Default)'}
+              {coachLabel}
             </Typography>
           </Box>
         </Stack>
@@ -204,7 +216,7 @@ export function ScheduleSlotRow({
               icon: <ClipboardList size={16} />,
               onClick: () => onLogSession(slot),
             },
-            ...(canManage
+            ...(canManage && !isEnded
               ? [
                   {
                     label: 'Edit Session',
@@ -228,7 +240,7 @@ export function ScheduleSlotRow({
                   },
                 ]
               : []),
-            ...(canManage
+            ...(canManage && !isEnded
               ? [
                   {
                     label: 'Cancel Session',
@@ -240,6 +252,10 @@ export function ScheduleSlotRow({
                       ? 'Session is already cancelled'
                       : 'Cancel this session and notify all participants',
                   },
+                ]
+              : []),
+            ...(canManage
+              ? [
                   {
                     label: 'Delete Session',
                     icon: <Trash2 size={16} />,
