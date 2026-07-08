@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
+import { PasswordInput } from '@/components/shared/form/PasswordInput'
 import { Button } from '@/components/shared/ui/Button'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useAcceptInvite } from '@/hooks/queries/useAuthMutations'
@@ -130,9 +131,8 @@ export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
         hint="Minimum 8 characters."
         required
       >
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           hasError={!!errors.password}
           {...register('password')}

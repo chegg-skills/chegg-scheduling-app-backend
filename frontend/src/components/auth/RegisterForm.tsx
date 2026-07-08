@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
+import { PasswordInput } from '@/components/shared/form/PasswordInput'
 import { Button } from '@/components/shared/ui/Button'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 import { useRegister } from '@/hooks/queries/useAuthMutations'
@@ -72,9 +73,8 @@ export function RegisterForm() {
       </FormField>
 
       <FormField label="Password" htmlFor="password" error={errors.password?.message} required>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           hasError={!!errors.password}
           {...register('password')}
