@@ -552,7 +552,10 @@ const updateEventScheduleSlot = async (
 
   const updated = await prisma.eventScheduleSlot.update({
     where: { id: slotId },
-    data: validated,
+    data: {
+      ...validated,
+      ...(coachChanged ? { assignedCoachOverride: validated.assignedCoachId !== null } : {}),
+    },
     include: {
       assignedCoach: {
         select: { id: true, firstName: true, lastName: true, avatarUrl: true, email: true, timezone: true },
@@ -716,6 +719,10 @@ const cancelEventScheduleSlot = async (
       StatusCodes.CONFLICT,
       "Cannot cancel a session that has already been logged.",
     );
+  }
+
+  if (slot.endTime && slot.endTime < new Date()) {
+    throw new ErrorHandler(StatusCodes.CONFLICT, "Cannot cancel a session that has already ended.");
   }
 
   // Use a transaction to update slot and bookings

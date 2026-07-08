@@ -275,6 +275,7 @@ export interface EventScheduleSlot {
   capacity: number | null
   isActive: boolean
   isCancelled: boolean
+  assignedCoachOverride: boolean
   createdAt: string
   updatedAt: string
   assignedCoachId: string | null

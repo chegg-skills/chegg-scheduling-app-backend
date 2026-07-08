@@ -32,6 +32,7 @@ function toEventScheduleSlot(slot: TrackerSlot): EventScheduleSlot {
     capacity: slot.capacity,
     isActive: true,
     isCancelled: false,
+    assignedCoachOverride: false,
     createdAt: new Date(0).toISOString(),
     updatedAt: new Date(0).toISOString(),
     assignedCoachId: slot.assignedCoach?.id ?? null,

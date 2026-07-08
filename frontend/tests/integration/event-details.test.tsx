@@ -82,8 +82,8 @@ const handlers = [
         slots: [
           {
             id: 'slot-1',
-            startTime: new Date(Date.now() + 2 * 3600000).toISOString(),
-            endTime: new Date(Date.now() + 3 * 3600000).toISOString(),
+            startTime: new Date(Date.now() - 5000).toISOString(),
+            endTime: new Date(Date.now() + 3600000).toISOString(),
             coachId: 'coach-1',
             recurrenceGroupId: 'series-1',
             recurrenceGroup: {

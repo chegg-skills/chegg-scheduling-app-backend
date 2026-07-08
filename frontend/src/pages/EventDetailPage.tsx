@@ -56,7 +56,7 @@ export function EventDetailPage() {
   const [showEdit, setShowEdit] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
   const EVENT_TABS = ['details', 'coaches', 'bookings', 'schedule'] as const
-  const [activeTab, setTab] = useTabParam('tab', 'details', EVENT_TABS)
+  const [activeTab, setTab] = useTabParam('tab', 'details', EVENT_TABS, { clearOnChange: ['series'] })
   const [showAddCoachModal, setShowAddCoachModal] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)

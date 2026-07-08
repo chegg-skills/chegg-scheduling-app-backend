@@ -262,9 +262,10 @@ model EventScheduleSlot {
   updatedAt         DateTime    @updatedAt
   assignedCoachId   String?
   recurrenceGroupId String?
-  isCancelled       Boolean     @default(false)
-  coachRevealSentAt DateTime?
-  sessionJoinUrl    String?
+  isCancelled            Boolean     @default(false)
+  assignedCoachOverride  Boolean     @default(false)
+  coachRevealSentAt      DateTime?
+  sessionJoinUrl         String?
   bookings          Booking[]
   assignedCoach     User?       @relation("SlotCoach", fields: [assignedCoachId], references: [id])
   event             Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
