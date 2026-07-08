@@ -11,14 +11,15 @@ import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
 import { useTheme } from '@mui/material/styles'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Calendar, 
+import {
+  Calendar,
   Clock,
-  Copy, 
+  Copy,
   Video,
-  AlertCircle, 
+  AlertCircle,
   XCircle,
-  HelpCircle
+  HelpCircle,
+  CheckCircle
 } from 'lucide-react'
 import { useSlotJoinInfo } from './hooks/useSlotJoinInfo'
 import type { PublicLayoutOutletContext } from '@/components/layout/PublicLayout'
@@ -121,7 +122,7 @@ export function SessionLandingPage() {
 
   const { data, isLoading, isError, refetch } = useSlotJoinInfo(slotId ?? '', token) as {
     data: {
-      status: 'available' | 'pending' | 'booking_cancelled' | 'slot_cancelled'
+      status: 'available' | 'pending' | 'booking_cancelled' | 'slot_cancelled' | 'session_ended'
       joinUrl?: string | null
       startsAt?: string
       minutesUntilAvailable?: number
@@ -325,6 +326,47 @@ export function SessionLandingPage() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                   }}
+                >
+                  {sessionDetails.teamName}
+                </Typography>
+              )}
+              <Typography variant="body1" fontWeight={700}>
+                {sessionDetails.eventName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formattedDate} • {formattedTime}
+              </Typography>
+            </Stack>
+          )}
+        </Box>
+      )
+    }
+
+    if (data.status === 'session_ended') {
+      return (
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          sx={{ textAlign: 'center', py: 2 }}
+        >
+          <IconWrapper color="success.main" bg="success.light">
+            <CheckCircle size={32} />
+          </IconWrapper>
+          <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mt: 1 }}>
+            Session Completed
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            This session has already taken place. Please check your email for a follow-up or contact your coordinator.
+          </Typography>
+          {sessionDetails && (
+            <Stack spacing={1} sx={{ mt: 1, width: '100%', alignItems: 'center' }}>
+              {sessionDetails.teamName && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}
                 >
                   {sessionDetails.teamName}
                 </Typography>
