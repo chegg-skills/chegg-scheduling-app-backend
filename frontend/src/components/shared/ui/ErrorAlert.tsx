@@ -1,3 +1,4 @@
+import type React from 'react'
 import Alert from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
 import type { AlertColor } from '@mui/material'
@@ -5,7 +6,7 @@ import { alpha } from '@mui/material/styles'
 
 interface ErrorAlertProps {
   title?: string
-  message: string
+  message: React.ReactNode
   severity?: AlertColor
 }
 

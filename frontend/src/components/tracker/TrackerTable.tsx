@@ -4,7 +4,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
-import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -13,9 +12,7 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import { Video } from 'lucide-react'
 import type { TrackerSlot } from '@/api/tracker'
 import { LogSessionDialog } from '@/components/events/dialogs/LogSessionDialog'
 import { EmptyState } from '@/components/shared/ui/EmptyState'
@@ -177,20 +174,6 @@ export function TrackerTable({ slots, isLoading }: TrackerTableProps) {
                 </TableCell>
                 <TableCell align="center">
                   <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
-                    {slot.assignedCoach?.zoomIsvLink && (
-                      <Tooltip title="Join Session">
-                        <IconButton
-                          component="a"
-                          href={slot.assignedCoach.zoomIsvLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          size="small"
-                          sx={{ color: 'primary.main' }}
-                        >
-                          <Video size={16} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
                     <Button
                       size="small"
                       variant="text"

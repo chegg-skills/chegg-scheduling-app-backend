@@ -77,6 +77,54 @@ export function EventForm({
   const [activeSection, setActiveSection] = useState('section-basic-info')
 
   useEffect(() => {
+    if (submitCount > 0 && hasValidationErrors) {
+      const firstErrorField = Object.keys(errors)[0]
+      if (firstErrorField) {
+        const getSectionIdForField = (field: string): string => {
+          switch (field) {
+            case 'name':
+            case 'description':
+            case 'eventTypeId':
+            case 'groupId':
+              return 'section-basic-info'
+            case 'interactionType':
+              return 'section-resources'
+            case 'bookingMode':
+            case 'deferCoachReveal':
+            case 'allowAnonymousBooking':
+            case 'bufferAfterMinutes':
+            case 'maxBookingWindowDays':
+              return 'section-booking-rules'
+            case 'locationType':
+            case 'locationValue':
+            case 'meetingLinkSource':
+            case 'locationLinkExpiresAt':
+            case 'locationLinkReminderDays':
+              return 'section-location'
+            case 'durationMinutes':
+            case 'assignmentStrategy':
+            case 'fixedLeadCoachId':
+            case 'targetCoHostCount':
+            case 'maxParticipantCount':
+            case 'sessionLeadershipStrategy':
+              return 'section-schedule'
+            case 'customQuestions':
+            case 'useDefaultQuestions':
+              return 'section-custom-questions'
+            default:
+              return 'section-basic-info'
+          }
+        }
+        const sectionId = getSectionIdForField(firstErrorField)
+        const el = document.getElementById(sectionId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }
+    }
+  }, [errors, submitCount, hasValidationErrors])
+
+  useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') {
       return
     }
@@ -180,9 +228,58 @@ export function EventForm({
           {/* Right Column: Scrollable Content sections */}
           <Stack spacing={3} sx={{ flex: 1, minWidth: 0, width: '100%' }}>
             {error && <ErrorAlert message={extractApiError(error)} />}
-            {hasValidationErrors && submitCount > 0 && (
-              <ErrorAlert message="Form validation failed. Please check the fields below for errors." />
-            )}
+            {hasValidationErrors && submitCount > 0 && (() => {
+              const errorList = Object.entries(errors)
+                .map(([field, err]) => {
+                  const message = (err as any)?.message
+                  if (!message) return null
+                  
+                  let label = field
+                  switch (field) {
+                    case 'name': label = 'Name'; break;
+                    case 'eventTypeId': label = 'Event Type'; break;
+                    case 'interactionType': label = 'Interaction Type'; break;
+                    case 'locationType': label = 'Location Type'; break;
+                    case 'locationValue': label = 'Location Value'; break;
+                    case 'durationMinutes': label = 'Duration'; break;
+                    case 'maxParticipantCount': label = 'Maximum Participants'; break;
+                    case 'fixedLeadCoachId': label = 'Fixed Lead Coach'; break;
+                    case 'allowAnonymousBooking': label = 'Anonymous Booking'; break;
+                    case 'meetingLinkSource': label = 'Meeting Link Source'; break;
+                    case 'locationLinkExpiresAt': label = 'Link Expiry Date'; break;
+                    case 'locationLinkReminderDays': label = 'Reminder Days'; break;
+                    case 'minimumNoticeMinutes': label = 'Minimum Notice'; break;
+                    case 'bufferAfterMinutes': label = 'Buffer After Session'; break;
+                  }
+                  return { label, message }
+                })
+                .filter((item): item is { label: string; message: string } => item !== null)
+
+              return (
+                <ErrorAlert
+                  title="Form Validation Failed"
+                  message={
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                        Please correct the following errors:
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {errorList.map((err, idx) => (
+                          <Box component="li" key={idx} sx={{ mb: 0.5 }}>
+                            <Typography variant="body2" component="span" sx={{ fontWeight: 600 }}>
+                              {err.label}:
+                            </Typography>{' '}
+                            <Typography variant="body2" component="span">
+                              {err.message}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  }
+                />
+              )
+            })()}
 
             {/* Basic info Section */}
             <Box
