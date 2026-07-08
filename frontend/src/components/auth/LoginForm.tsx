@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import IconButton from '@mui/material/IconButton'
+import InputAdornment from '@mui/material/InputAdornment'
+import { Eye, EyeOff } from 'lucide-react'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { FormField } from '@/components/shared/form/FormField'
@@ -22,6 +26,7 @@ type FormValues = z.infer<typeof schema>
 export function LoginForm() {
   const navigate = useNavigate()
   const { mutate, isPending, error } = useLogin()
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -53,9 +58,23 @@ export function LoginForm() {
         <FormField label="Password" htmlFor="password" error={errors.password?.message} required>
           <Input
             id="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
             hasError={!!errors.password}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
             {...register('password')}
           />
         </FormField>
