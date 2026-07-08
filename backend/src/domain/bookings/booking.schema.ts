@@ -97,7 +97,7 @@ export const ListBookingsSchema = {
       startDate: z.iso.datetime().optional(),
       endDate: z.iso.datetime().optional(),
       page: z.coerce.number().int().positive().default(1),
-      limit: z.coerce.number().int().positive().max(200).default(10),
+      limit: z.coerce.number().int().positive().max(1000).default(10),
     })
     .strip(),
 };
