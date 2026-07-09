@@ -117,7 +117,13 @@ const debugEventInclude = Prisma.validator<Prisma.EventInclude>()({
 export async function getSlotDebugReport(
   eventId: string,
   date: string,
-  options: { timezone?: string } = {},
+  options: {
+    timezone?: string;
+    /** Excludes this booking's own record from every coach's conflict check —
+     * passed when viewing this panel while rescheduling that specific booking,
+     * so its own prior time doesn't show as a false conflict. */
+    excludeBookingId?: string;
+  } = {},
 ): Promise<SlotDebugReport> {
   // Same idempotent pre-step as getAvailableSlots so generated fixed slots exist.
   await replenishContinuousSlots(eventId);
@@ -205,6 +211,7 @@ export async function getSlotDebugReport(
         where: {
           OR: [{ coachUserId: { in: coachIds } }, { coCoachUserIds: { hasSome: coachIds } }],
           status: { in: ["CONFIRMED", "PENDING"] },
+          ...(options.excludeBookingId ? { id: { not: options.excludeBookingId } } : {}),
           startTime: { lt: batchFetchEnd },
           endTime: { gt: lookbackStart },
         },
@@ -381,6 +388,7 @@ export async function getSlotDebugReport(
       eventId: allowShared ? eventId : undefined,
       scheduleSlotId: allowShared ? (scheduleSlot?.id ?? null) : undefined,
       bufferAfterMinutes: e.bufferAfterMinutes,
+      excludeBookingId: options.excludeBookingId,
       ...prefetch,
     });
 

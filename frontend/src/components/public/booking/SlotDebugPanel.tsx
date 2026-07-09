@@ -243,9 +243,19 @@ interface SlotDebugPanelProps {
   selectedTimezone: string
   dateLabel: string
   show: boolean
+  /** Booking currently being rescheduled — excluded from conflict checks so
+   * its own prior time doesn't show as a false conflict for its coach. */
+  excludeBookingId?: string
 }
 
-export function SlotDebugPanel({ eventId, selectedDate, selectedTimezone, dateLabel, show }: SlotDebugPanelProps) {
+export function SlotDebugPanel({
+  eventId,
+  selectedDate,
+  selectedTimezone,
+  dateLabel,
+  show,
+  excludeBookingId,
+}: SlotDebugPanelProps) {
   const theme = useTheme()
   const { isInternalUser } = usePublicSessionUser()
   const enabled = show && isInternalUser && !!eventId
@@ -264,7 +274,13 @@ export function SlotDebugPanel({ eventId, selectedDate, selectedTimezone, dateLa
     return (iso: string) => formatter.format(new Date(iso))
   }, [selectedTimezone])
 
-  const { data, isLoading, isError } = useSlotDebugReport(eventId, dateString, selectedTimezone, enabled)
+  const { data, isLoading, isError } = useSlotDebugReport(
+    eventId,
+    dateString,
+    selectedTimezone,
+    enabled,
+    excludeBookingId
+  )
 
   if (!enabled) return null
 

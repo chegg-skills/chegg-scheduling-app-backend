@@ -23,6 +23,9 @@ export type AssignmentContext = {
   bookingMode: string;
   allowSharedSessionOverlap: boolean;
   matchedScheduleSlotId?: string | null;
+  /** Excludes this booking's own record from each candidate's conflict check —
+   * set when rescheduling, so the booking's own prior time doesn't count against it. */
+  excludeBookingId?: string;
 };
 
 type AssignmentResult = {
@@ -45,6 +48,7 @@ const buildAvailabilityOptions = (context: AssignmentContext) => ({
   scheduleSlotId: context.allowSharedSessionOverlap
     ? (context.matchedScheduleSlotId ?? null)
     : undefined,
+  excludeBookingId: context.excludeBookingId,
   tx: context.prisma,
 });
 

@@ -471,6 +471,7 @@ const rescheduleBooking = async (
           end,
           allowSharedSessionOverlap,
           matchedScheduleSlotId: matchedScheduleSlot?.id,
+          excludeBookingId: booking.id,
           tx,
         });
 
