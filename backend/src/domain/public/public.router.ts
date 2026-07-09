@@ -72,8 +72,8 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/slots/:slotId/join-info")
-  .get(PublicController.getSlotJoinInfo)
+  .route("/sessions/:slotId/join")
+  .get(PublicController.joinSession)
   .all(methodNotAllowed);
 
 export default router;

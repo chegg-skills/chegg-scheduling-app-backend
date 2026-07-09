@@ -9,24 +9,6 @@ import type {
   PublicBookingDirectoryData,
 } from '@/types'
 
-export interface SlotSessionDetails {
-  eventName: string
-  eventDescription: string | null
-  startTime: string
-  endTime: string
-  durationSeconds: number
-  teamName: string | null
-  timezone: string
-  coachName: string | null
-  coachAvatarUrl: string | null
-}
-
-export type SlotJoinInfoResponse =
-  | { status: 'pending'; startsAt: string; minutesUntilAvailable: number; sessionDetails: SlotSessionDetails | null }
-  | { status: 'available'; joinUrl: string | null; sessionDetails: SlotSessionDetails | null }
-  | { status: 'booking_cancelled'; sessionDetails: SlotSessionDetails | null }
-  | { status: 'slot_cancelled'; sessionDetails: SlotSessionDetails | null }
-
 export interface ListPublicTeamsResponse {
   teams: PublicTeamSummary[]
 }
@@ -149,10 +131,4 @@ export const publicApi = {
       `/public/booking-directories/slug/${slug}`,
       { signal }
     ),
-
-  getSlotJoinInfo: (slotId: string, token: string, signal?: AbortSignal) =>
-    apiClient.get<ApiResponse<SlotJoinInfoResponse>>(`/public/slots/${slotId}/join-info`, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal,
-    }),
 }

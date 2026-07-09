@@ -5,7 +5,7 @@ import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import { parseBoundedDateRange } from "../../shared/utils/date";
 import * as AvailabilityService from "../availability/availability.service";
 import * as PublicService from "./public.service";
-import { ErrorHandler } from "../../shared/error/errorhandler";
+import { resolveFrontendUrl } from "../../shared/notifications/notification.publisher";
 
 const listTeams = async (_req: Request, res: Response) => {
   const teams = await PublicService.listTeams();
@@ -100,17 +100,23 @@ const getPublicBookingDirectory = async (req: Request, res: Response) => {
   );
 };
 
-const getSlotJoinInfo = async (req: Request, res: Response) => {
+const joinSession = async (req: Request, res: Response) => {
   const { slotId } = req.params;
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const token = (req.query.t as string | undefined) ?? "";
+  const result = await PublicService.resolveSlotJoinRedirect(slotId as string, token);
 
-  if (!token) {
-    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid session link.");
+  // The same URL must resolve to a different coach over time — never let a
+  // browser or intermediary proxy cache this redirect.
+  res.set("Cache-Control", "no-store");
+
+  if (result.type === "redirect") {
+    return res.redirect(StatusCodes.MOVED_TEMPORARILY, result.url);
   }
 
-  const result = await PublicService.getSlotJoinInfo(slotId as string, token);
-  return sendSuccessResponse(res, StatusCodes.OK, result, "Slot join info fetched successfully.");
+  return res.redirect(
+    StatusCodes.MOVED_TEMPORARILY,
+    `${resolveFrontendUrl()}/session/${slotId}/status?state=${result.state}`,
+  );
 };
 
 const getPublicBooking = async (req: Request, res: Response) => {
@@ -140,5 +146,5 @@ export default {
   listGroupEventsBySlug: asyncHandler(listGroupEventsBySlug),
   getPublicBookingDirectory: asyncHandler(getPublicBookingDirectory),
   getPublicBooking: asyncHandler(getPublicBooking),
-  getSlotJoinInfo: asyncHandler(getSlotJoinInfo),
+  joinSession: asyncHandler(joinSession),
 };

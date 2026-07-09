@@ -48,7 +48,7 @@ import {
   queueBookingUpdatedNotifications,
   queueBookingRescheduledNotifications,
 } from "./booking.notification";
-import { resolveFrontendUrl } from "../../shared/notifications/notification.publisher";
+import { resolveApiBaseUrl } from "../../shared/notifications/notification.publisher";
 
 export { bookingInclude, type SafeBooking } from "./booking.shared";
 
@@ -267,7 +267,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       const slotId = scheduleSlot?.id ?? null;
       const sessionLandingPageUrl =
         (event.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
-          ? `${resolveFrontendUrl()}/session/${slotId}?t=${sessionToken}`
+          ? `${resolveApiBaseUrl()}/api/public/sessions/${slotId}/join?t=${sessionToken}`
           : null;
 
       const bookingRecord = await createBookingRecord(tx, {
@@ -305,7 +305,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     if (bookingWithToken.sessionToken && booking.scheduleSlotId) {
       booking = {
         ...booking,
-        meetingJoinUrl: `${resolveFrontendUrl()}/session/${booking.scheduleSlotId}?t=${bookingWithToken.sessionToken}`,
+        meetingJoinUrl: `${resolveApiBaseUrl()}/api/public/sessions/${booking.scheduleSlotId}/join?t=${bookingWithToken.sessionToken}`,
       };
     }
   }
@@ -891,7 +891,7 @@ const bookFollowUpSession = async (
       const sessionToken = randomUUID();
       const sessionLandingPageUrl =
         (event.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
-          ? `${resolveFrontendUrl()}/session/${slotId}?t=${sessionToken}`
+          ? `${resolveApiBaseUrl()}/api/public/sessions/${slotId}/join?t=${sessionToken}`
           : null;
 
       const bookingRecord = await createBookingRecord(tx, {

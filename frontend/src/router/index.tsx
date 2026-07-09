@@ -113,9 +113,9 @@ const PublicCancelPage = lazy(() =>
     default: module.PublicCancelPage,
   }))
 )
-const SessionLandingPage = lazy(() =>
-  import('@/pages/public/SessionLandingPage').then((module) => ({
-    default: module.SessionLandingPage,
+const SessionStatusPage = lazy(() =>
+  import('@/pages/public/SessionStatusPage').then((module) => ({
+    default: module.SessionStatusPage,
   }))
 )
 const ReportsPage = lazy(() =>
@@ -211,9 +211,9 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
   },
   {
-    path: '/session/:slotId',
+    path: '/session/:slotId/status',
     element: <PublicLayout maxWidth="sm" />,
-    children: [{ path: '', element: renderLazyPage(SessionLandingPage) }],
+    children: [{ path: '', element: renderLazyPage(SessionStatusPage) }],
     errorElement: <RouteErrorPage />,
   },
 
