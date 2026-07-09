@@ -1,9 +1,13 @@
 import { z } from "zod";
 import { UserRole } from "@prisma/client";
+import { isAllowedMeetingLinkHost } from "../../shared/utils/meetingLinkValidation";
 
 const userIdSchema = z.object({
   userId: z.uuid("Invalid user ID"),
 });
+
+const MEETING_LINK_DOMAIN_ERROR = "Meeting link must be an https URL on an approved domain (e.g. zoom.us).";
+const isBlankOrAllowedMeetingLink = (val: string | null | undefined) => !val || isAllowedMeetingLinkHost(val);
 
 export const ListUsersSchema = {
   query: z.looseObject({
@@ -32,7 +36,7 @@ export const CreateUserSchema = {
     phoneNumber: z.string().optional(),
     country: z.string().optional(),
     timezone: z.string().default("UTC"),
-    zoomIsvLink: z.string().url().optional(),
+    zoomIsvLink: z.string().url().optional().refine(isBlankOrAllowedMeetingLink, MEETING_LINK_DOMAIN_ERROR),
   }),
 };
 
@@ -50,7 +54,7 @@ export const UpdateUserSchema = {
     timezone: z.string().trim().optional(),
     preferredLanguage: z.string().trim().optional(),
     isActive: z.boolean().optional(),
-    zoomIsvLink: z.string().trim().url().optional().or(z.literal("")).nullable(),
+    zoomIsvLink: z.string().trim().url().optional().or(z.literal("")).nullable().refine(isBlankOrAllowedMeetingLink, MEETING_LINK_DOMAIN_ERROR),
     zoomIsvLinkExpiresAt: z.coerce.date().optional().nullable(),
     zoomIsvLinkReminderDays: z.number().int().min(1).max(90).optional().nullable(),
     publicBookingSlug: z.string().trim().optional(),
@@ -67,7 +71,7 @@ export const UpdateMyProfileSchema = {
     avatarUrl: z.string().trim().url().optional().or(z.literal("")).nullable(),
     timezone: z.string().trim().optional(),
     preferredLanguage: z.string().trim().optional(),
-    zoomIsvLink: z.string().trim().url().optional().or(z.literal("")).nullable(),
+    zoomIsvLink: z.string().trim().url().optional().or(z.literal("")).nullable().refine(isBlankOrAllowedMeetingLink, MEETING_LINK_DOMAIN_ERROR),
     zoomIsvLinkExpiresAt: z.coerce.date().optional().nullable(),
     zoomIsvLinkReminderDays: z.number().int().min(1).max(90).optional().nullable(),
   }),

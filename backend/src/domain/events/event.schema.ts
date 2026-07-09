@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { EventLocationType, EventBookingMode, AssignmentStrategy, MeetingLinkSource } from "@prisma/client";
 import { stripHtml } from "../../shared/utils/htmlSanitizer";
+import { isAllowedMeetingLinkHost } from "../../shared/utils/meetingLinkValidation";
 import {
   INTERACTION_TYPE_CAPS,
   INTERACTION_TYPE_KEYS,
@@ -287,6 +288,18 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
             code: z.ZodIssueCode.custom,
             path: ["locationValue"],
             message: "Meeting link must be an http or https URL.",
+          });
+        } else if (
+          data.meetingLinkSource === MeetingLinkSource.EVENT_LOCATION &&
+          !isAllowedMeetingLinkHost(data.locationValue.trim())
+        ) {
+          // Only meeting links (EVENT_LOCATION) are emailed to students behind our own
+          // domain via the join-redirect endpoint — in-person address values on other
+          // sources never reach that endpoint and don't need this restriction.
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["locationValue"],
+            message: "Meeting link must be an https URL on an approved domain (e.g. zoom.us).",
           });
         }
       } catch {

@@ -104,3 +104,21 @@ export const bookingCreationLimiter = rateLimit({
     },
   }),
 });
+
+/**
+ * Session join tier — GET /public/bookings/:bookingId/join (public, unauthenticated).
+ * Entropy of bookingId+sessionToken makes brute force infeasible regardless, but this
+ * keeps probing/scanning traffic from sharing budget with legitimate public browsing.
+ */
+export const sessionJoinLimiter = rateLimit({
+  ...withTestBypass({
+    windowMs: Number(process.env.SESSION_JOIN_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
+    max: Number(process.env.SESSION_JOIN_RATE_LIMIT_MAX ?? 30),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message: "Too many requests. Please try again later.",
+    },
+  }),
+});

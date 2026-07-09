@@ -1,7 +1,7 @@
 import express from "express";
 import PublicController from "./public.controller";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import { publicLimiter } from "../../shared/middleware/rateLimit";
+import { publicLimiter, sessionJoinLimiter } from "../../shared/middleware/rateLimit";
 import { validate } from "../../shared/middleware/validate";
 import {
   PublicSlugSchema,
@@ -72,8 +72,8 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/sessions/:slotId/join")
-  .get(PublicController.joinSession)
+  .route("/bookings/:bookingId/join")
+  .get(sessionJoinLimiter, PublicController.joinBooking)
   .all(methodNotAllowed);
 
 export default router;

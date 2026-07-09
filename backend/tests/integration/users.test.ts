@@ -320,6 +320,24 @@ describe("PATCH /api/users/:userId", () => {
     expect(res.body.data.zoomIsvLink).toBe(zoomIsvLink);
   });
 
+  it("rejects a zoomIsvLink on a non-allow-listed domain", async () => {
+    const res = await request(app)
+      .patch(`/api/users/${coachId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ zoomIsvLink: "https://evil-phishing-site.com/fake-meeting" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a plain http zoomIsvLink even on an allowed domain", async () => {
+    const res = await request(app)
+      .patch(`/api/users/${coachId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ zoomIsvLink: "http://zoom.us/j/123456" });
+
+    expect(res.status).toBe(400);
+  });
+
   it("SUPER_ADMIN can change a user's role", async () => {
     const res = await request(app)
       .patch(`/api/users/${coachId}`)

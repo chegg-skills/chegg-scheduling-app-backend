@@ -9,25 +9,22 @@ interface BookingDetailsPanelProps {
   booking: Booking
 }
 
+// booking.meetingJoinUrl is now ALWAYS the student-facing join-redirect URL
+// (`/api/public/bookings/:id/join`), for every meetingLinkSource — never the
+// raw destination. The internal view always resolves the coach's direct link
+// independently instead of trusting that field.
 export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   const fallbackLocation = booking.event?.locationValue ?? ''
 
-  if (booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE') {
-    // Internal view shows the coach's direct Zoom ISV link.
-    // booking.meetingJoinUrl holds the student-facing session page URL — right for emails, not here.
+  if (booking.event?.meetingLinkSource === 'COACH_ISV' || booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE') {
+    // For FIXED_SLOTS, slot.assignedCoach is authoritative — the booking's own
+    // coach relation may be stale if the slot's coach was overridden before
+    // the cascade propagated.
     const slotLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? null
-    return slotLink ?? booking.coach?.zoomIsvLink ?? null
-  }
-
-  if (booking.event?.meetingLinkSource === 'COACH_ISV') {
-    // For FIXED_SLOTS, slot.assignedCoach is authoritative — booking.meetingJoinUrl may be
-    // stale if the slot's coach was overridden before the cascade propagated.
-    const slotLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? null
-    return slotLink ?? booking.meetingJoinUrl ?? (fallbackLocation || null)
+    return slotLink ?? booking.coach?.zoomIsvLink ?? (fallbackLocation || null)
   }
 
   return (
-    booking.meetingJoinUrl ??
     booking.coach?.zoomIsvLink ??
     (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
       ? fallbackLocation

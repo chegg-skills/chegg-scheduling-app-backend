@@ -225,7 +225,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         await lockEvent(tx, eventId);
       }
 
-      const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
+      const { assignedCoachId, coCoachUserIds } =
         await resolveBookingCoachSelection({
           preferredCoachId,
           activeCoaches,
@@ -261,16 +261,14 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         start,
       );
 
-      // Pre-generate sessionToken so SESSION_LANDING_PAGE meetingJoinUrl can be computed and
+      // Pre-generate id + sessionToken so the join-redirect URL can be computed and
       // written inside this transaction — avoids a non-atomic post-transaction patch.
+      const bookingId = randomUUID();
       const sessionToken = randomUUID();
       const slotId = scheduleSlot?.id ?? null;
-      const sessionLandingPageUrl =
-        (event.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
-          ? `${resolveApiBaseUrl()}/api/public/sessions/${slotId}/join?t=${sessionToken}`
-          : null;
 
       const bookingRecord = await createBookingRecord(tx, {
+        id: bookingId,
         studentId: student.id,
         scheduleSlotId: slotId,
         studentName: normalizedStudentName,
@@ -289,7 +287,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         sessionObjectives: savedSessionObjectives,
         customQuestions: savedCustomQuestions,
         customAnswers: savedCustomAnswers,
-        meetingJoinUrl: sessionLandingPageUrl ?? meetingJoinUrl,
+        meetingJoinUrl: `${resolveApiBaseUrl()}/api/public/bookings/${bookingId}/join?t=${sessionToken}`,
         sessionToken,
         status: BookingStatus.CONFIRMED,
       });
@@ -462,7 +460,7 @@ const rescheduleBooking = async (
         await lockEvent(tx, event.id);
       }
 
-      const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
+      const { assignedCoachId, coCoachUserIds } =
         await resolveBookingCoachSelection({
           preferredCoachId: booking.coachUserId ?? undefined,
           activeCoaches,
@@ -495,13 +493,18 @@ const rescheduleBooking = async (
         assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
       }
 
+      // meetingJoinUrl is intentionally NOT recomputed here — it's a stable
+      // pointer (bookingId + sessionToken never change on reschedule), and the
+      // live redirect endpoint already resolves whatever coach/time this
+      // update assigns on every click. Recomputing it here was the source of
+      // the original stale-link bug (an already-sent email couldn't reflect
+      // a later reassignment without this field changing underneath it).
       const updated = await updateBookingById(id, {
         startTime: start,
         endTime: end,
         timezone: timezone || booking.timezone,
         coachUserId: assignedCoachId,
         coCoachUserIds,
-        meetingJoinUrl,
         scheduleSlotId: scheduleSlot?.id ?? null,
         status: BookingStatus.CONFIRMED,
         ...(token && { rescheduleToken: randomUUID() }), // rotate token to invalidate the old link
@@ -792,7 +795,7 @@ const bookFollowUpSession = async (
       }
 
       // Check coach selection and assignment logic inside transaction
-      const { assignedCoachId, meetingJoinUrl, coCoachUserIds } =
+      const { assignedCoachId, coCoachUserIds } =
         await resolveBookingCoachSelection({
           preferredCoachId: originalBooking.coachUserId ?? undefined,
           activeCoaches,
@@ -889,13 +892,11 @@ const bookFollowUpSession = async (
       );
 
       const slotId = scheduleSlot?.id ?? null;
+      const bookingId = randomUUID();
       const sessionToken = randomUUID();
-      const sessionLandingPageUrl =
-        (event.meetingLinkSource as string) === "SESSION_LANDING_PAGE" && slotId
-          ? `${resolveApiBaseUrl()}/api/public/sessions/${slotId}/join?t=${sessionToken}`
-          : null;
 
       const bookingRecord = await createBookingRecord(tx, {
+        id: bookingId,
         studentId: student.id,
         scheduleSlotId: slotId,
         studentName: originalBooking.studentName,
@@ -915,7 +916,7 @@ const bookFollowUpSession = async (
         sessionObjectives: savedSessionObjectives,
         customQuestions: savedCustomQuestions,
         customAnswers: savedCustomAnswers,
-        meetingJoinUrl: sessionLandingPageUrl ?? meetingJoinUrl,
+        meetingJoinUrl: `${resolveApiBaseUrl()}/api/public/bookings/${bookingId}/join?t=${sessionToken}`,
         sessionToken,
         status: BookingStatus.CONFIRMED,
       });
