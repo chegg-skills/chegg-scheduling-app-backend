@@ -317,114 +317,49 @@ export const getPublicBookingDirectory = async (slug: string) => {
   return { id: directory.id, slug: directory.slug, name: directory.name, description: directory.description, sections };
 };
 
-const REVEAL_WINDOW_MS = 15 * 60 * 1000;
+export type SlotJoinRedirect =
+  | { type: "redirect"; url: string }
+  | { type: "status"; state: "invalid" | "booking_cancelled" | "slot_cancelled" | "session_ended" | "no_url" };
 
-export const getSlotJoinInfo = async (slotId: string, token: string) => {
+// Resolves the live join destination for a session link at click time — never throws,
+// every failure mode (bad token, cancelled, ended, no link configured) becomes a
+// status the caller redirects to instead of a JSON error. No time-based gate: the
+// coach is resolved live on every click, so there's nothing to protect by delaying it.
+export const resolveSlotJoinRedirect = async (slotId: string, token: string): Promise<SlotJoinRedirect> => {
   const booking = await prisma.booking.findFirst({
     where: { scheduleSlotId: slotId, sessionToken: token } as any,
-    select: { id: true, status: true, timezone: true },
+    select: { id: true, status: true },
   });
 
   if (!booking) {
-    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Invalid session link.");
+    return { type: "status", state: "invalid" };
   }
 
   if (booking.status === "CANCELLED") {
-    const slot = await prisma.eventScheduleSlot.findUnique({
-      where: { id: slotId },
-      select: {
-        startTime: true,
-        endTime: true,
-        event: {
-          select: {
-            name: true,
-            team: { select: { name: true } },
-          },
-        },
-      },
-    });
-    return {
-      status: "booking_cancelled" as const,
-      sessionDetails: slot
-        ? {
-            eventName: slot.event?.name || "Session",
-            eventDescription: null,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            durationSeconds: 0,
-            teamName: slot.event?.team?.name || null,
-            timezone: booking.timezone,
-            coachName: null,
-            coachAvatarUrl: null,
-          }
-        : null,
-    };
+    return { type: "status", state: "booking_cancelled" };
   }
 
   const slot = await prisma.eventScheduleSlot.findUnique({
     where: { id: slotId },
     select: {
-      startTime: true,
       endTime: true,
       isCancelled: true,
       sessionJoinUrl: true,
-      coachRevealSentAt: true,
-      assignedCoach: { select: { zoomIsvLink: true, firstName: true, lastName: true, avatarUrl: true } },
-      event: {
-        select: {
-          name: true,
-          description: true,
-          durationSeconds: true,
-          meetingLinkSource: true,
-          locationValue: true,
-          allowAnonymousBooking: true,
-          deferCoachReveal: true,
-          team: { select: { name: true } },
-        },
-      },
+      assignedCoach: { select: { zoomIsvLink: true } },
+      event: { select: { locationValue: true } },
     },
   });
 
   if (!slot) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Slot not found.");
+    return { type: "status", state: "invalid" };
   }
 
-  const shouldHideCoach =
-    slot.event?.allowAnonymousBooking ||
-    (slot.event?.deferCoachReveal && !slot.coachRevealSentAt);
-
-  const sessionDetails = {
-    eventName: slot.event?.name || "Session",
-    eventDescription: slot.event?.description || null,
-    startTime: slot.startTime,
-    endTime: slot.endTime,
-    durationSeconds: slot.event?.durationSeconds || 0,
-    teamName: slot.event?.team?.name || null,
-    timezone: booking.timezone,
-    coachName:
-      !shouldHideCoach && slot.assignedCoach
-        ? `${slot.assignedCoach.firstName} ${slot.assignedCoach.lastName}`
-        : null,
-    coachAvatarUrl: (!shouldHideCoach && slot.assignedCoach?.avatarUrl) || null,
-  };
-
   if (slot.isCancelled) {
-    return { status: "slot_cancelled" as const, sessionDetails };
+    return { type: "status", state: "slot_cancelled" };
   }
 
   if (slot.endTime && Date.now() > slot.endTime.getTime()) {
-    return { status: "session_ended" as const, sessionDetails };
-  }
-
-  const msUntilStart = slot.startTime.getTime() - Date.now();
-  if (msUntilStart > REVEAL_WINDOW_MS) {
-    const minutesUntilAvailable = Math.ceil((msUntilStart - REVEAL_WINDOW_MS) / 60000);
-    return {
-      status: "pending" as const,
-      startsAt: slot.startTime,
-      minutesUntilAvailable,
-      sessionDetails,
-    };
+    return { type: "status", state: "session_ended" };
   }
 
   const rawJoinUrl =
@@ -444,7 +379,11 @@ export const getSlotJoinInfo = async (slotId: string, token: string) => {
     }
   })();
 
-  return { status: "available" as const, joinUrl, sessionDetails };
+  if (!joinUrl) {
+    return { type: "status", state: "no_url" };
+  }
+
+  return { type: "redirect", url: joinUrl };
 };
 
 export const getPublicBooking = async (id: string, token: string, mode?: string) => {

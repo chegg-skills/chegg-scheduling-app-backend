@@ -34,6 +34,9 @@ interface SlotStepProps {
   setSelectedTimezone: (tz: string) => void
   eventId?: string
   showDebug?: boolean
+  /** Booking currently being rescheduled — forwarded to SlotDebugPanel so its
+   * own prior time doesn't show as a false conflict for its coach. */
+  excludeBookingId?: string
 }
 
 function makeSlotDayIndicator(availableDates: Set<string> | undefined) {
@@ -76,6 +79,7 @@ export function SlotStep({
   setSelectedTimezone,
   eventId,
   showDebug = false,
+  excludeBookingId,
 }: SlotStepProps) {
   const timeFormat = React.useMemo(
     () =>
@@ -276,6 +280,7 @@ export function SlotStep({
           selectedTimezone={selectedTimezone}
           dateLabel={format(selectedDate, 'MMM d, yyyy')}
           show={showDebug}
+          excludeBookingId={excludeBookingId}
         />
       </Stack>
     </Box>

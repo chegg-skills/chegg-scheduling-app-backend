@@ -254,6 +254,8 @@ const evaluateCoachAvailability = async (
     calendarData?: { weekly: UserWeeklyAvailability[]; exceptions: UserAvailabilityException[] };
     /** Pre-fetched conflicts already filtered for this slot — skips getCoachConflicts when provided. */
     prefetchedConflicts?: BookingWithEventBuffer[];
+    /** Excludes this booking's own record from the conflict check — see getCoachConflicts. */
+    excludeBookingId?: string;
   } = {},
 ): Promise<CoachAvailabilityResult> => {
   const client: AvailabilityClient = options.tx || prisma;

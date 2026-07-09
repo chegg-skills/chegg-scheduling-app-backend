@@ -36,6 +36,11 @@ type ResolveBookingCoachSelectionInput = {
   end: Date;
   allowSharedSessionOverlap: boolean;
   matchedScheduleSlotId?: string | null;
+  /** Excludes this booking's own record from every coach's conflict check —
+   * set on reschedule so the booking's own prior time doesn't count as a
+   * conflict against itself. Left undefined for new bookings and follow-ups,
+   * which have no "self" to exclude. */
+  excludeBookingId?: string;
   tx: Prisma.TransactionClient;
 };
 
@@ -43,14 +48,16 @@ const buildAvailabilityOptions = ({
   event,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
+  excludeBookingId,
   tx,
 }: Pick<
   ResolveBookingCoachSelectionInput,
-  "event" | "allowSharedSessionOverlap" | "matchedScheduleSlotId" | "tx"
+  "event" | "allowSharedSessionOverlap" | "matchedScheduleSlotId" | "excludeBookingId" | "tx"
 >) => ({
   ignoreWeeklySchedule: event.bookingMode === "FIXED_SLOTS",
   eventId: allowSharedSessionOverlap ? event.id : undefined,
   scheduleSlotId: allowSharedSessionOverlap ? (matchedScheduleSlotId ?? null) : undefined,
+  excludeBookingId,
   tx,
 });
 
@@ -60,6 +67,7 @@ const buildAssignmentContext = ({
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
+  excludeBookingId,
   tx,
 }: Omit<
   ResolveBookingCoachSelectionInput,
@@ -73,17 +81,18 @@ const buildAssignmentContext = ({
   bookingMode: event.bookingMode,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
+  excludeBookingId,
 });
 
-const assertHostAvailability = async ({
+const isHostAvailable = async ({
   coachUserId,
   event,
   start,
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
+  excludeBookingId,
   tx,
-  unavailableMessage,
 }: {
   coachUserId: string;
   event: BookableEvent;
@@ -91,9 +100,9 @@ const assertHostAvailability = async ({
   end: Date;
   allowSharedSessionOverlap: boolean;
   matchedScheduleSlotId?: string | null;
+  excludeBookingId?: string;
   tx: Prisma.TransactionClient;
-  unavailableMessage: string;
-}): Promise<void> => {
+}): Promise<boolean> => {
   const weeklyOverride =
     event.bookingMode !== "FIXED_SLOTS"
       ? await tx.eventCoachWeeklyAvailability.findMany({
@@ -102,14 +111,22 @@ const assertHostAvailability = async ({
         })
       : [];
 
-  const available = await isCoachAvailable(
+  return isCoachAvailable(
     coachUserId,
     start,
     end,
-    { ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }), weeklyOverride },
+    {
+      ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, excludeBookingId, tx }),
+      weeklyOverride,
+    },
   );
+};
 
-  if (!available) {
+const assertHostAvailability = async ({
+  unavailableMessage,
+  ...params
+}: Parameters<typeof isHostAvailable>[0] & { unavailableMessage: string }): Promise<void> => {
+  if (!(await isHostAvailable(params))) {
     throw new ErrorHandler(StatusCodes.CONFLICT, unavailableMessage);
   }
 };
@@ -122,6 +139,7 @@ const resolvePreferredSingleHost = async ({
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
+  excludeBookingId,
   tx,
 }: ResolveBookingCoachSelectionInput & {
   preferredCoachId: string;
@@ -144,6 +162,7 @@ const resolvePreferredSingleHost = async ({
     end,
     allowSharedSessionOverlap,
     matchedScheduleSlotId,
+    excludeBookingId,
     tx,
     unavailableMessage: "Coach is not available.",
   });
@@ -162,6 +181,7 @@ const resolveStrategyLead = async ({
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
+  excludeBookingId,
   tx,
 }: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">): Promise<{
   assignedCoachId: string;
@@ -176,6 +196,7 @@ const resolveStrategyLead = async ({
       end,
       allowSharedSessionOverlap,
       matchedScheduleSlotId,
+      excludeBookingId,
       tx,
     }),
   );
@@ -187,19 +208,65 @@ const resolveStrategyLead = async ({
   return result;
 };
 
-const resolveSingleHostSelection = async (
-  input: ResolveBookingCoachSelectionInput,
+const resolveViaStrategyLead = async (
+  input: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">,
 ): Promise<ResolvedBookingCoachSelection> => {
-  if (input.preferredCoachId) {
-    return resolvePreferredSingleHost({ ...input, preferredCoachId: input.preferredCoachId });
-  }
-
   const result = await resolveStrategyLead(input);
   return {
     assignedCoachId: result.assignedCoachId,
     meetingJoinUrl: getMeetingJoinUrl(input.event, result.meetingJoinUrl),
     coCoachUserIds: [],
   };
+};
+
+// Security model: possession of a preferredCoachId doesn't necessarily mean the
+// assignment must be pinned — see the ROUND_ROBIN branch below.
+const resolveSingleHostSelection = async (
+  input: ResolveBookingCoachSelectionInput,
+): Promise<ResolvedBookingCoachSelection> => {
+  if (!input.preferredCoachId) {
+    return resolveViaStrategyLead(input);
+  }
+
+  if (input.event.assignmentStrategy !== AssignmentStrategy.ROUND_ROBIN) {
+    // DIRECT (or an explicit fixed-lead pin): the assignment is a deliberate
+    // binding, not an interchangeable pool — no fallback if the pinned coach
+    // is unavailable.
+    return resolvePreferredSingleHost({ ...input, preferredCoachId: input.preferredCoachId });
+  }
+
+  // ROUND_ROBIN: prefer the previously-assigned coach if still genuinely
+  // available (excludeBookingId means their own prior record at this booking
+  // no longer counts against them) — this keeps a rescheduled/follow-up
+  // session with the same coach when nothing actually has to change. But the
+  // pool is interchangeable by design, so if they're genuinely busy with
+  // something else, fall back to the round-robin strategy (tries every
+  // eligible coach, same as a brand-new booking) instead of failing outright.
+  const preferredHost = input.activeCoaches.find(
+    (candidate) => candidate.coachUserId === input.preferredCoachId,
+  );
+  const preferredAvailable =
+    preferredHost !== undefined &&
+    (await isHostAvailable({
+      coachUserId: input.preferredCoachId,
+      event: input.event,
+      start: input.start,
+      end: input.end,
+      allowSharedSessionOverlap: input.allowSharedSessionOverlap,
+      matchedScheduleSlotId: input.matchedScheduleSlotId,
+      excludeBookingId: input.excludeBookingId,
+      tx: input.tx,
+    }));
+
+  if (preferredHost && preferredAvailable) {
+    return {
+      assignedCoachId: input.preferredCoachId,
+      meetingJoinUrl: getMeetingJoinUrl(input.event, preferredHost.coachUser.zoomIsvLink),
+      coCoachUserIds: [],
+    };
+  }
+
+  return resolveViaStrategyLead(input);
 };
 
 const resolveFixedLeadSelection = async (
@@ -231,6 +298,7 @@ const resolveFixedLeadSelection = async (
     end: input.end,
     allowSharedSessionOverlap: input.allowSharedSessionOverlap,
     matchedScheduleSlotId: input.matchedScheduleSlotId,
+    excludeBookingId: input.excludeBookingId,
     tx: input.tx,
     unavailableMessage: "The fixed lead coach is not available at this time.",
   });
@@ -249,6 +317,7 @@ const resolveCollaborativeCoHosts = async ({
   end,
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
+  excludeBookingId,
   tx,
 }: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId"> & {
   leadCoachId: string;
@@ -273,6 +342,7 @@ const resolveCollaborativeCoHosts = async ({
     end,
     allowSharedSessionOverlap,
     matchedScheduleSlotId,
+    excludeBookingId,
     tx,
   });
 
@@ -298,7 +368,10 @@ const resolveCollaborativeCoHosts = async ({
       candidate.coachUserId,
       start,
       end,
-      { ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, tx }), weeklyOverride: coHostOverride },
+      {
+        ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, excludeBookingId, tx }),
+        weeklyOverride: coHostOverride,
+      },
     );
 
     if (isAvailable) {

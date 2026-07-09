@@ -20,6 +20,10 @@ export const getCoachConflicts = async (
   options: {
     eventId?: string;
     scheduleSlotId?: string | null;
+    /** Excludes this booking's own record — used when rechecking availability
+     * for the booking currently being rescheduled, so its own prior time slot
+     * doesn't count as a conflict against itself. */
+    excludeBookingId?: string;
     tx?: AvailabilityClient;
   } = {},
 ): Promise<BookingWithEventBuffer[]> => {
@@ -37,6 +41,7 @@ export const getCoachConflicts = async (
     where: {
       OR: [{ coachUserId: userId }, { coCoachUserIds: { has: userId } }],
       status: { in: ["CONFIRMED", "PENDING"] },
+      ...(options.excludeBookingId ? { id: { not: options.excludeBookingId } } : {}),
       AND: [
         {
           startTime: { lt: endTime },

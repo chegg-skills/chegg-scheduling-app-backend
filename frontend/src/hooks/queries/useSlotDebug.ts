@@ -10,13 +10,16 @@ export function useSlotDebugReport(
   eventId: string | undefined,
   date: string | null,
   timezone: string,
-  enabled: boolean
+  enabled: boolean,
+  /** Excludes this booking's own record — pass the booking being rescheduled
+   * so its own prior time doesn't show as a false conflict for its coach. */
+  excludeBookingId?: string
 ) {
   return useQuery({
-    queryKey: ['events', eventId, 'slotDebug', date, timezone],
+    queryKey: ['events', eventId, 'slotDebug', date, timezone, excludeBookingId],
     queryFn: ({ signal }) =>
       eventsApi
-        .getSlotDebugReport(eventId as string, date as string, timezone, signal)
+        .getSlotDebugReport(eventId as string, date as string, timezone, signal, excludeBookingId)
         .then((r) => r.data.data ?? null),
     enabled: enabled && !!eventId && !!date,
     staleTime: 30 * 1000,

@@ -336,6 +336,7 @@ export function PublicReschedulePage() {
               availableDates={availableDates}
               isLoadingDates={isLoadingDates}
               onMonthChange={handleMonthChange}
+              excludeBookingId={bookingId}
             />
           </Box>
 

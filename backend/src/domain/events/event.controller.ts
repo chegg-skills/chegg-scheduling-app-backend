@@ -276,7 +276,7 @@ const listSlotBookings = async (req: Request, res: Response) => {
 };
 
 const getSlotDebugReport = async (req: Request, res: Response) => {
-  const { date, timezone } = req.query as Record<string, string>;
+  const { date, timezone, excludeBookingId } = req.query as Record<string, string>;
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     res
       .status(StatusCodes.BAD_REQUEST)
@@ -286,7 +286,7 @@ const getSlotDebugReport = async (req: Request, res: Response) => {
   const report = await availabilityDebugService.getSlotDebugReport(
     req.params.eventId as string,
     date,
-    { timezone: timezone || undefined },
+    { timezone: timezone || undefined, excludeBookingId: excludeBookingId || undefined },
   );
   sendSuccessResponse(res, StatusCodes.OK, report, "Slot availability debug report generated.");
 };

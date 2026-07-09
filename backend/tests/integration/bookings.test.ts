@@ -866,6 +866,157 @@ describe("Booking Domain Integration Tests", () => {
   });
 
   // ─────────────────────────────────────────────────────────────
+  // POST /api/bookings/:bookingId/reschedule (ROUND_ROBIN)
+  //
+  // Covers two bugs fixed together: (1) rescheduleBooking previously only
+  // checked the originally-assigned coach's availability and never fell back
+  // to the round-robin pool; (2) the availability check didn't exclude the
+  // booking's own prior record, so an overlapping reschedule always saw the
+  // original coach as "conflicting with themselves" even with nothing else
+  // booked.
+  // ─────────────────────────────────────────────────────────────
+  describe("POST /api/bookings/:bookingId/reschedule (ROUND_ROBIN)", () => {
+    let rrEventId: string;
+    let bookingId: string;
+    let rescheduleToken: string;
+
+    beforeEach(async () => {
+      const event = await prisma.event.create({
+        data: {
+          name: "Test RR Reschedule Event",
+          teamId,
+          eventTypeId,
+          interactionType: "ONE_TO_ONE",
+          assignmentStrategy: AssignmentStrategy.ROUND_ROBIN,
+          durationSeconds: 3600,
+          locationType: EventLocationType.VIRTUAL,
+          locationValue: "Zoom",
+          createdById: coachId,
+          updatedById: coachId,
+          publicBookingSlug: `test-rr-reschedule-${Date.now()}`,
+          coaches: {
+            create: [
+              { coachUserId: coachId, coachOrder: 1 },
+              { coachUserId: coach2Id, coachOrder: 2 },
+            ],
+          },
+        },
+      });
+      rrEventId = event.id;
+
+      // Both coaches available all day Monday — isolates the tests to booking
+      // conflicts rather than weekly-schedule edges.
+      await prisma.userWeeklyAvailability.create({
+        data: { userId: coachId, dayOfWeek: 1, startTime: "09:00", endTime: "17:00" },
+      });
+      await prisma.userWeeklyAvailability.create({
+        data: { userId: coach2Id, dayOfWeek: 1, startTime: "09:00", endTime: "17:00" },
+      });
+
+      const startTime = getNextUtcWeekdayAt(1, 10, 0); // Monday 10:00-11:00
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "RR Reschedule Student",
+          studentEmail: "rr-reschedule@example.com",
+          teamId,
+          eventId: rrEventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 3600 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+      bookingId = booking.id;
+      rescheduleToken = booking.rescheduleToken!;
+    });
+
+    it("keeps the same coach when rescheduling to an overlapping time with no other conflicts", async () => {
+      // 10:00-11:00 -> 10:15-11:15 overlaps the booking's own original time by
+      // 45 minutes. Without excluding the booking's own record, Coach 1 would
+      // incorrectly appear to conflict with themselves.
+      const newStartTime = getNextUtcWeekdayAt(1, 10, 15);
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: newStartTime.toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.coachUserId).toBe(coachId);
+
+      // No rotation decision was made — the cursor should not have moved.
+      const routing = await prisma.eventRoutingState.findUnique({ where: { eventId: rrEventId } });
+      expect(routing?.nextCoachOrder ?? 1).toBe(1);
+    });
+
+    it("falls back to another round-robin coach when the original coach has a genuine conflict at the new time", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 10, 15);
+
+      // A second, unrelated booking genuinely occupies Coach 1 at the new time.
+      await prisma.booking.create({
+        data: {
+          studentName: "Unrelated Student",
+          studentEmail: "unrelated@example.com",
+          teamId,
+          eventId: rrEventId,
+          coachUserId: coachId,
+          startTime: newStartTime,
+          endTime: new Date(newStartTime.getTime() + 3600 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: newStartTime.toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.coachUserId).toBe(coach2Id);
+
+      // A real rotation decision was made — updateRoutingState's upsert should
+      // have run (coach2 has the highest coachOrder, so the cursor wraps back
+      // to 1 — the same as its unset default, so we assert the row now exists
+      // rather than asserting a specific value).
+      const routing = await prisma.eventRoutingState.findUnique({ where: { eventId: rrEventId } });
+      expect(routing).not.toBeNull();
+    });
+
+    it("returns 409 when every coach in the pool is genuinely busy at the new time", async () => {
+      const newStartTime = getNextUtcWeekdayAt(1, 10, 15);
+
+      await prisma.booking.createMany({
+        data: [
+          {
+            studentName: "Unrelated Student 1",
+            studentEmail: "unrelated1@example.com",
+            teamId,
+            eventId: rrEventId,
+            coachUserId: coachId,
+            startTime: newStartTime,
+            endTime: new Date(newStartTime.getTime() + 3600 * 1000),
+            status: "CONFIRMED",
+          },
+          {
+            studentName: "Unrelated Student 2",
+            studentEmail: "unrelated2@example.com",
+            teamId,
+            eventId: rrEventId,
+            coachUserId: coach2Id,
+            startTime: newStartTime,
+            endTime: new Date(newStartTime.getTime() + 3600 * 1000),
+            status: "CONFIRMED",
+          },
+        ],
+      });
+
+      const res = await request(app)
+        .post(`/api/bookings/${bookingId}/reschedule`)
+        .send({ startTime: newStartTime.toISOString(), token: rescheduleToken });
+
+      expect(res.status).toBe(409);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
   // POST /api/bookings/:bookingId/cancel
   // ─────────────────────────────────────────────────────────────
   describe("POST /api/bookings/:bookingId/cancel", () => {

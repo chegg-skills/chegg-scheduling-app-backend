@@ -284,5 +284,13 @@ const resolveFrontendUrl = (): string => {
   return rawUrl.replace(/\/$/, "");
 };
 
-export { publishNotification, publishNotificationSafely, resolveFrontendUrl };
+// Public base URL embedded in "Join Session" email links — must be reachable
+// directly by students, not just internally.
+const resolveApiBaseUrl = (): string => {
+  const rawUrl = process.env.API_BASE_URL ?? process.env.PUBLIC_API_URL ?? "http://localhost:4000";
+
+  return rawUrl.replace(/\/$/, "");
+};
+
+export { publishNotification, publishNotificationSafely, resolveFrontendUrl, resolveApiBaseUrl };
 export type { NotificationPayload, NotificationType };
