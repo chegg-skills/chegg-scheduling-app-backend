@@ -315,6 +315,31 @@ export const normalizeStudentEmailAddress = (studentEmail: string): string => {
   return normalizedStudentEmail;
 };
 
+export const assertStudentNotOverlapping = async (
+  tx: Prisma.TransactionClient,
+  studentEmail: string,
+  start: Date,
+  end: Date,
+  excludeBookingId?: string,
+): Promise<void> => {
+  const conflict = await tx.booking.findFirst({
+    where: {
+      studentEmail,
+      status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+      startTime: { lt: end },
+      endTime: { gt: start },
+      ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
+    },
+    select: { id: true },
+  });
+  if (conflict) {
+    throw new ErrorHandler(
+      StatusCodes.CONFLICT,
+      "You already have a session booked during this time. Please choose a different time slot or cancel your existing booking before making another reservation.",
+    );
+  }
+};
+
 export const parseBookingStartTime = (startTime: string | Date): Date => {
   const start = new Date(startTime);
 
