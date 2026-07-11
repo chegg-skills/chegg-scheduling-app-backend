@@ -9,30 +9,29 @@ interface BookingDetailsPanelProps {
   booking: Booking
 }
 
+// booking.meetingJoinUrl is now ALWAYS the student-facing join-redirect URL
+// (`/api/public/bookings/:id/join`), for every meetingLinkSource — never the
+// raw destination. The internal view always resolves the coach's direct link
+// independently instead of trusting that field.
 export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   const fallbackLocation = booking.event?.locationValue ?? ''
 
-  if (booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE') {
-    // Internal view shows the coach's direct Zoom ISV link.
-    // booking.meetingJoinUrl holds the student-facing session page URL — right for emails, not here.
-    const slotLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? null
-    return slotLink ?? booking.coach?.zoomIsvLink ?? null
-  }
+  // For FIXED_SLOTS, slot.assignedCoach is authoritative — the booking's own
+  // coach relation may be stale if the slot's coach was overridden before
+  // the cascade propagated.
+  const coachZoomLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? booking.coach?.zoomIsvLink ?? null
 
   if (booking.event?.meetingLinkSource === 'COACH_ISV') {
-    // For FIXED_SLOTS, slot.assignedCoach is authoritative — booking.meetingJoinUrl may be
-    // stale if the slot's coach was overridden before the cascade propagated.
-    const slotLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? null
-    return slotLink ?? booking.meetingJoinUrl ?? (fallbackLocation || null)
+    return coachZoomLink ?? (fallbackLocation || null)
   }
 
-  return (
-    booking.meetingJoinUrl ??
-    booking.coach?.zoomIsvLink ??
-    (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
-      ? fallbackLocation
-      : null)
-  )
+  // EVENT_LOCATION: the shared location link is authoritative — must match what the
+  // student's join redirect actually resolves to (backend's getMeetingJoinUrl), or the
+  // coach and student can end up joining different meeting rooms.
+  const virtualLocationLink =
+    booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http') ? fallbackLocation : null
+
+  return virtualLocationLink ?? coachZoomLink
 }
 
 export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {

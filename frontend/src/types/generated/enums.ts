@@ -55,9 +55,8 @@ export const InteractionTypeValues = [
   'MANY_TO_MANY',
 ] as const
 
-export type MeetingLinkSource = 'COACH_ISV' | 'EVENT_LOCATION' | 'SESSION_LANDING_PAGE'
+export type MeetingLinkSource = 'COACH_ISV' | 'EVENT_LOCATION'
 export const MeetingLinkSourceValues = [
   'COACH_ISV',
   'EVENT_LOCATION',
-  'SESSION_LANDING_PAGE',
 ] as const

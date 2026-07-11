@@ -42,7 +42,7 @@ export function AllowAnonymousBookingField({ isLocked }: AllowAnonymousBookingFi
       >
         {isLocked
           ? 'Locked — sessions have been booked under this setting.'
-          : 'Students see no coach name or personal join URL at booking time. Any pool coach can log the completed session and assign themselves retroactively.'}
+          : "Students receive a join link immediately upon booking; the coach's identity remains hidden until the link is clicked. Any pool coach may log the completed session and assign themselves as host retroactively."}
       </Typography>
     </Stack>
   )

@@ -113,8 +113,9 @@ export const eventFormSchema = z
     }
 
     // fixedLeadCoachId is only relevant for multi-coach COACH_AVAILABILITY types (MANY_TO_ONE)
-    // where FIXED_LEAD leadership is derived from DIRECT assignment. Single-coach types
-    // (ONE_TO_ONE, ONE_TO_MANY) use SINGLE_COACH leadership and don't need a fixed lead.
+    // where FIXED_LEAD leadership is derived from DIRECT assignment. ONE_TO_ONE uses
+    // SINGLE_COACH leadership and doesn't need a fixed lead. FIXED_SLOTS types (MANY_TO_MANY)
+    // assign coaches per-slot, so fixedLeadCoachId is optional there too.
     if (
       caps &&
       caps.multipleCoaches &&
@@ -130,6 +131,23 @@ export const eventFormSchema = z
       })
     }
 
+    // Single-coach group sessions (ONE_TO_MANY) with DIRECT assignment must specify a fixed
+    // lead coach — unlike ROUND_ROBIN (which auto-assigns a coach per slot), DIRECT has no
+    // equivalent auto-assignment, so this is what every new slot defaults to.
+    if (
+      caps &&
+      !caps.multipleCoaches &&
+      caps.multipleParticipants &&
+      values.assignmentStrategy === 'DIRECT' &&
+      !values.fixedLeadCoachId
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['fixedLeadCoachId'],
+        message: 'A default host is required when using Direct assignment for this event type.',
+      })
+    }
+
     if (values.allowAnonymousBooking && values.deferCoachReveal) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -141,19 +159,19 @@ export const eventFormSchema = z
     if (
       values.allowAnonymousBooking &&
       values.meetingLinkSource !== 'EVENT_LOCATION' &&
-      values.meetingLinkSource !== 'SESSION_LANDING_PAGE'
+      values.meetingLinkSource !== 'COACH_ISV'
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['meetingLinkSource'],
-        message: 'Anonymous booking requires the Event Location URL or Dynamic Session Link as the meeting link source.',
+        message: "Anonymous booking requires the Event Location URL or Coach's Zoom Link as the meeting link source.",
       })
     }
 
-    // SESSION_LANDING_PAGE derives the join URL from the assigned coach at session time — no locationValue needed
+    // COACH_ISV derives the join URL from the assigned coach at click time — no locationValue needed.
     if (
       values.allowAnonymousBooking &&
-      values.meetingLinkSource !== 'SESSION_LANDING_PAGE' &&
+      values.meetingLinkSource !== 'COACH_ISV' &&
       !values.locationValue?.trim()
     ) {
       ctx.addIssue({

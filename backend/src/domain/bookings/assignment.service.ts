@@ -30,7 +30,6 @@ export type AssignmentContext = {
 
 type AssignmentResult = {
   assignedCoachId: string;
-  meetingJoinUrl: string | null;
 };
 
 const ensureCandidatesExist = (candidates: CoachCandidate[]): void => {
@@ -73,7 +72,6 @@ const isCandidateAvailable = async (
 
 const toAssignmentResult = (candidate: CoachCandidate): AssignmentResult => ({
   assignedCoachId: candidate.coachUserId,
-  meetingJoinUrl: candidate.coachUser.zoomIsvLink,
 });
 
 export const getRoutingState = async (

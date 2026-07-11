@@ -39,7 +39,7 @@ describe("renderTemplate — placeholder substitution", () => {
       studentName: "Alice",
       eventName: "Career Coaching",
       startTime: "Mon Jan 1, 10:00 AM",
-      coHostDetailsHtml: "",
+      coCoachDetailsHtml: "",
     });
     expect(result.html).toContain("Alice");
     expect(result.html).toContain("Career Coaching");
@@ -58,9 +58,9 @@ describe("renderTemplate — HTML escaping in html output", () => {
     expect(result.html).toContain("&quot;xss&#039;s&quot;");
   });
 
-  it("does NOT escape values in RAW_HTML_FIELDS (coHostDetailsHtml)", () => {
-    // coHostDetailsHtml is in RAW_HTML_FIELDS — its value must pass through unescaped.
-    // Use the BOOKING_CONFIRMED template which contains {{coHostDetailsHtml}}.
+  it("does NOT escape values in RAW_HTML_FIELDS (coCoachDetailsHtml)", () => {
+    // coCoachDetailsHtml is in RAW_HTML_FIELDS — its value must pass through unescaped.
+    // Use the BOOKING_CONFIRMED template which contains {{coCoachDetailsHtml}}.
     const rawHtml = "<strong>Coach Name</strong>";
     const result = renderTemplate("BOOKING_CONFIRMED", {
       studentName: "Alice",
@@ -71,7 +71,7 @@ describe("renderTemplate — HTML escaping in html output", () => {
       duration: "30 min",
       location: "Zoom",
       rescheduleUrl: "https://example.com",
-      coHostDetailsHtml: rawHtml,
+      coCoachDetailsHtml: rawHtml,
     });
 
     expect(result.html).toContain(rawHtml);
@@ -90,7 +90,7 @@ describe("renderTemplate — HTML escaping in html output", () => {
     const specialChars = "Tom & Jerry <the show>";
     const result = renderTemplate("BOOKING_CONFIRMED", {
       eventName: specialChars,
-      coHostDetailsHtml: "",
+      coCoachDetailsHtml: "",
     });
     expect(result.subject).toContain(specialChars);
     expect(result.subject).not.toContain("&amp;");
@@ -103,7 +103,7 @@ describe("renderTemplate — cancelUrl placement and escaping", () => {
   it("renders cancelUrl in BOOKING_CONFIRMED html and text", () => {
     const result = renderTemplate("BOOKING_CONFIRMED", {
       cancelUrl: CANCEL_URL,
-      coHostDetailsHtml: "",
+      coCoachDetailsHtml: "",
     });
     expect(result.html).toContain(CANCEL_URL);
     expect(result.text).toContain(CANCEL_URL);
@@ -112,7 +112,7 @@ describe("renderTemplate — cancelUrl placement and escaping", () => {
   it("renders cancelUrl in BOOKING_RESCHEDULED html", () => {
     const result = renderTemplate("BOOKING_RESCHEDULED", {
       cancelUrl: CANCEL_URL,
-      coHostDetailsHtml: "",
+      coCoachDetailsHtml: "",
     });
     expect(result.html).toContain(CANCEL_URL);
   });
@@ -146,7 +146,7 @@ describe("renderTemplate — cancelUrl placement and escaping", () => {
     const urlWithAmpersand = "https://app.example.com/cancel/id?token=t&extra=1";
     const result = renderTemplate("BOOKING_CONFIRMED", {
       cancelUrl: urlWithAmpersand,
-      coHostDetailsHtml: "",
+      coCoachDetailsHtml: "",
     });
     // & in a URL gets HTML-escaped to &amp; in html output (cancelUrl is not a raw field)
     expect(result.html).toContain("&amp;extra=1");

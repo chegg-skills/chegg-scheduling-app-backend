@@ -211,7 +211,7 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
   },
   {
-    path: '/session/:slotId/status',
+    path: '/session/status',
     element: <PublicLayout maxWidth="sm" />,
     children: [{ path: '', element: renderLazyPage(SessionStatusPage) }],
     errorElement: <RouteErrorPage />,

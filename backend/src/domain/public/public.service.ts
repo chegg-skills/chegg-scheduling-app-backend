@@ -7,6 +7,7 @@ import {
   assertCancelTokenValid,
   assertRescheduleTokenValid,
   bookingInclude,
+  getMeetingJoinUrl,
 } from "../bookings/booking.shared";
 import { getDefaultQuestionTexts } from "../systemSettings/bookingQuestion.service";
 
@@ -321,14 +322,27 @@ export type SlotJoinRedirect =
   | { type: "redirect"; url: string }
   | { type: "status"; state: "invalid" | "booking_cancelled" | "slot_cancelled" | "session_ended" | "no_url" };
 
-// Resolves the live join destination for a session link at click time — never throws,
-// every failure mode (bad token, cancelled, ended, no link configured) becomes a
-// status the caller redirects to instead of a JSON error. No time-based gate: the
-// coach is resolved live on every click, so there's nothing to protect by delaying it.
-export const resolveSlotJoinRedirect = async (slotId: string, token: string): Promise<SlotJoinRedirect> => {
+// Security model: this link is a *standing* pointer, not a single-use magic link —
+// possession of (bookingId, sessionToken) authorizes joining this specific session
+// at any point until it's cancelled or its endTime passes, by design (a re-click
+// after a coach reassignment must still work). This is a deliberate tradeoff, not
+// an oversight — do not "fix" it by making the token single-use.
+export const resolveBookingJoinRedirect = async (bookingId: string, token: string): Promise<SlotJoinRedirect> => {
   const booking = await prisma.booking.findFirst({
-    where: { scheduleSlotId: slotId, sessionToken: token } as any,
-    select: { id: true, status: true },
+    where: { id: bookingId, sessionToken: token },
+    select: {
+      status: true,
+      endTime: true,
+      coach: { select: { zoomIsvLink: true } },
+      scheduleSlot: {
+        select: {
+          isCancelled: true,
+          sessionJoinUrl: true,
+          assignedCoach: { select: { zoomIsvLink: true } },
+        },
+      },
+      event: { select: { meetingLinkSource: true, locationValue: true } },
+    },
   });
 
   if (!booking) {
@@ -339,41 +353,31 @@ export const resolveSlotJoinRedirect = async (slotId: string, token: string): Pr
     return { type: "status", state: "booking_cancelled" };
   }
 
-  const slot = await prisma.eventScheduleSlot.findUnique({
-    where: { id: slotId },
-    select: {
-      endTime: true,
-      isCancelled: true,
-      sessionJoinUrl: true,
-      assignedCoach: { select: { zoomIsvLink: true } },
-      event: { select: { locationValue: true } },
-    },
-  });
-
-  if (!slot) {
-    return { type: "status", state: "invalid" };
-  }
-
-  if (slot.isCancelled) {
+  // Defense in depth — cancelling a slot already cascades to booking.status via
+  // cancelEventScheduleSlot's transaction, so this should rarely fire on its own.
+  if (booking.scheduleSlot?.isCancelled) {
     return { type: "status", state: "slot_cancelled" };
   }
 
-  if (slot.endTime && Date.now() > slot.endTime.getTime()) {
+  if (booking.endTime && Date.now() > booking.endTime.getTime()) {
     return { type: "status", state: "session_ended" };
   }
 
-  const rawJoinUrl =
-    slot.sessionJoinUrl ||
-    slot.assignedCoach?.zoomIsvLink ||
-    slot.event?.locationValue ||
-    null;
+  // For FIXED_SLOTS bookings, the slot itself carries the assigned coach
+  // (booking.coachUserId is null there) — the slot's pinned coach must be
+  // checked before falling back to the booking's own coach relation. This
+  // resolved coach link is still routed through getMeetingJoinUrl below so
+  // EVENT_LOCATION events keep preferring the shared location over a coach's
+  // personal link, matching the admin-facing display (BookingDetailsPanel).
+  const coachZoomLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? booking.coach?.zoomIsvLink ?? null;
 
-  // Only allow http/https URLs to prevent javascript: or other dangerous schemes
+  const rawJoinUrl = booking.scheduleSlot?.sessionJoinUrl || getMeetingJoinUrl(booking.event, coachZoomLink);
+
+  // https only — no plaintext downgrade to a coach's meeting room.
   const joinUrl = (() => {
     if (!rawJoinUrl) return null;
     try {
-      const u = new URL(rawJoinUrl);
-      return u.protocol === "https:" || u.protocol === "http:" ? rawJoinUrl : null;
+      return new URL(rawJoinUrl).protocol === "https:" ? rawJoinUrl : null;
     } catch {
       return null;
     }
@@ -400,6 +404,24 @@ export const getPublicBooking = async (id: string, token: string, mode?: string)
     assertCancelTokenValid(booking);
   } else {
     assertRescheduleTokenValid(booking);
+  }
+
+  // Defer Coach Reveal: never expose the assigned coach's identity over the public
+  // cancel/reschedule API before the explicit reveal has been sent — mirrors the
+  // isDeferredReveal gating already enforced for student-facing notifications.
+  const isRevealPending =
+    booking.event?.deferCoachReveal === true && !booking.scheduleSlot?.coachRevealSentAt;
+
+  if (isRevealPending) {
+    booking.coach = null;
+    if (booking.scheduleSlot) {
+      booking.scheduleSlot.assignedCoach = null;
+    }
+  } else {
+    // The raw personal Zoom link is never public-safe, reveal-pending or not —
+    // only the masked meetingJoinUrl redirect belongs on the public API.
+    if (booking.coach) booking.coach.zoomIsvLink = null;
+    if (booking.scheduleSlot?.assignedCoach) booking.scheduleSlot.assignedCoach.zoomIsvLink = null;
   }
 
   return booking;

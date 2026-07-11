@@ -39,16 +39,23 @@ export function useScheduleSlotForm({ slot, isOpen }: UseScheduleSlotFormProps) 
     setNewSlotDate(value)
   }
 
+  // In edit mode, suppress the past-date error while the user hasn't changed the time yet
+  // (the slot may already be in the past — we allow viewing it, just not moving it further back).
+  const originalSlotTime = slot ? utcToZonedString(new Date(slot.startTime), browserTimezone) : null
+  const isUnchangedPastSlot = !!originalSlotTime && newSlotDate === originalSlotTime
+  const isPast = !!newSlotDate && !isUnchangedPastSlot && new Date(newSlotDate) < new Date()
+  const error = isPast ? 'Session start time cannot be in the past.' : null
+
   return {
     newSlotDate,
     newSlotCapacity,
     assignedCoachId,
     recurrence,
-    error: null,
+    error,
     setNewSlotCapacity,
     setAssignedCoachId,
     setRecurrence,
     handleDateChange,
-    isValid: !!newSlotDate,
+    isValid: !!newSlotDate && !error,
   }
 }

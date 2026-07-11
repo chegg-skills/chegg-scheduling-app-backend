@@ -1,12 +1,37 @@
-import type { EmailTemplateMap } from "../types/notification";
+import type { EmailTemplate, NotificationType } from "../types/notification";
 import { wrapLayout, BRAND_ORANGE } from "./layout";
-import { detailRow, inlineLink } from "./partials";
+import { detailRow, rescheduleCancelFooter } from "./partials";
 
-export const bookingTemplates: EmailTemplateMap = {
+// BOOKING_CANCELLED_DEFERRED and BOOKING_CANCELLED_ANONYMOUS render identically —
+// neither one shows coach identity (deferred: not yet revealed; anonymous: never
+// shown), so there's nothing to distinguish in the copy. One shared definition
+// instead of two independently-maintained copies that could silently drift.
+const genericCancellationEmail: EmailTemplate = {
+  subject: "Session Cancelled: {{eventName}}",
+  preheader: "Your booking for {{eventName}} has been cancelled.",
+  text: "Hi {{studentName}}, your booking for {{eventName}} with {{teamName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled.{{cancellationDetails}} You can book a new session at any time.",
+  html: wrapLayout(
+    "Session Cancelled",
+    `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>This is to inform you that your upcoming booking has been cancelled.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+         {{cancellationDetailsHtml}}
+       </p>
+       <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>`,
+    "Your booking for {{eventName}} has been cancelled.",
+    { text: "Book Again", url: "{{publicBookingUrl}}" },
+  ),
+};
+
+export const bookingTemplates = {
   BOOKING_CONFIRMED: {
     subject: "Confirmed: {{eventName}} with {{coachName}}",
     preheader: "Your session is confirmed for {{startTime}}.",
-    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}).{{coHostDetails}} Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
+    text: "Hi {{studentName}}, your booking for {{eventName}} is confirmed for {{startTime}} ({{timezone}}).{{coCoachDetails}} Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
     html: wrapLayout(
       "Booking Confirmation",
       `<p>Hi <strong>{{studentName}}</strong>,</p>
@@ -15,11 +40,11 @@ export const bookingTemplates: EmailTemplateMap = {
          ${detailRow("Time", "{{startTime}}")}
          ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Team", "{{teamName}}")}
-         {{coHostDetailsHtml}}
+         {{coCoachDetailsHtml}}
        </p>`,
       "Your session is confirmed for {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -35,11 +60,31 @@ export const bookingTemplates: EmailTemplateMap = {
          ${detailRow("New Time", "{{startTime}}")}
          ${detailRow("Timezone", "{{timezone}}")}
          ${detailRow("Coach", "{{coachName}}")}
-         {{coHostDetailsHtml}}
+         {{coCoachDetailsHtml}}
        </p>`,
       "Your session has been rescheduled to {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change it again? ${inlineLink("Reschedule again", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(true),
+    ),
+  },
+
+  BOOKING_RESCHEDULED_DEFERRED: {
+    subject: "Session Update: {{eventName}} has a new time",
+    preheader: "Your session has been rescheduled. Coach details will follow shortly before the session.",
+    text: "Hi {{studentName}}, your session for {{eventName}} with {{teamName}} has been rescheduled to {{startTime}} ({{timezone}}). You will receive coach and join details shortly before the session starts. Reschedule: {{rescheduleUrl}} | Cancel: {{cancelUrl}}",
+    html: wrapLayout(
+      "Session Rescheduled",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your session for <strong>{{eventName}}</strong> with the <strong>{{teamName}}</strong> has been successfully rescheduled.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("New Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+       </p>
+       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>`,
+      "Your session has been rescheduled. Coach details coming soon.",
+      undefined,
+      rescheduleCancelFooter(true),
     ),
   },
 
@@ -60,6 +105,26 @@ export const bookingTemplates: EmailTemplateMap = {
        <p>Please update your calendar accordingly.</p>`,
       "Your session has been moved to {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
+    ),
+  },
+
+  SLOT_RESCHEDULED_DEFERRED: {
+    subject: "Session Update: {{eventName}} has been rescheduled",
+    preheader: "Your session has been moved to {{startTime}}. Coach details will follow shortly before the session.",
+    text: "Hi {{studentName}}, your session for {{eventName}} with {{teamName}} has been rescheduled by the organiser to {{startTime}} ({{timezone}}). You will receive coach and join details shortly before the session starts.",
+    html: wrapLayout(
+      "Session Rescheduled",
+      `<p>Hi <strong>{{studentName}}</strong>,</p>
+       <p>Your upcoming session has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         ${detailRow("Event", "{{eventName}}")}
+         ${detailRow("New Time", "{{startTime}}")}
+         ${detailRow("Timezone", "{{timezone}}")}
+         ${detailRow("Team", "{{teamName}}")}
+       </p>
+       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>`,
+      "Your session has been moved to {{startTime}}. Coach details coming soon.",
+      undefined,
     ),
   },
 
@@ -162,26 +227,7 @@ export const bookingTemplates: EmailTemplateMap = {
     ),
   },
 
-  BOOKING_CANCELLED_DEFERRED: {
-    subject: "Session Cancelled: {{eventName}}",
-    preheader: "Your booking for {{eventName}} has been cancelled.",
-    text: "Hi {{studentName}}, your booking for {{eventName}} with {{teamName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled.{{cancellationDetails}} You can book a new session at any time.",
-    html: wrapLayout(
-      "Session Cancelled",
-      `<p>Hi <strong>{{studentName}}</strong>,</p>
-       <p>This is to inform you that your upcoming booking has been cancelled.</p>
-       <p style="margin-top: 16px;">
-         ${detailRow("Event", "{{eventName}}")}
-         ${detailRow("Time", "{{startTime}}")}
-         ${detailRow("Timezone", "{{timezone}}")}
-         ${detailRow("Team", "{{teamName}}")}
-         {{cancellationDetailsHtml}}
-       </p>
-       <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>`,
-      "Your booking for {{eventName}} has been cancelled.",
-      { text: "Book Again", url: "{{publicBookingUrl}}" },
-    ),
-  },
+  BOOKING_CANCELLED_DEFERRED: genericCancellationEmail,
 
   BOOKING_NO_SHOW: {
     subject: "Booking Marked: No-Show ({{eventName}})",
@@ -217,8 +263,8 @@ export const bookingTemplates: EmailTemplateMap = {
        </p>
        <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>`,
       "Your session is confirmed. Coach details coming soon.",
-      { text: "View Booking", url: "{{frontendUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      undefined,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -276,30 +322,11 @@ export const bookingTemplates: EmailTemplateMap = {
        </p>`,
       "Your session is confirmed for {{startTime}}.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
-  BOOKING_CANCELLED_ANONYMOUS: {
-    subject: "Session Cancelled: {{eventName}}",
-    preheader: "Your booking for {{eventName}} has been cancelled.",
-    text: "Hi {{studentName}}, your booking for {{eventName}} with {{teamName}} scheduled at {{startTime}} ({{timezone}}) has been cancelled.{{cancellationDetails}} You can book a new session at any time.",
-    html: wrapLayout(
-      "Session Cancelled",
-      `<p>Hi <strong>{{studentName}}</strong>,</p>
-       <p>This is to inform you that your upcoming booking has been cancelled.</p>
-       <p style="margin-top: 16px;">
-         ${detailRow("Event", "{{eventName}}")}
-         ${detailRow("Time", "{{startTime}}")}
-         ${detailRow("Timezone", "{{timezone}}")}
-         ${detailRow("Team", "{{teamName}}")}
-         {{cancellationDetailsHtml}}
-       </p>
-       <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>`,
-      "Your booking for {{eventName}} has been cancelled.",
-      { text: "Book Again", url: "{{publicBookingUrl}}" },
-    ),
-  },
+  BOOKING_CANCELLED_ANONYMOUS: genericCancellationEmail,
 
   ANONYMOUS_SLOT_CANCELLED_POOL: {
     subject: "Slot Cancelled: {{eventName}} on {{startTime}}",
@@ -312,4 +339,4 @@ export const bookingTemplates: EmailTemplateMap = {
       "The {{startTime}} slot for {{eventName}} has been cancelled.",
     ),
   },
-};
+} satisfies Partial<Record<NotificationType, EmailTemplate>>;

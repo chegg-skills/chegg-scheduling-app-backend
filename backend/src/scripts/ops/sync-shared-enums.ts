@@ -23,8 +23,8 @@ const SHARED_ENUMS = [
   "MeetingLinkSource",
 ] as const;
 
-const SCHEMA_PATH = resolve(__dirname, "../../prisma/schema.prisma");
-const OUTPUT_PATH = resolve(__dirname, "../../../frontend/src/types/generated/enums.ts");
+const SCHEMA_PATH = resolve(__dirname, "../../../prisma/schema.prisma");
+const OUTPUT_PATH = resolve(__dirname, "../../../../frontend/src/types/generated/enums.ts");
 
 const parseEnums = (schema: string): Map<string, string[]> => {
   const enums = new Map<string, string[]>();

@@ -113,13 +113,17 @@ export async function markNotificationAsFailed(
  * select and send the same reminder twice. Mirrors the backend outbox worker's claim.
  */
 export async function claimDueScheduledNotifications(limit: number): Promise<Notification[]> {
+  // "sendAt"/"lastAttemptAt" are naive (timestamp without time zone) columns storing UTC
+  // wall-clock values. Bare now() is timestamptz and gets implicitly cast using the
+  // session's TIMEZONE setting, which silently shifts it off UTC on any non-UTC server —
+  // `now() AT TIME ZONE 'UTC'` forces the cast to the same UTC convention the column uses.
   return prisma.$queryRaw<Notification[]>(Prisma.sql`
     UPDATE "Notification"
-    SET status = 'SENDING'::"NotificationStatus", "lastAttemptAt" = now()
+    SET status = 'SENDING'::"NotificationStatus", "lastAttemptAt" = (now() AT TIME ZONE 'UTC')
     WHERE id IN (
       SELECT id FROM "Notification"
       WHERE status IN ('SCHEDULED', 'RETRYING')
-        AND "sendAt" <= now()
+        AND "sendAt" <= (now() AT TIME ZONE 'UTC')
       ORDER BY "sendAt" ASC
       LIMIT ${limit}
       FOR UPDATE SKIP LOCKED
@@ -136,7 +140,7 @@ export async function reclaimStaleSendingNotifications(): Promise<number> {
   const cutoff = new Date(Date.now() - SEND_LEASE_MS);
   const count = await prisma.$executeRaw(Prisma.sql`
     UPDATE "Notification"
-    SET status = 'RETRYING'::"NotificationStatus", "sendAt" = now(), "updatedAt" = now()
+    SET status = 'RETRYING'::"NotificationStatus", "sendAt" = (now() AT TIME ZONE 'UTC'), "updatedAt" = (now() AT TIME ZONE 'UTC')
     WHERE status = 'SENDING'::"NotificationStatus"
       AND "lastAttemptAt" < ${cutoff}
   `);

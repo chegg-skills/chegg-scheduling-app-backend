@@ -78,6 +78,47 @@ const getBookingNotificationVariables = async (
   return variables;
 };
 
+type SafeStudentVariablesOptions = {
+  /** Include the masked meetingJoinUrl redirect — safe pre-reveal, it's opaque either way. */
+  includeMeetingLink?: boolean;
+  /** Include frontendUrl/rescheduleUrl/cancelUrl together — they're always needed as a set. */
+  includeCancelReschedule?: boolean;
+};
+
+/**
+ * The single source of truth for which fields are safe to send a student before a
+ * booking's coach identity may be disclosed (anonymous events, or deferred-reveal
+ * events pre-reveal). Every field list here is copied verbatim from the four call
+ * sites this replaces — never coachName, never a raw coach-specific join link.
+ * Replaces four independently hand-typed field lists that previously had to be kept
+ * in sync by hand across separate functions, which is exactly how a missing
+ * cancelUrl bug shipped once already.
+ */
+const buildSafeStudentVariables = (
+  full: Awaited<ReturnType<typeof getBookingNotificationVariables>>,
+  options: SafeStudentVariablesOptions = {},
+) => {
+  const variables: any = {
+    studentName: full.studentName,
+    eventName: full.eventName,
+    teamName: full.teamName,
+    startTime: full.startTime,
+    timezone: full.timezone,
+  };
+
+  if (options.includeMeetingLink) {
+    variables.meetingJoinUrl = full.meetingJoinUrl;
+  }
+
+  if (options.includeCancelReschedule) {
+    variables.frontendUrl = full.frontendUrl;
+    variables.rescheduleUrl = full.rescheduleUrl;
+    variables.cancelUrl = full.cancelUrl;
+  }
+
+  return variables;
+};
+
 /**
  * Resolve the active co-host users (id/email/timezone) for a set of co-coach user ids.
  * Single source of truth for the recipient lookup that several notification paths share.
@@ -340,6 +381,24 @@ type BookingNotificationOpts = {
 };
 
 /**
+ * The single definition of "is this booking still anonymous / still awaiting
+ * coach reveal" — used by every booking-level notification function that must
+ * decide between a coach-identifying template and a masked one. Anonymous always
+ * wins (an anonymous event can never also be deferCoachReveal, enforced at the
+ * schema level, but the explicit precedence here keeps that guarantee visible
+ * rather than assumed).
+ */
+const resolveRevealPolicy = (
+  booking: SafeBooking,
+  opts?: BookingNotificationOpts,
+): { isAnonymous: boolean; isDeferredReveal: boolean } => {
+  const isAnonymous = booking.event?.allowAnonymousBooking === true;
+  const isDeferredReveal =
+    !isAnonymous && booking.event?.deferCoachReveal === true && !opts?.slotRevealedAt;
+  return { isAnonymous, isDeferredReveal };
+};
+
+/**
  * Publishes the confirmation/assignment emails for a freshly created booking.
  *
  * Returns `true` only when every publish (and reminder scheduling) succeeded.
@@ -353,14 +412,15 @@ const queueBookingCreatedNotifications = async (
   booking: SafeBooking,
   opts?: BookingNotificationOpts,
 ): Promise<boolean> => {
+
+
   const keyFor = (role: string, recipient: string) =>
     `booking:${booking.id}:created:${role}:${recipient}`;
 
   try {
     const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
     const config = await getTeamNotificationConfig(booking.teamId);
-    const isAnonymous = booking.event?.allowAnonymousBooking === true;
-    const isDeferredReveal = !isAnonymous && booking.event?.deferCoachReveal === true && !opts?.slotRevealedAt;
+    const { isAnonymous, isDeferredReveal } = resolveRevealPolicy(booking, opts);
 
     if (isAnonymous) {
       // Anonymous booking: student gets confirmation without coach details.
@@ -370,16 +430,10 @@ const queueBookingCreatedNotifications = async (
           type: "BOOKING_CONFIRMED_ANONYMOUS",
           recipients: booking.studentEmail,
           notificationKey: keyFor("student", booking.studentEmail),
-          variables: {
-            studentName: studentVariables.studentName,
-            eventName: studentVariables.eventName,
-            teamName: studentVariables.teamName,
-            startTime: studentVariables.startTime,
-            timezone: studentVariables.timezone,
-            meetingJoinUrl: studentVariables.meetingJoinUrl,
-            frontendUrl: studentVariables.frontendUrl,
-            rescheduleUrl: studentVariables.rescheduleUrl,
-          },
+          variables: buildSafeStudentVariables(studentVariables, {
+            includeMeetingLink: true,
+            includeCancelReschedule: true,
+          }),
         }),
       ];
 
@@ -431,15 +485,7 @@ const queueBookingCreatedNotifications = async (
         userId: booking.coachUserId ?? undefined,
         notificationKey: keyFor("student", booking.studentEmail),
         variables: isDeferredReveal
-          ? {
-              studentName: studentVariables.studentName,
-              eventName: studentVariables.eventName,
-              teamName: studentVariables.teamName,
-              startTime: studentVariables.startTime,
-              timezone: studentVariables.timezone,
-              frontendUrl: studentVariables.frontendUrl,
-              rescheduleUrl: studentVariables.rescheduleUrl,
-            }
+          ? buildSafeStudentVariables(studentVariables, { includeCancelReschedule: true })
           : studentVariables,
       }),
     ];
@@ -688,7 +734,10 @@ const queueBookingUpdatedNotifications = async (
   }
 };
 
-const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
+const queueBookingRescheduledNotifications = async (
+  booking: SafeBooking,
+  opts?: BookingNotificationOpts,
+) => {
   try {
     const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
     const coachVariables = await getBookingNotificationVariables(
@@ -698,12 +747,21 @@ const queueBookingRescheduledNotifications = async (booking: SafeBooking) => {
 
     const config = await getTeamNotificationConfig(booking.teamId);
 
+    // Mirrors queueBookingCreatedNotifications's isDeferredReveal check (both now go through
+    // the shared resolveRevealPolicy) — a reschedule must not reveal coach/join details to the
+    // student any earlier than the explicit reveal action would have. The coach/co-host
+    // notifications below are intentionally unaffected: they're the session host(s) and always
+    // need full details regardless of student-facing deferral.
+    const { isDeferredReveal } = resolveRevealPolicy(booking, opts);
+
     const publishTasks: Array<Promise<boolean>> = [
       publishNotificationSafely({
-        type: "BOOKING_RESCHEDULED",
+        type: isDeferredReveal ? "BOOKING_RESCHEDULED_DEFERRED" : "BOOKING_RESCHEDULED",
         recipients: booking.studentEmail,
         userId: booking.coachUserId ?? undefined,
-        variables: studentVariables,
+        variables: isDeferredReveal
+          ? buildSafeStudentVariables(studentVariables, { includeCancelReschedule: true })
+          : studentVariables,
       }),
     ];
 
@@ -789,12 +847,18 @@ const queueSlotRescheduledNotifications = async (
   slotId: string,
   opts: {
     isAnonymous: boolean;
+    deferCoachReveal: boolean;
     coachRevealSentAt: Date | null;
     assignedCoach: { id: string; email: string; timezone: string | null } | null;
   },
 ): Promise<void> => {
   try {
-    const { isAnonymous, assignedCoach } = opts;
+    const { isAnonymous, deferCoachReveal, coachRevealSentAt, assignedCoach } = opts;
+
+    // Mirrors queueBookingRescheduledNotifications's isDeferredReveal check — an
+    // admin-initiated slot time change must not reveal coach/join details to the
+    // student any earlier than the explicit reveal action would have.
+    const isDeferredReveal = !isAnonymous && deferCoachReveal && !coachRevealSentAt;
 
     const bookings = await prisma.booking.findMany({
       where: { scheduleSlotId: slotId, status: { notIn: ["CANCELLED"] } },
@@ -811,14 +875,15 @@ const queueSlotRescheduledNotifications = async (
           publishNotificationSafely({
             type: "SLOT_RESCHEDULED_ANONYMOUS",
             recipients: booking.studentEmail,
-            variables: {
-              studentName: studentVars.studentName,
-              eventName: studentVars.eventName,
-              teamName: studentVars.teamName,
-              startTime: studentVars.startTime,
-              timezone: studentVars.timezone,
-              meetingJoinUrl: studentVars.meetingJoinUrl,
-            },
+            variables: buildSafeStudentVariables(studentVars, { includeMeetingLink: true }),
+          }),
+        );
+      } else if (isDeferredReveal) {
+        publishTasks.push(
+          publishNotificationSafely({
+            type: "SLOT_RESCHEDULED_DEFERRED",
+            recipients: booking.studentEmail,
+            variables: buildSafeStudentVariables(studentVars),
           }),
         );
       } else {

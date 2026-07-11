@@ -100,10 +100,10 @@ const getPublicBookingDirectory = async (req: Request, res: Response) => {
   );
 };
 
-const joinSession = async (req: Request, res: Response) => {
-  const { slotId } = req.params;
+const joinBooking = async (req: Request, res: Response) => {
+  const { bookingId } = req.params;
   const token = (req.query.t as string | undefined) ?? "";
-  const result = await PublicService.resolveSlotJoinRedirect(slotId as string, token);
+  const result = await PublicService.resolveBookingJoinRedirect(bookingId as string, token);
 
   // The same URL must resolve to a different coach over time — never let a
   // browser or intermediary proxy cache this redirect.
@@ -115,7 +115,7 @@ const joinSession = async (req: Request, res: Response) => {
 
   return res.redirect(
     StatusCodes.MOVED_TEMPORARILY,
-    `${resolveFrontendUrl()}/session/${slotId}/status?state=${result.state}`,
+    `${resolveFrontendUrl()}/session/status?state=${result.state}`,
   );
 };
 
@@ -146,5 +146,5 @@ export default {
   listGroupEventsBySlug: asyncHandler(listGroupEventsBySlug),
   getPublicBookingDirectory: asyncHandler(getPublicBookingDirectory),
   getPublicBooking: asyncHandler(getPublicBooking),
-  joinSession: asyncHandler(joinSession),
+  joinBooking: asyncHandler(joinBooking),
 };

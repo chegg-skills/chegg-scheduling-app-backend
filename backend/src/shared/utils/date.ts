@@ -166,6 +166,25 @@ export const formatNotificationDate = (date: Date, timezone?: string | null): st
 };
 
 /**
+ * Formats a date-only "expires on" string (no weekday, no time-of-day) for expiry
+ * reminder emails — deliberately not formatNotificationDate, which always includes
+ * a weekday and time and would misleadingly imply an exact expiry time that
+ * doesn't exist. Single source for what was previously two identical
+ * `toLocaleDateString` copies (event link expiry, Zoom ISV link expiry).
+ *
+ * @param date     - The UTC Date to format.
+ * @param timezone - IANA timezone string; defaults to UTC when absent.
+ * @returns Formatted string such as "August 1, 2026".
+ */
+export const formatExpiryDate = (date: Date, timezone?: string | null): string =>
+  date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: timezone || "UTC",
+  });
+
+/**
  * Maps an IANA timezone string to a user-friendly display name for email
  * footers (e.g. `"Asia/Kolkata"` → `"India Standard Time"`).
  *

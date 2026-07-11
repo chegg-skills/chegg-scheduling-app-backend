@@ -16,6 +16,7 @@ import {
   type DependencyStatus,
 } from "./shared/notifications/notification.publisher";
 import { registry, metricsMiddleware } from "./shared/observability/metrics";
+import { redactSessionToken } from "./shared/utils/redact";
 import routes from "./routes/index";
 
 dotenv.config();
@@ -58,11 +59,11 @@ const httpLogger = pinoHttp({
     return "info";
   },
   customSuccessMessage: (req, res) =>
-    `${(req as Request).method} ${(req as Request).url} ${res.statusCode}`,
+    `${(req as Request).method} ${redactSessionToken((req as Request).url)} ${res.statusCode}`,
   customErrorMessage: (_req, res, err) =>
     `${res.statusCode} ${(err as Error)?.message ?? "Request failed"}`,
   serializers: {
-    req: (req) => ({ method: req.method, url: req.url }),
+    req: (req) => ({ method: req.method, url: redactSessionToken(req.url ?? "") }),
     res: (res) => ({ statusCode: res.statusCode }),
   },
   // Suppress health/metrics endpoints to avoid log noise

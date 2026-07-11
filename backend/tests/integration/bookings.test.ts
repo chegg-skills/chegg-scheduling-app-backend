@@ -166,7 +166,14 @@ describe("Booking Domain Integration Tests", () => {
       expect(res.status).toBe(201);
       expect(res.body.data.booking.studentName).toBe("John Doe");
       expect(res.body.data.booking.coachUserId).toBe(coachId);
-      expect(res.body.data.booking.meetingJoinUrl).toBe(zoomIsvLink);
+      expect(res.body.data.booking.meetingJoinUrl).toMatch(/\/api\/public\/bookings\/.+\/join\?t=.+/);
+
+      // The join link is a live pointer, not a snapshot — confirm it resolves to the
+      // coach's actual Zoom link at click time.
+      const joinUrl = new URL(res.body.data.booking.meetingJoinUrl);
+      const joinRes = await request(app).get(`${joinUrl.pathname}${joinUrl.search}`);
+      expect(joinRes.status).toBe(302);
+      expect(joinRes.headers.location).toBe(zoomIsvLink);
     });
 
     it("creates and reuses a student profile across bookings with the same email", async () => {
@@ -1632,6 +1639,11 @@ describe("Anonymous booking (allowAnonymousBooking=true)", () => {
       });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.booking.meetingJoinUrl).toBe(locationValue);
+      expect(res.body.data.booking.meetingJoinUrl).toMatch(/\/api\/public\/bookings\/.+\/join\?t=.+/);
+
+      const joinUrl = new URL(res.body.data.booking.meetingJoinUrl);
+      const joinRes = await request(app).get(`${joinUrl.pathname}${joinUrl.search}`);
+      expect(joinRes.status).toBe(302);
+      expect(joinRes.headers.location).toBe(locationValue);
     });
 });

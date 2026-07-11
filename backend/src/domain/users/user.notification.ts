@@ -2,6 +2,7 @@ import {
   publishNotificationSafely,
   resolveFrontendUrl,
 } from "../../shared/notifications/notification.publisher";
+import { formatExpiryDate } from "../../shared/utils/date";
 import type { SafeUser } from "../../shared/utils/userUtils";
 
 export const queueZoomIsvLinkExpiryReminder = async (user: SafeUser): Promise<void> => {
@@ -17,12 +18,7 @@ export const queueZoomIsvLinkExpiryReminder = async (user: SafeUser): Promise<vo
     return;
   }
 
-  const expiryDateStr = expiresAt.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    timeZone: user.timezone ?? "UTC",
-  });
+  const expiryDateStr = formatExpiryDate(expiresAt, user.timezone);
 
   await publishNotificationSafely({
     type: "ZOOM_ISV_LINK_EXPIRY_REMINDER",

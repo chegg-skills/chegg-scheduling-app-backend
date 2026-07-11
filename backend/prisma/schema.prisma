@@ -580,7 +580,6 @@ enum InteractionType {
 enum MeetingLinkSource {
   COACH_ISV
   EVENT_LOCATION
-  SESSION_LANDING_PAGE
 }
 
 enum CommunicationStatus {

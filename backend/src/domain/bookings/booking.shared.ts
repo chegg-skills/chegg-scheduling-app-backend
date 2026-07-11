@@ -1,6 +1,7 @@
-import { BookingStatus, MeetingLinkSource, Prisma } from "@prisma/client";
+import { BookingStatus, MeetingLinkSource, Prisma, PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
+import { resolveApiBaseUrl } from "../../shared/notifications/notification.publisher";
 
 export const assertRescheduleTokenValid = (booking: {
   status: BookingStatus;
@@ -236,9 +237,23 @@ export type BookingSchedulingContext = Pick<
 >;
 
 /**
- * Resolves the meeting join URL for a booking based on the event's configured
- * meetingLinkSource. Each mode falls back to the other source if the preferred
- * source is null, ensuring students always receive a usable link.
+ * The single place a Booking.meetingJoinUrl value is ever constructed. Call this
+ * — and only this — when creating a booking. The result is a stable, opaque
+ * redirect (never a raw destination) that resolveBookingJoinRedirect
+ * (public.service.ts) resolves dynamically at click time. Nothing downstream of
+ * booking creation should ever compute or assign a different meetingJoinUrl —
+ * BookingUpdateDataNoJoinUrl / BookingRecordUpdateDataNoJoinUrl below exist to
+ * make that a compile error rather than a bug someone has to catch in review.
+ */
+export const buildStudentJoinUrl = (bookingId: string, sessionToken: string): string =>
+  `${resolveApiBaseUrl()}/api/public/bookings/${bookingId}/join?t=${sessionToken}`;
+
+/**
+ * Resolves the actual meeting destination (a coach's Zoom link or the event's
+ * shared location) for internal, non-student-facing use only — the redirect
+ * resolver (public.service.ts) and the admin-facing booking detail display.
+ * Never pass this value into a student-facing notification; students only ever
+ * receive the opaque link from buildStudentJoinUrl / Booking.meetingJoinUrl.
  */
 export const getMeetingJoinUrl = (
   event: { meetingLinkSource: MeetingLinkSource; locationValue: string | null },
@@ -249,6 +264,31 @@ export const getMeetingJoinUrl = (
   }
   return coachZoomLink || event.locationValue || null;
 };
+
+/**
+ * Booking.meetingJoinUrl must only ever be set once, at creation, via
+ * buildStudentJoinUrl. These types exclude it from any update payload so a
+ * future cascade/update can't silently reintroduce a raw destination into a
+ * student's confirmation email — passing meetingJoinUrl through these types is
+ * a compile error, not a bug someone has to catch in review. The one deliberate
+ * exception is src/scripts/ops/backfill-meeting-join-urls.ts, whose entire job
+ * is repairing this exact field — it intentionally bypasses these types.
+ */
+export type BookingUpdateDataNoJoinUrl = Omit<
+  Prisma.BookingUncheckedUpdateManyInput,
+  "meetingJoinUrl"
+>;
+
+export type BookingRecordUpdateDataNoJoinUrl = Omit<
+  Prisma.BookingUncheckedUpdateInput,
+  "meetingJoinUrl"
+>;
+
+export const updateBookingsPreservingJoinUrl = (
+  client: Prisma.TransactionClient | PrismaClient,
+  where: Prisma.BookingWhereInput,
+  data: BookingUpdateDataNoJoinUrl,
+) => client.booking.updateMany({ where, data });
 
 export const normalizeStudentName = (studentName: string): string => {
   const normalizedName = studentName?.trim();

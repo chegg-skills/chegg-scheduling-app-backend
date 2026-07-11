@@ -1,8 +1,8 @@
-import type { EmailTemplateMap } from "../types/notification";
+import type { EmailTemplate, NotificationType } from "../types/notification";
 import { wrapLayout } from "./layout";
 import { detailRow } from "./partials";
 
-export const teamTemplates: EmailTemplateMap = {
+export const teamTemplates = {
   TEAM_MEMBER_ADDED: {
     subject: "Added to Team: {{teamName}}",
     preheader: "You have been added to the {{teamName}} team.",
@@ -66,7 +66,7 @@ export const teamTemplates: EmailTemplateMap = {
   TEAM_BOOKING_CONFIRMED: {
     subject: "Team Update: New Booking ({{eventName}})",
     preheader: "A new session has been added to your team's schedule.",
-    text: "A new booking has been created for {{teamName}}. Student: {{studentName}}. Time: {{startTime}}.{{coHostDetails}}",
+    text: "A new booking has been created for {{teamName}}. Student: {{studentName}}. Time: {{startTime}}.{{coCoachDetails}}",
     html: wrapLayout(
       "New Team Booking",
       `<p>A new session has been added to your team's schedule.</p>
@@ -75,7 +75,7 @@ export const teamTemplates: EmailTemplateMap = {
          ${detailRow("Student", "{{studentName}}")}
          ${detailRow("Coach", "{{coachName}}")}
          ${detailRow("Time", "{{startTime}} ({{timezone}})")}
-         {{coHostDetailsHtml}}
+         {{coCoachDetailsHtml}}
        </p>`,
       "A new session has been added to your team's schedule.",
       { text: "View Team Schedule", url: "{{frontendUrl}}" },
@@ -172,4 +172,4 @@ export const teamTemplates: EmailTemplateMap = {
       { text: "Update Event Location", url: "{{frontendUrl}}/events/{{eventId}}" },
     ),
   },
-};
+} satisfies Partial<Record<NotificationType, EmailTemplate>>;
