@@ -1,7 +1,6 @@
 import {
   AssignmentStrategy,
   BookingStatus,
-  MeetingLinkSource,
   Prisma,
   SessionLeadershipStrategy,
 } from "@prisma/client";
@@ -20,11 +19,10 @@ import {
   getRoutingState,
   updateRoutingState,
 } from "./assignment.service";
-import { getMeetingJoinUrl, type BookableEvent } from "./booking.shared";
+import type { BookableEvent } from "./booking.shared";
 
 export type ResolvedBookingCoachSelection = {
   assignedCoachId: string | null;
-  meetingJoinUrl: string | null;
   coCoachUserIds: string[];
 };
 
@@ -169,7 +167,6 @@ const resolvePreferredSingleHost = async ({
 
   return {
     assignedCoachId: preferredCoachId,
-    meetingJoinUrl: getMeetingJoinUrl(event, preferredHost.coachUser.zoomIsvLink),
     coCoachUserIds: [],
   };
 };
@@ -185,7 +182,6 @@ const resolveStrategyLead = async ({
   tx,
 }: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">): Promise<{
   assignedCoachId: string;
-  meetingJoinUrl: string | null;
 }> => {
   const strategy = getAssignmentStrategy(event.assignmentStrategy);
   const result = await strategy.resolveCoach(
@@ -214,7 +210,6 @@ const resolveViaStrategyLead = async (
   const result = await resolveStrategyLead(input);
   return {
     assignedCoachId: result.assignedCoachId,
-    meetingJoinUrl: getMeetingJoinUrl(input.event, result.meetingJoinUrl),
     coCoachUserIds: [],
   };
 };
@@ -261,7 +256,6 @@ const resolveSingleHostSelection = async (
   if (preferredHost && preferredAvailable) {
     return {
       assignedCoachId: input.preferredCoachId,
-      meetingJoinUrl: getMeetingJoinUrl(input.event, preferredHost.coachUser.zoomIsvLink),
       coCoachUserIds: [],
     };
   }
@@ -271,7 +265,7 @@ const resolveSingleHostSelection = async (
 
 const resolveFixedLeadSelection = async (
   input: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">,
-): Promise<{ assignedCoachId: string; meetingJoinUrl: string | null }> => {
+): Promise<{ assignedCoachId: string }> => {
   const fixedLeadCoachId = input.event.fixedLeadCoachId ?? undefined;
 
   if (!fixedLeadCoachId) {
@@ -305,7 +299,6 @@ const resolveFixedLeadSelection = async (
 
   return {
     assignedCoachId: fixedLeadCoachId,
-    meetingJoinUrl: getMeetingJoinUrl(input.event, fixedLeadHost.coachUser.zoomIsvLink),
   };
 };
 
@@ -402,15 +395,9 @@ export const resolveBookingCoachSelection = async (
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType];
 
   // Anonymous booking: no coach assigned to the booking.
-  // SESSION_LANDING_PAGE: meetingJoinUrl is set post-creation once sessionToken is known.
-  // EVENT_LOCATION: use the shared event location URL directly.
   if (event.allowAnonymousBooking) {
     return {
       assignedCoachId: null,
-      meetingJoinUrl:
-        event.meetingLinkSource === MeetingLinkSource.SESSION_LANDING_PAGE
-          ? null
-          : event.locationValue || null,
       coCoachUserIds: [],
     };
   }
@@ -427,7 +414,6 @@ export const resolveBookingCoachSelection = async (
       select: {
         coachUserId: true,
         coCoachUserIds: true,
-        coach: { select: { zoomIsvLink: true } },
       },
     });
 
@@ -438,12 +424,11 @@ export const resolveBookingCoachSelection = async (
       if (event.bookingMode === "FIXED_SLOTS" && input.matchedScheduleSlotId) {
         const slot = await tx.eventScheduleSlot.findUnique({
           where: { id: input.matchedScheduleSlotId },
-          select: { assignedCoachId: true, assignedCoach: { select: { zoomIsvLink: true } } },
+          select: { assignedCoachId: true },
         });
         if (slot?.assignedCoachId) {
           return {
             assignedCoachId: slot.assignedCoachId,
-            meetingJoinUrl: getMeetingJoinUrl(event, slot.assignedCoach?.zoomIsvLink),
             coCoachUserIds: existingSession.coCoachUserIds,
           };
         }
@@ -451,7 +436,6 @@ export const resolveBookingCoachSelection = async (
 
       return {
         assignedCoachId: existingSession.coachUserId,
-        meetingJoinUrl: getMeetingJoinUrl(event, existingSession.coach?.zoomIsvLink),
         coCoachUserIds: existingSession.coCoachUserIds,
       };
     }
@@ -465,13 +449,12 @@ export const resolveBookingCoachSelection = async (
     if (input.matchedScheduleSlotId) {
       const slot = await tx.eventScheduleSlot.findUnique({
         where: { id: input.matchedScheduleSlotId },
-        select: { assignedCoachId: true, assignedCoach: { select: { zoomIsvLink: true } } },
+        select: { assignedCoachId: true },
       });
 
       if (slot?.assignedCoachId) {
         return {
           assignedCoachId: slot.assignedCoachId,
-          meetingJoinUrl: getMeetingJoinUrl(event, slot.assignedCoach?.zoomIsvLink),
           coCoachUserIds: [],
         };
       }
@@ -499,7 +482,6 @@ export const resolveBookingCoachSelection = async (
 
   return {
     assignedCoachId: leadSelection.assignedCoachId,
-    meetingJoinUrl: leadSelection.meetingJoinUrl,
     coCoachUserIds: await resolveCollaborativeCoHosts({
       ...input,
       leadCoachId: leadSelection.assignedCoachId,

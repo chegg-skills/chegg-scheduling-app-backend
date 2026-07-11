@@ -1,7 +1,7 @@
-import type { EmailTemplateMap } from "../types/notification";
+import type { EmailTemplate, NotificationType } from "../types/notification";
 import { wrapLayout } from "./layout";
 
-export const inviteTemplates: EmailTemplateMap = {
+export const inviteTemplates = {
   USER_INVITED: {
     subject: "You've been invited: Chegg Scheduling App",
     preheader: "You have a pending invitation — accept it before it expires.",
@@ -28,4 +28,4 @@ export const inviteTemplates: EmailTemplateMap = {
       "{{inviteeName}} has joined the application.",
     ),
   },
-};
+} satisfies Partial<Record<NotificationType, EmailTemplate>>;

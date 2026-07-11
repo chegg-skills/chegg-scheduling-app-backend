@@ -6,7 +6,7 @@ import type { EmailTemplate, TemplateVariables } from "../types/notification";
 // IMPORTANT: values for these keys must always be constructed server-side from
 // trusted DB data, never from user-submitted free text.
 const RAW_HTML_FIELDS = new Set<string>([
-  "coHostDetailsHtml",
+  "coCoachDetailsHtml",
   "cancellationDetailsHtml",
   "htmlBody",
 ]);

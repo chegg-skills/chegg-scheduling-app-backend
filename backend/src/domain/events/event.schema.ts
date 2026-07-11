@@ -163,9 +163,9 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   }
 
   // fixedLeadCoachId is only relevant for multi-coach types (MANY_TO_ONE) with DIRECT assignment
-  // and COACH_AVAILABILITY mode — that's where FIXED_LEAD leadership is derived. Single-coach
-  // types (ONE_TO_ONE, ONE_TO_MANY) use SINGLE_COACH leadership and never need a fixed lead.
-  // FIXED_SLOTS events assign coaches per-slot, so fixedLeadCoachId is optional there too.
+  // and COACH_AVAILABILITY mode — that's where FIXED_LEAD leadership is derived. ONE_TO_ONE uses
+  // SINGLE_COACH leadership and never needs a fixed lead. FIXED_SLOTS events (MANY_TO_MANY) assign
+  // coaches per-slot, so fixedLeadCoachId is optional there too.
   if (
     caps &&
     caps.multipleCoaches &&
@@ -178,6 +178,26 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
       code: z.ZodIssueCode.custom,
       path: ["fixedLeadCoachId"],
       message: "DIRECT assignment requires a default host to be specified.",
+    });
+  }
+
+  // Single-coach group sessions (ONE_TO_MANY) with DIRECT assignment must specify a fixed
+  // lead coach — unlike ROUND_ROBIN (which always auto-assigns a coach per slot at creation
+  // time, see resolveRoundRobinSlotAssignment/resolveRoundRobinSequence in
+  // eventScheduling.service.ts), DIRECT has no equivalent auto-assignment. Without this
+  // requirement, a DIRECT slot could be created with no coach assigned at all — this
+  // fixedLeadCoachId is exactly what slot creation now defaults new slots' assignedCoachId to.
+  if (
+    caps &&
+    !caps.multipleCoaches &&
+    caps.multipleParticipants &&
+    data.assignmentStrategy === AssignmentStrategy.DIRECT &&
+    !data.fixedLeadCoachId
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["fixedLeadCoachId"],
+      message: "DIRECT assignment requires a default host to be specified for this event type.",
     });
   }
 
@@ -231,26 +251,29 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     });
   }
 
-  // Anonymous booking requires EVENT_LOCATION or SESSION_LANDING_PAGE as the meeting link source
+  // Anonymous booking requires EVENT_LOCATION or COACH_ISV as the meeting link source. Both
+  // already resolve the join link dynamically through the booking-level redirect
+  // (resolveBookingJoinRedirect reads scheduleSlot.assignedCoach at click time) — the coach's
+  // raw personal link is never embedded in student-facing content for either, so COACH_ISV is
+  // just as anonymous-safe as EVENT_LOCATION.
   if (
     data.allowAnonymousBooking === true &&
     data.meetingLinkSource !== undefined &&
     data.meetingLinkSource !== MeetingLinkSource.EVENT_LOCATION &&
-    data.meetingLinkSource !== MeetingLinkSource.SESSION_LANDING_PAGE
+    data.meetingLinkSource !== MeetingLinkSource.COACH_ISV
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["meetingLinkSource"],
-      message:
-        "Anonymous booking requires the Event Location URL or Dynamic Session Link as the meeting link source.",
+      message: "Anonymous booking requires the Event Location URL or Coach's Zoom Link as the meeting link source.",
     });
   }
 
-  // Anonymous booking with EVENT_LOCATION requires a location value so students receive a link/details
-  // SESSION_LANDING_PAGE derives the join URL from the assigned coach at session time — no locationValue needed
+  // Anonymous booking with EVENT_LOCATION requires a location value so students receive a link/details.
+  // COACH_ISV derives the join URL from the assigned coach at click time — no locationValue needed.
   if (
     data.allowAnonymousBooking === true &&
-    data.meetingLinkSource !== MeetingLinkSource.SESSION_LANDING_PAGE &&
+    data.meetingLinkSource !== MeetingLinkSource.COACH_ISV &&
     data.locationValue !== undefined &&
     data.locationValue.trim() === ""
   ) {
@@ -457,10 +480,11 @@ export const ReplaceEventCoachesSchema = {
 
 export const EventScheduleSlotSchema = {
   body: EventScheduleSlotBase.refine(
-    (data) => {
-      return data.endTime > data.startTime;
-    },
+    (data) => data.endTime > data.startTime,
     { message: "endTime must be after startTime", path: ["endTime"] },
+  ).refine(
+    (data) => data.startTime > new Date(),
+    { message: "Session start time cannot be in the past.", path: ["startTime"] },
   ),
   partial: EventScheduleSlotBase.partial(),
 };
@@ -524,17 +548,13 @@ export const RevealCoachSchema = {
   }),
   body: z.object({
     coachUserId: z.uuid("Invalid coach user ID").optional(),
+    // Same allow-list as User.zoomIsvLink and Event.locationValue — this URL is emailed
+    // directly to students, so it must be restricted to approved video-conferencing
+    // domains, not just "any https URL".
     sessionJoinUrl: z
       .string()
       .trim()
-      .refine((u) => {
-        try {
-          const { protocol } = new URL(u);
-          return protocol === "https:" || protocol === "http:";
-        } catch {
-          return false;
-        }
-      }, "Invalid URL")
+      .refine(isAllowedMeetingLinkHost, "Meeting link must be an https URL on an approved domain (e.g. zoom.us).")
       .optional()
       .nullable(),
   }),

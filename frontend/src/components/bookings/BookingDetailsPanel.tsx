@@ -16,20 +16,22 @@ interface BookingDetailsPanelProps {
 export const getBookingMeetingJoinUrl = (booking: Booking): string | null => {
   const fallbackLocation = booking.event?.locationValue ?? ''
 
-  if (booking.event?.meetingLinkSource === 'COACH_ISV' || booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE') {
-    // For FIXED_SLOTS, slot.assignedCoach is authoritative — the booking's own
-    // coach relation may be stale if the slot's coach was overridden before
-    // the cascade propagated.
-    const slotLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? null
-    return slotLink ?? booking.coach?.zoomIsvLink ?? (fallbackLocation || null)
+  // For FIXED_SLOTS, slot.assignedCoach is authoritative — the booking's own
+  // coach relation may be stale if the slot's coach was overridden before
+  // the cascade propagated.
+  const coachZoomLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? booking.coach?.zoomIsvLink ?? null
+
+  if (booking.event?.meetingLinkSource === 'COACH_ISV') {
+    return coachZoomLink ?? (fallbackLocation || null)
   }
 
-  return (
-    booking.coach?.zoomIsvLink ??
-    (booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http')
-      ? fallbackLocation
-      : null)
-  )
+  // EVENT_LOCATION: the shared location link is authoritative — must match what the
+  // student's join redirect actually resolves to (backend's getMeetingJoinUrl), or the
+  // coach and student can end up joining different meeting rooms.
+  const virtualLocationLink =
+    booking.event?.locationType === 'VIRTUAL' && fallbackLocation.startsWith('http') ? fallbackLocation : null
+
+  return virtualLocationLink ?? coachZoomLink
 }
 
 export function BookingDetailsPanel({ booking }: BookingDetailsPanelProps) {

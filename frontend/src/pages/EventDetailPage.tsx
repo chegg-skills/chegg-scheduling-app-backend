@@ -6,7 +6,7 @@ import Tabs from '@mui/material/Tabs'
 import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import { alpha } from '@mui/material/styles'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   Code,
   Edit,
@@ -52,6 +52,7 @@ import { EmbedBookingDialog } from '@/components/events/dialogs/EmbedBookingDial
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams<{ eventId: string }>()
+  const navigate = useNavigate()
   const { isCoach } = usePermissions()
   const [showEdit, setShowEdit] = useState(false)
   const [showEmbed, setShowEmbed] = useState(false)
@@ -89,7 +90,7 @@ export function EventDetailPage() {
   const teamMembers = teamMembersResponse?.members ?? []
   const bookingViewValue = useMemo(() => ({ onViewCoach: setViewingUserId }), [])
 
-  if (isLoading) return <PageSpinner />
+  if (isLoading || deleteEventMutation.isPending || deleteEventMutation.isSuccess) return <PageSpinner />
   if (error || !event) {
     return (
       <Stack spacing={4}>
@@ -131,10 +132,12 @@ export function EventDetailPage() {
   }
 
   const handleDelete = () => {
-    handleAction((id) => deleteEventMutation.mutate(id), eventId, {
+    const teamId = event.teamId
+    handleAction((id, options) => deleteEventMutation.mutate(id, options), eventId, {
       title: 'Delete Event',
       message: `Are you sure you want to PERMANENTLY delete event "${event.name}"?\n\nThis action cannot be undone and all associated coach assignments will be lost.`,
       actionName: 'Deletion',
+      onSuccess: () => navigate(`/teams/${teamId}`),
     })
   }
 

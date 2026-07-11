@@ -334,7 +334,13 @@ export const resolveBookingJoinRedirect = async (bookingId: string, token: strin
       status: true,
       endTime: true,
       coach: { select: { zoomIsvLink: true } },
-      scheduleSlot: { select: { isCancelled: true, sessionJoinUrl: true } },
+      scheduleSlot: {
+        select: {
+          isCancelled: true,
+          sessionJoinUrl: true,
+          assignedCoach: { select: { zoomIsvLink: true } },
+        },
+      },
       event: { select: { meetingLinkSource: true, locationValue: true } },
     },
   });
@@ -357,9 +363,15 @@ export const resolveBookingJoinRedirect = async (bookingId: string, token: strin
     return { type: "status", state: "session_ended" };
   }
 
-  const rawJoinUrl =
-    booking.scheduleSlot?.sessionJoinUrl ||
-    getMeetingJoinUrl(booking.event, booking.coach?.zoomIsvLink ?? null);
+  // For FIXED_SLOTS bookings, the slot itself carries the assigned coach
+  // (booking.coachUserId is null there) — the slot's pinned coach must be
+  // checked before falling back to the booking's own coach relation. This
+  // resolved coach link is still routed through getMeetingJoinUrl below so
+  // EVENT_LOCATION events keep preferring the shared location over a coach's
+  // personal link, matching the admin-facing display (BookingDetailsPanel).
+  const coachZoomLink = booking.scheduleSlot?.assignedCoach?.zoomIsvLink ?? booking.coach?.zoomIsvLink ?? null;
+
+  const rawJoinUrl = booking.scheduleSlot?.sessionJoinUrl || getMeetingJoinUrl(booking.event, coachZoomLink);
 
   // https only — no plaintext downgrade to a coach's meeting room.
   const joinUrl = (() => {
@@ -392,6 +404,24 @@ export const getPublicBooking = async (id: string, token: string, mode?: string)
     assertCancelTokenValid(booking);
   } else {
     assertRescheduleTokenValid(booking);
+  }
+
+  // Defer Coach Reveal: never expose the assigned coach's identity over the public
+  // cancel/reschedule API before the explicit reveal has been sent — mirrors the
+  // isDeferredReveal gating already enforced for student-facing notifications.
+  const isRevealPending =
+    booking.event?.deferCoachReveal === true && !booking.scheduleSlot?.coachRevealSentAt;
+
+  if (isRevealPending) {
+    booking.coach = null;
+    if (booking.scheduleSlot) {
+      booking.scheduleSlot.assignedCoach = null;
+    }
+  } else {
+    // The raw personal Zoom link is never public-safe, reveal-pending or not —
+    // only the masked meetingJoinUrl redirect belongs on the public API.
+    if (booking.coach) booking.coach.zoomIsvLink = null;
+    if (booking.scheduleSlot?.assignedCoach) booking.scheduleSlot.assignedCoach.zoomIsvLink = null;
   }
 
   return booking;

@@ -15,7 +15,12 @@ import {
   type UpdateEventInput,
   type UpsertEventScheduleSlotInput,
 } from "./event.shared";
-import { bookingInclude, getMeetingJoinUrl } from "../bookings/booking.shared";
+import {
+  bookingInclude,
+  getMeetingJoinUrl,
+  type BookingUpdateDataNoJoinUrl,
+  updateBookingsPreservingJoinUrl,
+} from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
 import { generateRecurrenceDates } from "./recurrence.service";
 import {
@@ -394,6 +399,13 @@ const createEventScheduleSlot = async (
   const caps = INTERACTION_TYPE_CAPS[event.interactionType as InteractionType];
   const isRoundRobinGroup =
     event.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN && caps?.multipleParticipants === true;
+  // DIRECT single-coach group sessions (ONE_TO_MANY) have no per-slot auto-assignment like
+  // ROUND_ROBIN does — event.schema.ts now requires fixedLeadCoachId for this combination, so
+  // every new slot defaults to it unless an explicit override is supplied for that slot.
+  const isDirectSingleCoachGroup =
+    event.assignmentStrategy === AssignmentStrategy.DIRECT &&
+    caps?.multipleParticipants === true &&
+    !caps?.multipleCoaches;
 
   if (validated.recurrence) {
     // Create RecurrenceGroup in DB
@@ -428,7 +440,9 @@ const createEventScheduleSlot = async (
           startDates.map((s) => ({ startTime: s, endTime: new Date(s.getTime() + durationMs) })),
         );
       } else {
-        coachAssignments = startDates.map(() => validated.assignedCoachId ?? null);
+        const defaultCoachId =
+          validated.assignedCoachId ?? (isDirectSingleCoachGroup ? event.fixedLeadCoachId : null);
+        coachAssignments = startDates.map(() => defaultCoachId ?? null);
       }
 
       const slotsData = startDates.map((startTime, i) => ({
@@ -471,6 +485,8 @@ const createEventScheduleSlot = async (
       eventId, event.teamId, event.coaches,
       validated.startTime, validated.endTime,
     );
+  } else if (isDirectSingleCoachGroup && !assignedCoachId) {
+    assignedCoachId = event.fixedLeadCoachId ?? null;
   }
 
   const newSlot = await prisma.eventScheduleSlot.create({
@@ -524,6 +540,14 @@ const updateEventScheduleSlot = async (
     );
   }
 
+  // Guard: block moving a slot to a past time
+  if (validated.startTime !== undefined && new Date(validated.startTime) <= new Date()) {
+    throw new ErrorHandler(
+      StatusCodes.BAD_REQUEST,
+      "Session start time cannot be in the past.",
+    );
+  }
+
   // Fetch active booking count once — reused by both the capacity guard and cascade check below.
   const activeBookingCount = await prisma.booking.count({
     where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
@@ -554,7 +578,13 @@ const updateEventScheduleSlot = async (
     where: { id: slotId },
     data: {
       ...validated,
-      ...(coachChanged ? { assignedCoachOverride: validated.assignedCoachId !== null } : {}),
+      // A reassignment invalidates any join-link snapshot frozen at reveal time
+      // (revealCoachForSlot) — clearing it lets resolveBookingJoinRedirect's live
+      // fallback resolve the currently assigned coach instead of the one who held
+      // the slot when reveal was originally sent.
+      ...(coachChanged
+        ? { assignedCoachOverride: validated.assignedCoachId !== null, sessionJoinUrl: null }
+        : {}),
     },
     include: {
       assignedCoach: {
@@ -569,7 +599,7 @@ const updateEventScheduleSlot = async (
   if (timeChanged || coachChanged) {
 
     if (activeBookingCount > 0) {
-      const cascadeData: Record<string, unknown> = {};
+      const cascadeData: BookingUpdateDataNoJoinUrl = {};
       if (timeChanged) {
         if (validated.startTime) cascadeData.startTime = validated.startTime;
         if (validated.endTime) cascadeData.endTime = validated.endTime;
@@ -582,33 +612,28 @@ const updateEventScheduleSlot = async (
       if (shouldCascadeCoach) {
         cascadeData.coachUserId = validated.assignedCoachId ?? null;
 
-        // COACH_ISV: join URL is per-coach — update to new coach's link
-        if (event.meetingLinkSource === "COACH_ISV") {
-          if (validated.assignedCoachId) {
-            const newCoach = await prisma.user.findUnique({
-              where: { id: validated.assignedCoachId },
-              select: { zoomIsvLink: true },
-            });
-            cascadeData.meetingJoinUrl = getMeetingJoinUrl(event, newCoach?.zoomIsvLink ?? null);
-          } else {
-            cascadeData.meetingJoinUrl = null;
-          }
-        }
-        // SESSION_LANDING_PAGE: meetingJoinUrl is a stable token URL — unchanged when coach changes
-        // EVENT_LOCATION: shared event link — not coach-specific, no update needed
+        // meetingJoinUrl is intentionally left untouched here for every meetingLinkSource,
+        // including COACH_ISV — it's the stable masked redirect
+        // (/api/public/bookings/:id/join) set once at booking creation, which resolves the
+        // *current* assigned coach dynamically at click time via resolveBookingJoinRedirect
+        // (reading scheduleSlot.assignedCoach, updated above via cascadeData.coachUserId).
+        // Overwriting it here with a raw coach link would desync it from what new bookings
+        // receive and from what the admin-facing display (BookingDetailsPanel) resolves.
       }
 
       if (Object.keys(cascadeData).length > 0) {
-        await prisma.booking.updateMany({
-          where: { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
-          data: cascadeData,
-        });
+        await updateBookingsPreservingJoinUrl(
+          prisma,
+          { scheduleSlotId: slotId, status: { not: "CANCELLED" } },
+          cascadeData,
+        );
       }
 
       if (timeChanged) {
         try {
           await queueSlotRescheduledNotifications(slotId, {
             isAnonymous: event.allowAnonymousBooking,
+            deferCoachReveal: event.deferCoachReveal,
             coachRevealSentAt: slot.coachRevealSentAt,
             assignedCoach: updated.assignedCoach
               ? { id: updated.assignedCoach.id, email: updated.assignedCoach.email, timezone: updated.assignedCoach.timezone }
@@ -793,7 +818,7 @@ const revealCoachForSlot = async (
     include: {
       bookings: {
         where: { status: { notIn: [BookingStatus.CANCELLED] } },
-        select: { studentEmail: true, studentName: true, timezone: true },
+        select: { studentEmail: true, studentName: true, timezone: true, meetingJoinUrl: true },
       },
     },
   });
@@ -858,12 +883,17 @@ const revealCoachForSlot = async (
       },
     }),
     // Keep booking records in sync so cancellation/reminder notifications reference the revealed coach.
-    // Only overwrite meetingJoinUrl when a resolved URL exists — avoids clearing per-student
-    // token URLs (SESSION_LANDING_PAGE) or pre-existing links when the coach has no Zoom ISV link.
-    prisma.booking.updateMany({
-      where: { scheduleSlotId: slotId, status: { notIn: [BookingStatus.CANCELLED] } },
-      data: { coachUserId: finalCoachId, ...(finalJoinUrl ? { meetingJoinUrl: finalJoinUrl } : {}) },
-    }),
+    // meetingJoinUrl is intentionally NOT touched here — it's the stable masked redirect
+    // (/api/public/bookings/:id/join) set once at booking creation. It already resolves the
+    // revealed coach/link dynamically at click time via resolveBookingJoinRedirect, which reads
+    // scheduleSlot.sessionJoinUrl (set above) first. Writing the raw finalJoinUrl here would put
+    // an unvalidated destination directly into the student's confirmation email, bypassing both
+    // the masking redirect and the domain allow-list enforced on sessionJoinUrl.
+    updateBookingsPreservingJoinUrl(
+      prisma,
+      { scheduleSlotId: slotId, status: { notIn: [BookingStatus.CANCELLED] } },
+      { coachUserId: finalCoachId },
+    ),
   ]);
 
   getRequestLogger().info({ eventId, slotId, coachUserId: finalCoachId, participantCount: slot.bookings.length, revealedBy: caller.id }, "Coach revealed for slot.");
@@ -879,7 +909,7 @@ const revealCoachForSlot = async (
       timezone: coach.timezone,
     },
     participants: slot.bookings,
-    joinUrl: finalJoinUrl || "",
+    coachRawJoinUrl: finalJoinUrl || "",
   });
 
   return updatedSlot;
@@ -966,6 +996,8 @@ const replenishContinuousSlots = async (
       select: {
         assignmentStrategy: true,
         teamId: true,
+        fixedLeadCoachId: true,
+        interactionType: true,
         coaches: {
           where: { isActive: true },
           select: { coachUserId: true, coachOrder: true },
@@ -977,6 +1009,14 @@ const replenishContinuousSlots = async (
     const isRoundRobin =
       event?.assignmentStrategy === AssignmentStrategy.ROUND_ROBIN &&
       (event?.coaches.length ?? 0) > 0;
+    // Mirrors the same DIRECT single-coach-group defaulting used at initial slot creation
+    // (createEventScheduleSlot) — replenished slots must not silently perpetuate a stale/null
+    // assignedCoachId forward; the event's fixedLeadCoachId is the authoritative default.
+    const replenishCaps = event ? INTERACTION_TYPE_CAPS[event.interactionType as InteractionType] : null;
+    const isDirectSingleCoachGroup =
+      event?.assignmentStrategy === AssignmentStrategy.DIRECT &&
+      replenishCaps?.multipleParticipants === true &&
+      !replenishCaps?.multipleCoaches;
 
     const activeGroups = await client.recurrenceGroup.findMany({
       where: {
@@ -1062,7 +1102,9 @@ const replenishContinuousSlots = async (
           startTime: nextStart,
           endTime: slotEnd,
           capacity: latestSlot.capacity,
-          assignedCoachId: latestSlot.assignedCoachId,
+          assignedCoachId: isDirectSingleCoachGroup
+            ? (event!.fixedLeadCoachId ?? latestSlot.assignedCoachId)
+            : latestSlot.assignedCoachId,
           isActive: latestSlot.isActive,
           recurrenceGroupId: group.id,
         });

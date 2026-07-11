@@ -1,12 +1,12 @@
-import type { EmailTemplateMap } from "../types/notification";
+import type { EmailTemplate, NotificationType } from "../types/notification";
 import { wrapLayout } from "./layout";
 import { detailRow } from "./partials";
 
-export const coachTemplates: EmailTemplateMap = {
+export const coachTemplates = {
   COACH_BOOKING_ASSIGNED: {
     subject: "New Booking: {{eventName}} (Student: {{studentName}})",
     preheader: "A new session has been scheduled for you.",
-    text: "A new booking has been assigned to you for {{eventName}}. Student: {{studentName}} ({{startTime}}).{{coHostDetails}}",
+    text: "A new booking has been assigned to you for {{eventName}}. Student: {{studentName}} ({{startTime}}).{{coCoachDetails}}",
     html: wrapLayout(
       "New Session Assigned",
       `<p>Hi <strong>{{coachName}}</strong>,</p>
@@ -15,7 +15,7 @@ export const coachTemplates: EmailTemplateMap = {
          ${detailRow("Student", "{{studentName}} ({{studentEmail}})")}
          ${detailRow("Event", "{{eventName}}")}
          ${detailRow("Time", "{{startTime}} ({{timezone}})")}
-         {{coHostDetailsHtml}}
+         {{coCoachDetailsHtml}}
        </p>`,
       "A new session has been scheduled for you.",
       { text: "View Details", url: "{{meetingJoinUrl}}" },
@@ -122,4 +122,4 @@ export const coachTemplates: EmailTemplateMap = {
       "Message from your coach",
     ),
   },
-};
+} satisfies Partial<Record<NotificationType, EmailTemplate>>;

@@ -140,6 +140,7 @@ export function ScheduleSlotList({
       </TableContainer>
 
       <RevealCoachDialog
+        key={revealSlot?.id ?? 'reveal-coach-dialog'}
         isOpen={!!revealSlot}
         onClose={() => setRevealSlot(null)}
         event={event}

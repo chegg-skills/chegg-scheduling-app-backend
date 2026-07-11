@@ -88,12 +88,12 @@ const queueExceptionNotification = async (
   try {
     const user = await prisma.user.findUnique({
       where: { id: input.userId },
-      select: { email: true, firstName: true, lastName: true },
+      select: { email: true, firstName: true, lastName: true, timezone: true },
     });
 
     if (!user) return;
 
-    const dateStr = formatNotificationDate(new Date(input.date));
+    const dateStr = formatNotificationDate(new Date(input.date), user.timezone);
     const timeStr = input.isUnavailable ? "Whole Day" : `${input.startTime} - ${input.endTime}`;
     const userName = `${user.firstName} ${user.lastName}`.trim();
     const frontendUrl = resolveFrontendUrl();

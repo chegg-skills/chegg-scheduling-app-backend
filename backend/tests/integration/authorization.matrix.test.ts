@@ -154,6 +154,7 @@ beforeAll(async () => {
       durationSeconds: 1800,
       locationType: "VIRTUAL",
       locationValue: "https://meet.example.com/y",
+      fixedLeadCoachId: coachIn.id,
     });
   expect(deferredEvent.status).toBe(201);
   await request(app)

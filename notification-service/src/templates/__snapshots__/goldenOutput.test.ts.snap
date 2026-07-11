@@ -1,0 +1,2933 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`email template golden output (regression safety net) ANONYMOUS_BOOKING_POOL_REMINDER renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">You have an anonymous session with 4 confirmed participants.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Upcoming Anonymous Session</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>You have an upcoming anonymous session scheduled for <strong>Career Coaching Session</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Confirmed Participants:</strong> 4<br/>
+       </p>
+       <p style="margin-top: 16px;">Please coordinate with your team ahead of the session.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "You have an anonymous session with 4 confirmed participants.",
+  "subject": "Upcoming Anonymous Session: Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM",
+  "text": "You have an anonymous session for Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) with 4 confirmed participant(s). Please coordinate with your team and join using the event link.",
+}
+`;
+
+exports[`email template golden output (regression safety net) ANONYMOUS_SLOT_CANCELLED_POOL renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">The Wednesday, July 15, 2026, 10:00 AM slot for Career Coaching Session has been cancelled.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Slot Cancelled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>The slot for <strong>Career Coaching Session</strong> scheduled for <strong>Wednesday, July 15, 2026, 10:00 AM</strong> (Eastern Time - US &amp; Canada) has been cancelled by an administrator.</p>
+       <p>No further action is required from you.</p>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "The Wednesday, July 15, 2026, 10:00 AM slot for Career Coaching Session has been cancelled by an administrator.",
+  "subject": "Slot Cancelled: Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM",
+  "text": "The slot for Career Coaching Session scheduled at Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) has been cancelled by an administrator.",
+}
+`;
+
+exports[`email template golden output (regression safety net) AVAILABILITY_EXCEPTION_CREATED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">An availability update has been made for Morgan User.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Availability Update</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>An update has been made to the availability for <strong>Morgan User</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Date:</strong> July 15, 2026<br/>
+         <strong>Time Range:</strong> 9:00 AM - 5:00 PM<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Manage Availability
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "An availability update has been made for Morgan User.",
+  "subject": "Availability Update: Morgan User (July 15, 2026)",
+  "text": "An availability exception has been set for Morgan User on July 15, 2026 (9:00 AM - 5:00 PM).",
+}
+`;
+
+exports[`email template golden output (regression safety net) AVAILABILITY_EXCEPTION_REMOVED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">An availability exception has been removed for Morgan User.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Availability Update</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>An availability exception has been <strong>removed</strong> for <strong>Morgan User</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Date:</strong> July 15, 2026<br/>
+         <strong>Time Range:</strong> 9:00 AM - 5:00 PM<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Manage Availability
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "An availability exception has been removed for Morgan User.",
+  "subject": "Availability Update: Morgan User (July 15, 2026)",
+  "text": "An availability exception has been removed for Morgan User on July 15, 2026 (9:00 AM - 5:00 PM).",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_CANCELLED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your booking for Career Coaching Session has been cancelled.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Cancelled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is to inform you that your upcoming booking has been cancelled.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+         <br/><strong>Reason:</strong> Schedule conflict
+       </p>
+       <p style="margin-top: 16px;">You can reschedule your session by visiting our booking page.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/book/team-slug" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Book Again
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your booking for Career Coaching Session has been cancelled.",
+  "subject": "Session Cancelled: Career Coaching Session",
+  "text": "The booking for Career Coaching Session scheduled at Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) with Jamie Coach has been cancelled.
+Reason: Schedule conflict",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_CANCELLED_ANONYMOUS renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your booking for Career Coaching Session has been cancelled.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Cancelled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is to inform you that your upcoming booking has been cancelled.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+         <br/><strong>Reason:</strong> Schedule conflict
+       </p>
+       <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/book/team-slug" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Book Again
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your booking for Career Coaching Session has been cancelled.",
+  "subject": "Session Cancelled: Career Coaching Session",
+  "text": "Hi Alex Student, your booking for Career Coaching Session with Growth Team scheduled at Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) has been cancelled.
+Reason: Schedule conflict You can book a new session at any time.",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_CANCELLED_DEFERRED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your booking for Career Coaching Session has been cancelled.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Cancelled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is to inform you that your upcoming booking has been cancelled.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+         <br/><strong>Reason:</strong> Schedule conflict
+       </p>
+       <p style="margin-top: 16px;">You can book a new session at any time by visiting our booking page.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/book/team-slug" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Book Again
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your booking for Career Coaching Session has been cancelled.",
+  "subject": "Session Cancelled: Career Coaching Session",
+  "text": "Hi Alex Student, your booking for Career Coaching Session with Growth Team scheduled at Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) has been cancelled.
+Reason: Schedule conflict You can book a new session at any time.",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_CONFIRMED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session is confirmed for Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Booking Confirmation</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your session for <strong>Career Coaching Session</strong> with <strong>Jamie Coach</strong> is confirmed.</p>
+       <p style="margin-top: 16px;">
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+         <br/><strong>Co-coaches:</strong> Sam Co-coach
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session is confirmed for Wednesday, July 15, 2026, 10:00 AM.",
+  "subject": "Confirmed: Career Coaching Session with Jamie Coach",
+  "text": "Hi Alex Student, your booking for Career Coaching Session is confirmed for Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada).
+Co-coaches: Sam Co-coach Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_CONFIRMED_ANONYMOUS renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session is confirmed for Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Booking Confirmation</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your session for <strong>Career Coaching Session</strong> with the <strong>Growth Team</strong> is confirmed.</p>
+       <p style="margin-top: 16px;">
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session is confirmed for Wednesday, July 15, 2026, 10:00 AM.",
+  "subject": "Confirmed: Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM",
+  "text": "Hi Alex Student, your booking for Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) with Growth Team is confirmed. Join using the link below. Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_CONFIRMED_DEFERRED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session is confirmed. Coach details coming soon.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Booking Confirmation</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your session for <strong>Career Coaching Session</strong> with the <strong>Growth Team</strong> is confirmed.</p>
+       <p style="margin-top: 16px;">
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+       </p>
+       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>
+          </div>
+
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session is confirmed. Coach details will follow shortly before the session.",
+  "subject": "Confirmed: Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM",
+  "text": "Hi Alex Student, your booking for Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) with Growth Team is confirmed. You will receive coach and join details shortly before the session starts. Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_NO_SHOW renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session has been marked as a no-show.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Update: No-Show</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>The following session has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/book/team-slug" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Book New Session
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session has been marked as a no-show.",
+  "subject": "Booking Marked: No-Show (Career Coaching Session)",
+  "text": "The booking for Career Coaching Session at Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) has been marked as a no-show.",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_RESCHEDULED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session has been rescheduled to Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Rescheduled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your session for <strong>Career Coaching Session</strong> has been successfully rescheduled.</p>
+       <p style="margin-top: 16px;">
+         <strong>New Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+         <br/><strong>Co-coaches:</strong> Sam Co-coach
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change it again? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule again</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session has been rescheduled to Wednesday, July 15, 2026, 10:00 AM.",
+  "subject": "Rescheduled: Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM",
+  "text": "Hi Alex Student, your session for Career Coaching Session has been successfully rescheduled to Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada).",
+}
+`;
+
+exports[`email template golden output (regression safety net) BOOKING_RESCHEDULED_DEFERRED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session has been rescheduled. Coach details coming soon.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Rescheduled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your session for <strong>Career Coaching Session</strong> with the <strong>Growth Team</strong> has been successfully rescheduled.</p>
+       <p style="margin-top: 16px;">
+         <strong>New Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+       </p>
+       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>
+          </div>
+
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change it again? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule again</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session has been rescheduled. Coach details will follow shortly before the session.",
+  "subject": "Session Update: Career Coaching Session has a new time",
+  "text": "Hi Alex Student, your session for Career Coaching Session with Growth Team has been rescheduled to Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada). You will receive coach and join details shortly before the session starts. Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) COACH_BOOKING_ASSIGNED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A new session has been scheduled for you.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">New Session Assigned</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Jamie Coach</strong>,</p>
+       <p>A new session has been scheduled for you.</p>
+       <p style="margin-top: 16px;">
+         <strong>Student:</strong> Alex Student (student@example.com)<br/>
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)<br/>
+         <br/><strong>Co-coaches:</strong> Sam Co-coach
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                View Details
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A new session has been scheduled for you.",
+  "subject": "New Booking: Career Coaching Session (Student: Alex Student)",
+  "text": "A new booking has been assigned to you for Career Coaching Session. Student: Alex Student (Wednesday, July 15, 2026, 10:00 AM).
+Co-coaches: Sam Co-coach",
+}
+`;
+
+exports[`email template golden output (regression safety net) COACH_BOOKING_CANCELLED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A session with Alex Student has been cancelled.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Student Session Cancelled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Jamie Coach</strong>,</p>
+       <p>The following session has been cancelled by the student or an administrator:</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Student:</strong> Alex Student<br/>
+         <br/><strong>Reason:</strong> Schedule conflict
+       </p>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A session with Alex Student has been cancelled.",
+  "subject": "Session Cancelled: Career Coaching Session (Student: Alex Student)",
+  "text": "Your session for Career Coaching Session with Alex Student at Wednesday, July 15, 2026, 10:00 AM has been cancelled.
+Reason: Schedule conflict",
+}
+`;
+
+exports[`email template golden output (regression safety net) COACH_BOOKING_COHOST_ASSIGNED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">You have been added as a co-host for an upcoming session.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Co-host Assignment</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi there,</p>
+       <p>You have been added as a <strong>co-host</strong> for an upcoming session.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Lead Coach:</strong> Jamie Coach<br/>
+         <strong>Student:</strong> Alex Student<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Session
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "You have been added as a co-host for an upcoming session.",
+  "subject": "Co-host Assigned: Career Coaching Session (Student: Alex Student)",
+  "text": "You have been assigned as a co-host for Career Coaching Session with Alex Student at Wednesday, July 15, 2026, 10:00 AM.",
+}
+`;
+
+exports[`email template golden output (regression safety net) COACH_BOOKING_COHOST_CANCELLED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A co-hosted session has been cancelled.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Co-host Session Cancelled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi there,</p>
+       <p>The following session where you were assigned as a <strong>co-host</strong> has been cancelled:</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Student:</strong> Alex Student<br/>
+         <br/><strong>Reason:</strong> Schedule conflict
+       </p>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A co-hosted session has been cancelled.",
+  "subject": "Co-host Session Cancelled: Career Coaching Session",
+  "text": "Your co-hosting session for Career Coaching Session with Alex Student has been cancelled.
+Reason: Schedule conflict",
+}
+`;
+
+exports[`email template golden output (regression safety net) COACH_BOOKING_COHOST_NO_SHOW renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A student did not show up for a co-hosted session.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Co-host Update: No-Show</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi there,</p>
+       <p>The following session has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Student:</strong> Alex Student<br/>
+       </p>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A student did not show up for a co-hosted session.",
+  "subject": "Co-host Update: Student No-Show (Career Coaching Session)",
+  "text": "The student Alex Student did not show up for Career Coaching Session.",
+}
+`;
+
+exports[`email template golden output (regression safety net) COACH_BOOKING_NO_SHOW renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A student did not show up for your session.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Update: No-Show</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Jamie Coach</strong>,</p>
+       <p>The following session has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Student:</strong> Alex Student<br/>
+       </p>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A student did not show up for your session.",
+  "subject": "Update: Student No-Show (Career Coaching Session)",
+  "text": "The student Alex Student did not show up for Career Coaching Session at Wednesday, July 15, 2026, 10:00 AM.",
+}
+`;
+
+exports[`email template golden output (regression safety net) COACH_REVEAL_SENT renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your coach details are ready for Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Details Ready</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your upcoming session details are now ready. Here is everything you need:</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your coach and session join details are now available.",
+  "subject": "Session Details Ready: Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM",
+  "text": "Hi Alex Student, your upcoming session Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) will be hosted by Jamie Coach. Join here: https://app.example.com/api/public/bookings/booking-123/join?t=tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) EVENT_ACTIVATED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Jordan Admin has activated the event Career Coaching Session.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Event Activated</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>The event <strong>Career Coaching Session</strong> has been <strong>activated</strong> by Jordan Admin.</p>
+       <p>Students can now book sessions for this event.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                View Event
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Jordan Admin has activated the event Career Coaching Session.",
+  "subject": "Event Activated: Career Coaching Session",
+  "text": "The event Career Coaching Session has been activated by Jordan Admin.",
+}
+`;
+
+exports[`email template golden output (regression safety net) EVENT_DEACTIVATED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Jordan Admin has deactivated the event Career Coaching Session.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Event Deactivated</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>The event <strong>Career Coaching Session</strong> has been <strong>deactivated</strong> by Jordan Admin.</p>
+       <p>Students will no longer be able to book sessions for this event.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                View Event
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Jordan Admin has deactivated the event Career Coaching Session.",
+  "subject": "Event Deactivated: Career Coaching Session",
+  "text": "The event Career Coaching Session has been deactivated by Jordan Admin.",
+}
+`;
+
+exports[`email template golden output (regression safety net) EVENT_HOST_ADDED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">You have been assigned as a host for Career Coaching Session.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Event Host Assignment</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Morgan User</strong>,</p>
+       <p>You have been assigned as a host for: <strong>Career Coaching Session</strong>.</p>
+       <p>Please ensure your availability is up to date in the dashboard.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                View Event Details
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "You have been assigned as a host for Career Coaching Session.",
+  "subject": "Assigned to Event: Career Coaching Session",
+  "text": "Hi Morgan User, you have been assigned as a host for the event Career Coaching Session.",
+}
+`;
+
+exports[`email template golden output (regression safety net) EVENT_LOCATION_LINK_EXPIRY_REMINDER renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Event link for Career Coaching Session expires on August 1, 2026.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Event Link Expiring Soon</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Morgan User</strong>,</p>
+       <p>The joining link for the event <strong>Career Coaching Session</strong> is set to expire on <strong>August 1, 2026</strong>.</p>
+       <p style="margin-top: 16px;">Please update the link under the Event settings in the dashboard to prevent students from receiving an expired link during booking.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/events/event-abc-123" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Update Event Location
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your event joining link expires in 3 days — update it before it breaks bookings.",
+  "subject": "Action Required: Event link for Career Coaching Session expires on August 1, 2026",
+  "text": "Hi Morgan User, the joining link for event Career Coaching Session is set to expire on August 1, 2026. Please update it in the Event settings before it expires to avoid disrupting student sessions.",
+}
+`;
+
+exports[`email template golden output (regression safety net) INVITE_ACCEPTED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Taylor Invitee has joined the application.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Invitation Accepted</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p><strong>Taylor Invitee</strong> (invitee@example.com) has successfully joined the application.</p>
+       <p style="margin-top: 16px;"><strong>Assigned Role:</strong> COACH</p>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Taylor Invitee has joined the application.",
+  "subject": "Invite Accepted: Taylor Invitee",
+  "text": "Taylor Invitee (invitee@example.com) has accepted the invite and joined as a COACH.",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_1H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session starts in 1 hour — get ready!</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Starting Soon</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your session for <strong>Career Coaching Session</strong> with <strong>Jamie Coach</strong> starts in 1 hour.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Now
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session starts in 1 hour — get ready!",
+  "subject": "Starting Soon: Career Coaching Session begins in 1 hour",
+  "text": "Hi Alex Student, your session for Career Coaching Session starts in about 1 hour. Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_6H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session starts in 6 hours — be ready!</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Reminder (6h)</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is a reminder that your session for <strong>Career Coaching Session</strong> starts in 6 hours.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session starts in 6 hours — be ready!",
+  "subject": "Reminder: Career Coaching Session is in 6 hours",
+  "text": "Hi Alex Student, your session for Career Coaching Session starts in 6 hours (Wednesday, July 15, 2026, 10:00 AM). Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_12H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session starts in 12 hours — see you soon!</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Reminder (12h)</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Just a quick reminder that your session for <strong>Career Coaching Session</strong> with <strong>Jamie Coach</strong> is scheduled for today.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session starts in 12 hours — see you soon!",
+  "subject": "Reminder: Career Coaching Session is in 12 hours",
+  "text": "Hi Alex Student, your session for Career Coaching Session is scheduled for today in 12 hours (Wednesday, July 15, 2026, 10:00 AM). Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_24H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session is tomorrow at Wednesday, July 15, 2026, 10:00 AM — don't forget!</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Upcoming Session Reminder</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is a reminder that your session for <strong>Career Coaching Session</strong> is scheduled for tomorrow.</p>
+       <p style="margin-top: 16px;">
+         <strong>Coach:</strong> Jamie Coach<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session is tomorrow at Wednesday, July 15, 2026, 10:00 AM — don't forget!",
+  "subject": "Tomorrow: Your session for Career Coaching Session starts soon!",
+  "text": "Hi Alex Student, your session for Career Coaching Session is scheduled for tomorrow at Wednesday, July 15, 2026, 10:00 AM. Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_ANONYMOUS_1H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session starts in 1 hour.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Starting Soon</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your session for <strong>Career Coaching Session</strong> starts in 1 hour.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Now
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session starts in 1 hour.",
+  "subject": "Starting Soon: Career Coaching Session begins in 1 hour",
+  "text": "Hi Alex Student, your session for Career Coaching Session starts in about 1 hour at Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada). Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_ANONYMOUS_6H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session starts in 6 hours.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Reminder (6h)</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is a reminder that your session for <strong>Career Coaching Session</strong> starts in 6 hours.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session starts in 6 hours.",
+  "subject": "Reminder: Career Coaching Session is in 6 hours",
+  "text": "Hi Alex Student, your session for Career Coaching Session starts in 6 hours (Wednesday, July 15, 2026, 10:00 AM). Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_ANONYMOUS_12H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session starts in 12 hours.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Reminder (12h)</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is a reminder that your session for <strong>Career Coaching Session</strong> starts in 12 hours.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session starts in 12 hours.",
+  "subject": "Reminder: Career Coaching Session is in 12 hours",
+  "text": "Hi Alex Student, your session for Career Coaching Session starts in 12 hours (Wednesday, July 15, 2026, 10:00 AM). Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SESSION_REMINDER_ANONYMOUS_24H renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session is tomorrow — join using the link below.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Reminder (24h)</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>This is a reminder that your session for <strong>Career Coaching Session</strong> is tomorrow.</p>
+       <p style="margin: 24px 0; font-size: 18px; font-weight: 700;">
+         Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+            <div style="margin-top: 24px; font-size: 13px; color: #525252; text-align: left; font-weight: 500;">
+              Need to change the time? <a href="https://app.example.com/reschedule/booking-123?token=res-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Reschedule session</a> or <a href="https://app.example.com/cancel/booking-123?token=cancel-tok" style="color:#E87100;text-decoration:none;font-weight:600;">Cancel session</a>
+            </div>
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session is tomorrow — join using the link below.",
+  "subject": "Reminder: Career Coaching Session is tomorrow",
+  "text": "Hi Alex Student, your session for Career Coaching Session is tomorrow at Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada). Join using the link below. Reschedule: https://app.example.com/reschedule/booking-123?token=res-tok | Cancel: https://app.example.com/cancel/booking-123?token=cancel-tok",
+}
+`;
+
+exports[`email template golden output (regression safety net) SLOT_COACH_REASSIGNED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session on Wednesday, July 15, 2026, 10:00 AM now has a new coach.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Coach Update</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your upcoming session has been assigned to a new coach by the organiser.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>New Coach:</strong> Jamie Coach<br/>
+       </p>
+       <p>Please disregard the coach details in your earlier confirmation email.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session on Wednesday, July 15, 2026, 10:00 AM now has a new coach.",
+  "subject": "Session Update: Your coach for Career Coaching Session has changed",
+  "text": "Hi Alex Student, your upcoming session for Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) will now be hosted by Jamie Coach. Your meeting link has been updated accordingly. Please disregard the coach details in your earlier confirmation email.",
+}
+`;
+
+exports[`email template golden output (regression safety net) SLOT_COACH_REASSIGNED_COACH renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">You are now hosting a session on Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Assignment</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Jamie Coach</strong>,</p>
+       <p>You have been assigned to host a session by the organiser.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "You are now hosting a session on Wednesday, July 15, 2026, 10:00 AM.",
+  "subject": "You've been assigned to host: Career Coaching Session",
+  "text": "Hi Jamie Coach, you have been assigned to host a session for Career Coaching Session on Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) for the Growth Team team.",
+}
+`;
+
+exports[`email template golden output (regression safety net) SLOT_RESCHEDULED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session has been moved to Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Rescheduled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your upcoming session has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>New Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+       </p>
+       <p>Please update your calendar accordingly.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session has been moved to Wednesday, July 15, 2026, 10:00 AM.",
+  "subject": "Session Update: Career Coaching Session has been rescheduled",
+  "text": "Hi Alex Student, your session for Career Coaching Session with Jamie Coach has been rescheduled by the organiser to Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada). Please update your calendar accordingly.",
+}
+`;
+
+exports[`email template golden output (regression safety net) SLOT_RESCHEDULED_ANONYMOUS renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session has been moved to Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Rescheduled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your upcoming session has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>New Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+       </p>
+       <p>Please update your calendar accordingly.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session has been moved to Wednesday, July 15, 2026, 10:00 AM.",
+  "subject": "Session Update: Career Coaching Session has been rescheduled",
+  "text": "Hi Alex Student, your session for Career Coaching Session with Growth Team has been rescheduled by the organiser to Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada). Please update your calendar accordingly.",
+}
+`;
+
+exports[`email template golden output (regression safety net) SLOT_RESCHEDULED_COACH renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A session you are hosting has been moved to Wednesday, July 15, 2026, 10:00 AM.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Rescheduled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Jamie Coach</strong>,</p>
+       <p>A session you are hosting has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>New Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/api/public/bookings/booking-123/join?t=tok" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Join Meeting
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A session you are hosting has been moved to Wednesday, July 15, 2026, 10:00 AM.",
+  "subject": "Session Update: Career Coaching Session has been rescheduled",
+  "text": "Hi Jamie Coach, the session for Career Coaching Session with Alex Student has been rescheduled to Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada) by the organiser.",
+}
+`;
+
+exports[`email template golden output (regression safety net) SLOT_RESCHEDULED_DEFERRED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your session has been moved to Wednesday, July 15, 2026, 10:00 AM. Coach details coming soon.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Session Rescheduled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Your upcoming session has been rescheduled by the organiser.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>New Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+         <strong>Team:</strong> Growth Team<br/>
+       </p>
+       <p style="margin-top: 16px;">Your coach and session join details will be sent to you shortly before the session starts.</p>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your session has been moved to Wednesday, July 15, 2026, 10:00 AM. Coach details will follow shortly before the session.",
+  "subject": "Session Update: Career Coaching Session has been rescheduled",
+  "text": "Hi Alex Student, your session for Career Coaching Session with Growth Team has been rescheduled by the organiser to Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada). You will receive coach and join details shortly before the session starts.",
+}
+`;
+
+exports[`email template golden output (regression safety net) STUDENT_CUSTOM_EMAIL renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Message from your coach</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Message from your Coach</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <div style="font-size: 15px; line-height: 1.6; color: #333333; white-space: pre-wrap;">
+         <p>Custom message body</p>
+       </div>
+          </div>
+
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Message from your coach",
+  "subject": "Custom Subject Line",
+  "text": "Custom message body",
+}
+`;
+
+exports[`email template golden output (regression safety net) STUDENT_SESSION_FEEDBACK renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Share your feedback on your recent Career Coaching Session session.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Share Your Feedback</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Alex Student</strong>,</p>
+       <p>Thank you for attending your recent session. We'd love to hear how it went!</p>
+       <p style="margin-top: 16px;">
+         <strong>Session:</strong> Career Coaching Session<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <strong>Timezone:</strong> Eastern Time - US &amp; Canada<br/>
+       </p>
+       <p style="margin-top: 8px;">Your feedback helps us improve the experience for everyone.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://forms.example.com/feedback" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Give Feedback
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "We'd love to hear your feedback on your recent session.",
+  "subject": "How was your Career Coaching Session session?",
+  "text": "Hi Alex Student, thank you for attending your Career Coaching Session session with Jamie Coach on Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US & Canada). Please take a moment to share your feedback: https://forms.example.com/feedback",
+}
+`;
+
+exports[`email template golden output (regression safety net) TEAM_BOOKING_CANCELLED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A session in your team has been cancelled.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Team Booking Cancelled</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>A session in your team schedule has been <strong>cancelled</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Student:</strong> Alex Student<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+         <br/><strong>Reason:</strong> Schedule conflict
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                View Team Dashboard
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A session in your team has been cancelled.",
+  "subject": "Team Update: Booking Cancelled (Career Coaching Session)",
+  "text": "A booking for Growth Team (Career Coaching Session) has been cancelled. Student: Alex Student. Time: Wednesday, July 15, 2026, 10:00 AM.
+Reason: Schedule conflict",
+}
+`;
+
+exports[`email template golden output (regression safety net) TEAM_BOOKING_CONFIRMED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A new session has been added to your team's schedule.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">New Team Booking</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>A new session has been added to your team's schedule.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Student:</strong> Alex Student<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM (Eastern Time - US &amp; Canada)<br/>
+         <br/><strong>Co-coaches:</strong> Sam Co-coach
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                View Team Schedule
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A new session has been added to your team's schedule.",
+  "subject": "Team Update: New Booking (Career Coaching Session)",
+  "text": "A new booking has been created for Growth Team. Student: Alex Student. Time: Wednesday, July 15, 2026, 10:00 AM.
+Co-coaches: Sam Co-coach",
+}
+`;
+
+exports[`email template golden output (regression safety net) TEAM_BOOKING_NO_SHOW renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">A student did not show up for a session in your team.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Team Booking: No-Show</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>A session in your team has been marked as a <strong>no-show</strong>.</p>
+       <p style="margin-top: 16px;">
+         <strong>Event:</strong> Career Coaching Session<br/>
+         <strong>Student:</strong> Alex Student<br/>
+         <strong>Coach:</strong> Jamie Coach<br/>
+         <strong>Time:</strong> Wednesday, July 15, 2026, 10:00 AM<br/>
+       </p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                View Team Dashboard
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "A student did not show up for a session in your team.",
+  "subject": "Team Update: Student No-Show (Career Coaching Session)",
+  "text": "The student Alex Student did not show up for Career Coaching Session at Wednesday, July 15, 2026, 10:00 AM.",
+}
+`;
+
+exports[`email template golden output (regression safety net) TEAM_MEMBER_ADDED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">You have been added to the Growth Team team.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Team Assignment</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Morgan User</strong>,</p>
+       <p>You have been officially added to the <strong>Growth Team</strong> team on the Chegg Scheduling App.</p>
+       <p>You can now manage events and view availability for this team.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Go to Dashboard
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "You have been added to the Growth Team team.",
+  "subject": "Added to Team: Growth Team",
+  "text": "Hi Morgan User, you have been added to the team Growth Team on Chegg Scheduling App.",
+}
+`;
+
+exports[`email template golden output (regression safety net) USER_INVITED renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">You have a pending invitation — accept it before it expires.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Invitation to join the team</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi there,</p>
+       <p>You've been invited to join the <strong>Chegg Scheduling App</strong> as a <strong>COACH</strong>.</p>
+       <p>This link is safe to use and was sent to you directly.</p>
+       <p>This invitation will expire on <strong>2026-08-01</strong>.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/invite/abc" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Accept Invitation
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "You have a pending invitation — accept it before it expires.",
+  "subject": "You've been invited: Chegg Scheduling App",
+  "text": "You have been invited as a COACH. This link is safe to use and was sent to you directly. Use this link to accept your invite: https://app.example.com/invite/abc. This invite expires on 2026-08-01.",
+}
+`;
+
+exports[`email template golden output (regression safety net) ZOOM_ISV_LINK_EXPIRY_REMINDER renders a stable, unchanged output 1`] = `
+{
+  "html": "
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .email-container { padding: 20px 10px !important; }
+          .email-card { padding: 24px !important; width: 100% !important; border-radius: 4px !important; }
+          .email-title { font-size: 16px !important; }
+          .email-content { font-size: 13px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F8F9FA;">
+      <!-- Preheader: hidden inbox preview text -->
+      <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your Zoom ISV link expires on August 1, 2026.</span>
+      <div class="email-container" style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F9FA; padding: 40px 20px; color: #3A2C41; line-height: 1.6;">
+        <div class="email-card" style="max-width: 500px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-sizing: border-box; border: 1px solid #DEE3ED;">
+          <h1 class="email-title" style="font-size: 20px; font-weight: 800; margin: 0 0 24px; color: #3A2C41; text-align: left; letter-spacing: -0.01em;">Zoom ISV Link Expiring Soon</h1>
+
+          <div class="email-content" style="font-size: 15px; color: #3A2C41; text-align: left; font-weight: 500;">
+            <p>Hi <strong>Jamie Coach</strong>,</p>
+       <p>Your Zoom ISV link is set to expire on <strong>August 1, 2026</strong>.</p>
+       <p style="margin-top: 16px;">Please update your link before it expires — once expired, students won't be able to join sessions until a new link is saved.</p>
+          </div>
+
+          
+            <div style="margin: 32px 0; text-align: left;">
+              <a href="https://app.example.com/profile" style="display: inline-block; background-color: #E87100; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+                Update Profile
+              </a>
+            </div>
+          
+
+          
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #DEE3ED;">
+            <img src="http://localhost:3000/chegg-logo.png" alt="Chegg Logo" width="60" style="display: block; margin: 0 0 12px; text-align: left;" />
+            <p style="font-size: 12px; color: #525252; margin: 0; text-align: left;">
+              Automated priority message from Chegg Scheduling.
+            </p>
+            <p style="font-size: 11px; color: #9CA3AF; margin: 8px 0 0; text-align: left;">
+              &copy; 2026 Chegg Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
+",
+  "preheader": "Your Zoom ISV link expires in 3 days — update it before it breaks student sessions.",
+  "subject": "Action Required: Your Zoom ISV link expires on August 1, 2026",
+  "text": "Hi Jamie Coach, your Zoom ISV link is set to expire on August 1, 2026. Please update it in your profile before it expires to avoid disrupting student sessions.",
+}
+`;

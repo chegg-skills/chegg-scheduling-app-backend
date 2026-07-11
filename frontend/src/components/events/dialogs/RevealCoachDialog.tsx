@@ -1,14 +1,10 @@
-import { useState } from 'react'
 import { format } from 'date-fns'
 import Alert from '@mui/material/Alert'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Modal } from '@/components/shared/ui/Modal'
 import { Button } from '@/components/shared/ui/Button'
-import { FormField } from '@/components/shared/form/FormField'
-import { Input } from '@/components/shared/form/Input'
-import { SearchableCoachAvailabilityList } from '@/components/events/SearchableCoachAvailabilityList'
-import { useRevealCoach, useCoachAvailabilityForSlot } from '@/hooks/queries/useEvents'
+import { useCoachAvailabilityForSlot, useRevealCoach } from '@/hooks/queries/useEvents'
 import type { Event, EventScheduleSlot } from '@/types'
 
 interface RevealCoachDialogProps {
@@ -18,46 +14,55 @@ interface RevealCoachDialogProps {
   slot: EventScheduleSlot | null
 }
 
+// Mirrors backend/src/domain/bookings/booking.shared.ts's getMeetingJoinUrl — this is a
+// preview of what that function will resolve, not a second source of truth. Keep both in sync.
+function resolveJoinLinkPreview(
+  event: Pick<Event, 'meetingLinkSource' | 'locationValue'>,
+  coachZoomLink: string | null | undefined
+): string | null {
+  if (event.meetingLinkSource === 'EVENT_LOCATION') {
+    return event.locationValue || coachZoomLink || null
+  }
+  return coachZoomLink || event.locationValue || null
+}
+
 export function RevealCoachDialog({ isOpen, onClose, event, slot }: RevealCoachDialogProps) {
   const slotId = slot?.id ?? ''
   const { mutate: revealCoach, isPending } = useRevealCoach(event.id, slotId)
-  const { data: coachAvailability, isLoading: isLoadingAvailability } = useCoachAvailabilityForSlot(
-    event.id,
-    slotId,
-    isOpen && !!slotId
-  )
-
-  const preAssignedCoachId = slot?.assignedCoachId ?? null
-  const [selectedCoachId, setSelectedCoachId] = useState<string>(preAssignedCoachId ?? '')
-  const [customJoinUrl, setCustomJoinUrl] = useState<string>('')
+  const { data: coachAvailability } = useCoachAvailabilityForSlot(event.id, slotId, isOpen && !!slotId)
 
   if (!slot) return null
 
   const startFormatted = format(new Date(slot.startTime), 'EEE, MMM d @ h:mm a')
   const participantCount = slot._count?.bookings ?? 0
 
-  // Fall back to event.coaches (no availability info) while the query loads
   const coachList =
     coachAvailability ??
-    event.coaches.map((ec) => ({
-      coachUserId: ec.coachUserId,
-      coachUser: ec.coachUser,
-      isAvailable: true,
-      conflicts: [] as any[],
-    }))
+    event.coaches.map((ec) => ({ coachUserId: ec.coachUserId, coachUser: ec.coachUser }))
+
+  const assignedCoach = slot.assignedCoachId
+    ? coachList.find((c) => c.coachUserId === slot.assignedCoachId)
+    : undefined
+
+  const joinLinkPreview = assignedCoach
+    ? resolveJoinLinkPreview(event, assignedCoach.coachUser.zoomIsvLink)
+    : null
+
+  const coachName = assignedCoach
+    ? `${assignedCoach.coachUser.firstName} ${assignedCoach.coachUser.lastName}`
+    : null
+
+  // Should be unreachable going forward — DIRECT ONE_TO_MANY events now require a default
+  // host, and every new slot is assigned one at creation time. Kept as a defensive state for
+  // slots created before that guarantee existed, pointing at the real fix (Edit Session).
+  const blockedReason = !slot.assignedCoachId
+    ? 'This slot has no assigned coach. Assign one via Edit Session before revealing.'
+    : !joinLinkPreview
+      ? 'This coach has no Zoom link on file. Add one to their profile before revealing.'
+      : null
 
   const handleSend = () => {
-    revealCoach(
-      {
-        coachUserId: selectedCoachId || undefined,
-        ...(customJoinUrl.trim() ? { sessionJoinUrl: customJoinUrl.trim() } : {}),
-      },
-      {
-        onSuccess: () => {
-          onClose()
-        },
-      }
-    )
+    revealCoach({}, { onSuccess: () => onClose() })
   }
 
   return (
@@ -71,7 +76,7 @@ export function RevealCoachDialog({ isOpen, onClose, event, slot }: RevealCoachD
           <Button variant="secondary" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSend} disabled={isPending || !selectedCoachId}>
+          <Button variant="primary" onClick={handleSend} disabled={isPending || !!blockedReason}>
             {isPending ? 'Sending…' : `Send to ${participantCount} participant(s)`}
           </Button>
         </Stack>
@@ -88,45 +93,26 @@ export function RevealCoachDialog({ isOpen, onClose, event, slot }: RevealCoachD
           <Typography variant="body2" color="text.secondary">
             <strong>Participants:</strong> {participantCount}
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <strong>Coach:</strong> {coachName ?? 'Not assigned'}
+          </Typography>
+          {joinLinkPreview && (
+            <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
+              <strong>Join link:</strong> {joinLinkPreview}
+            </Typography>
+          )}
         </Stack>
 
-        <Alert severity="info">
-          Sending the reveal will email all booked participants with the coach name and join link.
-          This action cannot be undone.
-        </Alert>
-
-        <FormField
-          label="Select Coach to Reveal"
-          htmlFor="reveal-coach-search"
-          info={
-            preAssignedCoachId
-              ? 'This slot has a pre-assigned coach. You can change it before sending.'
-              : 'Select the coach who will host this session.'
-          }
-        >
-          <SearchableCoachAvailabilityList
-            id="reveal-coach-search"
-            coaches={coachList}
-            selectedCoachId={selectedCoachId}
-            onSelectCoach={setSelectedCoachId}
-            preAssignedCoachId={preAssignedCoachId}
-            isLoading={isLoadingAvailability}
-          />
-        </FormField>
-
-        <FormField
-          label="Custom Join URL (optional)"
-          htmlFor="reveal-join-url"
-          info="Leave blank to use the coach's Zoom link or the event location. Enter a URL to override."
-        >
-          <Input
-            id="reveal-join-url"
-            type="url"
-            placeholder="https://..."
-            value={customJoinUrl}
-            onChange={(e) => setCustomJoinUrl(e.target.value)}
-          />
-        </FormField>
+        {blockedReason ? (
+          <Alert severity="warning">{blockedReason}</Alert>
+        ) : (
+          <Alert severity="info">
+            This will immediately email the coach's name and join link to all {participantCount}{' '}
+            currently booked participant(s). It also permanently reveals the coach for this time
+            slot — any student who books this same slot afterward will see the coach's name and
+            join link right away in their confirmation email, without waiting for a reveal.
+          </Alert>
+        )}
       </Stack>
     </Modal>
   )

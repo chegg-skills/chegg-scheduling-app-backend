@@ -179,7 +179,11 @@ export const upsertSessionLog = async (
     if (payload.assignedCoachId) {
       await tx.eventScheduleSlot.update({
         where: { id: slotId },
-        data: { assignedCoachId: payload.assignedCoachId },
+        // Unreachable today for deferCoachReveal slots (mutually exclusive with anonymous
+        // events), but nulling sessionJoinUrl here anyway mirrors updateEventScheduleSlot's
+        // reassignment guard, so any coach change through this path can't leave a stale
+        // join-link snapshot behind either.
+        data: { assignedCoachId: payload.assignedCoachId, sessionJoinUrl: null },
       });
 
       await tx.booking.updateMany({

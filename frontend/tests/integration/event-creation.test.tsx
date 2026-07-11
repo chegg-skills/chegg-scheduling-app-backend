@@ -55,7 +55,7 @@ const handlers = [
           {
             id: 'coach-1',
             coachUserId: 'user-1',
-            user: { firstName: 'John', lastName: 'Coach' },
+            user: { id: 'user-1', firstName: 'John', lastName: 'Coach' },
             role: 'COACH',
           },
         ],

@@ -363,6 +363,31 @@ describe("POST /api/events/:eventId/schedule-slots/:slotId/log — business logi
     expect(booking?.status).toBe("PENDING");
   });
 
+  // Regression test: retroactively reassigning the coach while logging a session must
+  // invalidate any frozen sessionJoinUrl snapshot on the slot, mirroring the same guard
+  // in updateEventScheduleSlot — otherwise the public join redirect could keep pointing
+  // at whichever coach held the slot when that snapshot was taken.
+  it("clears a stale sessionJoinUrl on the slot when assignedCoachId is set via the log payload", async () => {
+    await prisma.eventScheduleSlot.update({
+      where: { id: slotId },
+      data: { sessionJoinUrl: "https://zoom.us/isv/dummy/stale-frozen-link" },
+    });
+
+    const res = await request(app)
+      .post(`/api/events/${context.eventId}/schedule-slots/${slotId}/log`)
+      .set("Authorization", `Bearer ${context.teamAdmin.token}`)
+      .send({
+        attendance: [{ bookingId: bookingOneId, attended: true }],
+        assignedCoachId: context.coachTwo.id,
+      });
+
+    expect(res.status).toBe(200);
+
+    const slot = await prisma.eventScheduleSlot.findUnique({ where: { id: slotId } });
+    expect(slot?.assignedCoachId).toBe(context.coachTwo.id);
+    expect(slot?.sessionJoinUrl).toBeNull();
+  });
+
   it("re-POSTing (upsert) updates the existing log fields and attendance", async () => {
     await request(app)
       .post(`/api/events/${context.eventId}/schedule-slots/${slotId}/log`)

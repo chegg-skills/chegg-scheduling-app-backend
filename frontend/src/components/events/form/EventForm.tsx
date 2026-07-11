@@ -117,7 +117,7 @@ export function EventForm({
         }
         const sectionId = getSectionIdForField(firstErrorField)
         const el = document.getElementById(sectionId)
-        if (el) {
+        if (el && typeof el.scrollIntoView === 'function') {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
       }

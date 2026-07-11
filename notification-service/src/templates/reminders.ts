@@ -1,8 +1,8 @@
-import type { EmailTemplateMap } from "../types/notification";
+import type { EmailTemplate, NotificationType } from "../types/notification";
 import { wrapLayout } from "./layout";
-import { inlineLink, detailRow } from "./partials";
+import { detailRow, rescheduleCancelFooter } from "./partials";
 
-export const reminderTemplates: EmailTemplateMap = {
+export const reminderTemplates = {
   SESSION_REMINDER_24H: {
     subject: "Tomorrow: Your session for {{eventName}} starts soon!",
     preheader: "Your session is tomorrow at {{startTime}} — don't forget!",
@@ -17,7 +17,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session is tomorrow at {{startTime}} — don't forget!",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -34,7 +34,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session starts in 12 hours — see you soon!",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -51,7 +51,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session starts in 6 hours — be ready!",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -68,7 +68,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session starts in 1 hour — get ready!",
       { text: "Join Now", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -85,7 +85,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session is tomorrow — join using the link below.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -102,7 +102,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session starts in 12 hours.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -119,7 +119,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session starts in 6 hours.",
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -136,7 +136,7 @@ export const reminderTemplates: EmailTemplateMap = {
        </p>`,
       "Your session starts in 1 hour.",
       { text: "Join Now", url: "{{meetingJoinUrl}}" },
-      `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`,
+      rescheduleCancelFooter(),
     ),
   },
 
@@ -157,4 +157,4 @@ export const reminderTemplates: EmailTemplateMap = {
       { text: "Join Meeting", url: "{{meetingJoinUrl}}" },
     ),
   },
-};
+} satisfies Partial<Record<NotificationType, EmailTemplate>>;

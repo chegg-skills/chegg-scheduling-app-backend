@@ -10,6 +10,7 @@ import {
   bookingInclude,
   buildBookingListWhere,
   type BookableEvent,
+  type BookingRecordUpdateDataNoJoinUrl,
   type DetailedBooking,
   type ListBookingsFilters,
   type SafeBooking,
@@ -146,26 +147,14 @@ const countBookings = async (filters: ListBookingsFilters): Promise<number> => {
 
 const updateBookingById = async (
   id: string,
-  data: {
-    status?: BookingStatus;
-    coCoachUserIds?: string[];
-    startTime?: Date;
-    endTime?: Date;
-    timezone?: string;
-    coachUserId?: string | null;
-    meetingJoinUrl?: string | null;
-    sessionJoinUrl?: string | null;
-    scheduleSlotId?: string | null;
-    rescheduleToken?: string;
-    cancellationReason?: string | null;
-  },
+  data: BookingRecordUpdateDataNoJoinUrl,
   tx?: Prisma.TransactionClient,
 ): Promise<SafeBooking> => {
   const client = tx || prisma;
   try {
     return await client.booking.update({
       where: { id },
-      data: data as Prisma.BookingUncheckedUpdateInput,
+      data,
       include: bookingInclude,
     });
   } catch (error) {

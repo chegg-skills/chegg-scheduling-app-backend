@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import request from "supertest";
 import app from "../../src/app";
 import { prisma } from "../../src/shared/db/prisma";
@@ -32,6 +33,10 @@ type TestContext = {
   otherTeamAdminId: string;
   coachOneId: string;
   coachTwoId: string;
+  /** Dedicated to DIRECT-strategy test fixtures needing a fixedLeadCoachId — kept out of
+   * coachOne/coachTwo's shared workload so it doesn't skew the ROUND_ROBIN tests, which measure
+   * relative team-wide slot counts between those two specifically. */
+  coachThreeId: string;
   coachToken: string;
   teamId: string;
   otherTeamId: string;
@@ -116,6 +121,13 @@ beforeAll(async () => {
     password: "Coach1234",
     role: "COACH",
   });
+  const coachThree = await registerUser(superAdmin.token, {
+    firstName: "Coach",
+    lastName: "Three",
+    email: "coach-three-events@example.com",
+    password: "Coach1234",
+    role: "COACH",
+  });
 
   const teamRes = await request(app)
     .post("/api/teams")
@@ -142,6 +154,7 @@ beforeAll(async () => {
     data: [
       { teamId, userId: coachOne.id },
       { teamId, userId: coachTwo.id },
+      { teamId, userId: coachThree.id },
     ],
   });
 
@@ -154,6 +167,7 @@ beforeAll(async () => {
     otherTeamAdminId: otherTeamAdmin.id,
     coachOneId: coachOne.id,
     coachTwoId: coachTwo.id,
+    coachThreeId: coachThree.id,
     coachToken: coachOne.token,
     teamId,
     otherTeamId,
@@ -351,6 +365,7 @@ describe("Event CRUD routes", () => {
       assignmentStrategy: undefined,
       bookingMode: "FIXED_SLOTS",
       maxParticipantCount: 8,
+      fixedLeadCoachId: context.coachOneId,
     });
 
     expect(res.status).toBe(201);
@@ -440,6 +455,7 @@ describe("Event CRUD routes", () => {
       interactionType: "ONE_TO_MANY",
       assignmentStrategy: "DIRECT",
       bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
     });
     expect(created.status).toBe(201);
     const eventId = created.body.data.id;
@@ -563,6 +579,7 @@ describe("Event CRUD routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
     });
     const eventId = event.body.data.id;
 
@@ -741,6 +758,7 @@ describe("Event scheduling routes", () => {
       bookingMode: "FIXED_SLOTS",
       minimumNoticeMinutes: 360,
       maxParticipantCount: 8,
+      fixedLeadCoachId: context.coachOneId,
     });
 
     expect(created.status).toBe(201);
@@ -771,6 +789,7 @@ describe("Event scheduling routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachThreeId,
     });
     const eventId = event.body.data.id as string;
 
@@ -829,6 +848,7 @@ describe("Event scheduling routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachThreeId,
     });
     const eventId = event.body.data.id as string;
 
@@ -895,6 +915,58 @@ describe("Event scheduling routes", () => {
     expect(listResAfterResume.body.data.slots[0].recurrenceGroup.isActive).toBe(true);
   });
 
+  it("continuous recurrence replenishment defaults new DIRECT slots to fixedLeadCoachId, not a stale null carried forward", async () => {
+    const eventType = await createEventType(context.superAdminToken, {
+      key: uniqueValue("continuous-direct-offering"),
+      name: "Continuous Direct Offering",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Continuous DIRECT Slot Event",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachThreeId,
+    });
+    const eventId = event.body.data.id as string;
+
+    const startTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    startTime.setUTCMinutes(0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    const createRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        capacity: 5,
+        recurrence: { frequency: "WEEKLY", isContinuous: true },
+      });
+    expect(createRes.status).toBe(201);
+
+    // Simulate the historical bug state: the latest slot in the group has a null
+    // assignedCoachId (as if created before the DIRECT-defaulting fix existed).
+    await prisma.eventScheduleSlot.update({
+      where: { id: createRes.body.data.id },
+      data: { assignedCoachId: null },
+    });
+
+    // Trigger replenishment.
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+
+    expect(listRes.status).toBe(200);
+    const slots = listRes.body.data.slots as Array<{ id: string; assignedCoachId: string | null }>;
+    expect(slots.length).toBeGreaterThan(1);
+
+    // The newly-replenished slots must default to fixedLeadCoachId, not copy the stale null
+    // forward from the seeded slot.
+    const newlyReplenished = slots.filter((s) => s.id !== createRes.body.data.id);
+    expect(newlyReplenished.length).toBeGreaterThan(0);
+    expect(newlyReplenished.every((s) => s.assignedCoachId === context.coachThreeId)).toBe(true);
+  });
+
   it("respects recurrenceVisibilityLimit on public booking slots", async () => {
     const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("visibility-offering"),
@@ -906,6 +978,7 @@ describe("Event scheduling routes", () => {
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
       minimumNoticeMinutes: 0,
+      fixedLeadCoachId: context.coachThreeId,
     });
     const eventId = event.body.data.id as string;
 
@@ -1011,6 +1084,7 @@ describe("Event scheduling routes", () => {
       eventTypeId: eventType.body.data.id,
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachThreeId,
     });
     const eventId = event.body.data.id as string;
 
@@ -1891,6 +1965,7 @@ describe("allowAnonymousBooking field", () => {
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
       maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
     });
 
     expect(res.status).toBe(201);
@@ -1907,6 +1982,7 @@ describe("allowAnonymousBooking field", () => {
       meetingLinkSource: "EVENT_LOCATION",
       allowAnonymousBooking: true,
       maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
     });
 
     expect(res.status).toBe(201);
@@ -1937,12 +2013,13 @@ describe("allowAnonymousBooking field", () => {
       deferCoachReveal: true,
       allowAnonymousBooking: true,
       maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
     });
 
     expect(res.status).toBe(400);
   });
 
-  it("rejects allowAnonymousBooking=true when meetingLinkSource is not EVENT_LOCATION", async () => {
+  it("accepts allowAnonymousBooking=true with meetingLinkSource COACH_ISV (join link resolves via the booking-level redirect, no raw link ever exposed)", async () => {
     const eventType = await createEventType(context.superAdminToken);
 
     const res = await createEvent(context.teamId, context.teamAdminToken, {
@@ -1952,10 +2029,12 @@ describe("allowAnonymousBooking field", () => {
       meetingLinkSource: "COACH_ISV",
       allowAnonymousBooking: true,
       maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/event location/i);
+    expect(res.status).toBe(201);
+    expect(res.body.data.allowAnonymousBooking).toBe(true);
+    expect(res.body.data.meetingLinkSource).toBe("COACH_ISV");
   });
 
   it("rejects allowAnonymousBooking=true when locationValue is empty", async () => {
@@ -1969,10 +2048,28 @@ describe("allowAnonymousBooking field", () => {
       allowAnonymousBooking: true,
       locationValue: "",
       maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
     });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/Location is required/i);
+  });
+
+  it("does not require locationValue for allowAnonymousBooking=true when meetingLinkSource is COACH_ISV", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      meetingLinkSource: "COACH_ISV",
+      allowAnonymousBooking: true,
+      locationValue: "",
+      maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
+    });
+
+    expect(res.status).toBe(201);
   });
 
   it("can be toggled via PATCH (before any bookings exist)", async () => {
@@ -1982,6 +2079,7 @@ describe("allowAnonymousBooking field", () => {
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
       maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
     });
     const eventId = created.body.data.id as string;
 
@@ -2008,6 +2106,7 @@ describe("allowAnonymousBooking field", () => {
       allowAnonymousBooking: true,
       maxParticipantCount: 5,
       minimumNoticeMinutes: 0,
+      fixedLeadCoachId: context.coachOneId,
     });
     expect(created.status).toBe(201);
     const eventId = created.body.data.id as string;
@@ -2054,6 +2153,7 @@ describe("allowAnonymousBooking field", () => {
       meetingLinkSource: "EVENT_LOCATION",
       allowAnonymousBooking: true,
       maxParticipantCount: 5,
+      fixedLeadCoachId: context.coachOneId,
     });
     const eventId = created.body.data.id as string;
 
@@ -2418,6 +2518,69 @@ describe("Event schema validation rejections", () => {
     expect(res.body.data.bookingMode).toBe("FIXED_SLOTS");
   });
 
+  it("rejects ONE_TO_MANY with DIRECT assignment strategy and no fixedLeadCoachId", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "DIRECT",
+      bookingMode: "FIXED_SLOTS",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/default host/i);
+  });
+
+  it("accepts ONE_TO_MANY with DIRECT assignment strategy when fixedLeadCoachId is set, and auto-assigns it to new slots", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+
+    const res = await createEvent(context.teamId, context.teamAdminToken, {
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      assignmentStrategy: "DIRECT",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachThreeId,
+    });
+    expect(res.status).toBe(201);
+    const eventId = res.body.data.id as string;
+
+    // Single-slot path
+    const start = new Date(Date.now() + 20 * 86400000);
+    start.setUTCHours(9, 0, 0, 0);
+    const slotRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: new Date(start.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+      });
+    expect(slotRes.status).toBe(201);
+    expect(slotRes.body.data.assignedCoachId).toBe(context.coachThreeId);
+
+    // Recurring-series path
+    const seriesStart = new Date(Date.now() + 21 * 86400000);
+    seriesStart.setUTCHours(9, 0, 0, 0);
+    const seriesRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: seriesStart.toISOString(),
+        endTime: new Date(seriesStart.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+        recurrence: { frequency: "WEEKLY", occurrences: 3 },
+      });
+    expect(seriesRes.status).toBe(201);
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    const slots = listRes.body.data.slots as Array<{ assignedCoachId: string | null }>;
+    expect(slots.length).toBeGreaterThanOrEqual(4);
+    expect(slots.every((s) => s.assignedCoachId === context.coachThreeId)).toBe(true);
+  });
+
   it("rejects ONE_TO_MANY with COACH_AVAILABILITY booking mode (must use FIXED_SLOTS)", async () => {
     const eventType = await createEventType(context.superAdminToken);
 
@@ -2558,6 +2721,7 @@ describe("Recurrence — slot creation", () => {
       eventTypeId: eventTypeId,
       interactionType: "ONE_TO_MANY",
       bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
     });
     eventId = event.body.data.id;
   });
@@ -2708,6 +2872,9 @@ describe("Deferred Coach Reveal", () => {
       bookingMode: "FIXED_SLOTS",
       deferCoachReveal: true,
       maxParticipantCount: 5,
+      // ONE_TO_MANY + DIRECT (the default assignmentStrategy) now requires a default host —
+      // every generated slot is auto-assigned to this coach at creation time.
+      fixedLeadCoachId: context.coachOneId,
     });
     expect(event.status).toBe(201);
     deferredEventId = event.body.data.id;
@@ -2721,7 +2888,7 @@ describe("Deferred Coach Reveal", () => {
     expect(putRes.status).toBe(200);
   });
 
-  it("creates a slot for the deferred reveal event", async () => {
+  it("creates a slot for the deferred reveal event, auto-assigned to the event's default host", async () => {
     const start = getNextUtcWeekdayAt(3, 14, 0);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
 
@@ -2732,9 +2899,20 @@ describe("Deferred Coach Reveal", () => {
 
     expect(res.status).toBe(201);
     slotId = res.body.data.id;
+    // DIRECT ONE_TO_MANY slots now auto-default to the event's fixedLeadCoachId — no explicit
+    // assignedCoachId was sent above.
+    expect(res.body.data.assignedCoachId).toBe(context.coachOneId);
   });
 
   it("POST /reveal with no coach assigned returns 400", async () => {
+    // Slots created going forward always have a coach auto-assigned (see the test above) —
+    // this simulates a slot from before that guarantee existed, to keep this defensive
+    // backend check covered.
+    await prisma.eventScheduleSlot.update({
+      where: { id: slotId },
+      data: { assignedCoachId: null },
+    });
+
     const res = await request(app)
       .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
@@ -2742,6 +2920,12 @@ describe("Deferred Coach Reveal", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/No coach assigned/);
+
+    // Restore, so the next test (which reveals this same slot) starts from a normal state.
+    await prisma.eventScheduleSlot.update({
+      where: { id: slotId },
+      data: { assignedCoachId: context.coachOneId },
+    });
   });
 
   it("POST /reveal with explicit coachUserId returns 200 and sets coachRevealSentAt", async () => {
@@ -2818,6 +3002,10 @@ describe("Deferred Coach Reveal", () => {
       bookingMode: "FIXED_SLOTS",
       deferCoachReveal: true,
       maxParticipantCount: 5,
+      // Must be a coach OTHER than context.coachOneId (whose token this test uses as the
+      // "not assigned" caller) — setting fixedLeadCoachId auto-adds that coach to the event's
+      // pool (event.service.ts:198-213), so using coachOne here would defeat the test's premise.
+      fixedLeadCoachId: context.coachTwoId,
     });
     expect(event.status).toBe(201);
     const unassignedEventId = event.body.data.id;
@@ -2876,6 +3064,157 @@ describe("Deferred Coach Reveal", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/not in this event's coach pool/);
+  });
+
+  it("rejects sessionJoinUrl on a non-allow-listed domain (400)", async () => {
+    const start = getNextUtcWeekdayAt(3, 19, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const slotRes = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ startTime: start.toISOString(), endTime: end.toISOString(), capacity: 5 });
+    expect(slotRes.status).toBe(201);
+    const newSlotId = slotRes.body.data.id;
+
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${newSlotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId, sessionJoinUrl: "https://evil-phishing-site.com/join" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/approved domain/);
+  });
+
+  it("rejects sessionJoinUrl using http:// on an otherwise allow-listed domain (400)", async () => {
+    const start = getNextUtcWeekdayAt(3, 20, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const slotRes = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ startTime: start.toISOString(), endTime: end.toISOString(), capacity: 5 });
+    expect(slotRes.status).toBe(201);
+    const newSlotId = slotRes.body.data.id;
+
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${newSlotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId, sessionJoinUrl: "http://zoom.us/j/12345" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/approved domain/);
+  });
+
+  it("accepts an allow-listed sessionJoinUrl but does not overwrite the booking's masked meetingJoinUrl", async () => {
+    const start = getNextUtcWeekdayAt(3, 21, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const slotRes = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ startTime: start.toISOString(), endTime: end.toISOString(), capacity: 5 });
+    expect(slotRes.status).toBe(201);
+    const newSlotId = slotRes.body.data.id;
+
+    const bookingId = randomUUID();
+    const maskedJoinUrl = `http://localhost:4000/api/public/bookings/${bookingId}/join?t=some-token`;
+    await prisma.booking.create({
+      data: {
+        id: bookingId,
+        studentName: "Reveal Regression Student",
+        studentEmail: "reveal-regression-student@example.com",
+        teamId: context.teamId,
+        eventId: deferredEventId,
+        scheduleSlotId: newSlotId,
+        startTime: start,
+        endTime: end,
+        status: "CONFIRMED",
+        meetingJoinUrl: maskedJoinUrl,
+      },
+    });
+
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${newSlotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId, sessionJoinUrl: "https://zoom.us/j/12345" });
+
+    expect(res.status).toBe(200);
+
+    // The slot itself gets the resolved override — this is the correct, masked-safe path,
+    // since resolveBookingJoinRedirect reads scheduleSlot.sessionJoinUrl at click time.
+    expect(res.body.data.sessionJoinUrl).toBe("https://zoom.us/j/12345");
+
+    // The booking's own meetingJoinUrl must remain untouched — still the masked redirect,
+    // never overwritten with the raw override.
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    expect(booking?.meetingJoinUrl).toBe(maskedJoinUrl);
+    expect(booking?.coachUserId).toBe(context.coachOneId);
+  });
+
+  // Regression test: reassigning the coach on an already-revealed slot must invalidate the
+  // frozen sessionJoinUrl snapshot from the original reveal, so the public join redirect
+  // resolves to the *new* coach's room instead of the coach who held the slot at reveal time.
+  it("clears the frozen sessionJoinUrl when the coach is reassigned after reveal, so the join redirect follows the new coach", async () => {
+    const coachOneZoomLink = "https://zoom.us/isv/dummy/coach-one-room";
+    const coachTwoZoomLink = "https://zoom.us/isv/dummy/coach-two-room";
+    await prisma.user.update({ where: { id: context.coachOneId }, data: { zoomIsvLink: coachOneZoomLink } });
+    await prisma.user.update({ where: { id: context.coachTwoId }, data: { zoomIsvLink: coachTwoZoomLink } });
+
+    // Add coachTwo to the event's coach pool so the reassignment is valid.
+    await request(app)
+      .put(`/api/events/${deferredEventId}/coaches`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coaches: [{ userId: context.coachOneId }, { userId: context.coachTwoId }] });
+
+    const start = getNextUtcWeekdayAt(3, 22, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const slotRes = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ startTime: start.toISOString(), endTime: end.toISOString(), capacity: 5 });
+    expect(slotRes.status).toBe(201);
+    const newSlotId = slotRes.body.data.id;
+
+    const booking = await prisma.booking.create({
+      data: {
+        studentName: "Reassign Regression Student",
+        studentEmail: "reassign-regression-student@example.com",
+        teamId: context.teamId,
+        eventId: deferredEventId,
+        scheduleSlotId: newSlotId,
+        startTime: start,
+        endTime: end,
+        status: "CONFIRMED",
+      },
+    });
+
+    // Reveal with coachOne — freezes sessionJoinUrl to coachOne's room.
+    const revealRes = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${newSlotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId });
+    expect(revealRes.status).toBe(200);
+    expect(revealRes.body.data.sessionJoinUrl).toBe(coachOneZoomLink);
+
+    const joinBeforeReassign = await request(app)
+      .get(`/api/public/bookings/${booking.id}/join`)
+      .query({ t: booking.sessionToken });
+    expect(joinBeforeReassign.headers.location).toBe(coachOneZoomLink);
+
+    // Reassign to coachTwo via Edit Session.
+    const patchRes = await request(app)
+      .patch(`/api/events/${deferredEventId}/schedule-slots/${newSlotId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ assignedCoachId: context.coachTwoId });
+    expect(patchRes.status).toBe(200);
+
+    // The stale snapshot must be cleared, not carried forward.
+    const slotAfterReassign = await prisma.eventScheduleSlot.findUnique({ where: { id: newSlotId } });
+    expect(slotAfterReassign?.sessionJoinUrl).toBeNull();
+
+    // The join redirect must now resolve to the newly assigned coach's room.
+    const joinAfterReassign = await request(app)
+      .get(`/api/public/bookings/${booking.id}/join`)
+      .query({ t: booking.sessionToken });
+    expect(joinAfterReassign.headers.location).toBe(coachTwoZoomLink);
   });
 
   it("schema rejects deferCoachReveal=true for ONE_TO_ONE event", async () => {

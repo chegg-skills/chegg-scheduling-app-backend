@@ -150,17 +150,14 @@ export function useEventForm({ teamId, event, accessedFromEventsTab, onSuccess }
   }, [caps, getValues, setValue, watchedAssignmentStrategy, watchedAllowStudentCoachChoice])
 
   // Mutual exclusivity: enabling one anonymous-mode toggle clears the other.
-  // Also force meetingLinkSource to EVENT_LOCATION when anonymous booking is on,
-  // but only when the current value is COACH_ISV (invalid for anonymous booking) —
-  // SESSION_LANDING_PAGE is valid and should be preserved.
+  // meetingLinkSource is not force-corrected here — both EVENT_LOCATION and COACH_ISV are
+  // valid for anonymous bookings (the join link is always resolved through the booking-level
+  // redirect, never embedded raw).
   useEffect(() => {
     if (watchedAllowAnonymousBooking) {
       setValue('deferCoachReveal', false, { shouldDirty: false })
-      if (getValues('meetingLinkSource') === 'COACH_ISV') {
-        setValue('meetingLinkSource', 'EVENT_LOCATION', { shouldDirty: false })
-      }
     }
-  }, [watchedAllowAnonymousBooking, getValues, setValue])
+  }, [watchedAllowAnonymousBooking, setValue])
 
   useEffect(() => {
     if (watchedDeferCoachReveal) {

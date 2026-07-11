@@ -124,6 +124,11 @@ export function UpsertScheduleSlotDialog({
     })
   }
 
+  // When editing a slot already in the past, don't enforce disablePast on the picker —
+  // the pre-filled time is already past and we don't want the picker to show it as invalid.
+  const isExistingSlotInPast = !!slot && new Date(slot.startTime) < new Date()
+  const pickerMinDateTime = isExistingSlotInPast ? undefined : new Date()
+
   const noCoachesConfigured = event.coaches.length === 0 && !event.fixedLeadCoachId
 
   return (
@@ -132,8 +137,9 @@ export function UpsertScheduleSlotDialog({
         {slot && bookingCount > 0 && (
           <Alert severity="info" sx={{ borderRadius: 1.5 }}>
             This session has <strong>{bookingCount}</strong> confirmed booking
-            {bookingCount !== 1 ? 's' : ''}. Changing the time or coach will update their
-            session details and notify them.
+            {bookingCount !== 1 ? 's' : ''}. {event.allowAnonymousBooking
+              ? 'Changing the time will update their session details and notify them. Changing the coach will not notify students — anonymous bookings never reveal coach identity to them.'
+              : 'Changing the time or coach will update their session details and notify them.'}
           </Alert>
         )}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -146,6 +152,8 @@ export function UpsertScheduleSlotDialog({
             >
               <DateTimePicker
                 value={newSlotDate ? new Date(newSlotDate) : null}
+                disablePast={!isExistingSlotInPast}
+                minDateTime={pickerMinDateTime}
                 onChange={(newValue) => {
                   if (newValue && !isNaN(newValue.getTime())) {
                     handleDateChange(format(newValue, "yyyy-MM-dd'T'HH:mm"))

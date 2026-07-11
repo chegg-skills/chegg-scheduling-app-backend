@@ -13,3 +13,14 @@ export const detailRow = (label: string, value: string): string =>
  */
 export const inlineLink = (text: string, url: string): string =>
   `<a href="${url}" style="color:${BRAND_ORANGE};text-decoration:none;font-weight:600;">${text}</a>`;
+
+/**
+ * The "Need to change the time? Reschedule / Cancel" postCta footer shared by every
+ * confirmation and reminder email. `again: true` swaps in the wording used on a
+ * follow-up reschedule of an already-rescheduled booking ("Need to change it
+ * again? ... Reschedule again ...").
+ */
+export const rescheduleCancelFooter = (again = false): string =>
+  again
+    ? `Need to change it again? ${inlineLink("Reschedule again", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`
+    : `Need to change the time? ${inlineLink("Reschedule session", "{{rescheduleUrl}}")} or ${inlineLink("Cancel session", "{{cancelUrl}}")}`;

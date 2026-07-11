@@ -340,4 +340,279 @@ describe("Public API", () => {
       expect(res.status).toBe(404);
     });
   });
+
+  // GET /api/public/bookings/:id — Defer Coach Reveal masking
+  // ─────────────────────────────────────────────────────────────
+  describe("GET /api/public/bookings/:id — Defer Coach Reveal masking", () => {
+    let deferBookingId: string;
+    let deferToken: string;
+    let deferSlotId: string;
+
+    beforeAll(async () => {
+      const eventTypeRes = await request(app)
+        .post("/api/event-types")
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({
+          key: "public-defer-offering",
+          name: "Public Defer Offering",
+          sortOrder: 2,
+          isActive: true,
+        });
+      const deferEventTypeId = eventTypeRes.body.data.id;
+
+      const deferEventRes = await request(app)
+        .post(`/api/teams/${teamId}/events`)
+        .set("Authorization", `Bearer ${superAdminToken}`)
+        .send({
+          name: "Defer Reveal Group Session",
+          description: "Group session with deferred coach reveal",
+          durationSeconds: 1800,
+          locationType: "VIRTUAL",
+          locationValue: "https://meet.example.com/defer-session",
+          isActive: true,
+          eventTypeId: deferEventTypeId,
+          interactionType: "ONE_TO_MANY",
+          bookingMode: "FIXED_SLOTS",
+          meetingLinkSource: "EVENT_LOCATION",
+          deferCoachReveal: true,
+          maxParticipantCount: 5,
+          fixedLeadCoachId: coachId,
+        });
+      const deferEventId = deferEventRes.body.data.id;
+
+      const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const slot = await prisma.eventScheduleSlot.create({
+        data: {
+          eventId: deferEventId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          assignedCoachId: coachId,
+          coachRevealSentAt: null,
+        },
+      });
+      deferSlotId = slot.id;
+
+      // Give the coach a raw personal Zoom link — must never appear in the public payload.
+      await prisma.user.update({
+        where: { id: coachId },
+        data: { zoomIsvLink: "https://zoom.us/isv/dummy/defer-coach-raw-link" },
+      });
+
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Defer Reveal Student",
+          studentEmail: "defer-reveal@example.com",
+          teamId,
+          eventId: deferEventId,
+          scheduleSlotId: deferSlotId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+      deferBookingId = booking.id;
+      deferToken = booking.rescheduleToken!;
+    });
+
+    it("hides the coach's name/email and the assigned slot coach before reveal has been sent", async () => {
+      const res = await request(app)
+        .get(`/api/public/bookings/${deferBookingId}`)
+        .set("Authorization", `Bearer ${deferToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.coach).toBeNull();
+      expect(res.body.data.booking.scheduleSlot?.assignedCoach).toBeNull();
+    });
+
+    it("never exposes the coach's raw personal Zoom link, reveal-pending or not", async () => {
+      const beforeReveal = await request(app)
+        .get(`/api/public/bookings/${deferBookingId}`)
+        .set("Authorization", `Bearer ${deferToken}`);
+      expect(JSON.stringify(beforeReveal.body)).not.toContain("zoom.us");
+
+      await prisma.eventScheduleSlot.update({
+        where: { id: deferSlotId },
+        data: { coachRevealSentAt: new Date() },
+      });
+
+      const afterReveal = await request(app)
+        .get(`/api/public/bookings/${deferBookingId}`)
+        .set("Authorization", `Bearer ${deferToken}`);
+      expect(JSON.stringify(afterReveal.body)).not.toContain("zoom.us");
+
+      // Reset for any subsequent tests relying on the pre-reveal state.
+      await prisma.eventScheduleSlot.update({
+        where: { id: deferSlotId },
+        data: { coachRevealSentAt: null },
+      });
+    });
+
+    it("reveals the coach's name once coachRevealSentAt has been set", async () => {
+      await prisma.eventScheduleSlot.update({
+        where: { id: deferSlotId },
+        data: { coachRevealSentAt: new Date() },
+      });
+
+      const res = await request(app)
+        .get(`/api/public/bookings/${deferBookingId}`)
+        .set("Authorization", `Bearer ${deferToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.booking.coach?.firstName).toBe("Public");
+      expect(res.body.data.booking.scheduleSlot?.assignedCoach?.firstName).toBe("Public");
+
+      await prisma.eventScheduleSlot.update({
+        where: { id: deferSlotId },
+        data: { coachRevealSentAt: null },
+      });
+    });
+  });
+
+  describe("GET /api/public/bookings/:bookingId/join", () => {
+    const zoomIsvLink = "https://zoom.us/isv/dummy/public-coach-link";
+
+    beforeAll(async () => {
+      await prisma.user.update({ where: { id: coachId }, data: { zoomIsvLink } });
+    });
+
+    it("redirects to the coach's zoomIsvLink for a booking with its own coachUserId (COACH_AVAILABILITY)", async () => {
+      const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Join Test Student",
+          studentEmail: "join-test@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/public/bookings/${booking.id}/join`)
+        .query({ t: booking.sessionToken });
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe(zoomIsvLink);
+      expect(res.headers["cache-control"]).toBe("no-store");
+    });
+
+    // Regression test: FIXED_SLOTS bookings carry the assigned coach on the
+    // *slot*, not on the booking itself (booking.coachUserId is null there).
+    // The redirect resolver must fall back to the slot's assignedCoach —
+    // without it, this always resolved to `no_url` instead of the coach's link.
+    it("redirects to the slot's assigned coach's zoomIsvLink when the booking itself has no coachUserId", async () => {
+      const slotCoach = await registerUser(superAdminToken, {
+        firstName: "Slot",
+        lastName: "Coach",
+        email: "slot-coach@public.com",
+        password: "SlotCoach1234",
+        role: "COACH",
+      });
+      const slotZoomLink = "https://zoom.us/isv/dummy/slot-assigned-coach-link";
+      await prisma.user.update({ where: { id: slotCoach.id }, data: { zoomIsvLink: slotZoomLink } });
+
+      const startTime = new Date(Date.now() + 48 * 60 * 60 * 1000);
+      const slot = await prisma.eventScheduleSlot.create({
+        data: {
+          eventId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          assignedCoachId: slotCoach.id,
+        },
+      });
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Slot Join Test Student",
+          studentEmail: "slot-join-test@example.com",
+          teamId,
+          eventId,
+          coachUserId: null,
+          scheduleSlotId: slot.id,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/public/bookings/${booking.id}/join`)
+        .query({ t: booking.sessionToken });
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe(slotZoomLink);
+    });
+
+    it("redirects to a booking_cancelled status page when the booking is cancelled", async () => {
+      const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Cancelled Join Student",
+          studentEmail: "cancelled-join@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          status: "CANCELLED",
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/public/bookings/${booking.id}/join`)
+        .query({ t: booking.sessionToken });
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toMatch(/\/session\/status\?state=booking_cancelled/);
+    });
+
+    it("redirects to a session_ended status page when the session has already ended", async () => {
+      const startTime = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Ended Join Student",
+          studentEmail: "ended-join@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/public/bookings/${booking.id}/join`)
+        .query({ t: booking.sessionToken });
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toMatch(/\/session\/status\?state=session_ended/);
+    });
+
+    it("redirects to an invalid status page for a wrong token", async () => {
+      const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const booking = await prisma.booking.create({
+        data: {
+          studentName: "Invalid Token Join Student",
+          studentEmail: "invalid-token-join@example.com",
+          teamId,
+          eventId,
+          coachUserId: coachId,
+          startTime,
+          endTime: new Date(startTime.getTime() + 1800 * 1000),
+          status: "CONFIRMED",
+        },
+      });
+
+      const res = await request(app)
+        .get(`/api/public/bookings/${booking.id}/join`)
+        .query({ t: "completely-wrong-token" });
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toMatch(/\/session\/status\?state=invalid/);
+    });
+  });
 });

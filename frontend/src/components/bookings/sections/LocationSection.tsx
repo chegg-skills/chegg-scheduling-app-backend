@@ -1,5 +1,5 @@
 import { Box, Button, Link, Stack, Typography, alpha, useTheme } from '@mui/material'
-import { ExternalLink, Video, MapPin, AlertTriangle } from 'lucide-react'
+import { ExternalLink, Video, MapPin } from 'lucide-react'
 import type { Booking } from '@/types'
 import { BookingSection } from './Common'
 import { getBookingMeetingJoinUrl } from '../BookingDetailsPanel'
@@ -76,24 +76,6 @@ export function LocationSection({ booking }: LocationSectionProps) {
               Join session
             </Button>
           </Box>
-        </Box>
-      ) : booking.event?.meetingLinkSource === 'SESSION_LANDING_PAGE' ? (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            p: 1.5,
-            borderRadius: 1.5,
-            bgcolor: 'warning.light',
-            border: '1px solid',
-            borderColor: (t) => alpha(t.palette.warning.main, 0.2),
-          }}
-        >
-          <AlertTriangle size={16} color={theme.palette.warning.main} style={{ flexShrink: 0 }} />
-          <Typography variant="body2" sx={{ fontWeight: 600, color: '#473C2C' }}>
-            Coach ISV link is not set in their profile.
-          </Typography>
         </Box>
       ) : (
         <Typography variant="body2" color="text.secondary">

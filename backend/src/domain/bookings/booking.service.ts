@@ -31,6 +31,7 @@ import {
   assertCancelTokenValid,
   assertRescheduleTokenValid,
   buildSchedulingContext,
+  buildStudentJoinUrl,
   normalizeStudentEmailAddress,
   normalizeStudentName,
   parseBookingStartTime,
@@ -48,7 +49,6 @@ import {
   queueBookingUpdatedNotifications,
   queueBookingRescheduledNotifications,
 } from "./booking.notification";
-import { resolveApiBaseUrl } from "../../shared/notifications/notification.publisher";
 
 export { bookingInclude, type SafeBooking } from "./booking.shared";
 
@@ -287,7 +287,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         sessionObjectives: savedSessionObjectives,
         customQuestions: savedCustomQuestions,
         customAnswers: savedCustomAnswers,
-        meetingJoinUrl: `${resolveApiBaseUrl()}/api/public/bookings/${bookingId}/join?t=${sessionToken}`,
+        meetingJoinUrl: buildStudentJoinUrl(bookingId, sessionToken),
         sessionToken,
         status: BookingStatus.CONFIRMED,
       });
@@ -296,17 +296,6 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     },
     { timeout: 15000 },
   );
-
-  if ((booking.event?.meetingLinkSource as string) === "SESSION_LANDING_PAGE") {
-    // meetingJoinUrl was set atomically inside the transaction above; keep local reference in sync.
-    const bookingWithToken = booking as typeof booking & { sessionToken: string | null };
-    if (bookingWithToken.sessionToken && booking.scheduleSlotId) {
-      booking = {
-        ...booking,
-        meetingJoinUrl: `${resolveApiBaseUrl()}/api/public/sessions/${booking.scheduleSlotId}/join?t=${bookingWithToken.sessionToken}`,
-      };
-    }
-  }
 
   try {
     await recordBookingActivity(
@@ -574,7 +563,18 @@ const rescheduleBooking = async (
     }
   }
 
-  void queueBookingRescheduledNotifications(updatedBooking);
+  const slotRevealedAt = await (async () => {
+    if (updatedBooking.event?.deferCoachReveal && updatedBooking.scheduleSlotId) {
+      const slot = await prisma.eventScheduleSlot.findUnique({
+        where: { id: updatedBooking.scheduleSlotId },
+        select: { coachRevealSentAt: true },
+      });
+      return slot?.coachRevealSentAt ?? null;
+    }
+    return null;
+  })();
+
+  void queueBookingRescheduledNotifications(updatedBooking, { slotRevealedAt });
 
   return updatedBooking;
 };
@@ -916,7 +916,7 @@ const bookFollowUpSession = async (
         sessionObjectives: savedSessionObjectives,
         customQuestions: savedCustomQuestions,
         customAnswers: savedCustomAnswers,
-        meetingJoinUrl: `${resolveApiBaseUrl()}/api/public/bookings/${bookingId}/join?t=${sessionToken}`,
+        meetingJoinUrl: buildStudentJoinUrl(bookingId, sessionToken),
         sessionToken,
         status: BookingStatus.CONFIRMED,
       });
