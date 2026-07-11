@@ -90,9 +90,11 @@ const main = async (): Promise<void> => {
   await run(apply);
 };
 
-main()
-  .catch((error) => {
-    console.error("backfill-stale-session-join-urls failed:", error);
-    process.exitCode = 1;
-  })
-  .finally(() => prisma.$disconnect());
+if (require.main === module) {
+  main()
+    .catch((error) => {
+      console.error("backfill-stale-session-join-urls failed:", error);
+      process.exitCode = 1;
+    })
+    .finally(() => prisma.$disconnect());
+}
