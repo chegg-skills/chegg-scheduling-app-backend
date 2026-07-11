@@ -1315,7 +1315,7 @@ describe("Booking Domain Integration Tests", () => {
         });
 
       expect(res.status).toBe(409);
-      expect(res.body.message).toContain("overlapping");
+      expect(res.body.message).toContain("session booked during this time");
     });
 
     it("returns 400 when coach is no longer active", async () => {

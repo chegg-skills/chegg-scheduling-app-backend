@@ -26,10 +26,12 @@ import {
   lockScheduleSlot,
   lockEvent,
   lockCoach,
+  lockStudent,
 } from "./booking.repository";
 import {
   assertCancelTokenValid,
   assertRescheduleTokenValid,
+  assertStudentNotOverlapping,
   buildSchedulingContext,
   buildStudentJoinUrl,
   normalizeStudentEmailAddress,
@@ -260,6 +262,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         normalizedStudentEmail,
         start,
       );
+      await lockStudent(tx, normalizedStudentEmail);
+      await assertStudentNotOverlapping(tx, normalizedStudentEmail, start, end);
 
       // Pre-generate id + sessionToken so the join-redirect URL can be computed and
       // written inside this transaction — avoids a non-atomic post-transaction patch.
@@ -481,6 +485,9 @@ const rescheduleBooking = async (
         );
         assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
       }
+
+      await lockStudent(tx, booking.studentEmail);
+      await assertStudentNotOverlapping(tx, booking.studentEmail, start, end, booking.id);
 
       // meetingJoinUrl is intentionally NOT recomputed here — it's a stable
       // pointer (bookingId + sessionToken never change on reschedule), and the
@@ -846,25 +853,6 @@ const bookFollowUpSession = async (
         assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
       }
 
-      // Prevent overlapping booking for the same student
-      const duplicateBooking = await tx.booking.findFirst({
-        where: {
-          studentEmail: originalBooking.studentEmail,
-          status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
-          OR: [
-            { startTime: { lte: start }, endTime: { gt: start } },
-            { startTime: { lt: end }, endTime: { gte: end } },
-            { startTime: { gte: start }, endTime: { lte: end } },
-          ],
-        },
-      });
-      if (duplicateBooking) {
-        throw new ErrorHandler(
-          StatusCodes.CONFLICT,
-          "This student already has a booking overlapping with the selected time.",
-        );
-      }
-
       // Upsert student profile
       const student = await upsertStudentForBooking(
         tx,
@@ -872,6 +860,8 @@ const bookFollowUpSession = async (
         originalBooking.studentEmail,
         start,
       );
+      await lockStudent(tx, originalBooking.studentEmail);
+      await assertStudentNotOverlapping(tx, originalBooking.studentEmail, start, end);
 
       const {
         savedSpecificQuestion,

@@ -59,6 +59,13 @@ const lockCoach = async (tx: Prisma.TransactionClient, coachUserId: string): Pro
   await tx.$executeRaw`SELECT id FROM "User" WHERE id = ${coachUserId} FOR UPDATE`;
 };
 
+const lockStudent = async (tx: Prisma.TransactionClient, studentEmail: string): Promise<void> => {
+  // Acquire a row-level lock on the student to serialize overlap checks for the same student
+  // across concurrent bookings to different events (which otherwise hold different event/slot locks
+  // and would not block each other during the assertStudentNotOverlapping query).
+  await tx.$executeRaw`SELECT id FROM "Student" WHERE email = ${studentEmail} FOR UPDATE`;
+};
+
 const countActiveParticipantsForTime = async (
   tx: Prisma.TransactionClient,
   eventId: string,
@@ -178,4 +185,5 @@ export {
   lockScheduleSlot,
   lockEvent,
   lockCoach,
+  lockStudent,
 };

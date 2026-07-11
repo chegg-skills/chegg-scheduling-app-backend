@@ -411,6 +411,7 @@ model Booking {
   @@index([startTime, endTime])
   @@index([status])
   @@index([studentEmail])
+  @@index([studentEmail, status, startTime, endTime])
 }
 
 /// Transactional outbox for ALL notifications. Every notification is enqueued
