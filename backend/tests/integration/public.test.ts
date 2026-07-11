@@ -368,7 +368,7 @@ describe("Public API", () => {
           description: "Group session with deferred coach reveal",
           durationSeconds: 1800,
           locationType: "VIRTUAL",
-          locationValue: "https://zoom.us/j/defer-session",
+          locationValue: "https://skills.chegg.com/j/defer-session",
           isActive: true,
           eventTypeId: deferEventTypeId,
           interactionType: "ONE_TO_MANY",
