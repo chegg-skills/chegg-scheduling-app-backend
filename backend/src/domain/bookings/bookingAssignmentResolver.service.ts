@@ -467,10 +467,16 @@ export const resolveBookingCoachSelection = async (
     }
 
     // 2. Fallback to DIRECT events logic...
-    if (isDirect && event.fixedLeadCoachId && !input.preferredCoachId) {
+    // Only use fixedLeadCoachId as preferred if that coach is still in the active pool —
+    // a stale fixedLeadCoachId (coach removed after event creation) should not block booking.
+    const fixedLeadInPool =
+      isDirect &&
+      !!event.fixedLeadCoachId &&
+      input.activeCoaches.some((c) => c.coachUserId === event.fixedLeadCoachId);
+    if (fixedLeadInPool && !input.preferredCoachId) {
       return resolveSingleHostSelection({
         ...input,
-        preferredCoachId: event.fixedLeadCoachId,
+        preferredCoachId: event.fixedLeadCoachId!,
       });
     }
     return resolveSingleHostSelection(input);
