@@ -283,6 +283,21 @@ const removeEventCoach = async (
   await validateEventCoaches(event.teamId, event, remainingCoaches);
 
   await prisma.$transaction(async (tx) => {
+    const assignedFutureSlotCount = await tx.eventScheduleSlot.count({
+      where: {
+        eventId,
+        assignedCoachId: userId,
+        startTime: { gt: new Date() },
+      },
+    });
+
+    if (assignedFutureSlotCount > 0) {
+      throw new ErrorHandler(
+        StatusCodes.CONFLICT,
+        `This coach is assigned to ${assignedFutureSlotCount} upcoming slot(s). Reassign them before removing the coach.`,
+      );
+    }
+
     const existingOverrides = await tx.eventCoachWeeklyAvailability.findMany({
       where: { eventId },
     });

@@ -275,6 +275,7 @@ model EventScheduleSlot {
   @@unique([eventId, startTime])
   @@index([eventId, startTime, isActive])
   @@index([assignedCoachId])
+  @@index([eventId, assignedCoachId, startTime])
   @@index([recurrenceGroupId])
 }
 
