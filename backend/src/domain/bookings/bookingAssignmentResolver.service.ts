@@ -426,9 +426,12 @@ export const resolveBookingCoachSelection = async (
           where: { id: input.matchedScheduleSlotId },
           select: { assignedCoachId: true },
         });
-        if (slot?.assignedCoachId) {
+        const slotCoachInPool = slot?.assignedCoachId
+          ? input.activeCoaches.some((c) => c.coachUserId === slot.assignedCoachId)
+          : false;
+        if (slotCoachInPool) {
           return {
-            assignedCoachId: slot.assignedCoachId,
+            assignedCoachId: slot!.assignedCoachId!,
             coCoachUserIds: existingSession.coCoachUserIds,
           };
         }
@@ -452,9 +455,12 @@ export const resolveBookingCoachSelection = async (
         select: { assignedCoachId: true },
       });
 
-      if (slot?.assignedCoachId) {
+      const slotCoachInPool = slot?.assignedCoachId
+        ? input.activeCoaches.some((c) => c.coachUserId === slot.assignedCoachId)
+        : false;
+      if (slotCoachInPool) {
         return {
-          assignedCoachId: slot.assignedCoachId,
+          assignedCoachId: slot!.assignedCoachId!,
           coCoachUserIds: [],
         };
       }
