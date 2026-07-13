@@ -426,12 +426,9 @@ export const resolveBookingCoachSelection = async (
           where: { id: input.matchedScheduleSlotId },
           select: { assignedCoachId: true },
         });
-        const slotCoachInPool = slot?.assignedCoachId
-          ? input.activeCoaches.some((c) => c.coachUserId === slot.assignedCoachId)
-          : false;
-        if (slotCoachInPool) {
+        if (slot?.assignedCoachId) {
           return {
-            assignedCoachId: slot!.assignedCoachId!,
+            assignedCoachId: slot.assignedCoachId,
             coCoachUserIds: existingSession.coCoachUserIds,
           };
         }
@@ -455,28 +452,19 @@ export const resolveBookingCoachSelection = async (
         select: { assignedCoachId: true },
       });
 
-      const slotCoachInPool = slot?.assignedCoachId
-        ? input.activeCoaches.some((c) => c.coachUserId === slot.assignedCoachId)
-        : false;
-      if (slotCoachInPool) {
+      if (slot?.assignedCoachId) {
         return {
-          assignedCoachId: slot!.assignedCoachId!,
+          assignedCoachId: slot.assignedCoachId,
           coCoachUserIds: [],
         };
       }
     }
 
     // 2. Fallback to DIRECT events logic...
-    // Only use fixedLeadCoachId as preferred if that coach is still in the active pool —
-    // a stale fixedLeadCoachId (coach removed after event creation) should not block booking.
-    const fixedLeadInPool =
-      isDirect &&
-      !!event.fixedLeadCoachId &&
-      input.activeCoaches.some((c) => c.coachUserId === event.fixedLeadCoachId);
-    if (fixedLeadInPool && !input.preferredCoachId) {
+    if (isDirect && event.fixedLeadCoachId && !input.preferredCoachId) {
       return resolveSingleHostSelection({
         ...input,
-        preferredCoachId: event.fixedLeadCoachId!,
+        preferredCoachId: event.fixedLeadCoachId,
       });
     }
     return resolveSingleHostSelection(input);
