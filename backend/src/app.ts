@@ -77,6 +77,11 @@ const httpLogger = pinoHttp({
 
 const app = express();
 
+// Behind an AWS ALB, req.ip would otherwise resolve to the ALB's internal IP,
+// making every request appear to come from the same address and breaking
+// per-client rate limiting. '1' = trust exactly one upstream proxy hop.
+app.set("trust proxy", 1);
+
 app.use(attachRequestContext);
 app.use(
   helmet({
