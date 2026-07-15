@@ -14,6 +14,7 @@ import { startNotificationDeliveryConsumer } from "./shared/notifications/notifi
 import { startOutboxWorker } from "./shared/notifications/outbox.worker";
 import { registerNotificationEnqueuedHook } from "./shared/notifications/notification.publisher";
 import { recordBookingNotificationActivity } from "./domain/bookings/notificationTimeline.hook";
+import { closeRedisClient } from "./shared/redis/redisClient";
 
 const validateEnv = (): void => {
   const required = ["DATABASE_URL", "JWT_SECRET"];
@@ -91,9 +92,9 @@ const start = async (): Promise<void> => {
     logger.info({ signal }, "Shutdown signal received.");
     stopOutboxWorker();
     server.close(async () => {
-      logger.info("HTTP server closed. Disconnecting database...");
-      await prisma.$disconnect();
-      logger.info("Database disconnected. Exiting.");
+      logger.info("HTTP server closed. Disconnecting database and Redis...");
+      await Promise.all([prisma.$disconnect(), closeRedisClient()]);
+      logger.info("Database and Redis disconnected. Exiting.");
       process.exit(0);
     });
   };

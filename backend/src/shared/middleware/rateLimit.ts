@@ -1,4 +1,20 @@
 import rateLimit from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import { getRedisClient } from "../redis/redisClient";
+
+// Returns a Redis-backed store when REDIS_URL is set (production), or undefined
+// which makes express-rate-limit fall back to its default in-memory store (dev/test).
+const buildStore = (prefix: string) => {
+  const redis = getRedisClient();
+  if (!redis) return undefined;
+  return new RedisStore({
+    // ioredis call() returns Promise<unknown>; rate-limit-redis expects Promise<RedisReply>.
+    // The runtime values are compatible — the cast bridges the type mismatch only.
+    sendCommand: (...args: string[]) =>
+      redis.call(...(args as [string, ...string[]])) as ReturnType<RedisStore["sendCommand"]>,
+    prefix: `rl:${prefix}:`,
+  });
+};
 
 type RateLimitOptions = NonNullable<Parameters<typeof rateLimit>[0]>;
 
@@ -26,6 +42,7 @@ const withTestBypass = <T extends RateLimitOptions>(options: T): T => ({
  */
 export const sensitiveLimiter = rateLimit({
   ...withTestBypass({
+    store: buildStore("sensitive"),
     windowMs: Number(process.env.SENSITIVE_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
     max: Number(process.env.SENSITIVE_RATE_LIMIT_MAX ?? 10),
     standardHeaders: true,
@@ -43,6 +60,7 @@ export const sensitiveLimiter = rateLimit({
  */
 export const standardLimiter = rateLimit({
   ...withTestBypass({
+    store: buildStore("standard"),
     windowMs: Number(process.env.STANDARD_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
     max: Number(process.env.STANDARD_RATE_LIMIT_MAX ?? 1000),
     standardHeaders: true,
@@ -60,6 +78,7 @@ export const standardLimiter = rateLimit({
  */
 export const strictLimiter = rateLimit({
   ...withTestBypass({
+    store: buildStore("strict"),
     windowMs: Number(process.env.STRICT_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
     max: Number(process.env.STRICT_RATE_LIMIT_MAX ?? 5),
     standardHeaders: true,
@@ -77,6 +96,7 @@ export const strictLimiter = rateLimit({
  */
 export const publicLimiter = rateLimit({
   ...withTestBypass({
+    store: buildStore("public"),
     windowMs: Number(process.env.PUBLIC_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
     max: Number(process.env.PUBLIC_RATE_LIMIT_MAX ?? 120),
     standardHeaders: true,
@@ -94,6 +114,7 @@ export const publicLimiter = rateLimit({
  */
 export const bookingCreationLimiter = rateLimit({
   ...withTestBypass({
+    store: buildStore("booking"),
     windowMs: Number(process.env.BOOKING_CREATION_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
     max: Number(process.env.BOOKING_CREATION_RATE_LIMIT_MAX ?? 10),
     standardHeaders: true,
@@ -112,6 +133,7 @@ export const bookingCreationLimiter = rateLimit({
  */
 export const sessionJoinLimiter = rateLimit({
   ...withTestBypass({
+    store: buildStore("session-join"),
     windowMs: Number(process.env.SESSION_JOIN_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
     max: Number(process.env.SESSION_JOIN_RATE_LIMIT_MAX ?? 30),
     standardHeaders: true,
