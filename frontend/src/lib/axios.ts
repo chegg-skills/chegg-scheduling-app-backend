@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react'
 import axios from 'axios'
 
 const CSRF_HEADER_NAME = 'x-csrf-token'
@@ -62,6 +63,11 @@ apiClient.interceptors.response.use(
     return res
   },
   (error) => {
+    const status = error.response?.status
+    if (!status || status >= 500) {
+      Sentry.captureException(error)
+    }
+
     if (error.response?.status === 401) {
       const pathname = window.location.pathname
       const isPublicRoute =

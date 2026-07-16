@@ -1,8 +1,10 @@
+import * as Sentry from '@sentry/react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useEffect } from 'react'
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom'
 import { ErrorAlert } from '@/components/shared/ui/ErrorAlert'
 
@@ -34,6 +36,12 @@ export function RouteErrorPage() {
   const error = useRouteError()
   const navigate = useNavigate()
   const { title, message } = getErrorMessage(error)
+
+  useEffect(() => {
+    if (error instanceof Error) {
+      Sentry.captureException(error)
+    }
+  }, [error])
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 3 }}>

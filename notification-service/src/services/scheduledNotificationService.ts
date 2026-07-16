@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { config } from "../config/env";
 import {
   claimDueScheduledNotifications,
@@ -23,6 +24,9 @@ export async function processScheduledNotifications(
         { error, notificationId: record.id, notificationType: record.notificationType },
         "Scheduled notification send failed.",
       );
+      Sentry.captureException(error, {
+        tags: { notificationId: String(record.id), notificationType: record.notificationType },
+      });
     }
   }
 

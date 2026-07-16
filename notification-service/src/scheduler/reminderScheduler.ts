@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { config } from "../config/env";
 import { processScheduledNotifications } from "../services/scheduledNotificationService";
 import { logger } from "../logger";
@@ -17,6 +18,7 @@ const runReminderSweep = async (): Promise<void> => {
     }
   } catch (error) {
     logger.error({ error }, "Reminder scheduler sweep failed.");
+    Sentry.captureException(error);
   } finally {
     sweepInProgress = false;
   }

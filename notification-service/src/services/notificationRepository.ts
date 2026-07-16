@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { NotificationStatus, Prisma, type Notification } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { logger } from "../logger";
@@ -63,6 +64,7 @@ export async function createOrUpsertNotification(
       { error, notificationType: data.notificationType },
       "Could not persist notification record.",
     );
+    Sentry.captureException(error);
     return null;
   }
 }
@@ -82,6 +84,7 @@ export async function markNotificationAsSent(id: number | null | undefined): Pro
     });
   } catch (error) {
     logger.warn({ error, notificationId: id }, "Could not update notification record after send.");
+    Sentry.captureException(error);
   }
 }
 
@@ -104,6 +107,7 @@ export async function markNotificationAsFailed(
     });
   } catch (updateError) {
     logger.error({ error: updateError, notificationId: id }, "Failed to update notification failure status.");
+    Sentry.captureException(updateError);
   }
 }
 

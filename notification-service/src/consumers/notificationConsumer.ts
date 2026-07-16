@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { QUEUE_CONFIG } from "../config/queues";
 import { getRabbitConnection } from "../queues/rabbitmq";
 import type { NotificationPayload } from "../types/notification";
@@ -50,6 +51,7 @@ async function startNotificationConsumer(): Promise<void> {
         channel.ack(msg);
       } catch (error) {
         logger.error({ error }, "Failed to process notification job.");
+        Sentry.captureException(error);
         channel.nack(msg, false, false);
       }
     });
