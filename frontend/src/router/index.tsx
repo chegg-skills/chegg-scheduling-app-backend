@@ -1,5 +1,8 @@
+import * as Sentry from '@sentry/react'
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react'
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
+
+const sentryCreateBrowserRouter = Sentry.wrapCreateBrowserRouter(createBrowserRouter)
 import { useAuth } from '@/context/auth/useAuth'
 import { PageSpinner } from '@/components/shared/ui/Spinner'
 import { RouteErrorPage } from '@/pages/RouteErrorPage'
@@ -154,7 +157,7 @@ function AuthGuard() {
   return <Outlet />
 }
 
-export const router = createBrowserRouter([
+export const router = sentryCreateBrowserRouter([
   {
     path: '/login',
     element: renderLazyPage(LoginPage),

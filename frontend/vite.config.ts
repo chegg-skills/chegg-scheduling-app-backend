@@ -27,6 +27,7 @@ export default defineConfig({
     hookTimeout: 15000,
   },
   build: {
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks(id) {

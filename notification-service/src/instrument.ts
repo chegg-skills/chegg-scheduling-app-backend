@@ -1,0 +1,16 @@
+// Must be the first import in src/index.ts so Sentry can instrument Node.js
+// internals (http, pg, amqplib) before they are loaded. No-op unless SENTRY_DSN
+// is set, so local dev and test environments are completely unaffected.
+import * as Sentry from "@sentry/node";
+
+const dsn = process.env.SENTRY_DSN;
+
+if (dsn) {
+  Sentry.init({
+    dsn,
+    environment: process.env.NODE_ENV ?? "development",
+    tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? "0.1"),
+  });
+}
+
+export const isSentryEnabled = (): boolean => Boolean(dsn);

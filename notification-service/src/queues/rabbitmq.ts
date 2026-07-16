@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import amqp from "amqplib";
 import { logger } from "../logger";
 
@@ -38,6 +39,7 @@ const scheduleReconnect = (): void => {
     }
 
     logger.fatal({ maxAttempts: MAX_RECONNECT_ATTEMPTS }, "RabbitMQ: exhausted reconnect attempts — exiting.");
+    Sentry.captureException(new Error("RabbitMQ reconnect attempts exhausted"));
     process.exit(1);
   })();
 };
@@ -51,6 +53,7 @@ const attachListeners = (conn: RabbitConnection): void => {
 
   conn.on("error", (err: unknown) => {
     logger.error({ error: err }, "RabbitMQ connection error.");
+    Sentry.captureException(err instanceof Error ? err : new Error(String(err)));
     connection = null;
     scheduleReconnect();
   });
