@@ -788,6 +788,7 @@ export interface ListBookingsFilters {
   endDate?: string | Date
   page?: number
   limit?: number
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface UpdateBookingStatusDto {

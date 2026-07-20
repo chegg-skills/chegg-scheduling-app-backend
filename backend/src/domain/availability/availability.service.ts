@@ -2,7 +2,6 @@ import {
   EventBookingMode,
   Prisma,
   UserAvailabilityException,
-  UserRole,
   UserWeeklyAvailability,
 } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
@@ -277,13 +276,35 @@ const evaluateCoachAvailability = async (
     ? new Date(endTime.getTime() + options.bufferAfterMinutes * 60 * 1000)
     : endTime;
 
+  // Calendar data is fetched via `client` (not the getEffectiveAvailability facade,
+  // which always uses the global prisma client). When this runs inside a booking
+  // transaction that already holds a row lock, a global-client query would need a
+  // SECOND pool connection — under bursty load every pool connection is held by
+  // requests queued on that same lock, deadlocking the pool until timeouts fire.
   const [calendar, conflicts] = await Promise.all([
     options.calendarData
       ? Promise.resolve(options.calendarData)
-      : getEffectiveAvailability(userId, startTime, effectiveEndTime, {
-          id: userId,
-          role: UserRole.COACH,
-        }),
+      : Promise.all([
+          // Weekly rows are provably unused when ignoreWeeklySchedule (FIXED_SLOTS):
+          // both the cross-midnight branch and the weekly fallback return before
+          // reading them. Only exceptions matter there — skip the dead query.
+          options.ignoreWeeklySchedule
+            ? Promise.resolve([] as UserWeeklyAvailability[])
+            : client.userWeeklyAvailability.findMany({ where: { userId } }),
+          // Exception dates are midnight-UTC timestamps matched against the session's
+          // LOCAL calendar day (dateString comparison). A [start, end] range misses the
+          // midnight anchor for any session not starting at 00:00 UTC — widen by 48h
+          // each side to cover every IANA offset plus cross-midnight sessions.
+          client.userAvailabilityException.findMany({
+            where: {
+              userId,
+              date: {
+                gte: new Date(startTime.getTime() - 48 * 60 * 60 * 1000),
+                lte: new Date(effectiveEndTime.getTime() + 48 * 60 * 60 * 1000),
+              },
+            },
+          }),
+        ]).then(([weekly, exceptions]) => ({ weekly, exceptions })),
     options.prefetchedConflicts
       ? Promise.resolve(options.prefetchedConflicts)
       : getCoachConflicts(userId, startTime, effectiveEndTime, options),

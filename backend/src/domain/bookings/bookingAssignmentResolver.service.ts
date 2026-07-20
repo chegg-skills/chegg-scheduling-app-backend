@@ -11,9 +11,14 @@ import {
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { isCoachAvailable } from "../availability/availability.service";
+import {
+  filterConflictsForSlot,
+  type BookingWithEventBuffer,
+} from "../availability/availabilityConflict.service";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import {
   type AssignmentContext,
+  type CoachAvailabilityPrefetch,
   getAssignmentStrategy,
   type CoachCandidate,
   getRoutingState,
@@ -40,6 +45,171 @@ type ResolveBookingCoachSelectionInput = {
    * which have no "self" to exclude. */
   excludeBookingId?: string;
   tx: Prisma.TransactionClient;
+  /** Batched per-coach availability data — built once by resolveBookingCoachSelection
+   * before any selection loop so candidate probes don't fire per-coach queries. */
+  coachDataMap?: Map<string, CoachAvailabilityPrefetch>;
+};
+
+/**
+ * Pre-fetches everything the availability checks need for the whole candidate pool
+ * in ~5 IN-clause queries (timezones, event overrides, weekly schedules, exceptions,
+ * conflicts), mirroring getAvailableSlots' batch strategy. All queries are tx-bound —
+ * a global-prisma query here would need a second pool connection while the caller
+ * holds the event/slot row lock, deadlocking the pool under load.
+ *
+ * The conflict pre-filter reuses filterConflictsForSlot (the pure equivalent of
+ * getCoachConflicts' overlap/same-session logic); excludeBookingId has no equivalent
+ * there, so it is applied in the raw fetch instead.
+ */
+const buildCoachDataMap = async ({
+  activeCoaches,
+  event,
+  start,
+  end,
+  allowSharedSessionOverlap,
+  matchedScheduleSlotId,
+  excludeBookingId,
+  tx,
+}: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId" | "coachDataMap">): Promise<
+  Map<string, CoachAvailabilityPrefetch>
+> => {
+  const map = new Map<string, CoachAvailabilityPrefetch>();
+  const coachIds = activeCoaches.map((c) => c.coachUserId);
+  if (coachIds.length === 0) return map;
+
+  const ignoreWeeklySchedule = event.bookingMode === "FIXED_SLOTS";
+  // Mirrors getCoachConflicts' fixed lookback for buffers on existing bookings.
+  const lookbackStart = new Date(start.getTime() - 120 * 60 * 1000);
+
+  const [users, overrideRows, weeklyRows, exceptionRows, conflictBookings, conflictSlots] =
+    await Promise.all([
+      tx.user.findMany({
+        where: { id: { in: coachIds } },
+        select: { id: true, timezone: true },
+      }),
+      ignoreWeeklySchedule
+        ? []
+        : tx.eventCoachWeeklyAvailability.findMany({
+            where: { eventId: event.id, coachUserId: { in: coachIds } },
+            select: { coachUserId: true, dayOfWeek: true, startTime: true, endTime: true },
+          }),
+      ignoreWeeklySchedule
+        ? []
+        : tx.userWeeklyAvailability.findMany({ where: { userId: { in: coachIds } } }),
+      tx.userAvailabilityException.findMany({
+        // Exception dates are stored as midnight-UTC timestamps but matched against the
+        // session's LOCAL calendar day (findAvailabilityException compares dateStrings).
+        // A [start, end] range would miss the midnight anchor for any session that
+        // doesn't start at exactly 00:00 UTC — widen by 48h each side to cover every
+        // IANA offset plus cross-midnight sessions.
+        where: {
+          userId: { in: coachIds },
+          date: {
+            gte: new Date(start.getTime() - 48 * 60 * 60 * 1000),
+            lte: new Date(end.getTime() + 48 * 60 * 60 * 1000),
+          },
+        },
+      }),
+      tx.booking.findMany({
+        where: {
+          OR: [{ coachUserId: { in: coachIds } }, { coCoachUserIds: { hasSome: coachIds } }],
+          status: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
+          ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
+          startTime: { lt: end },
+          endTime: { gt: lookbackStart },
+        },
+        include: { event: true },
+      }) as Promise<BookingWithEventBuffer[]>,
+      tx.eventScheduleSlot.findMany({
+        where: {
+          assignedCoachId: { in: coachIds },
+          isActive: true,
+          isCancelled: false,
+          startTime: { lt: end },
+          endTime: { gt: lookbackStart },
+        },
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          eventId: true,
+          assignedCoachId: true,
+          event: { select: { bufferAfterMinutes: true } },
+        },
+      }),
+    ]);
+
+  const timezoneByCoach = new Map(users.map((u) => [u.id, u.timezone]));
+
+  const overridesByCoach = new Map<string, CoachAvailabilityPrefetch["weeklyOverride"]>();
+  for (const o of overrideRows) {
+    const list = overridesByCoach.get(o.coachUserId) ?? [];
+    list.push({ dayOfWeek: o.dayOfWeek, startTime: o.startTime, endTime: o.endTime });
+    overridesByCoach.set(o.coachUserId, list);
+  }
+
+  const weeklyByCoach = new Map<string, typeof weeklyRows>();
+  for (const r of weeklyRows) {
+    const list = weeklyByCoach.get(r.userId) ?? [];
+    list.push(r);
+    weeklyByCoach.set(r.userId, list);
+  }
+
+  const exceptionsByCoach = new Map<string, typeof exceptionRows>();
+  for (const r of exceptionRows) {
+    const list = exceptionsByCoach.get(r.userId) ?? [];
+    list.push(r);
+    exceptionsByCoach.set(r.userId, list);
+  }
+
+  const rawConflictsByCoach = new Map<string, BookingWithEventBuffer[]>();
+  const addConflict = (coachId: string, conflict: BookingWithEventBuffer) => {
+    const list = rawConflictsByCoach.get(coachId) ?? [];
+    list.push(conflict);
+    rawConflictsByCoach.set(coachId, list);
+  };
+  const coachIdSet = new Set(coachIds);
+  for (const b of conflictBookings) {
+    if (b.coachUserId && coachIdSet.has(b.coachUserId)) addConflict(b.coachUserId, b);
+    for (const ccId of b.coCoachUserIds ?? []) {
+      if (coachIdSet.has(ccId)) addConflict(ccId, b);
+    }
+  }
+  for (const s of conflictSlots) {
+    if (!s.assignedCoachId || !coachIdSet.has(s.assignedCoachId)) continue;
+    // Shape slot assignments like getCoachConflicts does for its overlap filter.
+    addConflict(s.assignedCoachId, {
+      startTime: s.startTime,
+      endTime: s.endTime,
+      scheduleSlotId: s.id,
+      eventId: s.eventId,
+      event: { bufferAfterMinutes: s.event?.bufferAfterMinutes ?? null },
+    } as unknown as BookingWithEventBuffer);
+  }
+
+  const sameSessionOptions = {
+    eventId: allowSharedSessionOverlap ? event.id : undefined,
+    scheduleSlotId: allowSharedSessionOverlap ? (matchedScheduleSlotId ?? null) : undefined,
+  };
+
+  for (const coachId of coachIds) {
+    map.set(coachId, {
+      timezone: timezoneByCoach.get(coachId),
+      weeklyOverride: overridesByCoach.get(coachId) ?? [],
+      calendarData: {
+        weekly: weeklyByCoach.get(coachId) ?? [],
+        exceptions: exceptionsByCoach.get(coachId) ?? [],
+      },
+      prefetchedConflicts: filterConflictsForSlot(
+        rawConflictsByCoach.get(coachId) ?? [],
+        start,
+        end,
+        sameSessionOptions,
+      ),
+    });
+  }
+
+  return map;
 };
 
 const buildAvailabilityOptions = ({
@@ -67,6 +237,7 @@ const buildAssignmentContext = ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
+  coachDataMap,
 }: Omit<
   ResolveBookingCoachSelectionInput,
   "preferredCoachId" | "activeCoaches"
@@ -80,6 +251,7 @@ const buildAssignmentContext = ({
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
   excludeBookingId,
+  coachDataMap,
 });
 
 const isHostAvailable = async ({
@@ -91,6 +263,7 @@ const isHostAvailable = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
+  coachDataMap,
 }: {
   coachUserId: string;
   event: BookableEvent;
@@ -100,9 +273,12 @@ const isHostAvailable = async ({
   matchedScheduleSlotId?: string | null;
   excludeBookingId?: string;
   tx: Prisma.TransactionClient;
+  coachDataMap?: Map<string, CoachAvailabilityPrefetch>;
 }): Promise<boolean> => {
-  const weeklyOverride =
-    event.bookingMode !== "FIXED_SLOTS"
+  const prefetch = coachDataMap?.get(coachUserId);
+  const weeklyOverride = prefetch
+    ? prefetch.weeklyOverride
+    : event.bookingMode !== "FIXED_SLOTS"
       ? await tx.eventCoachWeeklyAvailability.findMany({
           where: { eventId: event.id, coachUserId },
           select: { dayOfWeek: true, startTime: true, endTime: true },
@@ -116,6 +292,11 @@ const isHostAvailable = async ({
     {
       ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, excludeBookingId, tx }),
       weeklyOverride,
+      ...(prefetch && {
+        timezone: prefetch.timezone,
+        calendarData: prefetch.calendarData,
+        prefetchedConflicts: prefetch.prefetchedConflicts,
+      }),
     },
   );
 };
@@ -139,6 +320,7 @@ const resolvePreferredSingleHost = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
+  coachDataMap,
 }: ResolveBookingCoachSelectionInput & {
   preferredCoachId: string;
 }): Promise<ResolvedBookingCoachSelection> => {
@@ -162,6 +344,7 @@ const resolvePreferredSingleHost = async ({
     matchedScheduleSlotId,
     excludeBookingId,
     tx,
+    coachDataMap,
     unavailableMessage: "Coach is not available.",
   });
 
@@ -180,6 +363,7 @@ const resolveStrategyLead = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
+  coachDataMap,
 }: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">): Promise<{
   assignedCoachId: string;
 }> => {
@@ -194,6 +378,7 @@ const resolveStrategyLead = async ({
       matchedScheduleSlotId,
       excludeBookingId,
       tx,
+      coachDataMap,
     }),
   );
 
@@ -251,6 +436,7 @@ const resolveSingleHostSelection = async (
       matchedScheduleSlotId: input.matchedScheduleSlotId,
       excludeBookingId: input.excludeBookingId,
       tx: input.tx,
+      coachDataMap: input.coachDataMap,
     }));
 
   if (preferredHost && preferredAvailable) {
@@ -294,6 +480,7 @@ const resolveFixedLeadSelection = async (
     matchedScheduleSlotId: input.matchedScheduleSlotId,
     excludeBookingId: input.excludeBookingId,
     tx: input.tx,
+    coachDataMap: input.coachDataMap,
     unavailableMessage: "The fixed lead coach is not available at this time.",
   });
 
@@ -312,6 +499,7 @@ const resolveCollaborativeCoHosts = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
+  coachDataMap,
 }: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId"> & {
   leadCoachId: string;
 }): Promise<string[]> => {
@@ -337,6 +525,7 @@ const resolveCollaborativeCoHosts = async ({
     matchedScheduleSlotId,
     excludeBookingId,
     tx,
+    coachDataMap,
   });
 
   for (let i = 0; i < candidatesCount; i++) {
@@ -349,8 +538,10 @@ const resolveCollaborativeCoHosts = async ({
     // Check if we already have enough co-hosts
     if (targetCount !== null && availableCoHosts.length >= targetCount) break;
 
-    const coHostOverride =
-      event.bookingMode !== "FIXED_SLOTS"
+    const prefetch = coachDataMap?.get(candidate.coachUserId);
+    const coHostOverride = prefetch
+      ? prefetch.weeklyOverride
+      : event.bookingMode !== "FIXED_SLOTS"
         ? await tx.eventCoachWeeklyAvailability.findMany({
             where: { eventId: event.id, coachUserId: candidate.coachUserId },
             select: { dayOfWeek: true, startTime: true, endTime: true },
@@ -364,6 +555,11 @@ const resolveCollaborativeCoHosts = async ({
       {
         ...buildAvailabilityOptions({ event, allowSharedSessionOverlap, matchedScheduleSlotId, excludeBookingId, tx }),
         weeklyOverride: coHostOverride,
+        ...(prefetch && {
+          timezone: prefetch.timezone,
+          calendarData: prefetch.calendarData,
+          prefetchedConflicts: prefetch.prefetchedConflicts,
+        }),
       },
     );
 
@@ -460,30 +656,38 @@ export const resolveBookingCoachSelection = async (
       }
     }
 
+    // Batch-fetch availability data for the pool before any candidate probing —
+    // built here (after the slot-assigned early return) so fixed-slot bookings
+    // with a pre-assigned coach don't pay for it.
+    const singleHostInput = { ...input, coachDataMap: await buildCoachDataMap(input) };
+
     // 2. Fallback to DIRECT events logic...
     if (isDirect && event.fixedLeadCoachId && !input.preferredCoachId) {
       return resolveSingleHostSelection({
-        ...input,
+        ...singleHostInput,
         preferredCoachId: event.fixedLeadCoachId,
       });
     }
-    return resolveSingleHostSelection(input);
+    return resolveSingleHostSelection(singleHostInput);
   }
 
   // Multi-coach session: determine lead coach.
   // FIXED_LEAD leadership OR DIRECT strategy with a designated coach both pin the lead.
+  // Batch-fetch availability data once — the lead selection and co-host loop below
+  // probe many candidates and would otherwise fire ~4 queries per coach.
+  const multiCoachInput = { ...input, coachDataMap: await buildCoachDataMap(input) };
   const useFixedLead =
     event.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD ||
     (isDirect && !!event.fixedLeadCoachId);
 
   const leadSelection = useFixedLead
-    ? await resolveFixedLeadSelection(input)
-    : await resolveStrategyLead(input);
+    ? await resolveFixedLeadSelection(multiCoachInput)
+    : await resolveStrategyLead(multiCoachInput);
 
   return {
     assignedCoachId: leadSelection.assignedCoachId,
     coCoachUserIds: await resolveCollaborativeCoHosts({
-      ...input,
+      ...multiCoachInput,
       leadCoachId: leadSelection.assignedCoachId,
     }),
   };

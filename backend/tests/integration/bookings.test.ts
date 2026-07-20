@@ -441,6 +441,32 @@ describe("Booking Domain Integration Tests", () => {
       // Coach 2 has 0 team-wide bookings vs Coach 1's 1 — should be preferred
       expect(res.body.data.booking.coachUserId).toBe(coach2Id);
     });
+
+    it("skips a coach blocked by an availability exception (vacation day) and assigns the next one", async () => {
+      // Both coaches share the Monday 09:00–12:00 window...
+      await prisma.userWeeklyAvailability.create({
+        data: { userId: coach2Id, dayOfWeek: 1, startTime: "09:00", endTime: "12:00" },
+      });
+
+      // ...but Coach 1 has a full-day unavailability exception on the booking date.
+      const startTime = getNextUtcWeekdayAt(1, 9, 30);
+      const exceptionDate = new Date(startTime);
+      exceptionDate.setUTCHours(0, 0, 0, 0);
+      await prisma.userAvailabilityException.create({
+        data: { userId: coachId, date: exceptionDate, isUnavailable: true },
+      });
+
+      const res = await request(app).post("/api/bookings").send({
+        studentName: "Student RR Exception",
+        studentEmail: "stu-exception@rr.com",
+        teamId,
+        eventId: rrEventId,
+        startTime: startTime.toISOString(),
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.booking.coachUserId).toBe(coach2Id);
+    });
   });
 
   describe("GET /api/bookings search", () => {
@@ -616,6 +642,42 @@ describe("Booking Domain Integration Tests", () => {
       // But clearTables is in afterAll and deleteMany in afterEach.
       // Wait, afterEach deletes all bookings. So it should be Exactly 3.
       expect(res.body.data.bookings.length).toBe(3);
+    });
+
+    it("sorts ascending when sortOrder=asc (soonest first)", async () => {
+      const res = await request(app)
+        .get("/api/bookings")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .query({ sortOrder: "asc" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.bookings.map((b: any) => b.studentName)).toEqual([
+        "April Student",
+        "May Student",
+        "June Student",
+      ]);
+    });
+
+    it("defaults to descending order when sortOrder is omitted (existing behavior)", async () => {
+      const res = await request(app)
+        .get("/api/bookings")
+        .set("Authorization", `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.bookings.map((b: any) => b.studentName)).toEqual([
+        "June Student",
+        "May Student",
+        "April Student",
+      ]);
+    });
+
+    it("rejects an invalid sortOrder value", async () => {
+      const res = await request(app)
+        .get("/api/bookings")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .query({ sortOrder: "sideways" });
+
+      expect(res.status).toBe(400);
     });
   });
 

@@ -140,7 +140,7 @@ const findBookings = async (filters: ListBookingsFilters): Promise<SafeBooking[]
   return prisma.booking.findMany({
     where: buildBookingListWhere(filters),
     include: bookingInclude,
-    orderBy: { startTime: "desc" },
+    orderBy: { startTime: filters.sortOrder ?? "desc" },
     skip,
     take: pageSize,
   });
