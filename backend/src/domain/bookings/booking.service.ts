@@ -130,7 +130,7 @@ const getBookableEvent = async (teamId: string, eventId: string): Promise<Bookab
   return { ...event, coaches: filteredCoaches } as BookableEvent;
 };
 
-const resolveBookingWindow = (event: BookableEvent, start: Date) => {
+const computeSessionTimeWindow = (event: BookableEvent, start: Date) => {
   const end = new Date(start.getTime() + event.durationSeconds * 1000);
   const schedulingContext = buildSchedulingContext(event);
 
@@ -139,7 +139,7 @@ const resolveBookingWindow = (event: BookableEvent, start: Date) => {
   return { end, schedulingContext };
 };
 
-const resolveSlotContext = async (event: BookableEvent, start: Date) => {
+const matchScheduleSlotForBooking = async (event: BookableEvent, start: Date) => {
   const matchedScheduleSlot = await resolveMatchingScheduleSlot(event.id, start);
   const allowSharedSessionOverlap = event.bookingMode === "FIXED_SLOTS";
 
@@ -232,8 +232,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     savedSessionObjectives,
     savedCustomQuestions,
     savedCustomAnswers,
-  // Cast is safe: Prisma includes all scalar fields when using `include` (not `select`).
-  // customQuestions and useDefaultQuestions are present at runtime — LS cache may lag after prisma generate.
+    // Cast is safe: Prisma includes all scalar fields when using `include` (not `select`).
+    // customQuestions and useDefaultQuestions are present at runtime — LS cache may lag after prisma generate.
   } = await resolveBookingQuestions(event as typeof event & { useDefaultQuestions: boolean; customQuestions: string[] }, customAnswers, {
     specificQuestion,
     triedSolutions,
@@ -241,8 +241,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     sessionObjectives,
   });
 
-  const { end, schedulingContext } = resolveBookingWindow(event, start);
-  const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
+  const { end, schedulingContext } = computeSessionTimeWindow(event, start);
+  const { matchedScheduleSlot, allowSharedSessionOverlap } = await matchScheduleSlotForBooking(event, start);
   const activeCoaches = event.coaches as CoachCandidate[];
 
   if (activeCoaches.length === 0) {
@@ -275,85 +275,85 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   // event lock, deadlocking the pool under load (see evaluateCoachAvailability).
   let booking = await prisma
     .$transaction(
-    async (tx) => {
-      const { assignedCoachId, coCoachUserIds } = await acquireLocksAndSelectCoach(tx, {
-        event,
-        matchedScheduleSlot,
-        activeCoaches,
-        start,
-        end,
-        allowSharedSessionOverlap,
-        preferredCoachId,
-      });
+      async (tx) => {
+        const { assignedCoachId, coCoachUserIds } = await acquireLocksAndSelectCoach(tx, {
+          event,
+          matchedScheduleSlot,
+          activeCoaches,
+          start,
+          end,
+          allowSharedSessionOverlap,
+          preferredCoachId,
+        });
 
-      const scheduleSlot =
-        matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
+        const scheduleSlot =
+          matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-      // Participant capacity is only meaningful for FIXED_SLOTS — those are pre-created shared
-      // slots with a real seat cap. In COACH_AVAILABILITY mode each booking gets its own coach;
-      // the coach conflict detection above already prevents double-booking at the coach level.
-      if (schedulingContext.bookingMode === "FIXED_SLOTS") {
-        const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
-        const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
-        assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+        // Participant capacity is only meaningful for FIXED_SLOTS — those are pre-created shared
+        // slots with a real seat cap. In COACH_AVAILABILITY mode each booking gets its own coach;
+        // the coach conflict detection above already prevents double-booking at the coach level.
+        if (schedulingContext.bookingMode === "FIXED_SLOTS") {
+          const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+          const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
+          assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+        }
+
+        const student = await upsertStudentForBooking(
+          tx,
+          normalizedStudentName,
+          normalizedStudentEmail,
+          start,
+        );
+        await lockStudent(tx, normalizedStudentEmail);
+        await assertStudentNotOverlapping(tx, normalizedStudentEmail, start, end);
+
+        // Pre-generate id + sessionToken so the join-redirect URL can be computed and
+        // written inside this transaction — avoids a non-atomic post-transaction patch.
+        const bookingId = randomUUID();
+        const sessionToken = randomUUID();
+        const slotId = scheduleSlot?.id ?? null;
+
+        const bookingRecord = await createBookingRecord(tx, {
+          id: bookingId,
+          studentId: student.id,
+          scheduleSlotId: slotId,
+          studentName: normalizedStudentName,
+          studentEmail: normalizedStudentEmail,
+          teamId,
+          eventId,
+          coachUserId: assignedCoachId,
+          coCoachUserIds,
+          startTime: start,
+          endTime: end,
+          timezone: timezone || "UTC",
+          notes,
+          specificQuestion: savedSpecificQuestion,
+          triedSolutions: savedTriedSolutions,
+          usedResources: savedUsedResources,
+          sessionObjectives: savedSessionObjectives,
+          customQuestions: savedCustomQuestions,
+          customAnswers: savedCustomAnswers,
+          meetingJoinUrl: buildStudentJoinUrl(bookingId, sessionToken),
+          sessionToken,
+          status: BookingStatus.CONFIRMED,
+        });
+
+        return bookingRecord;
+      },
+      { maxWait: 10000, timeout: 15000 },
+    )
+    .catch((error) => {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2024" || error.code === "P2028")
+      ) {
+        throw new ErrorHandler(
+          StatusCodes.CONFLICT,
+          "This time slot is currently busy. Please try again.",
+        );
       }
-
-      const student = await upsertStudentForBooking(
-        tx,
-        normalizedStudentName,
-        normalizedStudentEmail,
-        start,
-      );
-      await lockStudent(tx, normalizedStudentEmail);
-      await assertStudentNotOverlapping(tx, normalizedStudentEmail, start, end);
-
-      // Pre-generate id + sessionToken so the join-redirect URL can be computed and
-      // written inside this transaction — avoids a non-atomic post-transaction patch.
-      const bookingId = randomUUID();
-      const sessionToken = randomUUID();
-      const slotId = scheduleSlot?.id ?? null;
-
-      const bookingRecord = await createBookingRecord(tx, {
-        id: bookingId,
-        studentId: student.id,
-        scheduleSlotId: slotId,
-        studentName: normalizedStudentName,
-        studentEmail: normalizedStudentEmail,
-        teamId,
-        eventId,
-        coachUserId: assignedCoachId,
-        coCoachUserIds,
-        startTime: start,
-        endTime: end,
-        timezone: timezone || "UTC",
-        notes,
-        specificQuestion: savedSpecificQuestion,
-        triedSolutions: savedTriedSolutions,
-        usedResources: savedUsedResources,
-        sessionObjectives: savedSessionObjectives,
-        customQuestions: savedCustomQuestions,
-        customAnswers: savedCustomAnswers,
-        meetingJoinUrl: buildStudentJoinUrl(bookingId, sessionToken),
-        sessionToken,
-        status: BookingStatus.CONFIRMED,
-      });
-
-      return bookingRecord;
-    },
-    { maxWait: 10000, timeout: 15000 },
-  )
-  .catch((error) => {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2024" || error.code === "P2028")
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "This time slot is currently busy. Please try again.",
-      );
-    }
-    throw error;
-  });
+      throw error;
+    });
 
   try {
     await recordBookingActivity(
@@ -484,8 +484,8 @@ const rescheduleBooking = async (
 
   // 2. Resolve booking window and slot context
   const event = await getBookableEvent(booking.teamId, booking.eventId);
-  const { end } = resolveBookingWindow(event, start);
-  const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
+  const { end } = computeSessionTimeWindow(event, start);
+  const { matchedScheduleSlot, allowSharedSessionOverlap } = await matchScheduleSlotForBooking(event, start);
 
   // Guard: block rescheduling to a slot that has already started
   if (matchedScheduleSlot && new Date(matchedScheduleSlot.startTime) <= new Date()) {
@@ -502,89 +502,89 @@ const rescheduleBooking = async (
   // selection + update atomically; all queries inside MUST use `tx`.
   const rescheduleResult = await prisma
     .$transaction(
-    async (tx) => {
-      const { assignedCoachId, coCoachUserIds } = await acquireLocksAndSelectCoach(tx, {
-        event,
-        matchedScheduleSlot,
-        activeCoaches,
-        start,
-        end,
-        allowSharedSessionOverlap,
-        preferredCoachId: booking.coachUserId ?? undefined,
-        excludeBookingId: booking.id,
-      });
-
-      const scheduleSlot =
-        matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
-
-      // Check capacity for the NEW time (FIXED_SLOTS only — see booking creation comment)
-      const schedulingContext = buildSchedulingContext(event);
-      if (schedulingContext.bookingMode === "FIXED_SLOTS") {
-        const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
-        const currentParticipantCount = await countActiveParticipantsForTime(
-          tx,
-          booking.eventId,
+      async (tx) => {
+        const { assignedCoachId, coCoachUserIds } = await acquireLocksAndSelectCoach(tx, {
+          event,
+          matchedScheduleSlot,
+          activeCoaches,
           start,
+          end,
+          allowSharedSessionOverlap,
+          preferredCoachId: booking.coachUserId ?? undefined,
+          excludeBookingId: booking.id,
+        });
+
+        const scheduleSlot =
+          matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
+
+        // Check capacity for the NEW time (FIXED_SLOTS only — see booking creation comment)
+        const schedulingContext = buildSchedulingContext(event);
+        if (schedulingContext.bookingMode === "FIXED_SLOTS") {
+          const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+          const currentParticipantCount = await countActiveParticipantsForTime(
+            tx,
+            booking.eventId,
+            start,
+          );
+          assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+        }
+
+        await lockStudent(tx, booking.studentEmail);
+        await assertStudentNotOverlapping(tx, booking.studentEmail, start, end, booking.id);
+
+        // meetingJoinUrl is intentionally NOT recomputed here — it's a stable
+        // pointer (bookingId + sessionToken never change on reschedule), and the
+        // live redirect endpoint already resolves whatever coach/time this
+        // update assigns on every click. Recomputing it here was the source of
+        // the original stale-link bug (an already-sent email couldn't reflect
+        // a later reassignment without this field changing underneath it).
+        const updated = await updateBookingById(id, {
+          startTime: start,
+          endTime: end,
+          timezone: timezone || booking.timezone,
+          coachUserId: assignedCoachId,
+          coCoachUserIds,
+          scheduleSlotId: scheduleSlot?.id ?? null,
+          status: BookingStatus.CONFIRMED,
+          ...(token && { rescheduleToken: randomUUID() }), // rotate token to invalidate the old link
+        }, tx);
+
+        // Resolve actor and coach-change context — returned for post-transaction activity writes.
+        let actorType: BookingActivityActor = BookingActivityActor.SYSTEM;
+        let actorUserId: string | null = null;
+        let actorName: string | null = null;
+
+        if (caller) {
+          actorType = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
+          actorUserId = caller.id;
+        } else if (token) {
+          actorType = BookingActivityActor.STUDENT;
+          actorName = booking.studentName;
+        }
+
+        return {
+          updated,
+          actorType,
+          actorUserId,
+          actorName,
+          previousSlot: { startTime: booking.startTime, endTime: booking.endTime, coachUserId: booking.coachUserId },
+          coachChanged: booking.coachUserId !== updated.coachUserId,
+        };
+      },
+      { maxWait: 10000, timeout: 30000 },
+    )
+    .catch((error) => {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2024" || error.code === "P2028")
+      ) {
+        throw new ErrorHandler(
+          StatusCodes.CONFLICT,
+          "This time slot is currently busy. Please try again.",
         );
-        assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
       }
-
-      await lockStudent(tx, booking.studentEmail);
-      await assertStudentNotOverlapping(tx, booking.studentEmail, start, end, booking.id);
-
-      // meetingJoinUrl is intentionally NOT recomputed here — it's a stable
-      // pointer (bookingId + sessionToken never change on reschedule), and the
-      // live redirect endpoint already resolves whatever coach/time this
-      // update assigns on every click. Recomputing it here was the source of
-      // the original stale-link bug (an already-sent email couldn't reflect
-      // a later reassignment without this field changing underneath it).
-      const updated = await updateBookingById(id, {
-        startTime: start,
-        endTime: end,
-        timezone: timezone || booking.timezone,
-        coachUserId: assignedCoachId,
-        coCoachUserIds,
-        scheduleSlotId: scheduleSlot?.id ?? null,
-        status: BookingStatus.CONFIRMED,
-        ...(token && { rescheduleToken: randomUUID() }), // rotate token to invalidate the old link
-      }, tx);
-
-      // Resolve actor and coach-change context — returned for post-transaction activity writes.
-      let actorType: BookingActivityActor = BookingActivityActor.SYSTEM;
-      let actorUserId: string | null = null;
-      let actorName: string | null = null;
-
-      if (caller) {
-        actorType = caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
-        actorUserId = caller.id;
-      } else if (token) {
-        actorType = BookingActivityActor.STUDENT;
-        actorName = booking.studentName;
-      }
-
-      return {
-        updated,
-        actorType,
-        actorUserId,
-        actorName,
-        previousSlot: { startTime: booking.startTime, endTime: booking.endTime, coachUserId: booking.coachUserId },
-        coachChanged: booking.coachUserId !== updated.coachUserId,
-      };
-    },
-    { maxWait: 10000, timeout: 30000 },
-  )
-  .catch((error) => {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2024" || error.code === "P2028")
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "This time slot is currently busy. Please try again.",
-      );
-    }
-    throw error;
-  });
+      throw error;
+    });
 
   const updatedBooking = rescheduleResult.updated;
 
@@ -839,8 +839,8 @@ const bookFollowUpSession = async (
   // 5. Parse time and resolve booking window/slot constraints
   const start = parseBookingStartTime(payload.startTime);
   const event = await getBookableEvent(originalBooking.teamId, originalBooking.eventId);
-  const { end, schedulingContext } = resolveBookingWindow(event, start);
-  const { matchedScheduleSlot, allowSharedSessionOverlap } = await resolveSlotContext(event, start);
+  const { end, schedulingContext } = computeSessionTimeWindow(event, start);
+  const { matchedScheduleSlot, allowSharedSessionOverlap } = await matchScheduleSlotForBooking(event, start);
 
   const activeCoaches = event.coaches as CoachCandidate[];
 
@@ -867,109 +867,109 @@ const bookFollowUpSession = async (
   // 6. Database Transaction & Pessimistic Locks — same locking model as createBooking.
   const followUpBooking = await prisma
     .$transaction(
-    async (tx) => {
-      const { assignedCoachId, coCoachUserIds } = await acquireLocksAndSelectCoach(tx, {
-        event,
-        matchedScheduleSlot,
-        activeCoaches,
-        start,
-        end,
-        allowSharedSessionOverlap,
-        preferredCoachId: originalBooking.coachUserId ?? undefined,
-      });
-      if (assignedCoachId === null) {
+      async (tx) => {
+        const { assignedCoachId, coCoachUserIds } = await acquireLocksAndSelectCoach(tx, {
+          event,
+          matchedScheduleSlot,
+          activeCoaches,
+          start,
+          end,
+          allowSharedSessionOverlap,
+          preferredCoachId: originalBooking.coachUserId ?? undefined,
+        });
+        if (assignedCoachId === null) {
+          throw new ErrorHandler(
+            StatusCodes.CONFLICT,
+            "Cannot book a follow-up for an anonymous session without an assigned coach.",
+          );
+        }
+
+        // Re-verify coach is still active after acquiring the row lock (closes TOCTOU window)
+        const lockedCoachUser = await tx.user.findUnique({ where: { id: assignedCoachId } });
+        if (!lockedCoachUser?.isActive) {
+          throw new ErrorHandler(
+            StatusCodes.CONFLICT,
+            "The assigned coach is no longer active.",
+          );
+        }
+        const lockedEventCoach = await tx.eventCoach.findUnique({
+          where: {
+            eventId_coachUserId: { eventId: originalBooking.eventId, coachUserId: assignedCoachId },
+          },
+        });
+        if (!lockedEventCoach?.isActive) {
+          throw new ErrorHandler(
+            StatusCodes.CONFLICT,
+            "The assigned coach is no longer assigned to this event.",
+          );
+        }
+
+        const scheduleSlot =
+          matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
+
+        // Capacity check (FIXED_SLOTS only — see booking creation comment)
+        if (schedulingContext.bookingMode === "FIXED_SLOTS") {
+          const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
+          const currentParticipantCount = await countActiveParticipantsForTime(tx, event.id, start);
+          assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
+        }
+
+        // Upsert student profile
+        const student = await upsertStudentForBooking(
+          tx,
+          originalBooking.studentName,
+          originalBooking.studentEmail,
+          start,
+        );
+        await lockStudent(tx, originalBooking.studentEmail);
+        await assertStudentNotOverlapping(tx, originalBooking.studentEmail, start, end);
+
+        const slotId = scheduleSlot?.id ?? null;
+        const bookingId = randomUUID();
+        const sessionToken = randomUUID();
+
+        const bookingRecord = await createBookingRecord(tx, {
+          id: bookingId,
+          studentId: student.id,
+          scheduleSlotId: slotId,
+          studentName: originalBooking.studentName,
+          studentEmail: originalBooking.studentEmail,
+          teamId: originalBooking.teamId,
+          eventId: originalBooking.eventId,
+          coachUserId: assignedCoachId,
+          coCoachUserIds,
+          startTime: start,
+          endTime: end,
+          timezone: payload.timezone || originalBooking.timezone || "UTC",
+          notes:
+            payload.notes ?? `Follow-up to booking ${originalBooking.id.slice(0, 8).toUpperCase()}`,
+          specificQuestion: savedSpecificQuestion,
+          triedSolutions: savedTriedSolutions,
+          usedResources: savedUsedResources,
+          sessionObjectives: savedSessionObjectives,
+          customQuestions: savedCustomQuestions,
+          customAnswers: savedCustomAnswers,
+          meetingJoinUrl: buildStudentJoinUrl(bookingId, sessionToken),
+          sessionToken,
+          status: BookingStatus.CONFIRMED,
+        });
+
+        return { bookingRecord, actorType: caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN };
+      },
+      { maxWait: 10000, timeout: 15000 },
+    )
+    .catch((error) => {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2024" || error.code === "P2028")
+      ) {
         throw new ErrorHandler(
           StatusCodes.CONFLICT,
-          "Cannot book a follow-up for an anonymous session without an assigned coach.",
+          "This time slot is currently busy. Please try again.",
         );
       }
-
-      // Re-verify coach is still active after acquiring the row lock (closes TOCTOU window)
-      const lockedCoachUser = await tx.user.findUnique({ where: { id: assignedCoachId } });
-      if (!lockedCoachUser?.isActive) {
-        throw new ErrorHandler(
-          StatusCodes.CONFLICT,
-          "The assigned coach is no longer active.",
-        );
-      }
-      const lockedEventCoach = await tx.eventCoach.findUnique({
-        where: {
-          eventId_coachUserId: { eventId: originalBooking.eventId, coachUserId: assignedCoachId },
-        },
-      });
-      if (!lockedEventCoach?.isActive) {
-        throw new ErrorHandler(
-          StatusCodes.CONFLICT,
-          "The assigned coach is no longer assigned to this event.",
-        );
-      }
-
-      const scheduleSlot =
-        matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
-
-      // Capacity check (FIXED_SLOTS only — see booking creation comment)
-      if (schedulingContext.bookingMode === "FIXED_SLOTS") {
-        const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
-        const currentParticipantCount = await countActiveParticipantsForTime(tx, event.id, start);
-        assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
-      }
-
-      // Upsert student profile
-      const student = await upsertStudentForBooking(
-        tx,
-        originalBooking.studentName,
-        originalBooking.studentEmail,
-        start,
-      );
-      await lockStudent(tx, originalBooking.studentEmail);
-      await assertStudentNotOverlapping(tx, originalBooking.studentEmail, start, end);
-
-      const slotId = scheduleSlot?.id ?? null;
-      const bookingId = randomUUID();
-      const sessionToken = randomUUID();
-
-      const bookingRecord = await createBookingRecord(tx, {
-        id: bookingId,
-        studentId: student.id,
-        scheduleSlotId: slotId,
-        studentName: originalBooking.studentName,
-        studentEmail: originalBooking.studentEmail,
-        teamId: originalBooking.teamId,
-        eventId: originalBooking.eventId,
-        coachUserId: assignedCoachId,
-        coCoachUserIds,
-        startTime: start,
-        endTime: end,
-        timezone: payload.timezone || originalBooking.timezone || "UTC",
-        notes:
-          payload.notes ?? `Follow-up to booking ${originalBooking.id.slice(0, 8).toUpperCase()}`,
-        specificQuestion: savedSpecificQuestion,
-        triedSolutions: savedTriedSolutions,
-        usedResources: savedUsedResources,
-        sessionObjectives: savedSessionObjectives,
-        customQuestions: savedCustomQuestions,
-        customAnswers: savedCustomAnswers,
-        meetingJoinUrl: buildStudentJoinUrl(bookingId, sessionToken),
-        sessionToken,
-        status: BookingStatus.CONFIRMED,
-      });
-
-      return { bookingRecord, actorType: caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN };
-    },
-    { maxWait: 10000, timeout: 15000 },
-  )
-  .catch((error) => {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2024" || error.code === "P2028")
-    ) {
-      throw new ErrorHandler(
-        StatusCodes.CONFLICT,
-        "This time slot is currently busy. Please try again.",
-      );
-    }
-    throw error;
-  });
+      throw error;
+    });
 
   const { bookingRecord: followUpRecord, actorType: followUpActorType } = followUpBooking;
 
