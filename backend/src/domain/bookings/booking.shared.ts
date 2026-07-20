@@ -77,6 +77,8 @@ export type ListBookingsFilters = {
   endDate?: string | Date;
   page?: number;
   limit?: number;
+  /** Sort direction for startTime. Defaults to "desc" (most recent/farthest first). */
+  sortOrder?: "asc" | "desc";
   /** When set, restricts results to teams where this user is lead or active member. */
   teamAdminCallerId?: string;
 };

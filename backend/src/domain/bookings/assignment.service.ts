@@ -1,7 +1,15 @@
-import { AssignmentStrategy, BookingStatus, Prisma, PrismaClient } from "@prisma/client";
+import {
+  AssignmentStrategy,
+  BookingStatus,
+  Prisma,
+  PrismaClient,
+  UserAvailabilityException,
+  UserWeeklyAvailability,
+} from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { isCoachAvailable } from "../availability/availability.service";
+import type { BookingWithEventBuffer } from "../availability/availabilityConflict.service";
 
 export type CoachCandidate = {
   coachUserId: string;
@@ -13,6 +21,20 @@ export type CoachCandidate = {
 
 // Legacy alias — remove once all callers are updated
 export type HostCandidate = CoachCandidate;
+
+/**
+ * Batched per-coach availability inputs, pre-fetched once for the whole candidate
+ * pool before a selection loop. Without this, every candidate the round-robin /
+ * co-host loops probe costs ~4 serialized queries on the transaction connection —
+ * all while holding the event row lock that other booking requests queue on.
+ */
+export type CoachAvailabilityPrefetch = {
+  /** undefined = coach's user row missing; availability check falls back to a lookup that treats them as unavailable. */
+  timezone?: string;
+  weeklyOverride: Array<{ dayOfWeek: number; startTime: string; endTime: string }>;
+  calendarData: { weekly: UserWeeklyAvailability[]; exceptions: UserAvailabilityException[] };
+  prefetchedConflicts: BookingWithEventBuffer[];
+};
 
 export type AssignmentContext = {
   prisma: Prisma.TransactionClient | PrismaClient;
@@ -26,6 +48,9 @@ export type AssignmentContext = {
   /** Excludes this booking's own record from each candidate's conflict check —
    * set when rescheduling, so the booking's own prior time doesn't count against it. */
   excludeBookingId?: string;
+  /** When present, candidate availability checks read from this map instead of
+   * firing per-coach queries. Absent on paths that never loop (kept as fallback). */
+  coachDataMap?: Map<string, CoachAvailabilityPrefetch>;
 };
 
 type AssignmentResult = {
@@ -55,8 +80,10 @@ const isCandidateAvailable = async (
   candidate: CoachCandidate,
   context: AssignmentContext,
 ): Promise<boolean> => {
-  const weeklyOverride =
-    context.bookingMode !== "FIXED_SLOTS"
+  const prefetch = context.coachDataMap?.get(candidate.coachUserId);
+  const weeklyOverride = prefetch
+    ? prefetch.weeklyOverride
+    : context.bookingMode !== "FIXED_SLOTS"
       ? await context.prisma.eventCoachWeeklyAvailability.findMany({
           where: { eventId: context.eventId, coachUserId: candidate.coachUserId },
           select: { dayOfWeek: true, startTime: true, endTime: true },
@@ -66,7 +93,15 @@ const isCandidateAvailable = async (
     candidate.coachUserId,
     context.start,
     context.end,
-    { ...buildAvailabilityOptions(context), weeklyOverride },
+    {
+      ...buildAvailabilityOptions(context),
+      weeklyOverride,
+      ...(prefetch && {
+        timezone: prefetch.timezone,
+        calendarData: prefetch.calendarData,
+        prefetchedConflicts: prefetch.prefetchedConflicts,
+      }),
+    },
   );
 };
 

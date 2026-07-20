@@ -20,8 +20,15 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
     limit: 10,
     eventId,
   })
+  // Captured once per mount: an inline new Date() would mint a fresh ms-precision
+  // query key on every tab switch, so React Query could never reuse a cached page.
+  const [upcomingSince] = useState(() => new Date().toISOString())
 
-  // Prepare server filters based on status selection
+  // Prepare server filters based on status selection.
+  // UPCOMING asks the server for future bookings soonest-first — without startDate +
+  // sortOrder, a page of 10 would contain the FARTHEST-future sessions, so the soonest
+  // ones wouldn't even be in the response. The server owns the filtering; re-filtering
+  // client-side would desynchronize visible rows from pagination.total.
   const serverFilters = useMemo(
     () => ({
       ...params,
@@ -31,21 +38,16 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
           : statusFilter === 'ALL'
             ? undefined
             : (statusFilter as BookingStatus),
+      ...(statusFilter === 'UPCOMING' && {
+        sortOrder: 'asc' as const,
+        startDate: upcomingSince,
+      }),
     }),
-    [params, statusFilter]
+    [params, statusFilter, upcomingSince]
   )
 
   const { data, isLoading, error } = useBookings(serverFilters)
-
-  // Frontend filtering for UPCOMING (Confirmed + Future-dated)
-  const filteredBookings = useMemo(() => {
-    const bookings = data?.bookings ?? []
-    if (statusFilter === 'UPCOMING') {
-      const now = new Date()
-      return bookings.filter((b) => b.status === 'CONFIRMED' && new Date(b.startTime) >= now)
-    }
-    return bookings
-  }, [data?.bookings, statusFilter])
+  const bookings = data?.bookings ?? []
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: FilterType) => {
     setStatusFilter(newValue)
@@ -115,12 +117,12 @@ export function EventBookingList({ eventId }: EventBookingListProps) {
         }}
       >
         <Typography variant="subtitle2" color="text.secondary">
-          Showing {pagination?.total ?? filteredBookings.length} bookings
+          Showing {pagination?.total ?? bookings.length} bookings
         </Typography>
       </Box>
 
       <BookingTable
-        bookings={filteredBookings}
+        bookings={bookings}
         pagination={pagination}
         onPageChange={(page) => setParams((p) => ({ ...p, page }))}
         onRowsPerPageChange={(limit) => setParams((p) => ({ ...p, limit, page: 1 }))}

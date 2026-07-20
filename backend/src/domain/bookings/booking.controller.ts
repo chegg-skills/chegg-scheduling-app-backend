@@ -73,6 +73,7 @@ const listBookings = async (req: Request, res: Response) => {
     search: getStringParam(req.query.search),
     startDate: getStringParam(req.query.startDate),
     endDate: getStringParam(req.query.endDate),
+    sortOrder: getStringParam(req.query.sortOrder) as "asc" | "desc" | undefined,
     teamAdminCallerId: caller.role === UserRole.TEAM_ADMIN ? caller.id : undefined,
     page,
     limit,
