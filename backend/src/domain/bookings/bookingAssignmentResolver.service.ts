@@ -47,7 +47,7 @@ type ResolveBookingCoachSelectionInput = {
   tx: Prisma.TransactionClient;
   /** Batched per-coach availability data — built once by resolveBookingCoachSelection
    * before any selection loop so candidate probes don't fire per-coach queries. */
-  coachDataMap?: Map<string, CoachAvailabilityPrefetch>;
+  coachAvailabilityPrefetch?: Map<string, CoachAvailabilityPrefetch>;
 };
 
 /**
@@ -61,7 +61,7 @@ type ResolveBookingCoachSelectionInput = {
  * getCoachConflicts' overlap/same-session logic); excludeBookingId has no equivalent
  * there, so it is applied in the raw fetch instead.
  */
-const buildCoachDataMap = async ({
+const prefetchCoachAvailability = async ({
   activeCoaches,
   event,
   start,
@@ -70,7 +70,7 @@ const buildCoachDataMap = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
-}: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId" | "coachDataMap">): Promise<
+}: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId" | "coachAvailabilityPrefetch">): Promise<
   Map<string, CoachAvailabilityPrefetch>
 > => {
   const map = new Map<string, CoachAvailabilityPrefetch>();
@@ -96,6 +96,7 @@ const buildCoachDataMap = async ({
       ignoreWeeklySchedule
         ? []
         : tx.userWeeklyAvailability.findMany({ where: { userId: { in: coachIds } } }),
+      
       tx.userAvailabilityException.findMany({
         // Exception dates are stored as midnight-UTC timestamps but matched against the
         // session's LOCAL calendar day (findAvailabilityException compares dateStrings).
@@ -237,7 +238,7 @@ const buildAssignmentContext = ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
-  coachDataMap,
+  coachAvailabilityPrefetch,
 }: Omit<
   ResolveBookingCoachSelectionInput,
   "preferredCoachId" | "activeCoaches"
@@ -251,7 +252,7 @@ const buildAssignmentContext = ({
   allowSharedSessionOverlap,
   matchedScheduleSlotId,
   excludeBookingId,
-  coachDataMap,
+  coachAvailabilityPrefetch,
 });
 
 const isHostAvailable = async ({
@@ -263,7 +264,7 @@ const isHostAvailable = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
-  coachDataMap,
+  coachAvailabilityPrefetch,
 }: {
   coachUserId: string;
   event: BookableEvent;
@@ -273,9 +274,9 @@ const isHostAvailable = async ({
   matchedScheduleSlotId?: string | null;
   excludeBookingId?: string;
   tx: Prisma.TransactionClient;
-  coachDataMap?: Map<string, CoachAvailabilityPrefetch>;
+  coachAvailabilityPrefetch?: Map<string, CoachAvailabilityPrefetch>;
 }): Promise<boolean> => {
-  const prefetch = coachDataMap?.get(coachUserId);
+  const prefetch = coachAvailabilityPrefetch?.get(coachUserId);
   const weeklyOverride = prefetch
     ? prefetch.weeklyOverride
     : event.bookingMode !== "FIXED_SLOTS"
@@ -320,7 +321,7 @@ const resolvePreferredSingleHost = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
-  coachDataMap,
+  coachAvailabilityPrefetch,
 }: ResolveBookingCoachSelectionInput & {
   preferredCoachId: string;
 }): Promise<ResolvedBookingCoachSelection> => {
@@ -344,7 +345,7 @@ const resolvePreferredSingleHost = async ({
     matchedScheduleSlotId,
     excludeBookingId,
     tx,
-    coachDataMap,
+    coachAvailabilityPrefetch,
     unavailableMessage: "Coach is not available.",
   });
 
@@ -363,7 +364,7 @@ const resolveStrategyLead = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
-  coachDataMap,
+  coachAvailabilityPrefetch,
 }: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId">): Promise<{
   assignedCoachId: string;
 }> => {
@@ -378,7 +379,7 @@ const resolveStrategyLead = async ({
       matchedScheduleSlotId,
       excludeBookingId,
       tx,
-      coachDataMap,
+      coachAvailabilityPrefetch,
     }),
   );
 
@@ -436,7 +437,7 @@ const resolveSingleHostSelection = async (
       matchedScheduleSlotId: input.matchedScheduleSlotId,
       excludeBookingId: input.excludeBookingId,
       tx: input.tx,
-      coachDataMap: input.coachDataMap,
+      coachAvailabilityPrefetch: input.coachAvailabilityPrefetch,
     }));
 
   if (preferredHost && preferredAvailable) {
@@ -480,7 +481,7 @@ const resolveFixedLeadSelection = async (
     matchedScheduleSlotId: input.matchedScheduleSlotId,
     excludeBookingId: input.excludeBookingId,
     tx: input.tx,
-    coachDataMap: input.coachDataMap,
+    coachAvailabilityPrefetch: input.coachAvailabilityPrefetch,
     unavailableMessage: "The fixed lead coach is not available at this time.",
   });
 
@@ -499,7 +500,7 @@ const resolveCollaborativeCoHosts = async ({
   matchedScheduleSlotId,
   excludeBookingId,
   tx,
-  coachDataMap,
+  coachAvailabilityPrefetch,
 }: Omit<ResolveBookingCoachSelectionInput, "preferredCoachId"> & {
   leadCoachId: string;
 }): Promise<string[]> => {
@@ -525,7 +526,7 @@ const resolveCollaborativeCoHosts = async ({
     matchedScheduleSlotId,
     excludeBookingId,
     tx,
-    coachDataMap,
+    coachAvailabilityPrefetch,
   });
 
   for (let i = 0; i < candidatesCount; i++) {
@@ -538,7 +539,7 @@ const resolveCollaborativeCoHosts = async ({
     // Check if we already have enough co-hosts
     if (targetCount !== null && availableCoHosts.length >= targetCount) break;
 
-    const prefetch = coachDataMap?.get(candidate.coachUserId);
+    const prefetch = coachAvailabilityPrefetch?.get(candidate.coachUserId);
     const coHostOverride = prefetch
       ? prefetch.weeklyOverride
       : event.bookingMode !== "FIXED_SLOTS"
@@ -582,6 +583,24 @@ const resolveCollaborativeCoHosts = async ({
 
   return availableCoHosts;
 };
+
+/**
+ * Decides who runs this session. Walks the decision tree in order, returning as
+ * soon as one branch applies:
+ *  1. Anonymous event (event.allowAnonymousBooking) → no coach assigned to the
+ *     booking at all. Distinct from deferCoachReveal (ONE_TO_MANY only, mutually
+ *     exclusive with this flag per event.schema.ts) — that case assigns a coach
+ *     normally via branches 3/4 below and only delays *disclosing* it to the
+ *     student (see booking.notification.ts's deferCoachReveal checks).
+ *  2. Group session (multipleParticipants) already has a coach at this time → reuse
+ *     that same coaching team instead of picking again.
+ *  3. SINGLE_COACH leadership → one host, via resolveSingleHostSelection
+ *     (DIRECT = pinned coach; ROUND_ROBIN = rotates through the pool).
+ *  4. Otherwise (multi-coach session) → resolve a lead (FIXED_LEAD or strategy-picked)
+ *     then fill co-hosts via resolveCollaborativeCoHosts.
+ * Batches availability data for the whole candidate pool once (prefetchCoachAvailability)
+ * before any candidate is probed, so branches 3 and 4 don't fire a query per coach.
+ */
 
 export const resolveBookingCoachSelection = async (
   input: ResolveBookingCoachSelectionInput,
@@ -659,35 +678,35 @@ export const resolveBookingCoachSelection = async (
     // Batch-fetch availability data for the pool before any candidate probing —
     // built here (after the slot-assigned early return) so fixed-slot bookings
     // with a pre-assigned coach don't pay for it.
-    const singleHostInput = { ...input, coachDataMap: await buildCoachDataMap(input) };
+    const singleHostSelectionInput = { ...input, coachAvailabilityPrefetch: await prefetchCoachAvailability(input) };
 
     // 2. Fallback to DIRECT events logic...
     if (isDirect && event.fixedLeadCoachId && !input.preferredCoachId) {
       return resolveSingleHostSelection({
-        ...singleHostInput,
+        ...singleHostSelectionInput,
         preferredCoachId: event.fixedLeadCoachId,
       });
     }
-    return resolveSingleHostSelection(singleHostInput);
+    return resolveSingleHostSelection(singleHostSelectionInput);
   }
 
   // Multi-coach session: determine lead coach.
   // FIXED_LEAD leadership OR DIRECT strategy with a designated coach both pin the lead.
   // Batch-fetch availability data once — the lead selection and co-host loop below
   // probe many candidates and would otherwise fire ~4 queries per coach.
-  const multiCoachInput = { ...input, coachDataMap: await buildCoachDataMap(input) };
+  const multiCoachSelectionInput = { ...input, coachAvailabilityPrefetch: await prefetchCoachAvailability(input) };
   const useFixedLead =
     event.sessionLeadershipStrategy === SessionLeadershipStrategy.FIXED_LEAD ||
     (isDirect && !!event.fixedLeadCoachId);
 
   const leadSelection = useFixedLead
-    ? await resolveFixedLeadSelection(multiCoachInput)
-    : await resolveStrategyLead(multiCoachInput);
+    ? await resolveFixedLeadSelection(multiCoachSelectionInput)
+    : await resolveStrategyLead(multiCoachSelectionInput);
 
   return {
     assignedCoachId: leadSelection.assignedCoachId,
     coCoachUserIds: await resolveCollaborativeCoHosts({
-      ...multiCoachInput,
+      ...multiCoachSelectionInput,
       leadCoachId: leadSelection.assignedCoachId,
     }),
   };

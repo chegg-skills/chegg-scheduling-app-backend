@@ -11,7 +11,7 @@ follow the same locking skeleton (see [Related flows](#related-flows)).
 | Router | `backend/src/domain/bookings/booking.router.ts` | Rate limit + Zod validation |
 | Controller | `backend/src/domain/bookings/booking.controller.ts` | Unwraps body, delegates |
 | Service | `backend/src/domain/bookings/booking.service.ts` | Orchestration + transaction |
-| Coach resolver | `backend/src/domain/bookings/bookingAssignmentResolver.service.ts` | Who gets the session (incl. `buildCoachDataMap` batch prefetch) |
+| Coach resolver | `backend/src/domain/bookings/bookingAssignmentResolver.service.ts` | Who gets the session (incl. `prefetchCoachAvailability` batch prefetch) |
 | Strategies | `backend/src/domain/bookings/assignment.service.ts` | DIRECT / ROUND_ROBIN algorithms + rotation cursor |
 | Availability | `backend/src/domain/availability/availability.service.ts` | `isCoachAvailable` → `evaluateCoachAvailability` |
 | Conflicts | `backend/src/domain/availability/availabilityConflict.service.ts` | `getCoachConflicts`, `filterConflictsForSlot` |
@@ -94,7 +94,7 @@ graph TD
         Q6 --> Q6b[(Query 6b: eventScheduleSlot.findUnique)]
         
         %% Coach Data Prefetch
-        Q6b --> BuildDataMap[buildCoachDataMap]
+        Q6b --> BuildDataMap[prefetchCoachAvailability]
         BuildDataMap --> Q7_Prefetch[(Queries 7-12: batch-fetch timezones, overrides, weekly, exceptions, conflicts)]
         
         %% Single vs Multi Coach
@@ -223,7 +223,7 @@ sequenceDiagram
         end
 
         Note over BSR, DB: Batch prefetch — replaces ~4 queries PER coach candidate
-        BSR->>DB: [Q7–Q12] buildCoachDataMap — 6 IN-clause queries for the whole pool:<br/>timezones (user), event overrides (eventCoachWeeklyAvailability),<br/>weekly (userWeeklyAvailability), exceptions ±48h (userAvailabilityException),<br/>conflicting bookings (booking), conflicting slot assignments (eventScheduleSlot)
+        BSR->>DB: [Q7–Q12] prefetchCoachAvailability — 6 IN-clause queries for the whole pool:<br/>timezones (user), event overrides (eventCoachWeeklyAvailability),<br/>weekly (userWeeklyAvailability), exceptions ±48h (userAvailabilityException),<br/>conflicting bookings (booking), conflicting slot assignments (eventScheduleSlot)
         DB-->>BSR: per-coach prefetch map (conflicts pre-filtered via filterConflictsForSlot)
 
         alt Single-coach event (SINGLE_COACH leadership)

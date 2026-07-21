@@ -106,6 +106,8 @@ const resolveBookingQuestions = async (
   };
 };
 
+/** Loads the event and verifies it's bookable (active, belongs to teamId), then
+ * narrows the coach pool to currently-active team members. */
 const getBookableEvent = async (teamId: string, eventId: string): Promise<BookableEvent> => {
   const event = await findBookableEvent(eventId);
 
@@ -130,6 +132,8 @@ const getBookableEvent = async (teamId: string, eventId: string): Promise<Bookab
   return { ...event, coaches: filteredCoaches } as BookableEvent;
 };
 
+/** Derives the session end time from the event's duration and asserts the booking
+ * notice window (e.g. "must book 2h in advance") is satisfied for this start time. */
 const computeSessionTimeWindow = (event: BookableEvent, start: Date) => {
   const end = new Date(start.getTime() + event.durationSeconds * 1000);
   const schedulingContext = buildSchedulingContext(event);
@@ -139,6 +143,8 @@ const computeSessionTimeWindow = (event: BookableEvent, start: Date) => {
   return { end, schedulingContext };
 };
 
+/** Looks up a pre-created schedule slot at this start time (FIXED_SLOTS events only —
+ * a miss there is a hard 409, since those events have no other valid start times). */
 const matchScheduleSlotForBooking = async (event: BookableEvent, start: Date) => {
   const matchedScheduleSlot = await resolveMatchingScheduleSlot(event.id, start);
   const allowSharedSessionOverlap = event.bookingMode === "FIXED_SLOTS";
@@ -199,6 +205,15 @@ const acquireLocksAndSelectCoach = async (
   return selection;
 };
 
+/**
+ * Creates a booking for a student, end to end:
+ *  1-7  Prepare & validate  — normalize input, load the event, resolve questions,
+ *       compute the time window, match a fixed slot if any, guard on coach pool.
+ *  8-13 Lock & write        — inside one DB transaction: select + lock a coach,
+ *       check capacity, register the student, insert the booking.
+ *  14   Side effects        — audit log, structured log, notifications (best-effort,
+ *       outside the transaction so they can never roll back a successful booking).
+ */
 const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> => {
   if (!payload) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Booking request body is missing.");
@@ -219,12 +234,18 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     customAnswers,
   } = payload;
 
+  // Step 1: normalize student-supplied name/email (trim, case, format).
   const normalizedStudentName = normalizeStudentName(studentName);
   const normalizedStudentEmail = normalizeStudentEmailAddress(studentEmail);
 
+  // Step 2: parse + validate the requested start time.
   const start = parseBookingStartTime(startTime);
+  // Step 3: load the event and its currently-active coach pool.
   const event = await getBookableEvent(teamId, eventId);
 
+  // Step 4: resolve which question set (default vs. custom) applies to this booking
+  // and snapshot the student's answers against it — see resolveBookingQuestions' own
+  // JSDoc for the legacy-vs-custom-field logic.
   const {
     savedSpecificQuestion,
     savedTriedSolutions,
@@ -241,10 +262,14 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     sessionObjectives,
   });
 
+  // Step 5: compute the session's end time and assert the notice-window rule.
   const { end, schedulingContext } = computeSessionTimeWindow(event, start);
+
+  // Step 6: for FIXED_SLOTS events, find the pre-created slot at this start time.
   const { matchedScheduleSlot, allowSharedSessionOverlap } = await matchScheduleSlotForBooking(event, start);
   const activeCoaches = event.coaches as CoachCandidate[];
 
+  // Step 7: guard — nothing to book against, or the caller must pick a coach first.
   if (activeCoaches.length === 0) {
     getRequestLogger().warn(
       { eventId, teamId },
@@ -263,7 +288,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     );
   }
 
-  // 3. Create Booking
+  // Step 8: BEGIN TRANSACTION — everything below runs on one DB connection (`tx`).
   // COACH_AVAILABILITY: lockEvent serialises concurrent bookings for the same event so
   // each request sees the previous one's committed booking — required because round-robin
   // assignment ranks coaches by booking COUNT, which is only correct when selection and
@@ -273,9 +298,15 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
   // at Prisma's default 2-second pool timeout. Every query in this transaction MUST use
   // `tx` — a global-prisma query would need a second pool connection while holding the
   // event lock, deadlocking the pool under load (see evaluateCoachAvailability).
+
   let booking = await prisma
     .$transaction(
       async (tx) => {
+
+        // Step 9: lock the event/slot row, then pick + lock a coach. The coach-picking
+        // decision tree (anonymous / group-reuse / single vs. multi-coach / leadership
+        // strategy) lives in resolveBookingCoachSelection — see its JSDoc.
+        
         const { assignedCoachId, coCoachUserIds } = await acquireLocksAndSelectCoach(tx, {
           event,
           matchedScheduleSlot,
@@ -289,15 +320,18 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         const scheduleSlot =
           matchedScheduleSlot ?? (await resolveMatchingScheduleSlot(event.id, start, tx));
 
-        // Participant capacity is only meaningful for FIXED_SLOTS — those are pre-created shared
-        // slots with a real seat cap. In COACH_AVAILABILITY mode each booking gets its own coach;
-        // the coach conflict detection above already prevents double-booking at the coach level.
+        // Step 10: capacity check. Participant capacity is only meaningful for
+        // FIXED_SLOTS — those are pre-created shared slots with a real seat cap. In
+        // COACH_AVAILABILITY mode each booking gets its own coach; the coach conflict
+        // detection above already prevents double-booking at the coach level.
         if (schedulingContext.bookingMode === "FIXED_SLOTS") {
           const { maxParticipants } = getEffectiveParticipantPolicy(schedulingContext, scheduleSlot);
           const currentParticipantCount = await countActiveParticipantsForTime(tx, eventId, start);
           assertParticipantCapacityAvailable(maxParticipants, currentParticipantCount);
         }
 
+        // Step 11: register the student profile and lock it (blocks the same student
+        // double-booking themselves across concurrent requests), then check overlap.
         const student = await upsertStudentForBooking(
           tx,
           normalizedStudentName,
@@ -313,6 +347,7 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
         const sessionToken = randomUUID();
         const slotId = scheduleSlot?.id ?? null;
 
+        // Step 12: insert the booking row.
         const bookingRecord = await createBookingRecord(tx, {
           id: bookingId,
           studentId: student.id,
@@ -342,6 +377,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       },
       { maxWait: 10000, timeout: 15000 },
     )
+    // Step 13: COMMIT (implicit on success) — or map a pool/lock timeout to a clean
+    // 409 the client can retry, instead of letting it surface as a 500.
     .catch((error) => {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -355,6 +392,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
       throw error;
     });
 
+  // Step 14: post-transaction side effects — all best-effort, never able to undo the
+  // already-committed booking above.
   try {
     await recordBookingActivity(
       prisma, booking.id, BookingActivityType.BOOKING_CREATED,
@@ -376,6 +415,8 @@ const createBooking = async (payload: CreateBookingInput): Promise<SafeBooking> 
     "Booking created.",
   );
 
+  // Only relevant when the event defers revealing the coach — looks up whether that
+  // reveal has already fired for this slot, so the notification below can decide.
   const slotRevealedAt = await (async () => {
     if (booking.event?.deferCoachReveal && booking.scheduleSlotId) {
       const slot = await prisma.eventScheduleSlot.findUnique({

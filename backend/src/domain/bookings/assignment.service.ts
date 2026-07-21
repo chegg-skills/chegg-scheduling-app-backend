@@ -50,7 +50,7 @@ export type AssignmentContext = {
   excludeBookingId?: string;
   /** When present, candidate availability checks read from this map instead of
    * firing per-coach queries. Absent on paths that never loop (kept as fallback). */
-  coachDataMap?: Map<string, CoachAvailabilityPrefetch>;
+  coachAvailabilityPrefetch?: Map<string, CoachAvailabilityPrefetch>;
 };
 
 type AssignmentResult = {
@@ -80,7 +80,7 @@ const isCandidateAvailable = async (
   candidate: CoachCandidate,
   context: AssignmentContext,
 ): Promise<boolean> => {
-  const prefetch = context.coachDataMap?.get(candidate.coachUserId);
+  const prefetch = context.coachAvailabilityPrefetch?.get(candidate.coachUserId);
   const weeklyOverride = prefetch
     ? prefetch.weeklyOverride
     : context.bookingMode !== "FIXED_SLOTS"
