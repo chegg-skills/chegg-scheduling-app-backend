@@ -13,11 +13,18 @@ import {
 } from "./event.shared";
 import { validateEventConfiguration } from "./eventCoach.service";
 import { resolveEventSchedulingConfig } from "./eventScheduling.service";
-import { CreateEventSchema, UpdateEventSchema } from "./event.schema";
 import { normalizeKey } from "./event.shared";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { StatusCodes } from "http-status-codes";
+
+// The resolved lead-coach configuration. Kept as its own named type (rather than Pick-ing from
+// ResolvedEventMutationContext) so this building-block helper doesn't depend on the shape of the
+// larger context it helps assemble.
+type LeadershipConfig = {
+  sessionLeadershipStrategy: SessionLeadershipStrategy;
+  fixedLeadCoachId: string | null;
+};
 
 type ResolvedEventMutationContext = {
   eventType: Awaited<ReturnType<typeof getActiveEventType>>;
@@ -38,7 +45,7 @@ const resolveSessionLeadershipConfig = ({
   existingEvent?: SafeEvent;
   payload: Pick<UpdateEventInput, "sessionLeadershipStrategy" | "fixedLeadCoachId">;
   assignmentStrategy: AssignmentStrategy;
-}): Pick<ResolvedEventMutationContext, "sessionLeadershipStrategy" | "fixedLeadCoachId"> => {
+}): LeadershipConfig => {
   const caps = INTERACTION_TYPE_CAPS[interactionType];
 
   // 1. Initial Default (The Baseline)
@@ -122,16 +129,14 @@ export const resolveCreateEventContext = async (
   payload: CreateEventInput,
   callerId: string,
 ): Promise<ResolvedEventMutationContext> => {
-  const validated = CreateEventSchema.body.parse(payload);
-
-  const eventTypeId = await ensureEventTypeId(validated.eventTypeId, callerId);
+  const eventTypeId = await ensureEventTypeId(payload.eventTypeId, callerId);
   const eventType = await getActiveEventType(eventTypeId);
-  const interactionType = validated.interactionType as InteractionType;
-  const assignmentStrategy = validated.assignmentStrategy;
+  const interactionType = payload.interactionType as InteractionType;
+  const assignmentStrategy = payload.assignmentStrategy;
 
   const { sessionLeadershipStrategy, fixedLeadCoachId } = resolveSessionLeadershipConfig({
     interactionType,
-    payload: validated,
+    payload,
     assignmentStrategy,
   });
 
@@ -150,7 +155,7 @@ export const resolveCreateEventContext = async (
     assignmentStrategy,
     sessionLeadershipStrategy,
     fixedLeadCoachId,
-    schedulingConfig: resolveEventSchedulingConfig(validated),
+    schedulingConfig: resolveEventSchedulingConfig(payload),
   };
 };
 
@@ -163,23 +168,21 @@ export const resolveUpdateEventContext = async ({
   existingEvent: SafeEvent;
   callerId: string;
 }): Promise<ResolvedEventMutationContext> => {
-  const validated = UpdateEventSchema.body.parse(payload);
-
-  const resolvedEventTypeId = validated.eventTypeId ?? existingEvent.eventTypeId;
+  const resolvedEventTypeId = payload.eventTypeId ?? existingEvent.eventTypeId;
   if (!resolvedEventTypeId) {
     throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Event type is required.");
   }
   const nextEventTypeId = await ensureEventTypeId(resolvedEventTypeId, callerId);
-  const nextInteractionType = (validated.interactionType ??
+  const nextInteractionType = (payload.interactionType ??
     existingEvent.interactionType) as InteractionType;
 
   const eventType = await getActiveEventType(nextEventTypeId);
-  const assignmentStrategy = validated.assignmentStrategy ?? existingEvent.assignmentStrategy;
+  const assignmentStrategy = payload.assignmentStrategy ?? existingEvent.assignmentStrategy;
 
   const { sessionLeadershipStrategy, fixedLeadCoachId } = resolveSessionLeadershipConfig({
     interactionType: nextInteractionType,
     existingEvent,
-    payload: validated,
+    payload,
     assignmentStrategy,
   });
 
@@ -198,7 +201,7 @@ export const resolveUpdateEventContext = async ({
     assignmentStrategy,
     sessionLeadershipStrategy,
     fixedLeadCoachId,
-    schedulingConfig: resolveEventSchedulingConfig(validated, existingEvent),
+    schedulingConfig: resolveEventSchedulingConfig(payload, existingEvent),
   };
 };
 
@@ -213,39 +216,38 @@ export const buildEventCreateData = ({
   teamId: string;
   context: ResolvedEventMutationContext;
 }): Prisma.EventCreateInput => {
-  const validated = CreateEventSchema.body.parse(payload);
   // Preserve expiry fields for any VIRTUAL or CUSTOM location regardless of link source —
   // both the shared event URL and the coach-zoom fallback URL can expire.
   const hasExpiryCapableLocation =
-    validated.locationType === EventLocationType.VIRTUAL ||
-    validated.locationType === EventLocationType.CUSTOM;
+    payload.locationType === EventLocationType.VIRTUAL ||
+    payload.locationType === EventLocationType.CUSTOM;
 
   const data: Prisma.EventCreateInput = {
-    name: validated.name,
-    publicBookingSlug: createPublicBookingSlug(validated.name, "event"),
-    description: validated.description ?? undefined,
+    name: payload.name,
+    publicBookingSlug: createPublicBookingSlug(payload.name, "event"),
+    description: payload.description ?? undefined,
     eventType: { connect: { id: context.eventType.id } },
     interactionType: context.interactionType,
     assignmentStrategy: context.assignmentStrategy,
-    durationSeconds: validated.durationSeconds,
-    locationType: validated.locationType,
-    locationValue: validated.locationValue,
-    isActive: validated.isActive,
+    durationSeconds: payload.durationSeconds,
+    locationType: payload.locationType,
+    locationValue: payload.locationValue,
+    isActive: payload.isActive,
     sessionLeadershipStrategy: context.sessionLeadershipStrategy,
     fixedLeadCoachId: context.fixedLeadCoachId ?? undefined,
-    targetCoHostCount: validated.targetCoHostCount ?? undefined,
-    maxBookingWindowDays: validated.maxBookingWindowDays ?? undefined,
-    showDescription: validated.showDescription ?? false,
-    deferCoachReveal: validated.deferCoachReveal ?? false,
-    allowAnonymousBooking: validated.allowAnonymousBooking ?? false,
-    allowStudentCoachChoice: validated.allowStudentCoachChoice ?? false,
-    meetingLinkSource: validated.meetingLinkSource,
-    locationLinkExpiresAt: hasExpiryCapableLocation ? (validated.locationLinkExpiresAt ?? null) : null,
-    locationLinkReminderDays: hasExpiryCapableLocation ? (validated.locationLinkReminderDays ?? null) : null,
-    customQuestions: validated.customQuestions ?? [],
-    useDefaultQuestions: validated.useDefaultQuestions ?? true,
+    targetCoHostCount: payload.targetCoHostCount ?? undefined,
+    maxBookingWindowDays: payload.maxBookingWindowDays ?? undefined,
+    showDescription: payload.showDescription ?? false,
+    deferCoachReveal: payload.deferCoachReveal ?? false,
+    allowAnonymousBooking: payload.allowAnonymousBooking ?? false,
+    allowStudentCoachChoice: payload.allowStudentCoachChoice ?? false,
+    meetingLinkSource: payload.meetingLinkSource,
+    locationLinkExpiresAt: hasExpiryCapableLocation ? (payload.locationLinkExpiresAt ?? null) : null,
+    locationLinkReminderDays: hasExpiryCapableLocation ? (payload.locationLinkReminderDays ?? null) : null,
+    customQuestions: payload.customQuestions ?? [],
+    useDefaultQuestions: payload.useDefaultQuestions ?? true,
     team: { connect: { id: teamId } },
-    group: validated.groupId ? { connect: { id: validated.groupId } } : undefined,
+    group: payload.groupId ? { connect: { id: payload.groupId } } : undefined,
     createdBy: { connect: { id: callerId } },
     updatedBy: { connect: { id: callerId } },
     ...context.schedulingConfig,
@@ -275,7 +277,6 @@ export const buildEventUpdateData = ({
   callerId: string;
   context: ResolvedEventMutationContext;
 }): Prisma.EventUpdateInput => {
-  const validated = UpdateEventSchema.body.parse(payload);
 
   const updateData: Prisma.EventUpdateInput = {
     updatedBy: { connect: { id: callerId } },
@@ -287,89 +288,89 @@ export const buildEventUpdateData = ({
     ...context.schedulingConfig,
   };
 
-  if (validated.name !== undefined) {
-    updateData.name = validated.name;
+  if (payload.name !== undefined) {
+    updateData.name = payload.name;
     if (!existingEvent.publicBookingSlug) {
-      updateData.publicBookingSlug = createPublicBookingSlug(validated.name, "event");
+      updateData.publicBookingSlug = createPublicBookingSlug(payload.name, "event");
     }
   }
 
-  if (validated.description !== undefined) {
-    updateData.description = validated.description;
+  if (payload.description !== undefined) {
+    updateData.description = payload.description;
   }
 
-  if (validated.durationSeconds !== undefined) {
-    updateData.durationSeconds = validated.durationSeconds;
+  if (payload.durationSeconds !== undefined) {
+    updateData.durationSeconds = payload.durationSeconds;
   }
 
-  updateData.locationType = validated.locationType ?? existingEvent.locationType;
-  updateData.locationValue = validated.locationValue ?? existingEvent.locationValue;
+  updateData.locationType = payload.locationType ?? existingEvent.locationType;
+  updateData.locationValue = payload.locationValue ?? existingEvent.locationValue;
 
-  if (validated.isActive !== undefined) {
-    updateData.isActive = validated.isActive;
+  if (payload.isActive !== undefined) {
+    updateData.isActive = payload.isActive;
   }
 
-  if (validated.targetCoHostCount !== undefined) {
-    updateData.targetCoHostCount = validated.targetCoHostCount;
+  if (payload.targetCoHostCount !== undefined) {
+    updateData.targetCoHostCount = payload.targetCoHostCount;
   }
-  if (validated.showDescription !== undefined) {
-    updateData.showDescription = validated.showDescription;
-  }
-
-  if (validated.maxBookingWindowDays !== undefined) {
-    updateData.maxBookingWindowDays = validated.maxBookingWindowDays;
+  if (payload.showDescription !== undefined) {
+    updateData.showDescription = payload.showDescription;
   }
 
-
-  if (validated.deferCoachReveal !== undefined) {
-    updateData.deferCoachReveal = validated.deferCoachReveal;
+  if (payload.maxBookingWindowDays !== undefined) {
+    updateData.maxBookingWindowDays = payload.maxBookingWindowDays;
   }
 
-  if (validated.allowAnonymousBooking !== undefined) {
-    updateData.allowAnonymousBooking = validated.allowAnonymousBooking;
+
+  if (payload.deferCoachReveal !== undefined) {
+    updateData.deferCoachReveal = payload.deferCoachReveal;
   }
 
-  if (validated.allowStudentCoachChoice !== undefined) {
-    updateData.allowStudentCoachChoice = validated.allowStudentCoachChoice;
+  if (payload.allowAnonymousBooking !== undefined) {
+    updateData.allowAnonymousBooking = payload.allowAnonymousBooking;
   }
 
-  if (validated.meetingLinkSource !== undefined) {
-    updateData.meetingLinkSource = validated.meetingLinkSource;
+  if (payload.allowStudentCoachChoice !== undefined) {
+    updateData.allowStudentCoachChoice = payload.allowStudentCoachChoice;
   }
 
-  const finalLocationType = validated.locationType ?? existingEvent.locationType;
+  if (payload.meetingLinkSource !== undefined) {
+    updateData.meetingLinkSource = payload.meetingLinkSource;
+  }
+
+  const finalLocationType = payload.locationType ?? existingEvent.locationType;
   // Preserve expiry fields for any VIRTUAL or CUSTOM location regardless of link source
   const hasExpiryCapableLocation =
     finalLocationType === EventLocationType.VIRTUAL ||
     finalLocationType === EventLocationType.CUSTOM;
 
   if (hasExpiryCapableLocation) {
-    if (validated.locationLinkExpiresAt !== undefined) {
-      updateData.locationLinkExpiresAt = validated.locationLinkExpiresAt;
+    if (payload.locationLinkExpiresAt !== undefined) {
+      updateData.locationLinkExpiresAt = payload.locationLinkExpiresAt;
     }
-    if (validated.locationLinkReminderDays !== undefined) {
-      updateData.locationLinkReminderDays = validated.locationLinkReminderDays;
+    if (payload.locationLinkReminderDays !== undefined) {
+      updateData.locationLinkReminderDays = payload.locationLinkReminderDays;
     }
   } else {
     updateData.locationLinkExpiresAt = null;
     updateData.locationLinkReminderDays = null;
   }
 
-  if (validated.useDefaultQuestions !== undefined) {
-    updateData.useDefaultQuestions = validated.useDefaultQuestions;
+  if (payload.useDefaultQuestions !== undefined) {
+    updateData.useDefaultQuestions = payload.useDefaultQuestions;
     // When switching back to default questions, clear any stale custom questions from the DB.
-    if (validated.useDefaultQuestions === true) {
+    if (payload.useDefaultQuestions === true) {
       updateData.customQuestions = [];
     }
   }
 
-  if (validated.customQuestions !== undefined && validated.useDefaultQuestions !== true) {
-    updateData.customQuestions = validated.customQuestions;
+  if (payload.customQuestions !== undefined && payload.useDefaultQuestions !== true) {
+    updateData.customQuestions = payload.customQuestions;
   }
 
-  if (validated.groupId !== undefined) {
+  if (payload.groupId !== undefined) {
     updateData.group =
-      validated.groupId === null ? { disconnect: true } : { connect: { id: validated.groupId } };
+      payload.groupId === null ? { disconnect: true } : { connect: { id: payload.groupId } };
   }
 
   return updateData as any;
