@@ -61,6 +61,7 @@ import {
   queueEventLinkExpiryReminder,
   cancelEventLinkExpiryReminder,
 } from "./event.notification";
+import { CreateEventSchema, UpdateEventSchema } from "./event.schema";
 
 const listEventsByQuery = async (
   where: Prisma.EventWhereInput,
@@ -112,14 +113,18 @@ const createEvent = async (
 ): Promise<SafeEvent> => {
   await getManagedTeam(teamId, caller);
 
-  if (payload.groupId) {
-    await assertGroupBelongsToTeam(payload.groupId, teamId);
+  // Defense-in-depth: re-validate at the service boundary so createEvent is safe to call from any
+  // context, not just the validated HTTP route. Idempotent over an already-middleware-parsed body.
+  const validated = CreateEventSchema.body.parse(payload);
+
+  if (validated.groupId) {
+    await assertGroupBelongsToTeam(validated.groupId, teamId);
   }
 
-  const context = await resolveCreateEventContext(payload, caller.id);
+  const context = await resolveCreateEventContext(validated, caller.id);
 
   const event = await prisma.event.create({
-    data: buildEventCreateData({ payload, callerId: caller.id, teamId, context }),
+    data: buildEventCreateData({ payload: validated, callerId: caller.id, teamId, context }),
     include: eventInclude,
   });
 
@@ -164,9 +169,13 @@ const updateEvent = async (
 ): Promise<SafeEvent> => {
   const existingEvent = await getManagedEvent(eventId, caller);
 
+  // Defense-in-depth: re-validate at the service boundary so updateEvent is safe to call from any
+  // context, not just the validated HTTP route. Idempotent over an already-middleware-parsed body.
+  const validated = UpdateEventSchema.body.parse(payload);
+
   if (
-    payload.deferCoachReveal !== undefined &&
-    payload.deferCoachReveal !== existingEvent.deferCoachReveal &&
+    validated.deferCoachReveal !== undefined &&
+    validated.deferCoachReveal !== existingEvent.deferCoachReveal &&
     existingEvent._count.bookings > 0
   ) {
     throw new ErrorHandler(
@@ -176,8 +185,8 @@ const updateEvent = async (
   }
 
   if (
-    payload.allowAnonymousBooking !== undefined &&
-    payload.allowAnonymousBooking !== existingEvent.allowAnonymousBooking &&
+    validated.allowAnonymousBooking !== undefined &&
+    validated.allowAnonymousBooking !== existingEvent.allowAnonymousBooking &&
     existingEvent._count.bookings > 0
   ) {
     throw new ErrorHandler(
@@ -186,11 +195,11 @@ const updateEvent = async (
     );
   }
 
-  if (payload.groupId) {
-    await assertGroupBelongsToTeam(payload.groupId, existingEvent.teamId);
+  if (validated.groupId) {
+    await assertGroupBelongsToTeam(validated.groupId, existingEvent.teamId);
   }
 
-  const context = await resolveUpdateEventContext({ payload, existingEvent, callerId: caller.id });
+  const context = await resolveUpdateEventContext({ payload: validated, existingEvent, callerId: caller.id });
 
   let updatedEvent: SafeEvent;
   try {
@@ -222,7 +231,7 @@ const updateEvent = async (
       const result = await tx.event.update({
         where: { id: eventId },
         data: buildEventUpdateData({
-          payload,
+          payload: validated,
           existingEvent,
           callerId: caller.id,
           context,
@@ -247,7 +256,7 @@ const updateEvent = async (
     throw error;
   }
 
-  if (payload.isActive !== undefined && payload.isActive !== existingEvent.isActive) {
+  if (validated.isActive !== undefined && validated.isActive !== existingEvent.isActive) {
     getRequestLogger().info({ eventId, isActive: updatedEvent.isActive, updatedBy: caller.id }, "Event active status changed.");
     void queueEventStatusChangedNotification({
       eventId,

@@ -55,7 +55,7 @@ const EventBaseObjectCore = z.object({
   deferCoachReveal: z.boolean().optional(),
   allowAnonymousBooking: z.boolean().optional(),
   allowStudentCoachChoice: z.boolean().optional(),
-  meetingLinkSource: z.nativeEnum(MeetingLinkSource).optional(),
+  meetingLinkSource: z.enum(MeetingLinkSource).optional(),
   locationLinkExpiresAt: z.preprocess(
     (val) => (val === "" ? null : val),
     z.coerce.date()
@@ -91,48 +91,21 @@ const EventBaseObject = EventBaseObjectCore.extend({
   bufferAfterMinutes: z.coerce.number().int().nonnegative().default(0),
   deferCoachReveal: z.boolean().default(false),
   allowAnonymousBooking: z.boolean().default(false),
-  meetingLinkSource: z.nativeEnum(MeetingLinkSource).default(MeetingLinkSource.COACH_ISV),
+  meetingLinkSource: z.enum(MeetingLinkSource).default(MeetingLinkSource.COACH_ISV),
   customQuestions: z.array(z.string().trim().max(255).transform(stripHtml)).max(5).default([]),
   useDefaultQuestions: z.boolean().default(true),
 });
 
-/**
- * Reusable refinement logic for event interaction types and strategies.
- * Can be applied to both Create (full) and Update (partial) schemas.
- */
-const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
-  // In partial updates, interactionType may be absent — skip caps-based checks
-  const caps = data.interactionType
-    ? INTERACTION_TYPE_CAPS[data.interactionType as InteractionType]
-    : null;
+type EventCaps = (typeof INTERACTION_TYPE_CAPS)[InteractionType] | null;
 
-  if (caps && !caps.multipleCoaches) {
-    if (data.sessionLeadershipStrategy && data.sessionLeadershipStrategy !== "SINGLE_COACH") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["sessionLeadershipStrategy"],
-        message: "Only SINGLE_COACH leadership is supported for this interaction type.",
-      });
-    }
-  }
-
-  if (caps && !caps.multipleParticipants) {
-    if (data.maxParticipantCount != null && data.maxParticipantCount > 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["maxParticipantCount"],
-        message: "This interaction type only supports 1 participant per session.",
-      });
-    }
-  }
-
+function validateBookingMode(data: any, caps: EventCaps, ctx: z.RefinementCtx) {
   // ONE_TO_ONE sessions must use COACH_AVAILABILITY — pre-creating individual slots per student
   // is operational overhead with no benefit over dynamic availability. Symmetric to the
   // FIXED_SLOTS lock applied to group session types below.
   if (caps && !caps.multipleCoaches && !caps.multipleParticipants) {
     if (data.bookingMode && data.bookingMode !== EventBookingMode.COACH_AVAILABILITY) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["bookingMode"],
         message: "One-to-one sessions must use coach availability booking mode.",
       });
@@ -147,16 +120,38 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   if (caps && !caps.multipleCoaches && caps.multipleParticipants) {
     if (data.bookingMode && data.bookingMode !== EventBookingMode.FIXED_SLOTS) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["bookingMode"],
         message: "Single-coach group sessions must use FIXED_SLOTS booking mode.",
+      });
+    }
+  }
+}
+
+function validateLeadership(data: any, caps: EventCaps, ctx: z.RefinementCtx) {
+  if (caps && !caps.multipleCoaches) {
+    if (data.sessionLeadershipStrategy && data.sessionLeadershipStrategy !== "SINGLE_COACH") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["sessionLeadershipStrategy"],
+        message: "Only SINGLE_COACH leadership is supported for this interaction type.",
+      });
+    }
+  }
+
+  if (caps && !caps.multipleParticipants) {
+    if (data.maxParticipantCount != null && data.maxParticipantCount > 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["maxParticipantCount"],
+        message: "This interaction type only supports 1 participant per session.",
       });
     }
   }
 
   if (data.sessionLeadershipStrategy === "FIXED_LEAD" && !data.fixedLeadCoachId) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["fixedLeadCoachId"],
       message: "FIXED_LEAD strategy requires a fixed lead coach to be specified.",
     });
@@ -175,7 +170,7 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     data.bookingMode !== EventBookingMode.FIXED_SLOTS
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["fixedLeadCoachId"],
       message: "DIRECT assignment requires a default host to be specified.",
     });
@@ -195,7 +190,7 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     !data.fixedLeadCoachId
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["fixedLeadCoachId"],
       message: "DIRECT assignment requires a default host to be specified for this event type.",
     });
@@ -209,17 +204,19 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     data.targetCoHostCount < 1
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["targetCoHostCount"],
       message: "targetCoHostCount must be at least 1.",
     });
   }
+}
 
+function validateAnonymousAndDeferredReveal(data: any, caps: EventCaps, ctx: z.RefinementCtx) {
   // deferCoachReveal is only valid for ONE_TO_MANY (single-coach group) events
   if (data.deferCoachReveal === true && caps) {
     if (caps.multipleCoaches || !caps.multipleParticipants) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["deferCoachReveal"],
         message: "Deferred coach reveal is only supported for ONE_TO_MANY events.",
       });
@@ -230,7 +227,7 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   if (data.allowAnonymousBooking === true && caps) {
     if (caps.multipleCoaches || !caps.multipleParticipants) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["allowAnonymousBooking"],
         message: "Anonymous booking is only supported for ONE_TO_MANY events.",
       });
@@ -240,12 +237,12 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
   // allowAnonymousBooking and deferCoachReveal are mutually exclusive
   if (data.allowAnonymousBooking === true && data.deferCoachReveal === true) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["allowAnonymousBooking"],
       message: "Anonymous booking and deferred coach reveal cannot both be enabled.",
     });
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["deferCoachReveal"],
       message: "Anonymous booking and deferred coach reveal cannot both be enabled.",
     });
@@ -263,7 +260,7 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     data.meetingLinkSource !== MeetingLinkSource.COACH_ISV
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["meetingLinkSource"],
       message: "Anonymous booking requires the Event Location URL or Coach's Zoom Link as the meeting link source.",
     });
@@ -278,28 +275,32 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     data.locationValue.trim() === ""
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["locationValue"],
       message: "Location is required when anonymous booking is enabled so students receive booking details.",
     });
   }
+}
 
+function validateStudentCoachChoice(data: any, caps: EventCaps, ctx: z.RefinementCtx) {
   // allowStudentCoachChoice is only valid for ONE_TO_ONE events
   if (data.allowStudentCoachChoice === true && caps) {
     if (caps.multipleParticipants || caps.multipleCoaches) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["allowStudentCoachChoice"],
         message: "Student coach choice is only supported for ONE_TO_ONE events.",
       });
     }
   }
+}
 
+function validateLocation(data: any, ctx: z.RefinementCtx) {
   // Validate locationValue is a real URL for VIRTUAL events. Skip on partial PATCH when absent.
   if (data.locationType === EventLocationType.VIRTUAL && data.locationValue !== undefined) {
     if (data.meetingLinkSource === MeetingLinkSource.EVENT_LOCATION && data.locationValue.trim() === "") {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["locationValue"],
         message: "Event Link is required.",
       });
@@ -308,7 +309,7 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
         const url = new URL(data.locationValue.trim());
         if (url.protocol !== "http:" && url.protocol !== "https:") {
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             path: ["locationValue"],
             message: "Meeting link must be an http or https URL.",
           });
@@ -320,14 +321,14 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
           // domain via the join-redirect endpoint — in-person address values on other
           // sources never reach that endpoint and don't need this restriction.
           ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: "custom",
             path: ["locationValue"],
             message: "Meeting link must be an https URL on an approved domain (e.g. zoom.us).",
           });
         }
       } catch {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           path: ["locationValue"],
           message: "Please enter a valid URL (e.g. https://zoom.us/j/...).",
         });
@@ -341,7 +342,7 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     data.locationValue.trim() === ""
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["locationValue"],
       message: "In-person address is required.",
     });
@@ -353,16 +354,18 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     data.locationValue.trim() === ""
   ) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["locationValue"],
       message: "Custom instructions are required.",
     });
   }
+}
 
+function validateLinkExpiration(data: any, ctx: z.RefinementCtx) {
   // Expiry requires a non-empty location URL. Skip on partial PATCH when locationValue is absent.
   if (data.locationLinkExpiresAt && data.locationValue !== undefined && !data.locationValue?.trim()) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["locationLinkExpiresAt"],
       message: "A meeting link or location is required to set an expiry date.",
     });
@@ -377,13 +380,13 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
 
   if (expiresAtInPayload && !reminderDaysInPayload) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["locationLinkReminderDays"],
       message: "Reminder days must be provided when setting or clearing the expiration date.",
     });
   } else if (!expiresAtInPayload && reminderDaysInPayload) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["locationLinkExpiresAt"],
       message: "Expiration date must be provided when setting or clearing the reminder days.",
     });
@@ -391,28 +394,49 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
     // Both present in payload — they must agree: both truthy or both null.
     if (data.locationLinkExpiresAt && !data.locationLinkReminderDays) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["locationLinkReminderDays"],
         message: "Reminder days is required when an expiration date is set.",
       });
     } else if (!data.locationLinkExpiresAt && data.locationLinkReminderDays) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["locationLinkExpiresAt"],
         message: "Expiration date is required when reminder days is set.",
       });
     }
   }
+}
 
+function validateCustomQuestions(data: any, ctx: z.RefinementCtx) {
   // Custom questions mode requires at least one question.
   // Skip when useDefaultQuestions is absent (partial PATCH) — the service enforces the DB state.
   if (data.useDefaultQuestions === false && Array.isArray(data.customQuestions) && data.customQuestions.length === 0) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["customQuestions"],
       message: "Add at least one custom question or switch back to default questions.",
     });
   }
+}
+
+/**
+ * Reusable refinement logic for event interaction types and strategies.
+ * Can be applied to both Create (full) and Update (partial) schemas.
+ */
+const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
+  // In partial updates, interactionType may be absent — skip caps-based checks
+  const caps: EventCaps = data.interactionType
+    ? INTERACTION_TYPE_CAPS[data.interactionType as InteractionType]
+    : null;
+
+  validateBookingMode(data, caps, ctx);
+  validateLeadership(data, caps, ctx);
+  validateAnonymousAndDeferredReveal(data, caps, ctx);
+  validateStudentCoachChoice(data, caps, ctx);
+  validateLocation(data, ctx);
+  validateLinkExpiration(data, ctx);
+  validateCustomQuestions(data, ctx);
 };
 
 const EventBase = EventBaseObject.superRefine(refineEventConstraints);

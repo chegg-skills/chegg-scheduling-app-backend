@@ -1,19 +1,19 @@
 import {
   AssignmentStrategy,
   EventLocationType,
-  MeetingLinkSource,
   type EventType as EventTypeModel,
   Prisma,
   UserRole,
   SessionLeadershipStrategy,
-  InteractionType,
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import type { z } from "zod";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { getManagedTeam } from "../../shared/utils/teamAccess";
 import { safeUserSelect, type CallerContext } from "../../shared/utils/userUtils";
 import { INTERACTION_TYPE_CAPS } from "../../shared/constants/interactionType";
+import type { CreateEventSchema, UpdateEventSchema } from "./event.schema";
 
 export const eventInclude = Prisma.validator<Prisma.EventInclude>()({
   eventType: true,
@@ -64,37 +64,12 @@ export type ListEventsOptions = {
   pageSize?: number;
 };
 
-export type CreateEventInput = {
-  name: string;
-  description?: string | null;
-  eventTypeId?: string;
-  interactionType?: InteractionType;
-  assignmentStrategy?: string;
-  durationSeconds?: number;
-  locationType?: string;
-  locationValue?: string;
-  isActive?: boolean;
-  bookingMode?: string;
-  minimumNoticeMinutes?: number;
-  maxParticipantCount?: number | null;
-  targetCoHostCount?: number | null;
-  sessionLeadershipStrategy?: string;
-  fixedLeadCoachId?: string | null;
-  bufferAfterMinutes?: number;
-  maxBookingWindowDays?: number | null;
-  showDescription?: boolean;
-  deferCoachReveal?: boolean;
-  allowAnonymousBooking?: boolean;
-  allowStudentCoachChoice?: boolean;
-  meetingLinkSource?: MeetingLinkSource;
-  locationLinkExpiresAt?: Date | null;
-  locationLinkReminderDays?: number | null;
-  groupId?: string | null;
-  customQuestions?: string[];
-  useDefaultQuestions?: boolean;
-};
-
-export type UpdateEventInput = Partial<CreateEventInput>;
+// Input types are the schemas' output shapes: the validate() middleware parses the request body
+// once at the edge, so by the time these reach the service they are already validated, defaulted,
+// and transformed. Deriving from the schema (rather than hand-writing an all-optional mirror) keeps
+// this a single source of truth and lets the compiler carry the "already validated" guarantee.
+export type CreateEventInput = z.output<typeof CreateEventSchema.body>;
+export type UpdateEventInput = z.output<typeof UpdateEventSchema.body>;
 
 export type UpsertEventTypeInput = {
   key?: string;
