@@ -450,6 +450,51 @@ const STATUS_ACTIVITY: Partial<Record<BookingStatus, BookingActivityType>> = {
   [BookingStatus.NO_SHOW]: BookingActivityType.SESSION_NO_SHOW,
 };
 
+/** Maps an authenticated caller to a booking-activity actor. No caller = SYSTEM. */
+const resolveActivityActor = (caller?: CallerContext): BookingActivityActor => {
+  if (!caller) return BookingActivityActor.SYSTEM;
+  return caller.role === UserRole.COACH ? BookingActivityActor.COACH : BookingActivityActor.ADMIN;
+};
+
+/**
+ * Best-effort status timeline write. The PATCH update is not transactional, so a failed
+ * audit write must never turn an already-applied status change into an error for the caller.
+ * No-ops for statuses without a mapped activity type.
+ */
+const recordStatusActivitySafely = async (
+  bookingId: string,
+  status: BookingStatus,
+  cancellationReason: string | null,
+  caller?: CallerContext,
+): Promise<void> => {
+  const activityType = STATUS_ACTIVITY[status];
+  if (!activityType) return;
+
+  try {
+    await recordBookingActivity(
+      prisma,
+      bookingId,
+      activityType,
+      resolveActivityActor(caller),
+      caller?.id ?? null,
+      null,
+      status === BookingStatus.CANCELLED ? { cancellationReason } : undefined,
+    );
+  } catch (error) {
+    getRequestLogger().error(
+      { error, bookingId, status },
+      "Failed to record booking status activity.",
+    );
+  }
+};
+
+/** True when the booking's co-host set changed (added, removed, or swapped). */
+const haveCoHostsChanged = (oldIds?: string[] | null, newIds?: string[] | null): boolean => {
+  const oldSet = new Set(oldIds ?? []);
+  const newList = newIds ?? [];
+  return newList.length !== oldSet.size || newList.some((coachId) => !oldSet.has(coachId));
+};
+
 const updateBooking = async (
   id: string,
   data: { status?: BookingStatus; coCoachUserIds?: string[]; cancellationReason?: string },
@@ -458,52 +503,19 @@ const updateBooking = async (
   const oldBooking = await findBookingById(id);
   const booking = await updateBookingById(id, data);
 
+  // Status change: log, fire status emails, and record the timeline entry (best-effort).
   if (data.status && data.status !== oldBooking.status) {
     getRequestLogger().info(
       { bookingId: booking.id, previousStatus: oldBooking.status, newStatus: booking.status },
       "Booking status updated.",
     );
     void queueBookingStatusNotifications(booking);
-
-    const activityType = STATUS_ACTIVITY[data.status];
-    if (activityType) {
-      const actorType = caller
-        ? caller.role === UserRole.COACH
-          ? BookingActivityActor.COACH
-          : BookingActivityActor.ADMIN
-        : BookingActivityActor.SYSTEM;
-
-      // Best-effort: this update is not transactional, so a failed audit write must
-      // never turn an already-applied status change into an error for the caller.
-      try {
-        await recordBookingActivity(
-          prisma,
-          id,
-          activityType,
-          actorType,
-          caller?.id ?? null,
-          null,
-          data.status === BookingStatus.CANCELLED
-            ? { cancellationReason: booking.cancellationReason }
-            : undefined,
-        );
-      } catch (activityError) {
-        getRequestLogger().error(
-          { error: activityError, bookingId: id, status: data.status },
-          "Failed to record booking status activity.",
-        );
-      }
-    }
+    await recordStatusActivitySafely(booking.id, data.status, booking.cancellationReason, caller);
   }
-  // Only fire update notifications when co-host assignment changed — other field changes
-  // are covered by status notifications or don't warrant an email.
-  const oldCoCoachIds = new Set(oldBooking.coCoachUserIds ?? []);
-  const newCoCoachIds = booking.coCoachUserIds ?? [];
-  const coCoachsChanged =
-    newCoCoachIds.length !== oldCoCoachIds.size ||
-    newCoCoachIds.some((id) => !oldCoCoachIds.has(id));
 
-  if (coCoachsChanged) {
+  // Co-host change: notify only when the co-host assignment actually changed — other field
+  // changes are covered by status notifications or don't warrant an email.
+  if (haveCoHostsChanged(oldBooking.coCoachUserIds, booking.coCoachUserIds)) {
     void queueBookingUpdatedNotifications(oldBooking, booking);
   }
 
