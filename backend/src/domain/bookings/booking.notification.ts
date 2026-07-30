@@ -810,26 +810,25 @@ const queueBookingRescheduledNotifications = async (
     // need full details regardless of student-facing deferral.
     const { isDeferredReveal } = resolveRevealPolicy(booking, opts);
 
-    const publishTasks: Array<Promise<boolean>> = [
-      publishNotificationSafely({
-        type: isDeferredReveal ? "BOOKING_RESCHEDULED_DEFERRED" : "BOOKING_RESCHEDULED",
-        recipients: booking.studentEmail,
-        userId: booking.coachUserId ?? undefined,
-        variables: isDeferredReveal
-          ? buildSafeStudentVariables(studentVariables, { includeCancelReschedule: true })
-          : studentVariables,
-      }),
-    ];
+    // Collect the notification payloads first, then send them all in parallel at the end.
+    const payloads: NotificationPayload[] = [];
+
+    payloads.push({
+      type: isDeferredReveal ? "BOOKING_RESCHEDULED_DEFERRED" : "BOOKING_RESCHEDULED",
+      recipients: booking.studentEmail,
+      userId: booking.coachUserId ?? undefined,
+      variables: isDeferredReveal
+        ? buildSafeStudentVariables(studentVariables, { includeCancelReschedule: true })
+        : studentVariables,
+    });
 
     if (booking.coach?.email && (config.coachNotifyOnBooking || config.coachNotifyOnCancellation)) {
-      publishTasks.push(
-        publishNotificationSafely({
-          type: "BOOKING_RESCHEDULED",
-          recipients: booking.coach.email,
-          userId: booking.coach.id,
-          variables: coachVariables,
-        }),
-      );
+      payloads.push({
+        type: "BOOKING_RESCHEDULED",
+        recipients: booking.coach.email,
+        userId: booking.coach.id,
+        variables: coachVariables,
+      });
     }
 
     // Also notify co-hosts
@@ -838,19 +837,17 @@ const queueBookingRescheduledNotifications = async (
 
       for (const coHost of coHosts) {
         if (coHost.email) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "BOOKING_RESCHEDULED",
-              recipients: coHost.email,
-              userId: coHost.id,
-              variables: await getBookingNotificationVariables(booking, coHost.timezone),
-            }),
-          );
+          payloads.push({
+            type: "BOOKING_RESCHEDULED",
+            recipients: coHost.email,
+            userId: coHost.id,
+            variables: await getBookingNotificationVariables(booking, coHost.timezone),
+          });
         }
       }
     }
 
-    await Promise.all(publishTasks);
+    await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
 
     // Rescheduling should also refresh the reminders!
     await cancelScheduledBookingReminders(booking);
