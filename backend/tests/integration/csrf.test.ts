@@ -1,5 +1,6 @@
 import express from "express";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 import request from "supertest";
 import { csrfProtection } from "../../src/shared/middleware/csrf";
 import { errorHandler } from "../../src/shared/error/errorhandler";
@@ -18,6 +19,11 @@ if (process.env.ENABLE_CSRF_PROTECTION === "false") {
 const buildApp = () => {
   const app = express();
   app.use(cookieParser());
+  // A permissive rate limiter so this fixture mirrors the production middleware
+  // chain (which is always rate-limited) and CodeQL's js/missing-rate-limiting
+  // query doesn't flag these dummy routes. The cap is far above anything the
+  // suite sends, so it never trips and behaviour is unchanged.
+  app.use(rateLimit({ windowMs: 60_000, max: 10_000, validate: false }));
   app.use(csrfProtection);
   const ok = (_req: express.Request, res: express.Response) => res.status(200).json({ ok: true });
   app.post("/api/test", ok);
