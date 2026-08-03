@@ -95,8 +95,12 @@ const processRow = async (row: ClaimedRow): Promise<void> => {
   }
 };
 
-/** Process all currently-claimable rows. Never throws (would crash the process). */
-const processOutbox = async (): Promise<void> => {
+/**
+ * Process all currently-claimable rows. Never throws (would crash the process).
+ * Exported so tests can drive a single drain pass without starting the worker's
+ * intervals/emitter (production starts it only via `startOutboxWorker`).
+ */
+export const processOutbox = async (): Promise<void> => {
   if (isRunning) return; // a trigger and the poll can overlap — only one pass at a time
   isRunning = true;
   try {
