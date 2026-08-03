@@ -404,6 +404,51 @@ describe("PATCH /api/users/:userId", () => {
 
     expect(res.status).toBe(401);
   });
+
+  // Last-active-SUPER_ADMIN protection on the update path. The DELETE path is
+  // covered below; these exercise the two update branches (role change and
+  // isActive:false) plus the escape hatch once a second SUPER_ADMIN exists.
+  it("returns 403 when demoting the last active SUPER_ADMIN via role change", async () => {
+    // superAdminId is the only SUPER_ADMIN → demotion must be blocked.
+    const res = await request(app)
+      .patch(`/api/users/${superAdminId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ role: "TEAM_ADMIN" });
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toContain("last active SUPER_ADMIN");
+  });
+
+  it("returns 403 when deactivating the last active SUPER_ADMIN via isActive:false", async () => {
+    const res = await request(app)
+      .patch(`/api/users/${superAdminId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ isActive: false });
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toContain("last active SUPER_ADMIN");
+  });
+
+  it("allows demoting a SUPER_ADMIN when another active SUPER_ADMIN exists", async () => {
+    // Add a second SUPER_ADMIN so the bootstrap one is no longer the last;
+    // demoting the extra one must now succeed. superAdminId is left untouched.
+    const extraSuper = await registerUser(superAdminToken, {
+      firstName: "Extra",
+      lastName: "Super",
+      email: "extrasuper@users.com",
+      password: "ExtraSuper1234",
+      role: "SUPER_ADMIN",
+    });
+    expect(extraSuper.role).toBe("SUPER_ADMIN");
+
+    const res = await request(app)
+      .patch(`/api/users/${extraSuper.id}`)
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ role: "TEAM_ADMIN" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.role).toBe("TEAM_ADMIN");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────

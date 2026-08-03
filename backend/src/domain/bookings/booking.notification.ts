@@ -756,7 +756,8 @@ const queueBookingUpdatedNotifications = async (
   newBooking: SafeBooking,
 ) => {
   try {
-    const publishTasks: Array<Promise<boolean>> = [];
+    // Collect the notification payloads first, then send them all in parallel at the end.
+    const payloads: NotificationPayload[] = [];
 
     // Notify newly added co-coaches
     const oldCoCoaches = new Set(oldBooking.coCoachUserIds || []);
@@ -768,14 +769,12 @@ const queueBookingUpdatedNotifications = async (
 
       for (const coCoach of coCoachUsers) {
         if (coCoach.email) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_ASSIGNED",
-              recipients: coCoach.email,
-              userId: coCoach.id,
-              variables: await getBookingNotificationVariables(newBooking, coCoach.timezone),
-            }),
-          );
+          payloads.push({
+            type: "COACH_BOOKING_COHOST_ASSIGNED",
+            recipients: coCoach.email,
+            userId: coCoach.id,
+            variables: await getBookingNotificationVariables(newBooking, coCoach.timezone),
+          });
         }
       }
     }
@@ -784,7 +783,7 @@ const queueBookingUpdatedNotifications = async (
     // Note: status changes normally go through queueBookingStatusNotifications
     // but if updateBooking changes status too, we should handle it here or ensure it's called.
 
-    await Promise.all(publishTasks);
+    await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
   } catch (error) {
     logger.error({ bookingId: newBooking.id, error }, "Failed to queue booking update notifications.");
   }
@@ -918,35 +917,30 @@ const queueSlotRescheduledNotifications = async (
       include: bookingInclude,
     });
 
-    const publishTasks: Array<Promise<boolean>> = [];
+    // Collect the notification payloads first, then send them all in parallel at the end.
+    const payloads: NotificationPayload[] = [];
 
     for (const booking of bookings) {
       const studentVars = await getBookingNotificationVariables(booking as SafeBooking, booking.timezone);
 
       if (isAnonymous) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_RESCHEDULED_ANONYMOUS",
-            recipients: booking.studentEmail,
-            variables: buildSafeStudentVariables(studentVars, { includeMeetingLink: true }),
-          }),
-        );
+        payloads.push({
+          type: "SLOT_RESCHEDULED_ANONYMOUS",
+          recipients: booking.studentEmail,
+          variables: buildSafeStudentVariables(studentVars, { includeMeetingLink: true }),
+        });
       } else if (isDeferredReveal) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_RESCHEDULED_DEFERRED",
-            recipients: booking.studentEmail,
-            variables: buildSafeStudentVariables(studentVars),
-          }),
-        );
+        payloads.push({
+          type: "SLOT_RESCHEDULED_DEFERRED",
+          recipients: booking.studentEmail,
+          variables: buildSafeStudentVariables(studentVars),
+        });
       } else {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_RESCHEDULED",
-            recipients: booking.studentEmail,
-            variables: studentVars,
-          }),
-        );
+        payloads.push({
+          type: "SLOT_RESCHEDULED",
+          recipients: booking.studentEmail,
+          variables: studentVars,
+        });
       }
     }
 
@@ -956,17 +950,15 @@ const queueSlotRescheduledNotifications = async (
         bookings[0] as SafeBooking,
         assignedCoach.timezone,
       );
-      publishTasks.push(
-        publishNotificationSafely({
-          type: "SLOT_RESCHEDULED_COACH",
-          recipients: assignedCoach.email,
-          userId: assignedCoach.id,
-          variables: coachVars,
-        }),
-      );
+      payloads.push({
+        type: "SLOT_RESCHEDULED_COACH",
+        recipients: assignedCoach.email,
+        userId: assignedCoach.id,
+        variables: coachVars,
+      });
     }
 
-    await Promise.all(publishTasks);
+    await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
 
     // Cancel stale reminders and re-queue with the updated slot time for each booking.
     // All bookings share the same teamId — fetch config once outside the loop.
@@ -1008,19 +1000,18 @@ const queueSlotCoachReassignedNotifications = async (
       include: bookingInclude,
     });
 
-    const publishTasks: Array<Promise<boolean>> = [];
+    // Collect the notification payloads first, then send them all in parallel at the end.
+    const payloads: NotificationPayload[] = [];
 
     for (const booking of bookings) {
       // Anonymous events don't expose coach identity to students — skip student email.
       if (!isAnonymous) {
         const studentVars = await getBookingNotificationVariables(booking as SafeBooking, booking.timezone);
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_COACH_REASSIGNED",
-            recipients: booking.studentEmail,
-            variables: studentVars,
-          }),
-        );
+        payloads.push({
+          type: "SLOT_COACH_REASSIGNED",
+          recipients: booking.studentEmail,
+          variables: studentVars,
+        });
       }
     }
 
@@ -1030,17 +1021,15 @@ const queueSlotCoachReassignedNotifications = async (
         bookings[0] as SafeBooking,
         newCoach.timezone,
       );
-      publishTasks.push(
-        publishNotificationSafely({
-          type: "SLOT_COACH_REASSIGNED_COACH",
-          recipients: newCoach.email,
-          userId: newCoach.id,
-          variables: coachVars,
-        }),
-      );
+      payloads.push({
+        type: "SLOT_COACH_REASSIGNED_COACH",
+        recipients: newCoach.email,
+        userId: newCoach.id,
+        variables: coachVars,
+      });
     }
 
-    await Promise.all(publishTasks);
+    await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
 
     // Cancel stale reminders (baked with old coach name/link) and re-queue fresh.
     // All bookings share the same teamId — fetch config once outside the loop.
