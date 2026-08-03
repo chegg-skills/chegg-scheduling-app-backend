@@ -10,6 +10,8 @@ extension or https://mermaid.live.
 | Flow | File | Entry point |
 |---|---|---|
 | Booking creation (public) | [booking-creation.md](./booking-creation.md) | `POST /api/bookings` |
+| Event creation (admin) | [event-creation.md](./event-creation.md) | `POST /api/teams/:teamId/events` |
+| Request Validation & `Object.defineProperty` | [request-validation-middleware.md](../request-validation-middleware.md) | `validate.ts` Middleware |
 
 **Convention for adding a new flow:** one file per flow, named after the user
 action (not the module). Keep the file-map table at the top, number the queries
