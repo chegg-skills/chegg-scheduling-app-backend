@@ -66,23 +66,37 @@ export const getPerformanceReport = async (
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
 
+  // TEAM_ADMIN sees only their own teams; SUPER_ADMIN sees org-wide (mirrors getBookingsReport).
+  const teamScope: Prisma.BookingWhereInput =
+    caller.role === UserRole.TEAM_ADMIN ? { team: { teamLeadId: caller.id } } : {};
+
   const statusFilter = {
     in: [BookingStatus.COMPLETED, BookingStatus.NO_SHOW, BookingStatus.CANCELLED] as BookingStatus[],
   };
   const dateWhere: Prisma.BookingWhereInput = dateFilter ? { startTime: dateFilter } : {};
 
-  // 3 parallel queries regardless of coach count (replaces N×6 per-coach queries)
+  // 3 parallel queries regardless of coach count (replaces N×6 per-coach queries).
+  // For a TEAM_ADMIN both the coach roster and the session counts are restricted to
+  // their teams, so a coach who also works on other teams shows only their team-scoped totals.
   const [coaches, slotRows, individualRows] = await Promise.all([
-    prisma.user.findMany({ where: { role: UserRole.COACH, isActive: true } }),
+    prisma.user.findMany({
+      where: {
+        role: UserRole.COACH,
+        isActive: true,
+        ...(caller.role === UserRole.TEAM_ADMIN
+          ? { teamMemberships: { some: { isActive: true, team: { teamLeadId: caller.id } } } }
+          : {}),
+      },
+    }),
     // Each (coachUserId, scheduleSlotId, status) row = 1 distinct session
     prisma.booking.groupBy({
       by: ["coachUserId", "scheduleSlotId", "status"],
-      where: { ...dateWhere, status: statusFilter, scheduleSlotId: { not: null } },
+      where: { ...dateWhere, ...teamScope, status: statusFilter, scheduleSlotId: { not: null } },
     }),
     // Individual bookings (no slot) grouped by coach+status
     prisma.booking.groupBy({
       by: ["coachUserId", "status"],
-      where: { ...dateWhere, status: statusFilter, scheduleSlotId: null },
+      where: { ...dateWhere, ...teamScope, status: statusFilter, scheduleSlotId: null },
       _count: { id: true },
     }),
   ]);
@@ -136,14 +150,20 @@ export const getStudentReport = async (
   const timeframe = resolveTimeframe(timeframeRaw);
   const dateFilter = buildDateFilter(timeframe);
 
+  // TEAM_ADMIN sees only students who have booked on their teams; SUPER_ADMIN sees all.
+  // The per-student session count is likewise scoped so cross-team totals don't leak.
+  const isTeamAdmin = caller.role === UserRole.TEAM_ADMIN;
+  const teamBookingFilter: Prisma.BookingWhereInput = { team: { teamLeadId: caller.id } };
+
   const where: Prisma.StudentWhereInput = {
     ...(dateFilter ? { createdAt: dateFilter } : {}),
+    ...(isTeamAdmin ? { bookings: { some: teamBookingFilter } } : {}),
   };
 
   const students = await prisma.student.findMany({
     where,
     include: {
-      _count: { select: { bookings: true } },
+      _count: { select: { bookings: isTeamAdmin ? { where: teamBookingFilter } : true } },
     },
     orderBy: { lastBookedAt: "desc" },
   });
