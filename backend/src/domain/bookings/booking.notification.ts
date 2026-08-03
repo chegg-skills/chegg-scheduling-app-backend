@@ -5,6 +5,7 @@ import {
   publishNotificationSafely,
   resolveFrontendUrl,
   type NotificationType,
+  type NotificationPayload,
 } from "../../shared/notifications/notification.publisher";
 import type { SafeBooking } from "./booking.service";
 import { bookingInclude } from "./booking.shared";
@@ -399,7 +400,156 @@ const resolveRevealPolicy = (
 };
 
 /**
- * Publishes the confirmation/assignment emails for a freshly created booking.
+ * Team-admin "booking confirmed" notifications. Identical for anonymous and standard
+ * bookings — anonymous bookings carry coachUserId=null, so userId resolves to undefined
+ * and is dropped from the stored payload either way. Replaces two copy-pasted blocks.
+ */
+const queueTeamAdminBookingConfirmations = async (
+  booking: SafeBooking,
+  config: ResolvedNotificationConfig,
+  keyFor: (role: string, recipient: string) => string,
+): Promise<boolean> => {
+  if (!config.adminNotifyOnBooking) return true;
+
+  const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+  const tasks: Array<Promise<boolean>> = [];
+  for (const admin of teamAdmins) {
+    tasks.push(
+      publishNotificationSafely({
+        type: "TEAM_BOOKING_CONFIRMED",
+        recipients: admin.email,
+        userId: booking.coachUserId ?? undefined,
+        notificationKey: keyFor("admin", admin.email),
+        variables: await getBookingNotificationVariables(booking, admin.timezone),
+      }),
+    );
+  }
+  return (await Promise.all(tasks)).every(Boolean);
+};
+
+/**
+ * Anonymous booking confirmation: student gets a masked confirmation with no coach
+ * details, team admins are notified, and reminders are queued (anonymous student
+ * reminders + slot-level coach-pool reminders). No coach/co-host emails — anonymous
+ * bookings never have an assigned coach.
+ */
+const queueAnonymousBookingCreatedNotifications = async (
+  booking: SafeBooking,
+  config: ResolvedNotificationConfig,
+  keyFor: (role: string, recipient: string) => string,
+): Promise<boolean> => {
+  const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
+
+  // Student confirmation and team-admin confirmations run concurrently (as the
+  // original single Promise.all did).
+  const [confirmOk, adminOk] = await Promise.all([
+    publishNotificationSafely({
+      type: "BOOKING_CONFIRMED_ANONYMOUS",
+      recipients: booking.studentEmail,
+      notificationKey: keyFor("student", booking.studentEmail),
+      variables: buildSafeStudentVariables(studentVariables, {
+        includeMeetingLink: true,
+        includeCancelReschedule: true,
+      }),
+    }),
+    queueTeamAdminBookingConfirmations(booking, config, keyFor),
+  ]);
+
+  // Anonymous student reminders
+  const reminderResults = await Promise.all(
+    config.reminderOffsets.map((offset) => queueStudentReminderByOffset(booking, offset, true)),
+  );
+
+  // Refresh slot-level pool reminders with the updated participant count
+  let poolOk = true;
+  if (booking.scheduleSlotId) {
+    poolOk = await queueCoachPoolRemindersForSlot(
+      booking.scheduleSlotId,
+      booking.eventId,
+      new Date(booking.startTime),
+      config,
+    );
+  }
+
+  return confirmOk && adminOk && reminderResults.every(Boolean) && poolOk;
+};
+
+/**
+ * Standard booking confirmation: student (coach-identifying, or masked when deferred),
+ * the assigned coach, team admins, and any co-hosts. Session reminders are queued unless
+ * the booking is deferred-reveal (a reminder would leak coach/join details early).
+ */
+const queueStandardBookingCreatedNotifications = async (
+  booking: SafeBooking,
+  config: ResolvedNotificationConfig,
+  isDeferredReveal: boolean,
+  keyFor: (role: string, recipient: string) => string,
+): Promise<boolean> => {
+  const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
+  const coachVariables = await getBookingNotificationVariables(
+    booking,
+    booking.coach?.timezone || "UTC",
+  );
+
+  const publishTasks: Array<Promise<boolean>> = [
+    publishNotificationSafely({
+      type: isDeferredReveal ? "BOOKING_CONFIRMED_DEFERRED" : "BOOKING_CONFIRMED",
+      recipients: booking.studentEmail,
+      userId: booking.coachUserId ?? undefined,
+      notificationKey: keyFor("student", booking.studentEmail),
+      variables: isDeferredReveal
+        ? buildSafeStudentVariables(studentVariables, { includeCancelReschedule: true })
+        : studentVariables,
+    }),
+  ];
+
+  if (booking.coach?.email && config.coachNotifyOnBooking) {
+    publishTasks.push(
+      publishNotificationSafely({
+        type: "COACH_BOOKING_ASSIGNED",
+        recipients: booking.coach.email,
+        userId: booking.coach.id,
+        notificationKey: keyFor("coach", booking.coach.email),
+        variables: coachVariables,
+      }),
+    );
+  }
+
+  if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
+    const coHosts = await resolveCoHostRecipients(booking.coCoachUserIds);
+
+    for (const coHost of coHosts) {
+      if (coHost.email) {
+        publishTasks.push(
+          publishNotificationSafely({
+            type: "COACH_BOOKING_COHOST_ASSIGNED",
+            recipients: coHost.email,
+            userId: coHost.id,
+            notificationKey: keyFor("cocoach", coHost.email),
+            variables: await getBookingNotificationVariables(booking, coHost.timezone),
+          }),
+        );
+      }
+    }
+  }
+
+  // Student/coach/co-host batch and team-admin confirmations run concurrently (as the
+  // original single Promise.all did).
+  const [confirmResults, adminOk] = await Promise.all([
+    Promise.all(publishTasks),
+    queueTeamAdminBookingConfirmations(booking, config, keyFor),
+  ]);
+  const confirmOk = confirmResults.every(Boolean);
+  const remindersOk = isDeferredReveal
+    ? true
+    : await queueBookingReminderNotifications(booking, config);
+
+  return confirmOk && adminOk && remindersOk;
+};
+
+/**
+ * Publishes the confirmation/assignment emails for a freshly created booking, dispatching
+ * to the anonymous or standard flow.
  *
  * Returns `true` only when every publish (and reminder scheduling) succeeded.
  * The outbox worker uses this to decide whether to retry: a `false` keeps the
@@ -412,138 +562,172 @@ const queueBookingCreatedNotifications = async (
   booking: SafeBooking,
   opts?: BookingNotificationOpts,
 ): Promise<boolean> => {
-
-
   const keyFor = (role: string, recipient: string) =>
     `booking:${booking.id}:created:${role}:${recipient}`;
 
   try {
-    const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
     const config = await getTeamNotificationConfig(booking.teamId);
     const { isAnonymous, isDeferredReveal } = resolveRevealPolicy(booking, opts);
 
-    if (isAnonymous) {
-      // Anonymous booking: student gets confirmation without coach details.
-      // No coach assignment email. Pool reminders are slot-level.
-      const publishTasks: Array<Promise<boolean>> = [
-        publishNotificationSafely({
-          type: "BOOKING_CONFIRMED_ANONYMOUS",
-          recipients: booking.studentEmail,
-          notificationKey: keyFor("student", booking.studentEmail),
-          variables: buildSafeStudentVariables(studentVariables, {
-            includeMeetingLink: true,
-            includeCancelReschedule: true,
-          }),
-        }),
-      ];
-
-      if (config.adminNotifyOnBooking) {
-        const teamAdmins = await getTeamAdminRecipients(booking.teamId);
-        for (const admin of teamAdmins) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "TEAM_BOOKING_CONFIRMED",
-              recipients: admin.email,
-              notificationKey: keyFor("admin", admin.email),
-              variables: await getBookingNotificationVariables(booking, admin.timezone),
-            }),
-          );
-        }
-      }
-
-      const confirmResults = await Promise.all(publishTasks);
-
-      // Queue anonymous student reminders
-      const reminderResults = await Promise.all(
-        config.reminderOffsets.map((offset) =>
-          queueStudentReminderByOffset(booking, offset, true),
-        ),
-      );
-
-      // Refresh slot-level pool reminders with updated participant count
-      let poolOk = true;
-      if (booking.scheduleSlotId) {
-        poolOk = await queueCoachPoolRemindersForSlot(
-          booking.scheduleSlotId,
-          booking.eventId,
-          new Date(booking.startTime),
-          config,
-        );
-      }
-      return confirmResults.every(Boolean) && reminderResults.every(Boolean) && poolOk;
-    }
-
-    const coachVariables = await getBookingNotificationVariables(
-      booking,
-      booking.coach?.timezone || "UTC",
-    );
-
-    const publishTasks: Array<Promise<boolean>> = [
-      publishNotificationSafely({
-        type: isDeferredReveal ? "BOOKING_CONFIRMED_DEFERRED" : "BOOKING_CONFIRMED",
-        recipients: booking.studentEmail,
-        userId: booking.coachUserId ?? undefined,
-        notificationKey: keyFor("student", booking.studentEmail),
-        variables: isDeferredReveal
-          ? buildSafeStudentVariables(studentVariables, { includeCancelReschedule: true })
-          : studentVariables,
-      }),
-    ];
-
-    if (booking.coach?.email && config.coachNotifyOnBooking) {
-      publishTasks.push(
-        publishNotificationSafely({
-          type: "COACH_BOOKING_ASSIGNED",
-          recipients: booking.coach.email,
-          userId: booking.coach.id,
-          notificationKey: keyFor("coach", booking.coach.email),
-          variables: coachVariables,
-        }),
-      );
-    }
-
-    if (config.adminNotifyOnBooking) {
-      const teamAdmins = await getTeamAdminRecipients(booking.teamId);
-      for (const admin of teamAdmins) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "TEAM_BOOKING_CONFIRMED",
-            recipients: admin.email,
-            userId: booking.coachUserId ?? undefined,
-            notificationKey: keyFor("admin", admin.email),
-            variables: await getBookingNotificationVariables(booking, admin.timezone),
-          }),
-        );
-      }
-    }
-
-    if (booking.coCoachUserIds && booking.coCoachUserIds.length > 0) {
-      const coHosts = await resolveCoHostRecipients(booking.coCoachUserIds);
-
-      for (const coHost of coHosts) {
-        if (coHost.email) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_ASSIGNED",
-              recipients: coHost.email,
-              userId: coHost.id,
-              notificationKey: keyFor("cocoach", coHost.email),
-              variables: await getBookingNotificationVariables(booking, coHost.timezone),
-            }),
-          );
-        }
-      }
-    }
-
-    const confirmResults = await Promise.all(publishTasks);
-    const remindersOk = isDeferredReveal
-      ? true
-      : await queueBookingReminderNotifications(booking, config);
-    return confirmResults.every(Boolean) && remindersOk;
+    return isAnonymous
+      ? await queueAnonymousBookingCreatedNotifications(booking, config, keyFor)
+      : await queueStandardBookingCreatedNotifications(booking, config, isDeferredReveal, keyFor);
   } catch (error) {
     logger.error({ bookingId: booking.id, eventId: booking.eventId, error }, "Failed to queue booking creation notifications.");
     return false;
   }
+};
+
+/**
+ * Shared inputs both status-notification helpers need: the rendered student and coach template
+ * variables plus the active co-host recipients. Extracted so the two helpers stay self-contained
+ * without duplicating the setup.
+ */
+const resolveStatusNotificationInputs = async (booking: SafeBooking) => {
+  const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
+  const coachVariables = await getBookingNotificationVariables(
+    booking,
+    booking.coach?.timezone || "UTC",
+  );
+  const coHostRecipients = await resolveCoHostRecipients(booking.coCoachUserIds);
+  return { studentVariables, coachVariables, coHostRecipients };
+};
+
+/**
+ * Cancellation emails: student — anonymous and not-yet-revealed deferred events use a cancellation
+ * template (`BOOKING_CANCELLED_ANONYMOUS` / `BOOKING_CANCELLED_DEFERRED`) that omits coach identity.
+ * The full variables are passed (the masked template simply doesn't render coach fields, and it
+ * still needs `cancellationReason`) — masking here is via template selection, not variable
+ * stripping. Coach + co-hosts (non-anonymous only), and team admins where their config flags allow.
+ * Refreshes slot-level pool reminders for anonymous events.
+ */
+const queueBookingCancelledNotifications = async (
+  booking: SafeBooking,
+  config: ResolvedNotificationConfig,
+  opts?: BookingNotificationOpts,
+): Promise<void> => {
+
+  const { studentVariables, coachVariables, coHostRecipients } =
+    await resolveStatusNotificationInputs(booking);
+  
+  // Reuse the shared reveal-policy helper (single source of truth) rather than recomputing it here.
+  const { isAnonymous, isDeferredReveal } = resolveRevealPolicy(booking, opts);
+
+  let cancellationType: NotificationType = "BOOKING_CANCELLED";
+  if (isAnonymous) {
+    cancellationType = "BOOKING_CANCELLED_ANONYMOUS";
+  } else if (isDeferredReveal) {
+    cancellationType = "BOOKING_CANCELLED_DEFERRED";
+  }
+
+  // Collect the notification payloads first, then send them all in parallel at the end.
+  const payloads: NotificationPayload[] = [];
+
+  payloads.push({
+    type: cancellationType,
+    recipients: booking.studentEmail,
+    userId: booking.coachUserId ?? undefined,
+    variables: studentVariables,
+  });
+
+  if (!isAnonymous) {
+    if (booking.coach?.email && config.coachNotifyOnCancellation) {
+      payloads.push({
+        type: "COACH_BOOKING_CANCELLED",
+        recipients: booking.coach.email,
+        userId: booking.coach.id,
+        variables: coachVariables,
+      });
+    }
+
+    for (const coHost of coHostRecipients) {
+      if (coHost.email) {
+        payloads.push({
+          type: "COACH_BOOKING_COHOST_CANCELLED",
+          recipients: coHost.email,
+          userId: coHost.id,
+          variables: await getBookingNotificationVariables(booking, coHost.timezone),
+        });
+      }
+    }
+  }
+
+  if (config.adminNotifyOnCancellation) {
+    const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+    for (const admin of teamAdmins) {
+      payloads.push({
+        type: "TEAM_BOOKING_CANCELLED",
+        recipients: admin.email,
+        userId: booking.coachUserId ?? undefined,
+        variables: await getBookingNotificationVariables(booking, admin.timezone),
+      });
+    }
+  }
+
+  await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
+
+  // For anonymous slots: refresh pool reminders with updated participant count
+  if (isAnonymous && booking.scheduleSlotId) {
+    await queueCoachPoolRemindersForSlot(
+      booking.scheduleSlotId,
+      booking.eventId,
+      new Date(booking.startTime),
+      config,
+    );
+  }
+};
+
+/** No-show emails: student, coach + co-hosts, and team admins where their config flags allow. */
+const queueBookingNoShowNotifications = async (
+  booking: SafeBooking,
+  config: ResolvedNotificationConfig,
+): Promise<void> => {
+  const { studentVariables, coachVariables, coHostRecipients } =
+    await resolveStatusNotificationInputs(booking);
+
+  // Collect the notification payloads first, then send them all in parallel at the end.
+  const payloads: NotificationPayload[] = [];
+
+  payloads.push({
+    type: "BOOKING_NO_SHOW",
+    recipients: booking.studentEmail,
+    userId: booking.coachUserId ?? undefined,
+    variables: studentVariables,
+  });
+
+  if (booking.coach?.email && config.coachNotifyOnNoShow) {
+    payloads.push({
+      type: "COACH_BOOKING_NO_SHOW",
+      recipients: booking.coach.email,
+      userId: booking.coach.id,
+      variables: coachVariables,
+    });
+  }
+
+  for (const coHost of coHostRecipients) {
+    if (coHost.email) {
+      payloads.push({
+        type: "COACH_BOOKING_COHOST_NO_SHOW",
+        recipients: coHost.email,
+        userId: coHost.id,
+        variables: await getBookingNotificationVariables(booking, coHost.timezone),
+      });
+    }
+  }
+
+  if (config.adminNotifyOnNoShow) {
+    const teamAdmins = await getTeamAdminRecipients(booking.teamId);
+    for (const admin of teamAdmins) {
+      payloads.push({
+        type: "TEAM_BOOKING_NO_SHOW",
+        recipients: admin.email,
+        userId: booking.coachUserId ?? undefined,
+        variables: await getBookingNotificationVariables(booking, admin.timezone),
+      });
+    }
+  }
+
+  await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
 };
 
 const queueBookingStatusNotifications = async (
@@ -551,144 +735,16 @@ const queueBookingStatusNotifications = async (
   opts?: BookingNotificationOpts,
 ) => {
   try {
-    const studentVariables = await getBookingNotificationVariables(booking, booking.timezone);
-    const coachVariables = await getBookingNotificationVariables(
-      booking,
-      booking.coach?.timezone || "UTC",
-    );
     const config = await getTeamNotificationConfig(booking.teamId);
 
     if (booking.status === BookingStatus.CANCELLED || booking.status === BookingStatus.NO_SHOW) {
       await cancelScheduledBookingReminders(booking);
     }
 
-    // Fetch co-hosts if needed
-    const coCoachUserIds = (booking as any).coCoachUserIds as string[] | undefined;
-    const coHostUsers = await resolveCoHostRecipients(coCoachUserIds);
-
     if (booking.status === BookingStatus.CANCELLED) {
-      const isAnonymous = booking.event?.allowAnonymousBooking === true;
-
-      let cancellationType: NotificationType;
-      if (isAnonymous) {
-        cancellationType = "BOOKING_CANCELLED_ANONYMOUS";
-      } else if (booking.event?.deferCoachReveal && !opts?.slotRevealedAt) {
-        cancellationType = "BOOKING_CANCELLED_DEFERRED";
-      } else {
-        cancellationType = "BOOKING_CANCELLED";
-      }
-
-      const publishTasks: Array<Promise<boolean>> = [
-        publishNotificationSafely({
-          type: cancellationType,
-          recipients: booking.studentEmail,
-          userId: booking.coachUserId ?? undefined,
-          variables: studentVariables,
-        }),
-      ];
-
-      if (!isAnonymous) {
-        if (booking.coach?.email && config.coachNotifyOnCancellation) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "COACH_BOOKING_CANCELLED",
-              recipients: booking.coach.email,
-              userId: booking.coach.id,
-              variables: coachVariables,
-            }),
-          );
-        }
-
-        for (const coHost of coHostUsers) {
-          if (coHost.email) {
-            publishTasks.push(
-              publishNotificationSafely({
-                type: "COACH_BOOKING_COHOST_CANCELLED",
-                recipients: coHost.email,
-                userId: coHost.id,
-                variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
-              }),
-            );
-          }
-        }
-      }
-
-      if (config.adminNotifyOnCancellation) {
-        const teamAdmins = await getTeamAdminRecipients(booking.teamId);
-        for (const admin of teamAdmins) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "TEAM_BOOKING_CANCELLED",
-              recipients: admin.email,
-              userId: booking.coachUserId ?? undefined,
-              variables: await getBookingNotificationVariables(booking, admin.timezone),
-            }),
-          );
-        }
-      }
-
-      await Promise.all(publishTasks);
-
-      // For anonymous slots: refresh pool reminders with updated participant count
-      if (isAnonymous && booking.scheduleSlotId) {
-        await queueCoachPoolRemindersForSlot(
-          booking.scheduleSlotId,
-          booking.eventId,
-          new Date(booking.startTime),
-          config,
-        );
-      }
-    }
-
-    if (booking.status === BookingStatus.NO_SHOW) {
-      const publishTasks: Array<Promise<boolean>> = [
-        publishNotificationSafely({
-          type: "BOOKING_NO_SHOW",
-          recipients: booking.studentEmail,
-          userId: booking.coachUserId ?? undefined,
-          variables: studentVariables,
-        }),
-      ];
-
-      if (booking.coach?.email && config.coachNotifyOnNoShow) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "COACH_BOOKING_NO_SHOW",
-            recipients: booking.coach.email,
-            userId: booking.coach.id,
-            variables: coachVariables,
-          }),
-        );
-      }
-
-      for (const coHost of coHostUsers) {
-        if (coHost.email) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_NO_SHOW",
-              recipients: coHost.email,
-              userId: coHost.id,
-              variables: await getBookingNotificationVariables(booking, (coHost as any).timezone),
-            }),
-          );
-        }
-      }
-
-      if (config.adminNotifyOnNoShow) {
-        const teamAdmins = await getTeamAdminRecipients(booking.teamId);
-        for (const admin of teamAdmins) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "TEAM_BOOKING_NO_SHOW",
-              recipients: admin.email,
-              userId: booking.coachUserId ?? undefined,
-              variables: await getBookingNotificationVariables(booking, admin.timezone),
-            }),
-          );
-        }
-      }
-
-      await Promise.all(publishTasks);
+      await queueBookingCancelledNotifications(booking, config, opts);
+    } else if (booking.status === BookingStatus.NO_SHOW) {
+      await queueBookingNoShowNotifications(booking, config);
     }
   } catch (error) {
     logger.error({ bookingId: booking.id, status: booking.status, error }, "Failed to queue booking status notifications.");
@@ -700,7 +756,8 @@ const queueBookingUpdatedNotifications = async (
   newBooking: SafeBooking,
 ) => {
   try {
-    const publishTasks: Array<Promise<boolean>> = [];
+    // Collect the notification payloads first, then send them all in parallel at the end.
+    const payloads: NotificationPayload[] = [];
 
     // Notify newly added co-coaches
     const oldCoCoaches = new Set(oldBooking.coCoachUserIds || []);
@@ -712,14 +769,12 @@ const queueBookingUpdatedNotifications = async (
 
       for (const coCoach of coCoachUsers) {
         if (coCoach.email) {
-          publishTasks.push(
-            publishNotificationSafely({
-              type: "COACH_BOOKING_COHOST_ASSIGNED",
-              recipients: coCoach.email,
-              userId: coCoach.id,
-              variables: await getBookingNotificationVariables(newBooking, coCoach.timezone),
-            }),
-          );
+          payloads.push({
+            type: "COACH_BOOKING_COHOST_ASSIGNED",
+            recipients: coCoach.email,
+            userId: coCoach.id,
+            variables: await getBookingNotificationVariables(newBooking, coCoach.timezone),
+          });
         }
       }
     }
@@ -728,7 +783,7 @@ const queueBookingUpdatedNotifications = async (
     // Note: status changes normally go through queueBookingStatusNotifications
     // but if updateBooking changes status too, we should handle it here or ensure it's called.
 
-    await Promise.all(publishTasks);
+    await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
   } catch (error) {
     logger.error({ bookingId: newBooking.id, error }, "Failed to queue booking update notifications.");
   }
@@ -865,35 +920,30 @@ const queueSlotRescheduledNotifications = async (
       include: bookingInclude,
     });
 
-    const publishTasks: Array<Promise<boolean>> = [];
+    // Collect the notification payloads first, then send them all in parallel at the end.
+    const payloads: NotificationPayload[] = [];
 
     for (const booking of bookings) {
       const studentVars = await getBookingNotificationVariables(booking as SafeBooking, booking.timezone);
 
       if (isAnonymous) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_RESCHEDULED_ANONYMOUS",
-            recipients: booking.studentEmail,
-            variables: buildSafeStudentVariables(studentVars, { includeMeetingLink: true }),
-          }),
-        );
+        payloads.push({
+          type: "SLOT_RESCHEDULED_ANONYMOUS",
+          recipients: booking.studentEmail,
+          variables: buildSafeStudentVariables(studentVars, { includeMeetingLink: true }),
+        });
       } else if (isDeferredReveal) {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_RESCHEDULED_DEFERRED",
-            recipients: booking.studentEmail,
-            variables: buildSafeStudentVariables(studentVars),
-          }),
-        );
+        payloads.push({
+          type: "SLOT_RESCHEDULED_DEFERRED",
+          recipients: booking.studentEmail,
+          variables: buildSafeStudentVariables(studentVars),
+        });
       } else {
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_RESCHEDULED",
-            recipients: booking.studentEmail,
-            variables: studentVars,
-          }),
-        );
+        payloads.push({
+          type: "SLOT_RESCHEDULED",
+          recipients: booking.studentEmail,
+          variables: studentVars,
+        });
       }
     }
 
@@ -903,17 +953,15 @@ const queueSlotRescheduledNotifications = async (
         bookings[0] as SafeBooking,
         assignedCoach.timezone,
       );
-      publishTasks.push(
-        publishNotificationSafely({
-          type: "SLOT_RESCHEDULED_COACH",
-          recipients: assignedCoach.email,
-          userId: assignedCoach.id,
-          variables: coachVars,
-        }),
-      );
+      payloads.push({
+        type: "SLOT_RESCHEDULED_COACH",
+        recipients: assignedCoach.email,
+        userId: assignedCoach.id,
+        variables: coachVars,
+      });
     }
 
-    await Promise.all(publishTasks);
+    await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
 
     // Cancel stale reminders and re-queue with the updated slot time for each booking.
     // All bookings share the same teamId — fetch config once outside the loop.
@@ -955,19 +1003,18 @@ const queueSlotCoachReassignedNotifications = async (
       include: bookingInclude,
     });
 
-    const publishTasks: Array<Promise<boolean>> = [];
+    // Collect the notification payloads first, then send them all in parallel at the end.
+    const payloads: NotificationPayload[] = [];
 
     for (const booking of bookings) {
       // Anonymous events don't expose coach identity to students — skip student email.
       if (!isAnonymous) {
         const studentVars = await getBookingNotificationVariables(booking as SafeBooking, booking.timezone);
-        publishTasks.push(
-          publishNotificationSafely({
-            type: "SLOT_COACH_REASSIGNED",
-            recipients: booking.studentEmail,
-            variables: studentVars,
-          }),
-        );
+        payloads.push({
+          type: "SLOT_COACH_REASSIGNED",
+          recipients: booking.studentEmail,
+          variables: studentVars,
+        });
       }
     }
 
@@ -977,17 +1024,15 @@ const queueSlotCoachReassignedNotifications = async (
         bookings[0] as SafeBooking,
         newCoach.timezone,
       );
-      publishTasks.push(
-        publishNotificationSafely({
-          type: "SLOT_COACH_REASSIGNED_COACH",
-          recipients: newCoach.email,
-          userId: newCoach.id,
-          variables: coachVars,
-        }),
-      );
+      payloads.push({
+        type: "SLOT_COACH_REASSIGNED_COACH",
+        recipients: newCoach.email,
+        userId: newCoach.id,
+        variables: coachVars,
+      });
     }
 
-    await Promise.all(publishTasks);
+    await Promise.all(payloads.map((payload) => publishNotificationSafely(payload)));
 
     // Cancel stale reminders (baked with old coach name/link) and re-queue fresh.
     // All bookings share the same teamId — fetch config once outside the loop.
