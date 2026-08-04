@@ -19,11 +19,14 @@ const buildStore = (prefix: string) => {
 type RateLimitOptions = NonNullable<Parameters<typeof rateLimit>[0]>;
 
 const isTestRuntime = process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID !== undefined;
-const isDevRuntime =
-  process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+const isDevRuntime = process.env.NODE_ENV === "development";
 
+// Dev always bypasses. Test bypasses too — unless ENABLE_RATE_LIMITS_IN_TEST=true,
+// which lets integration tests exercise the limiter. (Previously `isDevRuntime`
+// also covered "test", so the escape hatch could never take effect.) Production
+// (NODE_ENV=production) never bypasses.
 const shouldBypassRateLimit =
-  (isTestRuntime && process.env.ENABLE_RATE_LIMITS_IN_TEST !== "true") || isDevRuntime;
+  isDevRuntime || (isTestRuntime && process.env.ENABLE_RATE_LIMITS_IN_TEST !== "true");
 
 const withTestBypass = <T extends RateLimitOptions>(options: T): T => ({
   ...options,
