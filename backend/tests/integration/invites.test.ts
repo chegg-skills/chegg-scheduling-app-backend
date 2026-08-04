@@ -289,9 +289,21 @@ describe("DELETE /api/invites/:id", () => {
     });
   });
 
+  // Mint a fresh pending invite per test so the revoke/already-revoked tests don't
+  // share (and consume) one invite under a shuffled order.
+  const mintPendingInvite = async (email: string): Promise<string> => {
+    const r = await request(app)
+      .post("/api/invites")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ email, role: "COACH" });
+    return r.body.data.id as string;
+  };
+
   it("SUPER_ADMIN can revoke a PENDING invite", async () => {
+    const inviteId = await mintPendingInvite("revoke-one@invites.com");
+
     const res = await request(app)
-      .delete(`/api/invites/${pendingInviteId}`)
+      .delete(`/api/invites/${inviteId}`)
       .set("Authorization", `Bearer ${superAdminToken}`);
 
     expect(res.status).toBe(200);
@@ -300,8 +312,15 @@ describe("DELETE /api/invites/:id", () => {
   });
 
   it("cannot revoke an already-revoked invite (409)", async () => {
+    const inviteId = await mintPendingInvite("revoke-twice@invites.com");
+
+    const first = await request(app)
+      .delete(`/api/invites/${inviteId}`)
+      .set("Authorization", `Bearer ${superAdminToken}`);
+    expect(first.status).toBe(200);
+
     const res = await request(app)
-      .delete(`/api/invites/${pendingInviteId}`)
+      .delete(`/api/invites/${inviteId}`)
       .set("Authorization", `Bearer ${superAdminToken}`);
 
     expect(res.status).toBe(409);
@@ -359,21 +378,21 @@ describe("DELETE /api/invites/:id", () => {
 // POST /api/invites/accept-invite
 // ─────────────────────────────────────────────────────────────
 describe("POST /api/invites/accept-invite", () => {
-  let activeInviteToken: string;
-
-  beforeAll(async () => {
-    // Create a fresh invite whose token we can use in the tests below
+  // Mint a fresh invite per test so the accept/re-accept tests don't share (and
+  // consume) one token under a shuffled order.
+  const mintInvite = async (email: string): Promise<string> => {
     const res = await request(app)
       .post("/api/invites")
       .set("Authorization", `Bearer ${superAdminToken}`)
-      .send({ email: "accepttest@invites.com", role: "COACH" });
-
-    activeInviteToken = res.body.data.token as string;
-  });
+      .send({ email, role: "COACH" });
+    return res.body.data.token as string;
+  };
 
   it("accepts a valid invite and creates a new user account", async () => {
+    const token = await mintInvite("accept-valid@invites.com");
+
     const res = await request(app).post("/api/invites/accept-invite").send({
-      token: activeInviteToken,
+      token,
       firstName: "Accepted",
       lastName: "User",
       password: "AcceptUser1234",
@@ -381,7 +400,7 @@ describe("POST /api/invites/accept-invite", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.user.email).toBe("accepttest@invites.com");
+    expect(res.body.data.user.email).toBe("accept-valid@invites.com");
     expect(res.body.data.user.role).toBe("COACH");
     expect(typeof res.body.data.token).toBe("string");
     // password must never appear in the response
@@ -389,8 +408,20 @@ describe("POST /api/invites/accept-invite", () => {
   });
 
   it("returns 409 when the invite token has already been accepted", async () => {
+    const token = await mintInvite("accept-twice@invites.com");
+
+    // First acceptance consumes the invite.
+    const first = await request(app).post("/api/invites/accept-invite").send({
+      token,
+      firstName: "First",
+      lastName: "User",
+      password: "FirstUser1234",
+    });
+    expect(first.status).toBe(201);
+
+    // A second acceptance of the same token must be rejected.
     const res = await request(app).post("/api/invites/accept-invite").send({
-      token: activeInviteToken,
+      token,
       firstName: "Repeat",
       lastName: "User",
       password: "RepeatUser1234",

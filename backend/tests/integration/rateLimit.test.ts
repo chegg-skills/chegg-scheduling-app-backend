@@ -8,7 +8,18 @@ import request from "supertest";
 // ENABLED (ENABLE_RATE_LIMITS_IN_TEST=true) and one BYPASSED (flag unset), to
 // cover both the enforcement path and the normal test-bypass path.
 
-const ORIGINAL_ENV = { ...process.env };
+// Keys this file mutates. We snapshot and restore each individually rather than
+// reassigning process.env wholesale — replacing the special process.env object
+// leaks the mutated values into later test files under a randomized run order.
+const MUTATED_KEYS = [
+  "REDIS_URL",
+  "ENABLE_RATE_LIMITS_IN_TEST",
+  "SENSITIVE_RATE_LIMIT_MAX",
+  "STRICT_RATE_LIMIT_MAX",
+  "BOOKING_CREATION_RATE_LIMIT_MAX",
+  "PUBLIC_RATE_LIMIT_MAX",
+] as const;
+const SAVED_ENV: Record<string, string | undefined> = {};
 
 let sensitiveLimiter: RequestHandler;
 let strictLimiter: RequestHandler;
@@ -16,6 +27,8 @@ let bookingCreationLimiter: RequestHandler;
 let bypassedPublicLimiter: RequestHandler;
 
 beforeAll(() => {
+  for (const k of MUTATED_KEYS) SAVED_ENV[k] = process.env[k];
+
   delete process.env.REDIS_URL; // force the in-memory store — no external dependency
 
   // ── Enabled instance ──
@@ -39,8 +52,11 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  // Restore env so later test files (run in-band) see the original values.
-  process.env = { ...ORIGINAL_ENV };
+  // Restore each key so later test files (run in-band) see the original env.
+  for (const k of MUTATED_KEYS) {
+    if (SAVED_ENV[k] === undefined) delete process.env[k];
+    else process.env[k] = SAVED_ENV[k];
+  }
 });
 
 const buildApp = (limiter: RequestHandler, path = "/hit"): express.Express => {

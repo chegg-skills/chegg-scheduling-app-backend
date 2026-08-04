@@ -14,6 +14,7 @@ let teamAdminId: string;
 let coachId: string;
 
 let testBookingId: string;
+let readonlyBookingId: string;
 let pastBookingId: string;
 
 beforeAll(async () => {
@@ -131,6 +132,22 @@ beforeAll(async () => {
   expect(res.status).toBe(201);
   testBookingId = res.body.data.booking.id;
 
+  // A dedicated booking used only by the count-exact timeline read tests, so their
+  // activity totals can't be perturbed by the reschedule/cancel tests that mutate
+  // testBookingId under a shuffled order.
+  const readonlyRes = await request(app)
+    .post("/api/bookings")
+    .send({
+      studentName: "Read Only",
+      studentEmail: "readonly@doe.com",
+      teamId: team.id,
+      eventId: oneOnOneEvent.id,
+      startTime: new Date(Date.now() + 26 * 3600 * 1000).toISOString(),
+      timezone: "UTC",
+    });
+  expect(readonlyRes.status).toBe(201);
+  readonlyBookingId = readonlyRes.body.data.booking.id;
+
   // Create a past booking for logging tests
   const pastStart = new Date(Date.now() - 3 * 3600 * 1000);
   const pastEnd = new Date(Date.now() - 2 * 3600 * 1000);
@@ -175,7 +192,7 @@ describe("Booking Activity Timeline API", () => {
   describe("GET /api/bookings/:bookingId/timeline", () => {
     it("returns activity timeline successfully for authorized coach", async () => {
       const res = await request(app)
-        .get(`/api/v1/bookings/${testBookingId}/timeline`)
+        .get(`/api/v1/bookings/${readonlyBookingId}/timeline`)
         .set("Authorization", `Bearer ${coachToken}`);
 
       expect(res.status).toBe(200);
@@ -209,7 +226,7 @@ describe("Booking Activity Timeline API", () => {
 
     it("paginates activity timeline results correctly", async () => {
       const res = await request(app)
-        .get(`/api/v1/bookings/${testBookingId}/timeline?page=1&limit=1`)
+        .get(`/api/v1/bookings/${readonlyBookingId}/timeline?page=1&limit=1`)
         .set("Authorization", `Bearer ${coachToken}`);
 
       expect(res.status).toBe(200);

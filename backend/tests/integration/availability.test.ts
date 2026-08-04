@@ -113,7 +113,20 @@ describe("Availability Domain Integration Tests", () => {
   });
 
   describe("Availability Exceptions", () => {
-    let exceptionId: string;
+    // Start each test from a clean set of exceptions so the suite is
+    // order-independent — these tests otherwise shared one exception across the
+    // add/list/remove sequence.
+    beforeEach(async () => {
+      await prisma.userAvailabilityException.deleteMany({ where: { userId: coachId } });
+    });
+
+    const addException = async (date: string, token = coachToken): Promise<string> => {
+      const res = await request(app)
+        .post(`/api/users/${coachId}/availability/exceptions`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({ date, isUnavailable: true });
+      return res.body.data.id as string;
+    };
 
     it("adds an availability exception", async () => {
       const res = await request(app)
@@ -126,10 +139,11 @@ describe("Availability Domain Integration Tests", () => {
 
       expect(res.status).toBe(201);
       expect(res.body.data.isUnavailable).toBe(true);
-      exceptionId = res.body.data.id;
     });
 
     it("lists availability exceptions", async () => {
+      await addException("2026-12-25");
+
       const res = await request(app)
         .get(`/api/users/${coachId}/availability/exceptions`)
         .set("Authorization", `Bearer ${coachToken}`);
@@ -139,6 +153,8 @@ describe("Availability Domain Integration Tests", () => {
     });
 
     it("removes an availability exception", async () => {
+      const exceptionId = await addException("2026-12-25");
+
       const res = await request(app)
         .delete(`/api/users/${coachId}/availability/exceptions/${exceptionId}`)
         .set("Authorization", `Bearer ${coachToken}`);
@@ -169,10 +185,11 @@ describe("Availability Domain Integration Tests", () => {
 
       expect(res.status).toBe(201);
       expect(res.body.data.isUnavailable).toBe(true);
-      exceptionId = res.body.data.id;
     });
 
     it("SUPER_ADMIN can remove an exception for a coach", async () => {
+      const exceptionId = await addException("2026-12-26", superAdminToken);
+
       const res = await request(app)
         .delete(`/api/users/${coachId}/availability/exceptions/${exceptionId}`)
         .set("Authorization", `Bearer ${superAdminToken}`);

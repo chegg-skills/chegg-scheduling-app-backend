@@ -542,6 +542,10 @@ describe("GET /api/events/:eventId/schedule-slots/:slotId/log", () => {
   });
 
   it("returns null when no session log has been created for the slot", async () => {
+    // Guarantee the no-log precondition regardless of test order — a sibling
+    // test creates a log on this shared slot.
+    await prisma.sessionLog.deleteMany({ where: { scheduleSlotId: slotId } });
+
     const res = await request(app)
       .get(`/api/events/${context.eventId}/schedule-slots/${slotId}/log`)
       .set("Authorization", `Bearer ${context.teamAdmin.token}`);

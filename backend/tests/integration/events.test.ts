@@ -745,6 +745,23 @@ describe("Event CRUD routes", () => {
 });
 
 describe("Event scheduling routes", () => {
+  // Round-robin assignment weighs each coach's team-wide workload, so the shared
+  // coaches (whose bookings other tests mutate) make rotation assertions
+  // order-dependent. These helpers mint fresh coaches with zero workload per test.
+  const createRrCoach = async (label: string): Promise<string> => {
+    const coach = await registerUser(context.superAdminToken, {
+      firstName: label,
+      lastName: "RR",
+      email: `rr-${label}-${randomUUID().slice(0, 8)}@events.com`,
+      password: "Coach1234",
+      role: "COACH",
+    });
+    await prisma.teamMember.create({
+      data: { teamId: context.teamId, userId: coach.id, isActive: true },
+    });
+    return coach.id;
+  };
+
   it("creates and updates an event with advanced scheduling settings", async () => {
     const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("fixed-slot-offering"),
@@ -1040,14 +1057,17 @@ describe("Event scheduling routes", () => {
     });
     const eventId = event.body.data.id as string;
 
-    // Two coaches in the pool, ordered.
+    // Two dedicated coaches (zero workload) so rotation is deterministic regardless
+    // of test order.
+    const coachA = await createRrCoach("ovr-a");
+    const coachB = await createRrCoach("ovr-b");
     await request(app)
       .put(`/api/events/${eventId}/coaches`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
         coaches: [
-          { userId: context.coachOneId, coachOrder: 1 },
-          { userId: context.coachTwoId, coachOrder: 2 },
+          { userId: coachA, coachOrder: 1 },
+          { userId: coachB, coachOrder: 2 },
         ],
       });
 
@@ -1062,7 +1082,7 @@ describe("Event scheduling routes", () => {
         startTime: sunday.toISOString(),
         endTime: new Date(sunday.getTime() + 30 * 60 * 1000).toISOString(),
         capacity: 5,
-        assignedCoachId: context.coachOneId,
+        assignedCoachId: coachA,
         recurrence: { frequency: "WEEKLY", occurrences: 4 },
       });
     expect(createRes.status).toBe(201);
@@ -1073,8 +1093,8 @@ describe("Event scheduling routes", () => {
     const assignedIds = listRes.body.data.slots.map((s: any) => s.assignedCoachId);
 
     // Both coaches appear — the override did not pin all four slots to coach one.
-    expect(assignedIds).toContain(context.coachOneId);
-    expect(assignedIds).toContain(context.coachTwoId);
+    expect(assignedIds).toContain(coachA);
+    expect(assignedIds).toContain(coachB);
     expect(new Set(assignedIds).size).toBe(2);
   });
 
@@ -1147,19 +1167,19 @@ describe("Event scheduling routes", () => {
     expect(event.status).toBe(201);
     const eventId = event.body.data.id as string;
 
-    // Add 2 coaches — syncRoutingState resets cursor to 1
+    // Two dedicated coaches (zero workload) so distribution is order-independent.
+    const coachA = await createRrCoach("rot-a");
+    const coachB = await createRrCoach("rot-b");
     await request(app)
       .put(`/api/events/${eventId}/coaches`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
         coaches: [
-          { userId: context.coachOneId, coachOrder: 1 },
-          { userId: context.coachTwoId, coachOrder: 2 },
+          { userId: coachA, coachOrder: 1 },
+          { userId: coachB, coachOrder: 2 },
         ],
       });
 
-    // Use a far-future time at an unusual hour to avoid collision with bookings
-    // created by other tests that reuse the same coachOneId/coachTwoId.
     const baseTime = new Date(Date.now() + 45 * 86400000);
     baseTime.setUTCHours(3, 0, 0, 0);
     const duration = 30 * 60 * 1000;
@@ -1176,16 +1196,14 @@ describe("Event scheduling routes", () => {
           capacity: 5,
         });
       expect(slotRes.status).toBe(201);
-      expect([context.coachOneId, context.coachTwoId]).toContain(slotRes.body.data.assignedCoachId);
+      expect([coachA, coachB]).toContain(slotRes.body.data.assignedCoachId);
       assignedCoachIds.push(slotRes.body.data.assignedCoachId);
     }
-    // Both coaches should appear — round-robin distributes across the pool.
-    // Exact counts depend on team-wide workload (shared across tests) so we only
-    // assert that no single coach gets all 4 slots.
-    const coachOneSlotsCount = assignedCoachIds.filter((id) => id === context.coachOneId).length;
-    const coachTwoSlotsCount = assignedCoachIds.filter((id) => id === context.coachTwoId).length;
-    expect(coachOneSlotsCount).toBeGreaterThanOrEqual(1);
-    expect(coachTwoSlotsCount).toBeGreaterThanOrEqual(1);
+    // With two zero-workload coaches, round-robin alternates — each gets exactly 2.
+    const coachOneSlotsCount = assignedCoachIds.filter((id) => id === coachA).length;
+    const coachTwoSlotsCount = assignedCoachIds.filter((id) => id === coachB).length;
+    expect(coachOneSlotsCount).toBe(2);
+    expect(coachTwoSlotsCount).toBe(2);
   });
 
   it("ROUND_ROBIN ONE_TO_MANY: manual assignedCoachId bypasses rotation and cursor does not advance", async () => {
@@ -1199,13 +1217,16 @@ describe("Event scheduling routes", () => {
     expect(event.status).toBe(201);
     const eventId = event.body.data.id as string;
 
+    // Two dedicated coaches (zero workload) so the cursor behaviour is deterministic.
+    const coachA = await createRrCoach("man-a");
+    const coachB = await createRrCoach("man-b");
     await request(app)
       .put(`/api/events/${eventId}/coaches`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
         coaches: [
-          { userId: context.coachOneId, coachOrder: 1 },
-          { userId: context.coachTwoId, coachOrder: 2 },
+          { userId: coachA, coachOrder: 1 },
+          { userId: coachB, coachOrder: 2 },
         ],
       });
 
@@ -1213,7 +1234,7 @@ describe("Event scheduling routes", () => {
     baseTime.setUTCHours(14, 0, 0, 0);
     const duration = 30 * 60 * 1000;
 
-    // First slot: manually assign coachTwo — cursor should NOT advance
+    // First slot: manually assign coachB — cursor should NOT advance
     const slot1 = await request(app)
       .post(`/api/events/${eventId}/schedule-slots`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
@@ -1221,12 +1242,12 @@ describe("Event scheduling routes", () => {
         startTime: baseTime.toISOString(),
         endTime: new Date(baseTime.getTime() + duration).toISOString(),
         capacity: 5,
-        assignedCoachId: context.coachTwoId,
+        assignedCoachId: coachB,
       });
     expect(slot1.status).toBe(201);
-    expect(slot1.body.data.assignedCoachId).toBe(context.coachTwoId);
+    expect(slot1.body.data.assignedCoachId).toBe(coachB);
 
-    // Second slot: no manual assignment — cursor still at 1, so coachOne is picked
+    // Second slot: no manual assignment — cursor still at 1, so coachA is picked
     const startTime2 = new Date(baseTime.getTime() + 2 * 60 * 60 * 1000);
     const slot2 = await request(app)
       .post(`/api/events/${eventId}/schedule-slots`)
@@ -1237,7 +1258,7 @@ describe("Event scheduling routes", () => {
         capacity: 5,
       });
     expect(slot2.status).toBe(201);
-    expect(slot2.body.data.assignedCoachId).toBe(context.coachOneId);
+    expect(slot2.body.data.assignedCoachId).toBe(coachA);
   });
 
   it("ROUND_ROBIN ONE_TO_MANY: prefers coach with fewer team-wide assigned slots", async () => {
@@ -1328,18 +1349,20 @@ describe("Event scheduling routes", () => {
     expect(event.status).toBe(201);
     const eventId = event.body.data.id as string;
 
+    // Two dedicated coaches (zero workload) so the rotation is deterministic.
+    const coachA = await createRrCoach("ser-a");
+    const coachB = await createRrCoach("ser-b");
     await request(app)
       .put(`/api/events/${eventId}/coaches`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({
         coaches: [
-          { userId: context.coachOneId, coachOrder: 1 },
-          { userId: context.coachTwoId, coachOrder: 2 },
+          { userId: coachA, coachOrder: 1 },
+          { userId: coachB, coachOrder: 2 },
         ],
       });
 
-    // Use a far-future time at an unusual hour to avoid collision with bookings
-    // from other tests that reuse the same coachOneId/coachTwoId.
+    // Far-future time at an unusual hour to avoid collisions with other tests' slots.
     const firstStart = new Date(Date.now() + 45 * 86400000);
     firstStart.setUTCHours(4, 0, 0, 0);
     const firstEnd = new Date(firstStart.getTime() + 60 * 60 * 1000);
@@ -1365,8 +1388,8 @@ describe("Event scheduling routes", () => {
     // Each coach should receive exactly 2 slots. The exact ordering depends on
     // team-wide workload (bookings + slot assignments), so we check distribution
     // rather than fixed position to keep the test environment-independent.
-    const coachOneSlotsCount = slots.filter((s) => s.assignedCoachId === context.coachOneId).length;
-    const coachTwoSlotsCount = slots.filter((s) => s.assignedCoachId === context.coachTwoId).length;
+    const coachOneSlotsCount = slots.filter((s) => s.assignedCoachId === coachA).length;
+    const coachTwoSlotsCount = slots.filter((s) => s.assignedCoachId === coachB).length;
     expect(coachOneSlotsCount).toBe(2);
     expect(coachTwoSlotsCount).toBe(2);
     // Slots should alternate between the two coaches (no two consecutive same coach).
@@ -2853,7 +2876,6 @@ describe("Recurrence — slot creation", () => {
 describe("Deferred Coach Reveal", () => {
   let eventTypeId: string;
   let deferredEventId: string;
-  let slotId: string;
 
   beforeAll(async () => {
     const eventType = await createEventType(context.superAdminToken, {
@@ -2902,39 +2924,47 @@ describe("Deferred Coach Reveal", () => {
       .send({ startTime: start.toISOString(), endTime: end.toISOString(), capacity: 5 });
 
     expect(res.status).toBe(201);
-    slotId = res.body.data.id;
     // DIRECT ONE_TO_MANY slots now auto-default to the event's fixedLeadCoachId — no explicit
     // assignedCoachId was sent above.
     expect(res.body.data.assignedCoachId).toBe(context.coachOneId);
   });
 
+  // Mint a fresh, unrevealed slot (unique start time to avoid the same-time 409)
+  // so each reveal test is self-contained under a shuffled order.
+  const createDeferredSlot = async (hour: number): Promise<string> => {
+    const start = getNextUtcWeekdayAt(3, hour, 0);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const res = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ startTime: start.toISOString(), endTime: end.toISOString(), capacity: 5 });
+    expect(res.status).toBe(201);
+    return res.body.data.id as string;
+  };
+
   it("POST /reveal with no coach assigned returns 400", async () => {
-    // Slots created going forward always have a coach auto-assigned (see the test above) —
-    // this simulates a slot from before that guarantee existed, to keep this defensive
-    // backend check covered.
+    const freshSlotId = await createDeferredSlot(8);
+    // Simulate a legacy slot with no coach to keep this defensive backend check covered
+    // (slots created now always auto-assign a coach).
     await prisma.eventScheduleSlot.update({
-      where: { id: slotId },
+      where: { id: freshSlotId },
       data: { assignedCoachId: null },
     });
 
     const res = await request(app)
-      .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${freshSlotId}/reveal`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({});
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/No coach assigned/);
-
-    // Restore, so the next test (which reveals this same slot) starts from a normal state.
-    await prisma.eventScheduleSlot.update({
-      where: { id: slotId },
-      data: { assignedCoachId: context.coachOneId },
-    });
   });
 
   it("POST /reveal with explicit coachUserId returns 200 and sets coachRevealSentAt", async () => {
+    const freshSlotId = await createDeferredSlot(9);
+
     const res = await request(app)
-      .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${freshSlotId}/reveal`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({ coachUserId: context.coachOneId });
 
@@ -2944,8 +2974,18 @@ describe("Deferred Coach Reveal", () => {
   });
 
   it("POST /reveal again returns 409 (already sent)", async () => {
+    const freshSlotId = await createDeferredSlot(10);
+
+    // First reveal succeeds…
+    const first = await request(app)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${freshSlotId}/reveal`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ coachUserId: context.coachOneId });
+    expect(first.status).toBe(200);
+
+    // …a second reveal of the same slot is rejected.
     const res = await request(app)
-      .post(`/api/events/${deferredEventId}/schedule-slots/${slotId}/reveal`)
+      .post(`/api/events/${deferredEventId}/schedule-slots/${freshSlotId}/reveal`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
       .send({ coachUserId: context.coachOneId });
 
@@ -3060,11 +3100,20 @@ describe("Deferred Coach Reveal", () => {
     expect(slotRes.status).toBe(201);
     const newSlotId = slotRes.body.data.id;
 
-    // Admin calls reveal with a coach who is NOT in the event's coach pool
+    // A brand-new coach that is definitively not in this event's pool, so the
+    // assertion can't be undermined by other tests touching the shared coaches.
+    const outsider = await registerUser(context.superAdminToken, {
+      firstName: "Pool",
+      lastName: "Outsider",
+      email: `pool-outsider-${randomUUID().slice(0, 8)}@events.com`,
+      password: "Coach1234",
+      role: "COACH",
+    });
+
     const res = await request(app)
       .post(`/api/events/${deferredEventId}/schedule-slots/${newSlotId}/reveal`)
       .set("Authorization", `Bearer ${context.teamAdminToken}`)
-      .send({ coachUserId: context.coachTwoId });
+      .send({ coachUserId: outsider.id });
 
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/not in this event's coach pool/);

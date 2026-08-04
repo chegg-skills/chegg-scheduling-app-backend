@@ -150,7 +150,11 @@ describe("Public API", () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.events).toBeDefined();
       expect(res.body.data.events.length).toBeGreaterThanOrEqual(1);
-      expect(res.body.data.events[0].name).toBe("Public Intro");
+      // Assert membership rather than a fixed position — a sibling test may add
+      // another active event for this team under a shuffled order.
+      expect(res.body.data.events.some((e: { name: string }) => e.name === "Public Intro")).toBe(
+        true,
+      );
     });
   });
 

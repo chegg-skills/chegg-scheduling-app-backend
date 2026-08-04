@@ -109,13 +109,24 @@ describe("GET /api/users", () => {
   });
 
   it("supports partial search by email", async () => {
+    // Dedicated user with a globally-unique email fragment, so the exact-count
+    // assertion can't be polluted by other tests' emails (e.g. "deletecoach@…"
+    // also contains "coach@users") under randomized order.
+    await registerUser(superAdminToken, {
+      firstName: "Search",
+      lastName: "Target",
+      email: "searchtarget-unique@users.com",
+      password: "Search1234",
+      role: "COACH",
+    });
+
     const res = await request(app)
-      .get("/api/users?search=coach@users")
+      .get("/api/users?search=searchtarget-unique")
       .set("Authorization", `Bearer ${superAdminToken}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.users).toHaveLength(1);
-    expect(res.body.data.users[0].email).toBe("coach@users.com");
+    expect(res.body.data.users[0].email).toBe("searchtarget-unique@users.com");
   });
 
   it("falls back to defaults for invalid pagination params", async () => {

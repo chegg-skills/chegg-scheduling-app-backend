@@ -196,9 +196,19 @@ describe("Team member routes", () => {
   });
 
   it("prevents a coach user who is NOT a team member from listing team members", async () => {
+    // A dedicated coach that is never added to the team, so this isn't polluted
+    // by the add-member tests enrolling coachTwo under a shuffled order.
+    const outsider = await registerUser(context.superAdminToken, {
+      firstName: "Outsider",
+      lastName: "Coach",
+      email: "outsider-coach-members@example.com",
+      password: "Coach1234",
+      role: "COACH",
+    });
+
     const res = await request(app)
       .get(`/api/teams/${context.teamId}/members`)
-      .set("Authorization", `Bearer ${context.coachTwoToken}`);
+      .set("Authorization", `Bearer ${outsider.token}`);
 
     expect(res.status).toBe(403);
   });

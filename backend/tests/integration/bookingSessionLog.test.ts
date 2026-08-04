@@ -208,6 +208,10 @@ afterAll(clearTables);
 describe("Booking Session Logs API", () => {
   describe("GET /api/bookings/:bookingId/log", () => {
     it("returns null when no log exists yet", async () => {
+      // Guarantee the no-log precondition regardless of test order — a sibling
+      // test creates a log on this shared booking.
+      await prisma.sessionLog.deleteMany({ where: { bookingId: pastBookingId } });
+
       const res = await request(app)
         .get(`/api/bookings/${pastBookingId}/log`)
         .set("Authorization", `Bearer ${coachToken}`);
