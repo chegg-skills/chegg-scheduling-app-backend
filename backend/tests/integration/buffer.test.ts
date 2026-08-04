@@ -11,6 +11,20 @@ let eventTypeId: string;
 let interactionTypeId: string;
 let eventId: string;
 
+// A Monday several weeks out. Computed relative to now so it is always in the
+// future — the public slots endpoint filters out past dates, so a hardcoded date
+// would silently start returning zero slots once real time passed it (time-bomb).
+// All times below are UTC to match the coach's default (UTC) availability window,
+// which also sidesteps DST. dayOfWeek 1 = Monday.
+const futureMonday = (weeksOut = 4): string => {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  const daysUntilMonday = ((1 - d.getUTCDay() + 7) % 7) || 7; // strictly future
+  d.setUTCDate(d.getUTCDate() + daysUntilMonday + (weeksOut - 1) * 7);
+  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+};
+const MONDAY = futureMonday();
+
 beforeAll(async () => {
   await clearTables();
 
@@ -79,10 +93,9 @@ afterAll(clearTables);
 
 describe("Event Buffer Integration Tests", () => {
   it("respects bufferAfterMinutes when calculating available slots", async () => {
-    // Setup: Book a session from 10:00 to 11:00 on a Monday
-    // 2026-12-07 is a Monday
-    const startTime = new Date("2026-12-07T10:00:00Z");
-    const endTime = new Date("2026-12-07T11:00:00Z");
+    // Setup: Book a session from 10:00 to 11:00 on the (future) Monday.
+    const startTime = new Date(`${MONDAY}T10:00:00Z`);
+    const endTime = new Date(`${MONDAY}T11:00:00Z`);
 
     await prisma.booking.create({
       data: {
@@ -99,7 +112,7 @@ describe("Event Buffer Integration Tests", () => {
 
     // Request available slots for that Monday
     const res = await request(app)
-      .get(`/api/public/events/${eventId}/slots?startDate=2026-12-07&endDate=2026-12-07`)
+      .get(`/api/public/events/${eventId}/slots?startDate=${MONDAY}&endDate=${MONDAY}`)
       .expect(200);
 
     const slots = res.body.data.slots;
@@ -113,19 +126,19 @@ describe("Event Buffer Integration Tests", () => {
     const startTimes = slots.map((s: any) => s.startTime);
 
     // 1. Ensure 11:00 is NOT present (coach is busy with 10:00 booking + 15m buffer till 11:15)
-    const elevenAM = "2026-12-07T11:00:00.000Z";
+    const elevenAM = `${MONDAY}T11:00:00.000Z`;
     expect(startTimes).not.toContain(elevenAM);
 
     // 2. Ensure 11:15 IS present (starts exactly after 10:00 booking's buffer)
-    const elevenFifteenAM = "2026-12-07T11:15:00.000Z";
+    const elevenFifteenAM = `${MONDAY}T11:15:00.000Z`;
     expect(startTimes).toContain(elevenFifteenAM);
 
     // 3. Ensure 09:00 IS NOT present (it needs 10:00-10:15 free for its own buffer, but 10:00 booking starts)
-    const nineAM = "2026-12-07T09:00:00.000Z";
+    const nineAM = `${MONDAY}T09:00:00.000Z`;
     expect(startTimes).not.toContain(nineAM);
 
     // 4. Ensure 08:45 IS present (ends at 09:45, its buffer 09:45-10:00 is free)
-    const eightFortyFiveAM = "2026-12-07T08:45:00.000Z";
+    const eightFortyFiveAM = `${MONDAY}T08:45:00.000Z`;
     expect(startTimes).toContain(eightFortyFiveAM);
 
     // Ensure no slots actually overlap with the [10:00, 11:15] busy window
@@ -133,7 +146,7 @@ describe("Event Buffer Integration Tests", () => {
       const s = new Date(slot.startTime);
       const e = new Date(slot.endTime);
       const isOverlap =
-        s < new Date("2026-12-07T11:15:00Z") && new Date("2026-12-07T10:00:00Z") < e;
+        s < new Date(`${MONDAY}T11:15:00Z`) && new Date(`${MONDAY}T10:00:00Z`) < e;
       expect(isOverlap).toBe(false);
     });
   });
