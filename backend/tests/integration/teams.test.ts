@@ -47,6 +47,19 @@ beforeAll(async () => {
   });
   coachToken = coach.token;
   coachId = coach.id;
+
+  // A baseline team so the list endpoints always have at least one row regardless
+  // of test order — under randomized order the create-team tests may run after the
+  // list tests.
+  await prisma.team.create({
+    data: {
+      name: "baseline list team",
+      teamLeadId: teamAdminId,
+      createdById: admin.id,
+      isActive: true,
+      publicBookingSlug: "baseline-list-team",
+    },
+  });
 });
 
 afterAll(clearTables);
@@ -98,10 +111,18 @@ describe("POST /api/teams", () => {
   });
 
   it("returns 409 when a team with that name already exists", async () => {
+    // Self-contained: create the team, then attempt a duplicate — no reliance on
+    // another test having created it first.
+    const name = "Duplicate Guard Team";
+    await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ name, teamLeadId: teamAdminId });
+
     const res = await request(app)
       .post("/api/teams")
       .set("Authorization", `Bearer ${superAdminToken}`)
-      .send({ name: "Alpha Team", teamLeadId: teamAdminId });
+      .send({ name, teamLeadId: teamAdminId });
 
     expect(res.status).toBe(409);
     expect(res.body.success).toBe(false);
@@ -183,7 +204,19 @@ describe("GET /api/teams", () => {
   });
 
   it("COACH can list teams (returns 200 with empty list if not enrolled in any)", async () => {
-    const res = await request(app).get("/api/teams").set("Authorization", `Bearer ${coachToken}`);
+    // Use a dedicated coach with no memberships so the empty-list expectation
+    // can't be polluted by any sibling test enrolling the shared coach.
+    const unenrolled = await registerUser(superAdminToken, {
+      firstName: "Unenrolled",
+      lastName: "Coach",
+      email: "unenrolled-coach@teams.com",
+      password: "Coach1234",
+      role: "COACH",
+    });
+
+    const res = await request(app)
+      .get("/api/teams")
+      .set("Authorization", `Bearer ${unenrolled.token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -213,6 +246,10 @@ describe("GET /api/teams", () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.teams.length).toBeGreaterThanOrEqual(1);
     expect(res.body.data.teams.some((t: any) => t.id === enrolledTeamId)).toBe(true);
+
+    // Undo the enrollment so the shared coach stays unenrolled for the sibling
+    // test that expects an empty list (order-independence).
+    await prisma.teamMember.deleteMany({ where: { userId: coachId, teamId: enrolledTeamId } });
   });
 
   it("returns 401 when no auth token is provided", async () => {
@@ -439,11 +476,17 @@ describe("PATCH /api/teams/:teamId", () => {
   });
 
   it("returns 409 when name conflicts with an existing team", async () => {
-    // "alpha team" was created in POST describe block
+    // Self-contained: create a distinct team, then try to rename this one onto it.
+    const conflictName = "Patch Conflict Target";
+    await request(app)
+      .post("/api/teams")
+      .set("Authorization", `Bearer ${superAdminToken}`)
+      .send({ name: conflictName, teamLeadId: teamAdminId });
+
     const res = await request(app)
       .patch(`/api/teams/${teamId}`)
       .set("Authorization", `Bearer ${superAdminToken}`)
-      .send({ name: "Alpha Team" });
+      .send({ name: conflictName });
 
     expect(res.status).toBe(409);
   });

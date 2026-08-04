@@ -195,7 +195,17 @@ describe("Students API", () => {
     expect(res.status).toBe(400);
   });
 
+  // Ensure a "Welcome to Chegg" communication exists regardless of test order —
+  // otherwise these read/retry tests depend on the send-email test running first.
+  const sendWelcomeEmail = () =>
+    request(app)
+      .post(`/api/students/${studentId}/send-email`)
+      .set("Authorization", `Bearer ${coachToken}`)
+      .send({ subject: "Welcome to Chegg", body: "<strong>Hello</strong> student!" });
+
   it("lists all communications sent to a student", async () => {
+    await sendWelcomeEmail();
+
     const res = await request(app)
       .get(`/api/students/${studentId}/communications`)
       .set("Authorization", `Bearer ${coachToken}`);
@@ -208,6 +218,8 @@ describe("Students API", () => {
   });
 
   it("allows retrying a failed email by creating a new pending log", async () => {
+    await sendWelcomeEmail();
+
     const logsRes = await request(app)
       .get(`/api/students/${studentId}/communications`)
       .set("Authorization", `Bearer ${coachToken}`);
