@@ -32,7 +32,12 @@ const createPgPool = (): Pool => {
 
   const pool = new Pool({
     connectionString: dbUrl,
-    allowExitOnIdle: process.env.NODE_ENV !== "production",
+    // Dev only: exit-on-idle for clean tsx-watch restarts. In tests, keeping idle
+    // clients OPEN (false) avoids per-query connect/close churn and the race where
+    // an idle socket is torn down under `allowExitOnIdle` just as a query lands on
+    // it (surfacing as ECONNRESET / aborted requests). Jest exits cleanly via
+    // `forceExit`. Prod keeps long-lived pooled connections.
+    allowExitOnIdle: process.env.NODE_ENV === "development",
     ssl: isProduction ? { rejectUnauthorized: true } : false,
   });
 
