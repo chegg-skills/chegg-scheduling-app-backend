@@ -2,7 +2,10 @@ import { StatusCodes } from "http-status-codes";
 import { Prisma, type User, UserRole } from "@prisma/client";
 import { ErrorHandler } from "../error/errorhandler";
 
-export const SALT_ROUNDS = 10;
+// bcrypt work factor. Defaults to 10 (prod/dev); tests set BCRYPT_SALT_ROUNDS low
+// so the hundreds of registration/hash calls don't block the event loop (a slow
+// hash widens the window for socket aborts under the suite's high request volume).
+export const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
 
 export type SafeUser = Omit<User, "password" | "ssoSub" | "ssoProvider">;
 
