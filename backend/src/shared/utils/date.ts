@@ -71,28 +71,30 @@ export const toZonedWallClock = (date: Date, timeZone: string): Date => {
  * calendar date's actual offset (DST-correct). Mirrors the frontend
  * `startOfDayInTimezone` / backend `endOfBookingWindowInTimezone`.
  *
- * DST edges (deterministic, matching Luxon / date-fns-tz conventions):
- * - **Ambiguous** local times (the repeated hour at a fall-back) resolve to the
- *   **earlier** instant.
+ * DST edges (deterministic; standard fix-offset resolution, as in Luxon):
  * - **Non-existent** local times (the skipped hour at a spring-forward) roll
- *   **forward** past the gap.
+ *   **forward** past the gap — in both east- and west-of-UTC zones.
+ * - **Ambiguous** local times (the repeated hour at a fall-back) resolve to a
+ *   single deterministic instant (the occurrence the naive UTC guess lands in).
  */
 export const fromZonedWallClock = (floating: Date, timeZone: string): Date => {
-  const targetFloatMs = floating.getTime(); // the wall clock we want, as floating UTC
-  const roundTrips = (ms: number) => toZonedWallClock(new Date(ms), timeZone).getTime() === targetFloatMs;
+  const localMs = floating.getTime(); // the wall clock we want, as floating UTC
+  // Offset (ms, + east of UTC) of `timeZone` at the given UTC instant.
+  const offsetAt = (utcMs: number) => toZonedWallClock(new Date(utcMs), timeZone).getTime() - utcMs;
 
-  // First correction: offset of the zone at the wall-clock-as-UTC guess. For a
-  // non-existent (spring-forward gap) local time this lands on the forward side.
-  const shown0 = toZonedWallClock(new Date(targetFloatMs), timeZone).getTime();
-  const forwardMs = targetFloatMs + (targetFloatMs - shown0);
+  const o1 = offsetAt(localMs);
+  const utc1 = localMs - o1;
+  const o2 = offsetAt(utc1);
+  if (o1 === o2) return new Date(utc1); // unambiguous — the common case
 
-  // Second correction refines normal times near — but outside — a DST transition
-  // (and picks the earlier instant for a fall-back's ambiguous hour). Only accept
-  // it when the local time actually exists; otherwise the input is a gap, and we
-  // keep the forward result above.
-  const shown1 = toZonedWallClock(new Date(forwardMs), timeZone).getTime();
-  const refinedMs = forwardMs + (targetFloatMs - shown1);
-  return new Date(roundTrips(refinedMs) ? refinedMs : forwardMs);
+  // Near a DST transition: settle once more using the adjusted offset.
+  const utc2 = localMs - o2;
+  const o3 = offsetAt(utc2);
+  if (o2 === o3) return new Date(utc2);
+
+  // Non-existent local time (spring-forward gap): roll forward past the gap by
+  // using the smaller offset (→ larger UTC → the post-transition local time).
+  return new Date(localMs - Math.min(o2, o3));
 };
 
 /**

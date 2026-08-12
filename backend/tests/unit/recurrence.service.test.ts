@@ -143,6 +143,14 @@ describe("zoned wall-clock utils", () => {
       expect(localHM(resolved, NY)).toBe("03:30");
     });
 
+    it("rolls the spring-forward gap forward for an east-of-UTC zone too (Berlin)", () => {
+      // 2026 EU DST starts 02:00 Sun Mar 29 → 03:00; 02:30 does not exist. This is
+      // the case a west-only algorithm gets wrong (it would roll backward to 01:30).
+      const resolved = fromZonedWallClock(wallClock("2026-03-29T02:30:00"), "Europe/Berlin");
+      expect(resolved.toISOString()).toBe("2026-03-29T01:30:00.000Z"); // 03:30 CEST (forward)
+      expect(localHM(resolved, "Europe/Berlin")).toBe("03:30");
+    });
+
     it("resolves an ambiguous (fall-back) local time to the earlier instant", () => {
       // 2026 US DST ends 02:00 Sun Nov 1 → 01:00; 01:30 occurs twice.
       const resolved = fromZonedWallClock(wallClock("2026-11-01T01:30:00"), NY);
