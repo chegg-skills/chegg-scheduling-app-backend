@@ -1,6 +1,6 @@
 import { AssignmentStrategy, EventBookingMode, Prisma, type EventScheduleSlot, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { addWeeks, addMonths, addDays } from "date-fns";
+import { fromZonedWallClock, toZonedWallClock } from "../../shared/utils/date";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import {
@@ -22,7 +22,12 @@ import {
   updateBookingsPreservingJoinUrl,
 } from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
-import { generateRecurrenceDates } from "./recurrence.service";
+import {
+  advanceRecurrenceFloating,
+  generateRecurrenceDates,
+  RECURRENCE_FREQUENCIES,
+  type RecurrenceFrequency,
+} from "./recurrence.service";
 import {
   queueBookingStatusNotifications,
   notifyPoolOfSlotCancellation,
@@ -408,11 +413,25 @@ const createEventScheduleSlot = async (
     !caps?.multipleCoaches;
 
   if (validated.recurrence) {
+    // Anchor the series to a wall-clock timezone so occurrences keep the same
+    // local time across DST. Prefer the timezone the creator entered the time in
+    // (sent by the client); fall back to their saved profile timezone, then UTC.
+    const seriesTimezone =
+      validated.recurrence.timezone ??
+      (
+        await prisma.user.findUnique({
+          where: { id: caller.id },
+          select: { timezone: true },
+        })
+      )?.timezone ??
+      "UTC";
+
     // Create RecurrenceGroup in DB
     const group = await prisma.recurrenceGroup.create({
       data: {
         eventId,
         frequency: validated.recurrence.frequency,
+        timezone: seriesTimezone,
         isContinuous: validated.recurrence.isContinuous ?? false,
         isActive: true,
         recurrenceVisibilityLimit: validated.recurrence.recurrenceVisibilityLimit ?? null,
@@ -424,10 +443,14 @@ const createEventScheduleSlot = async (
       ? 12
       : (validated.recurrence.occurrences ?? 1);
 
-    const startDates = generateRecurrenceDates(validated.startTime, {
-      frequency: validated.recurrence.frequency,
-      occurrences,
-    });
+    const startDates = generateRecurrenceDates(
+      validated.startTime,
+      {
+        frequency: validated.recurrence.frequency,
+        occurrences,
+      },
+      seriesTimezone,
+    );
     const durationMs = validated.endTime.getTime() - validated.startTime.getTime();
 
     const firstSlot = await prisma.$transaction(async (tx) => {
@@ -1059,37 +1082,34 @@ const replenishContinuousSlots = async (
         isActive: boolean;
         recurrenceGroupId: string;
       }> = [];
-      let nextStart = new Date(latestSlot.startTime);
+      // Advance the series in its anchor timezone so occurrences keep the same
+      // local time across DST (mirrors the initial generateRecurrenceDates path).
+      const seriesTz = group.timezone;
+      const knownFrequency = (RECURRENCE_FREQUENCIES as readonly string[]).includes(
+        group.frequency,
+      );
+      // Only THRICE_A_WEEK's interval depends on the running occurrence index.
+      const existingCount =
+        group.frequency === "THRICE_A_WEEK"
+          ? await client.eventScheduleSlot.count({ where: { recurrenceGroupId: group.id } })
+          : 0;
+
+      let floating = toZonedWallClock(latestSlot.startTime, seriesTz);
+      let nextStart = fromZonedWallClock(floating, seriesTz); // === latestSlot.startTime
       let iterations = 0;
 
-      while (nextStart < horizon && iterations < 100) {
+      // knownFrequency guards against stale/unknown values — otherwise advance()
+      // would return the same instant and the loop would spin (was: default → break).
+      while (knownFrequency && nextStart < horizon && iterations < 100) {
         iterations++;
 
-        switch (group.frequency) {
-          case "WEEKLY":
-            nextStart = addWeeks(nextStart, 1);
-            break;
-          case "BI_WEEKLY":
-            nextStart = addWeeks(nextStart, 2);
-            break;
-          case "MONTHLY":
-            nextStart = addMonths(nextStart, 1);
-            break;
-          case "TWICE_A_MONTH":
-            nextStart = addDays(nextStart, 14);
-            break;
-          case "THRICE_A_WEEK":
-            const existingCount = await client.eventScheduleSlot.count({
-              where: { recurrenceGroupId: group.id },
-            });
-            const currentIndex = existingCount + newSlotsData.length;
-            const diff = currentIndex % 3 === 2 ? 3 : 2;
-            nextStart = addDays(nextStart, diff);
-            break;
-          default:
-            nextStart = horizon;
-            break;
-        }
+        const currentIndex = existingCount + newSlotsData.length;
+        floating = advanceRecurrenceFloating(
+          floating,
+          group.frequency as RecurrenceFrequency,
+          currentIndex,
+        );
+        nextStart = fromZonedWallClock(floating, seriesTz);
 
         if (nextStart >= horizon) {
           break;

@@ -30,6 +30,53 @@ export const getEndOfDate = (date: Date): Date => {
 };
 
 /**
+ * Reads the wall-clock components of a UTC instant as seen in `timeZone`, and
+ * returns them as a "floating" Date whose UTC fields equal those local
+ * components (e.g. 10:00 in New York → a Date whose UTC time reads 10:00).
+ *
+ * Pair with `fromZonedWallClock` to advance a recurring session by whole local
+ * days/weeks/months without the UTC offset drifting across DST. Uses the same
+ * `Intl` approach as `toLocalAvailabilityInfo` / the frontend `startOfDayInTimezone`.
+ *
+ * @throws {Error} If `timeZone` is not a valid IANA timezone string.
+ */
+export const toZonedWallClock = (date: Date, timeZone: string): Date => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return new Date(
+    Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second")),
+  );
+};
+
+/**
+ * Inverse of `toZonedWallClock`: interprets a floating Date's UTC fields as a
+ * wall-clock time in `timeZone` and returns the real UTC instant, using that
+ * calendar date's actual offset (DST-correct). Two-pass approach mirrors the
+ * frontend `startOfDayInTimezone` and backend `endOfBookingWindowInTimezone`.
+ */
+export const fromZonedWallClock = (floating: Date, timeZone: string): Date => {
+  const targetFloatMs = floating.getTime(); // the wall clock we want, as floating UTC
+  let utcMs = targetFloatMs; // first guess: treat the wall clock as if it were UTC
+  // Correct by the zone's offset at that instant; a second pass settles DST edges.
+  for (let pass = 0; pass < 2; pass++) {
+    const shownFloatMs = toZonedWallClock(new Date(utcMs), timeZone).getTime();
+    const deltaMs = targetFloatMs - shownFloatMs;
+    if (deltaMs === 0) break;
+    utcMs += deltaMs;
+  }
+  return new Date(utcMs);
+};
+
+/**
  * Formats a date range as "Mon D, YYYY – Mon D, YYYY" for display.
  * Returns "All time" when either bound is null (unbounded range).
  */

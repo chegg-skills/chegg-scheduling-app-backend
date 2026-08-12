@@ -283,6 +283,10 @@ model RecurrenceGroup {
   id                        String              @id @default(uuid())
   eventId                   String
   frequency                 String
+  // IANA timezone the series' wall-clock is anchored to, so occurrences keep the
+  // same local time across DST transitions instead of drifting by an hour.
+  // Defaults to "UTC" for pre-existing rows (UTC has no DST → unchanged behavior).
+  timezone                  String              @default("UTC")
   isContinuous              Boolean             @default(false)
   isActive                  Boolean             @default(true)
   recurrenceVisibilityLimit Int?

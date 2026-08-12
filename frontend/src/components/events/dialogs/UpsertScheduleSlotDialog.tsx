@@ -120,7 +120,9 @@ export function UpsertScheduleSlotDialog({
       endTime: proposedEnd,
       capacity: !supportsMultipleParticipants ? 1 : newSlotCapacity === '' ? null : newSlotCapacity,
       assignedCoachId: isRoundRobinSeries ? null : assignedCoachId,
-      recurrence,
+      // Anchor the series to the same timezone the start time was entered in, so
+      // occurrences keep their local time across DST (see backend recurrence.service).
+      recurrence: recurrence ? { ...recurrence, timezone: browserTimezone } : recurrence,
     })
   }
 

@@ -23,6 +23,9 @@ export interface RecurrenceConfig {
   occurrences: number | null
   isContinuous?: boolean
   recurrenceVisibilityLimit?: number | null
+  // IANA timezone the start time was entered in — sent so the backend keeps each
+  // occurrence at the same local time across DST. Attached at submit time.
+  timezone?: string
 }
 
 interface RecurrenceSelectorProps {

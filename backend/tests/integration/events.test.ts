@@ -2758,6 +2758,60 @@ describe("Recurrence — slot creation", () => {
     await prisma.eventScheduleSlot.deleteMany({ where: { eventId } });
   });
 
+  it("keeps every occurrence at the same local time across a DST change (timezone-anchored)", async () => {
+    // 2026 US DST ends Sun Nov 1. Mon Oct 26 is EDT (-4); Mon Nov 2/9 are EST (-5).
+    const firstStart = new Date("2026-10-26T14:00:00.000Z"); // 10:00 America/New_York
+    const firstEnd = new Date(firstStart.getTime() + 60 * 60 * 1000);
+
+    const res = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: firstStart.toISOString(),
+        endTime: firstEnd.toISOString(),
+        capacity: 10,
+        recurrence: { frequency: "WEEKLY", occurrences: 3, timezone: "America/New_York" },
+      });
+    expect(res.status).toBe(201);
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(listRes.status).toBe(200);
+
+    const slots = (
+      listRes.body.data.slots as Array<{ startTime: string; recurrenceGroupId: string }>
+    )
+      .slice()
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    expect(slots).toHaveLength(3);
+
+    // The anchor timezone is persisted on THIS series' recurrence group (look it up
+    // by the slots' groupId — other tests' groups may linger since afterEach only
+    // clears slots).
+    const group = await prisma.recurrenceGroup.findUnique({
+      where: { id: slots[0].recurrenceGroupId },
+    });
+    expect(group?.timezone).toBe("America/New_York");
+
+    // Every occurrence is 10:00 in New York even though the UTC offset changes,
+    const nyHour = (isoStr: string) =>
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/New_York",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).format(new Date(isoStr));
+    slots.forEach((s) => expect(nyHour(s.startTime)).toBe("10:00"));
+
+    // …and the underlying UTC instants shift by an hour across the Nov 1 boundary.
+    expect(slots.map((s) => new Date(s.startTime).toISOString())).toEqual([
+      "2026-10-26T14:00:00.000Z",
+      "2026-11-02T15:00:00.000Z",
+      "2026-11-09T15:00:00.000Z",
+    ]);
+  });
+
   it("WEEKLY recurrence with occurrences: 3 creates exactly 3 slots sharing the same recurrenceGroupId", async () => {
     const start = getNextUtcWeekdayAt(1, 10, 0); // next Monday 10:00
     const end = new Date(start.getTime() + 30 * 60 * 1000);

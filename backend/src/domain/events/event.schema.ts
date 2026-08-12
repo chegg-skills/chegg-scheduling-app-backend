@@ -453,6 +453,22 @@ const EventScheduleSlotBase = z.object({
       frequency: z.enum(["WEEKLY", "BI_WEEKLY", "MONTHLY", "TWICE_A_MONTH", "THRICE_A_WEEK"]),
       occurrences: z.coerce.number().int().min(1).max(50).optional().nullable(),
       isContinuous: z.boolean().optional().default(false),
+      // IANA timezone the entered start time is anchored to, so occurrences keep
+      // the same local time across DST. Client sends the timezone it displayed the
+      // form in; the service falls back to the creator's profile timezone / UTC.
+      timezone: z
+        .string()
+        .trim()
+        .refine((tz) => {
+          try {
+            Intl.DateTimeFormat(undefined, { timeZone: tz });
+            return true;
+          } catch {
+            return false;
+          }
+        }, "Invalid IANA timezone")
+        .optional()
+        .nullable(),
       recurrenceVisibilityLimit: z.preprocess(
         (val) => (val === "" ? null : val),
         z.coerce.number().int().min(1).optional().nullable(),
