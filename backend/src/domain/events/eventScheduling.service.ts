@@ -1059,6 +1059,9 @@ const replenishContinuousSlots = async (
     const horizon = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
 
     for (const group of activeGroups) {
+      // Isolate each series: a failure on one group (bad data, a DB error) must not
+      // abort replenishment for the rest of the batch.
+      try {
       if (group.slots.length === 0) {
         await client.recurrenceGroup.update({
           where: { id: group.id },
@@ -1103,7 +1106,10 @@ const replenishContinuousSlots = async (
       while (knownFrequency && nextStart < horizon && iterations < 100) {
         iterations++;
 
-        const currentIndex = existingCount + newSlotsData.length;
+        // Index of the slot we're advancing FROM (the latest existing slot is at
+        // existingCount - 1), matching generateRecurrenceDates where advancing from
+        // occurrence i uses index i. Only THRICE_A_WEEK reads this.
+        const currentIndex = existingCount - 1 + newSlotsData.length;
         floating = advanceRecurrenceFloating(
           floating,
           group.frequency as RecurrenceFrequency,
@@ -1159,6 +1165,12 @@ const replenishContinuousSlots = async (
         getRequestLogger().info(
           { eventId, groupId: group.id, count: newSlotsData.length },
           "Replenished continuous recurrence slots."
+        );
+      }
+      } catch (perGroupError) {
+        getRequestLogger().warn(
+          { eventId, groupId: group.id, error: perGroupError },
+          "Failed to replenish one recurrence group — skipping.",
         );
       }
     }

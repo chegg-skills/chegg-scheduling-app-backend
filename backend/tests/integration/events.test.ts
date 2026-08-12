@@ -2812,6 +2812,135 @@ describe("Recurrence — slot creation", () => {
     ]);
   });
 
+  it("does not 500 when the creator's stored timezone is invalid and none is supplied", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Bad Profile TZ Event",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
+    });
+    const badTzEventId = event.body.data.id as string;
+
+    // Corrupt the creator's stored timezone (bypassing validation) so the anchor
+    // resolution falls through to it; it must degrade to UTC, not 500.
+    const original = (
+      await prisma.user.findUnique({
+        where: { id: context.teamAdminId },
+        select: { timezone: true },
+      })
+    )?.timezone;
+    await prisma.user.update({
+      where: { id: context.teamAdminId },
+      data: { timezone: "Not/AZone" },
+    });
+    try {
+      const start = getNextUtcWeekdayAt(1, 12, 0);
+      const res = await request(app)
+        .post(`/api/events/${badTzEventId}/schedule-slots`)
+        .set("Authorization", `Bearer ${context.teamAdminToken}`)
+        .send({
+          startTime: start.toISOString(),
+          endTime: new Date(start.getTime() + 30 * 60 * 1000).toISOString(),
+          capacity: 5,
+          recurrence: { frequency: "WEEKLY", occurrences: 3 }, // no timezone → falls back to the bad profile tz
+        });
+      expect(res.status).toBe(201); // graceful UTC fallback, not a 500
+
+      const list = await request(app)
+        .get(`/api/events/${badTzEventId}/schedule-slots`)
+        .set("Authorization", `Bearer ${context.teamAdminToken}`);
+      const starts = (list.body.data.slots as Array<{ startTime: string }>)
+        .map((s) => new Date(s.startTime).getTime())
+        .sort((a, b) => a - b);
+      expect(starts).toHaveLength(3);
+      expect(starts[1] - starts[0]).toBe(7 * 24 * 60 * 60 * 1000); // UTC-anchored 7-day interval
+    } finally {
+      await prisma.user.update({
+        where: { id: context.teamAdminId },
+        data: { timezone: original ?? "UTC" },
+      });
+    }
+  });
+
+  it("keeps replenishing a continuous series whose timezone is corrupt (graceful UTC)", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Corrupt TZ Continuous",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
+    });
+    const contEventId = event.body.data.id as string;
+
+    const start = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    start.setUTCMinutes(0, 0, 0);
+    const create = await request(app)
+      .post(`/api/events/${contEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: new Date(start.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+        recurrence: { frequency: "WEEKLY", isContinuous: true },
+      });
+    expect(create.status).toBe(201);
+
+    // Corrupt the group's stored timezone directly, then let a GET drive replenishment.
+    await prisma.recurrenceGroup.update({
+      where: { id: create.body.data.recurrenceGroupId },
+      data: { timezone: "Not/AZone" },
+    });
+    const list = await request(app)
+      .get(`/api/events/${contEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(list.status).toBe(200);
+    expect((list.body.data.slots as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  it("THRICE_A_WEEK continuous keeps the +2/+2/+3 cadence across the replenish boundary", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Thrice Continuous",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
+    });
+    const thriceEventId = event.body.data.id as string;
+
+    const start = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    start.setUTCHours(9, 0, 0, 0);
+    const create = await request(app)
+      .post(`/api/events/${thriceEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: new Date(start.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+        recurrence: { frequency: "THRICE_A_WEEK", isContinuous: true },
+      });
+    expect(create.status).toBe(201);
+
+    const list = await request(app)
+      .get(`/api/events/${thriceEventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    const starts = (list.body.data.slots as Array<{ startTime: string }>)
+      .map((s) => new Date(s.startTime).getTime())
+      .sort((a, b) => a - b);
+    // Initial fill is 12; replenishment tops up to the 90-day horizon → boundary at gap 11.
+    expect(starts.length).toBeGreaterThan(13);
+
+    const dayGaps = starts.slice(1).map((t, i) => Math.round((t - starts[i]) / (24 * 60 * 60 * 1000)));
+    // Gap advancing FROM occurrence i is +3 when i % 3 === 2, else +2 — a smooth
+    // [2,2,3] repeat, including the initial→replenish boundary at index 11 (the fix).
+    dayGaps.slice(0, 14).forEach((gap, i) => {
+      expect(gap).toBe(i % 3 === 2 ? 3 : 2);
+    });
+  });
+
   it("WEEKLY recurrence with occurrences: 3 creates exactly 3 slots sharing the same recurrenceGroupId", async () => {
     const start = getNextUtcWeekdayAt(1, 10, 0); // next Monday 10:00
     const end = new Date(start.getTime() + 30 * 60 * 1000);

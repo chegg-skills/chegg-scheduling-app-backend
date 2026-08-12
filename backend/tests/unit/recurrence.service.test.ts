@@ -113,4 +113,41 @@ describe("zoned wall-clock utils", () => {
     expect(toZonedWallClock(utc, "UTC").getTime()).toBe(utc.getTime());
     expect(fromZonedWallClock(utc, "UTC").getTime()).toBe(utc.getTime());
   });
+
+  describe("invalid timezone → UTC fallback (no throw)", () => {
+    const utc = new Date("2026-06-01T09:30:00.000Z");
+
+    it.each(["", "Not/AZone", "GMT+5:30"])("falls back to UTC for %p", (badTz) => {
+      // UTC wall clock == the instant itself, in both directions.
+      expect(toZonedWallClock(utc, badTz).getTime()).toBe(utc.getTime());
+      expect(fromZonedWallClock(utc, badTz).getTime()).toBe(utc.getTime());
+    });
+
+    it("makes generateRecurrenceDates degrade to the UTC (fixed-interval) output", () => {
+      const start = new Date("2026-06-01T09:30:00.000Z");
+      const bad = generateRecurrenceDates(start, { frequency: "WEEKLY", occurrences: 3 }, "Not/AZone");
+      const utcAnchored = generateRecurrenceDates(start, { frequency: "WEEKLY", occurrences: 3 }, "UTC");
+      expect(bad.map(iso)).toEqual(utcAnchored.map(iso));
+    });
+  });
+
+  describe("DST gap / ambiguous-hour resolution", () => {
+    const NY = "America/New_York";
+    // A "floating" Date whose UTC fields are the intended local wall clock.
+    const wallClock = (isoLocal: string) => new Date(`${isoLocal}.000Z`);
+
+    it("rolls a non-existent (spring-forward gap) local time forward past the gap", () => {
+      // 2026 US DST starts 02:00 Sun Mar 8 → 03:00; 02:30 does not exist that day.
+      const resolved = fromZonedWallClock(wallClock("2026-03-08T02:30:00"), NY);
+      expect(resolved.toISOString()).toBe("2026-03-08T07:30:00.000Z"); // 03:30 EDT (forward)
+      expect(localHM(resolved, NY)).toBe("03:30");
+    });
+
+    it("resolves an ambiguous (fall-back) local time to the earlier instant", () => {
+      // 2026 US DST ends 02:00 Sun Nov 1 → 01:00; 01:30 occurs twice.
+      const resolved = fromZonedWallClock(wallClock("2026-11-01T01:30:00"), NY);
+      expect(resolved.toISOString()).toBe("2026-11-01T05:30:00.000Z"); // 01:30 EDT (the earlier one)
+      expect(localHM(resolved, NY)).toBe("01:30");
+    });
+  });
 });
