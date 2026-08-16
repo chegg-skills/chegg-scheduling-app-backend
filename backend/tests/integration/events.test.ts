@@ -4,6 +4,7 @@ import app from "../../src/app";
 import { prisma } from "../../src/shared/db/prisma";
 import { clearTables } from "../helpers/db";
 import { bootstrapAdmin, registerUser } from "../helpers/auth";
+import { replenishContinuousSlots } from "../../src/domain/events/eventScheduling.service";
 
 // Returns the next UTC occurrence of targetDay (0=Sun..6=Sat) at the given hour/minute.
 // Always returns a date at least 1 day in the future.
@@ -2939,6 +2940,123 @@ describe("Recurrence — slot creation", () => {
     dayGaps.slice(0, 14).forEach((gap, i) => {
       expect(gap).toBe(i % 3 === 2 ? 3 : 2);
     });
+  });
+
+  it("THRICE_A_WEEK continuous keeps its cadence after a slot is hard-deleted (date-based phase)", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Thrice Delete Robust",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
+    });
+    const evId = event.body.data.id as string;
+
+    const start = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    start.setUTCHours(9, 0, 0, 0);
+    const create = await request(app)
+      .post(`/api/events/${evId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: start.toISOString(),
+        endTime: new Date(start.getTime() + 30 * 60 * 1000).toISOString(),
+        capacity: 5,
+        recurrence: { frequency: "THRICE_A_WEEK", isContinuous: true, timezone: "UTC" },
+      });
+    expect(create.status).toBe(201);
+
+    const getSorted = async () => {
+      const res = await request(app)
+        .get(`/api/events/${evId}/schedule-slots`)
+        .set("Authorization", `Bearer ${context.teamAdminToken}`);
+      return (res.body.data.slots as Array<{ id: string; startTime: string }>)
+        .slice()
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    };
+
+    let slots = await getSorted();
+    expect(slots.length).toBeGreaterThan(14);
+
+    // Hard-delete a MIDDLE slot and the LATEST slot: the row count no longer matches
+    // the pattern position, so the next replenish must derive the phase from the
+    // latest slot's date (not a count) to keep the +2/+2/+3 cadence.
+    await prisma.eventScheduleSlot.delete({ where: { id: slots[5].id } });
+    await prisma.eventScheduleSlot.delete({ where: { id: slots[slots.length - 1].id } });
+
+    slots = await getSorted(); // re-triggers replenishment
+
+    // Every slot sits on a valid THRICE occurrence: UTC-day offset from the anchor % 7 ∈ {0,2,4}.
+    const anchor = new Date(slots[0].startTime).getTime();
+    slots.forEach((s) => {
+      const offsetDays = Math.round((new Date(s.startTime).getTime() - anchor) / (24 * 60 * 60 * 1000));
+      expect([0, 2, 4]).toContain(((offsetDays % 7) + 7) % 7);
+    });
+  });
+
+  it("isolates a failing series during replenishment so the others still get slots", async () => {
+    const eventType = await createEventType(context.superAdminToken);
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Replenish Isolation",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachOneId,
+    });
+    const evId = event.body.data.id as string;
+
+    const mkSeries = async (dayOffset: number): Promise<string> => {
+      const s = new Date(Date.now() + dayOffset * 24 * 60 * 60 * 1000);
+      s.setUTCHours(8, 0, 0, 0);
+      const res = await request(app)
+        .post(`/api/events/${evId}/schedule-slots`)
+        .set("Authorization", `Bearer ${context.teamAdminToken}`)
+        .send({
+          startTime: s.toISOString(),
+          endTime: new Date(s.getTime() + 30 * 60 * 1000).toISOString(),
+          capacity: 5,
+          recurrence: { frequency: "WEEKLY", isContinuous: true, timezone: "UTC" },
+        });
+      expect(res.status).toBe(201);
+      return res.body.data.recurrenceGroupId as string;
+    };
+    const groupA = await mkSeries(2);
+    const groupB = await mkSeries(4);
+
+    // Fill both to the horizon, then delete each series' recent tail so both have
+    // room to replenish again.
+    await request(app)
+      .get(`/api/events/${evId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    const tailCutoff = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+    await prisma.eventScheduleSlot.deleteMany({
+      where: { recurrenceGroupId: { in: [groupA, groupB] }, startTime: { gt: tailCutoff } },
+    });
+
+    const countFor = (gid: string) => prisma.eventScheduleSlot.count({ where: { recurrenceGroupId: gid } });
+    const beforeA = await countFor(groupA);
+    const beforeB = await countFor(groupB);
+
+    // Make group A's slot inserts fail; group B's must still go through.
+    const originalCreateMany = prisma.eventScheduleSlot.createMany.bind(prisma.eventScheduleSlot);
+    const spy = jest.spyOn(prisma.eventScheduleSlot, "createMany").mockImplementation((async (args: {
+      data?: Array<{ recurrenceGroupId?: string }>;
+    }) => {
+      if (args?.data?.[0]?.recurrenceGroupId === groupA) {
+        throw new Error("injected replenish failure");
+      }
+      return originalCreateMany(args as never);
+    }) as never);
+
+    try {
+      // Must resolve, not reject, despite group A failing.
+      await replenishContinuousSlots(evId);
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(await countFor(groupB)).toBeGreaterThan(beforeB); // healthy series was replenished
+    expect(await countFor(groupA)).toBe(beforeA); // failing series added nothing, but didn't abort the batch
   });
 
   it("WEEKLY recurrence with occurrences: 3 creates exactly 3 slots sharing the same recurrenceGroupId", async () => {

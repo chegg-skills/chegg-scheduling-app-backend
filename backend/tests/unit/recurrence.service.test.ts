@@ -97,6 +97,27 @@ describe("generateRecurrenceDates", () => {
       );
       monthly.forEach((d) => expect(localHM(d, NY)).toBe("10:00"));
     });
+
+    it("TWICE_A_MONTH holds local time across a DST boundary", () => {
+      // 10:00 New York, +14 days across the Nov 1 fall-back.
+      const start = fromZonedWallClock(new Date("2026-10-26T10:00:00.000Z"), NY);
+      const dates = generateRecurrenceDates(start, { frequency: "TWICE_A_MONTH", occurrences: 3 }, NY);
+      dates.forEach((d) => expect(localHM(d, NY)).toBe("10:00"));
+    });
+
+    it("holds local time across a SOUTHERN-hemisphere spring-forward (Sydney, Oct)", () => {
+      // Australia/Sydney springs forward Sun Oct 4 2026 — reversed seasons, east of UTC.
+      const start = fromZonedWallClock(new Date("2026-09-27T10:00:00.000Z"), "Australia/Sydney");
+      const dates = generateRecurrenceDates(start, { frequency: "WEEKLY", occurrences: 4 }, "Australia/Sydney");
+      dates.forEach((d) => expect(localHM(d, "Australia/Sydney")).toBe("10:00"));
+    });
+
+    it("holds local time across a HALF-HOUR DST shift (Lord Howe, Oct)", () => {
+      // Australia/Lord_Howe shifts +10:30 → +11:00 (a 30-minute jump) on Sun Oct 4 2026.
+      const start = fromZonedWallClock(new Date("2026-09-27T10:00:00.000Z"), "Australia/Lord_Howe");
+      const dates = generateRecurrenceDates(start, { frequency: "WEEKLY", occurrences: 3 }, "Australia/Lord_Howe");
+      dates.forEach((d) => expect(localHM(d, "Australia/Lord_Howe")).toBe("10:00"));
+    });
   });
 });
 
@@ -156,6 +177,27 @@ describe("zoned wall-clock utils", () => {
       const resolved = fromZonedWallClock(wallClock("2026-11-01T01:30:00"), NY);
       expect(resolved.toISOString()).toBe("2026-11-01T05:30:00.000Z"); // 01:30 EDT (the earlier one)
       expect(localHM(resolved, NY)).toBe("01:30");
+    });
+
+    it("rolls the spring-forward gap forward for a southern-hemisphere zone (Sydney)", () => {
+      // Australia/Sydney springs forward 02:00 → 03:00 on Sun Oct 4 2026; 02:30 does not exist.
+      const resolved = fromZonedWallClock(wallClock("2026-10-04T02:30:00"), "Australia/Sydney");
+      expect(resolved.toISOString()).toBe("2026-10-03T16:30:00.000Z"); // 03:30 AEDT (forward)
+      expect(localHM(resolved, "Australia/Sydney")).toBe("03:30");
+    });
+
+    it("rolls a half-hour DST gap forward (Lord Howe)", () => {
+      // Australia/Lord_Howe jumps 02:00 → 02:30 (30 min) on Sun Oct 4 2026; 02:15 does not exist.
+      const resolved = fromZonedWallClock(wallClock("2026-10-04T02:15:00"), "Australia/Lord_Howe");
+      expect(resolved.toISOString()).toBe("2026-10-03T15:45:00.000Z"); // 02:45 (forward past the 30-min gap)
+      expect(localHM(resolved, "Australia/Lord_Howe")).toBe("02:45");
+    });
+
+    it("resolves a European fall-back overlap deterministically (Berlin)", () => {
+      // 02:30 occurs twice on Sun Oct 25 2026; resolves to a single stable instant, local 02:30.
+      const resolved = fromZonedWallClock(wallClock("2026-10-25T02:30:00"), "Europe/Berlin");
+      expect(resolved.toISOString()).toBe("2026-10-25T01:30:00.000Z");
+      expect(localHM(resolved, "Europe/Berlin")).toBe("02:30");
     });
   });
 });
