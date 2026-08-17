@@ -28,6 +28,9 @@ export function useScheduleSeriesGroups(
           frequency: slot.recurrenceGroup?.frequency ?? null,
           isContinuous: slot.recurrenceGroup?.isContinuous ?? false,
           isStopped: slot.recurrenceGroup ? !slot.recurrenceGroup.isActive : false,
+          // Prefer the series' anchor timezone; fall back to the slot's own stored
+          // timezone (single slots). Null for legacy rows → tracker uses the viewer's zone.
+          timezone: slot.recurrenceGroup?.timezone ?? slot.timezone ?? null,
         }
       }
       groups[key].occurrenceCount++

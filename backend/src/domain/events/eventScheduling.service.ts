@@ -66,6 +66,7 @@ type EventScheduleSlotWithBookingCount = Prisma.EventScheduleSlotGetPayload<{
       select: {
         id: true;
         frequency: true;
+        timezone: true;
         isContinuous: true;
         isActive: true;
       };
@@ -200,6 +201,7 @@ const listEventScheduleSlots = async (
         select: {
           id: true,
           frequency: true,
+          timezone: true,
           isContinuous: true,
           isActive: true,
         },
@@ -412,19 +414,25 @@ const createEventScheduleSlot = async (
     caps?.multipleParticipants === true &&
     !caps?.multipleCoaches;
 
+  // The timezone the creator configured the time in — stored on every slot (so the UI
+  // can render it unambiguously) and, for a series, used as the DST anchor. Prefer the
+  // slot-level timezone the client sent; for a series an older client may send only
+  // recurrence.timezone; fall back to the creator's saved profile timezone, then UTC.
+  const configuredTimezone =
+    validated.timezone ??
+    validated.recurrence?.timezone ??
+    (
+      await prisma.user.findUnique({
+        where: { id: caller.id },
+        select: { timezone: true },
+      })
+    )?.timezone ??
+    "UTC";
+
   if (validated.recurrence) {
     // Anchor the series to a wall-clock timezone so occurrences keep the same
-    // local time across DST. Prefer the timezone the creator entered the time in
-    // (sent by the client); fall back to their saved profile timezone, then UTC.
-    const seriesTimezone =
-      validated.recurrence.timezone ??
-      (
-        await prisma.user.findUnique({
-          where: { id: caller.id },
-          select: { timezone: true },
-        })
-      )?.timezone ??
-      "UTC";
+    // local time across DST.
+    const seriesTimezone = configuredTimezone;
 
     // Create RecurrenceGroup in DB
     const group = await prisma.recurrenceGroup.create({
@@ -476,6 +484,7 @@ const createEventScheduleSlot = async (
         assignedCoachId: coachAssignments[i],
         isActive: validated.isActive,
         recurrenceGroupId,
+        timezone: seriesTimezone,
       }));
 
       await tx.eventScheduleSlot.createMany({ data: slotsData, skipDuplicates: true });
@@ -521,6 +530,7 @@ const createEventScheduleSlot = async (
       assignedCoachId,
       isActive: validated.isActive,
       recurrenceGroupId: null,
+      timezone: configuredTimezone,
     },
     include: {
       assignedCoach: {
@@ -596,6 +606,13 @@ const updateEventScheduleSlot = async (
 
   // Remove recurrence if it exists, since it is not part of the EventScheduleSlot model
   delete (validated as any).recurrence;
+
+  // Zod `.partial()` re-applies field defaults, so isActive/isCancelled surface here even
+  // when the caller didn't send them (see CLAUDE.md). Spreading those would silently
+  // un-cancel or re-activate a slot on an unrelated PATCH (e.g. a timezone-only edit).
+  // Only keep fields the raw payload actually included.
+  if (!("isActive" in payload)) delete (validated as any).isActive;
+  if (!("isCancelled" in payload)) delete (validated as any).isCancelled;
 
   const updated = await prisma.eventScheduleSlot.update({
     where: { id: slotId },
@@ -1110,6 +1127,7 @@ const replenishContinuousSlots = async (
         assignedCoachId: string | null;
         isActive: boolean;
         recurrenceGroupId: string;
+        timezone: string;
       }> = [];
 
       let floating = toZonedWallClock(latestSlot.startTime, seriesTz);
@@ -1138,6 +1156,7 @@ const replenishContinuousSlots = async (
             : latestSlot.assignedCoachId,
           isActive: latestSlot.isActive,
           recurrenceGroupId: group.id,
+          timezone: seriesTz,
         });
       }
 

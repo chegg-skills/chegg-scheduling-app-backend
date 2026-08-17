@@ -6,6 +6,7 @@ import { Button } from '@/components/shared/ui/Button'
 import { Modal } from '@/components/shared/ui/Modal'
 import { FormField } from '@/components/shared/form/FormField'
 import { Input } from '@/components/shared/form/Input'
+import { TimezoneSelect } from '@/components/shared/form/TimezoneSelect'
 import { Clock } from 'lucide-react'
 import type { Event, EventScheduleSlot, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
@@ -17,8 +18,6 @@ import { SearchableCoachAvailabilityList } from '@/components/events/SearchableC
 import { useCoachAvailabilityForProposedSlot, eventKeys } from '@/hooks/queries/useEvents'
 import { useQuery } from '@tanstack/react-query'
 import { eventsApi } from '@/api/events'
-
-const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import { format } from 'date-fns'
 
@@ -33,6 +32,7 @@ interface UpsertScheduleSlotDialogProps {
     endTime: string
     capacity: number | null
     assignedCoachId: string | null
+    timezone: string
     recurrence?: RecurrenceConfig | null
   }) => void
   isPending: boolean
@@ -56,10 +56,12 @@ export function UpsertScheduleSlotDialog({
     newSlotCapacity,
     assignedCoachId,
     recurrence,
+    timezone,
     error,
     setNewSlotCapacity,
     setAssignedCoachId,
     setRecurrence,
+    setTimezone,
     handleDateChange,
     isValid,
   } = useScheduleSlotForm({ slot, isOpen })
@@ -70,7 +72,7 @@ export function UpsertScheduleSlotDialog({
   const isRoundRobinSeries = event.assignmentStrategy === 'ROUND_ROBIN' && recurrence != null
 
   const proposedStart = newSlotDate
-    ? zonedStringToUTC(newSlotDate, browserTimezone).toISOString()
+    ? zonedStringToUTC(newSlotDate, timezone).toISOString()
     : null
   const proposedEnd =
     newSlotDate && proposedStart
@@ -121,9 +123,12 @@ export function UpsertScheduleSlotDialog({
       endTime: proposedEnd,
       capacity: !supportsMultipleParticipants ? 1 : newSlotCapacity === '' ? null : newSlotCapacity,
       assignedCoachId: isRoundRobinSeries ? null : assignedCoachId,
+      // Persist the timezone the start time was entered in so the slot renders
+      // unambiguously in the tracker regardless of the viewer's browser zone.
+      timezone,
       // Anchor the series to the same timezone the start time was entered in, so
       // occurrences keep their local time across DST (see backend recurrence.service).
-      recurrence: withSeriesTimezone(recurrence, browserTimezone),
+      recurrence: withSeriesTimezone(recurrence, timezone),
     })
   }
 
@@ -210,6 +215,20 @@ export function UpsertScheduleSlotDialog({
           )}
         </Stack>
 
+        <FormField
+          label="Timezone"
+          htmlFor="slot-timezone"
+          info="The timezone the start time above is in — pick the coach's zone when scheduling for another country. Times are stored in UTC and shown in this zone."
+        >
+          <TimezoneSelect
+            id="slot-timezone"
+            value={timezone}
+            onChange={setTimezone}
+            variant="standard"
+            disabled={isPending}
+          />
+        </FormField>
+
         {error && (
           <Alert severity="warning" sx={{ mb: 1, borderRadius: 1.5 }}>
             {error}
@@ -239,7 +258,7 @@ export function UpsertScheduleSlotDialog({
               <strong>
                 {newSlotDate && previewEndTime ? (
                   new Intl.DateTimeFormat('en-US', {
-                    timeZone: browserTimezone,
+                    timeZone: timezone,
                     hour: 'numeric',
                     minute: 'numeric',
                     hour12: true,

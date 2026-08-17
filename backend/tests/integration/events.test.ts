@@ -856,6 +856,123 @@ describe("Event scheduling routes", () => {
     expect(deleteRes.body.message).toMatch(/deleted/i);
   });
 
+  it("stores and returns the configured timezone for one-off slots, series slots, and updates", async () => {
+    const eventType = await createEventType(context.superAdminToken, {
+      key: uniqueValue("tz-offering"),
+      name: "TZ Offering",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Timezone Slot Event",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachThreeId,
+    });
+    const eventId = event.body.data.id as string;
+
+    const startTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    startTime.setUTCMinutes(0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    // 1. One-off slot with an explicit timezone → stored on the slot.
+    const oneOff = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        capacity: 5,
+        timezone: "America/New_York",
+      });
+    expect(oneOff.status).toBe(201);
+    expect(oneOff.body.data.timezone).toBe("America/New_York");
+    const oneOffSlotId = oneOff.body.data.id as string;
+
+    // 2. Updating the slot's timezone persists the new value.
+    const updated = await request(app)
+      .patch(`/api/events/${eventId}/schedule-slots/${oneOffSlotId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ timezone: "Asia/Kolkata" });
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.timezone).toBe("Asia/Kolkata");
+
+    // 3. A series anchors every generated slot (and its group) to the timezone.
+    const seriesStart = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+    seriesStart.setUTCMinutes(0, 0, 0);
+    const seriesEnd = new Date(seriesStart.getTime() + 30 * 60 * 1000);
+    const series = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: seriesStart.toISOString(),
+        endTime: seriesEnd.toISOString(),
+        capacity: 5,
+        timezone: "Europe/Berlin",
+        recurrence: { frequency: "WEEKLY", occurrences: 3, timezone: "Europe/Berlin" },
+      });
+    expect(series.status).toBe(201);
+
+    const listRes = await request(app)
+      .get(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(listRes.status).toBe(200);
+
+    const seriesSlots = listRes.body.data.slots.filter(
+      (s: { recurrenceGroupId: string | null }) => s.recurrenceGroupId !== null,
+    );
+    expect(seriesSlots.length).toBe(3);
+    for (const slot of seriesSlots) {
+      expect(slot.timezone).toBe("Europe/Berlin");
+      expect(slot.recurrenceGroup.timezone).toBe("Europe/Berlin");
+    }
+  });
+
+  it("a timezone-only PATCH does not silently un-cancel or re-activate a slot", async () => {
+    const eventType = await createEventType(context.superAdminToken, {
+      key: uniqueValue("tz-patch-offering"),
+      name: "TZ Patch Offering",
+    });
+    const event = await createEvent(context.teamId, context.teamAdminToken, {
+      name: "Timezone Patch Event",
+      eventTypeId: eventType.body.data.id,
+      interactionType: "ONE_TO_MANY",
+      bookingMode: "FIXED_SLOTS",
+      fixedLeadCoachId: context.coachThreeId,
+    });
+    const eventId = event.body.data.id as string;
+
+    const startTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    startTime.setUTCMinutes(0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
+
+    const createRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        capacity: 5,
+        timezone: "America/New_York",
+      });
+    expect(createRes.status).toBe(201);
+    const slotId = createRes.body.data.id as string;
+
+    // Cancel the slot, then PATCH only the timezone.
+    const cancelRes = await request(app)
+      .post(`/api/events/${eventId}/schedule-slots/${slotId}/cancel`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`);
+    expect(cancelRes.status).toBe(200);
+
+    const patchRes = await request(app)
+      .patch(`/api/events/${eventId}/schedule-slots/${slotId}`)
+      .set("Authorization", `Bearer ${context.teamAdminToken}`)
+      .send({ timezone: "Asia/Kolkata" });
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.data.timezone).toBe("Asia/Kolkata");
+    // The cancel state must survive an unrelated field edit.
+    expect(patchRes.body.data.isCancelled).toBe(true);
+  });
+
   it("supports continuous recurring slots and stopping them", async () => {
     const eventType = await createEventType(context.superAdminToken, {
       key: uniqueValue("continuous-offering"),

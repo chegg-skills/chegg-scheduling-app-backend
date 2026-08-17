@@ -441,6 +441,23 @@ const refineEventConstraints = (data: any, ctx: z.RefinementCtx) => {
 
 const EventBase = EventBaseObject.superRefine(refineEventConstraints);
 
+// A trimmed IANA timezone string, validated by attempting to construct a
+// DateTimeFormat with it. Optional/nullable: callers may omit it, and the
+// service falls back to the creator's profile timezone / UTC.
+const ianaTimezoneSchema = z
+  .string()
+  .trim()
+  .refine((tz) => {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: tz });
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Invalid IANA timezone")
+  .optional()
+  .nullable();
+
 const EventScheduleSlotBase = z.object({
   startTime: z.preprocess((val) => (typeof val === "string" ? new Date(val) : val), z.date()),
   endTime: z.preprocess((val) => (typeof val === "string" ? new Date(val) : val), z.date()),
@@ -448,6 +465,10 @@ const EventScheduleSlotBase = z.object({
   assignedCoachId: z.uuid().optional().nullable(),
   isActive: z.boolean().default(true),
   isCancelled: z.boolean().default(false),
+  // IANA timezone the entered start time was configured in, stored on the slot so
+  // the UI can render it unambiguously. For a series, the same value anchors the
+  // recurrence (see recurrence.timezone below).
+  timezone: ianaTimezoneSchema,
   recurrence: z
     .object({
       frequency: z.enum(["WEEKLY", "BI_WEEKLY", "MONTHLY", "TWICE_A_MONTH", "THRICE_A_WEEK"]),
@@ -456,19 +477,7 @@ const EventScheduleSlotBase = z.object({
       // IANA timezone the entered start time is anchored to, so occurrences keep
       // the same local time across DST. Client sends the timezone it displayed the
       // form in; the service falls back to the creator's profile timezone / UTC.
-      timezone: z
-        .string()
-        .trim()
-        .refine((tz) => {
-          try {
-            Intl.DateTimeFormat(undefined, { timeZone: tz });
-            return true;
-          } catch {
-            return false;
-          }
-        }, "Invalid IANA timezone")
-        .optional()
-        .nullable(),
+      timezone: ianaTimezoneSchema,
       recurrenceVisibilityLimit: z.preprocess(
         (val) => (val === "" ? null : val),
         z.coerce.number().int().min(1).optional().nullable(),
