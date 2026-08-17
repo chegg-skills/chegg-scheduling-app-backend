@@ -282,6 +282,9 @@ export interface EventScheduleSlot {
   recurrenceGroupId: string | null
   coachRevealSentAt: string | null
   sessionJoinUrl: string | null
+  // IANA timezone the slot was configured in, for unambiguous display. Null on
+  // slots created before the picker existed — the UI falls back to the viewer's zone.
+  timezone?: string | null
   assignedCoach?: SafeUser | null
   _count?: {
     bookings: number
@@ -291,6 +294,8 @@ export interface EventScheduleSlot {
   recurrenceGroup?: {
     id: string
     frequency: string
+    // Anchor timezone of the series (defaults to "UTC" for pre-existing groups).
+    timezone?: string
     isContinuous: boolean
     isActive: boolean
   } | null

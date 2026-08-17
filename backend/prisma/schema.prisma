@@ -266,6 +266,10 @@ model EventScheduleSlot {
   assignedCoachOverride  Boolean     @default(false)
   coachRevealSentAt      DateTime?
   sessionJoinUrl         String?
+  // IANA timezone the slot's wall-clock was configured in, so the UI can render
+  // the time unambiguously (labeled) regardless of the viewer's browser zone.
+  // Nullable: pre-existing slots have none → the UI falls back to the viewer's zone.
+  timezone               String?
   bookings          Booking[]
   assignedCoach     User?       @relation("SlotCoach", fields: [assignedCoachId], references: [id])
   event             Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)

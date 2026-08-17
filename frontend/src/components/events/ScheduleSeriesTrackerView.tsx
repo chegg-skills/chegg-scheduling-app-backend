@@ -10,6 +10,8 @@ import { ChevronLeft } from 'lucide-react'
 import type { Event, EventScheduleSlot } from '@/types'
 import { ScheduleSlotList } from './ScheduleSlotList'
 import { Button } from '@/components/shared/ui/Button'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 
 interface Props {
   event: Event
@@ -20,6 +22,7 @@ interface Props {
     startTime: string
     isContinuous?: boolean
     isStopped?: boolean
+    timezone?: string | null
   }
   onBack: () => void
   onEditSlot: (slot: EventScheduleSlot) => void
@@ -48,6 +51,10 @@ export function ScheduleSeriesTrackerView({
   canManage = true,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabValue>('upcoming')
+  const { data: timezones = [] } = useTimezones()
+  const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const displayTz = group.timezone ?? browserTimezone
+  const timezoneLabel = formatTimezoneLabel(displayTz, timezones)
 
   const filteredSlots = useMemo(() => {
     const now = new Date()
@@ -130,8 +137,9 @@ export function ScheduleSeriesTrackerView({
             <Typography variant="body2" color="text.secondary">
               {group.isRecurring ? 'Weekly Series' : 'One-time session'}
               {' • '}
-              {new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(group.startTime))}s at{' '}
-              {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(group.startTime))}
+              {new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: displayTz }).format(new Date(group.startTime))}s at{' '}
+              {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: displayTz }).format(new Date(group.startTime))}
+              {timezoneLabel ? ` ${timezoneLabel}` : ''}
               {' • '}
               {group.isContinuous ? 'Continuous' : `${group.slots.length} occurrences`}
             </Typography>

@@ -15,6 +15,8 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import { Stack, Typography, Card, CardContent } from '@mui/material'
 import { RowActions } from '@/components/shared/table/RowActions'
 import { TablePagination } from '@/components/shared/table/TablePagination'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 import type { EventScheduleSlot } from '@/types'
 
 export interface ScheduleSeriesGroup {
@@ -28,6 +30,9 @@ export interface ScheduleSeriesGroup {
   frequency: string | null
   isContinuous?: boolean
   isStopped?: boolean
+  // IANA timezone the series/slot was configured in. Null for legacy rows created
+  // before the picker existed → the table falls back to the viewer's browser zone.
+  timezone?: string | null
 }
 
 const FREQUENCY_LABELS: Record<string, string> = {
@@ -57,6 +62,7 @@ export function ScheduleSeriesTable({
 }: Props) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const { data: timezones = [] } = useTimezones()
 
   if (groups.length === 0) {
     return (
@@ -106,13 +112,17 @@ export function ScheduleSeriesTable({
         </TableHead>
         <TableBody>
           {paginatedGroups.map((group) => {
+            // Render each slot's time in the zone it was configured in (falling back to
+            // the viewer's zone for legacy rows), so the displayed time is unambiguous.
+            const displayTz = group.timezone ?? browserTimezone
             const fmt = new Intl.DateTimeFormat('en-US', {
-              timeZone: browserTimezone,
+              timeZone: displayTz,
               hour: 'numeric',
               minute: '2-digit',
               hour12: true,
             })
             const timeRange = `${fmt.format(new Date(group.startTime))} – ${fmt.format(new Date(group.endTime))}`
+            const timezoneLabel = formatTimezoneLabel(displayTz, timezones)
             const seriesLabel = group.frequency
               ? `Recurring ${FREQUENCY_LABELS[group.frequency] ?? group.frequency} Series`
               : 'Recurring Series'
@@ -159,7 +169,7 @@ export function ScheduleSeriesTable({
                   {group.nextInstanceTime ? (
                     <Typography variant="body2" fontWeight={500}>
                       {new Intl.DateTimeFormat('en-US', {
-                        timeZone: browserTimezone,
+                        timeZone: displayTz,
                         weekday: 'short',
                         month: 'short',
                         day: 'numeric',
@@ -173,6 +183,11 @@ export function ScheduleSeriesTable({
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">{timeRange}</Typography>
+                  {timezoneLabel && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {timezoneLabel}
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Box

@@ -12,6 +12,8 @@ import { Badge } from '@/components/shared/ui/Badge'
 import type { EventScheduleSlot, Event, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { usePermissions } from '@/hooks/usePermissions'
+import { useTimezones } from '@/hooks/queries/useConfig'
+import { formatTimezoneLabel } from '@/components/users/userSystemFieldUtils'
 
 interface ScheduleSlotRowProps {
   slot: EventScheduleSlot
@@ -44,12 +46,36 @@ export function ScheduleSlotRow({
   canManage = true,
 }: ScheduleSlotRowProps) {
   const { isCoach } = usePermissions()
+  const { data: timezones = [] } = useTimezones()
 
-  const dateStr = format(new Date(slot.startTime), 'EEE, do MMMM, yyyy')
-  const timeRange = `${format(new Date(slot.startTime), 'h:mm a')} – ${format(
-    new Date(slot.endTime),
-    'h:mm a'
-  )}`
+  // Render in the slot's configured timezone so the detail rows match the tracker's
+  // labeled series time. Prefer the slot's own zone, then its series anchor (legacy
+  // series have the zone only on the group), then the viewer's zone. Format the UTC
+  // instant directly via Intl — no wall-clock round-trip that could slip across the
+  // viewer's own DST boundary.
+  const slotTz =
+    slot.timezone ??
+    slot.recurrenceGroup?.timezone ??
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  const timezoneLabel = formatTimezoneLabel(slotTz, timezones)
+  const startDate = new Date(slot.startTime)
+  const endDate = new Date(slot.endTime)
+  const dateParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: slotTz,
+    weekday: 'short',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).formatToParts(startDate)
+  const datePart = (type: string) => dateParts.find((p) => p.type === type)?.value ?? ''
+  const dateStr = `${datePart('weekday')}, ${ordinal(Number(datePart('day')))} ${datePart('month')}, ${datePart('year')}`
+  const timeFmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: slotTz,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+  const timeRange = `${timeFmt.format(startDate)} – ${timeFmt.format(endDate)}`
 
   const bookingCount = slot._count?.bookings ?? 0
   const isEnded = new Date(slot.endTime) < new Date()
@@ -176,7 +202,14 @@ export function ScheduleSlotRow({
           </Box>
         </Stack>
       </TableCell>
-      <TableCell sx={{ py: 2 }}>{timeRange}</TableCell>
+      <TableCell sx={{ py: 2 }}>
+        <Typography variant="body2">{timeRange}</Typography>
+        {timezoneLabel && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+            {timezoneLabel}
+          </Typography>
+        )}
+      </TableCell>
       <TableCell sx={{ py: 2 }}>
         <Box
           sx={{

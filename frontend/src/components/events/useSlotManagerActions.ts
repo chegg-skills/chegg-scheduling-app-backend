@@ -19,6 +19,7 @@ interface SlotSaveData {
   endTime: string
   capacity: number | null
   assignedCoachId?: string | null
+  timezone?: string
   recurrence?: RecurrenceConfig | null
 }
 
