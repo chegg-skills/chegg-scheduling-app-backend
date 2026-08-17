@@ -11,6 +11,7 @@ import type { Event, EventScheduleSlot, InteractionType } from '@/types'
 import { INTERACTION_TYPE_CAPS } from '@/constants/interactionTypes'
 import { useScheduleSlotForm } from './useScheduleSlotForm'
 import { RecurrenceSelector, type RecurrenceConfig } from './RecurrenceSelector'
+import { withSeriesTimezone } from './recurrencePayload'
 import { zonedStringToUTC } from '@/utils/dateTimezone'
 import { SearchableCoachAvailabilityList } from '@/components/events/SearchableCoachAvailabilityList'
 import { useCoachAvailabilityForProposedSlot, eventKeys } from '@/hooks/queries/useEvents'
@@ -120,7 +121,9 @@ export function UpsertScheduleSlotDialog({
       endTime: proposedEnd,
       capacity: !supportsMultipleParticipants ? 1 : newSlotCapacity === '' ? null : newSlotCapacity,
       assignedCoachId: isRoundRobinSeries ? null : assignedCoachId,
-      recurrence,
+      // Anchor the series to the same timezone the start time was entered in, so
+      // occurrences keep their local time across DST (see backend recurrence.service).
+      recurrence: withSeriesTimezone(recurrence, browserTimezone),
     })
   }
 

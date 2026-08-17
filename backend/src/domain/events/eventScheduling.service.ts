@@ -1,6 +1,6 @@
 import { AssignmentStrategy, EventBookingMode, Prisma, type EventScheduleSlot, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { addWeeks, addMonths, addDays } from "date-fns";
+import { fromZonedWallClock, toZonedWallClock } from "../../shared/utils/date";
 import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import {
@@ -22,7 +22,12 @@ import {
   updateBookingsPreservingJoinUrl,
 } from "../bookings/booking.shared";
 import { EventScheduleSlotSchema } from "./event.schema";
-import { generateRecurrenceDates } from "./recurrence.service";
+import {
+  advanceRecurrenceFloating,
+  generateRecurrenceDates,
+  RECURRENCE_FREQUENCIES,
+  type RecurrenceFrequency,
+} from "./recurrence.service";
 import {
   queueBookingStatusNotifications,
   notifyPoolOfSlotCancellation,
@@ -408,11 +413,25 @@ const createEventScheduleSlot = async (
     !caps?.multipleCoaches;
 
   if (validated.recurrence) {
+    // Anchor the series to a wall-clock timezone so occurrences keep the same
+    // local time across DST. Prefer the timezone the creator entered the time in
+    // (sent by the client); fall back to their saved profile timezone, then UTC.
+    const seriesTimezone =
+      validated.recurrence.timezone ??
+      (
+        await prisma.user.findUnique({
+          where: { id: caller.id },
+          select: { timezone: true },
+        })
+      )?.timezone ??
+      "UTC";
+
     // Create RecurrenceGroup in DB
     const group = await prisma.recurrenceGroup.create({
       data: {
         eventId,
         frequency: validated.recurrence.frequency,
+        timezone: seriesTimezone,
         isContinuous: validated.recurrence.isContinuous ?? false,
         isActive: true,
         recurrenceVisibilityLimit: validated.recurrence.recurrenceVisibilityLimit ?? null,
@@ -424,10 +443,14 @@ const createEventScheduleSlot = async (
       ? 12
       : (validated.recurrence.occurrences ?? 1);
 
-    const startDates = generateRecurrenceDates(validated.startTime, {
-      frequency: validated.recurrence.frequency,
-      occurrences,
-    });
+    const startDates = generateRecurrenceDates(
+      validated.startTime,
+      {
+        frequency: validated.recurrence.frequency,
+        occurrences,
+      },
+      seriesTimezone,
+    );
     const durationMs = validated.endTime.getTime() - validated.startTime.getTime();
 
     const firstSlot = await prisma.$transaction(async (tx) => {
@@ -1035,21 +1058,50 @@ const replenishContinuousSlots = async (
     const now = new Date();
     const horizon = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
 
-    for (const group of activeGroups) {
+    // Replenish a single continuous series up to the horizon. Extracted so the
+    // per-group error boundary in the loop below is unambiguous — a failure here
+    // skips only this series, never the rest of the batch.
+    const replenishOneGroup = async (group: (typeof activeGroups)[number]): Promise<void> => {
       if (group.slots.length === 0) {
-        await client.recurrenceGroup.update({
-          where: { id: group.id },
-          data: { isActive: false },
-        });
-        continue;
+        await client.recurrenceGroup.update({ where: { id: group.id }, data: { isActive: false } });
+        return;
       }
 
       const latestSlot = group.slots[0];
-      if (latestSlot.startTime >= horizon) {
-        continue;
+      if (latestSlot.startTime >= horizon) return;
+
+      // Skip stale/unknown cadences — advance() has no interval to apply and the
+      // loop would otherwise spin on the same instant.
+      if (!(RECURRENCE_FREQUENCIES as readonly string[]).includes(group.frequency)) return;
+      const frequency = group.frequency as RecurrenceFrequency;
+
+      // Advance the series in its anchor timezone so occurrences keep the same local
+      // time across DST (mirrors the initial generateRecurrenceDates path).
+      const seriesTz = group.timezone;
+      const durationMs = latestSlot.endTime.getTime() - latestSlot.startTime.getTime();
+
+      // THRICE_A_WEEK's +2/+2/+3 step depends on where the slot sits in the 7-day
+      // cycle. Derive that from the latest slot's local date relative to the series
+      // anchor (earliest slot), NOT the row count — so a hard-deleted middle slot
+      // can't shift the cadence. Occurrences sit at local-day offsets 0, 2, 4.
+      let cyclePhase = 0;
+      if (frequency === "THRICE_A_WEEK") {
+        const anchor = await client.eventScheduleSlot.findFirst({
+          where: { recurrenceGroupId: group.id },
+          orderBy: { startTime: "asc" },
+          select: { startTime: true },
+        });
+        if (anchor) {
+          const dayDiff = Math.round(
+            (toZonedWallClock(latestSlot.startTime, seriesTz).getTime() -
+              toZonedWallClock(anchor.startTime, seriesTz).getTime()) /
+              86_400_000,
+          );
+          const phaseDay = ((dayDiff % 7) + 7) % 7;
+          cyclePhase = phaseDay === 4 ? 2 : phaseDay === 2 ? 1 : 0;
+        }
       }
 
-      const durationMs = latestSlot.endTime.getTime() - latestSlot.startTime.getTime();
       const newSlotsData: Array<{
         eventId: string;
         startTime: Date;
@@ -1059,44 +1111,23 @@ const replenishContinuousSlots = async (
         isActive: boolean;
         recurrenceGroupId: string;
       }> = [];
-      let nextStart = new Date(latestSlot.startTime);
+
+      let floating = toZonedWallClock(latestSlot.startTime, seriesTz);
+      let nextStart = fromZonedWallClock(floating, seriesTz); // === latestSlot.startTime
       let iterations = 0;
 
       while (nextStart < horizon && iterations < 100) {
         iterations++;
 
-        switch (group.frequency) {
-          case "WEEKLY":
-            nextStart = addWeeks(nextStart, 1);
-            break;
-          case "BI_WEEKLY":
-            nextStart = addWeeks(nextStart, 2);
-            break;
-          case "MONTHLY":
-            nextStart = addMonths(nextStart, 1);
-            break;
-          case "TWICE_A_MONTH":
-            nextStart = addDays(nextStart, 14);
-            break;
-          case "THRICE_A_WEEK":
-            const existingCount = await client.eventScheduleSlot.count({
-              where: { recurrenceGroupId: group.id },
-            });
-            const currentIndex = existingCount + newSlotsData.length;
-            const diff = currentIndex % 3 === 2 ? 3 : 2;
-            nextStart = addDays(nextStart, diff);
-            break;
-          default:
-            nextStart = horizon;
-            break;
-        }
+        // Index whose %3 selects the +2/+2/+3 step for the slot we advance FROM;
+        // matches generateRecurrenceDates (advancing from occurrence i uses index i).
+        const currentIndex = cyclePhase + newSlotsData.length;
+        floating = advanceRecurrenceFloating(floating, frequency, currentIndex);
+        nextStart = fromZonedWallClock(floating, seriesTz);
 
-        if (nextStart >= horizon) {
-          break;
-        }
+        if (nextStart >= horizon) break;
 
         const slotEnd = new Date(nextStart.getTime() + durationMs);
-
         newSlotsData.push({
           eventId,
           startTime: nextStart,
@@ -1110,35 +1141,43 @@ const replenishContinuousSlots = async (
         });
       }
 
-      if (newSlotsData.length > 0) {
-        if (isRoundRobin && event!.coaches.length > 0) {
-          // Advance the round-robin cursor and assign coaches atomically.
-          await prisma.$transaction(async (innerTx) => {
-            const coachIds = await resolveRoundRobinSequence(
-              innerTx,
-              eventId,
-              event!.teamId,
-              event!.coaches,
-              newSlotsData.length,
-              newSlotsData.map((s) => ({ startTime: s.startTime, endTime: s.endTime })),
-            );
-            await innerTx.eventScheduleSlot.createMany({
-              data: newSlotsData.map((slot, i) => ({
-                ...slot,
-                assignedCoachId: coachIds[i],
-              })),
-              skipDuplicates: true,
-            });
-          });
-        } else {
-          await client.eventScheduleSlot.createMany({
-            data: newSlotsData,
+      if (newSlotsData.length === 0) return;
+
+      if (isRoundRobin && event!.coaches.length > 0) {
+        // Advance the round-robin cursor and assign coaches atomically.
+        await prisma.$transaction(async (innerTx) => {
+          const coachIds = await resolveRoundRobinSequence(
+            innerTx,
+            eventId,
+            event!.teamId,
+            event!.coaches,
+            newSlotsData.length,
+            newSlotsData.map((s) => ({ startTime: s.startTime, endTime: s.endTime })),
+          );
+          await innerTx.eventScheduleSlot.createMany({
+            data: newSlotsData.map((slot, i) => ({ ...slot, assignedCoachId: coachIds[i] })),
             skipDuplicates: true,
           });
-        }
-        getRequestLogger().info(
-          { eventId, groupId: group.id, count: newSlotsData.length },
-          "Replenished continuous recurrence slots."
+        });
+      } else {
+        await client.eventScheduleSlot.createMany({ data: newSlotsData, skipDuplicates: true });
+      }
+
+      getRequestLogger().info(
+        { eventId, groupId: group.id, count: newSlotsData.length },
+        "Replenished continuous recurrence slots."
+      );
+    };
+
+    for (const group of activeGroups) {
+      // Isolate each series: a failure on one group (bad data, a DB error) must not
+      // abort replenishment for the rest of the batch.
+      try {
+        await replenishOneGroup(group);
+      } catch (perGroupError) {
+        getRequestLogger().warn(
+          { eventId, groupId: group.id, error: perGroupError },
+          "Failed to replenish one recurrence group — skipping.",
         );
       }
     }

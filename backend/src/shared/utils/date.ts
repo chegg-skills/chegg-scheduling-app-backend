@@ -30,6 +30,74 @@ export const getEndOfDate = (date: Date): Date => {
 };
 
 /**
+ * Reads the wall-clock components of a UTC instant as seen in `timeZone`, and
+ * returns them as a "floating" Date whose UTC fields equal those local
+ * components (e.g. 10:00 in New York → a Date whose UTC time reads 10:00).
+ *
+ * Pair with `fromZonedWallClock` to advance a recurring session by whole local
+ * days/weeks/months without the UTC offset drifting across DST. Uses the same
+ * `Intl` approach as `toLocalAvailabilityInfo` / the frontend `startOfDayInTimezone`.
+ *
+ * An invalid IANA `timeZone` falls back to UTC (with a warning) rather than
+ * throwing, mirroring `formatNotificationDate` / `endOfBookingWindowInTimezone`,
+ * so a corrupt stored timezone degrades to a UTC-anchored series instead of a 500.
+ */
+export const toZonedWallClock = (date: Date, timeZone: string): Date => {
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }).formatToParts(date);
+  } catch {
+    logger.warn({ timeZone }, "toZonedWallClock received an invalid timezone — falling back to UTC.");
+    return new Date(date.getTime()); // the UTC wall-clock equals the instant itself
+  }
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return new Date(
+    Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second")),
+  );
+};
+
+/**
+ * Inverse of `toZonedWallClock`: interprets a floating Date's UTC fields as a
+ * wall-clock time in `timeZone` and returns the real UTC instant, using that
+ * calendar date's actual offset (DST-correct). Mirrors the frontend
+ * `startOfDayInTimezone` / backend `endOfBookingWindowInTimezone`.
+ *
+ * DST edges (deterministic; standard fix-offset resolution, as in Luxon):
+ * - **Non-existent** local times (the skipped hour at a spring-forward) roll
+ *   **forward** past the gap — in both east- and west-of-UTC zones.
+ * - **Ambiguous** local times (the repeated hour at a fall-back) resolve to a
+ *   single deterministic instant (the occurrence the naive UTC guess lands in).
+ */
+export const fromZonedWallClock = (floating: Date, timeZone: string): Date => {
+  const localMs = floating.getTime(); // the wall clock we want, as floating UTC
+  // Offset (ms, + east of UTC) of `timeZone` at the given UTC instant.
+  const offsetAt = (utcMs: number) => toZonedWallClock(new Date(utcMs), timeZone).getTime() - utcMs;
+
+  const o1 = offsetAt(localMs);
+  const utc1 = localMs - o1;
+  const o2 = offsetAt(utc1);
+  if (o1 === o2) return new Date(utc1); // unambiguous — the common case
+
+  // Near a DST transition: settle once more using the adjusted offset.
+  const utc2 = localMs - o2;
+  const o3 = offsetAt(utc2);
+  if (o2 === o3) return new Date(utc2);
+
+  // Non-existent local time (spring-forward gap): roll forward past the gap by
+  // using the smaller offset (→ larger UTC → the post-transition local time).
+  return new Date(localMs - Math.min(o2, o3));
+};
+
+/**
  * Formats a date range as "Mon D, YYYY – Mon D, YYYY" for display.
  * Returns "All time" when either bound is null (unbounded range).
  */
