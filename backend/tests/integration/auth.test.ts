@@ -593,18 +593,30 @@ describe("POST /api/auth/refresh", () => {
     spy.mockRestore();
   });
 
-  it("rejects a cross-site logout and leaves the session intact", async () => {
+  // Logout is intentionally exempt from CSRF: a client that cannot produce a token
+  // (cleared localStorage, an SSO redirect with no body, a stale tab) must still be
+  // able to end its session. Being unable to log out leaves a live session behind,
+  // which is worse than the nuisance of a cross-site forced logout.
+  it("logs out even when no CSRF token can be produced", async () => {
     const session = await login();
 
     const logoutRes = await request(app)
       .post("/api/auth/logout")
       .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`]);
 
-    expect(logoutRes.status).toBe(403);
+    expect(logoutRes.status).toBe(200);
 
-    // Still usable — a stranger's page cannot end the session
+    // ...and it genuinely revoked, rather than merely appearing to succeed
     const res = await postRefresh(session.refresh, session.csrf);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(401);
+  });
+
+  // Refresh keeps its protection — it mints new credentials rather than ending a session
+  it("still rejects a cross-site refresh with no CSRF token", async () => {
+    const session = await login();
+
+    const res = await postRefresh(session.refresh, null);
+    expect(res.status).toBe(403);
   });
 
   it("clears the dead refresh cookie when a refresh is rejected", async () => {

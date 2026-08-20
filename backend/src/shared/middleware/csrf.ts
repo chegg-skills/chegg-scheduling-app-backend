@@ -18,13 +18,25 @@ const refreshCookieCsrfEnabled = process.env.ENABLE_REFRESH_COOKIE_CSRF !== "fal
 
 // Pre-auth routes create a new session — there is no existing session to protect,
 // so CSRF validation is unconditionally skipped regardless of stale cookies.
-// `/api/auth/refresh` is deliberately NOT listed: it acts on a credential the
-// browser already holds, so it needs the same protection as any other write.
+//
+// `/api/auth/logout` is exempt for a different reason: ending a session must never
+// be blocked. Requiring a CSRF token here means any client that cannot produce one
+// — cleared localStorage, an SSO redirect that returned no body, a stale tab — can
+// never log out, leaving a live session behind on a possibly shared machine. That
+// is a worse outcome than the attack the check prevents: a cross-site forced logout
+// is a nuisance, not a compromise, since the attacker gains nothing and destroys
+// only the victim's own session. Under the default `SameSite=lax` a cross-site POST
+// carries no cookies at all, so this only widens exposure in `SameSite=none`
+// deployments, and only to that nuisance.
+//
+// `/api/auth/refresh` is deliberately NOT exempt: it mints fresh credentials and
+// rotates the stored token, so it keeps the same protection as any other write.
 const AUTH_EXEMPT_PREFIXES = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/bootstrap",
   "/api/auth/sso",
+  "/api/auth/logout",
   "/api/invites/accept-invite",
 ];
 
