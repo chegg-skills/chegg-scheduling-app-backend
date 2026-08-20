@@ -139,24 +139,23 @@ describe("refresh tiers — per-session budget plus per-IP ceiling", () => {
     expect((await request(app).post("/refresh").set("Cookie", sessionB)).status).toBe(200);
   });
 
-  it("does not pool cookie-less callers into one shared budget", async () => {
-    // `trust proxy` lets each request present a distinct client IP.
-    const app = express();
-    app.set("trust proxy", 1);
-    app.use(cookieParser());
-    app.post("/refresh", refreshLimiter, (_req, res) => res.status(200).json({ ok: true }));
+  it("does not meter cookie-less refreshes in the replay tier", async () => {
+    const app = buildRefreshApp(refreshLimiter);
 
-    const from = (ip: string) => request(app).post("/refresh").set("X-Forwarded-For", ip);
+    // A cookie-less refresh is rejected before any DB work and has no token to
+    // replay, so this tier must let it through to the wider per-IP ceiling.
+    // Metering it here (max 2) capped a whole NAT's expired-session traffic at this
+    // tier and turned the 401 those users should see into a 429 the client treats
+    // as transient — leaving them stranded instead of sent back to log in.
+    for (let i = 0; i < 5; i++) {
+      expect((await request(app).post("/refresh")).status).toBe(200);
+    }
 
-    // One cookie-less caller exhausts its own budget (max 2)...
-    expect((await from("203.0.113.1")).status).toBe(200);
-    expect((await from("203.0.113.1")).status).toBe(200);
-    expect((await from("203.0.113.1")).status).toBe(429);
-
-    // ...which must not spend anyone else's. Keying these to a constant let a single
-    // caller — exempt from CSRF, since it sends no cookie — lock out every user whose
-    // refresh cookie had expired, turning their 401 into an unrecoverable 429.
-    expect((await from("203.0.113.9")).status).toBe(200);
+    // ...and it must not have consumed a real session's separate budget either.
+    const withCookie = ["refresh_token=cccccccccccc"];
+    expect((await request(app).post("/refresh").set("Cookie", withCookie)).status).toBe(200);
+    expect((await request(app).post("/refresh").set("Cookie", withCookie)).status).toBe(200);
+    expect((await request(app).post("/refresh").set("Cookie", withCookie)).status).toBe(429);
   });
 
   it("bounds a flood of random tokens via the per-IP tier", async () => {

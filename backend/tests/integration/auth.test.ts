@@ -568,6 +568,31 @@ describe("POST /api/auth/refresh", () => {
     expect(res.status).toBe(401);
   });
 
+  it("still clears cookies when revocation fails", async () => {
+    const session = await login();
+
+    // A DB fault during revocation must not 500 before the cookies are cleared —
+    // that would leave the browser holding a live session while the user believes
+    // they logged out.
+    const spy = jest
+      .spyOn(prisma.refreshToken, "updateMany")
+      .mockRejectedValueOnce(new Error("connection lost"));
+
+    const res = await request(app)
+      .post("/api/auth/logout")
+      .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`, `${CSRF_COOKIE}=${session.csrf}`])
+      .set(CSRF_HEADER, session.csrf);
+
+    expect(res.status).toBe(200);
+
+    const cleared = (res.headers["set-cookie"] as unknown as string[]).find((c) =>
+      c.startsWith(`${REFRESH_COOKIE}=`),
+    );
+    expect(cleared).toContain(`${REFRESH_COOKIE}=;`);
+
+    spy.mockRestore();
+  });
+
   it("rejects a cross-site logout and leaves the session intact", async () => {
     const session = await login();
 

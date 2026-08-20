@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Request } from "express";
-import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import { getRedisClient } from "../redis/redisClient";
 import { REFRESH_COOKIE_NAME } from "../auth/cookie";
@@ -101,27 +101,23 @@ const REFRESH_LIMIT_MESSAGE = {
   message: "Too many refresh attempts. Please try again later.",
 };
 
-/**
- * Keys the per-session tier by the presented refresh cookie, falling back to the
- * client IP when there is none.
- *
- * The fallback must not be a constant: a shared bucket would let one caller — with
- * no cookie, and therefore exempt from CSRF — drain the budget for every cookie-less
- * request in the deployment. Real users whose cookie has expired would then get 429
- * instead of 401, and the frontend treats 429 as transient, so they would never be
- * redirected to log in again.
- *
- * Keys are prefixed so an IP can never collide with a token hash. Only the hash is
- * used — the raw token would otherwise be written into a Redis key.
- */
-const refreshSessionKey = (req: Request): string => {
+const getRefreshCookie = (req: Request): string | undefined => {
   const cookie = req.cookies?.[REFRESH_COOKIE_NAME];
-  if (typeof cookie !== "string" || cookie.length === 0) {
-    return `ip:${ipKeyGenerator(req.ip ?? "")}`;
-  }
-
-  return `session:${createHash("sha256").update(cookie).digest("hex").slice(0, 32)}`;
+  return typeof cookie === "string" && cookie.length > 0 ? cookie : undefined;
 };
+
+/**
+ * Keys the replay tier by the presented refresh cookie. Only the hash is used — the
+ * raw token would otherwise be written into a Redis key.
+ *
+ * Cookie-less requests never reach here (see `skip` below), so there is no constant
+ * fallback bucket for one caller to drain on everyone else's behalf.
+ */
+const refreshSessionKey = (req: Request): string =>
+  createHash("sha256")
+    .update(getRefreshCookie(req) ?? "")
+    .digest("hex")
+    .slice(0, 32);
 
 /**
  * Refresh replay tier — applied to POST /auth/refresh alongside the IP tier below.
@@ -143,6 +139,12 @@ export const refreshLimiter = rateLimit({
     windowMs: Number(process.env.REFRESH_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
     max: Number(process.env.REFRESH_RATE_LIMIT_MAX ?? 30),
     keyGenerator: refreshSessionKey,
+    // A cookie-less refresh is rejected before any DB work and has no token to
+    // replay, so this tight tier has nothing to protect against. Metering it here
+    // would cap legitimate expired-session traffic from a whole NAT at this tier's
+    // limit rather than the far wider per-IP ceiling — and a 429 (unlike the 401
+    // they should get) is treated as transient by the client, stranding the user.
+    skip: (req) => getRefreshCookie(req) === undefined,
     standardHeaders: true,
     legacyHeaders: false,
     message: REFRESH_LIMIT_MESSAGE,
