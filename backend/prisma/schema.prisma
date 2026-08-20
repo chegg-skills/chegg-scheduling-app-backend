@@ -50,6 +50,7 @@ model User {
   updatedBookingDirectories BookingDirectory[]          @relation("BookingDirectoryUpdatedBy")
   invitesCreated            UserInvite[]                @relation("InviteCreatedBy")
   activitiesPerformed       BookingActivity[]           @relation("ActivityActorUser")
+  refreshTokens             RefreshToken[]              @relation("UserRefreshTokens")
 
   @@unique([ssoProvider, ssoSub])
 }
@@ -100,6 +101,28 @@ model OidcState {
   createdAt   DateTime @default(now())
   expiresAt   DateTime
 
+  @@index([expiresAt])
+}
+
+/// Long-lived, revocable session credential backing the short-lived access JWT.
+/// Only the SHA-256 hash is stored — the raw token is returned to the client once
+/// and is not derivable from this row. Rotated on every use: each refresh revokes
+/// the presented token and links it to its replacement via `replacedByTokenId`,
+/// so presenting an already-revoked token signals theft (see refreshTokenUtils).
+model RefreshToken {
+  id                String    @id @default(uuid())
+  userId            String
+  tokenHash         String    @unique
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+  revokedAt         DateTime?
+  replacedByTokenId String?   @unique
+  userAgent         String?
+  ipAddress         String?
+
+  user User @relation("UserRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@index([expiresAt])
 }
 

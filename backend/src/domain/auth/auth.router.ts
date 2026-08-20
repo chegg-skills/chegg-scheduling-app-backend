@@ -3,8 +3,8 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import type { RequestHandler } from "express";
 import authController from "./auth.controller";
-import { authenticate, authorize } from "../../shared/middleware/auth";
-import { sensitiveLimiter, strictLimiter } from "../../shared/middleware/rateLimit";
+import { authenticate, authorize, optionalAuthenticate } from "../../shared/middleware/auth";
+import { refreshLimiter, sensitiveLimiter, strictLimiter } from "../../shared/middleware/rateLimit";
 import { validate } from "../../shared/middleware/validate";
 import {
   LoginSchema,
@@ -36,7 +36,16 @@ router
   .post(sensitiveLimiter, validate(LoginSchema), authController.login)
   .all(methodNotAllowed);
 
-router.route("/logout").post(authenticate, authController.logout).all(methodNotAllowed);
+// Authenticated by possession of the refresh cookie alone — deliberately not
+// behind `authenticate`, since the whole point is to be callable once the access
+// token has already expired.
+router.route("/refresh").post(refreshLimiter, authController.refresh).all(methodNotAllowed);
+
+// `optionalAuthenticate`, not `authenticate`: the access token expires long before
+// the session does, and requiring it would 401 an idle user's logout — leaving their
+// refresh token un-revoked and the session resumable. Logout is idempotent; the CSRF
+// middleware is what stops a cross-site page from triggering it.
+router.route("/logout").post(optionalAuthenticate, authController.logout).all(methodNotAllowed);
 
 // One-time bootstrap — only works when no users exist, requires BOOTSTRAP_SECRET
 router.route("/bootstrap").post(strictLimiter, authController.bootstrap).all(methodNotAllowed);

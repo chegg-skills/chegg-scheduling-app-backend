@@ -6,6 +6,7 @@ import * as inviteService from "./invite.service";
 import { ListInvitesSchema } from "./invite.schema";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import { setAuthCookie } from "../../shared/auth/cookie";
+import { establishRefreshSession } from "../../shared/auth/session";
 import {
   queueInviteAcceptedNotification,
   queueInviteCreatedNotification,
@@ -55,6 +56,7 @@ const acceptInvite = async (req: Request, res: Response) => {
   const result = await inviteService.acceptInvite(req.body);
 
   const csrfToken = setAuthCookie(res, result.token);
+  await establishRefreshSession(req, res, result.user.id);
 
   void queueInviteAcceptedNotification({
     invitedById: result.invitedById,

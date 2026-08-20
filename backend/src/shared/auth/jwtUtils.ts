@@ -24,8 +24,18 @@ export const getJwtSecret = (): string => {
 };
 
 /**
- * Signs a JWT for the given user. Expiry is controlled by the
- * `JWT_EXPIRES_IN_SECONDS` environment variable (default: 86400 — 24 hours).
+ * Lifetime of the short-lived access token, in seconds (default: 900 — 15 min).
+ * Renewal is the refresh token's job, so this stays short by design.
+ */
+export const getAccessTokenTtlSeconds = (): number => {
+  const raw = Number(process.env.ACCESS_TOKEN_EXPIRES_IN_SECONDS ?? "900");
+  return Number.isFinite(raw) && raw > 0 ? raw : 900;
+};
+
+/**
+ * Signs a short-lived access JWT for the given user. Expiry comes from
+ * {@link getAccessTokenTtlSeconds}; renewal is handled by the refresh-token
+ * flow (`POST /api/auth/refresh`), not by lengthening this token.
  *
  * The token embeds `sub` (user id), `role`, and `email`. The `authenticate`
  * middleware re-queries the database on every request, so the role embedded
@@ -36,9 +46,7 @@ export const getJwtSecret = (): string => {
  * @returns A signed HS256 JWT string.
  */
 export const buildAuthToken = (user: SafeUser): string => {
-  const raw = Number(process.env.JWT_EXPIRES_IN_SECONDS ?? "86400");
-  const expiresInSeconds = Number.isFinite(raw) && raw > 0 ? raw : 86400;
   return jwt.sign({ sub: user.id, role: user.role, email: user.email }, getJwtSecret(), {
-    expiresIn: expiresInSeconds,
+    expiresIn: getAccessTokenTtlSeconds(),
   });
 };
