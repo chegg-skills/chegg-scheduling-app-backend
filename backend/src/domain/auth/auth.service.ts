@@ -8,7 +8,6 @@ import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { buildAuthToken } from "../../shared/auth/jwtUtils";
 import {
-  purgeExpiredRefreshTokens,
   revokeAllRefreshTokensForUser,
   revokeRefreshToken,
   rotateRefreshToken,
@@ -190,7 +189,15 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
  */
 const logout = async (rawRefreshToken?: string): Promise<{ message: string }> => {
   if (rawRefreshToken) {
-    await revokeRefreshToken(rawRefreshToken);
+    try {
+      await revokeRefreshToken(rawRefreshToken);
+    } catch (error) {
+      // Genuinely best-effort, as documented. Letting a DB fault propagate would
+      // 500 before the controller clears the cookies, leaving the browser holding
+      // a live session while the user believes they logged out — the worse outcome
+      // of the two. Logged loudly because the token does outlive this request.
+      getRequestLogger().error({ error }, "Refresh token revocation failed during logout.");
+    }
   }
 
   return { message: "Logged out successfully." };
@@ -235,8 +242,6 @@ const refresh = async (
   }
 
   const safeUser = toSafeUser(user);
-
-  purgeExpiredRefreshTokens();
 
   return {
     user: safeUser,

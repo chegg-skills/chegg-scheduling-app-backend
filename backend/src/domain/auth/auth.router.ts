@@ -4,7 +4,12 @@ import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import type { RequestHandler } from "express";
 import authController from "./auth.controller";
 import { authenticate, authorize, optionalAuthenticate } from "../../shared/middleware/auth";
-import { refreshLimiter, sensitiveLimiter, strictLimiter } from "../../shared/middleware/rateLimit";
+import {
+  refreshIpLimiter,
+  refreshLimiter,
+  sensitiveLimiter,
+  strictLimiter,
+} from "../../shared/middleware/rateLimit";
 import { validate } from "../../shared/middleware/validate";
 import {
   LoginSchema,
@@ -39,7 +44,12 @@ router
 // Authenticated by possession of the refresh cookie alone — deliberately not
 // behind `authenticate`, since the whole point is to be callable once the access
 // token has already expired.
-router.route("/refresh").post(refreshLimiter, authController.refresh).all(methodNotAllowed);
+// Two tiers: a wide per-IP ceiling that stops floods of random cookies, then a
+// tight per-session budget. Neither substitutes for the other — see rateLimit.ts.
+router
+  .route("/refresh")
+  .post(refreshIpLimiter, refreshLimiter, authController.refresh)
+  .all(methodNotAllowed);
 
 // `optionalAuthenticate`, not `authenticate`: the access token expires long before
 // the session does, and requiring it would 401 an idle user's logout — leaving their

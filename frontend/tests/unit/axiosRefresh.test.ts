@@ -162,27 +162,89 @@ describe('axios 401 → refresh → retry', () => {
     expect(location.href).toBe('/login')
   })
 
-  it('re-syncs the CSRF token from the cookie and retries once after a 403', async () => {
+  it('sends the CSRF cookie value rather than a stale stored copy', async () => {
     document.cookie = 'csrf_token=cookie-truth'
-    let attempts = 0
     let sentHeader: string | null = null
+
+    server.use(
+      http.post(pathIs('/api/events'), ({ request }) => {
+        sentHeader = request.headers.get('x-csrf-token')
+        return HttpResponse.json({ success: true, data: 'created' })
+      })
+    )
+
+    await apiClient.post('/events', {})
+
+    // The cookie is what the server validates against, so it is the source of truth
+    expect(sentHeader).toBe('cookie-truth')
+  })
+
+  it('logs out on the first attempt by preferring the CSRF cookie over a stale copy', async () => {
+    // The failure that made "log out" not log out: the client sent a stale token,
+    // the server 403'd before clearing cookies, and the UI redirected to /login
+    // anyway — leaving the session alive. Preferring the cookie prevents it
+    // outright, without needing the retry below.
+    document.cookie = 'csrf_token=fresh-token'
+    let attempts = 0
+
+    server.use(
+      http.post(pathIs('/api/auth/logout'), ({ request }) => {
+        attempts += 1
+        return request.headers.get('x-csrf-token') === 'fresh-token'
+          ? HttpResponse.json({ success: true, data: {} })
+          : new HttpResponse(null, { status: 403 })
+      })
+    )
+
+    const res = await apiClient.post('/auth/logout', {}, { headers: { 'x-csrf-token': 'stale' } })
+
+    expect(attempts).toBe(1)
+    expect(res.status).toBe(200)
+  })
+
+  it('retries once when a fresh CSRF cookie arrives with the 403', async () => {
+    // Backstop for the case the cookie preference cannot cover: no cookie existed
+    // when the request went out, and the rejection itself carries a new one.
+    document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    let attempts = 0
 
     server.use(
       http.post(pathIs('/api/events'), ({ request }) => {
         attempts += 1
         if (attempts === 1) {
+          document.cookie = 'csrf_token=issued-with-403'
           return new HttpResponse(null, { status: 403 })
         }
-        sentHeader = request.headers.get('x-csrf-token')
-        return HttpResponse.json({ success: true, data: 'created' })
+        return request.headers.get('x-csrf-token') === 'issued-with-403'
+          ? HttpResponse.json({ success: true, data: 'created' })
+          : new HttpResponse(null, { status: 403 })
       })
     )
 
     const res = await apiClient.post('/events', {})
 
     expect(attempts).toBe(2)
-    expect(sentHeader).toBe('cookie-truth')
     expect(res.data.data).toBe('created')
+  })
+
+  it('does not replay an ordinary permission-denied 403', async () => {
+    document.cookie = 'csrf_token=matching-token'
+    let attempts = 0
+
+    server.use(
+      http.post(pathIs('/api/events'), () => {
+        attempts += 1
+        return new HttpResponse(null, { status: 403 })
+      })
+    )
+
+    // The token sent already matches the cookie, so this 403 is about permissions,
+    // not CSRF — retrying would just burn a second request.
+    await expect(
+      apiClient.post('/events', {}, { headers: { 'x-csrf-token': 'matching-token' } })
+    ).rejects.toThrow()
+
+    expect(attempts).toBe(1)
   })
 
   it('does not refresh in response to a failed login', async () => {

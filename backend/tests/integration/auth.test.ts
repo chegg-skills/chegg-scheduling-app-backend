@@ -568,18 +568,84 @@ describe("POST /api/auth/refresh", () => {
     expect(res.status).toBe(401);
   });
 
-  it("rejects a cross-site logout and leaves the session intact", async () => {
+  it("still clears cookies when revocation fails", async () => {
+    const session = await login();
+
+    // A DB fault during revocation must not 500 before the cookies are cleared —
+    // that would leave the browser holding a live session while the user believes
+    // they logged out.
+    const spy = jest
+      .spyOn(prisma.refreshToken, "updateMany")
+      .mockRejectedValueOnce(new Error("connection lost"));
+
+    const res = await request(app)
+      .post("/api/auth/logout")
+      .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`, `${CSRF_COOKIE}=${session.csrf}`])
+      .set(CSRF_HEADER, session.csrf);
+
+    expect(res.status).toBe(200);
+
+    const cleared = (res.headers["set-cookie"] as unknown as string[]).find((c) =>
+      c.startsWith(`${REFRESH_COOKIE}=`),
+    );
+    expect(cleared).toContain(`${REFRESH_COOKIE}=;`);
+
+    spy.mockRestore();
+  });
+
+  // Logout is intentionally exempt from CSRF: a client that cannot produce a token
+  // (cleared localStorage, an SSO redirect with no body, a stale tab) must still be
+  // able to end its session. Being unable to log out leaves a live session behind,
+  // which is worse than the nuisance of a cross-site forced logout.
+  it("logs out even when no CSRF token can be produced", async () => {
     const session = await login();
 
     const logoutRes = await request(app)
       .post("/api/auth/logout")
       .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`]);
 
-    expect(logoutRes.status).toBe(403);
+    expect(logoutRes.status).toBe(200);
 
-    // Still usable — a stranger's page cannot end the session
+    // ...and it genuinely revoked, rather than merely appearing to succeed
     const res = await postRefresh(session.refresh, session.csrf);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(401);
+  });
+
+  // Refresh keeps its protection — it mints new credentials rather than ending a session
+  it("still rejects a cross-site refresh with no CSRF token", async () => {
+    const session = await login();
+
+    const res = await postRefresh(session.refresh, null);
+    expect(res.status).toBe(403);
+  });
+
+  it("clears the dead refresh cookie when a refresh is rejected", async () => {
+    const session = await login();
+
+    await prisma.refreshToken.updateMany({
+      where: { revokedAt: null },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    const res = await postRefresh(session.refresh, session.csrf);
+    expect(res.status).toBe(401);
+
+    const cleared = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+      c.startsWith(`${REFRESH_COOKIE}=`),
+    );
+
+    // Without this the browser re-sends a useless cookie for its full 30-day life.
+    expect(cleared).toBeDefined();
+    expect(cleared).toContain(`${REFRESH_COOKIE}=;`);
+    // The clearing cookie must carry the same path it was set with, or it is ignored
+    expect(cleared).toContain("Path=/api/auth");
+
+    // The CSRF cookie is deliberately left alone — clearing it would strand the
+    // frontend's stored copy and make every later write fail with no recovery.
+    const csrfCleared = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+      c.startsWith(`${CSRF_COOKIE}=`),
+    );
+    expect(csrfCleared).toBeUndefined();
   });
 
   it("rejects a refresh token whose expiry has passed", async () => {

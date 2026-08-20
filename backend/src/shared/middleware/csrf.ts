@@ -18,18 +18,46 @@ const refreshCookieCsrfEnabled = process.env.ENABLE_REFRESH_COOKIE_CSRF !== "fal
 
 // Pre-auth routes create a new session — there is no existing session to protect,
 // so CSRF validation is unconditionally skipped regardless of stale cookies.
-// `/api/auth/refresh` is deliberately NOT listed: it acts on a credential the
-// browser already holds, so it needs the same protection as any other write.
+//
+// `/api/auth/logout` is exempt for a different reason: ending a session must never
+// be blocked. Requiring a CSRF token here means any client that cannot produce one
+// — cleared localStorage, an SSO redirect that returned no body, a stale tab — can
+// never log out, leaving a live session behind on a possibly shared machine. That
+// is a worse outcome than the attack the check prevents: a cross-site forced logout
+// is a nuisance, not a compromise, since the attacker gains nothing and destroys
+// only the victim's own session. Under the default `SameSite=lax` a cross-site POST
+// carries no cookies at all, so this only widens exposure in `SameSite=none`
+// deployments, and only to that nuisance.
+//
+// `/api/auth/refresh` is deliberately NOT exempt: it mints fresh credentials and
+// rotates the stored token, so it keeps the same protection as any other write.
 const AUTH_EXEMPT_PREFIXES = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/bootstrap",
   "/api/auth/sso",
+  "/api/auth/logout",
   "/api/invites/accept-invite",
 ];
 
-const isAuthExempt = (path: string): boolean =>
-  AUTH_EXEMPT_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
+// Express's default router (`case sensitive routing` / `strict routing` both
+// unset in app.ts) treats `/api/auth/Logout` and `/api/auth/logout/` as the same
+// route as `/api/auth/logout`. Comparing `req.path` with exact-case `startsWith`
+// does not: a differently-cased or trailing-slashed request reaches the same
+// handler but fails the exemption match, so it falls through to the credential
+// check below and gets CSRF-enforced anyway — silently defeating the exemption
+// for whichever route that happens to (e.g. logout, where the whole point of the
+// exemption is that it must never be blocked). Normalizing both sides makes the
+// match track what Express actually routes, not just the literal string.
+const normalizePath = (path: string): string => path.toLowerCase().replace(/\/+$/, "");
+
+const isAuthExempt = (path: string): boolean => {
+  const normalized = normalizePath(path);
+  return AUTH_EXEMPT_PREFIXES.some((prefix) => {
+    const normalizedPrefix = normalizePath(prefix);
+    return normalized === normalizedPrefix || normalized.startsWith(normalizedPrefix + "/");
+  });
+};
 
 const matchesToken = (cookieToken: string, headerToken: string): boolean => {
   const cookieBuffer = Buffer.from(cookieToken);

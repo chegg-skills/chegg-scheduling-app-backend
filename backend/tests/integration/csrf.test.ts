@@ -30,6 +30,7 @@ const buildApp = () => {
   app.get("/api/test", ok);
   app.post("/api/auth/login", ok); // auth-exempt (exact prefix)
   app.post("/api/auth/sso/callback", ok); // auth-exempt (prefix subpath)
+  app.post("/api/auth/logout", ok); // auth-exempt (must never be CSRF-blocked)
   app.use(errorHandler);
   return app;
 };
@@ -129,5 +130,32 @@ describe("csrfProtection middleware", () => {
       .set("Cookie", cookieHeader({ [AUTH_COOKIE_NAME]: "session-jwt" }));
 
     expect(res.status).toBe(200);
+  });
+
+  // Express's default router (case-insensitive, non-strict — matches app.ts's
+  // unset `case sensitive routing`/`strict routing`) sends all three of these to
+  // the same handler as `/api/auth/logout`. A plain exact-case `startsWith` match
+  // would let a differently-cased or trailing-slashed request slip past the
+  // exemption and fall into CSRF enforcement — silently defeating the whole point
+  // of the exemption for exactly the route where it must never be blocked.
+  it.each(["/api/auth/Logout", "/api/auth/LOGOUT", "/api/auth/logout/"])(
+    "still skips validation when the request path is %s (200)",
+    async (path) => {
+      const res = await request(app)
+        .post(path)
+        .set("Cookie", cookieHeader({ [AUTH_COOKIE_NAME]: "session-jwt" }));
+
+      expect(res.status).toBe(200);
+    },
+  );
+
+  it("does not widen the match to an unrelated route with the same prefix (403)", async () => {
+    // Guards the normalization itself: "/api/auth/logoutall" must not be treated
+    // as a subpath of "/api/auth/logout" just because it starts with that string.
+    const res = await request(app)
+      .post("/api/auth/logoutall")
+      .set("Cookie", cookieHeader({ [AUTH_COOKIE_NAME]: "session-jwt" }));
+
+    expect(res.status).toBe(403);
   });
 });

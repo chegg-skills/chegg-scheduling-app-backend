@@ -12,6 +12,7 @@ import { getOidcClient } from "./shared/auth/oidcClient";
 import { startFeedbackConsumer } from "./shared/notifications/communication.feedback";
 import { startNotificationDeliveryConsumer } from "./shared/notifications/notificationDelivery.consumer";
 import { startOutboxWorker } from "./shared/notifications/outbox.worker";
+import { startRefreshTokenCleanupWorker } from "./shared/auth/refreshTokenCleanup.worker";
 import { registerNotificationEnqueuedHook } from "./shared/notifications/notification.publisher";
 import { recordBookingNotificationActivity } from "./domain/bookings/notificationTimeline.hook";
 import { closeRedisClient } from "./shared/redis/redisClient";
@@ -72,6 +73,10 @@ const start = async (): Promise<void> => {
   // to RabbitMQ, retrying on failure so emails survive a RabbitMQ outage.
   const stopOutboxWorker = startOutboxWorker();
 
+  // Periodic sweep of expired refresh tokens — see the worker for why this runs
+  // on a schedule rather than opportunistically inside every refresh call.
+  const stopRefreshTokenCleanupWorker = startRefreshTokenCleanupWorker();
+
   // Verify DB is reachable before accepting traffic — fail fast rather than serving requests
   // that immediately hit connection errors.
   try {
@@ -91,6 +96,7 @@ const start = async (): Promise<void> => {
   const shutdown = (signal: string) => {
     logger.info({ signal }, "Shutdown signal received.");
     stopOutboxWorker();
+    stopRefreshTokenCleanupWorker();
     server.close(async () => {
       logger.info("HTTP server closed. Disconnecting database and Redis...");
       await Promise.all([prisma.$disconnect(), closeRedisClient()]);

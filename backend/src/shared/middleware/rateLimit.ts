@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
+import type { Request } from "express";
 import rateLimit from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import { getRedisClient } from "../redis/redisClient";
+import { REFRESH_COOKIE_NAME } from "../auth/cookie";
 
 // Returns a Redis-backed store when REDIS_URL is set (production), or undefined
 // which makes express-rate-limit fall back to its default in-memory store (dev/test).
@@ -93,24 +96,76 @@ export const strictLimiter = rateLimit({
   }),
 });
 
+const REFRESH_LIMIT_MESSAGE = {
+  success: false,
+  message: "Too many refresh attempts. Please try again later.",
+};
+
+const getRefreshCookie = (req: Request): string | undefined => {
+  const cookie = req.cookies?.[REFRESH_COOKIE_NAME];
+  return typeof cookie === "string" && cookie.length > 0 ? cookie : undefined;
+};
+
 /**
- * Refresh tier — POST /auth/refresh.
+ * Keys the replay tier by the presented refresh cookie. Only the hash is used — the
+ * raw token would otherwise be written into a Redis key.
  *
- * Sized well above `sensitiveLimiter` because silent refreshes are legitimately
- * frequent (once per access-token lifetime per active tab, and several tabs can
- * refresh independently), while still bounding replay of a stolen refresh token.
+ * Cookie-less requests never reach here (see `skip` below), so there is no constant
+ * fallback bucket for one caller to drain on everyone else's behalf.
+ */
+const refreshSessionKey = (req: Request): string =>
+  createHash("sha256")
+    .update(getRefreshCookie(req) ?? "")
+    .digest("hex")
+    .slice(0, 32);
+
+/**
+ * Refresh replay tier — applied to POST /auth/refresh alongside the IP tier below.
+ *
+ * Despite the per-session key, this is **replay protection, not a per-session
+ * throughput budget**: rotation issues a new token on every success, so a working
+ * session moves to a fresh empty bucket each time and can never fill one. What it
+ * does bound is repeated presentation of one unchanging token — the theft-replay
+ * case, which is exactly what reuse detection cares about.
+ *
+ * It therefore cannot bound a caller sending a *different* random cookie each
+ * request; every token hashes to a new key. A composite `ip:session` key would not
+ * help either — still unique per token — which is why the IP ceiling below is a
+ * genuinely separate limiter and the real volumetric bound.
  */
 export const refreshLimiter = rateLimit({
   ...withTestBypass({
     store: buildStore("refresh"),
     windowMs: Number(process.env.REFRESH_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
     max: Number(process.env.REFRESH_RATE_LIMIT_MAX ?? 30),
+    keyGenerator: refreshSessionKey,
+    // A cookie-less refresh is rejected before any DB work and has no token to
+    // replay, so this tight tier has nothing to protect against. Metering it here
+    // would cap legitimate expired-session traffic from a whole NAT at this tier's
+    // limit rather than the far wider per-IP ceiling — and a 429 (unlike the 401
+    // they should get) is treated as transient by the client, stranding the user.
+    skip: (req) => getRefreshCookie(req) === undefined,
     standardHeaders: true,
     legacyHeaders: false,
-    message: {
-      success: false,
-      message: "Too many refresh attempts. Please try again later.",
-    },
+    message: REFRESH_LIMIT_MESSAGE,
+  }),
+});
+
+/**
+ * Per-IP ceiling for refresh, sized for a large shared network rather than a single
+ * user: it exists to stop an unauthenticated flood of random cookies (each of which
+ * costs a DB transaction), not to police normal use. A 100-person office refreshing
+ * every 15 minutes produces roughly 35 requests per 5-minute window — an order of
+ * magnitude below this — while a flood trips it immediately.
+ */
+export const refreshIpLimiter = rateLimit({
+  ...withTestBypass({
+    store: buildStore("refresh-ip"),
+    windowMs: Number(process.env.REFRESH_IP_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
+    max: Number(process.env.REFRESH_IP_RATE_LIMIT_MAX ?? 300),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: REFRESH_LIMIT_MESSAGE,
   }),
 });
 

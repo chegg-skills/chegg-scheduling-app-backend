@@ -9,7 +9,9 @@ import {
   setRefreshCookie,
   REFRESH_COOKIE_NAME,
   CSRF_COOKIE_NAME,
+  clearSessionCookies,
 } from "../../shared/auth/cookie";
+import { ErrorHandler } from "../../shared/error/errorhandler";
 import { establishRefreshSession } from "../../shared/auth/session";
 
 const register = async (req: Request, res: Response) => {
@@ -44,10 +46,23 @@ const login = async (req: Request, res: Response) => {
  * cookie and never in the response body.
  */
 const refresh = async (req: Request, res: Response) => {
-  const result = await authService.refresh(req.cookies?.[REFRESH_COOKIE_NAME], {
-    userAgent: req.get("user-agent") ?? null,
-    ipAddress: req.ip ?? null,
-  });
+  let result: Awaited<ReturnType<typeof authService.refresh>>;
+
+  try {
+    result = await authService.refresh(req.cookies?.[REFRESH_COOKIE_NAME], {
+      userAgent: req.get("user-agent") ?? null,
+      ipAddress: req.ip ?? null,
+    });
+  } catch (error) {
+    // Intentional catch-and-rethrow (cf. sso.controller's handleCallback): a rejected
+    // refresh means the cookie is dead, so drop it rather than let the browser re-send
+    // it on every request for the next 30 days. Narrowed to 401 on purpose — a
+    // transient failure inside the rotation transaction must not destroy a valid session.
+    if (error instanceof ErrorHandler && error.statusCode === StatusCodes.UNAUTHORIZED) {
+      clearSessionCookies(res);
+    }
+    throw error;
+  }
 
   // Preserve the current CSRF token rather than rotating it — see setAuthCookie.
   const csrfToken = setAuthCookie(res, result.token, req.cookies?.[CSRF_COOKIE_NAME]);

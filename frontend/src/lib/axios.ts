@@ -165,11 +165,19 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // A stale CSRF token fails the double-submit check. The cookie is authoritative,
-    // so re-read it and retry once before treating this as a dead session.
+    // A stale or missing CSRF token fails the double-submit check. The cookie is
+    // authoritative, so retry once with it.
+    //
+    // The comparison is against the token this request actually sent, not against
+    // our stored copy: the request interceptor already prefers the cookie, so
+    // comparing to the stored copy would retry with the identical token that just
+    // failed, and would skip the retry when the stored copy happens to match. This
+    // also keeps ordinary permission-denied 403s from being replayed.
     if (status === 403 && original && !original._csrfRetried) {
       const cookieToken = readCsrfCookie()
-      if (cookieToken && cookieToken !== csrfMemory) {
+      const sentToken = original.headers?.[CSRF_HEADER_NAME]
+
+      if (cookieToken && cookieToken !== sentToken) {
         storeCsrfToken(cookieToken)
         original._csrfRetried = true
         return apiClient(original)

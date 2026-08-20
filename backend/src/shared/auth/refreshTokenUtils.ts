@@ -162,11 +162,19 @@ export const revokeAllRefreshTokensForUser = async (userId: string): Promise<voi
 };
 
 /**
- * Fire-and-forget cleanup of expired rows so rotation does not grow the table
- * without bound. Mirrors the opportunistic `oidcState` cleanup in the SSO callback.
+ * Deletes expired rows so rotation does not grow the table without bound.
+ *
+ * Runs on a schedule (see `refreshTokenCleanup.worker.ts`), not per-request: an
+ * earlier version ran opportunistically inside every `refresh` call, which meant
+ * a table-wide `deleteMany` fired on every session's ~15-minute renewal — many
+ * overlapping full-predicate deletes racing on the same expired rows under normal
+ * traffic, with cost scaling with active-session count instead of being flat.
+ *
+ * @returns The number of rows deleted, for the caller to log.
  */
-export const purgeExpiredRefreshTokens = (): void => {
-  void prisma.refreshToken
-    .deleteMany({ where: { expiresAt: { lt: new Date() } } })
-    .catch(() => undefined);
+export const purgeExpiredRefreshTokens = async (): Promise<number> => {
+  const { count } = await prisma.refreshToken.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
+  return count;
 };
