@@ -139,6 +139,26 @@ describe("refresh tiers — per-session budget plus per-IP ceiling", () => {
     expect((await request(app).post("/refresh").set("Cookie", sessionB)).status).toBe(200);
   });
 
+  it("does not pool cookie-less callers into one shared budget", async () => {
+    // `trust proxy` lets each request present a distinct client IP.
+    const app = express();
+    app.set("trust proxy", 1);
+    app.use(cookieParser());
+    app.post("/refresh", refreshLimiter, (_req, res) => res.status(200).json({ ok: true }));
+
+    const from = (ip: string) => request(app).post("/refresh").set("X-Forwarded-For", ip);
+
+    // One cookie-less caller exhausts its own budget (max 2)...
+    expect((await from("203.0.113.1")).status).toBe(200);
+    expect((await from("203.0.113.1")).status).toBe(200);
+    expect((await from("203.0.113.1")).status).toBe(429);
+
+    // ...which must not spend anyone else's. Keying these to a constant let a single
+    // caller — exempt from CSRF, since it sends no cookie — lock out every user whose
+    // refresh cookie had expired, turning their 401 into an unrecoverable 429.
+    expect((await from("203.0.113.9")).status).toBe(200);
+  });
+
   it("bounds a flood of random tokens via the per-IP tier", async () => {
     // The session tier alone cannot catch this: every random cookie hashes to a
     // fresh key, so each request would get its own budget. Only a genuinely

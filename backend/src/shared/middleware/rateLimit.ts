@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Request } from "express";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import { getRedisClient } from "../redis/redisClient";
 import { REFRESH_COOKIE_NAME } from "../auth/cookie";
@@ -102,29 +102,40 @@ const REFRESH_LIMIT_MESSAGE = {
 };
 
 /**
- * Keys the per-session tier by the presented refresh cookie.
+ * Keys the per-session tier by the presented refresh cookie, falling back to the
+ * client IP when there is none.
  *
- * Only the hash is used — the raw token would otherwise be written into a Redis key.
- * A caller with no cookie falls into one shared "anon" bucket; that is deliberate,
- * since a legitimate refresh always carries one.
+ * The fallback must not be a constant: a shared bucket would let one caller — with
+ * no cookie, and therefore exempt from CSRF — drain the budget for every cookie-less
+ * request in the deployment. Real users whose cookie has expired would then get 429
+ * instead of 401, and the frontend treats 429 as transient, so they would never be
+ * redirected to log in again.
+ *
+ * Keys are prefixed so an IP can never collide with a token hash. Only the hash is
+ * used — the raw token would otherwise be written into a Redis key.
  */
 const refreshSessionKey = (req: Request): string => {
   const cookie = req.cookies?.[REFRESH_COOKIE_NAME];
-  if (typeof cookie !== "string" || cookie.length === 0) return "anon";
+  if (typeof cookie !== "string" || cookie.length === 0) {
+    return `ip:${ipKeyGenerator(req.ip ?? "")}`;
+  }
 
-  return createHash("sha256").update(cookie).digest("hex").slice(0, 32);
+  return `session:${createHash("sha256").update(cookie).digest("hex").slice(0, 32)}`;
 };
 
 /**
- * Refresh tiers — both applied to POST /auth/refresh, because neither bounds the
- * other's abuse case.
+ * Refresh replay tier — applied to POST /auth/refresh alongside the IP tier below.
  *
- * Per-session (this one) gives each session its own budget, so an office behind a
- * single NAT no longer shares one — IP-only keying signed the whole building out.
- * But it cannot bound a caller who sends a *different* random cookie every request:
- * each one hashes to a fresh key. Note a composite `ip:session` key does not fix
- * that either — it is still unique per token — which is why the IP tier below is a
- * genuinely separate limiter rather than part of this key.
+ * Despite the per-session key, this is **replay protection, not a per-session
+ * throughput budget**: rotation issues a new token on every success, so a working
+ * session moves to a fresh empty bucket each time and can never fill one. What it
+ * does bound is repeated presentation of one unchanging token — the theft-replay
+ * case, which is exactly what reuse detection cares about.
+ *
+ * It therefore cannot bound a caller sending a *different* random cookie each
+ * request; every token hashes to a new key. A composite `ip:session` key would not
+ * help either — still unique per token — which is why the IP ceiling below is a
+ * genuinely separate limiter and the real volumetric bound.
  */
 export const refreshLimiter = rateLimit({
   ...withTestBypass({
