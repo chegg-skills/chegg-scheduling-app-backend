@@ -94,6 +94,27 @@ export const strictLimiter = rateLimit({
 });
 
 /**
+ * Refresh tier — POST /auth/refresh.
+ *
+ * Sized well above `sensitiveLimiter` because silent refreshes are legitimately
+ * frequent (once per access-token lifetime per active tab, and several tabs can
+ * refresh independently), while still bounding replay of a stolen refresh token.
+ */
+export const refreshLimiter = rateLimit({
+  ...withTestBypass({
+    store: buildStore("refresh"),
+    windowMs: Number(process.env.REFRESH_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
+    max: Number(process.env.REFRESH_RATE_LIMIT_MAX ?? 30),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message: "Too many refresh attempts. Please try again later.",
+    },
+  }),
+});
+
+/**
  * Public tier — unauthenticated discovery routes (/public/*).
  * Prevents bulk scraping of team/event/coach data.
  */

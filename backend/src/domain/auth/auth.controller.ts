@@ -3,7 +3,14 @@ import { asyncHandler } from "../../shared/http/asyncHandler";
 import { StatusCodes } from "http-status-codes";
 import * as authService from "./auth.service";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
-import { setAuthCookie, clearAuthCookie } from "../../shared/auth/cookie";
+import {
+  setAuthCookie,
+  clearAuthCookie,
+  setRefreshCookie,
+  REFRESH_COOKIE_NAME,
+  CSRF_COOKIE_NAME,
+} from "../../shared/auth/cookie";
+import { establishRefreshSession } from "../../shared/auth/session";
 
 const register = async (req: Request, res: Response) => {
   // When self-register is enabled (public endpoint), always force role to
@@ -13,6 +20,7 @@ const register = async (req: Request, res: Response) => {
 
   const result = await authService.register(data);
   const csrfToken = setAuthCookie(res, result.token);
+  await establishRefreshSession(req, res, result.user.id);
 
   sendSuccessResponse(
     res,
@@ -25,12 +33,36 @@ const register = async (req: Request, res: Response) => {
 const login = async (req: Request, res: Response) => {
   const result = await authService.login(req.body);
   const csrfToken = setAuthCookie(res, result.token);
+  await establishRefreshSession(req, res, result.user.id);
 
   sendSuccessResponse(res, StatusCodes.OK, { ...result, csrfToken }, "Login successful.");
 };
 
-const logout = async (_req: Request, res: Response) => {
-  const result = await authService.logout();
+/**
+ * Exchanges the refresh cookie for a fresh access token and rotates the refresh
+ * token. The rotated refresh token is deliberately returned only as an httpOnly
+ * cookie and never in the response body.
+ */
+const refresh = async (req: Request, res: Response) => {
+  const result = await authService.refresh(req.cookies?.[REFRESH_COOKIE_NAME], {
+    userAgent: req.get("user-agent") ?? null,
+    ipAddress: req.ip ?? null,
+  });
+
+  // Preserve the current CSRF token rather than rotating it — see setAuthCookie.
+  const csrfToken = setAuthCookie(res, result.token, req.cookies?.[CSRF_COOKIE_NAME]);
+  setRefreshCookie(res, result.refreshToken);
+
+  sendSuccessResponse(
+    res,
+    StatusCodes.OK,
+    { user: result.user, token: result.token, csrfToken },
+    "Session refreshed.",
+  );
+};
+
+const logout = async (req: Request, res: Response) => {
+  const result = await authService.logout(req.cookies?.[REFRESH_COOKIE_NAME]);
   clearAuthCookie(res);
 
   sendSuccessResponse(res, StatusCodes.OK, result, "Logout successful.");
@@ -39,6 +71,7 @@ const logout = async (_req: Request, res: Response) => {
 const bootstrap = async (req: Request, res: Response) => {
   const result = await authService.bootstrap(req.body);
   const csrfToken = setAuthCookie(res, result.token);
+  await establishRefreshSession(req, res, result.user.id);
   sendSuccessResponse(
     res,
     StatusCodes.CREATED,
@@ -50,6 +83,7 @@ const bootstrap = async (req: Request, res: Response) => {
 export default {
   register: asyncHandler(register),
   login: asyncHandler(login),
+  refresh: asyncHandler(refresh),
   logout: asyncHandler(logout),
   bootstrap: asyncHandler(bootstrap),
 };

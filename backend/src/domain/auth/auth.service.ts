@@ -7,6 +7,13 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { buildAuthToken } from "../../shared/auth/jwtUtils";
+import {
+  purgeExpiredRefreshTokens,
+  revokeAllRefreshTokensForUser,
+  revokeRefreshToken,
+  rotateRefreshToken,
+  type RefreshTokenMeta,
+} from "../../shared/auth/refreshTokenUtils";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import {
   SALT_ROUNDS,
@@ -176,8 +183,66 @@ const login = async (payload: LoginUserInput): Promise<{ user: SafeUser; token: 
   };
 };
 
-const logout = async (): Promise<{ message: string }> => {
+/**
+ * Revokes the presented refresh token so the session cannot be resumed after
+ * logout. Best-effort by design — a missing or already-invalid token still
+ * results in a successful logout rather than an error the client cannot act on.
+ */
+const logout = async (rawRefreshToken?: string): Promise<{ message: string }> => {
+  if (rawRefreshToken) {
+    await revokeRefreshToken(rawRefreshToken);
+  }
+
   return { message: "Logged out successfully." };
+};
+
+/**
+ * Exchanges a valid refresh token for a new access token, rotating the refresh
+ * token in the process.
+ *
+ * The account is re-checked here (not just at `authenticate` time) so a user
+ * deactivated mid-session cannot keep extending it.
+ */
+const refresh = async (
+  rawRefreshToken: string | undefined,
+  meta: RefreshTokenMeta = {},
+): Promise<{ user: SafeUser; token: string; refreshToken: string }> => {
+  if (!rawRefreshToken) {
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Session expired. Please log in again.");
+  }
+
+  const result = await rotateRefreshToken(rawRefreshToken, meta);
+
+  if (result.status === "reused") {
+    throw new ErrorHandler(
+      StatusCodes.UNAUTHORIZED,
+      "This session was revoked for security reasons. Please log in again.",
+    );
+  }
+
+  if (result.status === "invalid") {
+    throw new ErrorHandler(StatusCodes.UNAUTHORIZED, "Session expired. Please log in again.");
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: result.userId } });
+
+  if (!user || !user.isActive) {
+    await revokeAllRefreshTokensForUser(result.userId);
+    throw new ErrorHandler(
+      StatusCodes.UNAUTHORIZED,
+      "This account is no longer active. Please contact an administrator.",
+    );
+  }
+
+  const safeUser = toSafeUser(user);
+
+  purgeExpiredRefreshTokens();
+
+  return {
+    user: safeUser,
+    token: buildAuthToken(safeUser),
+    refreshToken: result.token,
+  };
 };
 
 type BootstrapInput = {
@@ -229,4 +294,4 @@ const bootstrap = async (payload: BootstrapInput): Promise<{ user: SafeUser; tok
 
   return result;
 };
-export { bootstrap, login, logout, register };
+export { bootstrap, login, logout, refresh, register };

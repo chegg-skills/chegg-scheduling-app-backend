@@ -64,4 +64,16 @@ export const defaultHandlers = [
       data: { id: 'default-user', role: 'SUPER_ADMIN', firstName: 'Default', lastName: 'User' },
     })
   ),
+  // The axios interceptor calls this on any 401. Override with `server.use(...)` to
+  // return 401 when a test needs the session-expired redirect instead.
+  http.post(pathIs('/api/auth/refresh'), () =>
+    HttpResponse.json({
+      success: true,
+      data: {
+        user: { id: 'default-user', role: 'SUPER_ADMIN', firstName: 'Default', lastName: 'User' },
+        token: 'refreshed-access-token',
+        csrfToken: 'refreshed-csrf-token',
+      },
+    })
+  ),
 ]

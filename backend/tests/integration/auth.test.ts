@@ -298,8 +298,299 @@ describe("POST /api/auth/logout", () => {
     expect(res.body.success).toBe(true);
   });
 
-  it("returns 401 when no auth token is provided", async () => {
+  // Logout is idempotent and no longer requires a live access token: that token now
+  // expires long before the session, and refusing an idle user's logout would leave
+  // their refresh token un-revoked. CSRF is what keeps this from being cross-site
+  // triggerable — covered in the refresh suite.
+  it("returns 200 when no credentials are provided at all", async () => {
     const res = await request(app).post("/api/auth/logout");
+
+    expect(res.status).toBe(200);
+  });
+
+  // Bearer clients carry no cookies, so they can never satisfy double-submit —
+  // CSRF must stay skipped for them or logout becomes unreachable.
+  it("allows a Bearer client with no cookies to log out", async () => {
+    const res = await request(app).post("/api/auth/logout").set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/auth/refresh
+// ─────────────────────────────────────────────────────────────
+describe("POST /api/auth/refresh", () => {
+  const REFRESH_COOKIE = "refresh_token";
+  const CSRF_COOKIE = "csrf_token";
+  const CSRF_HEADER = "x-csrf-token";
+
+  /** Pulls one cookie's value out of a supertest response's set-cookie header. */
+  const readCookie = (res: request.Response, name: string): string | undefined => {
+    const raw = res.headers["set-cookie"] as unknown as string[] | undefined;
+    const match = raw?.find((cookie) => cookie.startsWith(`${name}=`));
+    return match?.split(";")[0].split("=")[1];
+  };
+
+  type Session = { refresh: string; csrf: string; accessToken: string };
+
+  const login = async (): Promise<Session> => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "refresh@test.com", password: "Admin1234" });
+
+    expect(res.status).toBe(200);
+    const refresh = readCookie(res, REFRESH_COOKIE);
+    const csrf = readCookie(res, CSRF_COOKIE);
+    expect(refresh).toBeDefined();
+    expect(csrf).toBeDefined();
+
+    return { refresh: refresh as string, csrf: csrf as string, accessToken: res.body.data.token };
+  };
+
+  /**
+   * Refresh carries a cookie-borne credential, so it is CSRF-protected like any
+   * other write. Pass `csrf: null` to exercise the cross-site case.
+   */
+  const postRefresh = (refresh: string | null, csrf: string | null) => {
+    const cookies = [
+      ...(refresh ? [`${REFRESH_COOKIE}=${refresh}`] : []),
+      ...(csrf ? [`${CSRF_COOKIE}=${csrf}`] : []),
+    ];
+
+    const req = request(app).post("/api/auth/refresh");
+    if (cookies.length > 0) req.set("Cookie", cookies);
+    if (csrf) req.set(CSRF_HEADER, csrf);
+    return req;
+  };
+
+  beforeEach(async () => {
+    await clearTables();
+    await bootstrapAdmin("refresh@test.com", "Admin1234");
+  });
+
+  it("issues a refresh cookie on login", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "refresh@test.com", password: "Admin1234" });
+
+    const raw = res.headers["set-cookie"] as unknown as string[];
+    const refreshCookie = raw.find((cookie) => cookie.startsWith(`${REFRESH_COOKIE}=`));
+
+    expect(refreshCookie).toBeDefined();
+    expect(refreshCookie).toContain("HttpOnly");
+    // Scoped so the long-lived credential is not sent on ordinary API calls
+    expect(refreshCookie).toContain("Path=/api/auth");
+  });
+
+  it("exchanges a valid refresh cookie for a new access token and rotates the refresh token", async () => {
+    const session = await login();
+
+    const res = await postRefresh(session.refresh, session.csrf);
+
+    expect(res.status).toBe(200);
+    expect(typeof res.body.data.token).toBe("string");
+    expect(res.body.data.user.email).toBe("refresh@test.com");
+    // The rotated refresh token must never travel in the response body
+    expect(res.body.data.refreshToken).toBeUndefined();
+
+    const rotated = readCookie(res, REFRESH_COOKIE);
+    expect(rotated).toBeDefined();
+    expect(rotated).not.toBe(session.refresh);
+  });
+
+  it("returns a working access token that authenticates a protected route", async () => {
+    const session = await login();
+
+    const refreshRes = await postRefresh(session.refresh, session.csrf);
+
+    const meRes = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${refreshRes.body.data.token}`);
+
+    expect(meRes.status).toBe(200);
+  });
+
+  it("keeps the CSRF token stable across refreshes so other tabs stay valid", async () => {
+    const session = await login();
+
+    const first = await postRefresh(session.refresh, session.csrf);
+    expect(first.status).toBe(200);
+    expect(readCookie(first, CSRF_COOKIE)).toBe(session.csrf);
+    expect(first.body.data.csrfToken).toBe(session.csrf);
+
+    const second = await postRefresh(readCookie(first, REFRESH_COOKIE) as string, session.csrf);
+    expect(second.status).toBe(200);
+    expect(readCookie(second, CSRF_COOKIE)).toBe(session.csrf);
+
+    // A fresh login is still allowed to rotate it
+    const relogin = await login();
+    expect(relogin.csrf).not.toBe(session.csrf);
+  });
+
+  it("does not echo back a malformed CSRF cookie", async () => {
+    const session = await login();
+    const malformed = "not-a-uuid; DROP TABLE";
+
+    const res = await request(app)
+      .post("/api/auth/refresh")
+      .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`, `${CSRF_COOKIE}=${malformed}`])
+      .set(CSRF_HEADER, malformed);
+
+    // Rejected outright rather than serialized back into a Set-Cookie header
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 401 when no refresh cookie is present", async () => {
+    const res = await request(app).post("/api/auth/refresh");
+
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for an unknown refresh token", async () => {
+    const session = await login();
+    const res = await postRefresh("not-a-real-token", session.csrf);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects a refresh with no CSRF token and leaves the session usable", async () => {
+    const session = await login();
+
+    // A cross-site page can send the cookie but cannot read it to build the header
+    const res = await postRefresh(session.refresh, null);
+    expect(res.status).toBe(403);
+
+    // The rejected attempt must not have consumed the rotation
+    const legitimate = await postRefresh(session.refresh, session.csrf);
+    expect(legitimate.status).toBe(200);
+  });
+
+  it("rejects a refresh whose CSRF header does not match the cookie", async () => {
+    const session = await login();
+
+    const res = await request(app)
+      .post("/api/auth/refresh")
+      .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`, `${CSRF_COOKIE}=${session.csrf}`])
+      .set(CSRF_HEADER, "11111111-2222-3333-4444-555555555555");
+
+    expect(res.status).toBe(403);
+  });
+
+  it.each(["/api/auth/REFRESH", "/api/auth/refresh/"])(
+    "cannot bypass CSRF via path casing or trailing slash (%s)",
+    async (path) => {
+      const session = await login();
+
+      const res = await request(app)
+        .post(path)
+        .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`]);
+
+      expect(res.status).toBe(403);
+    },
+  );
+
+  it("revokes every session when a rotated-away token is replayed", async () => {
+    const session = await login();
+
+    // Rotate once so the original is superseded...
+    const firstRotation = await postRefresh(session.refresh, session.csrf);
+    expect(firstRotation.status).toBe(200);
+    const rotated = readCookie(firstRotation, REFRESH_COOKIE) as string;
+
+    // ...then replay the superseded token outside the grace window.
+    await prisma.refreshToken.updateMany({
+      where: { revokedAt: { not: null } },
+      data: { revokedAt: new Date(Date.now() - 60 * 60 * 1000) },
+    });
+
+    const replay = await postRefresh(session.refresh, session.csrf);
+    expect(replay.status).toBe(401);
+
+    // The legitimate token is revoked too — theft response is family-wide.
+    const afterTheft = await postRefresh(rotated, session.csrf);
+    expect(afterTheft.status).toBe(401);
+  });
+
+  it("tolerates a concurrent second refresh inside the grace window", async () => {
+    const session = await login();
+
+    const first = await postRefresh(session.refresh, session.csrf);
+    expect(first.status).toBe(200);
+
+    // Same cookie again immediately — a second browser tab losing the race, not theft.
+    const second = await postRefresh(session.refresh, session.csrf);
+
+    expect(second.status).toBe(200);
+  });
+
+  it("stops refreshing once the user is deactivated", async () => {
+    const session = await login();
+
+    await prisma.user.updateMany({
+      where: { email: "refresh@test.com" },
+      data: { isActive: false },
+    });
+
+    const res = await postRefresh(session.refresh, session.csrf);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("invalidates the refresh token on logout", async () => {
+    const session = await login();
+
+    const logoutRes = await request(app)
+      .post("/api/auth/logout")
+      .set("Authorization", `Bearer ${session.accessToken}`)
+      .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`, `${CSRF_COOKIE}=${session.csrf}`])
+      .set(CSRF_HEADER, session.csrf);
+    expect(logoutRes.status).toBe(200);
+
+    const res = await postRefresh(session.refresh, session.csrf);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("lets an idle user log out after the access token has expired", async () => {
+    const session = await login();
+
+    // No Authorization header and no auth cookie — the access token is long gone
+    const logoutRes = await request(app)
+      .post("/api/auth/logout")
+      .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`, `${CSRF_COOKIE}=${session.csrf}`])
+      .set(CSRF_HEADER, session.csrf);
+
+    expect(logoutRes.status).toBe(200);
+
+    // The session must actually be revoked, not merely appear to be
+    const res = await postRefresh(session.refresh, session.csrf);
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects a cross-site logout and leaves the session intact", async () => {
+    const session = await login();
+
+    const logoutRes = await request(app)
+      .post("/api/auth/logout")
+      .set("Cookie", [`${REFRESH_COOKIE}=${session.refresh}`]);
+
+    expect(logoutRes.status).toBe(403);
+
+    // Still usable — a stranger's page cannot end the session
+    const res = await postRefresh(session.refresh, session.csrf);
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects a refresh token whose expiry has passed", async () => {
+    const session = await login();
+
+    await prisma.refreshToken.updateMany({
+      where: { revokedAt: null },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    const res = await postRefresh(session.refresh, session.csrf);
 
     expect(res.status).toBe(401);
   });

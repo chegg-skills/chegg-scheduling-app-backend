@@ -5,6 +5,7 @@ import { prisma } from "../../shared/db/prisma";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { buildAuthToken } from "../../shared/auth/jwtUtils";
 import { setAuthCookie } from "../../shared/auth/cookie";
+import { establishRefreshSession } from "../../shared/auth/session";
 import { createPublicBookingSlug } from "../../shared/utils/publicBookingSlug";
 import { normalizeEmail, toSafeUser } from "../../shared/utils/userUtils";
 import {
@@ -128,6 +129,7 @@ const handleCallback = async (req: Request, res: Response) => {
 
     if (oidcState.inviteToken) {
       await handleInviteAcceptance(
+        req,
         res,
         oidcState.inviteToken,
         normalizedEmail,
@@ -136,7 +138,7 @@ const handleCallback = async (req: Request, res: Response) => {
         userInfo,
       );
     } else {
-      await handleExistingUserLogin(res, normalizedEmail, userInfo.sub, provider);
+      await handleExistingUserLogin(req, res, normalizedEmail, userInfo.sub, provider);
     }
   } catch (error) {
     getRequestLogger().error({ error }, "SSO callback failed.");
@@ -152,6 +154,7 @@ type OidcUserInfoPartial = {
 };
 
 async function handleInviteAcceptance(
+  req: Request,
   res: Response,
   inviteToken: string,
   normalizedEmail: string,
@@ -239,10 +242,12 @@ async function handleInviteAcceptance(
 
   const token = buildAuthToken(safeUser);
   setAuthCookie(res, token);
+  await establishRefreshSession(req, res, safeUser.id);
   res.redirect(`${getFrontendUrl()}/dashboard`);
 }
 
 async function handleExistingUserLogin(
+  req: Request,
   res: Response,
   normalizedEmail: string,
   ssoSub: string,
@@ -282,6 +287,7 @@ async function handleExistingUserLogin(
 
   const token = buildAuthToken(safeUser);
   setAuthCookie(res, token);
+  await establishRefreshSession(req, res, safeUser.id);
   res.redirect(`${getFrontendUrl()}/dashboard`);
 }
 

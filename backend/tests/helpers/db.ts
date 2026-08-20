@@ -19,5 +19,6 @@ export const clearTables = async (): Promise<void> => {
   await prisma.team.deleteMany();
   await prisma.oidcState.deleteMany(); // no FK; was not cleaned before
   await prisma.userInvite.deleteMany();
+  await prisma.refreshToken.deleteMany(); // cascades from user, but explicit keeps the order readable
   await prisma.user.deleteMany();
 };
