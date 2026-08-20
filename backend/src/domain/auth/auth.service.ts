@@ -8,7 +8,6 @@ import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { buildAuthToken } from "../../shared/auth/jwtUtils";
 import {
-  purgeExpiredRefreshTokens,
   revokeAllRefreshTokensForUser,
   revokeRefreshToken,
   rotateRefreshToken,
@@ -243,8 +242,6 @@ const refresh = async (
   }
 
   const safeUser = toSafeUser(user);
-
-  purgeExpiredRefreshTokens();
 
   return {
     user: safeUser,

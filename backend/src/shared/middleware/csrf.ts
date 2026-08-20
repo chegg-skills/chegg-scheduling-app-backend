@@ -40,8 +40,24 @@ const AUTH_EXEMPT_PREFIXES = [
   "/api/invites/accept-invite",
 ];
 
-const isAuthExempt = (path: string): boolean =>
-  AUTH_EXEMPT_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
+// Express's default router (`case sensitive routing` / `strict routing` both
+// unset in app.ts) treats `/api/auth/Logout` and `/api/auth/logout/` as the same
+// route as `/api/auth/logout`. Comparing `req.path` with exact-case `startsWith`
+// does not: a differently-cased or trailing-slashed request reaches the same
+// handler but fails the exemption match, so it falls through to the credential
+// check below and gets CSRF-enforced anyway — silently defeating the exemption
+// for whichever route that happens to (e.g. logout, where the whole point of the
+// exemption is that it must never be blocked). Normalizing both sides makes the
+// match track what Express actually routes, not just the literal string.
+const normalizePath = (path: string): string => path.toLowerCase().replace(/\/+$/, "");
+
+const isAuthExempt = (path: string): boolean => {
+  const normalized = normalizePath(path);
+  return AUTH_EXEMPT_PREFIXES.some((prefix) => {
+    const normalizedPrefix = normalizePath(prefix);
+    return normalized === normalizedPrefix || normalized.startsWith(normalizedPrefix + "/");
+  });
+};
 
 const matchesToken = (cookieToken: string, headerToken: string): boolean => {
   const cookieBuffer = Buffer.from(cookieToken);
