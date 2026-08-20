@@ -97,8 +97,20 @@ export const clearRefreshCookie = (res: Response): void => {
   });
 };
 
-export const clearAuthCookie = (res: Response): void => {
+/**
+ * Drops the session credentials but leaves the CSRF cookie in place.
+ *
+ * Used when a refresh is rejected: the dead refresh cookie would otherwise be
+ * re-sent on every future request for its full 30-day life. The CSRF cookie is
+ * deliberately spared — clearing it strands the frontend's stored copy in the very
+ * mismatch state that makes writes fail with no recovery path.
+ */
+export const clearSessionCookies = (res: Response): void => {
   res.clearCookie(AUTH_COOKIE_NAME, buildCookieOptions(true));
   clearRefreshCookie(res);
+};
+
+export const clearAuthCookie = (res: Response): void => {
+  clearSessionCookies(res);
   clearCsrfCookie(res);
 };

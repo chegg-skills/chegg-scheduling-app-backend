@@ -18,12 +18,16 @@ const MUTATED_KEYS = [
   "STRICT_RATE_LIMIT_MAX",
   "BOOKING_CREATION_RATE_LIMIT_MAX",
   "PUBLIC_RATE_LIMIT_MAX",
+  "REFRESH_RATE_LIMIT_MAX",
+  "REFRESH_IP_RATE_LIMIT_MAX",
 ] as const;
 const SAVED_ENV: Record<string, string | undefined> = {};
 
 let sensitiveLimiter: RequestHandler;
 let strictLimiter: RequestHandler;
 let bookingCreationLimiter: RequestHandler;
+let refreshLimiter: RequestHandler;
+let refreshIpLimiter: RequestHandler;
 let bypassedPublicLimiter: RequestHandler;
 
 beforeAll(() => {
@@ -36,11 +40,15 @@ beforeAll(() => {
   process.env.SENSITIVE_RATE_LIMIT_MAX = "3";
   process.env.STRICT_RATE_LIMIT_MAX = "2";
   process.env.BOOKING_CREATION_RATE_LIMIT_MAX = "2";
+  process.env.REFRESH_RATE_LIMIT_MAX = "2";
+  process.env.REFRESH_IP_RATE_LIMIT_MAX = "4";
   jest.isolateModules(() => {
     const mod = require("../../src/shared/middleware/rateLimit");
     sensitiveLimiter = mod.sensitiveLimiter;
     strictLimiter = mod.strictLimiter;
     bookingCreationLimiter = mod.bookingCreationLimiter;
+    refreshLimiter = mod.refreshLimiter;
+    refreshIpLimiter = mod.refreshIpLimiter;
   });
 
   // ── Bypassed instance (flag unset, low max to prove requests still pass) ──
@@ -103,6 +111,49 @@ describe("rate limiting — enforcement (ENABLE_RATE_LIMITS_IN_TEST=true)", () =
     const booking = await request(app).get("/booking");
     expect(booking.status).toBe(200);
     expect(booking.body.message).toBeUndefined();
+  });
+});
+
+describe("refresh tiers — per-session budget plus per-IP ceiling", () => {
+  const cookieParser = require("cookie-parser");
+
+  const buildRefreshApp = (...limiters: RequestHandler[]): express.Express => {
+    const app = express();
+    app.use(cookieParser());
+    app.post("/refresh", ...limiters, (_req, res) => res.status(200).json({ ok: true }));
+    return app;
+  };
+
+  it("gives two sessions from the same IP independent budgets", async () => {
+    const app = buildRefreshApp(refreshLimiter);
+    const sessionA = ["refresh_token=aaaaaaaaaaaa"];
+    const sessionB = ["refresh_token=bbbbbbbbbbbb"];
+
+    // Exhaust session A (max 2)
+    expect((await request(app).post("/refresh").set("Cookie", sessionA)).status).toBe(200);
+    expect((await request(app).post("/refresh").set("Cookie", sessionA)).status).toBe(200);
+    expect((await request(app).post("/refresh").set("Cookie", sessionA)).status).toBe(429);
+
+    // Session B shares the IP but must not inherit A's exhaustion — this is the
+    // office/NAT case where IP-only keying signed the whole building out.
+    expect((await request(app).post("/refresh").set("Cookie", sessionB)).status).toBe(200);
+  });
+
+  it("bounds a flood of random tokens via the per-IP tier", async () => {
+    // The session tier alone cannot catch this: every random cookie hashes to a
+    // fresh key, so each request would get its own budget. Only a genuinely
+    // IP-keyed limiter bounds it.
+    const app = buildRefreshApp(refreshIpLimiter, refreshLimiter);
+
+    const statuses: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const res = await request(app)
+        .post("/refresh")
+        .set("Cookie", [`refresh_token=random-${i}`]);
+      statuses.push(res.status);
+    }
+
+    expect(statuses).toContain(429);
   });
 });
 

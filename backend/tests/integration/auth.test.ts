@@ -582,6 +582,35 @@ describe("POST /api/auth/refresh", () => {
     expect(res.status).toBe(200);
   });
 
+  it("clears the dead refresh cookie when a refresh is rejected", async () => {
+    const session = await login();
+
+    await prisma.refreshToken.updateMany({
+      where: { revokedAt: null },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    const res = await postRefresh(session.refresh, session.csrf);
+    expect(res.status).toBe(401);
+
+    const cleared = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+      c.startsWith(`${REFRESH_COOKIE}=`),
+    );
+
+    // Without this the browser re-sends a useless cookie for its full 30-day life.
+    expect(cleared).toBeDefined();
+    expect(cleared).toContain(`${REFRESH_COOKIE}=;`);
+    // The clearing cookie must carry the same path it was set with, or it is ignored
+    expect(cleared).toContain("Path=/api/auth");
+
+    // The CSRF cookie is deliberately left alone — clearing it would strand the
+    // frontend's stored copy and make every later write fail with no recovery.
+    const csrfCleared = (res.headers["set-cookie"] as unknown as string[] | undefined)?.find((c) =>
+      c.startsWith(`${CSRF_COOKIE}=`),
+    );
+    expect(csrfCleared).toBeUndefined();
+  });
+
   it("rejects a refresh token whose expiry has passed", async () => {
     const session = await login();
 

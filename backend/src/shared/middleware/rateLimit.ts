@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
+import type { Request } from "express";
 import rateLimit from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import { getRedisClient } from "../redis/redisClient";
+import { REFRESH_COOKIE_NAME } from "../auth/cookie";
 
 // Returns a Redis-backed store when REDIS_URL is set (production), or undefined
 // which makes express-rate-limit fall back to its default in-memory store (dev/test).
@@ -93,24 +96,63 @@ export const strictLimiter = rateLimit({
   }),
 });
 
+const REFRESH_LIMIT_MESSAGE = {
+  success: false,
+  message: "Too many refresh attempts. Please try again later.",
+};
+
 /**
- * Refresh tier — POST /auth/refresh.
+ * Keys the per-session tier by the presented refresh cookie.
  *
- * Sized well above `sensitiveLimiter` because silent refreshes are legitimately
- * frequent (once per access-token lifetime per active tab, and several tabs can
- * refresh independently), while still bounding replay of a stolen refresh token.
+ * Only the hash is used — the raw token would otherwise be written into a Redis key.
+ * A caller with no cookie falls into one shared "anon" bucket; that is deliberate,
+ * since a legitimate refresh always carries one.
+ */
+const refreshSessionKey = (req: Request): string => {
+  const cookie = req.cookies?.[REFRESH_COOKIE_NAME];
+  if (typeof cookie !== "string" || cookie.length === 0) return "anon";
+
+  return createHash("sha256").update(cookie).digest("hex").slice(0, 32);
+};
+
+/**
+ * Refresh tiers — both applied to POST /auth/refresh, because neither bounds the
+ * other's abuse case.
+ *
+ * Per-session (this one) gives each session its own budget, so an office behind a
+ * single NAT no longer shares one — IP-only keying signed the whole building out.
+ * But it cannot bound a caller who sends a *different* random cookie every request:
+ * each one hashes to a fresh key. Note a composite `ip:session` key does not fix
+ * that either — it is still unique per token — which is why the IP tier below is a
+ * genuinely separate limiter rather than part of this key.
  */
 export const refreshLimiter = rateLimit({
   ...withTestBypass({
     store: buildStore("refresh"),
     windowMs: Number(process.env.REFRESH_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
     max: Number(process.env.REFRESH_RATE_LIMIT_MAX ?? 30),
+    keyGenerator: refreshSessionKey,
     standardHeaders: true,
     legacyHeaders: false,
-    message: {
-      success: false,
-      message: "Too many refresh attempts. Please try again later.",
-    },
+    message: REFRESH_LIMIT_MESSAGE,
+  }),
+});
+
+/**
+ * Per-IP ceiling for refresh, sized for a large shared network rather than a single
+ * user: it exists to stop an unauthenticated flood of random cookies (each of which
+ * costs a DB transaction), not to police normal use. A 100-person office refreshing
+ * every 15 minutes produces roughly 35 requests per 5-minute window — an order of
+ * magnitude below this — while a flood trips it immediately.
+ */
+export const refreshIpLimiter = rateLimit({
+  ...withTestBypass({
+    store: buildStore("refresh-ip"),
+    windowMs: Number(process.env.REFRESH_IP_RATE_LIMIT_WINDOW_MS ?? 5 * 60 * 1000),
+    max: Number(process.env.REFRESH_IP_RATE_LIMIT_MAX ?? 300),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: REFRESH_LIMIT_MESSAGE,
   }),
 });
 
