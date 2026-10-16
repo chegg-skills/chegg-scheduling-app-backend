@@ -41,6 +41,7 @@ export const buildAuthorizationUrl = async (state: string, nonce: string): Promi
     state,
     nonce,
     redirect_uri: redirectUri,
+    prompt: "login",
   });
 };
 
