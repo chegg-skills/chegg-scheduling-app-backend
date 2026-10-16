@@ -2,7 +2,7 @@ import express from "express";
 import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import type { RequestHandler } from "express";
-import authController from "./auth.controller";
+import authController from "./auth.module";
 import { authenticate, authorize, optionalAuthenticate } from "../../shared/middleware/auth";
 import {
   refreshIpLimiter,
