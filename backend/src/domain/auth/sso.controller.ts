@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { asyncHandler } from "../../shared/http/asyncHandler";
 import { prisma } from "../../shared/db/prisma";
 import { getRequestLogger } from "../../shared/logging/requestContext";
@@ -205,26 +205,35 @@ async function handleInviteAcceptance(
 
   const { firstName, lastName } = deriveName(userInfo);
 
-  const [createdUser] = await prisma.$transaction([
-    prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        password: null,
-        role: invite.role,
-        firstName,
-        lastName,
-        timezone: "UTC",
-        publicBookingSlug: createPublicBookingSlug(`${firstName} ${lastName}`, "coach"),
-        ssoProvider: provider,
-        ssoSub,
-        ssoLinkedAt: new Date(),
-      },
-    }),
-    prisma.userInvite.update({
-      where: { id: invite.id },
-      data: { acceptedAt: new Date() },
-    }),
-  ]);
+  let createdUser;
+  try {
+    [createdUser] = await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          password: null,
+          role: invite.role,
+          firstName,
+          lastName,
+          timezone: "UTC",
+          publicBookingSlug: createPublicBookingSlug(`${firstName} ${lastName}`, "coach"),
+          ssoProvider: provider,
+          ssoSub,
+          ssoLinkedAt: new Date(),
+        },
+      }),
+      prisma.userInvite.update({
+        where: { id: invite.id },
+        data: { acceptedAt: new Date() },
+      }),
+    ]);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      redirectError(res, "user_already_exists");
+      return;
+    }
+    throw error;
+  }
 
   const safeUser = toSafeUser(createdUser);
 

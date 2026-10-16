@@ -14,15 +14,19 @@
 
 ## Complete flow overview
 
+notification-service has its own PostgreSQL database, separate from the
+backend's — the `Notification` table below lives there, not in the backend's
+schema. The two services only ever cross the boundary via RabbitMQ.
+
 ```mermaid
 flowchart TD
-    A[Domain service calls publishNotificationSafely] --> B[INSERT OutboxNotification row<br/>same transaction as the business change]
+    A[Domain service calls publishNotificationSafely] --> B[INSERT OutboxNotification row<br/>backend DB, same transaction as the business change]
     B --> C{Trigger}
     C -- outboxEmitter signal --> D
     C -- 5-min fallback poll --> D
     D[claimBatch: FOR UPDATE SKIP LOCKED,<br/>up to 50 rows, 5-min lease] --> E{Rows claimed?}
     E -- none --> C
-    E -- some --> F[publish to RabbitMQ]
+    E -- some --> F["publish to RabbitMQ<br/>key: notification.send"]
     F --> G{Publish succeeded?}
     G -- yes --> H[SET processedAt]
     G -- no --> I[attempts += 1, lastError set]
@@ -31,7 +35,8 @@ flowchart TD
     J -- no --> C
 
     H --> L[RabbitMQ routes to notificationConsumer<br/>prefetch 10]
-    L --> M[Resolve template by NotificationType]
+    L --> M2[createOrUpsertNotification:<br/>idempotency check by notificationKey,<br/>notification-service's own DB]
+    M2 --> M[Resolve template by NotificationType]
     M --> N[Render HTML + subject]
     N --> O[sendEmailWithRetry via nodemailer]
     O --> P{SMTP result}
@@ -43,6 +48,13 @@ flowchart TD
     T --> U{Success this time?}
     U -- yes --> Q
     U -- no --> V[Discarded]
+
+    Q --> W{Send result feedback}
+    V --> W
+    W -- "STUDENT_CUSTOM_EMAIL only" --> X["publishFeedback<br/>key: notification.feedback"]
+    W -- "any notificationKey" --> Y["publishDeliveryFeedback<br/>key: notification.delivery"]
+    X --> Z[backend: communication.feedback.ts<br/>updates StudentCommunicationLog]
+    Y --> AA[backend: notificationDelivery.consumer.ts<br/>upserts NotificationDelivery]
 ```
 
 ## Why the outbox exists
