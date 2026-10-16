@@ -26,3 +26,13 @@ export const runBatch = async (
     await Promise.all(operations);
   }
 };
+
+/**
+ * Runs `fn` atomically. On the root client this opens an interactive `$transaction`
+ * (default options); on a client that is already a transaction it just calls `fn`, so
+ * repository methods that need atomicity compose safely inside a caller's transaction.
+ */
+export const runInTransaction = <T>(
+  client: DbClient,
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> => ("$transaction" in client ? client.$transaction((tx) => fn(tx)) : fn(client));
