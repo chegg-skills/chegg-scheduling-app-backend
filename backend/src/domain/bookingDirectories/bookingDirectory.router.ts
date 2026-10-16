@@ -13,8 +13,13 @@ import {
   AddTeamToSectionSchema,
   TeamInSectionParamsSchema,
 } from "./bookingDirectory.schema";
+import { standardLimiter } from "../../shared/middleware/rateLimit";
 
 const router = express.Router();
+
+// All booking-directory routes are authenticated admin APIs: apply the standard tier
+// ahead of auth, as the bookings router does.
+router.use(standardLimiter);
 
 router
   .route("/")
