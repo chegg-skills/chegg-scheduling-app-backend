@@ -11,6 +11,7 @@ extension or https://mermaid.live.
 |---|---|---|
 | Booking creation (public) | [booking-creation.md](./booking-creation.md) | `POST /api/bookings` |
 | Event creation (admin) | [event-creation.md](./event-creation.md) | `POST /api/teams/:teamId/events` |
+| Notification delivery (outbox → RabbitMQ → notification-service) | [notification-delivery.md](./notification-delivery.md) | `publishNotificationSafely()` |
 | Request Validation & `Object.defineProperty` | [request-validation-middleware.md](../request-validation-middleware.md) | `validate.ts` Middleware |
 
 **Convention for adding a new flow:** one file per flow, named after the user
