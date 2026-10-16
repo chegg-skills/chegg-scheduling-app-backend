@@ -1,6 +1,6 @@
 import { BookingStatus, UserRole, BookingActivityType, BookingActivityActor, Prisma } from "@prisma/client";
 import { recordBookingActivity } from "./bookingActivity.service";
-import { getDefaultQuestionTexts } from "../systemSettings/bookingQuestion.service";
+import { bookingQuestionService } from "../systemSettings/systemSetting.module";
 import { StatusCodes } from "http-status-codes";
 import { randomUUID } from "crypto";
 import { prisma } from "../../shared/db/prisma";
@@ -75,7 +75,7 @@ const resolveBookingQuestions = async (
   // Resolve the question set from the same source the public form uses, so the
   // snapshot's question/answer indexes match what the student actually saw.
   const questionTexts = event.useDefaultQuestions
-    ? await getDefaultQuestionTexts()
+    ? await bookingQuestionService.getDefaultQuestionTexts()
     : event.customQuestions;
 
   if (questionTexts.length === 0) {
