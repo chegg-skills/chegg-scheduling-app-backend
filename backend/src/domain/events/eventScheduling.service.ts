@@ -106,48 +106,8 @@ const resolveEventSchedulingConfig = (
   return config;
 };
 
-const assertBookingNoticeSatisfied = (minimumNoticeMinutes: number, bookingStartTime: Date) => {
-  const now = new Date();
-  const noticeMs = minimumNoticeMinutes * 60 * 1000;
-  if (bookingStartTime.getTime() - now.getTime() < noticeMs) {
-    throw new ErrorHandler(
-      StatusCodes.BAD_REQUEST,
-      "Booking does not satisfy the minimum notice requirement.",
-    );
-  }
-};
 
-const getEffectiveParticipantPolicy = (
-  event: {
-    interactionType: InteractionType;
-    bookingMode: EventBookingMode;
-    maxParticipantCount: number | null;
-  },
-  slot?: { capacity?: number | null } | null,
-) => {
-  const caps = INTERACTION_TYPE_CAPS[event.interactionType];
 
-  if (!caps.multipleParticipants) {
-    return { maxParticipants: 1 };
-  }
-
-  if (event.bookingMode === EventBookingMode.FIXED_SLOTS) {
-    return { maxParticipants: slot?.capacity ?? event.maxParticipantCount ?? null };
-  }
-  return { maxParticipants: event.maxParticipantCount ?? null };
-};
-
-const assertParticipantCapacityAvailable = (
-  maxParticipants: number | null,
-  currentParticipantCount: number,
-) => {
-  if (maxParticipants !== null && currentParticipantCount >= maxParticipants) {
-    throw new ErrorHandler(
-      StatusCodes.CONFLICT,
-      "This slot has reached its maximum participant capacity.",
-    );
-  }
-};
 
 const resolveMatchingScheduleSlot = async (
   eventId: string,
@@ -1256,9 +1216,6 @@ const resumeRecurrenceGroup = async (
 
 export {
   resolveEventSchedulingConfig,
-  assertBookingNoticeSatisfied,
-  getEffectiveParticipantPolicy,
-  assertParticipantCapacityAvailable,
   resolveMatchingScheduleSlot,
   listEventScheduleSlots,
   createEventScheduleSlot,
@@ -1273,3 +1230,9 @@ export {
   stopRecurrenceGroup,
   resumeRecurrenceGroup,
 };
+
+export {
+  assertBookingNoticeSatisfied,
+  getEffectiveParticipantPolicy,
+  assertParticipantCapacityAvailable,
+} from "../scheduling/eventRules";

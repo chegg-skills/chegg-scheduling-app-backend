@@ -1,17 +1,13 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "../../shared/db/prisma";
 import { buildSameSessionExclusion, type AvailabilityClient } from "./availability.shared";
+import type { BookingWithEventBuffer } from "../scheduling/conflictRules";
+
+export { filterConflictsForSlot, type BookingWithEventBuffer } from "../scheduling/conflictRules";
 
 /**
  * Service responsible for determining if a host has scheduling conflicts.
  * Encapsulates the logic for "Same Booking" overrides and capacity-aware conflicts.
  */
-
-export type BookingWithEventBuffer = Prisma.BookingGetPayload<{
-  include: {
-    event: true;
-  };
-}>;
 
 export const getCoachConflicts = async (
   userId: string,
@@ -96,46 +92,6 @@ export const getCoachConflicts = async (
     return startTime < effectiveEndTime && booking.startTime < endTime;
   });
 };
-
-/**
- * Pure in-memory equivalent of getCoachConflicts' filter step.
- * Used by getAvailableSlots when conflicts are pre-fetched for the full date
- * range to avoid firing a DB query per slot iteration.
- */
-export function filterConflictsForSlot(
-  allConflicts: BookingWithEventBuffer[],
-  startTime: Date,
-  effectiveEndTime: Date,
-  options: { eventId?: string; scheduleSlotId?: string | null } = {},
-): BookingWithEventBuffer[] {
-  const lookbackStart = new Date(startTime.getTime() - 120 * 60 * 1000);
-
-  return allConflicts.filter((b) => {
-    // Window pre-filter (mirrors the DB query range)
-    if (!(b.startTime < effectiveEndTime && b.endTime > lookbackStart)) return false;
-
-    // Same-session exclusion (mirrors buildSameSessionExclusion)
-    if (options.eventId) {
-      if (options.scheduleSlotId) {
-        if (b.scheduleSlotId === options.scheduleSlotId) return false;
-      } else {
-        if (
-          b.eventId === options.eventId &&
-          b.startTime.getTime() === startTime.getTime() &&
-          b.endTime.getTime() === effectiveEndTime.getTime()
-        ) {
-          return false;
-        }
-      }
-    }
-
-    // True overlap check (mirrors the .filter() in getCoachConflicts)
-    const effectiveBookingEnd = new Date(
-      b.endTime.getTime() + (b.event.bufferAfterMinutes ?? 0) * 60_000,
-    );
-    return startTime < effectiveBookingEnd && b.startTime < effectiveEndTime;
-  });
-}
 
 /**
  * Determines if a conflict is blocking based on session capacity rules.
