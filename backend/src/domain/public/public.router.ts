@@ -1,5 +1,5 @@
 import express from "express";
-import PublicController from "./public.controller";
+import PublicController from "./public.module";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { publicLimiter, sessionJoinLimiter } from "../../shared/middleware/rateLimit";
 import { validate } from "../../shared/middleware/validate";
