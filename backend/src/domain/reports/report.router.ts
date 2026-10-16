@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import reportController from "./report.controller";
+import reportController from "./report.module";
 
 const router = Router();
 
