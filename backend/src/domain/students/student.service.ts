@@ -4,7 +4,7 @@ import { ErrorHandler } from "../../shared/error/errorhandler";
 import { resolvePagination } from "../../shared/utils/pagination";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import type { SafeBooking } from "../bookings/booking.service";
-import { sanitizeHtml } from "../../shared/utils/htmlSanitizer";
+import { htmlToPlainText, sanitizeHtml } from "../../shared/utils/htmlSanitizer";
 import { publishNotificationSafely } from "../../shared/notifications/notification.publisher";
 import type { StudentRepository } from "./student.repository";
 import type { LatestBookingRecord, StudentSummaryRecord } from "./student.shared";
@@ -356,7 +356,7 @@ export const createStudentService = (studentRepo: StudentRepository) => {
     });
 
     const senderName = `${log.sentBy.firstName} ${log.sentBy.lastName}`.trim() || "Coach";
-    const textBody = sanitizedBody.replace(/<[^>]*>/g, "");
+    const textBody = htmlToPlainText(sanitizedBody);
 
     await publishNotificationSafely({
       type: "STUDENT_CUSTOM_EMAIL",
@@ -407,7 +407,7 @@ export const createStudentService = (studentRepo: StudentRepository) => {
 
     const senderName =
       `${updatedLog.sentBy.firstName} ${updatedLog.sentBy.lastName}`.trim() || "Coach";
-    const textBody = updatedLog.body.replace(/<[^>]*>/g, "");
+    const textBody = htmlToPlainText(updatedLog.body);
 
     await publishNotificationSafely({
       type: "STUDENT_CUSTOM_EMAIL",

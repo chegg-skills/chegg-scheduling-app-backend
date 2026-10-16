@@ -21,6 +21,29 @@ export function stripHtml(input: string): string {
 }
 
 /**
+ * Removes HTML tags to produce the plain-text alternative of an email body.
+ *
+ * The tag-matching pattern is applied until the string stops changing. For this
+ * particular pattern one pass already leaves no tag behind (any surviving `<` has no
+ * later `>`), so the loop is a belt-and-braces guarantee of idempotence that also
+ * satisfies static analysis, not a behaviour change. Entities are left untouched (this
+ * is not an escaper) — callers should pass HTML that has already been through
+ * {@link sanitizeHtml}.
+ */
+export function htmlToPlainText(html: string): string {
+  if (!html) return "";
+
+  let previous: string;
+  let result = html;
+  do {
+    previous = result;
+    result = result.replace(/<[^>]*>/g, "");
+  } while (result !== previous);
+
+  return result;
+}
+
+/**
  * A secure HTML sanitizer for custom email inputs.
  * Uses an allowlist approach via the sanitize-html library to ensure
  * only safe rich-text formatting tags and attributes are permitted.
