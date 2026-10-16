@@ -3,7 +3,7 @@ import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { validate } from "../../shared/middleware/validate";
-import bookingDirectoryController from "./bookingDirectory.controller";
+import bookingDirectoryController from "./bookingDirectory.module";
 import {
   CreateBookingDirectorySchema,
   UpdateBookingDirectorySchema,

@@ -1,7 +1,7 @@
 import express from "express";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
 import { validate } from "../../shared/middleware/validate";
-import trackerController from "./tracker.controller";
+import trackerController from "./tracker.module";
 import { TrackerSlotsQuerySchema, TrackerSessionDatesQuerySchema } from "./tracker.schema";
 
 const router = express.Router();
