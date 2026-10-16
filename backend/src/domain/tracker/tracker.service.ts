@@ -1,8 +1,8 @@
 import { InteractionType, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { prisma } from "../../shared/db/prisma";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import type { CallerContext } from "../../shared/utils/userUtils";
+import type { TrackerRepository } from "./tracker.repository";
 
 // Extensibility point — add interaction types here to include them in the tracker
 const TRACKER_INTERACTION_TYPES: InteractionType[] = [InteractionType.ONE_TO_MANY];
@@ -17,7 +17,12 @@ export interface TrackerSlot {
   seriesFrequency: string | null;
   seriesSessionNumber: number | null;
   seriesTotalCount: number | null;
-  assignedCoach: { id: string; firstName: string; lastName: string; zoomIsvLink: string | null } | null;
+  assignedCoach: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    zoomIsvLink: string | null;
+  } | null;
   bookingCount: number;
   capacity: number | null;
   remainingSeats: number | null;
@@ -39,29 +44,35 @@ const requireTrackerAccess = (caller: CallerContext): void => {
   }
 };
 
-export const getTrackerSlots = async (
-  caller: CallerContext,
-  filters: { date?: string; startDate?: string; endDate?: string; teamId?: string; eventId?: string },
-): Promise<TrackerSlot[]> => {
-  requireTrackerAccess(caller);
+export const createTrackerService = (trackerRepo: TrackerRepository) => {
+  const getTrackerSlots = async (
+    caller: CallerContext,
+    filters: {
+      date?: string;
+      startDate?: string;
+      endDate?: string;
+      teamId?: string;
+      eventId?: string;
+    },
+  ): Promise<TrackerSlot[]> => {
+    requireTrackerAccess(caller);
 
-  const now = new Date();
-  let start: Date;
-  let end: Date;
+    const now = new Date();
+    let start: Date;
+    let end: Date;
 
-  if (filters.startDate && filters.endDate) {
-    start = new Date(`${filters.startDate}T00:00:00.000`);
-    end = new Date(`${filters.endDate}T23:59:59.999`);
-  } else {
-    const targetDate =
-      filters.date ??
-      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    start = new Date(`${targetDate}T00:00:00.000`);
-    end = new Date(`${targetDate}T23:59:59.999`);
-  }
+    if (filters.startDate && filters.endDate) {
+      start = new Date(`${filters.startDate}T00:00:00.000`);
+      end = new Date(`${filters.endDate}T23:59:59.999`);
+    } else {
+      const targetDate =
+        filters.date ??
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      start = new Date(`${targetDate}T00:00:00.000`);
+      end = new Date(`${targetDate}T23:59:59.999`);
+    }
 
-  const slots = await prisma.eventScheduleSlot.findMany({
-    where: {
+    const slots = await trackerRepo.findSlots({
       isCancelled: false,
       startTime: { gte: start, lte: end },
       ...(filters.eventId ? { eventId: filters.eventId } : {}),
@@ -75,117 +86,86 @@ export const getTrackerSlots = async (
           ...(caller.role === UserRole.TEAM_ADMIN ? { teamLeadId: caller.id } : {}),
         },
       },
-    },
-    include: {
-      event: {
-        select: {
-          id: true,
-          name: true,
-          maxParticipantCount: true,
-          teamId: true,
-          team: { select: { id: true, name: true } },
-          eventType: { select: { id: true, name: true } },
-        },
-      },
-      assignedCoach: { select: { id: true, firstName: true, lastName: true, zoomIsvLink: true } },
-      recurrenceGroup: { select: { id: true, frequency: true } },
-      sessionLog: {
-        select: {
-          id: true,
-          summary: true,
-          coachNotes: true,
-          attendance: {
-            select: {
-              attended: true,
-            },
-          },
-        },
-      },
-      _count: { select: { bookings: { where: { status: { not: "CANCELLED" } } } } },
-    },
-    orderBy: { startTime: "asc" },
-  });
-
-  // Compute absolute session number within each series
-  const recurrenceGroupIds = slots
-    .map((s) => s.recurrenceGroup?.id)
-    .filter((id): id is string => !!id);
-
-  const sessionPositionMap = new Map<string, { position: number; total: number }>();
-
-  if (recurrenceGroupIds.length > 0) {
-    const allGroupSlots = await prisma.eventScheduleSlot.findMany({
-      where: { recurrenceGroupId: { in: recurrenceGroupIds }, isCancelled: false },
-      select: { id: true, recurrenceGroupId: true },
-      orderBy: { startTime: "asc" },
     });
 
-    const byGroup = new Map<string, string[]>();
-    for (const s of allGroupSlots) {
-      if (!s.recurrenceGroupId) continue;
-      if (!byGroup.has(s.recurrenceGroupId)) byGroup.set(s.recurrenceGroupId, []);
-      byGroup.get(s.recurrenceGroupId)!.push(s.id);
+    // Compute absolute session number within each series
+    const recurrenceGroupIds = slots
+      .map((s) => s.recurrenceGroup?.id)
+      .filter((id): id is string => !!id);
+
+    const sessionPositionMap = new Map<string, { position: number; total: number }>();
+
+    if (recurrenceGroupIds.length > 0) {
+      const allGroupSlots = await trackerRepo.findSlotIdsByRecurrenceGroups(recurrenceGroupIds);
+
+      const byGroup = new Map<string, string[]>();
+      for (const s of allGroupSlots) {
+        if (!s.recurrenceGroupId) continue;
+        if (!byGroup.has(s.recurrenceGroupId)) byGroup.set(s.recurrenceGroupId, []);
+        byGroup.get(s.recurrenceGroupId)!.push(s.id);
+      }
+
+      for (const ids of byGroup.values()) {
+        ids.forEach((id, idx) =>
+          sessionPositionMap.set(id, { position: idx + 1, total: ids.length }),
+        );
+      }
     }
 
-    for (const ids of byGroup.values()) {
-      ids.forEach((id, idx) =>
-        sessionPositionMap.set(id, { position: idx + 1, total: ids.length }),
-      );
-    }
-  }
+    return slots.map((slot) => {
+      const bookingCount = slot._count.bookings;
+      const capacity = slot.capacity ?? slot.event.maxParticipantCount ?? null;
+      const remainingSeats = capacity !== null ? Math.max(0, capacity - bookingCount) : null;
+      const isPast = slot.endTime < now;
+      const status: "OPEN" | "FULL" | "CLOSED" = isPast
+        ? "CLOSED"
+        : capacity !== null && bookingCount >= capacity
+          ? "FULL"
+          : "OPEN";
+      const seriesPos = sessionPositionMap.get(slot.id) ?? null;
 
-  return slots.map((slot) => {
-    const bookingCount = slot._count.bookings;
-    const capacity = slot.capacity ?? slot.event.maxParticipantCount ?? null;
-    const remainingSeats = capacity !== null ? Math.max(0, capacity - bookingCount) : null;
-    const isPast = slot.endTime < now;
-    const status: "OPEN" | "FULL" | "CLOSED" =
-      isPast ? "CLOSED" : (capacity !== null && bookingCount >= capacity ? "FULL" : "OPEN");
-    const seriesPos = sessionPositionMap.get(slot.id) ?? null;
+      return {
+        slotId: slot.id,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        team: slot.event.team,
+        event: { id: slot.event.id, name: slot.event.name },
+        eventType: slot.event.eventType ?? null,
+        seriesFrequency: slot.recurrenceGroup?.frequency ?? null,
+        seriesSessionNumber: seriesPos?.position ?? null,
+        seriesTotalCount: seriesPos?.total ?? null,
+        isLogged: slot.sessionLog !== null,
+        assignedCoach: slot.assignedCoach
+          ? {
+              id: slot.assignedCoach.id,
+              firstName: slot.assignedCoach.firstName,
+              lastName: slot.assignedCoach.lastName,
+              zoomIsvLink: slot.assignedCoach.zoomIsvLink,
+            }
+          : null,
+        bookingCount,
+        capacity,
+        remainingSeats,
+        status,
+        summary: slot.sessionLog?.summary ?? null,
+        coachNotes: slot.sessionLog?.coachNotes ?? null,
+        attendedCount: slot.sessionLog
+          ? slot.sessionLog.attendance.filter((a) => a.attended).length
+          : null,
+      };
+    });
+  };
 
-    return {
-      slotId: slot.id,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      team: slot.event.team,
-      event: { id: slot.event.id, name: slot.event.name },
-      eventType: slot.event.eventType ?? null,
-      seriesFrequency: slot.recurrenceGroup?.frequency ?? null,
-      seriesSessionNumber: seriesPos?.position ?? null,
-      seriesTotalCount: seriesPos?.total ?? null,
-      isLogged: slot.sessionLog !== null,
-      assignedCoach: slot.assignedCoach
-        ? {
-            id: slot.assignedCoach.id,
-            firstName: slot.assignedCoach.firstName,
-            lastName: slot.assignedCoach.lastName,
-            zoomIsvLink: slot.assignedCoach.zoomIsvLink,
-          }
-        : null,
-      bookingCount,
-      capacity,
-      remainingSeats,
-      status,
-      summary: slot.sessionLog?.summary ?? null,
-      coachNotes: slot.sessionLog?.coachNotes ?? null,
-      attendedCount: slot.sessionLog
-        ? slot.sessionLog.attendance.filter((a) => a.attended).length
-        : null,
-    };
-  });
-};
+  const getSessionDates = async (
+    caller: CallerContext,
+    filters: { startDate: string; endDate: string; teamId?: string; eventId?: string },
+  ): Promise<{ dates: string[] }> => {
+    requireTrackerAccess(caller);
 
-export const getSessionDates = async (
-  caller: CallerContext,
-  filters: { startDate: string; endDate: string; teamId?: string; eventId?: string },
-): Promise<{ dates: string[] }> => {
-  requireTrackerAccess(caller);
+    const rangeStart = new Date(`${filters.startDate}T00:00:00.000`);
+    const rangeEnd = new Date(`${filters.endDate}T23:59:59.999`);
 
-  const rangeStart = new Date(`${filters.startDate}T00:00:00.000`);
-  const rangeEnd = new Date(`${filters.endDate}T23:59:59.999`);
-
-  const slots = await prisma.eventScheduleSlot.findMany({
-    where: {
+    const slots = await trackerRepo.findSlotStartTimes({
       isCancelled: false,
       startTime: { gte: rangeStart, lte: rangeEnd },
       ...(filters.eventId ? { eventId: filters.eventId } : {}),
@@ -199,44 +179,37 @@ export const getSessionDates = async (
           ...(caller.role === UserRole.TEAM_ADMIN ? { teamLeadId: caller.id } : {}),
         },
       },
-    },
-    select: { startTime: true },
-  });
+    });
 
-  const toLocalDate = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const toLocalDate = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-  const dates = [...new Set(slots.map((s) => toLocalDate(s.startTime)))];
-  return { dates };
-};
+    const dates = [...new Set(slots.map((s) => toLocalDate(s.startTime)))];
+    return { dates };
+  };
 
-export const getTrackerFilters = async (
-  caller: CallerContext,
-): Promise<TrackerFilters> => {
-  requireTrackerAccess(caller);
+  const getTrackerFilters = async (caller: CallerContext): Promise<TrackerFilters> => {
+    requireTrackerAccess(caller);
 
-  const teamWhere =
-    caller.role === UserRole.TEAM_ADMIN
-      ? { teamLeadId: caller.id, deletedAt: null }
-      : { deletedAt: null };
+    const teamWhere =
+      caller.role === UserRole.TEAM_ADMIN
+        ? { teamLeadId: caller.id, deletedAt: null }
+        : { deletedAt: null };
 
-  const [teams, events] = await Promise.all([
-    prisma.team.findMany({
-      where: teamWhere,
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.event.findMany({
-      where: {
+    const [teams, events] = await Promise.all([
+      trackerRepo.findTeams(teamWhere),
+      trackerRepo.findEvents({
         deletedAt: null,
         isActive: true,
         interactionType: { in: TRACKER_INTERACTION_TYPES },
         team: teamWhere,
-      },
-      select: { id: true, name: true, teamId: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+      }),
+    ]);
 
-  return { teams, events };
+    return { teams, events };
+  };
+
+  return { getTrackerSlots, getSessionDates, getTrackerFilters };
 };
+
+export type TrackerService = ReturnType<typeof createTrackerService>;
