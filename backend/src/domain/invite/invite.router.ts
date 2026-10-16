@@ -1,7 +1,7 @@
 import express from "express";
 import { UserRole } from "@prisma/client";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import inviteController from "./invite.controller";
+import inviteController from "./invite.module";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { sensitiveLimiter } from "../../shared/middleware/rateLimit";
 
