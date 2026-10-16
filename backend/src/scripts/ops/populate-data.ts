@@ -4,12 +4,28 @@ import request from "supertest";
 import app from "../../app";
 import { prisma } from "../../shared/db/prisma";
 
-const SUPER_ADMIN_EMAIL = "mohitkumar3005@example.com";
-const SUPER_ADMIN_FIRST_NAME = "Mohit";
-const SUPER_ADMIN_LAST_NAME = "Kumar";
-const DEFAULT_PASSWORD = "pass1234";
+const SUPER_ADMIN_EMAIL = process.env.SEED_SUPER_ADMIN_EMAIL ?? "";
+const SUPER_ADMIN_FIRST_NAME = process.env.SEED_SUPER_ADMIN_FIRST_NAME ?? "";
+const SUPER_ADMIN_LAST_NAME = process.env.SEED_SUPER_ADMIN_LAST_NAME ?? "";
+const DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD ?? "";
 const RESET_DEMO_DATA = process.env.RESET_DEMO_DATA === "true";
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET ?? "";
+
+function assertSeedCredentialsConfigured(): void {
+  const missing = [
+    !SUPER_ADMIN_EMAIL && "SEED_SUPER_ADMIN_EMAIL",
+    !SUPER_ADMIN_FIRST_NAME && "SEED_SUPER_ADMIN_FIRST_NAME",
+    !SUPER_ADMIN_LAST_NAME && "SEED_SUPER_ADMIN_LAST_NAME",
+    !DEFAULT_PASSWORD && "SEED_DEFAULT_PASSWORD",
+  ].filter((name): name is string => Boolean(name));
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required env var(s) for seed:demo: ${missing.join(", ")}. ` +
+        "Set them in backend/.env — see .env.example for the full list.",
+    );
+  }
+}
 
 type ApiMethod = "GET" | "POST" | "PUT" | "PATCH";
 
@@ -641,6 +657,8 @@ async function ensureCoachAvailability(userIds: string[]) {
 
 async function main() {
   console.log("🚀 Populating the app with realistic demo data...");
+
+  assertSeedCredentialsConfigured();
 
   const { token, userId } = await ensureAuthenticatedAdmin();
   await resetDemoDataKeepingAdmin(userId);
