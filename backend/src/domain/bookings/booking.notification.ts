@@ -16,7 +16,7 @@ import {
   getTeamNotificationConfig,
   type ResolvedNotificationConfig,
 } from "../../shared/notifications/notificationConfig";
-import { getSystemSettingByKey } from "../systemSettings/systemSetting.service";
+import { systemSettingService } from "../systemSettings/systemSetting.module";
 
 const getCoachName = (booking: SafeBooking): string => {
   const coachName = [booking.coach?.firstName, booking.coach?.lastName]
@@ -870,7 +870,7 @@ const queueStudentFeedbackNotification = async (booking: SafeBooking): Promise<v
     const config = await getTeamNotificationConfig(booking.teamId);
     if (!config.sendFeedbackLink) return;
 
-    const feedbackFormLink = config.feedbackFormLink ?? (await getSystemSettingByKey("feedbackFormLink"));
+    const feedbackFormLink = config.feedbackFormLink ?? (await systemSettingService.getSystemSettingByKey("feedbackFormLink"));
     if (!feedbackFormLink) return;
 
     await publishNotificationSafely({

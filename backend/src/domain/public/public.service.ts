@@ -9,7 +9,7 @@ import {
   bookingInclude,
   getMeetingJoinUrl,
 } from "../bookings/booking.shared";
-import { getDefaultQuestionTexts } from "../systemSettings/bookingQuestion.service";
+import { bookingQuestionService } from "../systemSettings/systemSetting.module";
 
 const slugSchema = z.string().trim().min(1, "Slug is required");
 
@@ -94,7 +94,7 @@ const resolveEffectiveBookingQuestions = async (event: {
   customQuestions: string[];
 }): Promise<string[]> => {
   if (event.useDefaultQuestions) {
-    return getDefaultQuestionTexts();
+    return bookingQuestionService.getDefaultQuestionTexts();
   }
   return event.customQuestions.length > 0 ? event.customQuestions : [];
 };

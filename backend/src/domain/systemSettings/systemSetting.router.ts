@@ -3,8 +3,7 @@ import { UserRole } from "@prisma/client";
 import { authenticate, authorize } from "../../shared/middleware/auth";
 import { validate } from "../../shared/middleware/validate";
 import { methodNotAllowed } from "../../shared/error/methodNotAllowed";
-import controller from "./systemSetting.controller";
-import bookingQuestionController from "./bookingQuestion.controller";
+import controller, { bookingQuestionController } from "./systemSetting.module";
 import { UpdateSystemSettingsSchema } from "./systemSetting.schema";
 import { CreateBookingQuestionSchema, UpdateBookingQuestionSchema } from "./bookingQuestion.schema";
 
