@@ -1,6 +1,6 @@
 import { Prisma, UserRole } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { prisma } from "../../shared/db/prisma";
+import type { TxRunner } from "../../shared/db/transaction";
 import { ErrorHandler } from "../../shared/error/errorhandler";
 import { rethrowPrismaError } from "../../shared/error/prismaError";
 import { resolvePagination } from "../../shared/utils/pagination";
@@ -10,6 +10,7 @@ import type { CallerContext } from "../../shared/utils/userUtils";
 import type { Team } from "@prisma/client";
 import { CreateTeamSchema, UpdateTeamSchema, ListTeamsSchema } from "./team.schema";
 import { getRequestLogger } from "../../shared/logging/requestContext";
+import type { TeamRepository } from "./team.repository";
 
 export type SafeTeam = Team;
 
@@ -32,263 +33,187 @@ type UpdateTeamInput = {
   isActive?: boolean;
 };
 
-const validateTeamLead = async (teamLeadId: string): Promise<void> => {
-  const lead = await prisma.user.findUnique({
-    where: { id: teamLeadId },
-    select: { role: true, isActive: true },
-  });
+export const createTeamService = (teamRepo: TeamRepository, txRunner: TxRunner) => {
+  const validateTeamLead = async (teamLeadId: string): Promise<void> => {
+    const lead = await teamRepo.findUserRoleAndStatus(teamLeadId);
 
-  if (!lead) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead user not found.");
-  }
-  if (!lead.isActive) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead must be an active user.");
-  }
-  if (lead.role !== UserRole.TEAM_ADMIN) {
-    throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead must have the TEAM_ADMIN role.");
-  }
-};
+    if (!lead) {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead user not found.");
+    }
+    if (!lead.isActive) {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead must be an active user.");
+    }
+    if (lead.role !== UserRole.TEAM_ADMIN) {
+      throw new ErrorHandler(StatusCodes.BAD_REQUEST, "Team lead must have the TEAM_ADMIN role.");
+    }
+  };
 
-const upsertTeamLeadMembership = async (
-  tx: Prisma.TransactionClient,
-  teamId: string,
-  teamLeadId: string,
-): Promise<void> => {
-  await tx.teamMember.upsert({
-    where: {
-      teamId_userId: {
-        teamId,
-        userId: teamLeadId,
-      },
-    },
-    create: {
-      teamId,
-      userId: teamLeadId,
-      isActive: true,
-    },
-    update: {
-      isActive: true,
-    },
-  });
-};
+  const createTeam = async (payload: CreateTeamInput, caller: CallerContext): Promise<SafeTeam> => {
+    const validated = await CreateTeamSchema.body.parseAsync(payload);
 
-const createTeam = async (payload: CreateTeamInput, caller: CallerContext): Promise<SafeTeam> => {
-  const validated = await CreateTeamSchema.body.parseAsync(payload);
+    await validateTeamLead(validated.teamLeadId);
 
-  await validateTeamLead(validated.teamLeadId);
+    try {
+      const team = await txRunner.run(async (tx) => {
+        const newTeam = await teamRepo.create(
+          {
+            name: validated.name,
+            publicBookingSlug: createPublicBookingSlug(validated.name, "team"),
+            description: validated.description,
+            teamLeadId: validated.teamLeadId,
+            createdById: caller.id,
+            isActive: validated.isActive ?? true,
+          },
+          tx,
+        );
 
-  try {
-    const team = await prisma.$transaction(async (tx) => {
-      const newTeam = await tx.team.create({
-        data: {
-          name: validated.name,
-          publicBookingSlug: createPublicBookingSlug(validated.name, "team"),
-          description: validated.description,
-          teamLeadId: validated.teamLeadId,
-          createdById: caller.id,
-          isActive: validated.isActive ?? true,
-        },
+        await teamRepo.upsertLeadMembership(newTeam.id, validated.teamLeadId, tx);
+
+        return newTeam;
       });
 
-      await upsertTeamLeadMembership(tx, newTeam.id, validated.teamLeadId);
+      getRequestLogger().info(
+        { teamId: team.id, teamLeadId: validated.teamLeadId, createdBy: caller.id },
+        "Team created.",
+      );
 
-      return newTeam;
-    });
-
-    getRequestLogger().info({ teamId: team.id, teamLeadId: validated.teamLeadId, createdBy: caller.id }, "Team created.");
-
-    return team;
-  } catch (error) {
-    return rethrowPrismaError(error, {
-      P2002: {
-        status: StatusCodes.CONFLICT,
-        message: "A team with that name already exists.",
-      },
-    });
-  }
-};
-
-const listTeams = async (
-  options: ListTeamsOptions = {},
-  caller: CallerContext,
-): Promise<{
-  teams: SafeTeam[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-  };
-}> => {
-  const validatedOptions = ListTeamsSchema.query.parse(options);
-  const { page, pageSize, skip } = resolvePagination(validatedOptions);
-
-  const whereClause: Prisma.TeamWhereInput = { deletedAt: null };
-  if (caller.role === UserRole.COACH) {
-    whereClause.members = { some: { userId: caller.id, isActive: true } };
-  } else if (caller.role === UserRole.TEAM_ADMIN) {
-    whereClause.teamLeadId = caller.id;
-  }
-
-  const [teams, total] = await prisma.$transaction([
-    prisma.team.findMany({
-      where: whereClause,
-      include: {
-        teamLead: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-          },
+      return team;
+    } catch (error) {
+      return rethrowPrismaError(error, {
+        P2002: {
+          status: StatusCodes.CONFLICT,
+          message: "A team with that name already exists.",
         },
-      },
-      orderBy: { createdAt: "desc" },
+      });
+    }
+  };
+
+  const listTeams = async (
+    options: ListTeamsOptions = {},
+    caller: CallerContext,
+  ): Promise<{
+    teams: SafeTeam[];
+    pagination: {
+      page: number;
+      pageSize: number;
+      total: number;
+      totalPages: number;
+    };
+  }> => {
+    const validatedOptions = ListTeamsSchema.query.parse(options);
+    const { page, pageSize, skip } = resolvePagination(validatedOptions);
+
+    const whereClause: Prisma.TeamWhereInput = { deletedAt: null };
+    if (caller.role === UserRole.COACH) {
+      whereClause.members = { some: { userId: caller.id, isActive: true } };
+    } else if (caller.role === UserRole.TEAM_ADMIN) {
+      whereClause.teamLeadId = caller.id;
+    }
+
+    const [teams, total] = await teamRepo.findManyWithCount({
+      where: whereClause,
       skip,
       take: pageSize,
-    }),
-    prisma.team.count({
-      where: whereClause,
-    }),
-  ]);
-
-  return {
-    teams,
-    pagination: {
-      page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    },
-  };
-};
-
-const readTeam = async (teamId: string, caller?: CallerContext): Promise<SafeTeam> => {
-  if (caller) {
-    await getManagedTeam(teamId, caller, { allowCoachMember: true, allowInactive: true });
-  }
-
-  const team = await prisma.team.findFirst({
-    where: { id: teamId, deletedAt: null },
-    include: {
-      teamLead: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          avatarUrl: true,
-        },
-      },
-    },
-  });
-
-  if (!team) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
-  }
-
-  return team;
-};
-
-const updateTeam = async (teamId: string, payload: UpdateTeamInput): Promise<SafeTeam> => {
-  const validated = await UpdateTeamSchema.body.parseAsync(payload);
-  const existingTeam = await readTeam(teamId);
-
-  const updateData: Prisma.TeamUpdateInput = {};
-
-  if (validated.name !== undefined) {
-    updateData.name = validated.name;
-    if (!existingTeam.publicBookingSlug) {
-      updateData.publicBookingSlug = createPublicBookingSlug(validated.name, "team");
-    }
-  }
-
-  if (validated.description !== undefined) {
-    updateData.description = validated.description;
-  }
-
-  if (validated.teamLeadId !== undefined) {
-    await validateTeamLead(validated.teamLeadId);
-    updateData.teamLead = { connect: { id: validated.teamLeadId } };
-  }
-
-  if (validated.isActive !== undefined) {
-    updateData.isActive = validated.isActive;
-  }
-
-  try {
-    const team = await prisma.$transaction(async (tx) => {
-      const updatedTeam = await tx.team.update({
-        where: { id: teamId },
-        data: updateData,
-      });
-
-      if (validated.teamLeadId !== undefined) {
-        await upsertTeamLeadMembership(tx, updatedTeam.id, validated.teamLeadId);
-      }
-
-      return updatedTeam;
     });
 
-    if (validated.isActive !== undefined) {
-      getRequestLogger().info({ teamId, isActive: validated.isActive }, "Team active status changed.");
-    } else {
-      getRequestLogger().info({ teamId }, "Team updated.");
+    return {
+      teams,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  };
+
+  const readTeam = async (teamId: string, caller?: CallerContext): Promise<SafeTeam> => {
+    if (caller) {
+      await getManagedTeam(teamId, caller, { allowCoachMember: true, allowInactive: true });
+    }
+
+    const team = await teamRepo.findActiveWithLead(teamId);
+
+    if (!team) {
+      throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
     }
 
     return team;
-  } catch (error) {
-    return rethrowPrismaError(error, {
-      P2025: { status: StatusCodes.NOT_FOUND, message: "Team not found." },
-      P2002: {
-        status: StatusCodes.CONFLICT,
-        message: "A team with that name already exists.",
-      },
-    });
-  }
-};
+  };
 
-const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
-  const team = await prisma.team.findFirst({ where: { id: teamId, deletedAt: null } });
+  const updateTeam = async (teamId: string, payload: UpdateTeamInput): Promise<SafeTeam> => {
+    const validated = await UpdateTeamSchema.body.parseAsync(payload);
+    const existingTeam = await readTeam(teamId);
 
-  if (!team) {
-    throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
-  }
+    const updateData: Prisma.TeamUpdateInput = {};
 
-  getRequestLogger().warn({ teamId }, "Team deleted.");
-
-  await prisma.$transaction(async (tx) => {
-    // Gather all event IDs for bulk child cleanup
-    const eventIds = (
-      await tx.event.findMany({ where: { teamId }, select: { id: true } })
-    ).map((e) => e.id);
-
-    if (eventIds.length > 0) {
-      await tx.eventCoach.deleteMany({ where: { eventId: { in: eventIds } } });
-      await tx.eventScheduleSlot.deleteMany({ where: { eventId: { in: eventIds } } });
-      await tx.recurrenceGroup.deleteMany({ where: { eventId: { in: eventIds } } });
-      await tx.eventRoutingState.deleteMany({ where: { eventId: { in: eventIds } } });
-      // Null out groupId before deleting EventGroups (Event→EventGroup FK is Restrict)
-      await tx.event.updateMany({
-        where: { teamId },
-        data: { deletedAt: new Date(), isActive: false, groupId: null },
-      });
+    if (validated.name !== undefined) {
+      updateData.name = validated.name;
+      if (!existingTeam.publicBookingSlug) {
+        updateData.publicBookingSlug = createPublicBookingSlug(validated.name, "team");
+      }
     }
 
-    // Hard-delete EventGroups now that no events reference them
-    await tx.eventGroup.deleteMany({ where: { teamId } });
+    if (validated.description !== undefined) {
+      updateData.description = validated.description;
+    }
 
-    // Clean up team-level children
-    await tx.teamMember.deleteMany({ where: { teamId } });
-    await tx.teamNotificationConfig.deleteMany({ where: { teamId } });
+    if (validated.teamLeadId !== undefined) {
+      await validateTeamLead(validated.teamLeadId);
+      updateData.teamLead = { connect: { id: validated.teamLeadId } };
+    }
 
-    // Soft-delete the team — bookings are intentionally preserved
-    await tx.team.update({
-      where: { id: teamId },
-      data: { deletedAt: new Date(), isActive: false },
-    });
-  });
+    if (validated.isActive !== undefined) {
+      updateData.isActive = validated.isActive;
+    }
 
-  return team;
+    try {
+      const team = await txRunner.run(async (tx) => {
+        const updatedTeam = await teamRepo.update(teamId, updateData, tx);
+
+        if (validated.teamLeadId !== undefined) {
+          await teamRepo.upsertLeadMembership(updatedTeam.id, validated.teamLeadId, tx);
+        }
+
+        return updatedTeam;
+      });
+
+      if (validated.isActive !== undefined) {
+        getRequestLogger().info(
+          { teamId, isActive: validated.isActive },
+          "Team active status changed.",
+        );
+      } else {
+        getRequestLogger().info({ teamId }, "Team updated.");
+      }
+
+      return team;
+    } catch (error) {
+      return rethrowPrismaError(error, {
+        P2025: { status: StatusCodes.NOT_FOUND, message: "Team not found." },
+        P2002: {
+          status: StatusCodes.CONFLICT,
+          message: "A team with that name already exists.",
+        },
+      });
+    }
+  };
+
+  const deleteTeam = async (teamId: string): Promise<SafeTeam> => {
+    const team = await teamRepo.findActive(teamId);
+
+    if (!team) {
+      throw new ErrorHandler(StatusCodes.NOT_FOUND, "Team not found.");
+    }
+
+    getRequestLogger().warn({ teamId }, "Team deleted.");
+
+    await teamRepo.softDeleteWithChildren(teamId);
+
+    return team;
+  };
+
+  return { createTeam, listTeams, readTeam, updateTeam, deleteTeam };
 };
 
-export { createTeam, listTeams, readTeam, updateTeam, deleteTeam };
+export type TeamService = ReturnType<typeof createTeamService>;
