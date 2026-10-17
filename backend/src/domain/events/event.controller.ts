@@ -5,7 +5,7 @@ import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import type { CallerContext } from "../../shared/utils/userUtils";
 import * as eventService from "./event.service";
 import * as sessionLogService from "./sessionLog.service";
-import * as availabilityDebugService from "../availability/availabilityDebug.service";
+import { availabilityDebugService } from "../availability/availabilityDebug.module";
 
 const createEvent = async (req: Request, res: Response) => {
   const caller = res.locals.authUser as CallerContext;
