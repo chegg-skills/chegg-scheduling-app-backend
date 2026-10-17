@@ -44,6 +44,11 @@ const runtimeImports = (file: string): string[] => {
     const resolved = resolveRelative(file, match[3]);
     if (resolved) found.push(resolved);
   }
+  // Side-effect imports (`import "./x"`) carry no specifiers but still run at load time.
+  for (const match of source.matchAll(/^\s*import\s+"(\.{1,2}\/[^"]+)"/gm)) {
+    const resolved = resolveRelative(file, match[1]);
+    if (resolved) found.push(resolved);
+  }
   return found;
 };
 
@@ -96,14 +101,29 @@ describe("events / availability / bookings / scheduling dependencies", () => {
     expect(findLoops(listFiles())).toEqual([]);
   });
 
-  it("the shared rules and coach-availability leaf do not depend back on the domains they serve", () => {
+  it("the shared rules and the availability building blocks never depend back on the domains that use them", () => {
+    const availabilityLeaves = [
+      "coachAvailability.service.ts",
+      "coachAvailability.repository.ts",
+      "availabilityConflict.service.ts",
+      "availabilityConflict.repository.ts",
+      "availabilityCalendar.service.ts",
+      "availabilityCalendar.repository.ts",
+      "availabilityCore.module.ts",
+      "availability.shared.ts",
+      "availability.notification.ts",
+    ].map((f) => path.join(DOMAIN_ROOT, "availability", f));
+
     const leafPaths = [
       ...fs
         .readdirSync(path.join(DOMAIN_ROOT, "scheduling"))
         .filter((f) => f.endsWith(".ts"))
         .map((f) => path.join(DOMAIN_ROOT, "scheduling", f)),
-      path.join(DOMAIN_ROOT, "availability/coachAvailability.service.ts"),
+      ...availabilityLeaves,
     ];
+    for (const leaf of leafPaths) expect(fs.existsSync(leaf)).toBe(true);
+
+    // events and bookings are above these leaves, and so is the slot-listing service.
     const forbidden = [
       "availability/availability.service.ts",
       ...fs.readdirSync(path.join(DOMAIN_ROOT, "events")).map((f) => `events/${f}`),

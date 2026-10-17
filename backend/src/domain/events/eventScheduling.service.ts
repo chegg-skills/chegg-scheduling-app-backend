@@ -35,8 +35,7 @@ import {
   queueSlotCoachReassignedNotifications,
 } from "../bookings/booking.notification";
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
-import { getCoachConflicts } from "../availability/availabilityConflict.service";
-import { isCoachAvailable } from "../availability/coachAvailability.service";
+import { getCoachConflicts, isCoachAvailable } from "../availability/availabilityCore.module";
 import { logger } from "../../shared/logging/logger";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { BookingStatus } from "@prisma/client";
