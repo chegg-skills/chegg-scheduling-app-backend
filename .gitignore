@@ -35,6 +35,10 @@ personal-notes/
 # AI
 CLAUDE.md
 claude.md
+# Claude Code settings: they hold per-machine permission rules (including broad shell
+# allow-rules) and local paths, so they are not shared through the repository.
+.claude/settings.json
+.claude/settings.local.json
 
 # Local test files
 iframe-test.html
