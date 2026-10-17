@@ -215,7 +215,7 @@ describe("createPublicService (fake repository)", () => {
       coach: { zoomIsvLink: "https://zoom.us/coach" },
       scheduleSlot: null,
       event: {
-        meetingLinkSource: MeetingLinkSource.COACH_PERSONAL_LINK,
+        meetingLinkSource: MeetingLinkSource.COACH_ISV,
         locationValue: "https://loc.example/room",
       },
       ...overrides,
@@ -240,7 +240,7 @@ describe("createPublicService (fake repository)", () => {
         "no usable link",
         booking({
           coach: null,
-          event: { meetingLinkSource: MeetingLinkSource.COACH_PERSONAL_LINK, locationValue: null },
+          event: { meetingLinkSource: MeetingLinkSource.COACH_ISV, locationValue: null },
         }),
         "no_url",
       ],
@@ -290,7 +290,7 @@ describe("createPublicService (fake repository)", () => {
           booking({
             coach: { zoomIsvLink: "http://insecure.example/room" },
             event: {
-              meetingLinkSource: MeetingLinkSource.COACH_PERSONAL_LINK,
+              meetingLinkSource: MeetingLinkSource.COACH_ISV,
               locationValue: null,
             },
           }),
@@ -301,7 +301,7 @@ describe("createPublicService (fake repository)", () => {
           booking({
             coach: { zoomIsvLink: "not a url" },
             event: {
-              meetingLinkSource: MeetingLinkSource.COACH_PERSONAL_LINK,
+              meetingLinkSource: MeetingLinkSource.COACH_ISV,
               locationValue: null,
             },
           }),
