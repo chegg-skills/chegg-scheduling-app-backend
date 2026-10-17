@@ -36,7 +36,7 @@ import {
 } from "../bookings/booking.notification";
 import { queueCoachRevealNotifications } from "./coachReveal.notification";
 import { getCoachConflicts } from "../availability/availabilityConflict.service";
-import { isCoachAvailable } from "../availability/availability.service";
+import { isCoachAvailable } from "../availability/coachAvailability.service";
 import { logger } from "../../shared/logging/logger";
 import { getRequestLogger } from "../../shared/logging/requestContext";
 import { BookingStatus } from "@prisma/client";
