@@ -30,10 +30,8 @@ function isStartWithinWindow(
     .filter((w) => w.dayOfWeek === startLocal.dayOfWeek)
     .some((w) => startMins >= hhmmToMinutes(w.startTime) && startMins < hhmmToMinutes(w.endTime));
 }
-import {
-  evaluateCoachAvailability,
-  endOfBookingWindowInTimezone,
-} from "./availability.service";
+import { evaluateCoachAvailability } from "./availabilityCore.module";
+import { endOfBookingWindowInTimezone } from "./availability.service";
 import {
   filterConflictsForSlot,
   type BookingWithEventBuffer,
