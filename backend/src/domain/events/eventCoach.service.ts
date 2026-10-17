@@ -14,7 +14,7 @@ import { ReplaceEventCoachesSchema } from "./event.schema";
 import {
   getEventCoachWeeklyAvailability,
   setEventCoachWeeklyAvailability,
-} from "../availability/availabilityCalendar.service";
+} from "../availability/availabilityCore.module";
 
 type EventConfigValidationInput = {
   interactionType: InteractionType;

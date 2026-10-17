@@ -10,7 +10,7 @@ import {
   getEffectiveParticipantPolicy,
 } from "../scheduling/eventRules";
 import { replenishContinuousSlots } from "../events/eventScheduling.service";
-import { evaluateCoachAvailability, isCoachAvailable } from "./coachAvailability.service";
+import { evaluateCoachAvailability, isCoachAvailable } from "./availabilityCore.module";
 import {
   getWeeklyAvailability,
   setWeeklyAvailability,
@@ -18,7 +18,7 @@ import {
   addAvailabilityException,
   removeAvailabilityException,
   getEffectiveAvailabilityData as getEffectiveAvailability,
-} from "./availabilityCalendar.service";
+} from "./availabilityCore.module";
 import {
   filterConflictsForSlot,
   type BookingWithEventBuffer,

@@ -186,7 +186,7 @@ describe("booking rules", () => {
     });
     it("otherwise prefers the coach's link, falling back to the location", () => {
       const event = {
-        meetingLinkSource: MeetingLinkSource.COACH_PERSONAL_LINK,
+        meetingLinkSource: MeetingLinkSource.COACH_ISV,
         locationValue: "https://loc",
       };
       expect(getMeetingJoinUrl(event, "https://coach")).toBe("https://coach");
