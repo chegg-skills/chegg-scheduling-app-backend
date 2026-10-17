@@ -109,6 +109,20 @@ describe("events / availability / bookings / scheduling dependencies", () => {
     expect(violations).toEqual([]);
   });
 
+  it("the slot-debug service takes events by injection, and only the events controller consumes its module", () => {
+    const service = path.join(DOMAIN_ROOT, "availability/availabilityDebug.service.ts");
+    const fromEventsOrBookings = runtimeImports(service)
+      .map((t) => path.relative(DOMAIN_ROOT, t))
+      .filter((t) => t.startsWith("events/") || t.startsWith("bookings/"));
+    expect(fromEventsOrBookings).toEqual([]);
+
+    const debugModule = path.join(DOMAIN_ROOT, "availability/availabilityDebug.module.ts");
+    const importers = listFiles()
+      .filter((f) => f !== debugModule && runtimeImports(f).includes(debugModule))
+      .map((f) => path.relative(DOMAIN_ROOT, f));
+    expect(importers).toEqual(["events/event.controller.ts"]);
+  });
+
   it("events and bookings never import the slot-listing service or its module (they sit below it)", () => {
     const above = [
       path.join(DOMAIN_ROOT, "availability/availability.service.ts"),
