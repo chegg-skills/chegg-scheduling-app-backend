@@ -101,6 +101,29 @@ describe("events / availability / bookings / scheduling dependencies", () => {
     expect(findLoops(listFiles())).toEqual([]);
   });
 
+  it("the slot-listing service takes what it needs from events and bookings by injection, not by import", () => {
+    const service = path.join(DOMAIN_ROOT, "availability/availability.service.ts");
+    const violations = runtimeImports(service)
+      .map((t) => path.relative(DOMAIN_ROOT, t))
+      .filter((t) => t.startsWith("events/") || t.startsWith("bookings/"));
+    expect(violations).toEqual([]);
+  });
+
+  it("events and bookings never import the slot-listing service or its module (they sit below it)", () => {
+    const above = [
+      path.join(DOMAIN_ROOT, "availability/availability.service.ts"),
+      path.join(DOMAIN_ROOT, "availability/availability.module.ts"),
+    ];
+    const violations = listFiles()
+      .filter((f) => /\/(events|bookings)\//.test(f))
+      .flatMap((f) =>
+        runtimeImports(f)
+          .filter((t) => above.includes(t))
+          .map((t) => `${path.relative(DOMAIN_ROOT, f)} -> ${path.relative(DOMAIN_ROOT, t)}`),
+      );
+    expect(violations).toEqual([]);
+  });
+
   it("the shared rules and the availability building blocks never depend back on the domains that use them", () => {
     const availabilityLeaves = [
       "coachAvailability.service.ts",

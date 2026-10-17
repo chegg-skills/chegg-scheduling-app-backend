@@ -3,7 +3,7 @@ import { asyncHandler } from "../../shared/http/asyncHandler";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccessResponse } from "../../shared/http/responseHelper";
 import { parseBoundedDateRange } from "../../shared/utils/date";
-import * as AvailabilityService from "../availability/availability.service";
+import { availabilityService } from "../availability/availability.module";
 import type { PublicService } from "./public.service";
 import { resolveFrontendUrl } from "../../shared/notifications/notification.publisher";
 
@@ -62,7 +62,7 @@ export const createPublicController = (publicService: PublicService) => {
       maxRangeDays: 32,
     });
 
-    const slots = await AvailabilityService.getAvailableSlots(
+    const slots = await availabilityService.getAvailableSlots(
       eventId as string,
       start,
       end,

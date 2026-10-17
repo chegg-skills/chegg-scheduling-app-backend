@@ -10,7 +10,7 @@ import {
 } from "../../shared/constants/interactionType";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { isCoachAvailable } from "../availability/availability.service";
+import { isCoachAvailable } from "../availability/availabilityCore.module";
 import {
   filterConflictsForSlot,
   type BookingWithEventBuffer,

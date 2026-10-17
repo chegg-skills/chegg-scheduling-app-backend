@@ -8,7 +8,7 @@ import {
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { ErrorHandler } from "../../shared/error/errorhandler";
-import { isCoachAvailable } from "../availability/availability.service";
+import { isCoachAvailable } from "../availability/availabilityCore.module";
 import type { BookingWithEventBuffer } from "../availability/availabilityConflict.service";
 
 export type CoachCandidate = {
